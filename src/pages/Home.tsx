@@ -1,10 +1,39 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { FeatureCard } from '@/components/shared/FeatureCard';
 import { Button } from '@/components/ui/button';
-import { Bell, Users, BookOpen, Calendar, Map, Sparkles, ArrowRight, Clock } from 'lucide-react';
+import { ContentCarousel } from '@/components/shared/ContentCarousel';
+import { CarouselCard } from '@/components/shared/CarouselCard';
+import { MentorCard } from '@/components/shared/MentorCard';
+import { Bell, ArrowRight, Clock, Pin, Sparkles, Play, Calendar } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
+
+// Mock data - replace with actual data from database
+const mockStudents = [
+  { id: '1', name: 'Priya Sharma', specialty: 'Content Creator', imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200' },
+  { id: '2', name: 'Arjun Patel', specialty: 'Video Editor', imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200' },
+  { id: '3', name: 'Neha Gupta', specialty: 'Graphic Designer', imageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200' },
+  { id: '4', name: 'Rahul Singh', specialty: 'Photographer', imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200' },
+];
+
+const mockMentors = [
+  { id: '1', name: 'Virat Kohli', specialty: 'Entrepreneur', avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200' },
+  { id: '2', name: 'Priyanka Chopra', specialty: 'Acting Coach', avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200' },
+  { id: '3', name: 'Sundar Pichai', specialty: 'Tech Leadership', avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200' },
+  { id: '4', name: 'Deepika Padukone', specialty: 'Brand Building', avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200' },
+];
+
+const mockLearnContent = [
+  { id: '1', title: 'Introduction to Content Creation', duration: '15 min', thumbnail: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=400' },
+  { id: '2', title: 'Building Your Personal Brand', duration: '22 min', thumbnail: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=400' },
+  { id: '3', title: 'Video Editing Basics', duration: '18 min', thumbnail: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=400' },
+];
+
+const mockEvents = [
+  { id: '1', title: 'Forge Kickoff Mumbai', date: 'Feb 15, 2025', imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400' },
+  { id: '2', title: 'Creator Meetup Delhi', date: 'Feb 22, 2025', imageUrl: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400' },
+  { id: '3', title: 'Workshop: YouTube Growth', date: 'Mar 1, 2025', imageUrl: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=400' },
+];
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -22,7 +51,7 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="container py-6 space-y-6">
+    <div className="container py-6 space-y-8 max-w-5xl">
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-2xl font-bold text-foreground">
@@ -33,23 +62,24 @@ const Home: React.FC = () => {
         </p>
       </div>
 
-      {/* Countdown Card */}
+      {/* Countdown + Roadmap CTA */}
       <div className="relative overflow-hidden rounded-2xl gradient-primary p-6 shadow-glow">
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 text-primary-foreground/80 mb-2">
-            <Clock className="h-4 w-4" />
-            <span className="text-sm font-medium">Countdown to Forge</span>
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 text-primary-foreground/80 mb-2">
+              <Clock className="h-4 w-4" />
+              <span className="text-sm font-medium">Countdown to Forge</span>
+            </div>
+            <div className="flex items-baseline gap-2 mb-2">
+              <span className="text-4xl sm:text-5xl font-bold text-primary-foreground">{daysUntilForge}</span>
+              <span className="text-lg sm:text-xl text-primary-foreground/80">days</span>
+            </div>
+            <p className="text-primary-foreground/70 text-sm">
+              {format(forgeDate, 'MMMM d, yyyy')} • Mumbai
+            </p>
           </div>
-          <div className="flex items-baseline gap-2 mb-4">
-            <span className="text-5xl font-bold text-primary-foreground">{daysUntilForge}</span>
-            <span className="text-xl text-primary-foreground/80">days</span>
-          </div>
-          <p className="text-primary-foreground/70 text-sm mb-4">
-            {format(forgeDate, 'MMMM d, yyyy')} • Mumbai
-          </p>
           <Button
             variant="glass"
-            size="sm"
             onClick={() => navigate('/roadmap')}
             className="bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 border-primary-foreground/20"
           >
@@ -60,99 +90,100 @@ const Home: React.FC = () => {
         <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-primary-foreground/10 rounded-full blur-2xl" />
       </div>
 
-      {/* Master Notification CTA */}
-      <div 
-        onClick={() => navigate('/updates')}
-        className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border/50 cursor-pointer hover:border-primary/30 transition-all"
-      >
-        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-          <Bell className="h-6 w-6 text-primary" />
-        </div>
-        <div className="flex-1">
-          <h3 className="font-semibold text-foreground">Notification Center</h3>
-          <p className="text-sm text-muted-foreground">Stay updated with the latest</p>
-        </div>
-        <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-          <span className="text-xs font-bold text-primary-foreground">3</span>
-        </div>
-      </div>
-
-      {/* Quick Access Grid */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Explore</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <FeatureCard
-            icon={Users}
-            title="Community"
-            description="Connect with fellow creators"
-            onClick={() => navigate('/community')}
-          />
-          <FeatureCard
-            icon={BookOpen}
-            title="Learn"
-            description="Access exclusive content"
-            onClick={() => navigate('/learn')}
-          />
-          <FeatureCard
-            icon={Calendar}
-            title="Events"
-            description="Upcoming sessions"
-            onClick={() => navigate('/events')}
-          />
-          <FeatureCard
-            icon={Map}
-            title="Roadmap"
-            description="Your Forge journey"
-            onClick={() => navigate('/roadmap')}
-          />
-        </div>
-      </div>
-
-      {/* Featured Content */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Featured</h2>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/learn')}>
-            See all
-          </Button>
+      {/* Master Notification Center */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Bell className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold text-foreground">Master Notification Center</h2>
         </div>
         
-        <div className="space-y-3">
-          <FeatureCard
-            title="Welcome to LevelUp"
-            description="Your orientation guide to making the most of this community"
-            imageUrl="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&auto=format"
-            badge="New"
-            isPinned
+        <div className="grid gap-3 sm:grid-cols-2">
+          {/* FOMO Discovery Card */}
+          <div 
             onClick={() => navigate('/learn')}
-          />
-          <FeatureCard
-            title="Meet Your Cohort"
-            description="Get to know the amazing creators joining you on this journey"
-            imageUrl="https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800&auto=format"
-            onClick={() => navigate('/community')}
-          />
+            className="p-4 rounded-xl bg-card border border-border/50 cursor-pointer hover:border-primary/30 transition-all"
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Sparkles className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-foreground font-medium">Discover Learn, Events, Perks, Roadmap</p>
+                <p className="text-xs text-muted-foreground mt-1">FOMO-inducing discovery of other tabs</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Pinned Admin Cards */}
+          <div 
+            onClick={() => navigate('/updates')}
+            className="p-4 rounded-xl bg-card border border-border/50 cursor-pointer hover:border-primary/30 transition-all"
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                <Pin className="h-5 w-5 text-destructive" />
+              </div>
+              <div>
+                <p className="text-sm text-foreground font-medium">Admin Pinned Cards</p>
+                <p className="text-xs text-muted-foreground mt-1">Fixed, intentional messaging</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Engagement CTA */}
-      <div className="p-6 rounded-2xl bg-gradient-to-br from-card to-secondary border border-border/50">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shrink-0 shadow-glow">
-            <Sparkles className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-foreground mb-1">Ready to connect?</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Start a conversation in the community and introduce yourself to fellow creators.
-            </p>
-            <Button variant="premium" size="sm" onClick={() => navigate('/community')}>
-              Join the Conversation
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
+      {/* About Our Students */}
+      <ContentCarousel title="About Our Students" onSeeAll={() => navigate('/community')}>
+        {mockStudents.map((student) => (
+          <MentorCard
+            key={student.id}
+            name={student.name}
+            specialty={student.specialty}
+            avatarUrl={student.imageUrl}
+            onClick={() => navigate('/community')}
+          />
+        ))}
+      </ContentCarousel>
+
+      {/* About Our Mentors */}
+      <ContentCarousel title="About Our Mentors" onSeeAll={() => navigate('/community')}>
+        {mockMentors.map((mentor) => (
+          <MentorCard
+            key={mentor.id}
+            name={mentor.name}
+            specialty={mentor.specialty}
+            avatarUrl={mentor.avatarUrl}
+            onClick={() => navigate('/community')}
+          />
+        ))}
+      </ContentCarousel>
+
+      {/* Learn Section */}
+      <ContentCarousel title="Learn" onSeeAll={() => navigate('/learn')}>
+        {mockLearnContent.map((content) => (
+          <CarouselCard
+            key={content.id}
+            title={content.title}
+            subtitle={content.duration}
+            imageUrl={content.thumbnail}
+            onClick={() => navigate('/learn')}
+          />
+        ))}
+      </ContentCarousel>
+
+      {/* Events Section */}
+      <ContentCarousel title="Events" onSeeAll={() => navigate('/events')}>
+        {mockEvents.map((event) => (
+          <CarouselCard
+            key={event.id}
+            title={event.title}
+            subtitle={event.date}
+            imageUrl={event.imageUrl}
+            badge="Upcoming"
+            onClick={() => navigate('/events')}
+          />
+        ))}
+      </ContentCarousel>
     </div>
   );
 };

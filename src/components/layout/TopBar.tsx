@@ -9,14 +9,15 @@ export const TopBar: React.FC = () => {
   const { profile } = useAuth();
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50">
+    <header className="fixed top-0 left-0 right-0 md:left-56 z-50 glass border-b border-border/50">
       <div className="container flex items-center justify-between h-16">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2 md:hidden">
           <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-lg">L</span>
           </div>
           <span className="text-xl font-bold gradient-text">LevelUp</span>
         </Link>
+        <div className="hidden md:block" />
 
         <div className="flex items-center gap-2">
           <Button
