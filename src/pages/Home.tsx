@@ -67,31 +67,35 @@ const Home: React.FC = () => {
       <MasterNotificationCenter />
 
       {/* Countdown + Roadmap CTA */}
-      <div className="relative overflow-hidden rounded-2xl gradient-primary p-6 shadow-glow">
+      <div className="relative overflow-hidden rounded-2xl glass-premium p-6">
+        {/* Gradient Glow Effects */}
+        <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/30 rounded-full blur-3xl animate-pulse-soft" />
+        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-accent/20 rounded-full blur-3xl" />
+        
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-primary-foreground/80 mb-2">
-              <Clock className="h-4 w-4" />
+            <div className="flex items-center gap-2 text-primary mb-2">
+              <div className="p-1.5 rounded-lg bg-primary/20 backdrop-blur-sm">
+                <Clock className="h-4 w-4" />
+              </div>
               <span className="text-sm font-medium">Countdown to Forge</span>
             </div>
             <div className="flex items-baseline gap-2 mb-2">
-              <span className="text-4xl sm:text-5xl font-bold text-primary-foreground">{daysUntilForge}</span>
-              <span className="text-lg sm:text-xl text-primary-foreground/80">days</span>
+              <span className="text-4xl sm:text-5xl font-bold text-foreground glow-text">{daysUntilForge}</span>
+              <span className="text-lg sm:text-xl text-muted-foreground">days</span>
             </div>
-            <p className="text-primary-foreground/70 text-sm">
+            <p className="text-muted-foreground text-sm">
               {format(forgeDate, 'MMMM d, yyyy')} • Mumbai
             </p>
           </div>
           <Button
-            variant="glass"
             onClick={() => navigate('/roadmap')}
-            className="bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 border-primary-foreground/20"
+            className="rounded-full bg-primary/20 text-primary border border-primary/20 hover:bg-primary hover:text-primary-foreground backdrop-blur-md transition-all duration-300 shadow-[0_0_20px_hsl(var(--primary)/0.2)]"
           >
             View Roadmap
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
-        <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-primary-foreground/10 rounded-full blur-2xl" />
       </div>
 
       {/* Countdown + Roadmap CTA - Now below notification center */}
