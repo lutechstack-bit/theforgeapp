@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AdminRoute } from "@/components/admin/AdminRoute";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -32,6 +33,7 @@ import AdminEvents from "./pages/admin/AdminEvents";
 import AdminLearn from "./pages/admin/AdminLearn";
 import AdminAutoUpdates from "./pages/admin/AdminAutoUpdates";
 import AdminHeroBanners from "./pages/admin/AdminHeroBanners";
+import AdminRoadmap from "./pages/admin/AdminRoadmap";
 
 const queryClient = new QueryClient();
 
@@ -130,6 +132,7 @@ const AppRoutes = () => {
         <Route path="learn" element={<AdminLearn />} />
         <Route path="auto-updates" element={<AdminAutoUpdates />} />
         <Route path="hero-banners" element={<AdminHeroBanners />} />
+        <Route path="roadmap" element={<AdminRoadmap />} />
       </Route>
       
       {/* Catch-all */}
@@ -141,13 +144,15 @@ const AppRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
