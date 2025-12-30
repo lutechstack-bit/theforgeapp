@@ -25,7 +25,7 @@ export const AppLayout: React.FC = () => {
       {showNav && <SideNav />}
       {showNav && <TopBar />}
       {/* Extra padding top to account for countdown banner */}
-      <main className={`relative z-10 ${showNav ? 'md:ml-56 pb-20 md:pb-6 pt-28 sm:pt-24' : ''}`}>
+      <main className={`relative z-10 ${showNav ? 'md:ml-56 pb-20 md:pb-6 pt-28' : ''}`}>
         <Outlet />
       </main>
       {showNav && <BottomNav />}
