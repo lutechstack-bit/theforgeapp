@@ -28,6 +28,8 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminEditions from "./pages/admin/AdminEditions";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminContent from "./pages/admin/AdminContent";
+import AdminEvents from "./pages/admin/AdminEvents";
+import AdminLearn from "./pages/admin/AdminLearn";
 
 const queryClient = new QueryClient();
 
@@ -122,6 +124,8 @@ const AppRoutes = () => {
         <Route path="editions" element={<AdminEditions />} />
         <Route path="notifications" element={<AdminNotifications />} />
         <Route path="content" element={<AdminContent />} />
+        <Route path="events" element={<AdminEvents />} />
+        <Route path="learn" element={<AdminLearn />} />
       </Route>
       
       {/* Catch-all */}
