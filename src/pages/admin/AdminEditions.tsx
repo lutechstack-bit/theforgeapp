@@ -22,6 +22,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -61,7 +68,7 @@ export default function AdminEditions() {
 
   // Create edition mutation
   const createMutation = useMutation({
-    mutationFn: async (data: { name: string; city: string; forge_start_date?: string; forge_end_date?: string }) => {
+    mutationFn: async (data: { name: string; city: string; cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS'; forge_start_date?: string; forge_end_date?: string }) => {
       const { error } = await supabase.from('editions').insert(data);
       if (error) throw error;
     },
@@ -78,7 +85,7 @@ export default function AdminEditions() {
 
   // Update edition mutation
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; name: string; city: string; forge_start_date?: string; forge_end_date?: string }) => {
+    mutationFn: async ({ id, ...data }: { id: string; name: string; city: string; cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS'; forge_start_date?: string; forge_end_date?: string }) => {
       const { error } = await supabase.from('editions').update(data).eq('id', id);
       if (error) throw error;
     },
@@ -140,6 +147,13 @@ export default function AdminEditions() {
                 <div>
                   <CardTitle className="text-lg">{edition.name}</CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">{edition.city}</p>
+                  <span className={`mt-2 inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                    edition.cohort_type === 'FORGE' ? 'bg-forge-yellow/20 text-forge-yellow' :
+                    edition.cohort_type === 'FORGE_WRITING' ? 'bg-blue-500/20 text-blue-400' :
+                    'bg-pink-500/20 text-pink-400'
+                  }`}>
+                    {edition.cohort_type?.replace(/_/g, ' ')}
+                  </span>
                 </div>
                 <div className="flex gap-1">
                   <Button
@@ -227,6 +241,8 @@ export default function AdminEditions() {
   );
 }
 
+type CohortType = 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS';
+
 function EditionDialog({
   open,
   onOpenChange,
@@ -237,12 +253,13 @@ function EditionDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   edition: Edition | null;
-  onSubmit: (data: { name: string; city: string; forge_start_date?: string; forge_end_date?: string }) => void;
+  onSubmit: (data: { name: string; city: string; cohort_type: CohortType; forge_start_date?: string; forge_end_date?: string }) => void;
   isLoading: boolean;
 }) {
   const [formData, setFormData] = useState({
     name: '',
     city: '',
+    cohort_type: 'FORGE',
     forge_start_date: '',
     forge_end_date: ''
   });
@@ -252,11 +269,12 @@ function EditionDialog({
       setFormData({
         name: edition.name,
         city: edition.city,
+        cohort_type: edition.cohort_type || 'FORGE',
         forge_start_date: edition.forge_start_date ? format(new Date(edition.forge_start_date), 'yyyy-MM-dd') : '',
         forge_end_date: edition.forge_end_date ? format(new Date(edition.forge_end_date), 'yyyy-MM-dd') : ''
       });
     } else {
-      setFormData({ name: '', city: '', forge_start_date: '', forge_end_date: '' });
+      setFormData({ name: '', city: '', cohort_type: 'FORGE', forge_start_date: '', forge_end_date: '' });
     }
   }, [edition, open]);
 
@@ -265,6 +283,7 @@ function EditionDialog({
     onSubmit({
       name: formData.name,
       city: formData.city,
+      cohort_type: formData.cohort_type as 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS',
       forge_start_date: formData.forge_start_date || undefined,
       forge_end_date: formData.forge_end_date || undefined
     });
@@ -294,6 +313,22 @@ function EditionDialog({
               value={formData.city}
               onChange={(e) => setFormData({ ...formData, city: e.target.value })}
             />
+          </div>
+          <div className="space-y-2">
+            <Label>Cohort Type *</Label>
+            <Select
+              value={formData.cohort_type}
+              onValueChange={(value) => setFormData({ ...formData, cohort_type: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select cohort type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="FORGE">Forge (Filmmaking)</SelectItem>
+                <SelectItem value="FORGE_WRITING">Forge Writing</SelectItem>
+                <SelectItem value="FORGE_CREATORS">Forge Creators</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
