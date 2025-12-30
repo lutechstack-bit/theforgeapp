@@ -67,31 +67,37 @@ export const SideNav: React.FC = () => {
       >
         {/* Logo + Toggle */}
         <div className={cn(
-          "flex items-center justify-between py-5",
-          collapsed ? "px-4" : "px-5"
+          "flex py-5 transition-all duration-300",
+          collapsed ? "flex-col items-center gap-4 px-3" : "flex-row items-center justify-between px-5"
         )}>
-          <div className="flex items-center gap-3 overflow-hidden">
+          <div className="flex items-center justify-center overflow-hidden">
             <img 
               src={collapsed ? forgeIcon : forgeLogo} 
               alt="Forge" 
-              className={cn("shrink-0 transition-all duration-300", collapsed ? "h-7 w-7" : "h-8")}
+              className={cn("shrink-0 transition-all duration-300", collapsed ? "h-8 w-8" : "h-8")}
             />
           </div>
           
           {/* Toggle Button */}
-          <button
-            onClick={toggle}
-            className={cn(
-              "flex items-center justify-center rounded-lg bg-sidebar-accent/80 hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground transition-all duration-200",
-              collapsed ? "w-9 h-9" : "w-8 h-8"
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <button
+                onClick={toggle}
+                className="flex items-center justify-center w-9 h-9 rounded-lg bg-sidebar-accent/80 hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground transition-all duration-200"
+              >
+                {collapsed ? (
+                  <PanelLeft className="h-4 w-4" />
+                ) : (
+                  <PanelLeftClose className="h-4 w-4" />
+                )}
+              </button>
+            </TooltipTrigger>
+            {collapsed && (
+              <TooltipContent side="right" className="bg-popover text-popover-foreground">
+                Expand sidebar
+              </TooltipContent>
             )}
-          >
-            {collapsed ? (
-              <PanelLeft className="h-4 w-4" />
-            ) : (
-              <PanelLeftClose className="h-4 w-4" />
-            )}
-          </button>
+          </Tooltip>
         </div>
 
         {/* Main Navigation */}
