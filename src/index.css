@@ -118,14 +118,14 @@
     --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.4);
     --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.6);
 
-    /* Sidebar */
-    --sidebar-background: 0 0% 11%;
-    --sidebar-foreground: 40 68% 96%;
+    /* Sidebar - Cleaner dark theme */
+    --sidebar-background: 220 15% 10%;
+    --sidebar-foreground: 220 10% 90%;
     --sidebar-primary: 41 100% 62%;
     --sidebar-primary-foreground: 0 0% 13%;
-    --sidebar-accent: 0 0% 18%;
-    --sidebar-accent-foreground: 40 68% 96%;
-    --sidebar-border: 0 0% 20%;
+    --sidebar-accent: 220 15% 15%;
+    --sidebar-accent-foreground: 220 10% 90%;
+    --sidebar-border: 220 10% 18%;
     --sidebar-ring: 41 100% 62%;
   }
 

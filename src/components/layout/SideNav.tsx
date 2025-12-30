@@ -1,38 +1,37 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Users, BookOpen, Map, Calendar, Gift } from 'lucide-react';
+import { Home, Users, BookOpen, Map, Calendar, Gift, Sun, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import forgeLogo from '@/assets/forge-logo.png';
 
 const navItems = [
-  { to: '/', icon: Home, label: 'Home' },
+  { to: '/', icon: Home, label: 'Dashboard' },
   { to: '/community', icon: Users, label: 'Community' },
   { to: '/learn', icon: BookOpen, label: 'Learn' },
   { to: '/roadmap', icon: Map, label: 'Roadmap' },
-  { to: '/events', icon: Calendar, label: 'Event' },
+  { to: '/events', icon: Calendar, label: 'Events' },
   { to: '/perks', icon: Gift, label: 'Perks' },
 ];
 
 export const SideNav: React.FC = () => {
   const location = useLocation();
-  const { profile } = useAuth();
+  const { profile, signOut } = useAuth();
 
   return (
-    <aside className="hidden md:flex w-56 flex-col fixed left-0 top-0 bottom-0 z-40 glass-nav border-r border-white/10 pt-[52px]">
-      {/* Logo with subtle glow */}
-      <div className="p-5 border-b border-white/10">
-        <NavLink to="/" className="flex items-center group">
-          <img 
-            src={forgeLogo} 
-            alt="Forge" 
-            className="h-9 w-auto transition-all duration-300 group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" 
-          />
-        </NavLink>
+    <aside className="hidden md:flex w-64 flex-col fixed left-0 top-0 bottom-0 z-40 bg-sidebar border-r border-sidebar-border">
+      {/* Logo + Title */}
+      <div className="px-6 py-5 flex items-center gap-3">
+        <img 
+          src={forgeLogo} 
+          alt="Forge" 
+          className="h-8 w-auto" 
+        />
+        <span className="text-base font-semibold text-sidebar-foreground tracking-tight">Student Dashboard</span>
       </div>
 
-      {/* Navigation with glass buttons */}
-      <nav className="flex-1 p-4 space-y-2">
+      {/* Navigation */}
+      <nav className="flex-1 px-4 py-2 space-y-1">
         {navItems.map(({ to, icon: Icon, label }) => {
           const isActive = location.pathname === to;
           return (
@@ -40,43 +39,48 @@ export const SideNav: React.FC = () => {
               key={to}
               to={to}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 text-sm font-medium group",
+                "flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium",
                 isActive
-                  ? "bg-primary/90 text-primary-foreground shadow-[0_0_20px_hsl(var(--primary)/0.4)] backdrop-blur-sm"
-                  : "glass-card text-sidebar-foreground hover:bg-white/10 hover:shadow-[0_0_15px_hsl(var(--primary)/0.2)]"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
               )}
             >
-              <Icon className={cn(
-                "h-5 w-5 transition-all duration-300",
-                isActive ? "" : "group-hover:text-primary"
-              )} />
+              <Icon className="h-4 w-4" />
               <span>{label}</span>
             </NavLink>
           );
         })}
       </nav>
 
-      {/* User section with glass card */}
-      <div className="p-4 border-t border-white/10">
+      {/* Bottom Section */}
+      <div className="px-4 py-4 space-y-1 border-t border-sidebar-border">
+        {/* Light Mode Toggle */}
+        <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200">
+          <Sun className="h-4 w-4" />
+          <span>Light Mode</span>
+        </button>
+
+        {/* User Profile */}
         <NavLink
           to="/profile"
-          className="flex items-center gap-3 px-4 py-3 rounded-xl glass-card hover:bg-white/10 transition-all duration-300 group"
+          className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-sidebar-accent transition-all duration-200"
         >
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 backdrop-blur-sm border border-primary/30 flex items-center justify-center overflow-hidden ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all duration-300">
-            {profile?.avatar_url ? (
-              <img 
-                src={profile.avatar_url} 
-                alt="Profile" 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-xs font-semibold text-primary">
-                {profile?.full_name?.charAt(0) || 'U'}
-              </span>
-            )}
+          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold text-primary">
+            {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'}
           </div>
-          <span className="text-sm font-medium text-sidebar-foreground group-hover:text-primary transition-colors duration-300">Profile</span>
+          <span className="text-sm font-medium text-sidebar-foreground truncate">
+            {profile?.full_name || 'Profile'}
+          </span>
         </NavLink>
+
+        {/* Sign Out */}
+        <button
+          onClick={() => signOut()}
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Sign Out</span>
+        </button>
       </div>
     </aside>
   );
