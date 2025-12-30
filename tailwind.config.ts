@@ -68,6 +68,13 @@ export default {
           elevated: "hsl(var(--surface-elevated))",
           glass: "hsl(var(--surface-glass))",
         },
+        forge: {
+          yellow: "hsl(var(--forge-yellow))",
+          gold: "hsl(var(--forge-gold))",
+          orange: "hsl(var(--forge-orange))",
+          cream: "hsl(var(--forge-cream))",
+          charcoal: "hsl(var(--forge-charcoal))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

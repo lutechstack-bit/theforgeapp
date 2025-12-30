@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Home, Users, BookOpen, Map, Calendar, Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import forgeLogo from '@/assets/forge-logo.png';
 
 const navItems = [
   { to: '/', icon: Home, label: 'Home' },
@@ -19,12 +20,9 @@ export const SideNav: React.FC = () => {
     <aside className="hidden md:flex w-56 flex-col fixed left-0 top-0 bottom-0 bg-sidebar-background border-r border-sidebar-border z-40">
       {/* Logo */}
       <div className="p-6 border-b border-sidebar-border">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-lg">L</span>
-          </div>
-          <span className="text-xl font-bold gradient-text">LevelUp</span>
-        </div>
+        <NavLink to="/" className="flex items-center">
+          <img src={forgeLogo} alt="Forge" className="h-8 w-auto" />
+        </NavLink>
       </div>
 
       {/* Navigation */}

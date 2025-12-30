@@ -61,59 +61,71 @@
 
 @layer base {
   :root {
-    /* LevelUp Dark Premium Theme */
-    --background: 222 47% 6%;
-    --foreground: 45 20% 95%;
+    /* Forge Brand Color Palette */
+    /* Primary Yellow: #FFBC3B → HSL(41, 100%, 62%) */
+    /* Dark Gold: #D38F0C → HSL(39, 90%, 44%) */
+    /* Burnt Orange: #DD6F16 → HSL(27, 85%, 48%) */
+    /* Cream: #FCF7EF → HSL(40, 68%, 96%) */
+    /* Dark Charcoal: #222222 → HSL(0, 0%, 13%) */
 
-    --card: 222 40% 9%;
-    --card-foreground: 45 20% 95%;
+    --background: 0 0% 13%;
+    --foreground: 40 68% 96%;
 
-    --popover: 222 40% 9%;
-    --popover-foreground: 45 20% 95%;
+    --card: 0 0% 16%;
+    --card-foreground: 40 68% 96%;
 
-    --primary: 38 90% 55%;
-    --primary-foreground: 222 47% 6%;
+    --popover: 0 0% 16%;
+    --popover-foreground: 40 68% 96%;
 
-    --secondary: 222 30% 15%;
-    --secondary-foreground: 45 20% 90%;
+    --primary: 41 100% 62%;
+    --primary-foreground: 0 0% 13%;
 
-    --muted: 222 30% 12%;
-    --muted-foreground: 220 15% 55%;
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 40 68% 96%;
 
-    --accent: 38 70% 45%;
-    --accent-foreground: 45 20% 95%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 40 20% 60%;
+
+    --accent: 39 90% 44%;
+    --accent-foreground: 40 68% 96%;
 
     --destructive: 0 75% 55%;
-    --destructive-foreground: 45 20% 95%;
+    --destructive-foreground: 40 68% 96%;
 
-    --border: 222 25% 18%;
-    --input: 222 25% 15%;
-    --ring: 38 90% 55%;
+    --border: 0 0% 22%;
+    --input: 0 0% 20%;
+    --ring: 41 100% 62%;
 
     --radius: 0.75rem;
 
-    /* Custom tokens */
-    --glow-primary: 38 90% 55%;
-    --glow-secondary: 280 60% 50%;
-    --gradient-start: 38 90% 55%;
-    --gradient-end: 28 85% 45%;
-    --surface-elevated: 222 35% 12%;
-    --surface-glass: 222 40% 10%;
+    /* Custom Forge tokens */
+    --forge-yellow: 41 100% 62%;
+    --forge-gold: 39 90% 44%;
+    --forge-orange: 27 85% 48%;
+    --forge-cream: 40 68% 96%;
+    --forge-charcoal: 0 0% 13%;
+
+    --glow-primary: 41 100% 62%;
+    --glow-secondary: 27 85% 48%;
+    --gradient-start: 41 100% 62%;
+    --gradient-end: 27 85% 48%;
+    --surface-elevated: 0 0% 18%;
+    --surface-glass: 0 0% 15%;
     
     /* Shadows */
-    --shadow-glow: 0 0 40px hsl(38 90% 55% / 0.15);
-    --shadow-card: 0 4px 24px hsl(222 47% 6% / 0.4);
-    --shadow-elevated: 0 8px 32px hsl(222 47% 6% / 0.6);
+    --shadow-glow: 0 0 40px hsl(41 100% 62% / 0.2);
+    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.4);
+    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.6);
 
     /* Sidebar */
-    --sidebar-background: 222 40% 8%;
-    --sidebar-foreground: 45 20% 90%;
-    --sidebar-primary: 38 90% 55%;
-    --sidebar-primary-foreground: 222 47% 6%;
-    --sidebar-accent: 222 30% 15%;
-    --sidebar-accent-foreground: 45 20% 90%;
-    --sidebar-border: 222 25% 15%;
-    --sidebar-ring: 38 90% 55%;
+    --sidebar-background: 0 0% 11%;
+    --sidebar-foreground: 40 68% 96%;
+    --sidebar-primary: 41 100% 62%;
+    --sidebar-primary-foreground: 0 0% 13%;
+    --sidebar-accent: 0 0% 18%;
+    --sidebar-accent-foreground: 40 68% 96%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 41 100% 62%;
   }
 }
 
