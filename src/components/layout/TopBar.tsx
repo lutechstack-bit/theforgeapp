@@ -24,7 +24,7 @@ export const TopBar: React.FC = () => {
   const currentPage = pageNames[location.pathname] || 'Forge';
 
   return (
-    <header className="fixed top-0 left-0 right-0 md:left-56 z-50 glass-nav border-b border-white/10">
+    <header className="fixed top-[60px] sm:top-[52px] left-0 right-0 md:left-56 z-50 glass-nav border-b border-white/10">
       <div className="container flex items-center justify-between h-16 px-4 md:px-6">
         {/* Mobile Logo */}
         <Link to="/" className="flex items-center gap-2 md:hidden">

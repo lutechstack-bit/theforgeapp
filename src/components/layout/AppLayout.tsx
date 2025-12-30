@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import { TopBar } from './TopBar';
 import { SideNav } from './SideNav';
+import { CountdownBanner } from '../shared/CountdownBanner';
 
 export const AppLayout: React.FC = () => {
   const location = useLocation();
@@ -11,6 +12,9 @@ export const AppLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen gradient-bg">
+      {/* FOMO Countdown Banner - Always on top */}
+      {showNav && <CountdownBanner />}
+      
       {/* Floating Gradient Orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse-soft" />
@@ -20,7 +24,8 @@ export const AppLayout: React.FC = () => {
       
       {showNav && <SideNav />}
       {showNav && <TopBar />}
-      <main className={`relative z-10 ${showNav ? 'md:ml-56 pb-20 md:pb-6 pt-16' : ''}`}>
+      {/* Extra padding top to account for countdown banner */}
+      <main className={`relative z-10 ${showNav ? 'md:ml-56 pb-20 md:pb-6 pt-28 sm:pt-24' : ''}`}>
         <Outlet />
       </main>
       {showNav && <BottomNav />}
