@@ -10,7 +10,7 @@ export const TopBar: React.FC = () => {
   const { profile } = useAuth();
 
   return (
-    <header className="fixed top-0 left-0 right-0 md:left-56 z-50 glass border-b border-border/50">
+    <header className="fixed top-0 left-0 right-0 md:left-56 z-50 glass-nav">
       <div className="container flex items-center justify-between h-16">
         <Link to="/" className="flex items-center gap-2 md:hidden">
           <img src={forgeLogo} alt="Forge" className="h-8 w-auto" />
@@ -22,22 +22,23 @@ export const TopBar: React.FC = () => {
             variant="ghost"
             size="icon"
             onClick={() => navigate('/updates')}
-            className="relative"
+            className="relative glass-card-hover rounded-full"
           >
             <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
           </Button>
           
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate('/profile')}
+            className="glass-card-hover rounded-full"
           >
             {profile?.avatar_url ? (
               <img 
                 src={profile.avatar_url} 
                 alt="Profile" 
-                className="w-8 h-8 rounded-full object-cover"
+                className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/20"
               />
             ) : (
               <User className="h-5 w-5" />

@@ -40,8 +40,8 @@ const Learn: React.FC = () => {
   return (
     <div className="min-h-screen">
       <div className="container py-8 space-y-8">
-        {/* Header */}
-        <div>
+        {/* Header with Glass Effect */}
+        <div className="glass-premium rounded-2xl p-6">
           <h1 className="text-3xl font-bold text-foreground mb-2">Courses</h1>
           <p className="text-muted-foreground text-lg">
             Built by Leaders From Amazon, CRED, Zepto, Hindustan Unilever, Flipkart, Paytm & more
@@ -51,18 +51,18 @@ const Learn: React.FC = () => {
         {/* Tabs for categories */}
         <Tabs defaultValue="All" className="space-y-8">
           <div className="flex items-center justify-between">
-            <TabsList className="bg-transparent p-0 h-auto gap-2">
+            <TabsList className="bg-transparent p-0 h-auto gap-2 flex-wrap">
               {categories.map((category) => (
                 <TabsTrigger
                   key={category}
                   value={category}
-                  className="rounded-full px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-card data-[state=inactive]:border data-[state=inactive]:border-border/50"
+                  className="rounded-full px-5 py-2.5 backdrop-blur-md transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-[0_0_20px_hsl(var(--primary)/0.3)] data-[state=inactive]:glass-card data-[state=inactive]:hover:bg-card/60"
                 >
                   {category}
                 </TabsTrigger>
               ))}
             </TabsList>
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hidden md:flex">
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hidden md:flex glass-card-hover rounded-full px-4">
               View All Courses
               <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
@@ -73,7 +73,7 @@ const Learn: React.FC = () => {
               {isLoading ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {[...Array(4)].map((_, i) => (
-                    <div key={i} className="aspect-[3/4] rounded-2xl bg-muted animate-pulse" />
+                    <div key={i} className="aspect-[3/4] rounded-2xl glass-card animate-pulse" />
                   ))}
                 </div>
               ) : (
@@ -98,8 +98,8 @@ const Learn: React.FC = () => {
               )}
 
               {!isLoading && courses?.filter((c) => category === 'All' || c.category === category).length === 0 && (
-                <div className="text-center py-16">
-                  <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <div className="text-center py-16 glass-premium rounded-2xl">
+                  <BookOpen className="h-12 w-12 text-primary/50 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-foreground mb-2">No courses yet</h3>
                   <p className="text-muted-foreground">
                     Check back soon for new content in this category
@@ -110,14 +110,18 @@ const Learn: React.FC = () => {
           ))}
         </Tabs>
 
-        {/* Upcoming Session Banner */}
-        <div className="p-8 rounded-2xl bg-gradient-to-br from-card to-secondary border border-border/50">
-          <div className="flex flex-col md:flex-row items-start gap-6">
-            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+        {/* Upcoming Session Banner with Premium Glass */}
+        <div className="glass-premium rounded-2xl p-8 relative overflow-hidden">
+          {/* Glow Effect */}
+          <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/20 rounded-full blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-accent/20 rounded-full blur-3xl" />
+          
+          <div className="relative z-10 flex flex-col md:flex-row items-start gap-6">
+            <div className="w-14 h-14 rounded-2xl bg-primary/20 backdrop-blur-md border border-primary/20 flex items-center justify-center shrink-0 shadow-[0_0_20px_hsl(var(--primary)/0.2)]">
               <Users className="h-7 w-7 text-primary" />
             </div>
             <div className="flex-1">
-              <span className="text-xs font-semibold text-primary uppercase tracking-wider mb-2 block">
+              <span className="inline-block px-3 py-1 text-xs font-semibold text-primary bg-primary/10 rounded-full border border-primary/20 backdrop-blur-sm mb-3">
                 Live Session
               </span>
               <h3 className="font-bold text-foreground text-xl mb-2">Weekly Community Call</h3>
@@ -125,7 +129,7 @@ const Learn: React.FC = () => {
                 Join fellow creators every Friday at 6 PM IST for discussions, Q&A, and networking. 
                 Get access to exclusive insights from industry leaders.
               </p>
-              <Button variant="outline" className="rounded-full">
+              <Button className="rounded-full bg-primary/20 text-primary border border-primary/20 hover:bg-primary hover:text-primary-foreground backdrop-blur-md transition-all duration-300">
                 Add to Calendar
               </Button>
             </div>

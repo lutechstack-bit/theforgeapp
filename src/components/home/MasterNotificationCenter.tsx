@@ -117,14 +117,19 @@ export const MasterNotificationCenter: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Hero Header */}
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <Bell className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-bold text-foreground">Master Notification Center</h2>
+      <div className="glass-premium rounded-2xl p-5 relative overflow-hidden">
+        <div className="absolute -top-10 -right-10 w-24 h-24 bg-primary/20 rounded-full blur-2xl" />
+        <div className="relative z-10 space-y-1">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-primary/20 backdrop-blur-sm border border-primary/20">
+              <Bell className="h-5 w-5 text-primary" />
+            </div>
+            <h2 className="text-xl font-bold text-foreground">Master Notification Center</h2>
+          </div>
+          <p className="text-sm text-muted-foreground pl-11">
+            What's moving inside Forge right now—new drops, key calls, and what to do next.
+          </p>
         </div>
-        <p className="text-sm text-muted-foreground">
-          What's moving inside Forge right now—new drops, key calls, and what to do next.
-        </p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -132,14 +137,16 @@ export const MasterNotificationCenter: React.FC = () => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
+              <div className="p-1.5 rounded-lg bg-primary/10 backdrop-blur-sm">
+                <Sparkles className="h-4 w-4 text-primary" />
+              </div>
               <h3 className="text-sm font-semibold text-foreground">What's New</h3>
             </div>
           </div>
 
           <div className="space-y-2">
             {displayNotifications.length === 0 ? (
-              <div className="p-4 rounded-xl bg-card/50 border border-border/50 text-center">
+              <div className="p-4 rounded-xl glass-card text-center">
                 <p className="text-sm text-muted-foreground">
                   No fresh drops yet. Keep an eye here.
                 </p>
@@ -149,7 +156,7 @@ export const MasterNotificationCenter: React.FC = () => {
                 <div
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
-                  className="group p-3 rounded-xl bg-card/60 border border-border/50 cursor-pointer hover:border-primary/30 hover:bg-card/80 transition-all"
+                  className="group p-3 rounded-xl glass-card-hover cursor-pointer"
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex-1 min-w-0">
@@ -159,7 +166,7 @@ export const MasterNotificationCenter: React.FC = () => {
                         )}
                         <Badge 
                           variant="outline" 
-                          className={`text-[10px] px-1.5 py-0 ${typeColors[notification.type] || typeColors.SYSTEM}`}
+                          className={`text-[10px] px-1.5 py-0 backdrop-blur-sm ${typeColors[notification.type] || typeColors.SYSTEM}`}
                         >
                           {notification.type}
                         </Badge>
@@ -189,7 +196,7 @@ export const MasterNotificationCenter: React.FC = () => {
             variant="ghost" 
             size="sm" 
             onClick={() => navigate('/updates')}
-            className="w-full text-muted-foreground hover:text-foreground"
+            className="w-full text-muted-foreground hover:text-foreground glass-card-hover rounded-full"
           >
             View all updates
             <ArrowRight className="h-4 w-4 ml-1" />
@@ -199,7 +206,9 @@ export const MasterNotificationCenter: React.FC = () => {
         {/* SECTION 2: Featured (Admin Fixed Banners) */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Pin className="h-4 w-4 text-destructive" />
+            <div className="p-1.5 rounded-lg bg-destructive/10 backdrop-blur-sm">
+              <Pin className="h-4 w-4 text-destructive" />
+            </div>
             <h3 className="text-sm font-semibold text-foreground">Featured</h3>
           </div>
 
@@ -208,32 +217,35 @@ export const MasterNotificationCenter: React.FC = () => {
             {primaryBanner ? (
               <div
                 onClick={() => handleBannerClick(primaryBanner)}
-                className={`relative overflow-hidden rounded-xl cursor-pointer group transition-all hover:ring-2 hover:ring-primary/30 ${
-                  primaryBanner.image_url ? 'min-h-[140px]' : 'p-4 bg-gradient-to-br from-primary/20 to-accent/10 border border-primary/20'
+                className={`relative overflow-hidden rounded-xl cursor-pointer group transition-all duration-300 hover:shadow-[0_0_30px_hsl(var(--primary)/0.15)] ${
+                  primaryBanner.image_url ? 'min-h-[140px]' : 'p-4 glass-premium'
                 }`}
               >
                 {primaryBanner.image_url && (
-                  <img 
-                    src={primaryBanner.image_url} 
-                    alt={primaryBanner.title}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
+                  <>
+                    <img 
+                      src={primaryBanner.image_url} 
+                      alt={primaryBanner.title}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/20 backdrop-blur-[2px]" />
+                  </>
                 )}
-                <div className={`relative z-10 ${primaryBanner.image_url ? 'p-4 bg-gradient-to-t from-background/90 via-background/50 to-transparent min-h-[140px] flex flex-col justify-end' : ''}`}>
+                <div className={`relative z-10 ${primaryBanner.image_url ? 'p-4 min-h-[140px] flex flex-col justify-end' : ''}`}>
                   {primaryBanner.pinned && (
                     <div className="flex items-center gap-1 mb-1">
                       <Pin className="h-3 w-3 text-primary" />
-                      <span className="text-[10px] text-primary font-medium">PINNED</span>
+                      <span className="text-[10px] text-primary font-medium backdrop-blur-sm bg-primary/10 px-2 py-0.5 rounded-full">PINNED</span>
                     </div>
                   )}
-                  <h4 className="font-semibold text-foreground">{primaryBanner.title}</h4>
+                  <h4 className="font-semibold text-foreground drop-shadow-lg">{primaryBanner.title}</h4>
                   {primaryBanner.subtitle && (
                     <p className="text-sm text-muted-foreground mt-0.5">{primaryBanner.subtitle}</p>
                   )}
                   {primaryBanner.cta_text && (
                     <Button 
                       size="sm" 
-                      className="mt-3 w-fit"
+                      className="mt-3 w-fit rounded-full bg-primary/90 hover:bg-primary shadow-[0_0_15px_hsl(var(--primary)/0.3)]"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleBannerClick(primaryBanner);
@@ -246,7 +258,7 @@ export const MasterNotificationCenter: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="p-4 rounded-xl bg-card/50 border border-border/50 text-center">
+              <div className="p-4 rounded-xl glass-card text-center">
                 <p className="text-sm text-muted-foreground">
                   No featured banners yet.
                 </p>
@@ -257,7 +269,7 @@ export const MasterNotificationCenter: React.FC = () => {
             {secondaryBanner && (
               <div
                 onClick={() => handleBannerClick(secondaryBanner)}
-                className="p-3 rounded-xl bg-card/60 border border-border/50 cursor-pointer hover:border-primary/30 hover:bg-card/80 transition-all group"
+                className="p-3 rounded-xl glass-card-hover cursor-pointer group"
               >
                 <div className="flex items-center justify-between">
                   <div>

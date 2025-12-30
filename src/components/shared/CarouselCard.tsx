@@ -22,23 +22,25 @@ export const CarouselCard: React.FC<CarouselCardProps> = ({
     <div
       onClick={onClick}
       className={cn(
-        "min-w-[200px] sm:min-w-[240px] bg-card rounded-xl border border-border/50 overflow-hidden cursor-pointer hover:border-primary/30 transition-all duration-200 flex-shrink-0",
+        "min-w-[200px] sm:min-w-[240px] rounded-2xl overflow-hidden cursor-pointer flex-shrink-0",
+        "glass-card-hover group",
         className
       )}
       style={{ scrollSnapAlign: 'start' }}
     >
       {imageUrl && (
-        <div className="aspect-video bg-muted overflow-hidden">
+        <div className="aspect-video overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent z-10" />
           <img
             src={imageUrl}
             alt={title}
-            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
         </div>
       )}
-      <div className="p-4">
+      <div className="p-4 relative">
         {badge && (
-          <span className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-primary/10 text-primary mb-2">
+          <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-primary/20 text-primary border border-primary/20 mb-2 backdrop-blur-sm">
             {badge}
           </span>
         )}
