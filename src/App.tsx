@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { AdminRoute } from "@/components/admin/AdminRoute";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 // Pages
 import Auth from "./pages/Auth";
@@ -19,6 +21,13 @@ import Perks from "./pages/Perks";
 import Updates from "./pages/Updates";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+
+// Admin Pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminEditions from "./pages/admin/AdminEditions";
+import AdminNotifications from "./pages/admin/AdminNotifications";
+import AdminContent from "./pages/admin/AdminContent";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +113,15 @@ const AppRoutes = () => {
         <Route path="/perks" element={<Perks />} />
         <Route path="/updates" element={<Updates />} />
         <Route path="/profile" element={<Profile />} />
+      </Route>
+      
+      {/* Admin routes */}
+      <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+        <Route index element={<AdminDashboard />} />
+        <Route path="users" element={<AdminUsers />} />
+        <Route path="editions" element={<AdminEditions />} />
+        <Route path="notifications" element={<AdminNotifications />} />
+        <Route path="content" element={<AdminContent />} />
       </Route>
       
       {/* Catch-all */}
