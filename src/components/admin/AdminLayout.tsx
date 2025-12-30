@@ -7,7 +7,9 @@ import {
   FileText, 
   Bell,
   ArrowLeft,
-  Shield
+  Shield,
+  Sparkles,
+  Image
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -15,8 +17,9 @@ const adminNavItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/editions', icon: Calendar, label: 'Editions' },
+  { to: '/admin/auto-updates', icon: Sparkles, label: 'Auto Updates' },
+  { to: '/admin/hero-banners', icon: Image, label: 'Hero Banners' },
   { to: '/admin/notifications', icon: Bell, label: 'Notifications' },
-  { to: '/admin/content', icon: FileText, label: 'Content' },
   { to: '/admin/events', icon: Calendar, label: 'Events' },
   { to: '/admin/learn', icon: FileText, label: 'Learn' },
 ];

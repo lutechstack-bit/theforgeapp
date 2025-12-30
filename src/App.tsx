@@ -30,6 +30,8 @@ import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminEvents from "./pages/admin/AdminEvents";
 import AdminLearn from "./pages/admin/AdminLearn";
+import AdminAutoUpdates from "./pages/admin/AdminAutoUpdates";
+import AdminHeroBanners from "./pages/admin/AdminHeroBanners";
 
 const queryClient = new QueryClient();
 
@@ -126,6 +128,8 @@ const AppRoutes = () => {
         <Route path="content" element={<AdminContent />} />
         <Route path="events" element={<AdminEvents />} />
         <Route path="learn" element={<AdminLearn />} />
+        <Route path="auto-updates" element={<AdminAutoUpdates />} />
+        <Route path="hero-banners" element={<AdminHeroBanners />} />
       </Route>
       
       {/* Catch-all */}

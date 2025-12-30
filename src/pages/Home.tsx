@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { ContentCarousel } from '@/components/shared/ContentCarousel';
 import { CarouselCard } from '@/components/shared/CarouselCard';
 import { MentorCard } from '@/components/shared/MentorCard';
-import { Bell, ArrowRight, Clock, Pin, Sparkles, Play, Calendar } from 'lucide-react';
+import { MasterNotificationCenter } from '@/components/home/MasterNotificationCenter';
+import { ArrowRight, Clock } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 
 // Mock data - replace with actual data from database
@@ -62,6 +63,9 @@ const Home: React.FC = () => {
         </p>
       </div>
 
+      {/* Master Notification Center - Hero Section */}
+      <MasterNotificationCenter />
+
       {/* Countdown + Roadmap CTA */}
       <div className="relative overflow-hidden rounded-2xl gradient-primary p-6 shadow-glow">
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -90,47 +94,7 @@ const Home: React.FC = () => {
         <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-primary-foreground/10 rounded-full blur-2xl" />
       </div>
 
-      {/* Master Notification Center */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Bell className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold text-foreground">Master Notification Center</h2>
-        </div>
-        
-        <div className="grid gap-3 sm:grid-cols-2">
-          {/* FOMO Discovery Card */}
-          <div 
-            onClick={() => navigate('/learn')}
-            className="p-4 rounded-xl bg-card border border-border/50 cursor-pointer hover:border-primary/30 transition-all"
-          >
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <Sparkles className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-foreground font-medium">Discover Learn, Events, Perks, Roadmap</p>
-                <p className="text-xs text-muted-foreground mt-1">FOMO-inducing discovery of other tabs</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Pinned Admin Cards */}
-          <div 
-            onClick={() => navigate('/updates')}
-            className="p-4 rounded-xl bg-card border border-border/50 cursor-pointer hover:border-primary/30 transition-all"
-          >
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
-                <Pin className="h-5 w-5 text-destructive" />
-              </div>
-              <div>
-                <p className="text-sm text-foreground font-medium">Admin Pinned Cards</p>
-                <p className="text-xs text-muted-foreground mt-1">Fixed, intentional messaging</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Countdown + Roadmap CTA - Now below notification center */}
 
       {/* About Our Students */}
       <ContentCarousel title="About Our Students" onSeeAll={() => navigate('/community')}>
