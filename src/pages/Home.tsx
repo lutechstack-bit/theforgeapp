@@ -1,13 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
 import { ContentCarousel } from '@/components/shared/ContentCarousel';
 import { CarouselCard } from '@/components/shared/CarouselCard';
 import { MentorCard } from '@/components/shared/MentorCard';
 import { MasterNotificationCenter } from '@/components/home/MasterNotificationCenter';
-import { ArrowRight, Clock } from 'lucide-react';
-import { format, differenceInDays } from 'date-fns';
 
 // Mock data - replace with actual data from database
 const mockStudents = [
@@ -40,9 +37,6 @@ const Home: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   
-  // Mock countdown - replace with actual edition data
-  const forgeDate = new Date('2025-02-15');
-  const daysUntilForge = differenceInDays(forgeDate, new Date());
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -66,39 +60,6 @@ const Home: React.FC = () => {
       {/* Master Notification Center - Hero Section */}
       <MasterNotificationCenter />
 
-      {/* Countdown + Roadmap CTA */}
-      <div className="relative overflow-hidden rounded-2xl glass-premium p-6">
-        {/* Gradient Glow Effects */}
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/30 rounded-full blur-3xl animate-pulse-soft" />
-        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-accent/20 rounded-full blur-3xl" />
-        
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-primary mb-2">
-              <div className="p-1.5 rounded-lg bg-primary/20 backdrop-blur-sm">
-                <Clock className="h-4 w-4" />
-              </div>
-              <span className="text-sm font-medium">Countdown to Forge</span>
-            </div>
-            <div className="flex items-baseline gap-2 mb-2">
-              <span className="text-4xl sm:text-5xl font-bold text-foreground glow-text">{daysUntilForge}</span>
-              <span className="text-lg sm:text-xl text-muted-foreground">days</span>
-            </div>
-            <p className="text-muted-foreground text-sm">
-              {format(forgeDate, 'MMMM d, yyyy')} • Mumbai
-            </p>
-          </div>
-          <Button
-            onClick={() => navigate('/roadmap')}
-            className="rounded-full bg-primary/20 text-primary border border-primary/20 hover:bg-primary hover:text-primary-foreground backdrop-blur-md transition-all duration-300 shadow-[0_0_20px_hsl(var(--primary)/0.2)]"
-          >
-            View Roadmap
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Countdown + Roadmap CTA - Now below notification center */}
 
       {/* About Our Students */}
       <ContentCarousel title="About Our Students" onSeeAll={() => navigate('/community')}>

@@ -19,14 +19,14 @@ export const SideNav: React.FC = () => {
   const { profile } = useAuth();
 
   return (
-    <aside className="hidden md:flex w-56 flex-col fixed left-0 top-0 bottom-0 z-40 glass-nav border-r border-white/10">
+    <aside className="hidden md:flex w-56 flex-col fixed left-0 top-0 bottom-0 z-40 glass-nav border-r border-white/10 pt-[52px]">
       {/* Logo with subtle glow */}
-      <div className="p-6 border-b border-white/10">
+      <div className="p-5 border-b border-white/10">
         <NavLink to="/" className="flex items-center group">
           <img 
             src={forgeLogo} 
             alt="Forge" 
-            className="h-10 w-auto transition-all duration-300 group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" 
+            className="h-9 w-auto transition-all duration-300 group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" 
           />
         </NavLink>
       </div>
