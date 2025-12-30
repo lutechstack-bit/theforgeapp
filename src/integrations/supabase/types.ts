@@ -95,6 +95,54 @@ export type Database = {
         }
         Relationships: []
       }
+      hero_banners: {
+        Row: {
+          audience: string
+          created_at: string
+          created_by: string | null
+          cta_link: string | null
+          cta_text: string | null
+          end_at: string | null
+          id: string
+          image_url: string | null
+          pinned: boolean
+          priority: number
+          start_at: string | null
+          subtitle: string | null
+          title: string
+        }
+        Insert: {
+          audience?: string
+          created_at?: string
+          created_by?: string | null
+          cta_link?: string | null
+          cta_text?: string | null
+          end_at?: string | null
+          id?: string
+          image_url?: string | null
+          pinned?: boolean
+          priority?: number
+          start_at?: string | null
+          subtitle?: string | null
+          title: string
+        }
+        Update: {
+          audience?: string
+          created_at?: string
+          created_by?: string | null
+          cta_link?: string | null
+          cta_text?: string | null
+          end_at?: string | null
+          id?: string
+          image_url?: string | null
+          pinned?: boolean
+          priority?: number
+          start_at?: string | null
+          subtitle?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       home_cards: {
         Row: {
           card_type: string
@@ -178,34 +226,55 @@ export type Database = {
       }
       notifications: {
         Row: {
+          auto_update: boolean
+          body: string | null
           created_at: string
+          created_by: string | null
+          deep_link: string | null
+          expiry_at: string | null
           id: string
           is_global: boolean
           is_read: boolean
           link: string | null
           message: string
+          pinned: boolean
+          priority: number
           title: string
           type: Database["public"]["Enums"]["notification_type"]
           user_id: string | null
         }
         Insert: {
+          auto_update?: boolean
+          body?: string | null
           created_at?: string
+          created_by?: string | null
+          deep_link?: string | null
+          expiry_at?: string | null
           id?: string
           is_global?: boolean
           is_read?: boolean
           link?: string | null
           message: string
+          pinned?: boolean
+          priority?: number
           title: string
           type: Database["public"]["Enums"]["notification_type"]
           user_id?: string | null
         }
         Update: {
+          auto_update?: boolean
+          body?: string | null
           created_at?: string
+          created_by?: string | null
+          deep_link?: string | null
+          expiry_at?: string | null
           id?: string
           is_global?: boolean
           is_read?: boolean
           link?: string | null
           message?: string
+          pinned?: boolean
+          priority?: number
           title?: string
           type?: Database["public"]["Enums"]["notification_type"]
           user_id?: string | null
