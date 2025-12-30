@@ -17,6 +17,8 @@ const adminNavItems = [
   { to: '/admin/editions', icon: Calendar, label: 'Editions' },
   { to: '/admin/notifications', icon: Bell, label: 'Notifications' },
   { to: '/admin/content', icon: FileText, label: 'Content' },
+  { to: '/admin/events', icon: Calendar, label: 'Events' },
+  { to: '/admin/learn', icon: FileText, label: 'Learn' },
 ];
 
 export const AdminLayout: React.FC = () => {
