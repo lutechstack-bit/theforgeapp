@@ -38,6 +38,7 @@ export type Database = {
       editions: {
         Row: {
           city: string
+          cohort_type: Database["public"]["Enums"]["cohort_type"]
           created_at: string
           forge_end_date: string | null
           forge_start_date: string | null
@@ -46,6 +47,7 @@ export type Database = {
         }
         Insert: {
           city: string
+          cohort_type?: Database["public"]["Enums"]["cohort_type"]
           created_at?: string
           forge_end_date?: string | null
           forge_start_date?: string | null
@@ -54,6 +56,7 @@ export type Database = {
         }
         Update: {
           city?: string
+          cohort_type?: Database["public"]["Enums"]["cohort_type"]
           created_at?: string
           forge_end_date?: string | null
           forge_start_date?: string | null
@@ -468,6 +471,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      cohort_type: "FORGE" | "FORGE_WRITING" | "FORGE_CREATORS"
       forge_mode: "PRE_FORGE" | "DURING_FORGE" | "POST_FORGE"
       notification_type: "COMMUNITY" | "LEARN" | "EVENTS" | "ROADMAP" | "SYSTEM"
       payment_status: "CONFIRMED_15K" | "BALANCE_PAID"
@@ -600,6 +604,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      cohort_type: ["FORGE", "FORGE_WRITING", "FORGE_CREATORS"],
       forge_mode: ["PRE_FORGE", "DURING_FORGE", "POST_FORGE"],
       notification_type: ["COMMUNITY", "LEARN", "EVENTS", "ROADMAP", "SYSTEM"],
       payment_status: ["CONFIRMED_15K", "BALANCE_PAID"],
