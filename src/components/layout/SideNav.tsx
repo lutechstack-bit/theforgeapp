@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Home, Users, BookOpen, Map, Calendar, Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 import forgeLogo from '@/assets/forge-logo.png';
 
 const navItems = [
@@ -15,18 +16,23 @@ const navItems = [
 
 export const SideNav: React.FC = () => {
   const location = useLocation();
+  const { profile } = useAuth();
 
   return (
-    <aside className="hidden md:flex w-56 flex-col fixed left-0 top-0 bottom-0 bg-sidebar-background border-r border-sidebar-border z-40">
-      {/* Logo */}
-      <div className="p-6 border-b border-sidebar-border">
-        <NavLink to="/" className="flex items-center">
-          <img src={forgeLogo} alt="Forge" className="h-8 w-auto" />
+    <aside className="hidden md:flex w-56 flex-col fixed left-0 top-0 bottom-0 z-40 glass-nav border-r border-white/10">
+      {/* Logo with subtle glow */}
+      <div className="p-6 border-b border-white/10">
+        <NavLink to="/" className="flex items-center group">
+          <img 
+            src={forgeLogo} 
+            alt="Forge" 
+            className="h-10 w-auto transition-all duration-300 group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" 
+          />
         </NavLink>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1">
+      {/* Navigation with glass buttons */}
+      <nav className="flex-1 p-4 space-y-2">
         {navItems.map(({ to, icon: Icon, label }) => {
           const isActive = location.pathname === to;
           return (
@@ -34,29 +40,42 @@ export const SideNav: React.FC = () => {
               key={to}
               to={to}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium",
+                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 text-sm font-medium group",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-glow"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent"
+                  ? "bg-primary/90 text-primary-foreground shadow-[0_0_20px_hsl(var(--primary)/0.4)] backdrop-blur-sm"
+                  : "glass-card text-sidebar-foreground hover:bg-white/10 hover:shadow-[0_0_15px_hsl(var(--primary)/0.2)]"
               )}
             >
-              <Icon className="h-5 w-5" />
+              <Icon className={cn(
+                "h-5 w-5 transition-all duration-300",
+                isActive ? "" : "group-hover:text-primary"
+              )} />
               <span>{label}</span>
             </NavLink>
           );
         })}
       </nav>
 
-      {/* User section at bottom */}
-      <div className="p-4 border-t border-sidebar-border">
+      {/* User section with glass card */}
+      <div className="p-4 border-t border-white/10">
         <NavLink
           to="/profile"
-          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200"
+          className="flex items-center gap-3 px-4 py-3 rounded-xl glass-card hover:bg-white/10 transition-all duration-300 group"
         >
-          <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center">
-            <span className="text-xs font-medium">U</span>
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 backdrop-blur-sm border border-primary/30 flex items-center justify-center overflow-hidden ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all duration-300">
+            {profile?.avatar_url ? (
+              <img 
+                src={profile.avatar_url} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-xs font-semibold text-primary">
+                {profile?.full_name?.charAt(0) || 'U'}
+              </span>
+            )}
           </div>
-          <span className="text-sm font-medium">Profile</span>
+          <span className="text-sm font-medium text-sidebar-foreground group-hover:text-primary transition-colors duration-300">Profile</span>
         </NavLink>
       </div>
     </aside>
