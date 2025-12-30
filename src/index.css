@@ -1,4 +1,59 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+/* OpenSauceOne Font Family */
+@font-face {
+  font-family: 'OpenSauceOne';
+  src: url('/fonts/OpenSauceOne-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'OpenSauceOne';
+  src: url('/fonts/OpenSauceOne-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'OpenSauceOne';
+  src: url('/fonts/OpenSauceOne-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'OpenSauceOne';
+  src: url('/fonts/OpenSauceOne-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'OpenSauceOne';
+  src: url('/fonts/OpenSauceOne-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'OpenSauceOne';
+  src: url('/fonts/OpenSauceOne-ExtraBold.woff2') format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'OpenSauceOne';
+  src: url('/fonts/OpenSauceOne-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;
@@ -73,7 +128,7 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'OpenSauceOne', sans-serif;
   }
 }
 
