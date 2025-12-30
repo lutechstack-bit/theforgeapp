@@ -19,7 +19,7 @@ export const SideNav: React.FC = () => {
   const { profile } = useAuth();
 
   return (
-    <aside className="hidden md:flex w-56 flex-col fixed left-0 top-[52px] bottom-0 z-40 glass-nav border-r border-white/10">
+    <aside className="hidden md:flex w-56 flex-col fixed left-0 top-0 bottom-0 z-40 glass-nav border-r border-white/10">
       {/* Logo with subtle glow */}
       <div className="p-6 border-b border-white/10">
         <NavLink to="/" className="flex items-center group">
