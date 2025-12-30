@@ -16,7 +16,7 @@ export const BottomNav: React.FC = () => {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-border/50">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-border/50 md:hidden">
       <div className="container">
         <div className="flex items-center justify-around h-16">
           {navItems.map(({ to, icon: Icon, label }) => {
