@@ -20,6 +20,7 @@ const Roadmap: React.FC = () => {
   const { cohortName } = useTheme();
   const timelineRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(400);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   // Determine forge mode from profile
   const forgeMode = profile?.forge_mode || 'PRE_FORGE';
@@ -92,7 +93,7 @@ const Roadmap: React.FC = () => {
     [roadmapDays]
   );
 
-  // Track container width for responsive path
+  // Track container width and scroll progress
   useEffect(() => {
     const updateWidth = () => {
       if (timelineRef.current) {
@@ -100,9 +101,32 @@ const Roadmap: React.FC = () => {
       }
     };
     
+    const handleScroll = () => {
+      if (!timelineRef.current) return;
+      
+      const rect = timelineRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      const containerTop = rect.top;
+      const containerHeight = rect.height;
+      
+      // Calculate progress: 0 when timeline enters view, 1 when fully scrolled
+      const scrollStart = windowHeight * 0.8; // Start when 80% from top
+      const scrollEnd = -containerHeight + windowHeight * 0.2; // End when 20% visible
+      
+      const progress = (scrollStart - containerTop) / (scrollStart - scrollEnd);
+      setScrollProgress(Math.max(0, Math.min(1, progress)));
+    };
+    
     updateWidth();
+    handleScroll();
+    
     window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      window.removeEventListener('resize', updateWidth);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   if (isLoading) {
@@ -246,6 +270,7 @@ const Roadmap: React.FC = () => {
           getNodePosition={getNodePosition}
           nodeStatuses={nodeStatuses}
           containerWidth={containerWidth}
+          scrollProgress={scrollProgress}
         />
 
         {/* Nodes */}
