@@ -107,13 +107,13 @@ const Roadmap: React.FC = () => {
       const rect = timelineRef.current.getBoundingClientRect();
       const windowHeight = window.innerHeight;
       const containerTop = rect.top;
-      const containerHeight = rect.height;
+      const containerBottom = rect.bottom;
       
-      // Calculate progress: 0 when timeline enters view, 1 when fully scrolled
-      const scrollStart = windowHeight * 0.8; // Start when 80% from top
-      const scrollEnd = -containerHeight + windowHeight * 0.2; // End when 20% visible
+      // Progress: 0 when timeline top enters viewport, 1 when timeline bottom reaches viewport bottom
+      const scrollableDistance = rect.height - windowHeight * 0.3;
+      const scrolled = windowHeight * 0.7 - containerTop;
       
-      const progress = (scrollStart - containerTop) / (scrollStart - scrollEnd);
+      const progress = scrolled / scrollableDistance;
       setScrollProgress(Math.max(0, Math.min(1, progress)));
     };
     
