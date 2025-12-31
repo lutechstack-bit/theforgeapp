@@ -233,6 +233,7 @@ const AdminLearn: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Submitting form with video_url:', form.video_url);
     saveMutation.mutate(form);
   };
 
@@ -284,7 +285,10 @@ const AdminLearn: React.FC = () => {
                     label="Video File"
                     helperText="Supported formats: MP4, WebM, MOV. Max 5GB."
                     currentUrl={form.video_url}
-                    onUploadComplete={(url) => setForm({ ...form, video_url: url })}
+                    onUploadComplete={(url) => {
+                      console.log('Video upload complete, path:', url);
+                      setForm(prev => ({ ...prev, video_url: url }));
+                    }}
                   />
 
                   <FileUpload
