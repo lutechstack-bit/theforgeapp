@@ -59,7 +59,7 @@ const SmoothPath: React.FC<SmoothPathProps> = ({
 
   const pathD = generatePath();
   
-  // Use scroll progress for the path reveal (0-100%)
+  // Use scroll progress for the path reveal (0-100%) with smooth animation
   const progressPercent = Math.min(scrollProgress * 100, 100);
 
   return (
@@ -77,8 +77,8 @@ const SmoothPath: React.FC<SmoothPathProps> = ({
         </linearGradient>
         
         <filter id="smoothPathGlow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="4" result="blur" />
-          <feFlood floodColor="hsl(var(--primary))" floodOpacity="0.5" result="color" />
+          <feGaussianBlur stdDeviation="6" result="blur" />
+          <feFlood floodColor="hsl(var(--primary))" floodOpacity="0.6" result="color" />
           <feComposite in="color" in2="blur" operator="in" result="shadow" />
           <feMerge>
             <feMergeNode in="shadow" />
@@ -93,12 +93,18 @@ const SmoothPath: React.FC<SmoothPathProps> = ({
             width="100%" 
             height={`${progressPercent}%`}
             fill="white"
-            style={{ transition: 'height 0.1s ease-out' }}
-          />
+          >
+            <animate 
+              attributeName="height"
+              to={`${progressPercent}%`}
+              dur="0.15s"
+              fill="freeze"
+            />
+          </rect>
         </mask>
       </defs>
 
-      {/* Background dotted path - always visible */}
+      {/* Background dotted path - always visible but subtle */}
       <path
         d={pathD}
         fill="none"
@@ -106,37 +112,57 @@ const SmoothPath: React.FC<SmoothPathProps> = ({
         strokeWidth="4"
         strokeDasharray="8 16"
         strokeLinecap="round"
-        opacity="0.3"
+        opacity="0.25"
       />
       
-      {/* Active path revealed by scroll */}
+      {/* Active path revealed by scroll with smooth transition */}
       <path
         d={pathD}
         fill="none"
         stroke="url(#smoothPathGradient)"
-        strokeWidth="4"
+        strokeWidth="5"
         strokeDasharray="8 16"
         strokeLinecap="round"
         filter="url(#smoothPathGlow)"
         mask="url(#progressMask)"
+        style={{ 
+          transition: 'stroke-dashoffset 0.2s ease-out',
+        }}
       />
 
       {/* Traveling dot at the edge of revealed path */}
       {progressPercent > 0 && (
-        <circle 
-          r="6" 
-          fill="hsl(var(--primary))"
-          className="animate-pulse-soft"
-        >
-          <animateMotion
-            dur="0.1s"
-            fill="freeze"
-            path={pathD}
-            keyPoints={`${Math.min(scrollProgress, 1)};${Math.min(scrollProgress, 1)}`}
-            keyTimes="0;1"
-            calcMode="linear"
-          />
-        </circle>
+        <g style={{ transition: 'transform 0.15s ease-out' }}>
+          <circle 
+            r="8" 
+            fill="hsl(var(--primary))"
+            style={{ filter: 'drop-shadow(0 0 8px hsl(var(--primary)))' }}
+          >
+            <animateMotion
+              dur="0.01s"
+              fill="freeze"
+              path={pathD}
+              keyPoints={`${Math.min(scrollProgress, 1)};${Math.min(scrollProgress, 1)}`}
+              keyTimes="0;1"
+              calcMode="linear"
+            />
+          </circle>
+          {/* Inner glow */}
+          <circle 
+            r="4" 
+            fill="hsl(var(--primary-foreground))"
+            opacity="0.9"
+          >
+            <animateMotion
+              dur="0.01s"
+              fill="freeze"
+              path={pathD}
+              keyPoints={`${Math.min(scrollProgress, 1)};${Math.min(scrollProgress, 1)}`}
+              keyTimes="0;1"
+              calcMode="linear"
+            />
+          </circle>
+        </g>
       )}
     </svg>
   );
