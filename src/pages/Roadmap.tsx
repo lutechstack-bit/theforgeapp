@@ -87,28 +87,44 @@ const Roadmap: React.FC = () => {
       
       const rect = timelineRef.current.getBoundingClientRect();
       const windowHeight = window.innerHeight;
-      const containerTop = rect.top;
-      const containerBottom = rect.bottom;
       
-      // Progress: 0 when timeline top enters viewport, 1 when timeline bottom reaches viewport bottom
-      const scrollableDistance = rect.height - windowHeight * 0.3;
-      const scrolled = windowHeight * 0.7 - containerTop;
+      // Calculate how far we've scrolled through the timeline
+      // Start: when timeline top reaches 80% down the viewport
+      // End: when timeline bottom reaches 20% down the viewport
+      const startThreshold = windowHeight * 0.8;
+      const endThreshold = windowHeight * 0.2;
       
-      const progress = scrolled / scrollableDistance;
+      // Total scrollable distance for this element
+      const totalScrollableDistance = rect.height + (startThreshold - endThreshold);
+      
+      // How far we've scrolled (0 = timeline top at startThreshold, max = timeline bottom at endThreshold)
+      const scrolled = startThreshold - rect.top;
+      
+      const progress = scrolled / totalScrollableDistance;
       setScrollProgress(Math.max(0, Math.min(1, progress)));
     };
     
     updateWidth();
-    handleScroll();
+    // Initial scroll calculation
+    setTimeout(handleScroll, 100);
     
     window.addEventListener('resize', updateWidth);
     window.addEventListener('scroll', handleScroll, { passive: true });
     
+    // Also listen on the main content area in case it's a scrollable container
+    const mainContent = document.querySelector('main');
+    if (mainContent) {
+      mainContent.addEventListener('scroll', handleScroll, { passive: true });
+    }
+    
     return () => {
       window.removeEventListener('resize', updateWidth);
       window.removeEventListener('scroll', handleScroll);
+      if (mainContent) {
+        mainContent.removeEventListener('scroll', handleScroll);
+      }
     };
-  }, []);
+  }, [roadmapDays]);
 
   if (isLoading) {
     return (
