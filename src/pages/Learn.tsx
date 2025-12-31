@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LearnCarousel } from '@/components/learn/LearnCarousel';
 import { VideoPlayerModal } from '@/components/learn/VideoPlayerModal';
-import { Users, Sparkles, Play, BookOpen } from 'lucide-react';
+import { Users, Sparkles, BookOpen } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface LearnContent {
   id: string;
@@ -80,6 +81,7 @@ const Learn: React.FC = () => {
     }
     
     if (!content.video_url) {
+      toast.error('Video not available for this content');
       return;
     }
     

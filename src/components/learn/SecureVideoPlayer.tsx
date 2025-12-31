@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, RotateCcw, Loader2 } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, RotateCcw, Loader2, AlertCircle } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,16 +40,38 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   // Get signed URL for private videos
   useEffect(() => {
     const getSignedUrl = async () => {
+      if (!videoUrl) {
+        setIsLoading(false);
+        return;
+      }
+      
       setIsLoading(true);
       
-      // Check if videoUrl is already a full URL or needs signing
+      // Check if videoUrl is already a signed URL or public URL from thumbnails
       if (videoUrl.startsWith('http')) {
+        // If it's a Supabase storage URL for learn-videos, we need to re-sign it
+        if (videoUrl.includes('learn-videos') && !videoUrl.includes('token=')) {
+          // Extract the path from the public URL
+          const pathMatch = videoUrl.match(/learn-videos\/(.+)$/);
+          if (pathMatch) {
+            const { data, error } = await supabase.storage
+              .from('learn-videos')
+              .createSignedUrl(pathMatch[1], 3600);
+            
+            if (data?.signedUrl) {
+              setSignedUrl(data.signedUrl);
+              setIsLoading(false);
+              return;
+            }
+          }
+        }
+        // For other http URLs, use directly
         setSignedUrl(videoUrl);
         setIsLoading(false);
         return;
       }
 
-      // Get signed URL from learn-videos bucket
+      // It's a path - get signed URL from learn-videos bucket
       const { data, error } = await supabase.storage
         .from('learn-videos')
         .createSignedUrl(videoUrl, 3600); // 1 hour expiry
@@ -58,15 +80,12 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
         setSignedUrl(data.signedUrl);
       } else {
         console.error('Failed to get signed URL:', error);
-        // Fallback to original URL
-        setSignedUrl(videoUrl);
+        setSignedUrl(null);
       }
       setIsLoading(false);
     };
 
-    if (videoUrl) {
-      getSignedUrl();
-    }
+    getSignedUrl();
   }, [videoUrl]);
 
   // Log access when video starts
@@ -227,13 +246,27 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
 
   if (isLoading) {
     return (
-      <div className={cn("relative bg-black rounded-2xl overflow-hidden flex items-center justify-center", className)}>
+      <div className={cn("relative bg-black rounded-2xl overflow-hidden flex items-center justify-center aspect-video", className)}>
         {thumbnailUrl && (
           <img src={thumbnailUrl} alt={title} className="absolute inset-0 w-full h-full object-cover opacity-30" />
         )}
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-10 w-10 text-primary animate-spin" />
           <p className="text-white/70 text-sm">Loading secure video...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!signedUrl) {
+    return (
+      <div className={cn("relative bg-black rounded-2xl overflow-hidden flex items-center justify-center aspect-video", className)}>
+        {thumbnailUrl && (
+          <img src={thumbnailUrl} alt={title} className="absolute inset-0 w-full h-full object-cover opacity-30" />
+        )}
+        <div className="flex flex-col items-center gap-3 text-center p-4">
+          <AlertCircle className="h-10 w-10 text-destructive" />
+          <p className="text-white/70 text-sm">Video not available or failed to load</p>
         </div>
       </div>
     );
