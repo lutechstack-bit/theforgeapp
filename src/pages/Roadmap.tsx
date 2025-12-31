@@ -3,10 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { CheckCircle2, Circle, Lock, MapPin, Clock, Calendar, ChevronRight, Loader2, Compass, Flag, Anchor } from 'lucide-react';
-import { format } from 'date-fns';
+import { Loader2, Flag, Anchor, Sparkles, Trophy } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
+import RoadmapNode from '@/components/roadmap/RoadmapNode';
 
 type RoadmapDay = Database['public']['Tables']['roadmap_days']['Row'];
 
@@ -36,7 +35,6 @@ const Roadmap: React.FC = () => {
     if (!day.is_active) return 'locked';
     
     if (!day.date) {
-      // Pre-forge day without date - check if it's the first active day
       const activeDays = roadmapDays?.filter(d => d.is_active) || [];
       if (activeDays[0]?.id === day.id) return 'current';
       return 'upcoming';
@@ -50,39 +48,26 @@ const Roadmap: React.FC = () => {
     return 'upcoming';
   };
 
-  const getStatusIcon = (status: 'completed' | 'current' | 'upcoming' | 'locked') => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle2 className="h-6 w-6 text-primary" />;
-      case 'current':
-        return (
-          <div className="w-6 h-6 rounded-full gradient-primary flex items-center justify-center shadow-glow animate-pulse-soft">
-            <div className="w-2 h-2 rounded-full bg-primary-foreground" />
-          </div>
-        );
-      case 'upcoming':
-        return <Circle className="h-6 w-6 text-muted-foreground" />;
-      case 'locked':
-        return <Lock className="h-6 w-6 text-muted-foreground" />;
-    }
+  const getNodePosition = (index: number): 'left' | 'center' | 'right' => {
+    const row = index % 3;
+    if (row === 0) return 'left';
+    if (row === 1) return 'center';
+    return 'right';
   };
 
   const completedCount = roadmapDays?.filter(d => getDayStatus(d) === 'completed').length || 0;
+  const currentIndex = roadmapDays?.findIndex(d => getDayStatus(d) === 'current') ?? -1;
   const totalCount = roadmapDays?.length || 0;
 
-  // Scroll progress tracking for path animation
+  // Scroll progress tracking
   useEffect(() => {
     const handleScroll = () => {
       if (!timelineRef.current) return;
       
       const rect = timelineRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
-      const elementTop = rect.top;
-      const elementHeight = rect.height;
-      
-      // Calculate how much of the timeline is scrolled through
-      const scrolled = viewportHeight - elementTop;
-      const totalScrollable = elementHeight + viewportHeight;
+      const scrolled = viewportHeight - rect.top;
+      const totalScrollable = rect.height + viewportHeight;
       const progress = Math.max(0, Math.min(1, scrolled / totalScrollable));
       
       setScrollProgress(progress);
@@ -97,7 +82,13 @@ const Roadmap: React.FC = () => {
   if (isLoading) {
     return (
       <div className="container py-6 flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-accent animate-pulse" />
+          </div>
+          <p className="text-muted-foreground text-sm">Loading your journey...</p>
+        </div>
       </div>
     );
   }
@@ -105,7 +96,8 @@ const Roadmap: React.FC = () => {
   if (!profile?.edition_id) {
     return (
       <div className="container py-6">
-        <div className="p-8 rounded-xl bg-card border border-border/50 text-center">
+        <div className="p-8 rounded-2xl glass-premium text-center">
+          <Anchor className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-foreground mb-2">No Edition Assigned</h2>
           <p className="text-muted-foreground">
             You haven't been assigned to a Forge edition yet. Please contact the team for assistance.
@@ -119,10 +111,11 @@ const Roadmap: React.FC = () => {
     return (
       <div className="container py-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground mb-2">Your {cohortName} Roadmap</h1>
-          <p className="text-muted-foreground">Your journey is being prepared...</p>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Your {cohortName} Journey</h1>
+          <p className="text-muted-foreground">Your adventure is being prepared...</p>
         </div>
-        <div className="p-8 rounded-xl bg-card border border-border/50 text-center">
+        <div className="p-8 rounded-2xl glass-premium text-center">
+          <Sparkles className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
           <p className="text-muted-foreground">
             The roadmap for your edition is coming soon. Check back later!
           </p>
@@ -131,241 +124,183 @@ const Roadmap: React.FC = () => {
     );
   }
 
+  const nodeStatuses = roadmapDays.map(getDayStatus);
+
   return (
-    <div className="container py-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Your {cohortName} Roadmap</h1>
+    <div className="container py-6 pb-24">
+      {/* Header */}
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold gradient-text mb-2">Your {cohortName} Journey</h1>
         <p className="text-muted-foreground">
           {isDuringForge 
-            ? 'Your daily guide through the Forge experience'
-            : 'Preview your journey to Forge and beyond'}
+            ? 'Navigate through your Forge experience'
+            : 'Preview your path to mastery'}
         </p>
       </div>
 
-      {/* Progress Overview */}
-      <div className="mb-8 p-5 rounded-xl bg-card border border-border/50">
+      {/* Progress Overview Card */}
+      <div className="mb-10 p-6 rounded-2xl glass-premium max-w-md mx-auto">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-medium text-muted-foreground">Your Progress</span>
-          <span className="text-sm font-medium text-primary">{completedCount} of {totalCount}</span>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center shadow-glow">
+              <Trophy className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Journey Progress</p>
+              <p className="text-2xl font-bold text-foreground">{completedCount} / {totalCount}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-3xl font-black gradient-text">
+              {totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0}%
+            </p>
+          </div>
         </div>
-        <div className="h-2 rounded-full bg-secondary overflow-hidden">
+        
+        <div className="h-3 rounded-full bg-secondary overflow-hidden">
           <div 
-            className="h-full gradient-primary transition-all duration-500"
+            className="h-full gradient-primary rounded-full transition-all duration-700 ease-out relative"
             style={{ width: totalCount > 0 ? `${(completedCount / totalCount) * 100}%` : '0%' }}
-          />
+          >
+            <div className="absolute inset-0 animate-shimmer" />
+          </div>
         </div>
+        
+        {currentIndex >= 0 && roadmapDays[currentIndex] && (
+          <div className="mt-4 pt-4 border-t border-border/30">
+            <p className="text-xs text-muted-foreground mb-1">Currently on</p>
+            <p className="text-sm font-semibold text-foreground">{roadmapDays[currentIndex].title}</p>
+          </div>
+        )}
       </div>
 
-      {/* Timeline with Treasure Map Path */}
-      <div ref={timelineRef} className="relative">
-        {/* SVG Dotted Path - Treasure Map Style */}
-        <svg
-          className="absolute left-[14px] top-0 w-16 h-full pointer-events-none overflow-visible"
+      {/* Serpentine Path Timeline */}
+      <div ref={timelineRef} className="relative max-w-lg mx-auto">
+        {/* SVG Path Connections */}
+        <svg 
+          className="absolute left-0 top-0 w-full h-full pointer-events-none"
           style={{ zIndex: 0 }}
         >
           <defs>
-            <linearGradient id="pathGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <linearGradient id="pathGradientVertical" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.9" />
               <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0.7" />
             </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+            <filter id="glowPath">
+              <feGaussianBlur stdDeviation="3" result="blur" />
               <feMerge>
-                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="blur" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
           </defs>
 
-          {/* Background dotted path (static) */}
           {roadmapDays.map((_, index) => {
-            const yStart = index === 0 ? 20 : index * 140 - 10;
-            const yEnd = (index + 1) * 140 - 30;
-            const isEven = index % 2 === 0;
+            if (index === roadmapDays.length - 1) return null;
             
-            // Create winding bezier curve
-            const controlX1 = isEven ? 25 : -15;
-            const controlX2 = isEven ? -10 : 20;
+            const currentPos = getNodePosition(index);
+            const nextPos = getNodePosition(index + 1);
+            const status = nodeStatuses[index];
+            const nextStatus = nodeStatuses[index + 1];
+            const isCompleted = status === 'completed' || (status === 'current' && nextStatus !== 'locked');
+            
+            // Calculate positions
+            const getXPosition = (pos: string) => {
+              if (pos === 'left') return '20%';
+              if (pos === 'right') return '80%';
+              return '50%';
+            };
+            
+            const y1 = index * 140 + 70;
+            const y2 = (index + 1) * 140 + 30;
+            const x1 = getXPosition(currentPos);
+            const x2 = getXPosition(nextPos);
             
             return (
               <g key={index}>
-                {/* Static background path */}
-                <path
-                  d={`M 0 ${yStart} 
-                      C ${controlX1} ${yStart + 30}, ${controlX2} ${yEnd - 30}, 0 ${yEnd}`}
-                  fill="none"
+                {/* Background dotted line */}
+                <line
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
                   stroke="hsl(var(--border))"
                   strokeWidth="3"
-                  strokeDasharray="6 10"
+                  strokeDasharray="6 12"
                   strokeLinecap="round"
                   opacity="0.4"
                 />
                 
-                {/* Animated progress path */}
-                <path
-                  d={`M 0 ${yStart} 
-                      C ${controlX1} ${yStart + 30}, ${controlX2} ${yEnd - 30}, 0 ${yEnd}`}
-                  fill="none"
-                  stroke="url(#pathGradient)"
-                  strokeWidth="3"
-                  strokeDasharray="6 10"
-                  strokeLinecap="round"
-                  filter="url(#glow)"
-                  style={{
-                    opacity: scrollProgress > (index / roadmapDays.length) ? 1 : 0.2,
-                    transition: 'opacity 0.5s ease-out'
-                  }}
-                />
+                {/* Active line */}
+                {isCompleted && (
+                  <line
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    stroke="url(#pathGradientVertical)"
+                    strokeWidth="3"
+                    strokeDasharray="6 12"
+                    strokeLinecap="round"
+                    filter="url(#glowPath)"
+                    className="animate-fade-in"
+                  />
+                )}
               </g>
             );
           })}
         </svg>
 
-        <div className="space-y-6">
+        {/* Nodes */}
+        <div className="relative z-10 space-y-20 py-8">
           {roadmapDays.map((day, index) => {
             const status = getDayStatus(day);
+            const position = getNodePosition(index);
             const checklist = (day.checklist as string[]) || [];
-            const isLast = index === roadmapDays.length - 1;
-
+            
             return (
               <div
                 key={day.id}
-                className="relative pl-14 animate-slide-up"
-                style={{ animationDelay: `${index * 0.1}s` }}
+                className="animate-slide-up"
+                style={{ animationDelay: `${index * 0.08}s` }}
               >
-                {/* Waypoint Marker */}
-                <div className="absolute left-0 top-2 z-10">
-                  <div className={`
-                    relative w-8 h-8 rounded-full flex items-center justify-center
-                    transition-all duration-300
-                    ${status === 'completed' 
-                      ? 'bg-primary/20 border-2 border-primary' 
-                      : status === 'current'
-                      ? 'bg-primary shadow-[0_0_20px_hsl(var(--primary)/0.5)] border-2 border-primary'
-                      : 'bg-card border-2 border-border'
-                    }
-                  `}>
-                    {status === 'completed' && (
-                      <CheckCircle2 className="h-4 w-4 text-primary" />
-                    )}
-                    {status === 'current' && (
-                      <div className="relative">
-                        <Compass className="h-4 w-4 text-primary-foreground animate-pulse" />
-                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-ping" />
-                      </div>
-                    )}
-                    {status === 'upcoming' && (
-                      <Circle className="h-3 w-3 text-muted-foreground" />
-                    )}
-                    {status === 'locked' && (
-                      <Lock className="h-3 w-3 text-muted-foreground" />
-                    )}
-                  </div>
-                  
-                  {/* Destination flag for last item */}
-                  {isLast && (
-                    <Flag className="absolute -top-2 -right-2 h-4 w-4 text-primary" />
-                  )}
-                </div>
-
-                {/* Card */}
-                <div className={`p-4 rounded-xl border transition-all ${
-                  status === 'current'
-                    ? 'bg-gradient-to-br from-card to-primary/5 border-primary/30 shadow-glow'
-                    : status === 'completed'
-                    ? 'bg-card border-primary/20'
-                    : 'bg-card border-border/50 hover:border-border'
-                }`}>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        {day.day_number > 0 && (
-                          <span className="text-xs font-medium text-primary">
-                            Day {day.day_number}
-                          </span>
-                        )}
-                        {day.day_number === 0 && (
-                          <span className="text-xs font-medium text-primary">
-                            Pre-Forge
-                          </span>
-                        )}
-                        {status === 'current' && (
-                          <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs font-medium">
-                            Current
-                          </span>
-                        )}
-                      </div>
-                      <h3 className="font-semibold text-foreground mb-1">{day.title}</h3>
-                      {day.description && (
-                        <p className="text-sm text-muted-foreground mb-3">{day.description}</p>
-                      )}
-
-                      {/* Operational Details (only shown during Forge) */}
-                      {isDuringForge && day.date && (
-                        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground mb-3">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            {format(new Date(day.date), 'MMM d, yyyy')}
-                          </span>
-                          {day.call_time && (
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
-                              {day.call_time}
-                            </span>
-                          )}
-                          {day.location && (
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-4 w-4" />
-                              {day.location}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Preview Mode - Show basic date */}
-                      {!isDuringForge && day.date && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-                          <Calendar className="h-4 w-4" />
-                          {format(new Date(day.date), 'MMMM d, yyyy')}
-                        </div>
-                      )}
-
-                      {/* Checklist (shown during Forge or for current) */}
-                      {checklist.length > 0 && (status === 'current' || isDuringForge) && (
-                        <div className="space-y-2">
-                          {checklist.map((item, i) => (
-                            <div key={i} className="flex items-center gap-2">
-                              <div className="w-4 h-4 rounded border border-border flex items-center justify-center">
-                                {status === 'completed' && <CheckCircle2 className="h-3 w-3 text-primary" />}
-                              </div>
-                              <span className={`text-sm ${status === 'completed' ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
-                                {item}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {status !== 'locked' && (
-                      <Button variant="ghost" size="icon" className="shrink-0">
-                        <ChevronRight className="h-5 w-5" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                <RoadmapNode
+                  day={day}
+                  status={status}
+                  position={position}
+                  isFirst={index === 0}
+                  isLast={index === roadmapDays.length - 1}
+                  totalChecklist={checklist.length}
+                  completedChecklist={status === 'completed' ? checklist.length : 0}
+                />
               </div>
             );
           })}
         </div>
+
+        {/* End destination marker */}
+        <div className="relative flex justify-center mt-8">
+          <div className="glass-premium rounded-2xl p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center">
+              <Flag className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Destination</p>
+              <p className="font-semibold text-foreground">Forge Complete</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Note for Pre-Forge */}
+      {/* Pre-Forge Note */}
       {!isDuringForge && (
-        <div className="mt-8 p-4 rounded-xl bg-secondary/50 border border-border/50">
-          <p className="text-sm text-muted-foreground text-center">
-            Detailed schedules, locations, and checklists will become available once Forge begins.
-          </p>
+        <div className="mt-12 max-w-md mx-auto">
+          <div className="p-4 rounded-xl bg-secondary/30 border border-border/30 text-center">
+            <Sparkles className="w-5 h-5 text-primary mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">
+              More details will unlock as your journey progresses
+            </p>
+          </div>
         </div>
       )}
     </div>
