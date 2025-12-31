@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -99,6 +99,7 @@ const AdminLearn: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
   const [isVideoUploading, setIsVideoUploading] = useState(false);
+  const videoUrlRef = useRef<string>('');
   const [form, setForm] = useState<LearnContentForm>(initialForm);
   const [resourceForm, setResourceForm] = useState<ResourceForm>(initialResourceForm);
   const [activeTab, setActiveTab] = useState('community_sessions');
@@ -209,11 +210,15 @@ const AdminLearn: React.FC = () => {
 
   const resetForm = () => {
     setForm(initialForm);
+    videoUrlRef.current = '';
+    setIsVideoUploading(false);
     setEditingId(null);
     setIsDialogOpen(false);
   };
 
   const handleEdit = (item: typeof content[0]) => {
+    const nextVideoUrl = item.video_url || '';
+
     setForm({
       title: item.title,
       description: item.description || '',
@@ -223,11 +228,13 @@ const AdminLearn: React.FC = () => {
       category: item.category,
       section_type: item.section_type || 'community_sessions',
       thumbnail_url: item.thumbnail_url || '',
-      video_url: item.video_url || '',
+      video_url: nextVideoUrl,
       duration_minutes: item.duration_minutes || 0,
       is_premium: item.is_premium,
       order_index: item.order_index,
     });
+
+    videoUrlRef.current = nextVideoUrl;
     setEditingId(item.id);
     setIsDialogOpen(true);
   };
@@ -240,12 +247,13 @@ const AdminLearn: React.FC = () => {
       return;
     }
 
-    if (!form.video_url) {
+    const finalVideoUrl = videoUrlRef.current || form.video_url;
+    if (!finalVideoUrl) {
       toast.error('Please upload a video before saving');
       return;
     }
 
-    saveMutation.mutate(form);
+    saveMutation.mutate({ ...form, video_url: finalVideoUrl });
   };
 
   const handleResourceSubmit = (e: React.FormEvent) => {
@@ -297,7 +305,10 @@ const AdminLearn: React.FC = () => {
                     helperText="Supported formats: MP4, WebM, MOV. Max 5GB."
                     currentUrl={form.video_url}
                     onUploadingChange={setIsVideoUploading}
-                    onUploadComplete={(url) => setForm((prev) => ({ ...prev, video_url: url }))}
+                    onUploadComplete={(url) => {
+                      videoUrlRef.current = url;
+                      setForm((prev) => ({ ...prev, video_url: url }));
+                    }}
                   />
 
                   <FileUpload
