@@ -7,36 +7,9 @@ import { ContentCarousel } from '@/components/shared/ContentCarousel';
 import { CarouselCard } from '@/components/shared/CarouselCard';
 import { EventCard } from '@/components/shared/EventCard';
 import { MentorCard } from '@/components/shared/MentorCard';
-import { Calendar, ArrowRight, Flame } from 'lucide-react';
+import { Calendar, ArrowRight, Flame, Users, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-// Mock data - replace with actual data from database
-const mockStudents = [
-  { id: '1', name: 'Priya Sharma', specialty: 'Content Creator', imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200' },
-  { id: '2', name: 'Arjun Patel', specialty: 'Video Editor', imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200' },
-  { id: '3', name: 'Neha Gupta', specialty: 'Graphic Designer', imageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200' },
-  { id: '4', name: 'Rahul Singh', specialty: 'Photographer', imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200' },
-];
-
-const mockMentors = [
-  { id: '1', name: 'Virat Kohli', specialty: 'Entrepreneur', avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200' },
-  { id: '2', name: 'Priyanka Chopra', specialty: 'Acting Coach', avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200' },
-  { id: '3', name: 'Sundar Pichai', specialty: 'Tech Leadership', avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200' },
-  { id: '4', name: 'Deepika Padukone', specialty: 'Brand Building', avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200' },
-];
-
-const mockLearnContent = [
-  { id: '1', title: 'Introduction to Content Creation', duration: '15 min', thumbnail: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=400' },
-  { id: '2', title: 'Building Your Personal Brand', duration: '22 min', thumbnail: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=400' },
-  { id: '3', title: 'Video Editing Basics', duration: '18 min', thumbnail: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=400' },
-];
-
-const mockEvents = [
-  { id: '1', title: 'Goa Offsite Meet & Greet', date: 'Sat, Jan 3', location: 'Hyderabad', hostName: 'Naganjan Kumar', hostAvatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200', imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400' },
-  { id: '2', title: 'Peakst8 Festival X GrowthX', date: 'Sat, Jan 10', location: 'Bengaluru', hostName: 'Dilipkumar', hostAvatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200', imageUrl: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400', isFillingFast: true },
-  { id: '3', title: 'AI - X to 10X Workshop', date: 'Sat, Jan 10', location: 'Mumbai', hostName: 'Alok Shenoy', hostAvatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200', imageUrl: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=400' },
-  { id: '4', title: 'How FDEs drive 0-1 transformations', date: 'Sat, Jan 17', location: 'Virtual', hostName: 'Abhijeet Jha', hostAvatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200', imageUrl: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=400', isVirtual: true },
-];
+import { format } from 'date-fns';
 
 interface TimeLeft {
   days: number;
@@ -65,6 +38,53 @@ const Home: React.FC = () => {
     },
     enabled: !!profile?.edition_id,
   });
+
+  // Fetch home cards (students, mentors, etc.)
+  const { data: homeCards } = useQuery({
+    queryKey: ['home_cards'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('home_cards')
+        .select('*')
+        .eq('is_active', true)
+        .order('order_index', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Fetch events from database
+  const { data: events } = useQuery({
+    queryKey: ['home_events'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .gte('event_date', new Date().toISOString())
+        .order('event_date', { ascending: true })
+        .limit(6);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Fetch learn content from database
+  const { data: learnContent } = useQuery({
+    queryKey: ['home_learn_content'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('learn_content')
+        .select('*')
+        .order('order_index', { ascending: true })
+        .limit(6);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Filter home cards by type
+  const studentCards = homeCards?.filter(card => card.card_type === 'student') || [];
+  const mentorCards = homeCards?.filter(card => card.card_type === 'mentor') || [];
 
   useEffect(() => {
     if (!edition?.forge_start_date) return;
@@ -186,61 +206,77 @@ const Home: React.FC = () => {
       </div>
 
       {/* About Our Students */}
-      <ContentCarousel title="About Our Students" onSeeAll={() => navigate('/community')}>
-        {mockStudents.map((student) => (
-          <MentorCard
-            key={student.id}
-            name={student.name}
-            specialty={student.specialty}
-            avatarUrl={student.imageUrl}
-            onClick={() => navigate('/community')}
-          />
-        ))}
-      </ContentCarousel>
+      {studentCards.length > 0 && (
+        <ContentCarousel title="About Our Students" onSeeAll={() => navigate('/community')}>
+          {studentCards.map((student) => (
+            <MentorCard
+              key={student.id}
+              name={student.title}
+              specialty={student.description || ''}
+              avatarUrl={student.image_url || ''}
+              onClick={() => student.link ? navigate(student.link) : navigate('/community')}
+            />
+          ))}
+        </ContentCarousel>
+      )}
 
       {/* About Our Mentors */}
-      <ContentCarousel title="About Our Mentors" onSeeAll={() => navigate('/community')}>
-        {mockMentors.map((mentor) => (
-          <MentorCard
-            key={mentor.id}
-            name={mentor.name}
-            specialty={mentor.specialty}
-            avatarUrl={mentor.avatarUrl}
-            onClick={() => navigate('/community')}
-          />
-        ))}
-      </ContentCarousel>
+      {mentorCards.length > 0 && (
+        <ContentCarousel title="About Our Mentors" onSeeAll={() => navigate('/community')}>
+          {mentorCards.map((mentor) => (
+            <MentorCard
+              key={mentor.id}
+              name={mentor.title}
+              specialty={mentor.description || ''}
+              avatarUrl={mentor.image_url || ''}
+              onClick={() => mentor.link ? navigate(mentor.link) : navigate('/community')}
+            />
+          ))}
+        </ContentCarousel>
+      )}
 
       {/* Learn Section */}
-      <ContentCarousel title="Learn" onSeeAll={() => navigate('/learn')}>
-        {mockLearnContent.map((content) => (
-          <CarouselCard
-            key={content.id}
-            title={content.title}
-            subtitle={content.duration}
-            imageUrl={content.thumbnail}
-            onClick={() => navigate('/learn')}
-          />
-        ))}
-      </ContentCarousel>
+      {learnContent && learnContent.length > 0 && (
+        <ContentCarousel title="Learn" onSeeAll={() => navigate('/learn')}>
+          {learnContent.map((content) => (
+            <CarouselCard
+              key={content.id}
+              title={content.title}
+              subtitle={content.duration_minutes ? `${content.duration_minutes} min` : undefined}
+              imageUrl={content.thumbnail_url || undefined}
+              onClick={() => navigate('/learn')}
+            />
+          ))}
+        </ContentCarousel>
+      )}
 
       {/* Events Section */}
-      <ContentCarousel title="Upcoming Events" onSeeAll={() => navigate('/events')}>
-        {mockEvents.map((event) => (
-          <EventCard
-            key={event.id}
-            title={event.title}
-            date={event.date}
-            location={event.location}
-            imageUrl={event.imageUrl}
-            hostName={event.hostName}
-            hostAvatarUrl={event.hostAvatarUrl}
-            isFillingFast={event.isFillingFast}
-            isVirtual={event.isVirtual}
-            onClick={() => navigate('/events')}
-          />
-        ))}
-      </ContentCarousel>
+      {events && events.length > 0 && (
+        <ContentCarousel title="Upcoming Events" onSeeAll={() => navigate('/events')}>
+          {events.map((event) => (
+            <EventCard
+              key={event.id}
+              title={event.title}
+              date={format(new Date(event.event_date), 'EEE, MMM d')}
+              location={event.location || undefined}
+              imageUrl={event.image_url || undefined}
+              isVirtual={event.is_virtual}
+              onClick={() => navigate('/events')}
+            />
+          ))}
+        </ContentCarousel>
+      )}
+
+      {/* Empty State */}
+      {(!studentCards.length && !mentorCards.length && !learnContent?.length && !events?.length) && (
+        <div className="glass-premium rounded-2xl p-8 text-center">
+          <Users className="h-12 w-12 text-primary/50 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">Content Coming Soon</h3>
+          <p className="text-muted-foreground">
+            Check back soon for students, mentors, courses, and events!
+          </p>
+        </div>
+      )}
     </div>
   );
 };
