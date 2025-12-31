@@ -1,19 +1,28 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Flag, Anchor, Sparkles, Trophy } from 'lucide-react';
+import { 
+  Loader2, Flag, Anchor, Sparkles, Trophy, 
+  Rocket, Gift, Users, ArrowRight, Star
+} from 'lucide-react';
+import { differenceInDays } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
 import RoadmapNode from '@/components/roadmap/RoadmapNode';
+import SmoothPath from '@/components/roadmap/SmoothPath';
+import { Button } from '@/components/ui/button';
 
 type RoadmapDay = Database['public']['Tables']['roadmap_days']['Row'];
 
 const Roadmap: React.FC = () => {
-  const { isDuringForge, profile } = useAuth();
+  const { profile } = useAuth();
   const { cohortName } = useTheme();
   const timelineRef = useRef<HTMLDivElement>(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(400);
+
+  // Determine forge mode from profile
+  const forgeMode = profile?.forge_mode || 'PRE_FORGE';
 
   // Fetch roadmap days for user's edition
   const { data: roadmapDays, isLoading } = useQuery({
@@ -30,6 +39,25 @@ const Roadmap: React.FC = () => {
     },
     enabled: !!profile?.edition_id
   });
+
+  // Fetch edition for forge start date
+  const { data: edition } = useQuery({
+    queryKey: ['edition', profile?.edition_id],
+    queryFn: async () => {
+      if (!profile?.edition_id) return null;
+      const { data, error } = await supabase
+        .from('editions')
+        .select('*')
+        .eq('id', profile.edition_id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!profile?.edition_id
+  });
+
+  const forgeStartDate = edition?.forge_start_date ? new Date(edition.forge_start_date) : null;
+  const daysUntilForge = forgeStartDate ? differenceInDays(forgeStartDate, new Date()) : null;
 
   const getDayStatus = (day: RoadmapDay): 'completed' | 'current' | 'upcoming' | 'locked' => {
     if (!day.is_active) return 'locked';
@@ -59,25 +87,23 @@ const Roadmap: React.FC = () => {
   const currentIndex = roadmapDays?.findIndex(d => getDayStatus(d) === 'current') ?? -1;
   const totalCount = roadmapDays?.length || 0;
 
-  // Scroll progress tracking
+  const nodeStatuses = useMemo(() => 
+    roadmapDays?.map(getDayStatus) || [], 
+    [roadmapDays]
+  );
+
+  // Track container width for responsive path
   useEffect(() => {
-    const handleScroll = () => {
-      if (!timelineRef.current) return;
-      
-      const rect = timelineRef.current.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const scrolled = viewportHeight - rect.top;
-      const totalScrollable = rect.height + viewportHeight;
-      const progress = Math.max(0, Math.min(1, scrolled / totalScrollable));
-      
-      setScrollProgress(progress);
+    const updateWidth = () => {
+      if (timelineRef.current) {
+        setContainerWidth(timelineRef.current.offsetWidth);
+      }
     };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [roadmapDays]);
+    
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
 
   if (isLoading) {
     return (
@@ -124,29 +150,67 @@ const Roadmap: React.FC = () => {
     );
   }
 
-  const nodeStatuses = roadmapDays.map(getDayStatus);
-
   return (
-    <div className="container py-6 pb-24">
-      {/* Header */}
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold gradient-text mb-2">Your {cohortName} Journey</h1>
-        <p className="text-muted-foreground">
-          {isDuringForge 
-            ? 'Navigate through your Forge experience'
-            : 'Preview your path to mastery'}
-        </p>
-      </div>
+    <div className="container py-6 pb-24 max-w-2xl mx-auto">
+      {/* Phase-Specific Header */}
+      {forgeMode === 'PRE_FORGE' && (
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
+            <Rocket className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium text-primary">
+              {daysUntilForge !== null && daysUntilForge > 0 
+                ? `${daysUntilForge} days until Forge begins`
+                : 'Forge is about to begin!'}
+            </span>
+          </div>
+          <h1 className="text-3xl font-bold gradient-text mb-2">Your {cohortName} Awaits</h1>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            Preview the incredible journey ahead. More details unlock as we get closer to launch.
+          </p>
+        </div>
+      )}
+
+      {forgeMode === 'DURING_FORGE' && (
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 border border-primary/30 mb-4 animate-pulse-soft">
+            <Star className="w-4 h-4 text-primary fill-primary" />
+            <span className="text-sm font-bold text-primary">FORGE IS LIVE</span>
+          </div>
+          <h1 className="text-3xl font-bold gradient-text mb-2">Your {cohortName} Journey</h1>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            Navigate through your transformative Forge experience
+          </p>
+        </div>
+      )}
+
+      {forgeMode === 'POST_FORGE' && (
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 border border-accent/30 mb-4">
+            <Trophy className="w-4 h-4 text-accent" />
+            <span className="text-sm font-bold text-accent">FORGE COMPLETE</span>
+          </div>
+          <h1 className="text-3xl font-bold gradient-text mb-2">Your {cohortName} Legacy</h1>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            You've completed an incredible journey. Here's what you accomplished.
+          </p>
+        </div>
+      )}
 
       {/* Progress Overview Card */}
-      <div className="mb-10 p-6 rounded-2xl glass-premium max-w-md mx-auto">
+      <div className="mb-10 p-6 rounded-2xl glass-premium">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center shadow-glow">
-              <Trophy className="w-6 h-6 text-primary-foreground" />
+              {forgeMode === 'POST_FORGE' ? (
+                <Trophy className="w-6 h-6 text-primary-foreground" />
+              ) : (
+                <Rocket className="w-6 h-6 text-primary-foreground" />
+              )}
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Journey Progress</p>
+              <p className="text-sm text-muted-foreground">
+                {forgeMode === 'POST_FORGE' ? 'Journey Completed' : 'Journey Progress'}
+              </p>
               <p className="text-2xl font-bold text-foreground">{completedCount} / {totalCount}</p>
             </div>
           </div>
@@ -166,7 +230,7 @@ const Roadmap: React.FC = () => {
           </div>
         </div>
         
-        {currentIndex >= 0 && roadmapDays[currentIndex] && (
+        {forgeMode === 'DURING_FORGE' && currentIndex >= 0 && roadmapDays[currentIndex] && (
           <div className="mt-4 pt-4 border-t border-border/30">
             <p className="text-xs text-muted-foreground mb-1">Currently on</p>
             <p className="text-sm font-semibold text-foreground">{roadmapDays[currentIndex].title}</p>
@@ -175,88 +239,23 @@ const Roadmap: React.FC = () => {
       </div>
 
       {/* Serpentine Path Timeline */}
-      <div ref={timelineRef} className="relative max-w-lg mx-auto">
-        {/* SVG Path Connections */}
-        <svg 
-          className="absolute left-0 top-0 w-full h-full pointer-events-none"
-          style={{ zIndex: 0 }}
-        >
-          <defs>
-            <linearGradient id="pathGradientVertical" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0.7" />
-            </linearGradient>
-            <filter id="glowPath">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-
-          {roadmapDays.map((_, index) => {
-            if (index === roadmapDays.length - 1) return null;
-            
-            const currentPos = getNodePosition(index);
-            const nextPos = getNodePosition(index + 1);
-            const status = nodeStatuses[index];
-            const nextStatus = nodeStatuses[index + 1];
-            const isCompleted = status === 'completed' || (status === 'current' && nextStatus !== 'locked');
-            
-            // Calculate positions
-            const getXPosition = (pos: string) => {
-              if (pos === 'left') return '20%';
-              if (pos === 'right') return '80%';
-              return '50%';
-            };
-            
-            const y1 = index * 140 + 70;
-            const y2 = (index + 1) * 140 + 30;
-            const x1 = getXPosition(currentPos);
-            const x2 = getXPosition(nextPos);
-            
-            return (
-              <g key={index}>
-                {/* Background dotted line */}
-                <line
-                  x1={x1}
-                  y1={y1}
-                  x2={x2}
-                  y2={y2}
-                  stroke="hsl(var(--border))"
-                  strokeWidth="3"
-                  strokeDasharray="6 12"
-                  strokeLinecap="round"
-                  opacity="0.4"
-                />
-                
-                {/* Active line */}
-                {isCompleted && (
-                  <line
-                    x1={x1}
-                    y1={y1}
-                    x2={x2}
-                    y2={y2}
-                    stroke="url(#pathGradientVertical)"
-                    strokeWidth="3"
-                    strokeDasharray="6 12"
-                    strokeLinecap="round"
-                    filter="url(#glowPath)"
-                    className="animate-fade-in"
-                  />
-                )}
-              </g>
-            );
-          })}
-        </svg>
+      <div ref={timelineRef} className="relative" style={{ minHeight: (totalCount - 1) * 160 + 200 }}>
+        {/* SVG Smooth Path */}
+        <SmoothPath
+          nodeCount={totalCount}
+          getNodePosition={getNodePosition}
+          nodeStatuses={nodeStatuses}
+          containerWidth={containerWidth}
+        />
 
         {/* Nodes */}
-        <div className="relative z-10 space-y-20 py-8">
+        <div className="relative z-10 space-y-24 py-8">
           {roadmapDays.map((day, index) => {
             const status = getDayStatus(day);
             const position = getNodePosition(index);
             const checklist = (day.checklist as string[]) || [];
+            const mentors = (day.mentors as string[]) || [];
+            const keyLearnings = (day.key_learnings as string[]) || [];
             
             return (
               <div
@@ -265,13 +264,25 @@ const Roadmap: React.FC = () => {
                 style={{ animationDelay: `${index * 0.08}s` }}
               >
                 <RoadmapNode
-                  day={day}
+                  day={{
+                    ...day,
+                    checklist,
+                    mentors,
+                    key_learnings: keyLearnings,
+                    activity_type: day.activity_type,
+                    duration_hours: day.duration_hours ? Number(day.duration_hours) : null,
+                    intensity_level: day.intensity_level,
+                    teaser_text: day.teaser_text,
+                    reveal_days_before: day.reveal_days_before,
+                  }}
                   status={status}
                   position={position}
                   isFirst={index === 0}
                   isLast={index === roadmapDays.length - 1}
                   totalChecklist={checklist.length}
                   completedChecklist={status === 'completed' ? checklist.length : 0}
+                  forgeMode={forgeMode}
+                  forgeStartDate={forgeStartDate}
                 />
               </div>
             );
@@ -279,26 +290,76 @@ const Roadmap: React.FC = () => {
         </div>
 
         {/* End destination marker */}
-        <div className="relative flex justify-center mt-8">
-          <div className="glass-premium rounded-2xl p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center">
-              <Flag className="w-5 h-5 text-primary-foreground" />
+        <div className="relative flex justify-center mt-8 pt-8">
+          <div className="glass-premium rounded-2xl p-5 flex items-center gap-4 shadow-glow">
+            <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center">
+              <Flag className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Destination</p>
-              <p className="font-semibold text-foreground">Forge Complete</p>
+              <p className="font-bold text-foreground">
+                {forgeMode === 'POST_FORGE' ? 'Journey Complete!' : `${cohortName} Complete`}
+              </p>
             </div>
+            {forgeMode === 'POST_FORGE' && (
+              <Trophy className="w-6 h-6 text-accent ml-2" />
+            )}
           </div>
         </div>
       </div>
 
+      {/* Post-Forge: What's Next Section */}
+      {forgeMode === 'POST_FORGE' && (
+        <div className="mt-16 space-y-6">
+          <h2 className="text-xl font-bold text-foreground text-center mb-6">What's Next?</h2>
+          
+          <div className="grid gap-4">
+            <div className="glass-card-hover rounded-xl p-5 flex items-center gap-4 cursor-pointer">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Users className="w-6 h-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground">Join the Alumni Network</h3>
+                <p className="text-sm text-muted-foreground">Connect with fellow Forge graduates</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-muted-foreground" />
+            </div>
+
+            <div className="glass-card-hover rounded-xl p-5 flex items-center gap-4 cursor-pointer">
+              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                <Gift className="w-6 h-6 text-accent" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground">Exclusive Alumni Perks</h3>
+                <p className="text-sm text-muted-foreground">Unlock special benefits and discounts</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-muted-foreground" />
+            </div>
+
+            <div className="glass-card-hover rounded-xl p-5 flex items-center gap-4 cursor-pointer">
+              <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                <Rocket className="w-6 h-6 text-foreground" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground">Upcoming Events</h3>
+                <p className="text-sm text-muted-foreground">Stay connected with the community</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-muted-foreground" />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Pre-Forge Note */}
-      {!isDuringForge && (
-        <div className="mt-12 max-w-md mx-auto">
-          <div className="p-4 rounded-xl bg-secondary/30 border border-border/30 text-center">
-            <Sparkles className="w-5 h-5 text-primary mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">
-              More details will unlock as your journey progresses
+      {forgeMode === 'PRE_FORGE' && (
+        <div className="mt-12">
+          <div className="p-5 rounded-xl gradient-subtle border border-primary/20 text-center">
+            <Sparkles className="w-6 h-6 text-primary mx-auto mb-3" />
+            <p className="text-sm text-foreground font-medium mb-1">
+              The countdown has begun
+            </p>
+            <p className="text-xs text-muted-foreground">
+              More details will reveal as we approach launch. Stay tuned!
             </p>
           </div>
         </div>

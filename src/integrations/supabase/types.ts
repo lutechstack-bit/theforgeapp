@@ -387,44 +387,65 @@ export type Database = {
       }
       roadmap_days: {
         Row: {
+          activity_type: string | null
           call_time: string | null
           checklist: Json | null
           created_at: string
           date: string | null
           day_number: number
           description: string | null
+          duration_hours: number | null
           edition_id: string | null
           id: string
+          intensity_level: string | null
           is_active: boolean
+          key_learnings: string[] | null
           location: string | null
+          mentors: string[] | null
+          reveal_days_before: number | null
+          teaser_text: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          activity_type?: string | null
           call_time?: string | null
           checklist?: Json | null
           created_at?: string
           date?: string | null
           day_number: number
           description?: string | null
+          duration_hours?: number | null
           edition_id?: string | null
           id?: string
+          intensity_level?: string | null
           is_active?: boolean
+          key_learnings?: string[] | null
           location?: string | null
+          mentors?: string[] | null
+          reveal_days_before?: number | null
+          teaser_text?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          activity_type?: string | null
           call_time?: string | null
           checklist?: Json | null
           created_at?: string
           date?: string | null
           day_number?: number
           description?: string | null
+          duration_hours?: number | null
           edition_id?: string | null
           id?: string
+          intensity_level?: string | null
           is_active?: boolean
+          key_learnings?: string[] | null
           location?: string | null
+          mentors?: string[] | null
+          reveal_days_before?: number | null
+          teaser_text?: string | null
           title?: string
           updated_at?: string
         }
