@@ -231,42 +231,113 @@ export type Database = {
       }
       learn_content: {
         Row: {
+          access_token: string | null
+          bonuses: Json | null
           category: string
+          company_name: string | null
           created_at: string
           description: string | null
           duration_minutes: number | null
+          full_description: string | null
           id: string
+          instructor_name: string | null
           is_premium: boolean
           order_index: number
+          section_type: string
           thumbnail_url: string | null
           title: string
+          updated_at: string | null
           video_url: string | null
+          views_count: number | null
         }
         Insert: {
+          access_token?: string | null
+          bonuses?: Json | null
           category: string
+          company_name?: string | null
           created_at?: string
           description?: string | null
           duration_minutes?: number | null
+          full_description?: string | null
           id?: string
+          instructor_name?: string | null
           is_premium?: boolean
           order_index?: number
+          section_type?: string
           thumbnail_url?: string | null
           title: string
+          updated_at?: string | null
           video_url?: string | null
+          views_count?: number | null
         }
         Update: {
+          access_token?: string | null
+          bonuses?: Json | null
           category?: string
+          company_name?: string | null
           created_at?: string
           description?: string | null
           duration_minutes?: number | null
+          full_description?: string | null
           id?: string
+          instructor_name?: string | null
           is_premium?: boolean
           order_index?: number
+          section_type?: string
           thumbnail_url?: string | null
           title?: string
+          updated_at?: string | null
           video_url?: string | null
+          views_count?: number | null
         }
         Relationships: []
+      }
+      learn_resources: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_size_mb: number | null
+          file_type: string
+          file_url: string
+          id: string
+          is_premium: boolean
+          learn_content_id: string
+          order_index: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_size_mb?: number | null
+          file_type?: string
+          file_url: string
+          id?: string
+          is_premium?: boolean
+          learn_content_id: string
+          order_index?: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_size_mb?: number | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          is_premium?: boolean
+          learn_content_id?: string
+          order_index?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learn_resources_learn_content_id_fkey"
+            columns: ["learn_content_id"]
+            isOneToOne: false
+            referencedRelation: "learn_content"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       message_reactions: {
         Row: {
@@ -558,6 +629,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      video_access_logs: {
+        Row: {
+          accessed_at: string
+          id: string
+          ip_address: string | null
+          learn_content_id: string
+          user_agent: string | null
+          user_id: string
+          watch_duration_seconds: number | null
+        }
+        Insert: {
+          accessed_at?: string
+          id?: string
+          ip_address?: string | null
+          learn_content_id: string
+          user_agent?: string | null
+          user_id: string
+          watch_duration_seconds?: number | null
+        }
+        Update: {
+          accessed_at?: string
+          id?: string
+          ip_address?: string | null
+          learn_content_id?: string
+          user_agent?: string | null
+          user_id?: string
+          watch_duration_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_access_logs_learn_content_id_fkey"
+            columns: ["learn_content_id"]
+            isOneToOne: false
+            referencedRelation: "learn_content"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
