@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { 
   CheckCircle2, Lock, Star, Trophy, Clock, Target, 
   Users, Lightbulb, Zap, BookOpen, Calendar,
-  MapPin, Sparkles, Eye, ChevronRight
+  MapPin, Sparkles, Eye, ChevronRight, Mic,
+  Wrench, Compass, Coffee, Presentation, MessageCircle
 } from 'lucide-react';
 import { format, differenceInDays, differenceInHours } from 'date-fns';
 
@@ -96,13 +97,23 @@ const RoadmapNode: React.FC<RoadmapNodeProps> = ({
     return <Zap className="w-3 h-3" />;
   };
 
-  const getActivityIcon = () => {
+  // Activity-based icon mapping
+  const getActivityIcon = (size: 'sm' | 'lg' = 'sm') => {
+    const iconClass = size === 'lg' ? 'w-7 h-7' : 'w-4 h-4';
     const type = day.activity_type?.toLowerCase() || '';
-    if (type.includes('workshop')) return <BookOpen className="w-4 h-4" />;
-    if (type.includes('network')) return <Users className="w-4 h-4" />;
-    if (type.includes('session')) return <Lightbulb className="w-4 h-4" />;
-    if (type.includes('field')) return <MapPin className="w-4 h-4" />;
-    return <Star className="w-4 h-4" />;
+    
+    if (type.includes('workshop')) return <Wrench className={iconClass} />;
+    if (type.includes('network')) return <Users className={iconClass} />;
+    if (type.includes('session')) return <BookOpen className={iconClass} />;
+    if (type.includes('field') || type.includes('trip')) return <Compass className={iconClass} />;
+    if (type.includes('speaker') || type.includes('talk')) return <Mic className={iconClass} />;
+    if (type.includes('presentation')) return <Presentation className={iconClass} />;
+    if (type.includes('discussion') || type.includes('qa')) return <MessageCircle className={iconClass} />;
+    if (type.includes('break') || type.includes('social')) return <Coffee className={iconClass} />;
+    if (type.includes('learn')) return <Lightbulb className={iconClass} />;
+    
+    // Default icon based on day number
+    return <Star className={iconClass} />;
   };
 
   const nodeSize = status === 'current' ? 'w-20 h-20' : 'w-16 h-16';
@@ -169,23 +180,31 @@ const RoadmapNode: React.FC<RoadmapNodeProps> = ({
               </svg>
             )}
 
-            {/* Icon */}
-            <div className="absolute inset-0 flex items-center justify-center">
+            {/* Icon - Activity-based */}
+            <div className={`absolute inset-0 flex items-center justify-center transition-transform duration-300 ${
+              isHovered ? 'scale-110' : ''
+            }`}>
               {status === 'completed' && (
-                <CheckCircle2 className="w-7 h-7 text-primary-foreground" />
+                <div className="text-primary-foreground">
+                  {getActivityIcon('lg')}
+                </div>
               )}
               {status === 'current' && (
-                <Star className="w-8 h-8 text-primary-foreground fill-primary-foreground animate-pulse-soft" />
+                <div className="text-primary-foreground animate-pulse-soft">
+                  {getActivityIcon('lg')}
+                </div>
               )}
               {status === 'upcoming' && (
                 isRevealed ? (
-                  <Star className="w-6 h-6 text-muted-foreground" />
+                  <div className="text-muted-foreground">
+                    {getActivityIcon('lg')}
+                  </div>
                 ) : (
-                  <Eye className="w-5 h-5 text-muted-foreground" />
+                  <Eye className="w-6 h-6 text-muted-foreground" />
                 )
               )}
               {status === 'locked' && (
-                <Lock className="w-5 h-5 text-muted-foreground/50" />
+                <Lock className="w-6 h-6 text-muted-foreground/50" />
               )}
             </div>
 
@@ -242,7 +261,7 @@ const RoadmapNode: React.FC<RoadmapNodeProps> = ({
               </div>
               {day.activity_type && isRevealed && (
                 <div className="p-2 rounded-lg bg-secondary/50 text-muted-foreground">
-                  {getActivityIcon()}
+                  {getActivityIcon('sm')}
                 </div>
               )}
             </div>
