@@ -280,9 +280,9 @@ const AdminLearn: React.FC = () => {
                   <FileUpload
                     bucket="learn-videos"
                     accept="video/*"
-                    maxSizeMB={500}
+                    maxSizeMB={5120}
                     label="Video File"
-                    helperText="Supported formats: MP4, WebM, MOV. Max 500MB."
+                    helperText="Supported formats: MP4, WebM, MOV. Max 5GB."
                     currentUrl={form.video_url}
                     onUploadComplete={(url) => setForm({ ...form, video_url: url })}
                   />
