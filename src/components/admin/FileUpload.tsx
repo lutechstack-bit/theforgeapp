@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 interface FileUploadProps {
   bucket: 'learn-videos' | 'learn-thumbnails' | 'learn-resources';
   onUploadComplete: (url: string, path: string) => void;
+  onUploadingChange?: (uploading: boolean) => void;
   accept?: string;
   maxSizeMB?: number;
   className?: string;
@@ -20,6 +21,7 @@ interface FileUploadProps {
 export const FileUpload: React.FC<FileUploadProps> = ({
   bucket,
   onUploadComplete,
+  onUploadingChange,
   accept = '*/*',
   maxSizeMB = 100,
   className,
@@ -55,6 +57,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
     setError(null);
     setUploading(true);
+    onUploadingChange?.(true);
     setProgress(0);
 
     try {
@@ -112,6 +115,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       toast.error('Upload failed: ' + (err.message || 'Unknown error'));
     } finally {
       setUploading(false);
+      onUploadingChange?.(false);
       // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';

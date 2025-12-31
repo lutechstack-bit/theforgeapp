@@ -98,6 +98,7 @@ const AdminLearn: React.FC = () => {
   const [isResourceDialogOpen, setIsResourceDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
+  const [isVideoUploading, setIsVideoUploading] = useState(false);
   const [form, setForm] = useState<LearnContentForm>(initialForm);
   const [resourceForm, setResourceForm] = useState<ResourceForm>(initialResourceForm);
   const [activeTab, setActiveTab] = useState('community_sessions');
@@ -233,7 +234,17 @@ const AdminLearn: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitting form with video_url:', form.video_url);
+
+    if (isVideoUploading) {
+      toast.error('Please wait for the video upload to finish');
+      return;
+    }
+
+    if (!form.video_url) {
+      toast.error('Please upload a video before saving');
+      return;
+    }
+
     saveMutation.mutate(form);
   };
 
@@ -285,10 +296,8 @@ const AdminLearn: React.FC = () => {
                     label="Video File"
                     helperText="Supported formats: MP4, WebM, MOV. Max 5GB."
                     currentUrl={form.video_url}
-                    onUploadComplete={(url) => {
-                      console.log('Video upload complete, path:', url);
-                      setForm(prev => ({ ...prev, video_url: url }));
-                    }}
+                    onUploadingChange={setIsVideoUploading}
+                    onUploadComplete={(url) => setForm((prev) => ({ ...prev, video_url: url }))}
                   />
 
                   <FileUpload
@@ -298,7 +307,7 @@ const AdminLearn: React.FC = () => {
                     label="Thumbnail Image"
                     helperText="Recommended: 16:9 aspect ratio, min 1280x720px"
                     currentUrl={form.thumbnail_url}
-                    onUploadComplete={(url) => setForm({ ...form, thumbnail_url: url })}
+                    onUploadComplete={(url) => setForm((prev) => ({ ...prev, thumbnail_url: url }))}
                   />
                 </div>
 
@@ -434,7 +443,10 @@ const AdminLearn: React.FC = () => {
                   <Button type="button" variant="outline" onClick={resetForm}>
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={saveMutation.isPending}>
+                  <Button
+                    type="submit"
+                    disabled={saveMutation.isPending || isVideoUploading || !form.video_url}
+                  >
                     {saveMutation.isPending ? 'Saving...' : editingId ? 'Update' : 'Create'}
                   </Button>
                 </div>
