@@ -1,8 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SecureVideoPlayer } from './SecureVideoPlayer';
-import { Button } from '@/components/ui/button';
-import { Download, FileText, ExternalLink, X } from 'lucide-react';
+import { Download, FileText, ExternalLink } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -64,18 +63,10 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl w-[95vw] max-h-[95vh] p-0 gap-0 overflow-hidden bg-background border border-border shadow-xl">
-        <DialogHeader className="p-4 pb-2 flex flex-row items-center justify-between bg-background border-b border-border">
+        <DialogHeader className="p-4 pb-2 bg-background border-b border-border">
           <DialogTitle className="text-lg font-bold truncate pr-8 text-foreground">
             {content.title}
           </DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-4 top-4 hover:bg-muted"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
 
         <div className="flex flex-col lg:flex-row bg-background">
