@@ -130,122 +130,122 @@
   }
 
   /* Forge Writing Theme - Blue */
-  /* Primary Blue: #3366FF → HSL(224, 100%, 60%) */
-  /* Dark Blue: #2244CC → HSL(224, 70%, 47%) */
+  /* Primary Blue: #005FFF → HSL(218, 100%, 50%) */
+  /* Light Blue: #5296FF → HSL(214, 100%, 66%) */
   .theme-forge-writing {
-    --background: 0 0% 8%;
-    --foreground: 220 20% 95%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
 
-    --card: 224 15% 12%;
-    --card-foreground: 220 20% 95%;
+    --card: 218 30% 8%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 224 15% 12%;
-    --popover-foreground: 220 20% 95%;
+    --popover: 218 30% 8%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 224 100% 60%;
+    --primary: 218 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 224 20% 18%;
-    --secondary-foreground: 220 20% 95%;
+    --secondary: 218 30% 15%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 224 15% 15%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 218 20% 12%;
+    --muted-foreground: 214 30% 60%;
 
-    --accent: 224 70% 47%;
-    --accent-foreground: 220 20% 95%;
-
-    --destructive: 0 75% 55%;
-    --destructive-foreground: 220 20% 95%;
-
-    --border: 224 15% 20%;
-    --input: 224 15% 18%;
-    --ring: 224 100% 60%;
-
-    --forge-yellow: 224 100% 60%;
-    --forge-gold: 224 70% 47%;
-    --forge-orange: 224 60% 40%;
-    --forge-cream: 220 20% 95%;
-    --forge-charcoal: 0 0% 8%;
-
-    --glow-primary: 224 100% 60%;
-    --glow-secondary: 224 70% 47%;
-    --gradient-start: 224 100% 60%;
-    --gradient-end: 224 70% 47%;
-    --surface-elevated: 224 15% 14%;
-    --surface-glass: 224 15% 10%;
-
-    --shadow-glow: 0 0 40px hsl(224 100% 60% / 0.25);
-    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.5);
-    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.7);
-
-    --sidebar-background: 224 20% 8%;
-    --sidebar-foreground: 220 20% 95%;
-    --sidebar-primary: 224 100% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 224 15% 15%;
-    --sidebar-accent-foreground: 220 20% 95%;
-    --sidebar-border: 224 15% 18%;
-    --sidebar-ring: 224 100% 60%;
-  }
-
-  /* Forge Creators Theme - Pink/Coral */
-  /* Primary Pink: #FF5882 → HSL(345, 100%, 67%) */
-  /* Coral: #FF7B6B → HSL(7, 100%, 71%) */
-  /* Yellow Accent: #FFD93D → HSL(48, 100%, 62%) */
-  .theme-forge-creators {
-    --background: 0 0% 98%;
-    --foreground: 0 0% 10%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
-
-    --primary: 345 100% 67%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 0 0% 94%;
-    --secondary-foreground: 0 0% 20%;
-
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-
-    --accent: 48 100% 62%;
-    --accent-foreground: 0 0% 10%;
+    --accent: 214 100% 66%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 88%;
-    --input: 0 0% 92%;
-    --ring: 345 100% 67%;
+    --border: 218 20% 18%;
+    --input: 218 20% 15%;
+    --ring: 218 100% 50%;
 
-    --forge-yellow: 48 100% 62%;
-    --forge-gold: 345 100% 67%;
-    --forge-orange: 7 100% 71%;
-    --forge-cream: 0 0% 98%;
-    --forge-charcoal: 0 0% 10%;
+    --forge-yellow: 218 100% 50%;
+    --forge-gold: 214 100% 66%;
+    --forge-orange: 218 80% 40%;
+    --forge-cream: 0 0% 100%;
+    --forge-charcoal: 0 0% 0%;
 
-    --glow-primary: 345 100% 67%;
-    --glow-secondary: 7 100% 71%;
-    --gradient-start: 345 100% 67%;
-    --gradient-end: 7 100% 71%;
-    --surface-elevated: 0 0% 100%;
-    --surface-glass: 0 0% 98%;
+    --glow-primary: 218 100% 50%;
+    --glow-secondary: 214 100% 66%;
+    --gradient-start: 218 100% 50%;
+    --gradient-end: 214 100% 66%;
+    --surface-elevated: 218 25% 10%;
+    --surface-glass: 218 25% 6%;
 
-    --shadow-glow: 0 0 40px hsl(345 100% 67% / 0.2);
-    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.08);
-    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.12);
+    --shadow-glow: 0 0 40px hsl(218 100% 50% / 0.3);
+    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.5);
+    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.7);
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 10%;
-    --sidebar-primary: 345 100% 67%;
+    --sidebar-background: 218 25% 5%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 218 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 0 0% 20%;
-    --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 345 100% 67%;
+    --sidebar-accent: 218 25% 12%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 218 20% 15%;
+    --sidebar-ring: 218 100% 50%;
+  }
+
+  /* Forge Creators Theme - Pink/Coral with Yellow and Blue accents */
+  /* Primary Pink: ~#FF5682 → HSL(344, 100%, 67%) */
+  /* Yellow Accent: #F6C102 → HSL(47, 98%, 49%) */
+  /* Blue Accent: #1B4DBB → HSL(220, 78%, 42%) */
+  .theme-forge-creators {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+
+    --card: 344 20% 8%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 344 20% 8%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 344 100% 67%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 344 20% 15%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 344 15% 12%;
+    --muted-foreground: 344 20% 60%;
+
+    --accent: 47 98% 49%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 344 15% 18%;
+    --input: 344 15% 15%;
+    --ring: 344 100% 67%;
+
+    --forge-yellow: 47 98% 49%;
+    --forge-gold: 344 100% 67%;
+    --forge-orange: 220 78% 42%;
+    --forge-cream: 0 0% 100%;
+    --forge-charcoal: 0 0% 0%;
+
+    --glow-primary: 344 100% 67%;
+    --glow-secondary: 47 98% 49%;
+    --gradient-start: 344 100% 67%;
+    --gradient-end: 47 98% 49%;
+    --surface-elevated: 344 20% 10%;
+    --surface-glass: 344 20% 6%;
+
+    --shadow-glow: 0 0 40px hsl(344 100% 67% / 0.3);
+    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.5);
+    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.7);
+
+    --sidebar-background: 344 20% 5%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 344 100% 67%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 344 20% 12%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 344 15% 15%;
+    --sidebar-ring: 344 100% 67%;
   }
 }
 
