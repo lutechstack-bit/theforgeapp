@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, RotateCcw, Settings } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, RotateCcw, Loader2 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -33,7 +33,41 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   const [volume, setVolume] = useState(1);
   const [showControls, setShowControls] = useState(true);
   const [watchTime, setWatchTime] = useState(0);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Get signed URL for private videos
+  useEffect(() => {
+    const getSignedUrl = async () => {
+      setIsLoading(true);
+      
+      // Check if videoUrl is already a full URL or needs signing
+      if (videoUrl.startsWith('http')) {
+        setSignedUrl(videoUrl);
+        setIsLoading(false);
+        return;
+      }
+
+      // Get signed URL from learn-videos bucket
+      const { data, error } = await supabase.storage
+        .from('learn-videos')
+        .createSignedUrl(videoUrl, 3600); // 1 hour expiry
+
+      if (data?.signedUrl) {
+        setSignedUrl(data.signedUrl);
+      } else {
+        console.error('Failed to get signed URL:', error);
+        // Fallback to original URL
+        setSignedUrl(videoUrl);
+      }
+      setIsLoading(false);
+    };
+
+    if (videoUrl) {
+      getSignedUrl();
+    }
+  }, [videoUrl]);
 
   // Log access when video starts
   useEffect(() => {
@@ -191,6 +225,20 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     }, 3000);
   };
 
+  if (isLoading) {
+    return (
+      <div className={cn("relative bg-black rounded-2xl overflow-hidden flex items-center justify-center", className)}>
+        {thumbnailUrl && (
+          <img src={thumbnailUrl} alt={title} className="absolute inset-0 w-full h-full object-cover opacity-30" />
+        )}
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-10 w-10 text-primary animate-spin" />
+          <p className="text-white/70 text-sm">Loading secure video...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={containerRef}
@@ -204,7 +252,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
       {/* Video Element with DRM-like protections */}
       <video
         ref={videoRef}
-        src={videoUrl}
+        src={signedUrl || videoUrl}
         poster={thumbnailUrl}
         className="w-full h-full object-contain"
         onTimeUpdate={handleTimeUpdate}

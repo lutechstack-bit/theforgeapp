@@ -33,6 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, BookOpen, Sparkles, FileUp, Download, Play, Users } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { FileUpload } from '@/components/admin/FileUpload';
 
 interface LearnContentForm {
   title: string;
@@ -251,7 +252,7 @@ const AdminLearn: React.FC = () => {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Learn Content Management</h1>
-          <p className="text-muted-foreground">Manage video content, resources, and bonuses</p>
+          <p className="text-muted-foreground">Upload videos, manage content, and add bonus resources</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -264,11 +265,40 @@ const AdminLearn: React.FC = () => {
             <DialogHeader>
               <DialogTitle>{editingId ? 'Edit Content' : 'Create Content'}</DialogTitle>
               <DialogDescription>
-                {editingId ? 'Update the content details below' : 'Fill in the content details below'}
+                {editingId ? 'Update the content details below' : 'Upload video and fill in content details'}
               </DialogDescription>
             </DialogHeader>
             <ScrollArea className="max-h-[70vh] pr-4">
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Video Upload Section */}
+                <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 space-y-4">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2">
+                    <Play className="h-4 w-4 text-primary" />
+                    Video Upload
+                  </h3>
+                  
+                  <FileUpload
+                    bucket="learn-videos"
+                    accept="video/*"
+                    maxSizeMB={500}
+                    label="Video File"
+                    helperText="Supported formats: MP4, WebM, MOV. Max 500MB."
+                    currentUrl={form.video_url}
+                    onUploadComplete={(url) => setForm({ ...form, video_url: url })}
+                  />
+
+                  <FileUpload
+                    bucket="learn-thumbnails"
+                    accept="image/*"
+                    maxSizeMB={10}
+                    label="Thumbnail Image"
+                    helperText="Recommended: 16:9 aspect ratio, min 1280x720px"
+                    currentUrl={form.thumbnail_url}
+                    onUploadComplete={(url) => setForm({ ...form, thumbnail_url: url })}
+                  />
+                </div>
+
+                {/* Basic Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="title">Title *</Label>
@@ -361,30 +391,6 @@ const AdminLearn: React.FC = () => {
                   </Select>
                 </div>
 
-                <div>
-                  <Label htmlFor="thumbnail_url">Thumbnail URL</Label>
-                  <Input
-                    id="thumbnail_url"
-                    value={form.thumbnail_url}
-                    onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="video_url">Video URL *</Label>
-                  <Input
-                    id="video_url"
-                    value={form.video_url}
-                    onChange={(e) => setForm({ ...form, video_url: e.target.value })}
-                    placeholder="https://... (direct video file URL)"
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Use a direct video URL. For DRM protection, videos are served through our secure player.
-                  </p>
-                </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="duration_minutes">Duration (minutes)</Label>
@@ -408,7 +414,7 @@ const AdminLearn: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
                   <Switch
                     id="is_premium"
                     checked={form.is_premium}
@@ -420,7 +426,7 @@ const AdminLearn: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4">
+                <div className="flex justify-end gap-3 pt-4 border-t border-border">
                   <Button type="button" variant="outline" onClick={resetForm}>
                     Cancel
                   </Button>
@@ -454,7 +460,11 @@ const AdminLearn: React.FC = () => {
             <div className="text-center py-12 glass-card rounded-xl">
               <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">No content yet</h3>
-              <p className="text-muted-foreground mb-4">Create your first content in this section</p>
+              <p className="text-muted-foreground mb-4">Upload your first video to get started</p>
+              <Button onClick={() => { resetForm(); setForm({ ...initialForm, section_type: activeTab }); setIsDialogOpen(true); }}>
+                <Plus className="h-4 w-4 mr-2" />
+                Upload Video
+              </Button>
             </div>
           ) : (
             <div className="rounded-xl border border-border/50 overflow-hidden">
@@ -570,7 +580,7 @@ const AdminLearn: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Manage Bonus Resources</DialogTitle>
             <DialogDescription>
-              Add downloadable resources like PDFs, templates, and checklists
+              Upload downloadable resources like PDFs, templates, and checklists
             </DialogDescription>
           </DialogHeader>
 
@@ -615,6 +625,22 @@ const AdminLearn: React.FC = () => {
           <form onSubmit={handleResourceSubmit} className="space-y-4 border-t border-border pt-4">
             <h4 className="text-sm font-medium text-foreground">Add New Resource</h4>
             
+            <FileUpload
+              bucket="learn-resources"
+              accept=".pdf,.doc,.docx,.xlsx,.pptx,.zip"
+              maxSizeMB={50}
+              label="Upload Resource File"
+              helperText="PDF, Word, Excel, PowerPoint, or ZIP files. Max 50MB."
+              onUploadComplete={(url, path) => {
+                setResourceForm({ 
+                  ...resourceForm, 
+                  file_url: path,
+                  // Auto-detect file type
+                  file_type: path.split('.').pop() || 'other'
+                });
+              }}
+            />
+
             <div>
               <Label htmlFor="resource_title">Resource Title</Label>
               <Input
@@ -627,27 +653,13 @@ const AdminLearn: React.FC = () => {
             </div>
 
             <div>
-              <Label htmlFor="resource_description">Description</Label>
+              <Label htmlFor="resource_description">Description (optional)</Label>
               <Input
                 id="resource_description"
                 value={resourceForm.description}
                 onChange={(e) => setResourceForm({ ...resourceForm, description: e.target.value })}
                 placeholder="Brief description of the resource"
               />
-            </div>
-
-            <div>
-              <Label htmlFor="resource_file_url">File URL</Label>
-              <Input
-                id="resource_file_url"
-                value={resourceForm.file_url}
-                onChange={(e) => setResourceForm({ ...resourceForm, file_url: e.target.value })}
-                placeholder="Path in learn-resources bucket"
-                required
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Upload file to the learn-resources storage bucket first
-              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -686,7 +698,7 @@ const AdminLearn: React.FC = () => {
               <Button type="button" variant="outline" onClick={() => setIsResourceDialogOpen(false)}>
                 Close
               </Button>
-              <Button type="submit" disabled={saveResourceMutation.isPending}>
+              <Button type="submit" disabled={saveResourceMutation.isPending || !resourceForm.file_url}>
                 {saveResourceMutation.isPending ? 'Adding...' : 'Add Resource'}
               </Button>
             </div>
