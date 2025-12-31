@@ -4,8 +4,11 @@ import { Home, Users, BookOpen, Map, Calendar, Gift, Settings, Info, PanelLeftCl
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import forgeLogo from '@/assets/forge-logo.png';
 import forgeIcon from '@/assets/forge-icon.png';
+import forgeWritingLogo from '@/assets/forge-writing-logo.png';
+import forgeCreatorsLogo from '@/assets/forge-creators-logo.png';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const navItems = [
@@ -25,6 +28,21 @@ export const SideNav: React.FC = () => {
   const { collapsed, toggle } = useSidebar();
   const location = useLocation();
   const { profile } = useAuth();
+  const { cohortType } = useTheme();
+
+  // Get the appropriate logo based on cohort type
+  const getLogo = () => {
+    switch (cohortType) {
+      case 'FORGE_WRITING':
+        return forgeWritingLogo;
+      case 'FORGE_CREATORS':
+        return forgeCreatorsLogo;
+      default:
+        return forgeLogo;
+    }
+  };
+
+  const currentLogo = getLogo();
 
   const NavItem = ({ to, icon: Icon, label, isActive }: { to: string; icon: React.ElementType; label: string; isActive: boolean }) => {
     const content = (
@@ -82,7 +100,7 @@ export const SideNav: React.FC = () => {
     <TooltipProvider>
       <aside 
         className={cn(
-          "hidden md:flex flex-col fixed left-0 top-0 bottom-0 z-40 bg-sidebar transition-all duration-300 ease-in-out",
+          "hidden md:flex flex-col fixed left-0 top-0 bottom-0 z-40 bg-sidebar border-r border-sidebar-border transition-all duration-300 ease-in-out",
           collapsed ? "w-[72px]" : "w-64"
         )}
       >
@@ -93,9 +111,12 @@ export const SideNav: React.FC = () => {
         )}>
           <div className="flex items-center justify-center overflow-hidden">
             <img 
-              src={collapsed ? forgeIcon : forgeLogo} 
+              src={collapsed ? forgeIcon : currentLogo} 
               alt="Forge" 
-              className={cn("shrink-0 transition-all duration-300", collapsed ? "h-8 w-8" : "h-8")}
+              className={cn(
+                "shrink-0 transition-all duration-300 object-contain",
+                collapsed ? "h-8 w-8" : "h-10 max-w-[180px]"
+              )}
             />
           </div>
           
