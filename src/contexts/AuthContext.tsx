@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { calculateForgeMode } from '@/lib/forgeUtils';
 
 interface Profile {
   id: string;
@@ -20,16 +21,24 @@ interface Profile {
   specialty: string | null;
 }
 
+interface Edition {
+  id: string;
+  forge_start_date: string | null;
+  forge_end_date: string | null;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
+  edition: Edition | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   isFullAccess: boolean;
   isDuringForge: boolean;
+  forgeMode: 'PRE_FORGE' | 'DURING_FORGE' | 'POST_FORGE';
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,7 +47,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [edition, setEdition] = useState<Edition | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const fetchEdition = async (editionId: string) => {
+    const { data, error } = await supabase
+      .from('editions')
+      .select('id, forge_start_date, forge_end_date')
+      .eq('id', editionId)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching edition:', error);
+      return null;
+    }
+    return data as Edition;
+  };
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -54,10 +78,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return data as Profile;
   };
 
+  const fetchUserData = async (userId: string) => {
+    const profileData = await fetchProfile(userId);
+    setProfile(profileData);
+    
+    if (profileData?.edition_id) {
+      const editionData = await fetchEdition(profileData.edition_id);
+      setEdition(editionData);
+    } else {
+      setEdition(null);
+    }
+  };
+
   const refreshProfile = async () => {
     if (user) {
-      const profileData = await fetchProfile(user.id);
-      setProfile(profileData);
+      await fetchUserData(user.id);
     }
   };
 
@@ -69,10 +104,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (session?.user) {
           setTimeout(() => {
-            fetchProfile(session.user.id).then(setProfile);
+            fetchUserData(session.user.id);
           }, 0);
         } else {
           setProfile(null);
+          setEdition(null);
         }
         setLoading(false);
       }
@@ -83,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchProfile(session.user.id).then(setProfile);
+        fetchUserData(session.user.id);
       }
       setLoading(false);
     });
@@ -99,22 +135,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
+    setEdition(null);
   };
 
   const isFullAccess = profile?.unlock_level === 'FULL';
-  const isDuringForge = profile?.forge_mode === 'DURING_FORGE';
+  const forgeMode = calculateForgeMode(edition?.forge_start_date, edition?.forge_end_date);
+  const isDuringForge = forgeMode === 'DURING_FORGE';
 
   return (
     <AuthContext.Provider value={{
       user,
       session,
       profile,
+      edition,
       loading,
       signIn,
       signOut,
       refreshProfile,
       isFullAccess,
       isDuringForge,
+      forgeMode,
     }}>
       {children}
     </AuthContext.Provider>

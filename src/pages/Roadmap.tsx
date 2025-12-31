@@ -16,14 +16,11 @@ import { Button } from '@/components/ui/button';
 type RoadmapDay = Database['public']['Tables']['roadmap_days']['Row'];
 
 const Roadmap: React.FC = () => {
-  const { profile } = useAuth();
+  const { profile, edition, forgeMode } = useAuth();
   const { cohortName } = useTheme();
   const timelineRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(400);
   const [scrollProgress, setScrollProgress] = useState(0);
-
-  // Determine forge mode from profile
-  const forgeMode = profile?.forge_mode || 'PRE_FORGE';
 
   // Fetch roadmap days for user's edition
   const { data: roadmapDays, isLoading } = useQuery({
@@ -37,22 +34,6 @@ const Roadmap: React.FC = () => {
         .order('day_number', { ascending: true });
       if (error) throw error;
       return data as RoadmapDay[];
-    },
-    enabled: !!profile?.edition_id
-  });
-
-  // Fetch edition for forge start date
-  const { data: edition } = useQuery({
-    queryKey: ['edition', profile?.edition_id],
-    queryFn: async () => {
-      if (!profile?.edition_id) return null;
-      const { data, error } = await supabase
-        .from('editions')
-        .select('*')
-        .eq('id', profile.edition_id)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
     },
     enabled: !!profile?.edition_id
   });
