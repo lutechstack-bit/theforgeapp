@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, BookOpen, Sparkles, FileUp, Download, Play, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, BookOpen, Sparkles, FileUp, Download, Play, Users, AlertTriangle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileUpload } from '@/components/admin/FileUpload';
 
@@ -524,7 +524,15 @@ const AdminLearn: React.FC = () => {
                             </div>
                           )}
                           <div>
-                            <p className="font-medium text-foreground">{item.title}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-foreground">{item.title}</p>
+                              {!item.video_url && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-destructive/10 text-destructive text-xs font-medium">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  No video
+                                </span>
+                              )}
+                            </div>
                             <p className="text-xs text-muted-foreground truncate max-w-[200px]">
                               {item.description}
                             </p>
