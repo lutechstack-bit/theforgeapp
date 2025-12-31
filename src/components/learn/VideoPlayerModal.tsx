@@ -63,30 +63,30 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-[95vw] max-h-[95vh] p-0 gap-0 overflow-hidden">
-        <DialogHeader className="p-4 pb-2 flex flex-row items-center justify-between">
-          <DialogTitle className="text-lg font-bold truncate pr-8">
+      <DialogContent className="max-w-5xl w-[95vw] max-h-[95vh] p-0 gap-0 overflow-hidden bg-background border border-border shadow-xl">
+        <DialogHeader className="p-4 pb-2 flex flex-row items-center justify-between bg-background border-b border-border">
+          <DialogTitle className="text-lg font-bold truncate pr-8 text-foreground">
             {content.title}
           </DialogTitle>
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-4 top-4"
+            className="absolute right-4 top-4 hover:bg-muted"
             onClick={() => onOpenChange(false)}
           >
             <X className="h-4 w-4" />
           </Button>
         </DialogHeader>
 
-        <div className="flex flex-col lg:flex-row">
+        <div className="flex flex-col lg:flex-row bg-background">
           {/* Video Player */}
-          <div className="flex-1 bg-black">
+          <div className="flex-1 bg-black min-h-0">
             <SecureVideoPlayer
               videoUrl={content.video_url}
               contentId={content.id}
               title={content.title}
               thumbnailUrl={content.thumbnail_url}
-              className="aspect-video"
+              className="aspect-video w-full"
             />
           </div>
 
