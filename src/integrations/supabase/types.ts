@@ -14,26 +14,67 @@ export type Database = {
   }
   public: {
     Tables: {
+      city_groups: {
+        Row: {
+          city_key: string
+          created_at: string
+          id: string
+          is_main: boolean
+          name: string
+        }
+        Insert: {
+          city_key: string
+          created_at?: string
+          id?: string
+          is_main?: boolean
+          name: string
+        }
+        Update: {
+          city_key?: string
+          created_at?: string
+          id?: string
+          is_main?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       community_messages: {
         Row: {
           content: string
           created_at: string
+          group_id: string
           id: string
+          image_url: string | null
+          is_announcement: boolean
           user_id: string
         }
         Insert: {
           content: string
           created_at?: string
+          group_id: string
           id?: string
+          image_url?: string | null
+          is_announcement?: boolean
           user_id: string
         }
         Update: {
           content?: string
           created_at?: string
+          group_id?: string
           id?: string
+          image_url?: string | null
+          is_announcement?: boolean
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "community_messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "city_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       editions: {
         Row: {
@@ -226,6 +267,38 @@ export type Database = {
           video_url?: string | null
         }
         Relationships: []
+      }
+      message_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "community_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
