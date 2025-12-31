@@ -31,15 +31,36 @@ export const SideNav: React.FC = () => {
       <NavLink
         to={to}
         className={cn(
-          "flex items-center gap-3 rounded-xl transition-all duration-200 text-[15px] font-medium",
+          "group relative flex items-center gap-3.5 rounded-xl transition-all duration-300 ease-out text-[15px] font-medium",
           collapsed ? "justify-center p-3" : "px-4 py-3",
           isActive
-            ? "bg-sidebar-accent text-sidebar-foreground"
-            : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            ? "bg-gradient-to-r from-primary/20 to-primary/10 text-primary shadow-[0_0_20px_-5px_hsl(var(--primary)/0.4)]"
+            : "text-sidebar-foreground/50 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
         )}
       >
-        <Icon className="shrink-0 h-5 w-5" />
-        {!collapsed && <span>{label}</span>}
+        {/* Active indicator bar */}
+        {isActive && (
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-primary shadow-[0_0_8px_2px_hsl(var(--primary)/0.5)]" />
+        )}
+        
+        {/* Icon container with premium glow effect */}
+        <span className={cn(
+          "relative shrink-0 flex items-center justify-center transition-all duration-300",
+          isActive && "drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]"
+        )}>
+          <Icon className={cn(
+            "h-[22px] w-[22px] transition-transform duration-300 ease-out",
+            "group-hover:scale-110",
+            isActive && "text-primary"
+          )} strokeWidth={isActive ? 2.2 : 1.8} />
+        </span>
+        
+        {!collapsed && (
+          <span className={cn(
+            "transition-all duration-300",
+            isActive && "font-semibold"
+          )}>{label}</span>
+        )}
       </NavLink>
     );
 
@@ -47,7 +68,7 @@ export const SideNav: React.FC = () => {
       return (
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>{content}</TooltipTrigger>
-          <TooltipContent side="right" className="bg-popover text-popover-foreground">
+          <TooltipContent side="right" sideOffset={12} className="bg-popover/95 backdrop-blur-sm text-popover-foreground border-border/50 shadow-xl">
             {label}
           </TooltipContent>
         </Tooltip>
