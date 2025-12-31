@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Circle, Lock, MapPin, Clock, Calendar, ChevronRight, Loader2 } from 'lucide-react';
+import { CheckCircle2, Circle, Lock, MapPin, Clock, Calendar, ChevronRight, Loader2, Compass, Flag, Anchor } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -13,6 +13,8 @@ type RoadmapDay = Database['public']['Tables']['roadmap_days']['Row'];
 const Roadmap: React.FC = () => {
   const { isDuringForge, profile } = useAuth();
   const { cohortName } = useTheme();
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   // Fetch roadmap days for user's edition
   const { data: roadmapDays, isLoading } = useQuery({
@@ -67,6 +69,30 @@ const Roadmap: React.FC = () => {
 
   const completedCount = roadmapDays?.filter(d => getDayStatus(d) === 'completed').length || 0;
   const totalCount = roadmapDays?.length || 0;
+
+  // Scroll progress tracking for path animation
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!timelineRef.current) return;
+      
+      const rect = timelineRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const elementTop = rect.top;
+      const elementHeight = rect.height;
+      
+      // Calculate how much of the timeline is scrolled through
+      const scrolled = viewportHeight - elementTop;
+      const totalScrollable = elementHeight + viewportHeight;
+      const progress = Math.max(0, Math.min(1, scrolled / totalScrollable));
+      
+      setScrollProgress(progress);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [roadmapDays]);
 
   if (isLoading) {
     return (
@@ -130,25 +156,116 @@ const Roadmap: React.FC = () => {
         </div>
       </div>
 
-      {/* Timeline */}
-      <div className="relative">
-        {/* Line */}
-        <div className="absolute left-[15px] top-0 bottom-0 w-0.5 bg-border" />
+      {/* Timeline with Treasure Map Path */}
+      <div ref={timelineRef} className="relative">
+        {/* SVG Dotted Path - Treasure Map Style */}
+        <svg
+          className="absolute left-[14px] top-0 w-16 h-full pointer-events-none overflow-visible"
+          style={{ zIndex: 0 }}
+        >
+          <defs>
+            <linearGradient id="pathGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0.7" />
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
 
-        <div className="space-y-4">
+          {/* Background dotted path (static) */}
+          {roadmapDays.map((_, index) => {
+            const yStart = index === 0 ? 20 : index * 140 - 10;
+            const yEnd = (index + 1) * 140 - 30;
+            const isEven = index % 2 === 0;
+            
+            // Create winding bezier curve
+            const controlX1 = isEven ? 25 : -15;
+            const controlX2 = isEven ? -10 : 20;
+            
+            return (
+              <g key={index}>
+                {/* Static background path */}
+                <path
+                  d={`M 0 ${yStart} 
+                      C ${controlX1} ${yStart + 30}, ${controlX2} ${yEnd - 30}, 0 ${yEnd}`}
+                  fill="none"
+                  stroke="hsl(var(--border))"
+                  strokeWidth="3"
+                  strokeDasharray="6 10"
+                  strokeLinecap="round"
+                  opacity="0.4"
+                />
+                
+                {/* Animated progress path */}
+                <path
+                  d={`M 0 ${yStart} 
+                      C ${controlX1} ${yStart + 30}, ${controlX2} ${yEnd - 30}, 0 ${yEnd}`}
+                  fill="none"
+                  stroke="url(#pathGradient)"
+                  strokeWidth="3"
+                  strokeDasharray="6 10"
+                  strokeLinecap="round"
+                  filter="url(#glow)"
+                  style={{
+                    opacity: scrollProgress > (index / roadmapDays.length) ? 1 : 0.2,
+                    transition: 'opacity 0.5s ease-out'
+                  }}
+                />
+              </g>
+            );
+          })}
+        </svg>
+
+        <div className="space-y-6">
           {roadmapDays.map((day, index) => {
             const status = getDayStatus(day);
             const checklist = (day.checklist as string[]) || [];
+            const isLast = index === roadmapDays.length - 1;
 
             return (
               <div
                 key={day.id}
-                className="relative pl-12 animate-slide-up"
+                className="relative pl-14 animate-slide-up"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                {/* Status Icon */}
-                <div className="absolute left-0 top-1 bg-background p-0.5">
-                  {getStatusIcon(status)}
+                {/* Waypoint Marker */}
+                <div className="absolute left-0 top-2 z-10">
+                  <div className={`
+                    relative w-8 h-8 rounded-full flex items-center justify-center
+                    transition-all duration-300
+                    ${status === 'completed' 
+                      ? 'bg-primary/20 border-2 border-primary' 
+                      : status === 'current'
+                      ? 'bg-primary shadow-[0_0_20px_hsl(var(--primary)/0.5)] border-2 border-primary'
+                      : 'bg-card border-2 border-border'
+                    }
+                  `}>
+                    {status === 'completed' && (
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                    )}
+                    {status === 'current' && (
+                      <div className="relative">
+                        <Compass className="h-4 w-4 text-primary-foreground animate-pulse" />
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-ping" />
+                      </div>
+                    )}
+                    {status === 'upcoming' && (
+                      <Circle className="h-3 w-3 text-muted-foreground" />
+                    )}
+                    {status === 'locked' && (
+                      <Lock className="h-3 w-3 text-muted-foreground" />
+                    )}
+                  </div>
+                  
+                  {/* Destination flag for last item */}
+                  {isLast && (
+                    <Flag className="absolute -top-2 -right-2 h-4 w-4 text-primary" />
+                  )}
                 </div>
 
                 {/* Card */}
