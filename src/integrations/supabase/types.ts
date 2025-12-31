@@ -475,8 +475,11 @@ export type Database = {
           key_learnings: string[] | null
           location: string | null
           mentors: string[] | null
+          objective: string | null
           reveal_days_before: number | null
+          schedule: Json | null
           teaser_text: string | null
+          theme_name: string | null
           title: string
           updated_at: string
         }
@@ -496,8 +499,11 @@ export type Database = {
           key_learnings?: string[] | null
           location?: string | null
           mentors?: string[] | null
+          objective?: string | null
           reveal_days_before?: number | null
+          schedule?: Json | null
           teaser_text?: string | null
+          theme_name?: string | null
           title: string
           updated_at?: string
         }
@@ -517,8 +523,11 @@ export type Database = {
           key_learnings?: string[] | null
           location?: string | null
           mentors?: string[] | null
+          objective?: string | null
           reveal_days_before?: number | null
+          schedule?: Json | null
           teaser_text?: string | null
+          theme_name?: string | null
           title?: string
           updated_at?: string
         }

@@ -1,0 +1,256 @@
+import React from 'react';
+import { format } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { 
+  Clock, MapPin, Users, Lightbulb, Zap, Calendar,
+  CheckCircle2, Target, ChevronRight
+} from 'lucide-react';
+import { getDayIcon, getScheduleIcon } from '@/lib/roadmapIcons';
+import type { CohortType } from '@/lib/roadmapIcons';
+
+interface ScheduleItem {
+  time: string;
+  activity: string;
+  icon?: string;
+}
+
+interface DayDetailModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  day: {
+    id: string;
+    day_number: number;
+    title: string;
+    description?: string | null;
+    date?: string | null;
+    location?: string | null;
+    call_time?: string | null;
+    checklist?: string[];
+    mentors?: string[];
+    key_learnings?: string[];
+    activity_type?: string | null;
+    duration_hours?: number | null;
+    intensity_level?: string | null;
+    theme_name?: string | null;
+    objective?: string | null;
+    schedule?: ScheduleItem[];
+  };
+  status: 'completed' | 'current' | 'upcoming' | 'locked';
+  cohortType: CohortType;
+  forgeMode: 'PRE_FORGE' | 'DURING_FORGE' | 'POST_FORGE';
+}
+
+const DayDetailModal: React.FC<DayDetailModalProps> = ({
+  isOpen,
+  onClose,
+  day,
+  status,
+  cohortType,
+  forgeMode,
+}) => {
+  const getIntensityBadge = () => {
+    const level = day.intensity_level || 'medium';
+    const config = {
+      low: { label: 'Light Day', variant: 'secondary' as const },
+      medium: { label: 'Moderate', variant: 'default' as const },
+      high: { label: 'Intensive', variant: 'destructive' as const },
+      intense: { label: 'Full Power', variant: 'destructive' as const },
+    };
+    return config[level as keyof typeof config] || config.medium;
+  };
+
+  const schedule = day.schedule || [];
+  const intensityConfig = getIntensityBadge();
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-lg max-h-[90vh] p-0 overflow-hidden glass-premium border-primary/20">
+        {/* Header with gradient */}
+        <div className="relative p-6 pb-4 gradient-subtle border-b border-border/30">
+          {/* Status badge */}
+          <div className="flex items-center gap-2 mb-3">
+            <Badge 
+              variant={status === 'completed' ? 'default' : status === 'current' ? 'default' : 'secondary'}
+              className={status === 'current' ? 'animate-pulse-soft' : ''}
+            >
+              {day.day_number === 0 ? 'Pre-Forge' : `Day ${day.day_number}`}
+            </Badge>
+            {status === 'current' && (
+              <span className="flex items-center gap-1 text-xs text-primary font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                LIVE NOW
+              </span>
+            )}
+            {status === 'completed' && (
+              <span className="flex items-center gap-1 text-xs text-primary">
+                <CheckCircle2 className="w-3 h-3" />
+                Completed
+              </span>
+            )}
+          </div>
+
+          {/* Theme name (movie name) */}
+          {day.theme_name && (
+            <p className="text-xs text-primary/80 font-medium mb-1 tracking-wider uppercase">
+              {day.theme_name}
+            </p>
+          )}
+
+          {/* Title with icon */}
+          <DialogHeader className="p-0">
+            <DialogTitle className="flex items-center gap-3 text-xl">
+              <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-glow text-primary-foreground">
+                {getDayIcon(cohortType, day.activity_type, day.day_number, 'md')}
+              </div>
+              <span>{day.title}</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Objective */}
+          {day.objective && (
+            <p className="mt-3 text-sm text-muted-foreground flex items-start gap-2">
+              <Target className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+              {day.objective}
+            </p>
+          )}
+
+          {/* Quick info row */}
+          <div className="flex flex-wrap gap-3 mt-4 text-xs text-muted-foreground">
+            {day.date && (
+              <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-secondary/50">
+                <Calendar className="w-3.5 h-3.5" />
+                {format(new Date(day.date), 'EEEE, MMMM d')}
+              </span>
+            )}
+            {day.call_time && (
+              <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-secondary/50">
+                <Clock className="w-3.5 h-3.5" />
+                {day.call_time}
+              </span>
+            )}
+            {day.location && (
+              <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-secondary/50">
+                <MapPin className="w-3.5 h-3.5" />
+                {day.location}
+              </span>
+            )}
+            {day.intensity_level && (
+              <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-secondary/50">
+                <Zap className="w-3.5 h-3.5" />
+                {intensityConfig.label}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Scrollable content */}
+        <ScrollArea className="max-h-[50vh]">
+          <div className="p-6 space-y-6">
+            {/* Description */}
+            {day.description && (
+              <div>
+                <p className="text-sm text-muted-foreground leading-relaxed">{day.description}</p>
+              </div>
+            )}
+
+            {/* Schedule Timeline */}
+            {schedule.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-primary" />
+                  Day Schedule
+                </h4>
+                <div className="relative">
+                  {/* Timeline line */}
+                  <div className="absolute left-5 top-2 bottom-2 w-0.5 bg-border" />
+                  
+                  <div className="space-y-4">
+                    {schedule.map((item, index) => (
+                      <div key={index} className="relative flex items-start gap-4 pl-2">
+                        {/* Timeline dot */}
+                        <div className="w-6 h-6 rounded-full bg-secondary border-2 border-border flex items-center justify-center z-10 text-muted-foreground">
+                          {getScheduleIcon(item.activity, 'sm')}
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="flex-1 pb-2">
+                          <span className="text-xs text-primary font-semibold">{item.time}</span>
+                          <p className="text-sm text-foreground">{item.activity}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Mentors */}
+            {day.mentors && day.mentors.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Users className="w-4 h-4 text-primary" />
+                  Mentors
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {day.mentors.map((mentor, i) => (
+                    <span 
+                      key={i} 
+                      className="px-3 py-1.5 rounded-full text-sm bg-primary/10 text-foreground border border-primary/20"
+                    >
+                      {mentor}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Key Learnings */}
+            {day.key_learnings && day.key_learnings.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4 text-accent" />
+                  Key Learnings
+                </h4>
+                <ul className="space-y-2">
+                  {day.key_learnings.map((learning, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <ChevronRight className="w-4 h-4 mt-0.5 text-accent flex-shrink-0" />
+                      <span>{learning}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Checklist for current day */}
+            {status === 'current' && day.checklist && day.checklist.length > 0 && forgeMode === 'DURING_FORGE' && (
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Target className="w-4 h-4 text-primary" />
+                  Today's Tasks
+                </h4>
+                <ul className="space-y-2">
+                  {day.checklist.map((task, i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="w-4 h-4 rounded border border-border flex-shrink-0" />
+                      <span>{task}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default DayDetailModal;
