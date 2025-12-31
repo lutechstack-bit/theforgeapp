@@ -1,9 +1,18 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, RotateCcw, Loader2, AlertCircle } from 'lucide-react';
-import { Slider } from '@/components/ui/slider';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
+import { 
+  Play, Pause, Volume2, VolumeX, Maximize, Minimize, 
+  SkipBack, SkipForward, Settings, Loader2, AlertCircle
+} from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface SecureVideoPlayerProps {
   videoUrl: string;
@@ -11,6 +20,7 @@ interface SecureVideoPlayerProps {
   title: string;
   thumbnailUrl?: string;
   onClose?: () => void;
+  onVideoEnd?: () => void;
   className?: string;
 }
 
@@ -20,106 +30,127 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   title,
   thumbnailUrl,
   onClose,
+  onVideoEnd,
   className,
 }) => {
   const { user } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+  const accessLogIdRef = useRef<string | null>(null);
+  const watchTimeRef = useRef<number>(0);
+
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [watchTime, setWatchTime] = useState(0);
-  const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+  const [error, setError] = useState<string | null>(null);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
 
-  // Get signed URL for private videos
+  const playbackSpeeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+  // Generate signed URL for private videos
   useEffect(() => {
     const getSignedUrl = async () => {
       if (!videoUrl) {
+        setError('No video URL provided');
         setIsLoading(false);
         return;
       }
-      
-      setIsLoading(true);
-      
-      // Check if videoUrl is already a signed URL or public URL from thumbnails
-      if (videoUrl.startsWith('http')) {
-        // If it's a Supabase storage URL for learn-videos, we need to re-sign it
-        if (videoUrl.includes('learn-videos') && !videoUrl.includes('token=')) {
-          // Extract the path from the public URL
-          const pathMatch = videoUrl.match(/learn-videos\/(.+)$/);
-          if (pathMatch) {
-            const { data, error } = await supabase.storage
-              .from('learn-videos')
-              .createSignedUrl(pathMatch[1], 3600);
-            
-            if (data?.signedUrl) {
-              setSignedUrl(data.signedUrl);
-              setIsLoading(false);
-              return;
+
+      try {
+        // If it's already a full URL (http/https), use it directly
+        if (videoUrl.startsWith('http://') || videoUrl.startsWith('https://')) {
+          // If it's a Supabase storage URL for learn-videos, we need to re-sign it
+          if (videoUrl.includes('learn-videos') && !videoUrl.includes('token=')) {
+            const pathMatch = videoUrl.match(/learn-videos\/(.+)$/);
+            if (pathMatch) {
+              const { data, error: signError } = await supabase.storage
+                .from('learn-videos')
+                .createSignedUrl(pathMatch[1], 3600);
+              
+              if (data?.signedUrl) {
+                setSignedUrl(data.signedUrl);
+                setIsLoading(false);
+                return;
+              }
             }
           }
+          setSignedUrl(videoUrl);
+          setIsLoading(false);
+          return;
         }
-        // For other http URLs, use directly
-        setSignedUrl(videoUrl);
-        setIsLoading(false);
-        return;
-      }
 
-      // It's a path - get signed URL from learn-videos bucket
-      const { data, error } = await supabase.storage
-        .from('learn-videos')
-        .createSignedUrl(videoUrl, 3600); // 1 hour expiry
+        // Otherwise, it's a storage path - get signed URL
+        const { data, error: signError } = await supabase.storage
+          .from('learn-videos')
+          .createSignedUrl(videoUrl, 3600); // 1 hour expiry
 
-      if (data?.signedUrl) {
+        if (signError) {
+          console.error('Error creating signed URL:', signError);
+          setError('Failed to load video. Please try again.');
+          setIsLoading(false);
+          return;
+        }
+
         setSignedUrl(data.signedUrl);
-      } else {
-        console.error('Failed to get signed URL:', error);
-        setSignedUrl(null);
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Error getting signed URL:', err);
+        setError('Failed to load video');
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     getSignedUrl();
   }, [videoUrl]);
 
-  // Log access when video starts
+  // Log video access
   useEffect(() => {
-    if (user && contentId) {
-      const logAccess = async () => {
-        await supabase.from('video_access_logs').insert({
-          user_id: user.id,
-          learn_content_id: contentId,
-          user_agent: navigator.userAgent,
-        });
-      };
-      logAccess();
-    }
+    const logAccess = async () => {
+      if (!user || !contentId) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('video_access_logs')
+          .insert({
+            user_id: user.id,
+            learn_content_id: contentId,
+            user_agent: navigator.userAgent,
+          })
+          .select('id')
+          .single();
+
+        if (!error && data) {
+          accessLogIdRef.current = data.id;
+        }
+      } catch (err) {
+        console.error('Failed to log video access:', err);
+      }
+    };
+
+    logAccess();
   }, [user, contentId]);
 
-  // Update watch time periodically
+  // Update watch duration periodically
   useEffect(() => {
     const interval = setInterval(() => {
-      if (isPlaying && user && contentId) {
-        setWatchTime((prev) => prev + 5);
-        // Update the watch duration in the log
+      if (accessLogIdRef.current && watchTimeRef.current > 0) {
         supabase
           .from('video_access_logs')
-          .update({ watch_duration_seconds: watchTime + 5 })
-          .eq('user_id', user.id)
-          .eq('learn_content_id', contentId)
-          .order('accessed_at', { ascending: false })
-          .limit(1);
+          .update({ watch_duration_seconds: Math.floor(watchTimeRef.current) })
+          .eq('id', accessLogIdRef.current)
+          .then();
       }
-    }, 5000);
+    }, 10000);
 
     return () => clearInterval(interval);
-  }, [isPlaying, user, contentId, watchTime]);
+  }, []);
 
   // Prevent right-click context menu
   useEffect(() => {
@@ -140,25 +171,53 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     };
   }, []);
 
-  // Prevent keyboard shortcuts for downloading
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Prevent Ctrl+S, Ctrl+Shift+S, Ctrl+U
-      if (
-        (e.ctrlKey && e.key === 's') ||
-        (e.ctrlKey && e.shiftKey && e.key === 's') ||
-        (e.ctrlKey && e.key === 'u')
-      ) {
+      if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyM', 'KeyF'].includes(e.code)) {
         e.preventDefault();
-        return false;
+      }
+
+      switch (e.code) {
+        case 'Space':
+          handlePlayPause();
+          break;
+        case 'ArrowLeft':
+          handleSkipBackward();
+          break;
+        case 'ArrowRight':
+          handleSkipForward();
+          break;
+        case 'ArrowUp':
+          handleVolumeChange([Math.min(1, volume + 0.1)]);
+          break;
+        case 'ArrowDown':
+          handleVolumeChange([Math.max(0, volume - 0.1)]);
+          break;
+        case 'KeyM':
+          toggleMute();
+          break;
+        case 'KeyF':
+          toggleFullscreen();
+          break;
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [volume, isPlaying]);
+
+  // Handle fullscreen change
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  const handlePlayPause = () => {
+  const handlePlayPause = useCallback(() => {
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
@@ -167,64 +226,63 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
       }
       setIsPlaying(!isPlaying);
     }
-  };
+  }, [isPlaying]);
 
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
-    }
-  };
-
-  const handleLoadedMetadata = () => {
-    if (videoRef.current) {
-      setDuration(videoRef.current.duration);
-    }
-  };
-
-  const handleSeek = (value: number[]) => {
+  const handleSeek = useCallback((value: number[]) => {
     if (videoRef.current) {
       videoRef.current.currentTime = value[0];
       setCurrentTime(value[0]);
     }
-  };
+  }, []);
 
-  const handleVolumeChange = (value: number[]) => {
+  const handleVolumeChange = useCallback((value: number[]) => {
     if (videoRef.current) {
       const newVolume = value[0];
       videoRef.current.volume = newVolume;
       setVolume(newVolume);
       setIsMuted(newVolume === 0);
     }
-  };
+  }, []);
 
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     if (videoRef.current) {
       videoRef.current.muted = !isMuted;
       setIsMuted(!isMuted);
     }
-  };
+  }, [isMuted]);
 
-  const toggleFullscreen = async () => {
-    if (!containerRef.current) return;
-
-    if (!isFullscreen) {
-      if (containerRef.current.requestFullscreen) {
-        await containerRef.current.requestFullscreen();
-      }
-    } else {
-      if (document.exitFullscreen) {
-        await document.exitFullscreen();
+  const toggleFullscreen = useCallback(() => {
+    if (containerRef.current) {
+      if (!document.fullscreenElement) {
+        containerRef.current.requestFullscreen();
+      } else {
+        document.exitFullscreen();
       }
     }
-    setIsFullscreen(!isFullscreen);
-  };
+  }, []);
 
-  const handleRestart = () => {
+  const handleSkipForward = useCallback(() => {
     if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-      setCurrentTime(0);
+      videoRef.current.currentTime = Math.min(duration, currentTime + 10);
     }
-  };
+  }, [currentTime, duration]);
+
+  const handleSkipBackward = useCallback(() => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.max(0, currentTime - 10);
+    }
+  }, [currentTime]);
+
+  const handlePlaybackSpeedChange = useCallback((speed: number) => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = speed;
+      setPlaybackSpeed(speed);
+    }
+  }, []);
+
+  const handleDoubleClick = useCallback(() => {
+    toggleFullscreen();
+  }, [toggleFullscreen]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -232,7 +290,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleMouseMove = () => {
+  const handleMouseMove = useCallback(() => {
     setShowControls(true);
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current);
@@ -242,165 +300,241 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
         setShowControls(false);
       }
     }, 3000);
+  }, [isPlaying]);
+
+  const handleVideoError = () => {
+    setError('Video format not supported. Please ensure the video is in MP4 (H.264) or WebM format.');
+    setIsLoading(false);
   };
 
-  if (isLoading) {
+  // Loading state
+  if (isLoading && !signedUrl) {
     return (
       <div className={cn("relative bg-black rounded-2xl overflow-hidden flex items-center justify-center aspect-video", className)}>
         {thumbnailUrl && (
           <img src={thumbnailUrl} alt={title} className="absolute inset-0 w-full h-full object-cover opacity-30" />
         )}
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-10 w-10 text-primary animate-spin" />
-          <p className="text-white/70 text-sm">Loading secure video...</p>
+        <div className="relative z-10 flex flex-col items-center gap-3">
+          <Loader2 className="w-12 h-12 text-primary animate-spin" />
+          <span className="text-white/70 text-sm">Loading video...</span>
         </div>
       </div>
     );
   }
 
-  if (!signedUrl) {
+  // Error state
+  if (error || !signedUrl) {
     return (
       <div className={cn("relative bg-black rounded-2xl overflow-hidden flex items-center justify-center aspect-video", className)}>
         {thumbnailUrl && (
           <img src={thumbnailUrl} alt={title} className="absolute inset-0 w-full h-full object-cover opacity-30" />
         )}
-        <div className="flex flex-col items-center gap-3 text-center p-4">
-          <AlertCircle className="h-10 w-10 text-destructive" />
-          <p className="text-white/70 text-sm">Video not available or failed to load</p>
+        <div className="text-center p-6 max-w-md relative z-10">
+          <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-3" />
+          <div className="text-white text-lg font-medium mb-2">Unable to play video</div>
+          <p className="text-white/60 text-sm">{error || 'Video not available or failed to load'}</p>
+          <p className="text-white/40 text-xs mt-3">
+            Tip: MP4 (H.264 video + AAC audio) works best across all devices.
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div
+    <div 
       ref={containerRef}
       className={cn(
-        "relative bg-black rounded-2xl overflow-hidden group select-none",
+        "relative bg-black rounded-2xl overflow-hidden select-none group aspect-video",
         className
       )}
       onMouseMove={handleMouseMove}
       onMouseLeave={() => isPlaying && setShowControls(false)}
+      onDoubleClick={handleDoubleClick}
     >
-      {/* Video Element with DRM-like protections */}
+      {/* Video Element */}
       <video
         ref={videoRef}
-        src={signedUrl || videoUrl}
+        src={signedUrl}
         poster={thumbnailUrl}
         className="w-full h-full object-contain"
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-        onEnded={() => setIsPlaying(false)}
         controlsList="nodownload noplaybackrate"
         disablePictureInPicture
         playsInline
+        onLoadedMetadata={(e) => {
+          setDuration(e.currentTarget.duration);
+          setIsLoading(false);
+        }}
+        onTimeUpdate={(e) => {
+          setCurrentTime(e.currentTarget.currentTime);
+          watchTimeRef.current = e.currentTarget.currentTime;
+        }}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onEnded={() => {
+          setIsPlaying(false);
+          onVideoEnd?.();
+        }}
+        onError={handleVideoError}
+        onWaiting={() => setIsLoading(true)}
+        onCanPlay={() => setIsLoading(false)}
         onClick={handlePlayPause}
       />
 
-      {/* Watermark overlay */}
-      <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-10">
-        <div className="text-white text-2xl font-bold transform rotate-[-30deg]">
-          BFP FORGE
+      {/* Loading Overlay */}
+      {isLoading && signedUrl && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+          <Loader2 className="w-12 h-12 text-primary animate-spin" />
         </div>
-      </div>
+      )}
 
-      {/* Custom Controls */}
-      <div
+      {/* Play/Pause Overlay Button */}
+      {!isPlaying && !isLoading && (
+        <button
+          onClick={handlePlayPause}
+          className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors cursor-pointer"
+        >
+          <div className="w-20 h-20 rounded-full bg-primary/90 flex items-center justify-center shadow-[0_0_40px_hsl(var(--primary)/0.5)] transform hover:scale-105 transition-transform">
+            <Play className="w-10 h-10 text-primary-foreground ml-1" fill="currentColor" />
+          </div>
+        </button>
+      )}
+
+      {/* Title Overlay */}
+      <div 
         className={cn(
-          "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 transition-opacity duration-300",
+          "absolute top-0 left-0 right-0 bg-gradient-to-b from-black/70 to-transparent p-4 transition-opacity duration-300",
           showControls ? "opacity-100" : "opacity-0"
         )}
       >
+        <h3 className="text-white font-semibold text-lg truncate">{title}</h3>
+      </div>
+
+      {/* Custom Controls */}
+      <div 
+        className={cn(
+          "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 pt-12 transition-opacity duration-300",
+          showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+      >
         {/* Progress Bar */}
-        <div className="mb-4">
+        <div className="mb-3">
           <Slider
             value={[currentTime]}
+            min={0}
             max={duration || 100}
             step={0.1}
             onValueChange={handleSeek}
-            className="cursor-pointer"
+            className="cursor-pointer [&>span:first-child]:h-1.5 [&>span:first-child]:bg-white/30 [&_[role=slider]]:bg-primary [&_[role=slider]]:w-4 [&_[role=slider]]:h-4 [&_[role=slider]]:border-0 [&>span:first-child_>span]:bg-primary"
           />
         </div>
 
         {/* Control Buttons */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
+          <div className="flex items-center gap-2">
+            {/* Play/Pause */}
+            <button 
               onClick={handlePlayPause}
-              className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+              className="p-2 hover:bg-white/20 rounded-full transition-colors"
             >
               {isPlaying ? (
-                <Pause className="h-5 w-5 text-white" />
+                <Pause className="w-6 h-6 text-white" fill="currentColor" />
               ) : (
-                <Play className="h-5 w-5 text-white ml-0.5" />
+                <Play className="w-6 h-6 text-white" fill="currentColor" />
               )}
             </button>
 
-            <button
-              onClick={handleRestart}
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            {/* Skip Backward */}
+            <button 
+              onClick={handleSkipBackward}
+              className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              title="Rewind 10s (←)"
             >
-              <RotateCcw className="h-4 w-4 text-white" />
+              <SkipBack className="w-5 h-5 text-white" />
             </button>
 
-            <div className="flex items-center gap-2">
-              <button
+            {/* Skip Forward */}
+            <button 
+              onClick={handleSkipForward}
+              className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              title="Forward 10s (→)"
+            >
+              <SkipForward className="w-5 h-5 text-white" />
+            </button>
+
+            {/* Volume */}
+            <div className="flex items-center gap-2 group/volume">
+              <button 
                 onClick={toggleMute}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                title="Mute (M)"
               >
-                {isMuted ? (
-                  <VolumeX className="h-4 w-4 text-white" />
+                {isMuted || volume === 0 ? (
+                  <VolumeX className="w-5 h-5 text-white" />
                 ) : (
-                  <Volume2 className="h-4 w-4 text-white" />
+                  <Volume2 className="w-5 h-5 text-white" />
                 )}
               </button>
-              <div className="w-20">
+              <div className="w-0 overflow-hidden group-hover/volume:w-20 transition-all duration-200">
                 <Slider
                   value={[isMuted ? 0 : volume]}
+                  min={0}
                   max={1}
                   step={0.01}
                   onValueChange={handleVolumeChange}
-                  className="cursor-pointer"
+                  className="cursor-pointer [&>span:first-child]:h-1 [&>span:first-child]:bg-white/30 [&_[role=slider]]:bg-white [&_[role=slider]]:w-3 [&_[role=slider]]:h-3 [&_[role=slider]]:border-0 [&>span:first-child_>span]:bg-white"
                 />
               </div>
             </div>
 
-            <span className="text-white/80 text-sm font-medium">
+            {/* Time Display */}
+            <span className="text-white text-sm font-medium ml-2">
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-white/60 text-xs hidden md:inline">
-              {title}
-            </span>
-            <button
+            {/* Playback Speed */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button 
+                  className="px-2 py-1 hover:bg-white/20 rounded transition-colors text-white text-sm font-medium flex items-center gap-1"
+                  title="Playback Speed"
+                >
+                  <Settings className="w-4 h-4" />
+                  {playbackSpeed}x
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur">
+                {playbackSpeeds.map((speed) => (
+                  <DropdownMenuItem
+                    key={speed}
+                    onClick={() => handlePlaybackSpeedChange(speed)}
+                    className={playbackSpeed === speed ? 'bg-primary/20' : ''}
+                  >
+                    {speed}x
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Fullscreen */}
+            <button 
               onClick={toggleFullscreen}
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              title="Fullscreen (F)"
             >
               {isFullscreen ? (
-                <Minimize className="h-4 w-4 text-white" />
+                <Minimize className="w-5 h-5 text-white" />
               ) : (
-                <Maximize className="h-4 w-4 text-white" />
+                <Maximize className="w-5 h-5 text-white" />
               )}
             </button>
           </div>
         </div>
       </div>
-
-      {/* Play button overlay when paused */}
-      {!isPlaying && (
-        <button
-          onClick={handlePlayPause}
-          className="absolute inset-0 flex items-center justify-center bg-black/30"
-        >
-          <div className="w-20 h-20 rounded-full bg-primary/90 flex items-center justify-center shadow-[0_0_40px_hsl(var(--primary)/0.5)] hover:scale-110 transition-transform">
-            <Play className="h-10 w-10 text-primary-foreground ml-1" />
-          </div>
-        </button>
-      )}
     </div>
   );
 };
+
+export default SecureVideoPlayer;
