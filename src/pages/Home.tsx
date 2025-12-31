@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentCarousel } from '@/components/shared/ContentCarousel';
 import { CarouselCard } from '@/components/shared/CarouselCard';
+import { EventCard } from '@/components/shared/EventCard';
 import { MentorCard } from '@/components/shared/MentorCard';
 import { Calendar, ArrowRight, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,9 +32,10 @@ const mockLearnContent = [
 ];
 
 const mockEvents = [
-  { id: '1', title: 'Forge Kickoff Mumbai', date: 'Feb 15, 2025', imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400' },
-  { id: '2', title: 'Creator Meetup Delhi', date: 'Feb 22, 2025', imageUrl: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400' },
-  { id: '3', title: 'Workshop: YouTube Growth', date: 'Mar 1, 2025', imageUrl: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=400' },
+  { id: '1', title: 'Goa Offsite Meet & Greet', date: 'Sat, Jan 3', location: 'Hyderabad', hostName: 'Naganjan Kumar', hostAvatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200', imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400' },
+  { id: '2', title: 'Peakst8 Festival X GrowthX', date: 'Sat, Jan 10', location: 'Bengaluru', hostName: 'Dilipkumar', hostAvatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200', imageUrl: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400', isFillingFast: true },
+  { id: '3', title: 'AI - X to 10X Workshop', date: 'Sat, Jan 10', location: 'Mumbai', hostName: 'Alok Shenoy', hostAvatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200', imageUrl: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=400' },
+  { id: '4', title: 'How FDEs drive 0-1 transformations', date: 'Sat, Jan 17', location: 'Virtual', hostName: 'Abhijeet Jha', hostAvatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200', imageUrl: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=400', isVirtual: true },
 ];
 
 interface TimeLeft {
@@ -223,14 +225,18 @@ const Home: React.FC = () => {
       </ContentCarousel>
 
       {/* Events Section */}
-      <ContentCarousel title="Events" onSeeAll={() => navigate('/events')}>
+      <ContentCarousel title="Upcoming Events" onSeeAll={() => navigate('/events')}>
         {mockEvents.map((event) => (
-          <CarouselCard
+          <EventCard
             key={event.id}
             title={event.title}
-            subtitle={event.date}
+            date={event.date}
+            location={event.location}
             imageUrl={event.imageUrl}
-            badge="Upcoming"
+            hostName={event.hostName}
+            hostAvatarUrl={event.hostAvatarUrl}
+            isFillingFast={event.isFillingFast}
+            isVirtual={event.isVirtual}
             onClick={() => navigate('/events')}
           />
         ))}
