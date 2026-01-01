@@ -94,12 +94,12 @@ const Home: React.FC = () => {
   // Filter home cards by type (for mentors)
   const mentorCardsFromDb = homeCards?.filter(card => card.card_type === 'mentor') || [];
 
-  // Dummy mentor data for development
-  const dummyMentors = [
-    { id: '1', title: 'Cinematic Excellence', subtitle: 'Achieving', name: 'Christopher Nolan', image_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=800&fit=crop', companyName: 'Warner Bros' },
-    { id: '2', title: 'Directing Mastery', subtitle: 'The Art of', name: 'Ava DuVernay', image_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=800&fit=crop', companyName: 'ARRAY' },
-    { id: '3', title: 'World Building', subtitle: 'Immersive', name: 'Denis Villeneuve', image_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600&h=800&fit=crop', companyName: 'Legendary' },
-    { id: '4', title: 'Authentic Voice', subtitle: 'Finding Your', name: 'Greta Gerwig', image_url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=600&h=800&fit=crop', companyName: 'A24' },
+  // Mentor data with actual images
+  const mentorData = [
+    { id: '1', title: 'Leadership', subtitle: 'Mastering', name: 'Praveen', image_url: '/images/mentors/praveen.png', companyName: 'LevelUp' },
+    { id: '2', title: 'Growth Strategy', subtitle: 'Building', name: 'Santhosh', image_url: '/images/mentors/santhosh.png', companyName: 'LevelUp' },
+    { id: '3', title: 'Creative Vision', subtitle: 'Developing', name: 'Sharan', image_url: '/images/mentors/sharan.png', companyName: 'LevelUp' },
+    { id: '4', title: 'Excellence', subtitle: 'Achieving', name: 'Sharanya', image_url: '/images/mentors/sharanya.png', companyName: 'LevelUp' },
   ];
 
   const dummyLearnContent = [
@@ -145,8 +145,8 @@ const Home: React.FC = () => {
     },
   ];
 
-  // Use dummy data if database is empty
-  const mentorCards = mentorCardsFromDb.length > 0 ? mentorCardsFromDb : dummyMentors;
+  // Use database data if available, otherwise use local mentor data
+  const mentorCards = mentorCardsFromDb.length > 0 ? mentorCardsFromDb : mentorData;
   const displayLearnContent = (learnContent && learnContent.length > 0) ? learnContent : dummyLearnContent;
   const displayEvents = (events && events.length > 0) ? events : dummyEvents;
 
