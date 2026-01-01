@@ -5,7 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentCarousel } from '@/components/shared/ContentCarousel';
 import { EventCard } from '@/components/shared/EventCard';
-import { MentorCard } from '@/components/shared/MentorCard';
+import { StudentVideoCard } from '@/components/shared/StudentVideoCard';
+import { MentorVideoCard } from '@/components/shared/MentorVideoCard';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { Calendar, ArrowRight, Flame, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -88,17 +89,17 @@ const Home: React.FC = () => {
 
   // Dummy data for development
   const dummyStudents = [
-    { id: '1', title: 'Sarah Chen', description: 'Filmmaker & Director', image_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200' },
-    { id: '2', title: 'Marcus Johnson', description: 'Documentary Producer', image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200' },
-    { id: '3', title: 'Priya Sharma', description: 'Screenwriter', image_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200' },
-    { id: '4', title: 'Alex Rivera', description: 'Cinematographer', image_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200' },
+    { id: '1', title: 'Creative Storytelling', subtitle: 'The Art of', name: 'Sarah Chen', image_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&h=800&fit=crop' },
+    { id: '2', title: 'Documentary Vision', subtitle: 'Mastering', name: 'Marcus Johnson', image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=800&fit=crop' },
+    { id: '3', title: 'Script to Screen', subtitle: 'From', name: 'Priya Sharma', image_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=600&h=800&fit=crop' },
+    { id: '4', title: 'Visual Language', subtitle: 'Understanding', name: 'Alex Rivera', image_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600&h=800&fit=crop' },
   ];
 
   const dummyMentors = [
-    { id: '1', title: 'Christopher Nolan', description: 'Oscar-Winning Director', image_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200' },
-    { id: '2', title: 'Ava DuVernay', description: 'Director & Producer', image_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200' },
-    { id: '3', title: 'Denis Villeneuve', description: 'Visionary Filmmaker', image_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200' },
-    { id: '4', title: 'Greta Gerwig', description: 'Writer & Director', image_url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200' },
+    { id: '1', title: 'Cinematic Excellence', subtitle: 'Achieving', name: 'Christopher Nolan', image_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=800&fit=crop', companyName: 'Warner Bros' },
+    { id: '2', title: 'Directing Mastery', subtitle: 'The Art of', name: 'Ava DuVernay', image_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=800&fit=crop', companyName: 'ARRAY' },
+    { id: '3', title: 'World Building', subtitle: 'Immersive', name: 'Denis Villeneuve', image_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600&h=800&fit=crop', companyName: 'Legendary' },
+    { id: '4', title: 'Authentic Voice', subtitle: 'Finding Your', name: 'Greta Gerwig', image_url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=600&h=800&fit=crop', companyName: 'A24' },
   ];
 
   const dummyLearnContent = [
@@ -272,12 +273,13 @@ const Home: React.FC = () => {
       {/* About Our Students */}
       {studentCards.length > 0 && (
         <ContentCarousel title="About Our Students" onSeeAll={() => navigate('/community')}>
-          {studentCards.map((student) => (
-            <MentorCard
+          {studentCards.map((student: any) => (
+            <StudentVideoCard
               key={student.id}
-              name={student.title}
-              specialty={student.description || ''}
-              avatarUrl={student.image_url || ''}
+              name={student.name || student.title}
+              title={student.title}
+              subtitle={student.subtitle || student.description}
+              imageUrl={student.image_url}
               onClick={() => navigate('/community')}
             />
           ))}
@@ -287,12 +289,14 @@ const Home: React.FC = () => {
       {/* About Our Mentors */}
       {mentorCards.length > 0 && (
         <ContentCarousel title="About Our Mentors" onSeeAll={() => navigate('/community')}>
-          {mentorCards.map((mentor) => (
-            <MentorCard
+          {mentorCards.map((mentor: any) => (
+            <MentorVideoCard
               key={mentor.id}
-              name={mentor.title}
-              specialty={mentor.description || ''}
-              avatarUrl={mentor.image_url || ''}
+              name={mentor.name || mentor.title}
+              title={mentor.title}
+              subtitle={mentor.subtitle || mentor.description}
+              imageUrl={mentor.image_url}
+              companyName={mentor.companyName}
               onClick={() => navigate('/community')}
             />
           ))}
