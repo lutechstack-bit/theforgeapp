@@ -5,12 +5,20 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentCarousel } from '@/components/shared/ContentCarousel';
 import { EventCard } from '@/components/shared/EventCard';
-import { StudentVideoCard } from '@/components/shared/StudentVideoCard';
+import { TestimonialVideoCard } from '@/components/shared/TestimonialVideoCard';
 import { MentorVideoCard } from '@/components/shared/MentorVideoCard';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { Calendar, ArrowRight, Flame, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
+
+// Alumni testimonial videos
+const alumniTestimonials = [
+  { id: '1', name: 'Anurag', videoUrl: '/videos/testimonials/anurag.mp4' },
+  { id: '2', name: 'Ashwin', videoUrl: '/videos/testimonials/ashwin.mp4' },
+  { id: '3', name: 'Devansh', videoUrl: '/videos/testimonials/devansh.mp4' },
+  { id: '4', name: 'Aanchal', videoUrl: '/videos/testimonials/aanchal.mp4' },
+];
 
 interface TimeLeft {
   days: number;
@@ -83,18 +91,10 @@ const Home: React.FC = () => {
     },
   });
 
-  // Filter home cards by type
-  const studentCardsFromDb = homeCards?.filter(card => card.card_type === 'student') || [];
+  // Filter home cards by type (for mentors)
   const mentorCardsFromDb = homeCards?.filter(card => card.card_type === 'mentor') || [];
 
-  // Dummy data for development
-  const dummyStudents = [
-    { id: '1', title: 'Creative Storytelling', subtitle: 'The Art of', name: 'Sarah Chen', image_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&h=800&fit=crop' },
-    { id: '2', title: 'Documentary Vision', subtitle: 'Mastering', name: 'Marcus Johnson', image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=800&fit=crop' },
-    { id: '3', title: 'Script to Screen', subtitle: 'From', name: 'Priya Sharma', image_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=600&h=800&fit=crop' },
-    { id: '4', title: 'Visual Language', subtitle: 'Understanding', name: 'Alex Rivera', image_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600&h=800&fit=crop' },
-  ];
-
+  // Dummy mentor data for development
   const dummyMentors = [
     { id: '1', title: 'Cinematic Excellence', subtitle: 'Achieving', name: 'Christopher Nolan', image_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=800&fit=crop', companyName: 'Warner Bros' },
     { id: '2', title: 'Directing Mastery', subtitle: 'The Art of', name: 'Ava DuVernay', image_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=800&fit=crop', companyName: 'ARRAY' },
@@ -146,7 +146,6 @@ const Home: React.FC = () => {
   ];
 
   // Use dummy data if database is empty
-  const studentCards = studentCardsFromDb.length > 0 ? studentCardsFromDb : dummyStudents;
   const mentorCards = mentorCardsFromDb.length > 0 ? mentorCardsFromDb : dummyMentors;
   const displayLearnContent = (learnContent && learnContent.length > 0) ? learnContent : dummyLearnContent;
   const displayEvents = (events && events.length > 0) ? events : dummyEvents;
@@ -270,21 +269,16 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* About Our Students */}
-      {studentCards.length > 0 && (
-        <ContentCarousel title="About Our Students" onSeeAll={() => navigate('/community')}>
-          {studentCards.map((student: any) => (
-            <StudentVideoCard
-              key={student.id}
-              name={student.name || student.title}
-              title={student.title}
-              subtitle={student.subtitle || student.description}
-              imageUrl={student.image_url}
-              onClick={() => navigate('/community')}
-            />
-          ))}
-        </ContentCarousel>
-      )}
+      {/* Listen to Our Alumni - Testimonials */}
+      <ContentCarousel title="Listen to Our Alumni">
+        {alumniTestimonials.map((alumni) => (
+          <TestimonialVideoCard
+            key={alumni.id}
+            name={alumni.name}
+            videoUrl={alumni.videoUrl}
+          />
+        ))}
+      </ContentCarousel>
 
       {/* About Our Mentors */}
       {mentorCards.length > 0 && (
@@ -341,12 +335,12 @@ const Home: React.FC = () => {
       )}
 
       {/* Empty State */}
-      {(!studentCards.length && !mentorCards.length && !learnContent?.length && !events?.length) && (
+      {(!alumniTestimonials.length && !mentorCards.length && !learnContent?.length && !events?.length) && (
         <div className="glass-premium rounded-2xl p-8 text-center">
           <Users className="h-12 w-12 text-primary/50 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">Content Coming Soon</h3>
           <p className="text-muted-foreground">
-            Check back soon for students, mentors, courses, and events!
+            Check back soon for alumni stories, mentors, courses, and events!
           </p>
         </div>
       )}
