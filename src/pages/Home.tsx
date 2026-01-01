@@ -4,10 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentCarousel } from '@/components/shared/ContentCarousel';
-import { CarouselCard } from '@/components/shared/CarouselCard';
 import { EventCard } from '@/components/shared/EventCard';
 import { MentorCard } from '@/components/shared/MentorCard';
-import { Calendar, ArrowRight, Flame, Users, BookOpen } from 'lucide-react';
+import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
+import { Calendar, ArrowRight, Flame, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 
@@ -302,13 +302,15 @@ const Home: React.FC = () => {
       {/* Learn Section */}
       {displayLearnContent.length > 0 && (
         <ContentCarousel title="Learn" onSeeAll={() => navigate('/learn')}>
-          {displayLearnContent.map((content) => (
-            <CarouselCard
+          {displayLearnContent.map((content: any) => (
+            <LearnCourseCard
               key={content.id}
+              id={content.id}
               title={content.title}
-              subtitle={content.duration_minutes ? `${content.duration_minutes} min` : undefined}
-              imageUrl={content.thumbnail_url || undefined}
-              onClick={() => navigate('/learn')}
+              thumbnailUrl={content.thumbnail_url || undefined}
+              instructorName={content.instructor_name}
+              companyName={content.company_name}
+              isPremium={content.is_premium}
             />
           ))}
         </ContentCarousel>

@@ -16,6 +16,7 @@ import KYF from "./pages/KYF";
 import Home from "./pages/Home";
 import Community from "./pages/Community";
 import Learn from "./pages/Learn";
+import CourseDetail from "./pages/CourseDetail";
 import Events from "./pages/Events";
 import Roadmap from "./pages/Roadmap";
 import Perks from "./pages/Perks";
@@ -114,6 +115,7 @@ const AppRoutes = () => {
         <Route path="/" element={<Home />} />
         <Route path="/community" element={<Community />} />
         <Route path="/learn" element={<Learn />} />
+        <Route path="/learn/:id" element={<CourseDetail />} />
         <Route path="/events" element={<Events />} />
         <Route path="/roadmap" element={<Roadmap />} />
         <Route path="/perks" element={<Perks />} />
