@@ -42,7 +42,7 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
   return (
     <div
       onClick={handleClick}
-      className="group relative cursor-pointer rounded-2xl overflow-hidden aspect-[3/4] min-w-[200px] md:min-w-[240px] transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
+      className="group relative cursor-pointer rounded-2xl overflow-hidden aspect-[3/4] min-w-[200px] md:min-w-[240px] transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1"
     >
       {/* Background Image */}
       <div className="absolute inset-0">
