@@ -83,8 +83,72 @@ const Home: React.FC = () => {
   });
 
   // Filter home cards by type
-  const studentCards = homeCards?.filter(card => card.card_type === 'student') || [];
-  const mentorCards = homeCards?.filter(card => card.card_type === 'mentor') || [];
+  const studentCardsFromDb = homeCards?.filter(card => card.card_type === 'student') || [];
+  const mentorCardsFromDb = homeCards?.filter(card => card.card_type === 'mentor') || [];
+
+  // Dummy data for development
+  const dummyStudents = [
+    { id: '1', title: 'Sarah Chen', description: 'Filmmaker & Director', image_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200' },
+    { id: '2', title: 'Marcus Johnson', description: 'Documentary Producer', image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200' },
+    { id: '3', title: 'Priya Sharma', description: 'Screenwriter', image_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200' },
+    { id: '4', title: 'Alex Rivera', description: 'Cinematographer', image_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200' },
+  ];
+
+  const dummyMentors = [
+    { id: '1', title: 'Christopher Nolan', description: 'Oscar-Winning Director', image_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200' },
+    { id: '2', title: 'Ava DuVernay', description: 'Director & Producer', image_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200' },
+    { id: '3', title: 'Denis Villeneuve', description: 'Visionary Filmmaker', image_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200' },
+    { id: '4', title: 'Greta Gerwig', description: 'Writer & Director', image_url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200' },
+  ];
+
+  const dummyLearnContent = [
+    { id: '1', title: 'The Art of Visual Storytelling', duration_minutes: 45, thumbnail_url: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400' },
+    { id: '2', title: 'Mastering Cinematography', duration_minutes: 60, thumbnail_url: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=400' },
+    { id: '3', title: 'Sound Design Fundamentals', duration_minutes: 30, thumbnail_url: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=400' },
+    { id: '4', title: 'Post-Production Workflow', duration_minutes: 55, thumbnail_url: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=400' },
+  ];
+
+  const dummyEvents = [
+    { 
+      id: '1', 
+      title: 'Masterclass: Creating Award-Winning Short Films', 
+      event_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+      location: 'Los Angeles, CA',
+      image_url: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=600',
+      is_virtual: false,
+      hostName: 'Steven Spielberg',
+      hostAvatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
+      isFillingFast: true,
+    },
+    { 
+      id: '2', 
+      title: 'Virtual Networking: Connect with Industry Pros', 
+      event_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      location: null,
+      image_url: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=600',
+      is_virtual: true,
+      hostName: 'Film Connect',
+      hostAvatarUrl: null,
+      isFillingFast: false,
+    },
+    { 
+      id: '3', 
+      title: 'Documentary Filmmaking Workshop', 
+      event_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      location: 'New York, NY',
+      image_url: 'https://images.unsplash.com/photo-1524712245354-2c4e5e7121c0?w=600',
+      is_virtual: false,
+      hostName: 'Documentary Guild',
+      hostAvatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100',
+      isFillingFast: true,
+    },
+  ];
+
+  // Use dummy data if database is empty
+  const studentCards = studentCardsFromDb.length > 0 ? studentCardsFromDb : dummyStudents;
+  const mentorCards = mentorCardsFromDb.length > 0 ? mentorCardsFromDb : dummyMentors;
+  const displayLearnContent = (learnContent && learnContent.length > 0) ? learnContent : dummyLearnContent;
+  const displayEvents = (events && events.length > 0) ? events : dummyEvents;
 
   useEffect(() => {
     if (!edition?.forge_start_date) return;
@@ -214,7 +278,7 @@ const Home: React.FC = () => {
               name={student.title}
               specialty={student.description || ''}
               avatarUrl={student.image_url || ''}
-              onClick={() => student.link ? navigate(student.link) : navigate('/community')}
+              onClick={() => navigate('/community')}
             />
           ))}
         </ContentCarousel>
@@ -229,16 +293,16 @@ const Home: React.FC = () => {
               name={mentor.title}
               specialty={mentor.description || ''}
               avatarUrl={mentor.image_url || ''}
-              onClick={() => mentor.link ? navigate(mentor.link) : navigate('/community')}
+              onClick={() => navigate('/community')}
             />
           ))}
         </ContentCarousel>
       )}
 
       {/* Learn Section */}
-      {learnContent && learnContent.length > 0 && (
+      {displayLearnContent.length > 0 && (
         <ContentCarousel title="Learn" onSeeAll={() => navigate('/learn')}>
-          {learnContent.map((content) => (
+          {displayLearnContent.map((content) => (
             <CarouselCard
               key={content.id}
               title={content.title}
@@ -251,15 +315,18 @@ const Home: React.FC = () => {
       )}
 
       {/* Events Section */}
-      {events && events.length > 0 && (
+      {displayEvents.length > 0 && (
         <ContentCarousel title="Upcoming Events" onSeeAll={() => navigate('/events')}>
-          {events.map((event) => (
+          {displayEvents.map((event: any) => (
             <EventCard
               key={event.id}
               title={event.title}
               date={format(new Date(event.event_date), 'EEE, MMM d')}
               location={event.location || undefined}
               imageUrl={event.image_url || undefined}
+              hostName={event.hostName}
+              hostAvatarUrl={event.hostAvatarUrl}
+              isFillingFast={event.isFillingFast}
               isVirtual={event.is_virtual}
               onClick={() => navigate('/events')}
             />
