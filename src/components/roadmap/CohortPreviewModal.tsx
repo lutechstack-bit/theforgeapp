@@ -33,6 +33,12 @@ const cohortDescriptions: Record<CohortType, string> = {
   FORGE_CREATORS: 'Build your creator career and audience',
 };
 
+const cohortLinks: Record<CohortType, string> = {
+  FORGE: 'https://www.forgebylevelup.com/',
+  FORGE_WRITING: 'https://www.forgebylevelup.com/writingresidency',
+  FORGE_CREATORS: 'https://creators.forgebylevelup.com/',
+};
+
 const CohortPreviewModal: React.FC<CohortPreviewModalProps> = ({ isOpen, onClose, cohortType }) => {
   // Fetch a sample edition for this cohort to show roadmap preview
   const { data: previewData, isLoading } = useQuery({
@@ -159,8 +165,7 @@ const CohortPreviewModal: React.FC<CohortPreviewModalProps> = ({ isOpen, onClose
           <Button 
             className="w-full gradient-primary text-primary-foreground"
             onClick={() => {
-              // Could link to signup/info page for this cohort
-              window.open('https://theforge.in', '_blank');
+              window.open(cohortLinks[cohortType], '_blank');
             }}
           >
             Learn More
