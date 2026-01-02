@@ -38,6 +38,8 @@ import AdminLearn from "./pages/admin/AdminLearn";
 import AdminAutoUpdates from "./pages/admin/AdminAutoUpdates";
 import AdminHeroBanners from "./pages/admin/AdminHeroBanners";
 import AdminRoadmap from "./pages/admin/AdminRoadmap";
+import AdminKYForms from "./pages/admin/AdminKYForms";
+import DynamicKYForm from "./pages/DynamicKYForm";
 
 const queryClient = new QueryClient();
 
@@ -154,6 +156,7 @@ const AppRoutes = () => {
         <Route path="auto-updates" element={<AdminAutoUpdates />} />
         <Route path="hero-banners" element={<AdminHeroBanners />} />
         <Route path="roadmap" element={<AdminRoadmap />} />
+        <Route path="ky-forms" element={<AdminKYForms />} />
       </Route>
       
       {/* Catch-all */}
