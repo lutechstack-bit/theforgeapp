@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -176,6 +176,113 @@ const KYFForm: React.FC = () => {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
   const { toast } = useToast();
+
+  // Load existing responses on mount
+  useEffect(() => {
+    const loadExistingResponses = async () => {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('kyf_responses')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data && !error) {
+        setFormData({
+          certificate_name: data.certificate_name || '',
+          current_occupation: data.current_occupation || '',
+          instagram_id: data.instagram_id || '',
+          age: data.age?.toString() || '',
+          date_of_birth: data.date_of_birth || '',
+          address_line_1: data.address_line_1 || '',
+          address_line_2: data.address_line_2 || '',
+          state: data.state || '',
+          pincode: data.pincode || '',
+          gender: data.gender || '',
+          tshirt_size: data.tshirt_size || '',
+          has_editing_laptop: data.has_editing_laptop === true ? 'yes' : data.has_editing_laptop === false ? 'no' : '',
+          emergency_contact_name: data.emergency_contact_name || '',
+          emergency_contact_number: data.emergency_contact_number || '',
+          proficiency_screenwriting: data.proficiency_screenwriting || '',
+          proficiency_direction: data.proficiency_direction || '',
+          proficiency_cinematography: data.proficiency_cinematography || '',
+          proficiency_editing: data.proficiency_editing || '',
+          top_3_movies: data.top_3_movies?.join(', ') || '',
+          chronotype: data.chronotype || '',
+          meal_preference: data.meal_preference || '',
+          food_allergies: data.food_allergies || '',
+          medication_support: data.medication_support || '',
+          languages_known: data.languages_known || [],
+          height_ft: data.height_ft || '',
+          photo_favorite_url: data.photo_favorite_url || '',
+          headshot_front_url: data.headshot_front_url || '',
+          headshot_right_url: data.headshot_right_url || '',
+          headshot_left_url: data.headshot_left_url || '',
+          full_body_url: data.full_body_url || '',
+          mbti_type: data.mbti_type || '',
+          forge_intent: data.forge_intent || '',
+          forge_intent_other: data.forge_intent_other || '',
+          terms_accepted: data.terms_accepted || false,
+        });
+      }
+    };
+
+    loadExistingResponses();
+  }, [user]);
+
+  // Save progress function
+  const saveProgress = async () => {
+    if (!user) return;
+
+    try {
+      await supabase.from('kyf_responses').upsert({
+        user_id: user.id,
+        certificate_name: formData.certificate_name || null,
+        current_occupation: formData.current_occupation || null,
+        instagram_id: formData.instagram_id || null,
+        age: formData.age ? parseInt(formData.age) : null,
+        date_of_birth: formData.date_of_birth || null,
+        address_line_1: formData.address_line_1 || null,
+        address_line_2: formData.address_line_2 || null,
+        state: formData.state || null,
+        pincode: formData.pincode || null,
+        gender: formData.gender || null,
+        tshirt_size: formData.tshirt_size || null,
+        has_editing_laptop: formData.has_editing_laptop === 'yes' ? true : formData.has_editing_laptop === 'no' ? false : null,
+        emergency_contact_name: formData.emergency_contact_name || null,
+        emergency_contact_number: formData.emergency_contact_number || null,
+        proficiency_screenwriting: formData.proficiency_screenwriting || null,
+        proficiency_direction: formData.proficiency_direction || null,
+        proficiency_cinematography: formData.proficiency_cinematography || null,
+        proficiency_editing: formData.proficiency_editing || null,
+        top_3_movies: formData.top_3_movies ? formData.top_3_movies.split(',').map(m => m.trim()) : null,
+        chronotype: formData.chronotype || null,
+        meal_preference: formData.meal_preference || null,
+        food_allergies: formData.food_allergies || null,
+        medication_support: formData.medication_support || null,
+        languages_known: formData.languages_known.length > 0 ? formData.languages_known : null,
+        height_ft: formData.height_ft || null,
+        photo_favorite_url: formData.photo_favorite_url || null,
+        headshot_front_url: formData.headshot_front_url || null,
+        headshot_right_url: formData.headshot_right_url || null,
+        headshot_left_url: formData.headshot_left_url || null,
+        full_body_url: formData.full_body_url || null,
+        mbti_type: formData.mbti_type || null,
+        forge_intent: formData.forge_intent || null,
+        forge_intent_other: formData.forge_intent_other || null,
+        terms_accepted: formData.terms_accepted,
+      }, { onConflict: 'user_id' });
+    } catch (error) {
+      console.error('Error saving progress:', error);
+    }
+  };
+
+  const handleExitWithSave = async () => {
+    await saveProgress();
+    toast({ title: 'Progress saved', description: 'You can continue later from where you left off.' });
+    navigate('/');
+  };
 
   const updateField = (field: keyof FormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -602,14 +709,14 @@ const KYFForm: React.FC = () => {
       <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Leave the form?</AlertDialogTitle>
+            <AlertDialogTitle>Save and leave?</AlertDialogTitle>
             <AlertDialogDescription>
-              Your progress won't be saved. Are you sure you want to leave?
+              Your progress will be saved and you can continue later.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Continue filling</AlertDialogCancel>
-            <AlertDialogAction onClick={() => navigate('/')}>Leave anyway</AlertDialogAction>
+            <AlertDialogAction onClick={handleExitWithSave}>Save & Leave</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
