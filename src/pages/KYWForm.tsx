@@ -12,6 +12,16 @@ import { KYFormNavigation } from '@/components/onboarding/KYFormNavigation';
 import { RadioSelectField } from '@/components/onboarding/RadioSelectField';
 import { MultiSelectField } from '@/components/onboarding/MultiSelectField';
 import { ProficiencyField } from '@/components/onboarding/ProficiencyField';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { User, MapPin, Pen, Sparkles, FileCheck, ExternalLink } from 'lucide-react';
 
 const STEP_TITLES = ['General Details', 'Personal Details', 'Writing Practice & Emergency', 'Proficiency', 'Personality & Preferences', 'Understanding You', 'Intent', 'Terms & Conditions'];
@@ -19,6 +29,7 @@ const STEP_TITLES = ['General Details', 'Personal Details', 'Writing Practice & 
 const KYWForm: React.FC = () => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [showExitDialog, setShowExitDialog] = useState(false);
   const [formData, setFormData] = useState({
     certificate_name: '', current_occupation: '',
     age: '', primary_language: '',
@@ -33,6 +44,50 @@ const KYWForm: React.FC = () => {
   const { toast } = useToast();
 
   const updateField = (field: string, value: any) => setFormData(prev => ({ ...prev, [field]: value }));
+
+  const saveProgress = async () => {
+    if (!user) return;
+    try {
+      await supabase.from('kyw_responses').upsert({
+        user_id: user.id,
+        certificate_name: formData.certificate_name || null,
+        current_occupation: formData.current_occupation || null,
+        age: formData.age ? parseInt(formData.age) : null,
+        primary_language: formData.primary_language || null,
+        writing_types: formData.writing_types.length > 0 ? formData.writing_types : null,
+        emergency_contact_name: formData.emergency_contact_name || null,
+        emergency_contact_number: formData.emergency_contact_number || null,
+        proficiency_writing: formData.proficiency_writing || null,
+        proficiency_story_voice: formData.proficiency_story_voice || null,
+        top_3_writers_books: formData.top_3_writers_books ? formData.top_3_writers_books.split(',').map(c => c.trim()) : null,
+        chronotype: formData.chronotype || null,
+        mbti_type: formData.mbti_type || null,
+        forge_intent: formData.forge_intent || null,
+        forge_intent_other: formData.forge_intent_other || null,
+      }, { onConflict: 'user_id' });
+    } catch (error: any) {
+      console.error('Error saving progress:', error);
+    }
+  };
+
+  const handleBack = () => {
+    if (step === 0) {
+      setShowExitDialog(true);
+    } else {
+      setStep(s => s - 1);
+    }
+  };
+
+  const handleExitWithSave = async () => {
+    await saveProgress();
+    toast({ title: 'Progress saved', description: 'You can continue later.' });
+    navigate('/');
+  };
+
+  const handleNext = async () => {
+    await saveProgress();
+    setStep(s => s + 1);
+  };
 
   const handleSubmit = async () => {
     if (!user) return;
@@ -143,8 +198,32 @@ const KYWForm: React.FC = () => {
       <div className="relative w-full max-w-lg">
         <KYFormProgress currentStep={step} totalSteps={STEP_TITLES.length} stepTitles={STEP_TITLES} />
         <div className="mt-8 mb-4 max-h-[calc(100vh-280px)] overflow-y-auto pr-2">{renderStep()}</div>
-        <KYFormNavigation currentStep={step} totalSteps={STEP_TITLES.length} canProceed={canProceed()} loading={loading} onBack={() => setStep(s => s - 1)} onNext={() => setStep(s => s + 1)} onSubmit={handleSubmit} />
+        <KYFormNavigation 
+          currentStep={step} 
+          totalSteps={STEP_TITLES.length} 
+          canProceed={canProceed()} 
+          loading={loading} 
+          onBack={handleBack} 
+          onNext={handleNext} 
+          onSubmit={handleSubmit}
+          showBackOnFirstStep={true}
+        />
       </div>
+
+      <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Save and leave?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your progress will be saved. You can continue filling out the form later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continue filling</AlertDialogCancel>
+            <AlertDialogAction onClick={handleExitWithSave}>Save & Leave</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
