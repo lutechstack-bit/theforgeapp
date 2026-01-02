@@ -11,7 +11,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 
 // Pages
 import Auth from "./pages/Auth";
-import Welcome from "./pages/Welcome";
+
 import ProfileSetup from "./pages/ProfileSetup";
 import KYFForm from "./pages/KYFForm";
 import KYCForm from "./pages/KYCForm";
@@ -60,8 +60,8 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-// KYF Check wrapper
-const KYFCheck: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Profile Setup Check wrapper - ensures profile setup is completed first
+const ProfileSetupCheck: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { profile, loading } = useAuth();
   
   if (loading) {
@@ -72,8 +72,8 @@ const KYFCheck: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     );
   }
   
-  if (profile && !profile.kyf_completed) {
-    return <Navigate to="/welcome" replace />;
+  if (profile && !profile.profile_setup_completed) {
+    return <Navigate to="/profile-setup" replace />;
   }
   
   return <>{children}</>;
@@ -93,26 +93,42 @@ const AppRoutes = () => {
   return (
     <Routes>
       {/* Public routes */}
-      <Route path="/auth" element={user ? <Navigate to="/welcome" replace /> : <Auth />} />
+      <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
       
-      {/* Post-login flow */}
-      <Route path="/welcome" element={
+      {/* Onboarding flow */}
+      <Route path="/profile-setup" element={
         <ProtectedRoute>
-          <Welcome />
+          <ProfileSetup />
         </ProtectedRoute>
       } />
-      <Route path="/kyf" element={
+      <Route path="/kyf-form" element={
         <ProtectedRoute>
-          <KYF />
+          <ProfileSetupCheck>
+            <KYFForm />
+          </ProfileSetupCheck>
+        </ProtectedRoute>
+      } />
+      <Route path="/kyc-form" element={
+        <ProtectedRoute>
+          <ProfileSetupCheck>
+            <KYCForm />
+          </ProfileSetupCheck>
+        </ProtectedRoute>
+      } />
+      <Route path="/kyw-form" element={
+        <ProtectedRoute>
+          <ProfileSetupCheck>
+            <KYWForm />
+          </ProfileSetupCheck>
         </ProtectedRoute>
       } />
       
       {/* App routes with layout */}
       <Route element={
         <ProtectedRoute>
-          <KYFCheck>
+          <ProfileSetupCheck>
             <AppLayout />
-          </KYFCheck>
+          </ProfileSetupCheck>
         </ProtectedRoute>
       }>
         <Route path="/" element={<Home />} />
