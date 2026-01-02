@@ -12,7 +12,10 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 // Pages
 import Auth from "./pages/Auth";
 import Welcome from "./pages/Welcome";
-import KYF from "./pages/KYF";
+import ProfileSetup from "./pages/ProfileSetup";
+import KYFForm from "./pages/KYFForm";
+import KYCForm from "./pages/KYCForm";
+import KYWForm from "./pages/KYWForm";
 import Home from "./pages/Home";
 import Community from "./pages/Community";
 import Learn from "./pages/Learn";
