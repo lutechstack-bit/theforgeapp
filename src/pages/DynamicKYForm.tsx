@@ -8,6 +8,16 @@ import { KYFormNavigation } from '@/components/onboarding/KYFormNavigation';
 import { DynamicFormField, FormFieldConfig } from '@/components/onboarding/DynamicFormField';
 import { Loader2 } from 'lucide-react';
 import * as Icons from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface FormStep {
   id: string;
@@ -31,6 +41,7 @@ const DynamicKYForm: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [responses, setResponses] = useState<Record<string, any>>({});
+  const [showExitDialog, setShowExitDialog] = useState(false);
 
   const navigate = useNavigate();
   const { user, profile, edition, refreshProfile } = useAuth();
@@ -250,11 +261,35 @@ const DynamicKYForm: React.FC = () => {
           totalSteps={formData.steps.length}
           canProceed={canProceed()}
           loading={submitting}
-          onBack={() => setStep((s) => s - 1)}
+          onBack={() => {
+            if (step === 0) {
+              setShowExitDialog(true);
+            } else {
+              setStep((s) => s - 1);
+            }
+          }}
           onNext={() => setStep((s) => s + 1)}
           onSubmit={handleSubmit}
+          showBackOnFirstStep
         />
       </div>
+
+      <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave form?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your progress will be saved, but you'll need to complete the form before accessing all features.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continue filling</AlertDialogCancel>
+            <AlertDialogAction onClick={() => navigate('/')}>
+              Leave anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

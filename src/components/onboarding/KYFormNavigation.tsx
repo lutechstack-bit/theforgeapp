@@ -10,6 +10,7 @@ interface KYFormNavigationProps {
   onBack: () => void;
   onNext: () => void;
   onSubmit: () => void;
+  showBackOnFirstStep?: boolean;
 }
 
 export const KYFormNavigation: React.FC<KYFormNavigationProps> = ({
@@ -20,12 +21,14 @@ export const KYFormNavigation: React.FC<KYFormNavigationProps> = ({
   onBack,
   onNext,
   onSubmit,
+  showBackOnFirstStep = false,
 }) => {
   const isLastStep = currentStep === totalSteps - 1;
+  const showBack = currentStep > 0 || showBackOnFirstStep;
 
   return (
     <div className="flex gap-3 pt-6">
-      {currentStep > 0 && (
+      {showBack && (
         <Button
           variant="outline"
           size="lg"
