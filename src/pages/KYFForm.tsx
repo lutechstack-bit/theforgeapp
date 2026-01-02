@@ -88,14 +88,11 @@ const LANGUAGES = ['English', 'Hindi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada'
 interface FormData {
   certificate_name: string;
   current_occupation: string;
-  whatsapp_number: string;
   instagram_id: string;
-  email: string;
   age: string;
   date_of_birth: string;
   address_line_1: string;
   address_line_2: string;
-  city: string;
   state: string;
   pincode: string;
   gender: string;
@@ -131,14 +128,11 @@ const KYFForm: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     certificate_name: '',
     current_occupation: '',
-    whatsapp_number: '',
     instagram_id: '',
-    email: '',
     age: '',
     date_of_birth: '',
     address_line_1: '',
     address_line_2: '',
-    city: '',
     state: '',
     pincode: '',
     gender: '',
@@ -186,14 +180,11 @@ const KYFForm: React.FC = () => {
         user_id: user.id,
         certificate_name: formData.certificate_name,
         current_occupation: formData.current_occupation,
-        whatsapp_number: formData.whatsapp_number,
         instagram_id: formData.instagram_id,
-        email: formData.email,
         age: formData.age ? parseInt(formData.age) : null,
         date_of_birth: formData.date_of_birth || null,
         address_line_1: formData.address_line_1,
         address_line_2: formData.address_line_2,
-        city: formData.city,
         state: formData.state,
         pincode: formData.pincode,
         gender: formData.gender,
@@ -246,8 +237,8 @@ const KYFForm: React.FC = () => {
 
   const canProceed = (): boolean => {
     switch (step) {
-      case 0: return !!(formData.certificate_name && formData.current_occupation && formData.whatsapp_number && formData.instagram_id && formData.email);
-      case 1: return !!(formData.age && formData.date_of_birth && formData.address_line_1 && formData.city && formData.state && formData.pincode);
+      case 0: return !!(formData.certificate_name && formData.current_occupation && formData.instagram_id);
+      case 1: return !!(formData.age && formData.date_of_birth && formData.address_line_1 && formData.state && formData.pincode);
       case 2: return !!(formData.gender && formData.tshirt_size && formData.has_editing_laptop && formData.emergency_contact_name && formData.emergency_contact_number);
       case 3: return !!(formData.proficiency_screenwriting && formData.proficiency_direction && formData.proficiency_cinematography && formData.proficiency_editing);
       case 4: return !!(formData.top_3_movies && formData.chronotype && formData.meal_preference && formData.food_allergies && formData.medication_support);
@@ -281,16 +272,8 @@ const KYFForm: React.FC = () => {
                 <Input value={formData.current_occupation} onChange={e => updateField('current_occupation', e.target.value)} placeholder="e.g. Student, Working Professional" className="h-12 bg-secondary/50" />
               </div>
               <div className="space-y-2">
-                <Label>Your WhatsApp Number *</Label>
-                <Input value={formData.whatsapp_number} onChange={e => updateField('whatsapp_number', e.target.value)} placeholder="+91 12345 67890" className="h-12 bg-secondary/50" />
-              </div>
-              <div className="space-y-2">
                 <Label>Your Instagram ID *</Label>
                 <Input value={formData.instagram_id} onChange={e => updateField('instagram_id', e.target.value)} placeholder="@yourhandle" className="h-12 bg-secondary/50" />
-              </div>
-              <div className="space-y-2">
-                <Label>Your Email ID *</Label>
-                <Input type="email" value={formData.email} onChange={e => updateField('email', e.target.value)} className="h-12 bg-secondary/50" />
               </div>
             </div>
           </div>
@@ -324,15 +307,9 @@ const KYFForm: React.FC = () => {
                 <Label>Address Line 2</Label>
                 <Input value={formData.address_line_2} onChange={e => updateField('address_line_2', e.target.value)} className="h-12 bg-secondary/50" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>City *</Label>
-                  <Input value={formData.city} onChange={e => updateField('city', e.target.value)} className="h-12 bg-secondary/50" />
-                </div>
-                <div className="space-y-2">
-                  <Label>State *</Label>
-                  <Input value={formData.state} onChange={e => updateField('state', e.target.value)} className="h-12 bg-secondary/50" />
-                </div>
+              <div className="space-y-2">
+                <Label>State *</Label>
+                <Input value={formData.state} onChange={e => updateField('state', e.target.value)} className="h-12 bg-secondary/50" />
               </div>
               <div className="space-y-2">
                 <Label>Pincode *</Label>
