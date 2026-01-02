@@ -14,6 +14,16 @@ import { MultiSelectField } from '@/components/onboarding/MultiSelectField';
 import { ProficiencyField } from '@/components/onboarding/ProficiencyField';
 import { PhotoUploadField } from '@/components/onboarding/PhotoUploadField';
 import { User, MapPin, Heart, Film, Camera, Sparkles, FileCheck, ExternalLink } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const STEP_TITLES = [
   'General Details',
@@ -125,6 +135,7 @@ interface FormData {
 const KYFForm: React.FC = () => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [showExitDialog, setShowExitDialog] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     certificate_name: '',
     current_occupation: '',
@@ -554,6 +565,14 @@ const KYFForm: React.FC = () => {
     }
   };
 
+  const handleBack = () => {
+    if (step === 0) {
+      setShowExitDialog(true);
+    } else {
+      setStep(s => s - 1);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-start py-8 px-6 bg-background">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -573,11 +592,27 @@ const KYFForm: React.FC = () => {
           totalSteps={STEP_TITLES.length}
           canProceed={canProceed()}
           loading={loading}
-          onBack={() => setStep(s => s - 1)}
+          onBack={handleBack}
           onNext={() => setStep(s => s + 1)}
           onSubmit={handleSubmit}
+          showBackOnFirstStep={true}
         />
       </div>
+
+      <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave the form?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your progress won't be saved. Are you sure you want to leave?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continue filling</AlertDialogCancel>
+            <AlertDialogAction onClick={() => navigate('/')}>Leave anyway</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
