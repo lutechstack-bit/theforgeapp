@@ -229,6 +229,180 @@ export type Database = {
         }
         Relationships: []
       }
+      ky_dynamic_responses: {
+        Row: {
+          created_at: string
+          form_id: string
+          id: string
+          responses: Json
+          terms_accepted: boolean | null
+          terms_accepted_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          form_id: string
+          id?: string
+          responses?: Json
+          terms_accepted?: boolean | null
+          terms_accepted_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          form_id?: string
+          id?: string
+          responses?: Json
+          terms_accepted?: boolean | null
+          terms_accepted_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ky_dynamic_responses_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "ky_forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ky_form_fields: {
+        Row: {
+          created_at: string
+          default_value: string | null
+          field_key: string
+          field_type: Database["public"]["Enums"]["form_field_type"]
+          grid_cols: number | null
+          helper_text: string | null
+          id: string
+          is_required: boolean
+          label: string
+          max_value: number | null
+          min_value: number | null
+          options: Json | null
+          order_index: number
+          placeholder: string | null
+          step_id: string
+          validation_regex: string | null
+        }
+        Insert: {
+          created_at?: string
+          default_value?: string | null
+          field_key: string
+          field_type?: Database["public"]["Enums"]["form_field_type"]
+          grid_cols?: number | null
+          helper_text?: string | null
+          id?: string
+          is_required?: boolean
+          label: string
+          max_value?: number | null
+          min_value?: number | null
+          options?: Json | null
+          order_index?: number
+          placeholder?: string | null
+          step_id: string
+          validation_regex?: string | null
+        }
+        Update: {
+          created_at?: string
+          default_value?: string | null
+          field_key?: string
+          field_type?: Database["public"]["Enums"]["form_field_type"]
+          grid_cols?: number | null
+          helper_text?: string | null
+          id?: string
+          is_required?: boolean
+          label?: string
+          max_value?: number | null
+          min_value?: number | null
+          options?: Json | null
+          order_index?: number
+          placeholder?: string | null
+          step_id?: string
+          validation_regex?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ky_form_fields_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "ky_form_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ky_form_steps: {
+        Row: {
+          created_at: string
+          description: string | null
+          form_id: string
+          icon: string | null
+          id: string
+          order_index: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          form_id: string
+          icon?: string | null
+          id?: string
+          order_index?: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          form_id?: string
+          icon?: string | null
+          id?: string
+          order_index?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ky_form_steps_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "ky_forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ky_forms: {
+        Row: {
+          cohort_type: Database["public"]["Enums"]["cohort_type"]
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          cohort_type: Database["public"]["Enums"]["cohort_type"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          cohort_type?: Database["public"]["Enums"]["cohort_type"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       kyc_responses: {
         Row: {
           age: number | null
@@ -997,6 +1171,19 @@ export type Database = {
       app_role: "admin" | "moderator" | "user"
       cohort_type: "FORGE" | "FORGE_WRITING" | "FORGE_CREATORS"
       forge_mode: "PRE_FORGE" | "DURING_FORGE" | "POST_FORGE"
+      form_field_type:
+        | "text"
+        | "email"
+        | "number"
+        | "date"
+        | "tel"
+        | "textarea"
+        | "select"
+        | "radio"
+        | "checkbox"
+        | "multi_select"
+        | "proficiency"
+        | "photo_upload"
       notification_type: "COMMUNITY" | "LEARN" | "EVENTS" | "ROADMAP" | "SYSTEM"
       payment_status: "CONFIRMED_15K" | "BALANCE_PAID"
       unlock_level: "PREVIEW" | "FULL"
@@ -1130,6 +1317,20 @@ export const Constants = {
       app_role: ["admin", "moderator", "user"],
       cohort_type: ["FORGE", "FORGE_WRITING", "FORGE_CREATORS"],
       forge_mode: ["PRE_FORGE", "DURING_FORGE", "POST_FORGE"],
+      form_field_type: [
+        "text",
+        "email",
+        "number",
+        "date",
+        "tel",
+        "textarea",
+        "select",
+        "radio",
+        "checkbox",
+        "multi_select",
+        "proficiency",
+        "photo_upload",
+      ],
       notification_type: ["COMMUNITY", "LEARN", "EVENTS", "ROADMAP", "SYSTEM"],
       payment_status: ["CONFIRMED_15K", "BALANCE_PAID"],
       unlock_level: ["PREVIEW", "FULL"],
