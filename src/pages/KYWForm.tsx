@@ -20,8 +20,8 @@ const KYWForm: React.FC = () => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    certificate_name: '', current_occupation: '', whatsapp_number: '', email: '',
-    age: '', city: '', primary_language: '',
+    certificate_name: '', current_occupation: '',
+    age: '', primary_language: '',
     writing_types: [] as string[], emergency_contact_name: '', emergency_contact_number: '',
     proficiency_writing: '', proficiency_story_voice: '',
     top_3_writers_books: '', chronotype: '',
@@ -39,9 +39,22 @@ const KYWForm: React.FC = () => {
     setLoading(true);
     try {
       await supabase.from('kyw_responses').upsert({
-        user_id: user.id, ...formData,
+        user_id: user.id,
+        certificate_name: formData.certificate_name,
+        current_occupation: formData.current_occupation,
         age: formData.age ? parseInt(formData.age) : null,
+        primary_language: formData.primary_language,
+        writing_types: formData.writing_types,
+        emergency_contact_name: formData.emergency_contact_name,
+        emergency_contact_number: formData.emergency_contact_number,
+        proficiency_writing: formData.proficiency_writing,
+        proficiency_story_voice: formData.proficiency_story_voice,
         top_3_writers_books: formData.top_3_writers_books.split(',').map(c => c.trim()),
+        chronotype: formData.chronotype,
+        mbti_type: formData.mbti_type,
+        forge_intent: formData.forge_intent,
+        forge_intent_other: formData.forge_intent_other,
+        terms_accepted: formData.terms_accepted,
         terms_accepted_at: formData.terms_accepted ? new Date().toISOString() : null,
       }, { onConflict: 'user_id' });
       await supabase.from('profiles').update({ ky_form_completed: true, kyf_completed: true }).eq('id', user.id);
@@ -57,8 +70,8 @@ const KYWForm: React.FC = () => {
 
   const canProceed = (): boolean => {
     switch (step) {
-      case 0: return !!(formData.certificate_name && formData.current_occupation && formData.whatsapp_number && formData.email);
-      case 1: return !!(formData.age && formData.city && formData.primary_language);
+      case 0: return !!(formData.certificate_name && formData.current_occupation);
+      case 1: return !!(formData.age && formData.primary_language);
       case 2: return formData.writing_types.length > 0 && !!(formData.emergency_contact_name && formData.emergency_contact_number);
       case 3: return !!(formData.proficiency_writing && formData.proficiency_story_voice);
       case 4: return !!(formData.top_3_writers_books && formData.chronotype);
@@ -76,15 +89,12 @@ const KYWForm: React.FC = () => {
         <div className="space-y-4">
           <div className="space-y-2"><Label>Full name (as you want it on your certificate) *</Label><Input value={formData.certificate_name} onChange={e => updateField('certificate_name', e.target.value)} className="h-12 bg-secondary/50" /></div>
           <div className="space-y-2"><Label>What are you currently doing? *</Label><Input value={formData.current_occupation} onChange={e => updateField('current_occupation', e.target.value)} className="h-12 bg-secondary/50" /></div>
-          <div className="space-y-2"><Label>Your WhatsApp Number *</Label><Input value={formData.whatsapp_number} onChange={e => updateField('whatsapp_number', e.target.value)} className="h-12 bg-secondary/50" /></div>
-          <div className="space-y-2"><Label>Your Email ID *</Label><Input type="email" value={formData.email} onChange={e => updateField('email', e.target.value)} className="h-12 bg-secondary/50" /></div>
         </div>
       </div>,
       <div key={1} className="space-y-6 animate-fade-in">
         <div className="text-center space-y-2"><div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4"><MapPin className="h-7 w-7 text-primary" /></div><h2 className="text-2xl font-bold">Personal Details</h2></div>
         <div className="space-y-4">
           <div className="space-y-2"><Label>Your Age *</Label><Input type="number" value={formData.age} onChange={e => updateField('age', e.target.value)} className="h-12 bg-secondary/50" /></div>
-          <div className="space-y-2"><Label>Your City *</Label><Input value={formData.city} onChange={e => updateField('city', e.target.value)} className="h-12 bg-secondary/50" /></div>
           <div className="space-y-2"><Label>Your Primary Language of Writing *</Label><Input value={formData.primary_language} onChange={e => updateField('primary_language', e.target.value)} className="h-12 bg-secondary/50" /></div>
         </div>
       </div>,

@@ -19,8 +19,8 @@ const KYCForm: React.FC = () => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    certificate_name: '', current_status: '', whatsapp_number: '', instagram_id: '', email: '',
-    age: '', date_of_birth: '', city: '', state: '', country: '',
+    certificate_name: '', current_status: '', instagram_id: '',
+    age: '', date_of_birth: '', state: '', country: '',
     primary_platform: '', emergency_contact_name: '', emergency_contact_number: '',
     proficiency_content_creation: '', proficiency_storytelling: '', proficiency_video_production: '',
     top_3_creators: '', chronotype: '', meal_preference: '',
@@ -38,10 +38,27 @@ const KYCForm: React.FC = () => {
     setLoading(true);
     try {
       await supabase.from('kyc_responses').upsert({
-        user_id: user.id, ...formData,
+        user_id: user.id,
+        certificate_name: formData.certificate_name,
+        current_status: formData.current_status,
+        instagram_id: formData.instagram_id,
         age: formData.age ? parseInt(formData.age) : null,
         date_of_birth: formData.date_of_birth || null,
+        state: formData.state,
+        country: formData.country,
+        primary_platform: formData.primary_platform,
+        emergency_contact_name: formData.emergency_contact_name,
+        emergency_contact_number: formData.emergency_contact_number,
+        proficiency_content_creation: formData.proficiency_content_creation,
+        proficiency_storytelling: formData.proficiency_storytelling,
+        proficiency_video_production: formData.proficiency_video_production,
         top_3_creators: formData.top_3_creators.split(',').map(c => c.trim()),
+        chronotype: formData.chronotype,
+        meal_preference: formData.meal_preference,
+        mbti_type: formData.mbti_type,
+        forge_intent: formData.forge_intent,
+        forge_intent_other: formData.forge_intent_other,
+        terms_accepted: formData.terms_accepted,
         terms_accepted_at: formData.terms_accepted ? new Date().toISOString() : null,
       }, { onConflict: 'user_id' });
       await supabase.from('profiles').update({ ky_form_completed: true, kyf_completed: true }).eq('id', user.id);
@@ -57,8 +74,8 @@ const KYCForm: React.FC = () => {
 
   const canProceed = (): boolean => {
     switch (step) {
-      case 0: return !!(formData.certificate_name && formData.current_status && formData.whatsapp_number && formData.instagram_id && formData.email);
-      case 1: return !!(formData.age && formData.date_of_birth && formData.city && formData.state && formData.country);
+      case 0: return !!(formData.certificate_name && formData.current_status && formData.instagram_id);
+      case 1: return !!(formData.age && formData.date_of_birth && formData.state && formData.country);
       case 2: return !!(formData.primary_platform && formData.emergency_contact_name && formData.emergency_contact_number);
       case 3: return !!(formData.proficiency_content_creation && formData.proficiency_storytelling && formData.proficiency_video_production);
       case 4: return !!(formData.top_3_creators && formData.chronotype && formData.meal_preference);
@@ -76,16 +93,13 @@ const KYCForm: React.FC = () => {
         <div className="space-y-4">
           <div className="space-y-2"><Label>Full name (as you want it on your certificate) *</Label><Input value={formData.certificate_name} onChange={e => updateField('certificate_name', e.target.value)} className="h-12 bg-secondary/50" /></div>
           <RadioSelectField label="What best describes you right now?" required options={[{value:'student',label:'Student'},{value:'working',label:'Working Professional'},{value:'freelancer',label:'Freelancer'},{value:'creator',label:'Full-time Creator'},{value:'founder',label:'Founder / Entrepreneur'}]} value={formData.current_status} onChange={v => updateField('current_status', v)} />
-          <div className="space-y-2"><Label>Your WhatsApp Number *</Label><Input value={formData.whatsapp_number} onChange={e => updateField('whatsapp_number', e.target.value)} className="h-12 bg-secondary/50" /></div>
           <div className="space-y-2"><Label>Your Instagram ID *</Label><Input value={formData.instagram_id} onChange={e => updateField('instagram_id', e.target.value)} className="h-12 bg-secondary/50" /></div>
-          <div className="space-y-2"><Label>Your Email ID *</Label><Input type="email" value={formData.email} onChange={e => updateField('email', e.target.value)} className="h-12 bg-secondary/50" /></div>
         </div>
       </div>,
       <div key={1} className="space-y-6 animate-fade-in">
         <div className="text-center space-y-2"><div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4"><MapPin className="h-7 w-7 text-primary" /></div><h2 className="text-2xl font-bold">Personal Details</h2></div>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label>Your Age *</Label><Input type="number" value={formData.age} onChange={e => updateField('age', e.target.value)} className="h-12 bg-secondary/50" /></div><div className="space-y-2"><Label>Date of Birth *</Label><Input type="date" value={formData.date_of_birth} onChange={e => updateField('date_of_birth', e.target.value)} className="h-12 bg-secondary/50" /></div></div>
-          <div className="space-y-2"><Label>City *</Label><Input value={formData.city} onChange={e => updateField('city', e.target.value)} className="h-12 bg-secondary/50" /></div>
           <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label>State *</Label><Input value={formData.state} onChange={e => updateField('state', e.target.value)} className="h-12 bg-secondary/50" /></div><div className="space-y-2"><Label>Country *</Label><Input value={formData.country} onChange={e => updateField('country', e.target.value)} className="h-12 bg-secondary/50" /></div></div>
         </div>
       </div>,
