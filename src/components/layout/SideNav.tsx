@@ -4,11 +4,8 @@ import { Home, Users, BookOpen, Map, Calendar, Gift, Settings, Info, PanelLeftCl
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebar } from '@/contexts/SidebarContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import forgeLogo from '@/assets/forge-logo.png';
 import forgeIcon from '@/assets/forge-icon.png';
-import forgeWritingLogo from '@/assets/forge-writing-logo.png';
-import forgeCreatorsLogo from '@/assets/forge-creators-logo.png';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const navItems = [
@@ -28,21 +25,6 @@ export const SideNav: React.FC = () => {
   const { collapsed, toggle } = useSidebar();
   const location = useLocation();
   const { profile } = useAuth();
-  const { cohortType } = useTheme();
-
-  // Get the appropriate logo based on cohort type
-  const getLogo = () => {
-    switch (cohortType) {
-      case 'FORGE_WRITING':
-        return forgeWritingLogo;
-      case 'FORGE_CREATORS':
-        return forgeCreatorsLogo;
-      default:
-        return forgeLogo;
-    }
-  };
-
-  const currentLogo = getLogo();
 
   const NavItem = ({ to, icon: Icon, label, isActive }: { to: string; icon: React.ElementType; label: string; isActive: boolean }) => {
     const content = (
@@ -111,7 +93,7 @@ export const SideNav: React.FC = () => {
         )}>
           <div className="flex items-center justify-center overflow-hidden">
             <img 
-              src={collapsed ? forgeIcon : currentLogo} 
+              src={collapsed ? forgeIcon : forgeLogo} 
               alt="Forge" 
               className={cn(
                 "shrink-0 transition-all duration-300 object-contain",
