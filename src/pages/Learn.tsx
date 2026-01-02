@@ -7,8 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LearnCarousel } from '@/components/learn/LearnCarousel';
 import { VideoPlayerModal } from '@/components/learn/VideoPlayerModal';
-import { Users, Sparkles, BookOpen } from 'lucide-react';
+import { Users, Sparkles, BookOpen, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+
+// TODO: Replace with your actual Razorpay payment link
+const PAYMENT_LINK = "https://razorpay.com/payment-link/your-link-here";
 
 interface LearnContent {
   id: string;
@@ -40,7 +43,7 @@ const Learn: React.FC = () => {
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [selectedContent, setSelectedContent] = useState<LearnContent | null>(null);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
-  const { isFullAccess } = useAuth();
+  const { isFullAccess, isBalancePaid } = useAuth();
 
   // Fetch learn content from database
   const { data: courses, isLoading } = useQuery({
@@ -89,6 +92,15 @@ const Learn: React.FC = () => {
     setShowVideoPlayer(true);
   };
 
+  // Handler for when user clicks on BFP content when not balance paid
+  const handleBFPClick = (content: LearnContent) => {
+    if (!isBalancePaid) {
+      setShowUnlockModal(true);
+      return;
+    }
+    handlePlayContent(content);
+  };
+
   // Filter content by section type
   const communityContent = courses?.filter(c => c.section_type === 'community_sessions') || [];
   const bfpContent = courses?.filter(c => c.section_type === 'bfp_sessions') || [];
@@ -124,6 +136,9 @@ const Learn: React.FC = () => {
             >
               <Sparkles className="h-4 w-4 mr-2" />
               BFP Sessions
+              {!isBalancePaid && (
+                <Lock className="h-3 w-3 ml-1.5 text-amber-400" />
+              )}
             </TabsTrigger>
           </TabsList>
 
@@ -197,66 +212,172 @@ const Learn: React.FC = () => {
 
           {/* BFP Sessions Tab */}
           <TabsContent value="bfp" className="space-y-8 mt-6">
-            {isLoading ? (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="aspect-video rounded-2xl glass-card animate-pulse" />
-                ))}
-              </div>
-            ) : bfpContent.length === 0 ? (
-              <div className="text-center py-16 glass-premium rounded-2xl">
-                <BookOpen className="h-12 w-12 text-primary/50 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  BFP Sessions Coming Soon
-                </h3>
-                <p className="text-muted-foreground">
-                  Pre-recorded workshops from Build For Purpose will be available here
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-10">
-                {/* Show by category */}
-                {bfpCategories.length > 1 ? (
-                  bfpCategories.map((category) => (
-                    <LearnCarousel
-                      key={category}
-                      title={category}
-                      items={bfpContent.filter(c => c.category === category)}
-                      isFullAccess={isFullAccess}
-                      onItemClick={handlePlayContent}
-                    />
-                  ))
-                ) : (
-                  <LearnCarousel
-                    title="Pre-recorded Workshops"
-                    items={bfpContent}
-                    isFullAccess={isFullAccess}
-                    onItemClick={handlePlayContent}
-                  />
-                )}
+            {/* Locked Overlay for 15k paid users */}
+            {!isBalancePaid && (
+              <div className="relative">
+                {/* Blur overlay */}
+                <div 
+                  className="absolute inset-0 z-10 backdrop-blur-md bg-background/60 rounded-2xl flex flex-col items-center justify-center cursor-pointer"
+                  onClick={() => setShowUnlockModal(true)}
+                >
+                  <div className="text-center p-8 max-w-md">
+                    <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30 flex items-center justify-center animate-pulse-soft">
+                      <Lock className="h-10 w-10 text-primary" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-foreground mb-3">
+                      Unlock BFP Sessions
+                    </h3>
+                    <p className="text-muted-foreground mb-6">
+                      Complete your balance payment to access exclusive masterclasses, 
+                      workshops, and premium content from industry experts.
+                    </p>
+                    <Button 
+                      variant="premium" 
+                      size="lg"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowUnlockModal(true);
+                      }}
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Pay Balance to Unlock
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-4">
+                      ₹10,000 balance remaining
+                    </p>
+                  </div>
+                </div>
+
+                {/* Blurred content preview behind */}
+                <div className="opacity-30 pointer-events-none">
+                  {isLoading ? (
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {[...Array(4)].map((_, i) => (
+                        <div key={i} className="aspect-video rounded-2xl glass-card animate-pulse" />
+                      ))}
+                    </div>
+                  ) : bfpContent.length === 0 ? (
+                    <div className="text-center py-16 glass-premium rounded-2xl">
+                      <BookOpen className="h-12 w-12 text-primary/50 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-foreground mb-2">
+                        BFP Sessions Coming Soon
+                      </h3>
+                      <p className="text-muted-foreground">
+                        Pre-recorded workshops from Build For Purpose will be available here
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-10">
+                      {bfpCategories.length > 1 ? (
+                        bfpCategories.map((category) => (
+                          <LearnCarousel
+                            key={category}
+                            title={category}
+                            items={bfpContent.filter(c => c.category === category)}
+                            isFullAccess={true}
+                            onItemClick={() => {}}
+                          />
+                        ))
+                      ) : (
+                        <LearnCarousel
+                          title="Pre-recorded Workshops"
+                          items={bfpContent}
+                          isFullAccess={true}
+                          onItemClick={() => {}}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {/* BFP Info Banner */}
+                  <div className="glass-premium rounded-2xl p-8 relative overflow-hidden mt-10">
+                    <div className="absolute -top-20 -right-20 w-40 h-40 bg-accent/20 rounded-full blur-3xl" />
+                    
+                    <div className="relative z-10 flex flex-col md:flex-row items-start gap-6">
+                      <div className="w-14 h-14 rounded-2xl bg-accent/20 backdrop-blur-md border border-accent/20 flex items-center justify-center shrink-0">
+                        <Sparkles className="h-7 w-7 text-accent" />
+                      </div>
+                      <div className="flex-1">
+                        <span className="inline-block px-3 py-1 text-xs font-semibold text-accent bg-accent/10 rounded-full border border-accent/20 backdrop-blur-sm mb-3">
+                          Exclusive Content
+                        </span>
+                        <h3 className="font-bold text-foreground text-xl mb-2">Build For Purpose Archive</h3>
+                        <p className="text-muted-foreground mb-4">
+                          Access recordings from previous BFP sessions, workshops, and masterclasses. 
+                          Learn from industry experts and past participants.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* BFP Info Banner */}
-            <div className="glass-premium rounded-2xl p-8 relative overflow-hidden">
-              <div className="absolute -top-20 -right-20 w-40 h-40 bg-accent/20 rounded-full blur-3xl" />
-              
-              <div className="relative z-10 flex flex-col md:flex-row items-start gap-6">
-                <div className="w-14 h-14 rounded-2xl bg-accent/20 backdrop-blur-md border border-accent/20 flex items-center justify-center shrink-0">
-                  <Sparkles className="h-7 w-7 text-accent" />
+            {/* Full content for balance paid users */}
+            {isBalancePaid && (
+              <>
+                {isLoading ? (
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="aspect-video rounded-2xl glass-card animate-pulse" />
+                    ))}
+                  </div>
+                ) : bfpContent.length === 0 ? (
+                  <div className="text-center py-16 glass-premium rounded-2xl">
+                    <BookOpen className="h-12 w-12 text-primary/50 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                      BFP Sessions Coming Soon
+                    </h3>
+                    <p className="text-muted-foreground">
+                      Pre-recorded workshops from Build For Purpose will be available here
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-10">
+                    {/* Show by category */}
+                    {bfpCategories.length > 1 ? (
+                      bfpCategories.map((category) => (
+                        <LearnCarousel
+                          key={category}
+                          title={category}
+                          items={bfpContent.filter(c => c.category === category)}
+                          isFullAccess={isFullAccess}
+                          onItemClick={handleBFPClick}
+                        />
+                      ))
+                    ) : (
+                      <LearnCarousel
+                        title="Pre-recorded Workshops"
+                        items={bfpContent}
+                        isFullAccess={isFullAccess}
+                        onItemClick={handleBFPClick}
+                      />
+                    )}
+                  </div>
+                )}
+
+                {/* BFP Info Banner */}
+                <div className="glass-premium rounded-2xl p-8 relative overflow-hidden">
+                  <div className="absolute -top-20 -right-20 w-40 h-40 bg-accent/20 rounded-full blur-3xl" />
+                  
+                  <div className="relative z-10 flex flex-col md:flex-row items-start gap-6">
+                    <div className="w-14 h-14 rounded-2xl bg-accent/20 backdrop-blur-md border border-accent/20 flex items-center justify-center shrink-0">
+                      <Sparkles className="h-7 w-7 text-accent" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="inline-block px-3 py-1 text-xs font-semibold text-accent bg-accent/10 rounded-full border border-accent/20 backdrop-blur-sm mb-3">
+                        Exclusive Content
+                      </span>
+                      <h3 className="font-bold text-foreground text-xl mb-2">Build For Purpose Archive</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Access recordings from previous BFP sessions, workshops, and masterclasses. 
+                        Learn from industry experts and past participants.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <span className="inline-block px-3 py-1 text-xs font-semibold text-accent bg-accent/10 rounded-full border border-accent/20 backdrop-blur-sm mb-3">
-                    Exclusive Content
-                  </span>
-                  <h3 className="font-bold text-foreground text-xl mb-2">Build For Purpose Archive</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Access recordings from previous BFP sessions, workshops, and masterclasses. 
-                    Learn from industry experts and past participants.
-                  </p>
-                </div>
-              </div>
-            </div>
+              </>
+            )}
           </TabsContent>
         </Tabs>
 
@@ -280,8 +401,9 @@ const Learn: React.FC = () => {
         <UnlockModal
           open={showUnlockModal}
           onOpenChange={setShowUnlockModal}
-          title="Unlock Premium Content"
-          description="This content is available to fully onboarded members. Complete your balance payment to access all exclusive videos, sessions, and mentorship content."
+          title="Unlock BFP Sessions"
+          description="Complete your balance payment to access exclusive masterclasses, workshops, and premium content from industry experts."
+          paymentLink={PAYMENT_LINK}
         />
       </div>
     </div>
