@@ -40,6 +40,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   isFullAccess: boolean;
+  isBalancePaid: boolean;
   isDuringForge: boolean;
   forgeMode: 'PRE_FORGE' | 'DURING_FORGE' | 'POST_FORGE';
 }
@@ -142,6 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const isFullAccess = profile?.unlock_level === 'FULL';
+  const isBalancePaid = profile?.payment_status === 'BALANCE_PAID';
   const forgeMode = calculateForgeMode(edition?.forge_start_date, edition?.forge_end_date);
   const isDuringForge = forgeMode === 'DURING_FORGE';
 
@@ -156,6 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signOut,
       refreshProfile,
       isFullAccess,
+      isBalancePaid,
       isDuringForge,
       forgeMode,
     }}>

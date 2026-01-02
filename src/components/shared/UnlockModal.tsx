@@ -1,26 +1,29 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowRight, ExternalLink } from 'lucide-react';
 
 interface UnlockModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title?: string;
   description?: string;
+  paymentLink?: string;
   onPayClick?: () => void;
 }
 
 export const UnlockModal: React.FC<UnlockModalProps> = ({
   open,
   onOpenChange,
-  title = "Complete Your Onboarding",
-  description = "This becomes active once you're fully onboarded for Forge. Complete your balance payment to unlock the full experience.",
+  title = "Unlock the Full Experience",
+  description = "Complete your balance payment to access exclusive BFP sessions, masterclasses, and premium content from industry experts.",
+  paymentLink,
   onPayClick,
 }) => {
   const handlePayClick = () => {
-    // Razorpay integration placeholder
-    console.log('Initiating Razorpay payment...');
+    if (paymentLink) {
+      window.open(paymentLink, '_blank');
+    }
     onPayClick?.();
   };
 
@@ -50,18 +53,29 @@ export const UnlockModal: React.FC<UnlockModalProps> = ({
             </p>
           </div>
 
+          <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+            <p className="text-sm text-foreground font-medium mb-1">
+              🎬 What you'll unlock:
+            </p>
+            <ul className="text-xs text-muted-foreground space-y-1">
+              <li>• BFP Sessions & Masterclasses</li>
+              <li>• Premium workshops from industry experts</li>
+              <li>• Exclusive resources & downloadables</li>
+            </ul>
+          </div>
+
           <Button 
             variant="premium" 
             size="lg" 
             className="w-full"
             onClick={handlePayClick}
           >
-            Pay Balance via Razorpay
-            <ArrowRight className="h-4 w-4" />
+            Pay Balance to Unlock
+            {paymentLink ? <ExternalLink className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
           </Button>
 
           <p className="text-xs text-center text-muted-foreground">
-            Secure payment powered by Razorpay
+            Secure payment via Razorpay
           </p>
         </div>
       </DialogContent>
