@@ -700,7 +700,10 @@ const KYFForm: React.FC = () => {
           canProceed={canProceed()}
           loading={loading}
           onBack={handleBack}
-          onNext={() => setStep(s => s + 1)}
+          onNext={async () => {
+            await saveProgress();
+            setStep(s => s + 1);
+          }}
           onSubmit={handleSubmit}
           showBackOnFirstStep={true}
         />
