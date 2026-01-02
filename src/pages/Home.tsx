@@ -8,6 +8,7 @@ import { EventCard } from '@/components/shared/EventCard';
 import { TestimonialVideoCard } from '@/components/shared/TestimonialVideoCard';
 import { MentorVideoCard } from '@/components/shared/MentorVideoCard';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
+import { KYFormReminderBanner } from '@/components/onboarding/KYFormReminderBanner';
 import { Calendar, ArrowRight, Flame, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
@@ -185,6 +186,9 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen p-4 md:p-8 space-y-8">
+      {/* KY Form Reminder Banner */}
+      <KYFormReminderBanner />
+
       {/* Hero Banner with Countdown */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/80 to-accent min-h-[180px] md:min-h-[200px] reveal-section hover-glow transition-all duration-500">
         {/* Animated decorative elements */}

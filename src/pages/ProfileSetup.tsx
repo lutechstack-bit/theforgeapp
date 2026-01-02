@@ -124,13 +124,13 @@ const ProfileSetup: React.FC = () => {
     // Navigate to the appropriate KY form based on cohort
     switch (formData.cohort_type) {
       case 'FORGE':
-        navigate('/kyf');
+        navigate('/kyf-form');
         break;
       case 'FORGE_CREATORS':
-        navigate('/kyc');
+        navigate('/kyc-form');
         break;
       case 'FORGE_WRITING':
-        navigate('/kyw');
+        navigate('/kyw-form');
         break;
       default:
         navigate('/');
