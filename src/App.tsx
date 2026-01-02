@@ -81,6 +81,26 @@ const ProfileSetupCheck: React.FC<{ children: React.ReactNode }> = ({ children }
   return <>{children}</>;
 };
 
+// Redirect away from profile setup if already completed
+const ProfileSetupRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { profile, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-primary">Loading...</div>
+      </div>
+    );
+  }
+  
+  // If profile setup is already completed, redirect to home
+  if (profile?.profile_setup_completed) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 const AppRoutes = () => {
   const { user, loading } = useAuth();
 
@@ -100,7 +120,9 @@ const AppRoutes = () => {
       {/* Onboarding flow */}
       <Route path="/profile-setup" element={
         <ProtectedRoute>
-          <ProfileSetup />
+          <ProfileSetupRoute>
+            <ProfileSetup />
+          </ProfileSetupRoute>
         </ProtectedRoute>
       } />
       <Route path="/kyf-form" element={
