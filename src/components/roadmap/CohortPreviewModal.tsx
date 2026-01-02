@@ -117,29 +117,26 @@ const CohortPreviewModal: React.FC<CohortPreviewModalProps> = ({ isOpen, onClose
               {previewData?.roadmapDays?.map((day, index) => (
                 <div
                   key={day.id}
-                  className="relative glass-card rounded-xl p-4 opacity-70"
+                  className="glass-card rounded-xl p-4"
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
-                  {/* Locked overlay */}
-                  <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] rounded-xl flex items-center justify-center z-10">
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/80 border border-border/50">
-                      <Lock className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">Locked</span>
-                    </div>
-                  </div>
-
-                  {/* Blurred content */}
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-bold text-muted-foreground">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-bold text-primary">
                         {day.day_number}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground text-sm truncate blur-[3px]">
-                        {day.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 blur-[3px]">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-foreground text-sm">
+                          {day.title}
+                        </p>
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/60 border border-border/30">
+                          <Lock className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">Locked</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                         {day.description || 'Discover what this day has in store...'}
                       </p>
                     </div>
