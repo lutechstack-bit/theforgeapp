@@ -1,67 +1,62 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useAuth } from './AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import React, { createContext, useContext } from 'react';
 
 type CohortType = 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS';
+
+interface CohortInfo {
+  name: string;
+  description: string;
+  logo: string;
+}
 
 interface ThemeContextType {
   cohortType: CohortType;
   cohortName: string;
-  isLoading: boolean;
+  allCohorts: Record<CohortType, CohortInfo>;
+  getOtherCohorts: (current: CohortType) => Array<{ type: CohortType } & CohortInfo>;
 }
 
-const cohortThemes: Record<CohortType, { cssClass: string; name: string }> = {
-  FORGE: { cssClass: 'theme-forge', name: 'The Forge' },
-  FORGE_WRITING: { cssClass: 'theme-forge-writing', name: 'The Forge Writing' },
-  FORGE_CREATORS: { cssClass: 'theme-forge-creators', name: 'The Forge Creators' },
+// Cohort metadata for cross-sell
+const cohortInfo: Record<CohortType, CohortInfo> = {
+  FORGE: {
+    name: 'The Forge',
+    description: 'Master the art of filmmaking',
+    logo: '/src/assets/forge-logo.png',
+  },
+  FORGE_WRITING: {
+    name: 'The Forge Writing',
+    description: 'Craft compelling screenplays',
+    logo: '/src/assets/forge-writing-logo.png',
+  },
+  FORGE_CREATORS: {
+    name: 'The Forge Creators',
+    description: 'Build your creator career',
+    logo: '/src/assets/forge-creators-logo.png',
+  },
 };
 
 const ThemeContext = createContext<ThemeContextType>({
   cohortType: 'FORGE',
   cohortName: 'The Forge',
-  isLoading: true,
+  allCohorts: cohortInfo,
+  getOtherCohorts: () => [],
 });
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { profile } = useAuth();
-  const [cohortType, setCohortType] = useState<CohortType>('FORGE');
-  const [isLoading, setIsLoading] = useState(true);
+  // With unified theme, we no longer fetch cohort type for theming
+  // But we still need to know the user's cohort for displaying cohort name and cross-sell
 
-  useEffect(() => {
-    const fetchEditionTheme = async () => {
-      if (profile?.edition_id) {
-        const { data } = await supabase
-          .from('editions')
-          .select('cohort_type')
-          .eq('id', profile.edition_id)
-          .single();
-
-        if (data?.cohort_type) {
-          setCohortType(data.cohort_type as CohortType);
-        }
-      }
-      setIsLoading(false);
-    };
-
-    fetchEditionTheme();
-  }, [profile?.edition_id]);
-
-  // Apply theme class to document
-  useEffect(() => {
-    const root = document.documentElement;
-    
-    // Remove all theme classes
-    root.classList.remove('theme-forge', 'theme-forge-writing', 'theme-forge-creators');
-    
-    // Add current theme class
-    root.classList.add(cohortThemes[cohortType].cssClass);
-  }, [cohortType]);
+  const getOtherCohorts = (current: CohortType) => {
+    return (Object.keys(cohortInfo) as CohortType[])
+      .filter(type => type !== current)
+      .map(type => ({ type, ...cohortInfo[type] }));
+  };
 
   return (
     <ThemeContext.Provider value={{
-      cohortType,
-      cohortName: cohortThemes[cohortType].name,
-      isLoading,
+      cohortType: 'FORGE', // Default, actual cohort comes from AuthContext
+      cohortName: cohortInfo.FORGE.name,
+      allCohorts: cohortInfo,
+      getOtherCohorts,
     }}>
       {children}
     </ThemeContext.Provider>
@@ -75,3 +70,6 @@ export const useTheme = () => {
   }
   return context;
 };
+
+export { cohortInfo };
+export type { CohortType, CohortInfo };
