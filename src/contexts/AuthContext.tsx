@@ -15,6 +15,8 @@ interface Profile {
   edition_id: string | null;
   city: string | null;
   kyf_completed: boolean;
+  profile_setup_completed: boolean;
+  ky_form_completed: boolean;
   bio: string | null;
   instagram_handle: string | null;
   twitter_handle: string | null;

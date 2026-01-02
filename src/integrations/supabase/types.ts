@@ -229,6 +229,312 @@ export type Database = {
         }
         Relationships: []
       }
+      kyc_responses: {
+        Row: {
+          age: number | null
+          certificate_name: string | null
+          chronotype: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          current_status: string | null
+          date_of_birth: string | null
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_number: string | null
+          forge_intent: string | null
+          forge_intent_other: string | null
+          id: string
+          instagram_id: string | null
+          mbti_type: string | null
+          meal_preference: string | null
+          primary_platform: string | null
+          proficiency_content_creation: string | null
+          proficiency_storytelling: string | null
+          proficiency_video_production: string | null
+          state: string | null
+          terms_accepted: boolean | null
+          terms_accepted_at: string | null
+          top_3_creators: string[] | null
+          updated_at: string
+          user_id: string
+          whatsapp_number: string | null
+        }
+        Insert: {
+          age?: number | null
+          certificate_name?: string | null
+          chronotype?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          current_status?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_number?: string | null
+          forge_intent?: string | null
+          forge_intent_other?: string | null
+          id?: string
+          instagram_id?: string | null
+          mbti_type?: string | null
+          meal_preference?: string | null
+          primary_platform?: string | null
+          proficiency_content_creation?: string | null
+          proficiency_storytelling?: string | null
+          proficiency_video_production?: string | null
+          state?: string | null
+          terms_accepted?: boolean | null
+          terms_accepted_at?: string | null
+          top_3_creators?: string[] | null
+          updated_at?: string
+          user_id: string
+          whatsapp_number?: string | null
+        }
+        Update: {
+          age?: number | null
+          certificate_name?: string | null
+          chronotype?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          current_status?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_number?: string | null
+          forge_intent?: string | null
+          forge_intent_other?: string | null
+          id?: string
+          instagram_id?: string | null
+          mbti_type?: string | null
+          meal_preference?: string | null
+          primary_platform?: string | null
+          proficiency_content_creation?: string | null
+          proficiency_storytelling?: string | null
+          proficiency_video_production?: string | null
+          state?: string | null
+          terms_accepted?: boolean | null
+          terms_accepted_at?: string | null
+          top_3_creators?: string[] | null
+          updated_at?: string
+          user_id?: string
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
+      kyf_responses: {
+        Row: {
+          address_line_1: string | null
+          address_line_2: string | null
+          age: number | null
+          certificate_name: string | null
+          chronotype: string | null
+          city: string | null
+          created_at: string
+          current_occupation: string | null
+          date_of_birth: string | null
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_number: string | null
+          food_allergies: string | null
+          forge_intent: string | null
+          forge_intent_other: string | null
+          full_body_url: string | null
+          gender: string | null
+          has_editing_laptop: boolean | null
+          headshot_front_url: string | null
+          headshot_left_url: string | null
+          headshot_right_url: string | null
+          height_ft: string | null
+          id: string
+          instagram_id: string | null
+          languages_known: string[] | null
+          mbti_type: string | null
+          meal_preference: string | null
+          medication_support: string | null
+          photo_favorite_url: string | null
+          pincode: string | null
+          proficiency_cinematography: string | null
+          proficiency_direction: string | null
+          proficiency_editing: string | null
+          proficiency_screenwriting: string | null
+          state: string | null
+          terms_accepted: boolean | null
+          terms_accepted_at: string | null
+          top_3_movies: string[] | null
+          tshirt_size: string | null
+          updated_at: string
+          user_id: string
+          whatsapp_number: string | null
+        }
+        Insert: {
+          address_line_1?: string | null
+          address_line_2?: string | null
+          age?: number | null
+          certificate_name?: string | null
+          chronotype?: string | null
+          city?: string | null
+          created_at?: string
+          current_occupation?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_number?: string | null
+          food_allergies?: string | null
+          forge_intent?: string | null
+          forge_intent_other?: string | null
+          full_body_url?: string | null
+          gender?: string | null
+          has_editing_laptop?: boolean | null
+          headshot_front_url?: string | null
+          headshot_left_url?: string | null
+          headshot_right_url?: string | null
+          height_ft?: string | null
+          id?: string
+          instagram_id?: string | null
+          languages_known?: string[] | null
+          mbti_type?: string | null
+          meal_preference?: string | null
+          medication_support?: string | null
+          photo_favorite_url?: string | null
+          pincode?: string | null
+          proficiency_cinematography?: string | null
+          proficiency_direction?: string | null
+          proficiency_editing?: string | null
+          proficiency_screenwriting?: string | null
+          state?: string | null
+          terms_accepted?: boolean | null
+          terms_accepted_at?: string | null
+          top_3_movies?: string[] | null
+          tshirt_size?: string | null
+          updated_at?: string
+          user_id: string
+          whatsapp_number?: string | null
+        }
+        Update: {
+          address_line_1?: string | null
+          address_line_2?: string | null
+          age?: number | null
+          certificate_name?: string | null
+          chronotype?: string | null
+          city?: string | null
+          created_at?: string
+          current_occupation?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_number?: string | null
+          food_allergies?: string | null
+          forge_intent?: string | null
+          forge_intent_other?: string | null
+          full_body_url?: string | null
+          gender?: string | null
+          has_editing_laptop?: boolean | null
+          headshot_front_url?: string | null
+          headshot_left_url?: string | null
+          headshot_right_url?: string | null
+          height_ft?: string | null
+          id?: string
+          instagram_id?: string | null
+          languages_known?: string[] | null
+          mbti_type?: string | null
+          meal_preference?: string | null
+          medication_support?: string | null
+          photo_favorite_url?: string | null
+          pincode?: string | null
+          proficiency_cinematography?: string | null
+          proficiency_direction?: string | null
+          proficiency_editing?: string | null
+          proficiency_screenwriting?: string | null
+          state?: string | null
+          terms_accepted?: boolean | null
+          terms_accepted_at?: string | null
+          top_3_movies?: string[] | null
+          tshirt_size?: string | null
+          updated_at?: string
+          user_id?: string
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
+      kyw_responses: {
+        Row: {
+          age: number | null
+          certificate_name: string | null
+          chronotype: string | null
+          city: string | null
+          created_at: string
+          current_occupation: string | null
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_number: string | null
+          forge_intent: string | null
+          forge_intent_other: string | null
+          id: string
+          mbti_type: string | null
+          primary_language: string | null
+          proficiency_story_voice: string | null
+          proficiency_writing: string | null
+          terms_accepted: boolean | null
+          terms_accepted_at: string | null
+          top_3_writers_books: string[] | null
+          updated_at: string
+          user_id: string
+          whatsapp_number: string | null
+          writing_types: string[] | null
+        }
+        Insert: {
+          age?: number | null
+          certificate_name?: string | null
+          chronotype?: string | null
+          city?: string | null
+          created_at?: string
+          current_occupation?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_number?: string | null
+          forge_intent?: string | null
+          forge_intent_other?: string | null
+          id?: string
+          mbti_type?: string | null
+          primary_language?: string | null
+          proficiency_story_voice?: string | null
+          proficiency_writing?: string | null
+          terms_accepted?: boolean | null
+          terms_accepted_at?: string | null
+          top_3_writers_books?: string[] | null
+          updated_at?: string
+          user_id: string
+          whatsapp_number?: string | null
+          writing_types?: string[] | null
+        }
+        Update: {
+          age?: number | null
+          certificate_name?: string | null
+          chronotype?: string | null
+          city?: string | null
+          created_at?: string
+          current_occupation?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_number?: string | null
+          forge_intent?: string | null
+          forge_intent_other?: string | null
+          id?: string
+          mbti_type?: string | null
+          primary_language?: string | null
+          proficiency_story_voice?: string | null
+          proficiency_writing?: string | null
+          terms_accepted?: boolean | null
+          terms_accepted_at?: string | null
+          top_3_writers_books?: string[] | null
+          updated_at?: string
+          user_id?: string
+          whatsapp_number?: string | null
+          writing_types?: string[] | null
+        }
+        Relationships: []
+      }
       learn_content: {
         Row: {
           access_token: string | null
@@ -473,9 +779,11 @@ export type Database = {
           full_name: string | null
           id: string
           instagram_handle: string | null
+          ky_form_completed: boolean
           kyf_completed: boolean
           payment_status: Database["public"]["Enums"]["payment_status"]
           phone: string | null
+          profile_setup_completed: boolean
           specialty: string | null
           twitter_handle: string | null
           unlock_level: Database["public"]["Enums"]["unlock_level"]
@@ -492,9 +800,11 @@ export type Database = {
           full_name?: string | null
           id: string
           instagram_handle?: string | null
+          ky_form_completed?: boolean
           kyf_completed?: boolean
           payment_status?: Database["public"]["Enums"]["payment_status"]
           phone?: string | null
+          profile_setup_completed?: boolean
           specialty?: string | null
           twitter_handle?: string | null
           unlock_level?: Database["public"]["Enums"]["unlock_level"]
@@ -511,9 +821,11 @@ export type Database = {
           full_name?: string | null
           id?: string
           instagram_handle?: string | null
+          ky_form_completed?: boolean
           kyf_completed?: boolean
           payment_status?: Database["public"]["Enums"]["payment_status"]
           phone?: string | null
+          profile_setup_completed?: boolean
           specialty?: string | null
           twitter_handle?: string | null
           unlock_level?: Database["public"]["Enums"]["unlock_level"]
