@@ -76,7 +76,8 @@ export const mentorsData: Mentor[] = [
     name: 'Rahul Srinivas',
     title: 'Storyteller | Producer | Entrepreneur',
     roles: ['Storyteller', 'Producer', 'Entrepreneur'],
-    imageUrl: '/images/mentors/rahul.png',
+    imageUrl: '/images/mentors/rahul-20260104.png',
+    modalImageUrl: '/images/mentors/rahul-20260104.png',
     bio: [
       "Runs India's largest and fastest-growing filmmaking community with over 20,000 Writers, Directors, Storytellers, Editors and more.",
       'Directed and produced the masterclasses of Karthik Subbaraj, G Venket Ram, Anthony Gonsalvez, DRK Kiran, Ravi Basrur and Lokesh Kanagaraj.',
