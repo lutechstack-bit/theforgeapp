@@ -194,38 +194,28 @@ const Home: React.FC = () => {
       <FOMOBanner />
 
       {/* Hero Banner with Countdown */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/80 to-accent min-h-[180px] md:min-h-[200px] reveal-section hover-glow transition-all duration-500">
-        {/* Animated decorative elements */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2 animate-pulse-soft" />
-          <div className="absolute bottom-0 left-1/4 w-48 h-48 bg-white/10 rounded-full blur-2xl animate-float" />
-        </div>
-        
-        {/* Decorative illustration placeholder */}
-        <div className="absolute right-8 top-1/2 -translate-y-1/2 hidden lg:block">
-          <div className="w-32 h-32 bg-white/10 rounded-2xl backdrop-blur-sm flex items-center justify-center animate-float">
-            <Flame className="w-16 h-16 text-white/40 animate-pulse-soft" />
-          </div>
-        </div>
-
-        <div className="relative z-10 p-6 md:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary/80 reveal-section">
+        <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="animate-fade-in">
-            <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
-              Forge Begins In
-            </h1>
+            <div className="flex items-center gap-2 mb-2">
+              <Flame className="w-6 h-6 text-white/90" />
+              <h1 className="text-2xl md:text-3xl font-bold text-white">
+                Forge Begins In
+              </h1>
+            </div>
             <p className="text-white/70 text-sm">
               Your creative journey starts soon
             </p>
           </div>
 
           {/* Countdown Timer */}
-          <div className="flex items-center gap-3 md:gap-6 bg-black/20 backdrop-blur-sm rounded-xl px-6 py-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <div className="flex items-center gap-4 md:gap-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <TimeBlock value={timeLeft.days} label="Days" />
-            <span className="text-white/40 text-xl animate-pulse-soft">:</span>
+            <span className="text-white/50 text-2xl font-light">:</span>
             <TimeBlock value={timeLeft.hours} label="Hours" />
-            <span className="text-white/40 text-xl animate-pulse-soft">:</span>
+            <span className="text-white/50 text-2xl font-light">:</span>
             <TimeBlock value={timeLeft.minutes} label="Mins" />
-            <span className="text-white/40 text-xl animate-pulse-soft">:</span>
+            <span className="text-white/50 text-2xl font-light">:</span>
             <TimeBlock value={timeLeft.seconds} label="Secs" />
           </div>
         </div>
