@@ -57,8 +57,8 @@ export const mentorsData: Mentor[] = [
     name: 'Bavithravanan J',
     title: 'Cinematographer | Creative Director | Photographer',
     roles: ['Cinematographer', 'Creative Director', 'Photographer'],
-    imageUrl: '/images/mentors/bavithravanan.png',
-    modalImageUrl: '/images/mentors/bavithravanan.png',
+    imageUrl: '/images/mentors/bavithravanan-20260104.png',
+    modalImageUrl: '/images/mentors/bavithravanan-20260104.png',
     bio: [
       '14+ years of experience in creative and visual storytelling.',
       'Assistant cinematographer on GameOver Feature Film Starring Tapsee Pannu.',
