@@ -147,7 +147,8 @@ export const mentorsData: Mentor[] = [
     name: 'Sudarshan Narayanan',
     title: 'Director | Creative Producer | Writer',
     roles: ['Director', 'Creative Producer', 'Writer'],
-    imageUrl: '/images/mentors/sudharshan.png',
+    imageUrl: '/images/mentors/sudharshan-20260104.png',
+    modalImageUrl: '/images/mentors/sudharshan-20260104.png',
     bio: [
       'Sudharshan Narayanan is a seasoned filmmaker with a diverse background in the film industry, having worked across various capacities in Tamil, Malayalam, and Hindi cinema.',
       'With a foundation in Electrical and Electronics Engineering, he transitioned into filmmaking, studying under the renowned filmmaker Rajiv Menon at Mindscreen Film Institute.',
