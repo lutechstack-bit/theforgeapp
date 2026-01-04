@@ -111,16 +111,17 @@ export const mentorsData: Mentor[] = [
     title: 'Editor | Cinematographer | Creator',
     roles: ['Editor', 'Cinematographer', 'Creator'],
     imageUrl: '/images/mentors/edwin.png',
+    modalImageUrl: '/images/mentors/edwin.png',
     bio: [
       'Has 5+ years of experience as an Editor and Cinematographer.',
       "Head of Production at LevelUp Learning and Millennial Labs and Head of Editing & Camera crew at Lokesh Kanagaraj's filmmaking masterclass.",
       'His freelance portfolio includes prestigious brands like Aston Martin, Harley Davidson, Ferrari and Cars & Coffee.',
     ],
     brands: [
-      { name: 'Ferrari' },
-      { name: 'Aston Martin' },
-      { name: 'Harley-Davidson' },
-      { name: 'TEDx' },
+      { name: 'Ferrari', logoUrl: '/images/brands/ferrari.png' },
+      { name: 'Aston Martin', logoUrl: '/images/brands/aston-martin.png' },
+      { name: 'Harley-Davidson', logoUrl: '/images/brands/harley-davidson.png' },
+      { name: 'Cars & Coffee', logoUrl: '/images/brands/cars-coffee.png' },
     ],
   },
   {
