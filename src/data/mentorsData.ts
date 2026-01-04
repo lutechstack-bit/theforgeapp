@@ -9,6 +9,7 @@ export interface Mentor {
   title: string;
   roles: string[];
   imageUrl: string;
+  modalImageUrl?: string;
   bio: string[];
   brands: MentorBrand[];
 }
@@ -20,6 +21,7 @@ export const mentorsData: Mentor[] = [
     title: 'Director | Editor | Photographer',
     roles: ['Director', 'Editor', 'Photographer'],
     imageUrl: '/images/mentors/ranjini.png',
+    modalImageUrl: '/images/mentors/ranjini-full.png',
     bio: [
       'Worked as a Co-director and Associate director in several Tamil feature films like Maara, and Sorgavaasal.',
       "Directed and Edited commercials for Anirudh Ravichander's brand Piece of Rock and Hukum Tour.",

@@ -34,9 +34,9 @@ export const MentorDetailModal: React.FC<MentorDetailModalProps> = ({
         <div className="flex flex-col md:flex-row">
           {/* Left: Photo */}
           <div className="md:w-2/5 relative">
-            <div className="aspect-[3/4] md:h-full">
+          <div className="aspect-[3/4] md:h-full">
               <img
-                src={mentor.imageUrl}
+                src={mentor.modalImageUrl || mentor.imageUrl}
                 alt={mentor.name}
                 className="w-full h-full object-cover object-top rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
               />
