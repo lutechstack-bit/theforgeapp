@@ -38,8 +38,8 @@ export const mentorsData: Mentor[] = [
     name: 'Prashanth G',
     title: 'Writer | Creative Director | Producer',
     roles: ['Writer', 'Creative Director', 'Producer'],
-    imageUrl: '/images/mentors/prashanth.png',
-    modalImageUrl: '/images/mentors/prashanth.png',
+    imageUrl: '/images/mentors/prashanth-20260104.png',
+    modalImageUrl: '/images/mentors/prashanth-20260104.png',
     bio: [
       'Former Creative Director and Content Manager at ZEE 5 Tamil for multiple web series & Executive Producer for May6 Entertainment, Showrunner for their projects with MX Player.',
       'Youngest Contestant in Naalaya Iyakkunar Season 3: Made 6 short films in 2016, one of them hit 1M views.',
