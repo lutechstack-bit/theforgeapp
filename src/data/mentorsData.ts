@@ -93,14 +93,15 @@ export const mentorsData: Mentor[] = [
     title: 'Writer | Director | Mentor',
     roles: ['Writer', 'Director', 'Mentor'],
     imageUrl: '/images/mentors/praveen-r.png',
+    modalImageUrl: '/images/mentors/praveen-r.png',
     bio: [
       'Completed a 2-year Post Graduate Diploma in Direction and Screenwriting at L V Prasad Film Institute, Chennai.',
       'Has mentored over 150 students at L V Prasad Film Institute, Chennai.',
       'Has trained over 25,000 aspiring filmmakers across the country and has hosted 180+ workshops on Screenwriting & Film Direction.',
     ],
     brands: [
-      { name: 'L V Prasad' },
-      { name: 'LevelUp' },
+      { name: 'L V Prasad', logoUrl: '/images/brands/lv-prasad.png' },
+      { name: 'LevelUp', logoUrl: '/images/brands/levelup.png' },
     ],
   },
   {
