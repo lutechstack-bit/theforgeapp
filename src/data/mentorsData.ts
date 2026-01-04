@@ -26,9 +26,9 @@ export const mentorsData: Mentor[] = [
       'Freelance Editing and Photography work including artists like Shraddha Srinath.',
     ],
     brands: [
-      { name: 'Maara' },
-      { name: 'Hukum' },
-      { name: 'Shraddha Srinath' },
+      { name: 'Maara', logoUrl: '/images/brands/marg.png' },
+      { name: 'Hukum', logoUrl: '/images/brands/hukum.png' },
+      { name: 'Shraddha Srinath', logoUrl: '/images/brands/shraddha-srinath.png' },
     ],
   },
   {
