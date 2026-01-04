@@ -38,6 +38,8 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: any }>;
+  updatePassword: (newPassword: string) => Promise<{ error: any }>;
   refreshProfile: () => Promise<void>;
   isFullAccess: boolean;
   isBalancePaid: boolean;
@@ -142,6 +144,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setEdition(null);
   };
 
+  const resetPassword = async (email: string) => {
+    const redirectUrl = `${window.location.origin}/reset-password`;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
+    return { error };
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    return { error };
+  };
+
   const isFullAccess = profile?.unlock_level === 'FULL';
   const isBalancePaid = profile?.payment_status === 'BALANCE_PAID';
   const forgeMode = calculateForgeMode(edition?.forge_start_date, edition?.forge_end_date);
@@ -156,6 +171,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loading,
       signIn,
       signOut,
+      resetPassword,
+      updatePassword,
       refreshProfile,
       isFullAccess,
       isBalancePaid,

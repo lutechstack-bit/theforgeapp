@@ -11,6 +11,8 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 
 // Pages
 import Auth from "./pages/Auth";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Welcome from "./pages/Welcome";
 import ProfileSetup from "./pages/ProfileSetup";
 import KYFForm from "./pages/KYFForm";
@@ -116,6 +118,8 @@ const AppRoutes = () => {
     <Routes>
       {/* Public routes */}
       <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
+      <Route path="/forgot-password" element={user ? <Navigate to="/" replace /> : <ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/welcome" element={
         <ProtectedRoute>
           <ProfileSetupCheck>
