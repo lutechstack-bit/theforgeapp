@@ -58,6 +58,7 @@ export const mentorsData: Mentor[] = [
     title: 'Cinematographer | Creative Director | Photographer',
     roles: ['Cinematographer', 'Creative Director', 'Photographer'],
     imageUrl: '/images/mentors/bavithravanan.png',
+    modalImageUrl: '/images/mentors/bavithravanan.png',
     bio: [
       '14+ years of experience in creative and visual storytelling.',
       'Assistant cinematographer on GameOver Feature Film Starring Tapsee Pannu.',
@@ -65,9 +66,9 @@ export const mentorsData: Mentor[] = [
       'Shot for several advertisements and broadcast media, including TEDx India and others.',
     ],
     brands: [
-      { name: 'GameOver' },
-      { name: 'TEDx' },
-      { name: 'LevelUp' },
+      { name: 'GameOver', logoUrl: '/images/brands/gameover.png' },
+      { name: 'TEDx', logoUrl: '/images/brands/tedx.png' },
+      { name: 'LevelUp', logoUrl: '/images/brands/levelup.png' },
     ],
   },
   {
