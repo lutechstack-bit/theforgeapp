@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ContentCarousel } from '@/components/shared/ContentCarousel';
 import { EventCard } from '@/components/shared/EventCard';
 import { TestimonialVideoCard } from '@/components/shared/TestimonialVideoCard';
-import { PremiumMentorCard } from '@/components/shared/PremiumMentorCard';
+import { FlipMentorCard } from '@/components/shared/FlipMentorCard';
 import { MentorDetailModal } from '@/components/shared/MentorDetailModal';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { KYFormReminderBanner } from '@/components/onboarding/KYFormReminderBanner';
@@ -276,7 +276,7 @@ const Home: React.FC = () => {
       {/* Meet Your Mentors */}
       <ContentCarousel title="Meet Your Mentors">
         {mentorsData.map((mentor) => (
-          <PremiumMentorCard
+          <FlipMentorCard
             key={mentor.id}
             mentor={mentor}
             onClick={() => handleMentorClick(mentor)}
