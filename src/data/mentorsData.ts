@@ -129,7 +129,8 @@ export const mentorsData: Mentor[] = [
     name: 'Indira Kumar A',
     title: 'Editor | Videographer | Photographer',
     roles: ['Editor', 'Videographer', 'Photographer'],
-    imageUrl: '/images/mentors/indira.png',
+    imageUrl: '/images/mentors/indira-20260104.png',
+    modalImageUrl: '/images/mentors/indira-20260104.png',
     bio: [
       'Has 3+ years of experience in Post Production & Videography and is currently a Senior Video Editor at LevelUp Learning.',
       'He was the Post Production Lead at Fully Filmy for 1 year.',
