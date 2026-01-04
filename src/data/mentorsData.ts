@@ -110,8 +110,8 @@ export const mentorsData: Mentor[] = [
     name: 'Edwin Paul',
     title: 'Editor | Cinematographer | Creator',
     roles: ['Editor', 'Cinematographer', 'Creator'],
-    imageUrl: '/images/mentors/edwin.png',
-    modalImageUrl: '/images/mentors/edwin.png',
+    imageUrl: '/images/mentors/edwin-20260104.png',
+    modalImageUrl: '/images/mentors/edwin-20260104.png',
     bio: [
       'Has 5+ years of experience as an Editor and Cinematographer.',
       "Head of Production at LevelUp Learning and Millennial Labs and Head of Editing & Camera crew at Lokesh Kanagaraj's filmmaking masterclass.",
