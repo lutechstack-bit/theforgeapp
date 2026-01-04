@@ -20,7 +20,7 @@ export const mentorsData: Mentor[] = [
     name: 'Ranjini Ramesh',
     title: 'Director | Editor | Photographer',
     roles: ['Director', 'Editor', 'Photographer'],
-    imageUrl: '/images/mentors/ranjini.png',
+    imageUrl: '/images/mentors/ranjini-full.png',
     modalImageUrl: '/images/mentors/ranjini-full.png',
     bio: [
       'Worked as a Co-director and Associate director in several Tamil feature films like Maara, and Sorgavaasal.',
