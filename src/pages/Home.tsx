@@ -6,13 +6,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { ContentCarousel } from '@/components/shared/ContentCarousel';
 import { EventCard } from '@/components/shared/EventCard';
 import { TestimonialVideoCard } from '@/components/shared/TestimonialVideoCard';
-import { MentorVideoCard } from '@/components/shared/MentorVideoCard';
+import { PremiumMentorCard } from '@/components/shared/PremiumMentorCard';
+import { MentorDetailModal } from '@/components/shared/MentorDetailModal';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { KYFormReminderBanner } from '@/components/onboarding/KYFormReminderBanner';
 import { FOMOBanner } from '@/components/shared/FOMOBanner';
 import { Calendar, ArrowRight, Flame, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
+import { mentorsData, Mentor } from '@/data/mentorsData';
 
 // Alumni testimonial videos
 const alumniTestimonials = [
@@ -33,6 +35,13 @@ const Home: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
+  const [isMentorModalOpen, setIsMentorModalOpen] = useState(false);
+
+  const handleMentorClick = (mentor: Mentor) => {
+    setSelectedMentor(mentor);
+    setIsMentorModalOpen(true);
+  };
 
   // Fetch edition data for countdown
   const { data: edition } = useQuery({
@@ -93,17 +102,6 @@ const Home: React.FC = () => {
     },
   });
 
-  // Filter home cards by type (for mentors)
-  const mentorCardsFromDb = homeCards?.filter(card => card.card_type === 'mentor') || [];
-
-  // Mentor data with actual images
-  const mentorData = [
-    { id: '1', title: 'Leadership', subtitle: 'Mastering', name: 'Praveen', image_url: '/images/mentors/praveen.png', companyName: 'LevelUp' },
-    { id: '2', title: 'Growth Strategy', subtitle: 'Building', name: 'Santhosh', image_url: '/images/mentors/santhosh.png', companyName: 'LevelUp' },
-    { id: '3', title: 'Creative Vision', subtitle: 'Developing', name: 'Sharan', image_url: '/images/mentors/sharan.png', companyName: 'LevelUp' },
-    { id: '4', title: 'Excellence', subtitle: 'Achieving', name: 'Sharanya', image_url: '/images/mentors/sharanya.png', companyName: 'LevelUp' },
-  ];
-
   const dummyLearnContent = [
     { id: '1', title: 'The Art of Visual Storytelling', duration_minutes: 45, thumbnail_url: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400' },
     { id: '2', title: 'Mastering Cinematography', duration_minutes: 60, thumbnail_url: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=400' },
@@ -146,9 +144,6 @@ const Home: React.FC = () => {
       isFillingFast: true,
     },
   ];
-
-  // Use database data if available, otherwise use local mentor data
-  const mentorCards = mentorCardsFromDb.length > 0 ? mentorCardsFromDb : mentorData;
   const displayLearnContent = (learnContent && learnContent.length > 0) ? learnContent : dummyLearnContent;
   const displayEvents = (events && events.length > 0) ? events : dummyEvents;
 
@@ -278,22 +273,23 @@ const Home: React.FC = () => {
         ))}
       </ContentCarousel>
 
-      {/* About Our Mentors */}
-      {mentorCards.length > 0 && (
-        <ContentCarousel title="About Our Mentors" onSeeAll={() => navigate('/community')}>
-          {mentorCards.map((mentor: any) => (
-            <MentorVideoCard
-              key={mentor.id}
-              name={mentor.name || mentor.title}
-              title={mentor.title}
-              subtitle={mentor.subtitle || mentor.description}
-              imageUrl={mentor.image_url}
-              companyName={mentor.companyName}
-              onClick={() => navigate('/community')}
-            />
-          ))}
-        </ContentCarousel>
-      )}
+      {/* Meet Your Mentors */}
+      <ContentCarousel title="Meet Your Mentors">
+        {mentorsData.map((mentor) => (
+          <PremiumMentorCard
+            key={mentor.id}
+            mentor={mentor}
+            onClick={() => handleMentorClick(mentor)}
+          />
+        ))}
+      </ContentCarousel>
+
+      {/* Mentor Detail Modal */}
+      <MentorDetailModal
+        mentor={selectedMentor}
+        isOpen={isMentorModalOpen}
+        onClose={() => setIsMentorModalOpen(false)}
+      />
 
       {/* Learn Section */}
       {displayLearnContent.length > 0 && (
@@ -333,7 +329,7 @@ const Home: React.FC = () => {
       )}
 
       {/* Empty State */}
-      {(!alumniTestimonials.length && !mentorCards.length && !learnContent?.length && !events?.length) && (
+      {(!alumniTestimonials.length && !mentorsData.length && !learnContent?.length && !events?.length) && (
         <div className="glass-premium rounded-2xl p-8 text-center">
           <Users className="h-12 w-12 text-primary/50 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">Content Coming Soon</h3>
