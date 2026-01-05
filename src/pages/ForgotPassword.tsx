@@ -49,17 +49,17 @@ const ForgotPassword: React.FC = () => {
 
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-background">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 -left-32 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 -right-32 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
+      <div className="min-h-screen min-h-[100dvh] flex items-center justify-center px-4 py-8 sm:p-6 bg-background safe-area-inset">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 -left-16 sm:-left-32 w-48 sm:w-64 h-48 sm:h-64 bg-primary/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 -right-16 sm:-right-32 w-48 sm:w-64 h-48 sm:h-64 bg-accent/10 rounded-full blur-3xl" />
         </div>
 
-        <div className="relative w-full max-w-md space-y-8 animate-slide-up text-center">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-green-500/20 flex items-center justify-center">
-            <CheckCircle className="h-8 w-8 text-green-500" />
+        <div className="relative w-full max-w-md space-y-6 sm:space-y-8 animate-slide-up text-center">
+          <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-green-500/20 flex items-center justify-center">
+            <CheckCircle className="h-7 w-7 sm:h-8 sm:w-8 text-green-500" />
           </div>
-          <h1 className="text-3xl font-bold">Check Your Email</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Check Your Email</h1>
           <p className="text-muted-foreground">
             We've sent a password reset link to <strong className="text-foreground">{email}</strong>. 
             Please check your inbox and click the link to reset your password.
@@ -88,24 +88,24 @@ const ForgotPassword: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-background">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 -left-32 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-32 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
+    <div className="min-h-screen min-h-[100dvh] flex items-center justify-center px-4 py-8 sm:p-6 bg-background safe-area-inset">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 -left-16 sm:-left-32 w-48 sm:w-64 h-48 sm:h-64 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 -right-16 sm:-right-32 w-48 sm:w-64 h-48 sm:h-64 bg-accent/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative w-full max-w-md space-y-8 animate-slide-up">
-        <div className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center shadow-glow">
-            <Mail className="h-8 w-8 text-primary-foreground" />
+      <div className="relative w-full max-w-md space-y-6 sm:space-y-8 animate-slide-up">
+        <div className="text-center space-y-3 sm:space-y-4">
+          <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 rounded-2xl gradient-primary flex items-center justify-center shadow-glow">
+            <Mail className="h-7 w-7 sm:h-8 sm:w-8 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold gradient-text">Reset Password</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold gradient-text">Reset Password</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Enter your email address and we'll send you a link to reset your password.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
