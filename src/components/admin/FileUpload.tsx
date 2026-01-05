@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -18,6 +18,29 @@ interface FileUploadProps {
   helperText?: string;
 }
 
+interface UploadStats {
+  bytesUploaded: number;
+  totalBytes: number;
+  startTime: number;
+  speed: number; // bytes per second
+  estimatedTimeRemaining: number; // seconds
+}
+
+const formatBytes = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+};
+
+const formatTime = (seconds: number): string => {
+  if (seconds < 60) return `${Math.ceil(seconds)}s`;
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.ceil(seconds % 60);
+  return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+};
+
 export const FileUpload: React.FC<FileUploadProps> = ({
   bucket,
   onUploadComplete,
@@ -33,7 +56,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(currentUrl || null);
+  const [uploadStats, setUploadStats] = useState<UploadStats | null>(null);
+  const [fileName, setFileName] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const getFileIcon = () => {
     if (accept.includes('video')) return FileVideo;
@@ -42,6 +68,71 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   const FileIcon = getFileIcon();
+
+  // Use XMLHttpRequest for real progress tracking
+  const uploadWithProgress = async (
+    file: File,
+    uploadFileName: string
+  ): Promise<{ data: any; error: any }> => {
+    return new Promise((resolve) => {
+      const xhr = new XMLHttpRequest();
+      abortControllerRef.current = new AbortController();
+
+      const startTime = Date.now();
+
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = Math.round((event.loaded / event.total) * 100);
+          const elapsedTime = (Date.now() - startTime) / 1000; // seconds
+          const speed = event.loaded / elapsedTime; // bytes per second
+          const remainingBytes = event.total - event.loaded;
+          const estimatedTimeRemaining = remainingBytes / speed;
+
+          setProgress(percentComplete);
+          setUploadStats({
+            bytesUploaded: event.loaded,
+            totalBytes: event.total,
+            startTime,
+            speed,
+            estimatedTimeRemaining: isFinite(estimatedTimeRemaining) ? estimatedTimeRemaining : 0,
+          });
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve({ data: { path: uploadFileName }, error: null });
+        } else {
+          let errorMessage = 'Upload failed';
+          try {
+            const response = JSON.parse(xhr.responseText);
+            errorMessage = response.message || response.error || errorMessage;
+          } catch {
+            errorMessage = xhr.statusText || errorMessage;
+          }
+          resolve({ data: null, error: { message: errorMessage } });
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        resolve({ data: null, error: { message: 'Network error during upload' } });
+      });
+
+      xhr.addEventListener('abort', () => {
+        resolve({ data: null, error: { message: 'Upload cancelled' } });
+      });
+
+      // Get the Supabase URL and key
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      xhr.open('POST', `${supabaseUrl}/storage/v1/object/${bucket}/${uploadFileName}`);
+      xhr.setRequestHeader('Authorization', `Bearer ${supabaseKey}`);
+      xhr.setRequestHeader('x-upsert', 'false');
+      
+      xhr.send(file);
+    });
+  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -57,37 +148,25 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
     setError(null);
     setUploading(true);
+    setFileName(file.name);
     onUploadingChange?.(true);
     setProgress(0);
+    setUploadStats({
+      bytesUploaded: 0,
+      totalBytes: file.size,
+      startTime: Date.now(),
+      speed: 0,
+      estimatedTimeRemaining: 0,
+    });
 
     try {
       // Generate unique filename
       const timestamp = Date.now();
       const fileExt = file.name.split('.').pop();
-      const fileName = `${timestamp}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const uploadFileName = `${timestamp}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-      // Start upload with progress tracking
-      const startTime = Date.now();
-      
-      // Simulate progress for better UX (Supabase doesn't provide real progress)
-      const progressInterval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + 10;
-        });
-      }, 200);
-
-      const { data, error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false,
-        });
-
-      clearInterval(progressInterval);
+      // Upload with real progress tracking
+      const { data, error: uploadError } = await uploadWithProgress(file, uploadFileName);
 
       if (uploadError) {
         throw uploadError;
@@ -98,15 +177,15 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       // Get public URL for thumbnails, signed URL for videos/resources
       let url: string;
       if (bucket === 'learn-thumbnails') {
-        const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName);
+        const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(uploadFileName);
         url = urlData.publicUrl;
       } else {
         // For private buckets, we'll store the path and generate signed URLs on demand
-        url = fileName;
+        url = uploadFileName;
       }
 
       setUploadedUrl(url);
-      onUploadComplete(url, fileName);
+      onUploadComplete(url, uploadFileName);
       toast.success('File uploaded successfully');
 
     } catch (err: any) {
@@ -115,6 +194,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       toast.error('Upload failed: ' + (err.message || 'Unknown error'));
     } finally {
       setUploading(false);
+      setUploadStats(null);
       onUploadingChange?.(false);
       // Reset file input
       if (fileInputRef.current) {
@@ -123,9 +203,16 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     }
   };
 
+  const handleCancelUpload = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+  };
+
   const handleRemove = () => {
     setUploadedUrl(null);
     setProgress(0);
+    setFileName('');
     onUploadComplete('', '');
   };
 
@@ -168,19 +255,46 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         </div>
       )}
 
-      {/* Uploading State */}
-      {uploading && (
+      {/* Uploading State with detailed stats */}
+      {uploading && uploadStats && (
         <div className="border rounded-xl p-4 bg-secondary/30">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
               <Upload className="h-5 w-5 text-primary animate-pulse" />
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-foreground">Uploading...</p>
-              <p className="text-xs text-muted-foreground">{progress}% complete</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">
+                {fileName || 'Uploading...'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {formatBytes(uploadStats.bytesUploaded)} / {formatBytes(uploadStats.totalBytes)}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={handleCancelUpload}
+              className="shrink-0"
+              title="Cancel upload"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <Progress value={progress} className="h-2 mb-2" />
+          
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{progress}% complete</span>
+            <div className="flex items-center gap-3">
+              {uploadStats.speed > 0 && (
+                <span>{formatBytes(uploadStats.speed)}/s</span>
+              )}
+              {uploadStats.estimatedTimeRemaining > 0 && progress < 100 && (
+                <span>~{formatTime(uploadStats.estimatedTimeRemaining)} remaining</span>
+              )}
             </div>
           </div>
-          <Progress value={progress} className="h-2" />
         </div>
       )}
 
