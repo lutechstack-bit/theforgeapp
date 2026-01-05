@@ -10,6 +10,7 @@ interface FileUploadProps {
   bucket: 'learn-videos' | 'learn-thumbnails' | 'learn-resources';
   onUploadComplete: (url: string, path: string) => void;
   onUploadingChange?: (uploading: boolean) => void;
+  onDurationDetected?: (durationMinutes: number) => void;
   accept?: string;
   maxSizeMB?: number;
   className?: string;
@@ -45,6 +46,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   bucket,
   onUploadComplete,
   onUploadingChange,
+  onDurationDetected,
   accept = '*/*',
   maxSizeMB = 100,
   className,
@@ -56,6 +58,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(currentUrl || null);
+  const [detectedDuration, setDetectedDuration] = useState<number | null>(null);
   const [uploadStats, setUploadStats] = useState<UploadStats | null>(null);
   const [fileName, setFileName] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -134,6 +137,26 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     });
   };
 
+  // Extract video duration from file
+  const extractVideoDuration = (file: File): Promise<number> => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src);
+        const durationMinutes = Math.ceil(video.duration / 60);
+        resolve(durationMinutes);
+      };
+      
+      video.onerror = () => {
+        resolve(0);
+      };
+      
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -144,6 +167,15 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       setError(`File size exceeds ${maxSizeMB}MB limit`);
       toast.error(`File size exceeds ${maxSizeMB}MB limit`);
       return;
+    }
+
+    // Extract duration for video files
+    if (file.type.startsWith('video/') && onDurationDetected) {
+      const duration = await extractVideoDuration(file);
+      if (duration > 0) {
+        setDetectedDuration(duration);
+        onDurationDetected(duration);
+      }
     }
 
     setError(null);
