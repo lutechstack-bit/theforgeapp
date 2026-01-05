@@ -21,26 +21,28 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
-    // Check if any admin already exists
-    const { data: existingAdmins, error: checkError } = await adminClient
-      .from('user_roles')
-      .select('id')
-      .eq('role', 'admin')
-      .limit(1);
-
-    if (checkError) {
-      console.error('Error checking existing admins:', checkError);
-    }
-
-    if (existingAdmins && existingAdmins.length > 0) {
-      return new Response(
-        JSON.stringify({ error: 'Admin already exists. Bootstrap disabled.' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     // Parse the request body
-    const { email, password } = await req.json();
+    const { email, password, force } = await req.json();
+
+    // Check if any admin already exists (unless force flag is set)
+    if (!force) {
+      const { data: existingAdmins, error: checkError } = await adminClient
+        .from('user_roles')
+        .select('id')
+        .eq('role', 'admin')
+        .limit(1);
+
+      if (checkError) {
+        console.error('Error checking existing admins:', checkError);
+      }
+
+      if (existingAdmins && existingAdmins.length > 0) {
+        return new Response(
+          JSON.stringify({ error: 'Admin already exists. Bootstrap disabled. Use force:true to override.' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     if (!email || !password) {
       return new Response(
