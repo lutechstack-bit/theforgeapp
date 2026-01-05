@@ -302,12 +302,15 @@ const AdminLearn: React.FC = () => {
                     accept="video/*"
                     maxSizeMB={5120}
                     label="Video File"
-                    helperText="Supported formats: MP4, WebM, MOV. Max 5GB."
+                    helperText="Supported formats: MP4, WebM, MOV. Max 5GB. Duration auto-detected."
                     currentUrl={form.video_url}
                     onUploadingChange={setIsVideoUploading}
                     onUploadComplete={(url) => {
                       videoUrlRef.current = url;
                       setForm((prev) => ({ ...prev, video_url: url }));
+                    }}
+                    onDurationDetected={(duration) => {
+                      setForm((prev) => ({ ...prev, duration_minutes: duration }));
                     }}
                   />
 
