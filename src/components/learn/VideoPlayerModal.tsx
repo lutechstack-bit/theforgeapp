@@ -23,6 +23,7 @@ interface VideoContent {
   company_name?: string;
   full_description?: string;
   duration_minutes?: number;
+  video_source_type?: 'upload' | 'embed';
 }
 
 interface VideoPlayerModalProps {
@@ -77,6 +78,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
               contentId={content.id}
               title={content.title}
               thumbnailUrl={content.thumbnail_url}
+              videoSourceType={content.video_source_type}
               className="aspect-video w-full"
             />
           </div>

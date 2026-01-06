@@ -19,16 +19,39 @@ interface SecureVideoPlayerProps {
   contentId: string;
   title: string;
   thumbnailUrl?: string;
+  videoSourceType?: 'upload' | 'embed';
   onClose?: () => void;
   onVideoEnd?: () => void;
   className?: string;
 }
+
+// Helper to extract Vimeo video ID and hash from various URL formats
+const parseVimeoUrl = (url: string): { videoId: string; hash?: string } | null => {
+  // Match patterns:
+  // https://vimeo.com/123456789
+  // https://player.vimeo.com/video/123456789
+  // https://vimeo.com/123456789/abc123def (private with hash)
+  // https://player.vimeo.com/video/123456789?h=abc123def
+  const patterns = [
+    /vimeo\.com\/(\d+)(?:\/([a-zA-Z0-9]+))?/,
+    /player\.vimeo\.com\/video\/(\d+)(?:\?h=([a-zA-Z0-9]+))?/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) {
+      return { videoId: match[1], hash: match[2] };
+    }
+  }
+  return null;
+};
 
 export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   videoUrl,
   contentId,
   title,
   thumbnailUrl,
+  videoSourceType = 'upload',
   onClose,
   onVideoEnd,
   className,
@@ -54,8 +77,14 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
 
   const playbackSpeeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
-  // Generate signed URL for private videos
+  // Generate signed URL for private videos (skip for embed type)
   useEffect(() => {
+    // For Vimeo embeds, we don't need to process the URL
+    if (videoSourceType === 'embed') {
+      setIsLoading(false);
+      return;
+    }
+
     const getSignedUrl = async () => {
       if (!videoUrl) {
         setError('No video URL provided');
@@ -108,7 +137,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     };
 
     getSignedUrl();
-  }, [videoUrl]);
+  }, [videoUrl, videoSourceType]);
 
   // Log video access
   useEffect(() => {
@@ -307,8 +336,8 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     setIsLoading(false);
   };
 
-  // Loading state
-  if (isLoading && !signedUrl) {
+  // Loading state (for upload mode only)
+  if (videoSourceType === 'upload' && isLoading && !signedUrl) {
     return (
       <div className={cn("relative bg-black rounded-2xl overflow-hidden flex items-center justify-center aspect-video", className)}>
         {thumbnailUrl && (
@@ -322,8 +351,8 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     );
   }
 
-  // Error state
-  if (error || !signedUrl) {
+  // Error state (for upload mode only)
+  if (videoSourceType === 'upload' && (error || !signedUrl)) {
     return (
       <div className={cn("relative bg-black rounded-2xl overflow-hidden flex items-center justify-center aspect-video", className)}>
         {thumbnailUrl && (
@@ -337,6 +366,45 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
             Tip: MP4 (H.264 video + AAC audio) works best across all devices.
           </p>
         </div>
+      </div>
+    );
+  }
+
+  // Vimeo Embed Mode
+  if (videoSourceType === 'embed') {
+    const vimeoData = parseVimeoUrl(videoUrl);
+    
+    if (!vimeoData) {
+      return (
+        <div className={cn("relative bg-black rounded-2xl overflow-hidden flex items-center justify-center aspect-video", className)}>
+          {thumbnailUrl && (
+            <img src={thumbnailUrl} alt={title} className="absolute inset-0 w-full h-full object-cover opacity-30" />
+          )}
+          <div className="text-center p-6 max-w-md relative z-10">
+            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-3" />
+            <div className="text-white text-lg font-medium mb-2">Invalid Vimeo URL</div>
+            <p className="text-white/60 text-sm">Could not parse the Vimeo video URL.</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Build Vimeo embed URL
+    let embedUrl = `https://player.vimeo.com/video/${vimeoData.videoId}?autoplay=0&title=0&byline=0&portrait=0`;
+    if (vimeoData.hash) {
+      embedUrl += `&h=${vimeoData.hash}`;
+    }
+
+    return (
+      <div className={cn("relative bg-black rounded-2xl overflow-hidden aspect-video", className)}>
+        <iframe
+          src={embedUrl}
+          className="absolute inset-0 w-full h-full"
+          frameBorder="0"
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowFullScreen
+          title={title}
+        />
       </div>
     );
   }
