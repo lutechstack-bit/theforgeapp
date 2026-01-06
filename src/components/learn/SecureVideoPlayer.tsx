@@ -404,8 +404,8 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
       );
     }
 
-    // Build Vimeo embed URL
-    let embedUrl = `https://player.vimeo.com/video/${vimeoData.videoId}?autoplay=0&title=0&byline=0&portrait=0`;
+    // Build Vimeo embed URL with full controls
+    let embedUrl = `https://player.vimeo.com/video/${vimeoData.videoId}?autoplay=0&controls=1&title=1&byline=0&portrait=0&pip=1&dnt=1`;
     if (vimeoData.hash) {
       embedUrl += `&h=${vimeoData.hash}`;
     }
@@ -416,7 +416,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
           src={embedUrl}
           className="absolute inset-0 w-full h-full"
           frameBorder="0"
-          allow="autoplay; fullscreen; picture-in-picture"
+          allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
           allowFullScreen
           title={title}
         />
