@@ -410,8 +410,19 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
       embedUrl += `&h=${vimeoData.hash}`;
     }
 
+    const handleVimeoFullscreen = () => {
+      const container = document.querySelector('.vimeo-container');
+      if (container) {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        } else {
+          container.requestFullscreen();
+        }
+      }
+    };
+
     return (
-      <div className={cn("relative bg-black rounded-2xl overflow-hidden aspect-video", className)}>
+      <div className={cn("vimeo-container relative bg-black rounded-2xl overflow-hidden aspect-video group", className)}>
         <iframe
           src={embedUrl}
           className="absolute inset-0 w-full h-full"
@@ -420,6 +431,13 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
           allowFullScreen
           title={title}
         />
+        <button
+          onClick={handleVimeoFullscreen}
+          className="absolute bottom-4 right-4 p-2 bg-black/60 hover:bg-black/80 rounded-lg text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+          title="Toggle Fullscreen"
+        >
+          <Maximize className="w-5 h-5" />
+        </button>
       </div>
     );
   }
