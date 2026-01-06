@@ -94,6 +94,36 @@ const sectionTypes = [
 ];
 const fileTypes = ['pdf', 'doc', 'xlsx', 'pptx', 'zip', 'other'];
 
+// Helper to extract Vimeo video ID from URL or full HTML embed code
+const parseVimeoInput = (input: string): { videoId: string; url: string } | null => {
+  let url = input.trim();
+  
+  // Check if input is HTML embed code (contains iframe)
+  if (url.includes('<iframe')) {
+    const srcMatch = url.match(/src=["']([^"']+)["']/);
+    if (srcMatch) {
+      url = srcMatch[1];
+      url = url.replace(/&amp;/g, '&'); // Decode HTML entities
+    } else {
+      return null;
+    }
+  }
+
+  // Match Vimeo URL patterns
+  const patterns = [
+    /vimeo\.com\/(\d+)/,
+    /player\.vimeo\.com\/video\/(\d+)/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) {
+      return { videoId: match[1], url };
+    }
+  }
+  return null;
+};
+
 const AdminLearn: React.FC = () => {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -260,14 +290,16 @@ const AdminLearn: React.FC = () => {
 
       saveMutation.mutate({ ...form, video_url: finalVideoUrl });
     } else {
-      // Embed mode - validate Vimeo URL
-      const vimeoRegex = /^https?:\/\/(www\.)?(vimeo\.com|player\.vimeo\.com)\/(video\/)?(\d+)(\/[a-zA-Z0-9]+)?/;
-      if (!form.video_url || !vimeoRegex.test(form.video_url)) {
-        toast.error('Please enter a valid Vimeo URL');
+      // Embed mode - validate Vimeo URL or embed code
+      const vimeoData = parseVimeoInput(form.video_url || '');
+      if (!vimeoData) {
+        toast.error('Please enter a valid Vimeo URL or embed code');
         return;
       }
 
-      saveMutation.mutate(form);
+      // Normalize to clean player URL before saving
+      const normalizedUrl = `https://player.vimeo.com/video/${vimeoData.videoId}`;
+      saveMutation.mutate({ ...form, video_url: normalizedUrl });
     }
   };
 
