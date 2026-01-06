@@ -195,50 +195,60 @@ const CourseDetail: React.FC = () => {
         <div className="container relative py-12 lg:py-16">
           <div className="grid lg:grid-cols-[1.4fr_1fr] gap-8 lg:gap-12 items-start">
             
-            {/* Left - Tiled Thumbnails Grid */}
-            <div className="relative">
-              {/* Main Grid of Tiles */}
-              <div className="grid grid-cols-3 gap-3 lg:gap-4">
-                {[...Array(6)].map((_, i) => (
-                  <div 
-                    key={i} 
-                    className={`relative aspect-[4/3] rounded-xl lg:rounded-2xl overflow-hidden shadow-lg transition-all duration-500 hover:scale-[1.02] hover:shadow-xl ${tileTransforms[i]}`}
-                    style={{ 
-                      animationDelay: `${i * 100}ms`,
-                      opacity: i === 0 || i === 4 ? 1 : 0.85 - (i * 0.08)
-                    }}
-                  >
-                    {course.thumbnail_url ? (
-                      <img 
-                        src={course.thumbnail_url} 
-                        alt={course.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-primary/30 to-accent/20" />
-                    )}
-                    {/* Subtle overlay for depth */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+            {/* Left - Premium Featured Thumbnail */}
+            <div className="relative group">
+              {/* Decorative glow behind thumbnail */}
+              <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-accent/10 to-primary/20 rounded-3xl blur-2xl opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+              
+              {/* Main Thumbnail Container */}
+              <div className="relative aspect-video rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl border border-white/10 group-hover:border-primary/30 transition-all duration-500">
+                {course.thumbnail_url ? (
+                  <img 
+                    src={course.thumbnail_url} 
+                    alt={course.title}
+                    className="w-full h-full object-cover transform group-hover:scale-[1.02] transition-transform duration-700"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-primary/30 via-card to-accent/20" />
+                )}
+                
+                {/* Gradient overlay for depth */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                
+                {/* Premium corner accent */}
+                <div className="absolute top-4 left-4">
+                  {course.is_premium && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm border border-white/10">
+                      <Sparkles className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-xs font-semibold text-white">Premium</span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Duration badge */}
+                {course.duration_minutes && (
+                  <div className="absolute bottom-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm border border-white/10">
+                    <Clock className="h-3.5 w-3.5 text-white/80" />
+                    <span className="text-xs font-medium text-white">{course.duration_minutes} min</span>
                   </div>
-                ))}
+                )}
+                
+                {/* Centered Play Button */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Button 
+                    onClick={handlePlayVideo}
+                    className="rounded-full bg-white/95 text-gray-900 hover:bg-white shadow-2xl gap-3 px-8 py-6 text-base font-semibold transition-all duration-300 hover:scale-105 opacity-90 group-hover:opacity-100"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center">
+                      <Play className="h-5 w-5 text-white ml-0.5" fill="white" />
+                    </div>
+                    Start Course
+                  </Button>
+                </div>
               </div>
               
-              {/* Centered Play Button */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-                <Button 
-                  onClick={handlePlayVideo}
-                  className="rounded-full bg-white text-gray-900 hover:bg-white/95 shadow-2xl gap-3 px-8 py-6 text-base font-semibold transition-all duration-300 hover:scale-105 hover:shadow-[0_20px_60px_rgba(0,0,0,0.3)]"
-                >
-                  <div className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center">
-                    <Play className="h-5 w-5 text-white ml-0.5" fill="white" />
-                  </div>
-                  Start Course
-                </Button>
-              </div>
-
-              {/* Decorative Elements */}
-              <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-primary/20 blur-2xl pointer-events-none" />
-              <div className="absolute -top-4 -left-4 w-32 h-32 rounded-full bg-accent/15 blur-3xl pointer-events-none" />
+              {/* Subtle reflection effect */}
+              <div className="absolute -bottom-6 left-6 right-6 h-6 bg-gradient-to-b from-primary/10 to-transparent rounded-b-3xl blur-sm opacity-40" />
             </div>
             
             {/* Right - Floating Premium Info Card */}
