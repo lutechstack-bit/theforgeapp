@@ -364,10 +364,10 @@ const AdminLearn: React.FC = () => {
                         id="vimeo_url"
                         value={form.video_url}
                         onChange={(e) => setForm({ ...form, video_url: e.target.value })}
-                        placeholder="https://vimeo.com/123456789 or https://player.vimeo.com/video/123456789"
+                        placeholder="Paste Vimeo URL or full embed code"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Paste your Vimeo video URL. Supports standard URLs (vimeo.com/123456) and private videos with hash.
+                        Paste your Vimeo URL or the full embed code from Vimeo's share button.
                       </p>
                     </div>
                   )}
