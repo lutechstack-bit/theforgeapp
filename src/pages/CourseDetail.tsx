@@ -27,6 +27,7 @@ interface LearnContent {
   full_description?: string;
   thumbnail_url?: string;
   video_url?: string;
+  video_source_type?: 'upload' | 'embed';
   instructor_name?: string;
   company_name?: string;
   is_premium: boolean;
@@ -388,6 +389,7 @@ const CourseDetail: React.FC = () => {
           id: course.id,
           title: course.title,
           video_url: course.video_url || '',
+          video_source_type: course.video_source_type,
           thumbnail_url: course.thumbnail_url,
           instructor_name: course.instructor_name,
           company_name: course.company_name,
