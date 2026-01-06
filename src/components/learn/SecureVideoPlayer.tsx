@@ -26,7 +26,22 @@ interface SecureVideoPlayerProps {
 }
 
 // Helper to extract Vimeo video ID and hash from various URL formats
-const parseVimeoUrl = (url: string): { videoId: string; hash?: string } | null => {
+const parseVimeoUrl = (input: string): { videoId: string; hash?: string } | null => {
+  let url = input.trim();
+  
+  // Check if input is HTML embed code (contains iframe)
+  if (url.includes('<iframe')) {
+    // Extract src from iframe using regex
+    const srcMatch = url.match(/src=["']([^"']+)["']/);
+    if (srcMatch) {
+      url = srcMatch[1];
+      // Decode HTML entities (e.g., &amp; -> &)
+      url = url.replace(/&amp;/g, '&');
+    } else {
+      return null;
+    }
+  }
+  
   // Match patterns:
   // https://vimeo.com/123456789
   // https://player.vimeo.com/video/123456789
