@@ -132,10 +132,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       });
 
       // Use the user's session access token (not the anon key) for proper RLS authentication
+      // Note: Storage REST also expects the public API key via the `apikey` header.
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
       xhr.open('POST', `${supabaseUrl}/storage/v1/object/${bucket}/${uploadFileName}`);
       xhr.setRequestHeader('Authorization', `Bearer ${session.access_token}`);
+      xhr.setRequestHeader('apikey', supabaseKey);
       xhr.setRequestHeader('x-upsert', 'false');
       
       xhr.send(file);
