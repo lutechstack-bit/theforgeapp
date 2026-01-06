@@ -223,7 +223,7 @@ const CourseDetail: React.FC = () => {
                 ))}
               </div>
               
-              {/* Centered Watch Trailer Button */}
+              {/* Centered Play Button */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
                 <Button 
                   onClick={handlePlayVideo}
@@ -232,7 +232,7 @@ const CourseDetail: React.FC = () => {
                   <div className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center">
                     <Play className="h-5 w-5 text-white ml-0.5" fill="white" />
                   </div>
-                  Watch trailer
+                  Start Course
                 </Button>
               </div>
 
