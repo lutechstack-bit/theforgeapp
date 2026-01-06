@@ -16,7 +16,11 @@ import {
   FileText, 
   Download,
   CheckCircle2,
-  BookOpen
+  BookOpen,
+  ArrowRight,
+  Award,
+  Sparkles,
+  GraduationCap
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -118,7 +122,7 @@ const CourseDetail: React.FC = () => {
       <div className="min-h-screen p-4 md:p-8">
         <div className="animate-pulse space-y-6">
           <div className="h-8 w-48 bg-muted rounded" />
-          <div className="h-64 bg-muted rounded-2xl" />
+          <div className="h-[500px] bg-muted rounded-2xl" />
           <div className="h-32 bg-muted rounded-xl" />
         </div>
       </div>
@@ -145,18 +149,29 @@ const CourseDetail: React.FC = () => {
     'Self paced recorded course',
     'Peer group via community',
     'Access exclusive resources',
+    'Certificate of completion',
+  ];
+
+  // Generate tile positions for visual interest
+  const tileTransforms = [
+    'rotate-[-2deg] translate-y-2',
+    'rotate-[1deg] -translate-y-1',
+    'rotate-[-1deg] translate-y-3',
+    'rotate-[2deg] -translate-y-2',
+    'rotate-[-1.5deg] translate-y-1',
+    'rotate-[1.5deg] -translate-y-3',
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       {/* Header with back button */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border/50">
         <div className="container py-4 flex items-center justify-between">
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={() => navigate('/learn')}
-            className="gap-2"
+            className="gap-2 hover:bg-card"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Learn
@@ -164,114 +179,187 @@ const CourseDetail: React.FC = () => {
           
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Learn</span>
-            <span>/</span>
-            <span className="text-foreground">{course.title}</span>
+            <span className="text-primary">/</span>
+            <span className="text-foreground font-medium">{course.title}</span>
           </div>
         </div>
       </div>
 
-      <div className="container py-8 space-y-8">
-        {/* Hero Section */}
-        <div className="grid lg:grid-cols-[1fr_400px] gap-8">
-          {/* Left - Video/Thumbnail */}
-          <div className="relative aspect-video rounded-2xl overflow-hidden bg-muted group cursor-pointer" onClick={handlePlayVideo}>
-            {course.thumbnail_url ? (
-              <img 
-                src={course.thumbnail_url} 
-                alt={course.title}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20" />
-            )}
+      {/* Immersive Hero Section */}
+      <div className="relative overflow-hidden">
+        {/* Background Gradient Orbs */}
+        <div className="absolute -top-40 left-1/4 w-[600px] h-[600px] bg-primary/15 rounded-full blur-[150px] pointer-events-none" />
+        <div className="absolute -bottom-40 right-1/4 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+        
+        <div className="container relative py-12 lg:py-16">
+          <div className="grid lg:grid-cols-[1.4fr_1fr] gap-8 lg:gap-12 items-start">
             
-            {/* Play Button Overlay */}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-2xl">
-                <Play className="h-8 w-8 text-foreground ml-1" />
+            {/* Left - Tiled Thumbnails Grid */}
+            <div className="relative">
+              {/* Main Grid of Tiles */}
+              <div className="grid grid-cols-3 gap-3 lg:gap-4">
+                {[...Array(6)].map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={`relative aspect-[4/3] rounded-xl lg:rounded-2xl overflow-hidden shadow-lg transition-all duration-500 hover:scale-[1.02] hover:shadow-xl ${tileTransforms[i]}`}
+                    style={{ 
+                      animationDelay: `${i * 100}ms`,
+                      opacity: i === 0 || i === 4 ? 1 : 0.85 - (i * 0.08)
+                    }}
+                  >
+                    {course.thumbnail_url ? (
+                      <img 
+                        src={course.thumbnail_url} 
+                        alt={course.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary/30 to-accent/20" />
+                    )}
+                    {/* Subtle overlay for depth */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                  </div>
+                ))}
+              </div>
+              
+              {/* Centered Watch Trailer Button */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                <Button 
+                  onClick={handlePlayVideo}
+                  className="rounded-full bg-white text-gray-900 hover:bg-white/95 shadow-2xl gap-3 px-8 py-6 text-base font-semibold transition-all duration-300 hover:scale-105 hover:shadow-[0_20px_60px_rgba(0,0,0,0.3)]"
+                >
+                  <div className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center">
+                    <Play className="h-5 w-5 text-white ml-0.5" fill="white" />
+                  </div>
+                  Watch trailer
+                </Button>
+              </div>
+
+              {/* Decorative Elements */}
+              <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-primary/20 blur-2xl pointer-events-none" />
+              <div className="absolute -top-4 -left-4 w-32 h-32 rounded-full bg-accent/15 blur-3xl pointer-events-none" />
+            </div>
+            
+            {/* Right - Floating Premium Info Card */}
+            <div className="lg:sticky lg:top-24 animate-fade-in" style={{ animationDelay: '200ms' }}>
+              <div className="bg-card rounded-2xl lg:rounded-3xl p-6 lg:p-8 shadow-2xl border border-border/50 hover:shadow-[0_30px_80px_rgba(0,0,0,0.3)] transition-all duration-500">
+                {/* Premium Badge */}
+                {course.is_premium && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-6">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-semibold text-primary uppercase tracking-wider">Premium Course</span>
+                  </div>
+                )}
+
+                <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-3 leading-tight">
+                  {course.title}
+                </h1>
+                
+                {course.description && (
+                  <p className="text-muted-foreground text-sm lg:text-base mb-6 leading-relaxed">
+                    {course.description}
+                  </p>
+                )}
+
+                {/* Key Features */}
+                <div className="space-y-4 mb-8">
+                  {keyFeatures.map((feature, index) => (
+                    <div 
+                      key={index} 
+                      className="flex items-center gap-3 animate-fade-in"
+                      style={{ animationDelay: `${300 + index * 100}ms` }}
+                    >
+                      <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      </div>
+                      <span className="text-sm lg:text-base text-foreground">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* CTA Button */}
+                <Button 
+                  onClick={handlePlayVideo}
+                  className="w-full rounded-full h-14 text-base lg:text-lg font-semibold bg-foreground text-background hover:bg-foreground/90 shadow-lg transition-all duration-300 hover:shadow-xl group"
+                >
+                  {course.is_premium && !isFullAccess ? 'Unlock with Full Access' : 'Enrol with full membership'}
+                  <ArrowRight className="h-5 w-5 ml-2 transition-transform group-hover:translate-x-1" />
+                </Button>
+
+                {/* Course Stats Grid */}
+                <div className="grid grid-cols-3 gap-3 mt-8 pt-6 border-t border-border/50">
+                  <div className="text-center p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
+                    <Clock className="h-5 w-5 text-primary mx-auto mb-2" />
+                    <p className="text-sm font-bold text-foreground">{course.duration_minutes || '30'} min</p>
+                    <p className="text-xs text-muted-foreground">Duration</p>
+                  </div>
+                  <div className="text-center p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
+                    <BookOpen className="h-5 w-5 text-primary mx-auto mb-2" />
+                    <p className="text-sm font-bold text-foreground">Self-Paced</p>
+                    <p className="text-xs text-muted-foreground">Format</p>
+                  </div>
+                  <div className="text-center p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
+                    <Award className="h-5 w-5 text-primary mx-auto mb-2" />
+                    <p className="text-sm font-bold text-foreground">Certificate</p>
+                    <p className="text-xs text-muted-foreground">Included</p>
+                  </div>
+                </div>
               </div>
             </div>
-
-            {/* Watch Trailer Button */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-              <Button 
-                variant="secondary" 
-                className="rounded-full bg-white text-foreground hover:bg-white/90 shadow-lg gap-2"
-              >
-                <Play className="h-4 w-4" />
-                Watch trailer
-              </Button>
-            </div>
-          </div>
-
-          {/* Right - Course Info Card */}
-          <div className="glass-premium rounded-2xl p-6 h-fit space-y-6">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground mb-2">{course.title}</h1>
-              {course.description && (
-                <p className="text-muted-foreground text-sm">{course.description}</p>
-              )}
-            </div>
-
-            {/* Key Features */}
-            <div className="space-y-3">
-              {keyFeatures.map((feature, index) => (
-                <div key={index} className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                  <span className="text-sm text-foreground">{feature}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* CTA Button */}
-            <Button 
-              onClick={handlePlayVideo}
-              className="w-full rounded-full h-12 text-base font-semibold bg-primary hover:bg-primary/90"
-            >
-              {course.is_premium && !isFullAccess ? 'Unlock with Full Access' : 'Start Learning'}
-              <ArrowLeft className="h-5 w-5 ml-2 rotate-180" />
-            </Button>
-
-            {/* Meta Info */}
-            <div className="flex items-center gap-4 text-sm text-muted-foreground pt-4 border-t border-border">
-              {course.duration_minutes && (
-                <div className="flex items-center gap-1.5">
-                  <Clock className="h-4 w-4" />
-                  <span>{course.duration_minutes} min</span>
-                </div>
-              )}
-              {course.instructor_name && (
-                <div className="flex items-center gap-1.5">
-                  <User className="h-4 w-4" />
-                  <span>{course.instructor_name}</span>
-                </div>
-              )}
-              {course.company_name && (
-                <div className="flex items-center gap-1.5">
-                  <Building2 className="h-4 w-4" />
-                  <span>{course.company_name}</span>
-                </div>
-              )}
-            </div>
+            
           </div>
         </div>
+      </div>
 
-        {/* Tabs - Description, Resources, About */}
-        <Tabs defaultValue="about" className="space-y-6">
-          <TabsList className="bg-card/50 p-1 rounded-full border border-border/50">
+      {/* Course Content Section */}
+      <div className="container py-12 lg:py-16">
+        {/* Large Course Title */}
+        <div className="max-w-4xl mb-10">
+          <h2 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-foreground mb-6 leading-tight">
+            {course.title}
+          </h2>
+          <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed">
+            {course.full_description || course.description || 'Unlock your potential with this comprehensive course designed to take your skills to the next level.'}
+          </p>
+        </div>
+
+        {/* Taught By Section */}
+        {course.instructor_name && (
+          <div className="max-w-4xl mb-12 pt-8 border-t border-border/30">
+            <h3 className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground mb-6">
+              Taught By
+            </h3>
+            <div className="flex items-center gap-5">
+              <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-gradient-to-br from-primary/40 to-accent/30 flex items-center justify-center ring-4 ring-primary/10 shadow-lg">
+                <User className="h-8 w-8 lg:h-10 lg:w-10 text-primary" />
+              </div>
+              <div>
+                <p className="text-xl lg:text-2xl font-bold text-foreground">{course.instructor_name}</p>
+                {course.company_name && (
+                  <p className="text-muted-foreground text-base lg:text-lg">{course.company_name}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tabs - Resources */}
+        <Tabs defaultValue="about" className="space-y-8">
+          <TabsList className="bg-card p-1.5 rounded-full border border-border/50 shadow-sm">
             <TabsTrigger
               value="about"
-              className="rounded-full px-6 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="rounded-full px-6 lg:px-8 py-2.5 text-sm lg:text-base font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
             >
               About
             </TabsTrigger>
             <TabsTrigger
               value="resources"
-              className="rounded-full px-6 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="rounded-full px-6 lg:px-8 py-2.5 text-sm lg:text-base font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
             >
               Resources
               {resources && resources.length > 0 && (
-                <span className="ml-2 px-2 py-0.5 text-xs bg-muted rounded-full">
+                <span className="ml-2 px-2.5 py-0.5 text-xs bg-muted rounded-full font-semibold">
                   {resources.length}
                 </span>
               )}
@@ -279,44 +367,49 @@ const CourseDetail: React.FC = () => {
           </TabsList>
 
           {/* About Tab */}
-          <TabsContent value="about" className="space-y-6">
-            <div className="glass-premium rounded-2xl p-6 md:p-8">
-              <h2 className="text-xl font-bold text-foreground mb-4">{course.title}</h2>
+          <TabsContent value="about" className="space-y-8">
+            {/* What You'll Learn */}
+            <div className="bg-card rounded-2xl lg:rounded-3xl p-6 lg:p-10 border border-border/50 shadow-lg">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <GraduationCap className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="text-xl lg:text-2xl font-bold text-foreground">What You'll Learn</h3>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                {[
+                  'Master the fundamentals and advanced concepts',
+                  'Build real-world projects with practical exercises',
+                  'Learn industry best practices and workflows',
+                  'Get personalized feedback from experts',
+                ].map((item, index) => (
+                  <div key={index} className="flex items-start gap-3 p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
+                    <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
+                    <span className="text-foreground">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Course Description Card */}
+            <div className="bg-card rounded-2xl lg:rounded-3xl p-6 lg:p-10 border border-border/50 shadow-lg">
+              <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-6">Course Overview</h3>
               
               {course.full_description ? (
                 <div className="prose prose-invert max-w-none">
-                  <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  <p className="text-muted-foreground text-base lg:text-lg leading-relaxed whitespace-pre-wrap">
                     {course.full_description}
                   </p>
                 </div>
               ) : course.description ? (
-                <p className="text-muted-foreground leading-relaxed">
+                <p className="text-muted-foreground text-base lg:text-lg leading-relaxed">
                   {course.description}
                 </p>
               ) : (
                 <p className="text-muted-foreground italic">
                   No description available for this course.
                 </p>
-              )}
-
-              {/* Instructor Section */}
-              {course.instructor_name && (
-                <div className="mt-8 pt-6 border-t border-border">
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-                    Taught By
-                  </h3>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                      <User className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground">{course.instructor_name}</p>
-                      {course.company_name && (
-                        <p className="text-sm text-muted-foreground">{course.company_name}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
               )}
             </div>
           </TabsContent>
@@ -325,42 +418,39 @@ const CourseDetail: React.FC = () => {
           <TabsContent value="resources" className="space-y-4">
             {resources && resources.length > 0 ? (
               <div className="grid gap-4">
-                {resources.map((resource) => (
+                {resources.map((resource, index) => (
                   <div 
                     key={resource.id}
-                    className="glass-premium rounded-xl p-4 flex items-center justify-between hover:bg-card/80 transition-colors"
+                    className="bg-card rounded-2xl p-5 lg:p-6 flex items-center justify-between border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-300 group animate-fade-in"
+                    style={{ animationDelay: `${index * 100}ms` }}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
-                        <FileText className="h-5 w-5 text-primary" />
+                    <div className="flex items-center gap-4 lg:gap-5">
+                      <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                        <FileText className="h-6 w-6 lg:h-7 lg:w-7 text-primary" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-foreground">{resource.title}</h4>
+                        <h4 className="font-semibold text-foreground text-base lg:text-lg">{resource.title}</h4>
                         {resource.description && (
-                          <p className="text-sm text-muted-foreground">{resource.description}</p>
+                          <p className="text-sm text-muted-foreground mt-1">{resource.description}</p>
                         )}
-                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                          <span className="uppercase">{resource.file_type}</span>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                          <span className="uppercase font-medium px-2 py-0.5 rounded bg-muted">{resource.file_type}</span>
                           {resource.file_size_mb && (
-                            <>
-                              <span>•</span>
-                              <span>{resource.file_size_mb} MB</span>
-                            </>
+                            <span>{resource.file_size_mb} MB</span>
                           )}
                           {resource.is_premium && (
-                            <>
-                              <span>•</span>
-                              <span className="text-primary">Premium</span>
-                            </>
+                            <span className="text-primary font-medium flex items-center gap-1">
+                              <Sparkles className="h-3 w-3" />
+                              Premium
+                            </span>
                           )}
                         </div>
                       </div>
                     </div>
                     <Button
                       variant="outline"
-                      size="sm"
                       onClick={() => handleDownloadResource(resource)}
-                      className="shrink-0 gap-2"
+                      className="shrink-0 gap-2 rounded-full px-5 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
                     >
                       <Download className="h-4 w-4" />
                       Download
@@ -369,11 +459,13 @@ const CourseDetail: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <div className="glass-premium rounded-2xl p-8 text-center">
-                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">No resources yet</h3>
-                <p className="text-muted-foreground">
-                  Resources for this course will be available soon.
+              <div className="bg-card rounded-2xl lg:rounded-3xl p-10 lg:p-16 text-center border border-border/50">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground mb-2">No resources yet</h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  Resources for this course will be available soon. Check back later!
                 </p>
               </div>
             )}
