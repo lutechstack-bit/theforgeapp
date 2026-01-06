@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, BookOpen, Sparkles, FileUp, Download, Play, Users, AlertTriangle } from 'lucide-react';
+import { Plus, Pencil, Trash2, BookOpen, Sparkles, FileUp, Download, Play, Users, AlertTriangle, Link, Upload } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileUpload } from '@/components/admin/FileUpload';
 
@@ -45,6 +45,7 @@ interface LearnContentForm {
   section_type: string;
   thumbnail_url: string;
   video_url: string;
+  video_source_type: 'upload' | 'embed';
   duration_minutes: number;
   is_premium: boolean;
   order_index: number;
@@ -70,6 +71,7 @@ const initialForm: LearnContentForm = {
   section_type: 'community_sessions',
   thumbnail_url: '',
   video_url: '',
+  video_source_type: 'upload',
   duration_minutes: 0,
   is_premium: false,
   order_index: 0,
@@ -218,6 +220,7 @@ const AdminLearn: React.FC = () => {
 
   const handleEdit = (item: typeof content[0]) => {
     const nextVideoUrl = item.video_url || '';
+    const sourceType = (item.video_source_type as 'upload' | 'embed') || 'upload';
 
     setForm({
       title: item.title,
@@ -229,6 +232,7 @@ const AdminLearn: React.FC = () => {
       section_type: item.section_type || 'community_sessions',
       thumbnail_url: item.thumbnail_url || '',
       video_url: nextVideoUrl,
+      video_source_type: sourceType,
       duration_minutes: item.duration_minutes || 0,
       is_premium: item.is_premium,
       order_index: item.order_index,
@@ -242,18 +246,29 @@ const AdminLearn: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (isVideoUploading) {
-      toast.error('Please wait for the video upload to finish');
-      return;
-    }
+    if (form.video_source_type === 'upload') {
+      if (isVideoUploading) {
+        toast.error('Please wait for the video upload to finish');
+        return;
+      }
 
-    const finalVideoUrl = videoUrlRef.current || form.video_url;
-    if (!finalVideoUrl) {
-      toast.error('Please upload a video before saving');
-      return;
-    }
+      const finalVideoUrl = videoUrlRef.current || form.video_url;
+      if (!finalVideoUrl) {
+        toast.error('Please upload a video before saving');
+        return;
+      }
 
-    saveMutation.mutate({ ...form, video_url: finalVideoUrl });
+      saveMutation.mutate({ ...form, video_url: finalVideoUrl });
+    } else {
+      // Embed mode - validate Vimeo URL
+      const vimeoRegex = /^https?:\/\/(www\.)?(vimeo\.com|player\.vimeo\.com)\/(video\/)?(\d+)(\/[a-zA-Z0-9]+)?/;
+      if (!form.video_url || !vimeoRegex.test(form.video_url)) {
+        toast.error('Please enter a valid Vimeo URL');
+        return;
+      }
+
+      saveMutation.mutate(form);
+    }
   };
 
   const handleResourceSubmit = (e: React.FormEvent) => {
@@ -290,29 +305,72 @@ const AdminLearn: React.FC = () => {
             </DialogHeader>
             <ScrollArea className="max-h-[70vh] pr-4">
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Video Upload Section */}
+                {/* Video Source Section */}
                 <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 space-y-4">
                   <h3 className="font-semibold text-foreground flex items-center gap-2">
                     <Play className="h-4 w-4 text-primary" />
-                    Video Upload
+                    Video Source
                   </h3>
                   
-                  <FileUpload
-                    bucket="learn-videos"
-                    accept="video/*"
-                    maxSizeMB={5120}
-                    label="Video File"
-                    helperText="Supported formats: MP4, WebM, MOV. Max 5GB. Duration auto-detected."
-                    currentUrl={form.video_url}
-                    onUploadingChange={setIsVideoUploading}
-                    onUploadComplete={(url) => {
-                      videoUrlRef.current = url;
-                      setForm((prev) => ({ ...prev, video_url: url }));
-                    }}
-                    onDurationDetected={(duration) => {
-                      setForm((prev) => ({ ...prev, duration_minutes: duration }));
-                    }}
-                  />
+                  {/* Video Source Toggle */}
+                  <div className="flex gap-2 p-1 bg-secondary/50 rounded-lg w-fit">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={form.video_source_type === 'upload' ? 'default' : 'ghost'}
+                      className="gap-2"
+                      onClick={() => setForm({ ...form, video_source_type: 'upload', video_url: '' })}
+                    >
+                      <Upload className="h-4 w-4" />
+                      Upload Video
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={form.video_source_type === 'embed' ? 'default' : 'ghost'}
+                      className="gap-2"
+                      onClick={() => setForm({ ...form, video_source_type: 'embed', video_url: '' })}
+                    >
+                      <Link className="h-4 w-4" />
+                      Embed Link
+                    </Button>
+                  </div>
+
+                  {/* Upload Mode */}
+                  {form.video_source_type === 'upload' && (
+                    <FileUpload
+                      bucket="learn-videos"
+                      accept="video/*"
+                      maxSizeMB={5120}
+                      label="Video File"
+                      helperText="Supported formats: MP4, WebM, MOV. Max 5GB. Duration auto-detected."
+                      currentUrl={form.video_url}
+                      onUploadingChange={setIsVideoUploading}
+                      onUploadComplete={(url) => {
+                        videoUrlRef.current = url;
+                        setForm((prev) => ({ ...prev, video_url: url }));
+                      }}
+                      onDurationDetected={(duration) => {
+                        setForm((prev) => ({ ...prev, duration_minutes: duration }));
+                      }}
+                    />
+                  )}
+
+                  {/* Embed Mode */}
+                  {form.video_source_type === 'embed' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="vimeo_url">Vimeo URL</Label>
+                      <Input
+                        id="vimeo_url"
+                        value={form.video_url}
+                        onChange={(e) => setForm({ ...form, video_url: e.target.value })}
+                        placeholder="https://vimeo.com/123456789 or https://player.vimeo.com/video/123456789"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Paste your Vimeo video URL. Supports standard URLs (vimeo.com/123456) and private videos with hash.
+                      </p>
+                    </div>
+                  )}
 
                   <FileUpload
                     bucket="learn-thumbnails"
@@ -459,7 +517,7 @@ const AdminLearn: React.FC = () => {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={saveMutation.isPending || isVideoUploading || !form.video_url}
+                    disabled={saveMutation.isPending || (form.video_source_type === 'upload' && isVideoUploading) || !form.video_url}
                   >
                     {saveMutation.isPending ? 'Saving...' : editingId ? 'Update' : 'Create'}
                   </Button>

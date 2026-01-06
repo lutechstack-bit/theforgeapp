@@ -19,6 +19,7 @@ interface LearnContent {
   description?: string;
   thumbnail_url?: string;
   video_url?: string;
+  video_source_type?: 'upload' | 'embed';
   instructor_name?: string;
   company_name?: string;
   full_description?: string;
@@ -394,6 +395,7 @@ const Learn: React.FC = () => {
             company_name: selectedContent.company_name,
             full_description: selectedContent.full_description,
             duration_minutes: selectedContent.duration_minutes,
+            video_source_type: (selectedContent.video_source_type as 'upload' | 'embed') || 'upload',
           } : null}
           resources={resources}
         />
