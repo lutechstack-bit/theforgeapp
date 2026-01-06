@@ -72,11 +72,17 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
   const FileIcon = getFileIcon();
 
-  // Use XMLHttpRequest for real progress tracking
+  // Use XMLHttpRequest for real progress tracking with user's session token
   const uploadWithProgress = async (
     file: File,
     uploadFileName: string
   ): Promise<{ data: any; error: any }> => {
+    // Get the current user's session token for proper RLS authentication
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      return { data: null, error: { message: 'You must be logged in to upload files' } };
+    }
+
     return new Promise((resolve) => {
       const xhr = new XMLHttpRequest();
       abortControllerRef.current = new AbortController();
@@ -125,12 +131,11 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         resolve({ data: null, error: { message: 'Upload cancelled' } });
       });
 
-      // Get the Supabase URL and key
+      // Use the user's session access token (not the anon key) for proper RLS authentication
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
       xhr.open('POST', `${supabaseUrl}/storage/v1/object/${bucket}/${uploadFileName}`);
-      xhr.setRequestHeader('Authorization', `Bearer ${supabaseKey}`);
+      xhr.setRequestHeader('Authorization', `Bearer ${session.access_token}`);
       xhr.setRequestHeader('x-upsert', 'false');
       
       xhr.send(file);
