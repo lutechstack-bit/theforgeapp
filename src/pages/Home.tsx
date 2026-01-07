@@ -13,6 +13,7 @@ import { KYFormReminderBanner } from '@/components/onboarding/KYFormReminderBann
 import { FOMOBanner } from '@/components/shared/FOMOBanner';
 import { EnhancedCountdown } from '@/components/home/EnhancedCountdown';
 import { WhatYouCanDoHere } from '@/components/home/WhatYouCanDoHere';
+import { OnboardingChecklist } from '@/components/home/OnboardingChecklist';
 import { Calendar, ArrowRight, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
@@ -183,6 +184,9 @@ const Home: React.FC = () => {
 
       {/* What You Can Do Here - Onboarding for new users */}
       <WhatYouCanDoHere />
+
+      {/* Onboarding Checklist - Getting Started Tasks */}
+      <OnboardingChecklist />
 
       {/* Quick Actions Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 reveal-section" style={{ animationDelay: '0.15s' }}>

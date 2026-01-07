@@ -911,6 +911,30 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_checklist: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          task_key: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          task_key: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          task_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       perks: {
         Row: {
           claim_instructions: string | null
