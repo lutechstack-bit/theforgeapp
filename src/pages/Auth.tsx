@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { z } from 'zod';
+import forgeLogo from '@/assets/forge-logo.png';
 
 const authSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -28,6 +29,8 @@ const Auth: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string; fullName?: string }>({});
   
   const navigate = useNavigate();
@@ -40,6 +43,8 @@ const Auth: React.FC = () => {
     setConfirmPassword('');
     setFullName('');
     setErrors({});
+    setShowPassword(false);
+    setShowConfirmPassword(false);
   };
 
   const toggleMode = () => {
@@ -85,7 +90,7 @@ const Auth: React.FC = () => {
       }
 
       toast({
-        title: 'Account Created!',
+        title: 'Welcome to the Circle!',
         description: 'Please check your email to verify your account.',
       });
       setIsSignUp(false);
@@ -123,141 +128,171 @@ const Auth: React.FC = () => {
 
   return (
     <div className="min-h-screen min-h-[100dvh] flex items-center justify-center px-4 py-8 sm:p-6 bg-background safe-area-inset">
+      {/* Enhanced Animated Gradient Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-16 sm:-left-32 w-48 sm:w-64 h-48 sm:h-64 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-16 sm:-right-32 w-48 sm:w-64 h-48 sm:h-64 bg-accent/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-primary/15 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-accent/15 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '4s' }} />
       </div>
 
       <div className="relative w-full max-w-md space-y-6 sm:space-y-8 animate-slide-up">
-        <div className="text-center space-y-3 sm:space-y-4">
-          <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 rounded-2xl gradient-primary flex items-center justify-center shadow-glow">
-            <Sparkles className="h-7 w-7 sm:h-8 sm:w-8 text-primary-foreground" />
+        {/* Logo and Header */}
+        <div className="text-center space-y-4 sm:space-y-5">
+          {/* Forge Logo with Glow */}
+          <div className="relative mx-auto w-20 h-20 sm:w-24 sm:h-24">
+            <div className="absolute inset-0 bg-primary/30 rounded-2xl blur-xl" />
+            <img 
+              src={forgeLogo} 
+              alt="Forge" 
+              className="relative w-full h-full object-contain drop-shadow-lg"
+            />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold gradient-text">
-            {isSignUp ? 'Create Account' : 'Welcome Back'}
+            {isSignUp ? 'Join the Inner Circle' : 'Welcome Back, Creator'}
           </h1>
           <p className="text-muted-foreground">
             {isSignUp 
-              ? 'Join the LevelUp community today'
-              : 'Sign in to continue your LevelUp journey'
+              ? 'Your creative journey starts here'
+              : 'Continue your creative journey'
             }
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-          {isSignUp && (
+        {/* Glassmorphism Form Card */}
+        <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 sm:p-8 border border-border/50 shadow-2xl">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="John Doe"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="h-12 bg-secondary/50"
+                />
+                {errors.fullName && (
+                  <p className="text-sm text-destructive">{errors.fullName}</p>
+                )}
+              </div>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="fullName"
-                type="text"
-                placeholder="John Doe"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="h-12 bg-secondary/50"
               />
-              {errors.fullName && (
-                <p className="text-sm text-destructive">{errors.fullName}</p>
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email}</p>
               )}
             </div>
-          )}
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-12 bg-secondary/50"
-            />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-              {!isSignUp && (
-                <Link 
-                  to="/forgot-password" 
-                  className="text-sm text-primary hover:underline"
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                {!isSignUp && (
+                  <Link 
+                    to="/forgot-password" 
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                )}
+              </div>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-12 bg-secondary/50 pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Forgot password?
-                </Link>
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password}</p>
               )}
             </div>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="h-12 bg-secondary/50"
-            />
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password}</p>
-            )}
-          </div>
 
-          {isSignUp && (
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="h-12 bg-secondary/50"
-              />
-              {errors.confirmPassword && (
-                <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="h-12 bg-secondary/50 pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                )}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              variant="premium"
+              size="xl"
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  {isSignUp ? 'Joining the Circle...' : 'Entering...'}
+                </>
+              ) : (
+                isSignUp ? 'Apply for the Circle' : 'Enter the Circle'
               )}
-            </div>
-          )}
-
-          <Button
-            type="submit"
-            variant="premium"
-            size="xl"
-            className="w-full"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                {isSignUp ? 'Creating account...' : 'Signing in...'}
-              </>
-            ) : (
-              isSignUp ? 'Create Account' : 'Sign In'
-            )}
-          </Button>
-        </form>
+            </Button>
+          </form>
+        </div>
 
         <p className="text-center text-sm text-muted-foreground">
           {isSignUp ? (
             <>
-              Already have an account?{' '}
+              Already a member?{' '}
               <button
                 type="button"
                 onClick={toggleMode}
                 className="text-primary hover:underline font-medium"
               >
-                Sign in
+                Enter the Circle
               </button>
             </>
           ) : (
             <>
-              Don't have an account?{' '}
+              New here?{' '}
               <button
                 type="button"
                 onClick={toggleMode}
                 className="text-primary hover:underline font-medium"
               >
-                Create one
+                Apply for the Circle
               </button>
             </>
           )}
