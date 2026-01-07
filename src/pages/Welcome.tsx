@@ -2,7 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Sparkles, Users, BookOpen, Rocket } from 'lucide-react';
+import { ArrowRight, Users, BookOpen, Rocket } from 'lucide-react';
+import forgeLogo from '@/assets/forge-logo.png';
 
 const features = [
   {
@@ -36,22 +37,30 @@ const Welcome: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-background">
+      {/* Enhanced Animated Gradient Background */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-primary/15 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-accent/15 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '4s' }} />
       </div>
 
       <div className="relative w-full max-w-lg space-y-8 text-center animate-slide-up">
-        <div className="space-y-4">
-          <div className="mx-auto w-20 h-20 rounded-2xl gradient-primary flex items-center justify-center shadow-glow animate-pulse-soft">
-            <Sparkles className="h-10 w-10 text-primary-foreground" />
+        <div className="space-y-5">
+          {/* Forge Logo with Glow */}
+          <div className="relative mx-auto w-20 h-20">
+            <div className="absolute inset-0 bg-primary/30 rounded-2xl blur-xl" />
+            <img 
+              src={forgeLogo} 
+              alt="Forge" 
+              className="relative w-full h-full object-contain drop-shadow-lg"
+            />
           </div>
           <h1 className="text-4xl font-bold">
-            Welcome to{' '}
-            <span className="gradient-text">LevelUp</span>
+            Welcome to the{' '}
+            <span className="gradient-text">Inner Circle</span>
           </h1>
           <p className="text-lg text-muted-foreground">
-            You're now part of an exclusive community of creators. Your journey to Forge begins here.
+            Your creative journey begins here.
           </p>
         </div>
 
@@ -79,14 +88,14 @@ const Welcome: React.FC = () => {
             className="w-full"
             onClick={handleContinue}
           >
-            {profile?.kyf_completed ? 'Enter LevelUp' : 'Complete Your Profile'}
+            {profile?.kyf_completed ? 'Enter' : 'Start'}
             <ArrowRight className="h-5 w-5" />
           </Button>
           
           <p className="text-sm text-muted-foreground">
             {profile?.kyf_completed 
-              ? 'Head to the community and start connecting'
-              : 'Just a few quick questions to help us personalize your experience'}
+              ? 'Your Inner Circle awaits'
+              : 'A few quick questions to personalize your experience'}
           </p>
         </div>
       </div>
