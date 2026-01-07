@@ -1,25 +1,26 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme, CohortType } from '@/contexts/ThemeContext';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  Loader2, Flag, Anchor, Sparkles, Trophy, 
-  Rocket, Gift, Users, ArrowRight, Star, Map, BookOpen, CheckSquare
-} from 'lucide-react';
+import { Loader2, Flag, Anchor, Sparkles, Map, Image } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
-import RoadmapNode from '@/components/roadmap/RoadmapNode';
-import SmoothPath from '@/components/roadmap/SmoothPath';
-import RulesGuidelines from '@/components/roadmap/RulesGuidelines';
-import EssentialChecklist from '@/components/roadmap/EssentialChecklist';
+
+// Components
+import RoadmapHero from '@/components/roadmap/RoadmapHero';
+import QuickActionsBar from '@/components/roadmap/QuickActionsBar';
+import EnhancedRoadmapNode from '@/components/roadmap/EnhancedRoadmapNode';
+import EnhancedSmoothPath from '@/components/roadmap/EnhancedSmoothPath';
+import MasonryGallery from '@/components/roadmap/MasonryGallery';
+import StudentFilmStrip from '@/components/roadmap/StudentFilmStrip';
+import PrepChecklistSection from '@/components/roadmap/PrepChecklistSection';
+import RulesAccordion from '@/components/roadmap/RulesAccordion';
 import CohortCrossSell from '@/components/roadmap/CohortCrossSell';
 import CohortPreviewModal from '@/components/roadmap/CohortPreviewModal';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type RoadmapDay = Database['public']['Tables']['roadmap_days']['Row'];
 
-// Cohort name mapping
 const cohortDisplayNames: Record<CohortType, string> = {
   FORGE: 'The Forge',
   FORGE_WRITING: 'Forge Writing',
@@ -27,14 +28,17 @@ const cohortDisplayNames: Record<CohortType, string> = {
 };
 
 const Roadmap: React.FC = () => {
-  const { profile, edition, forgeMode } = useAuth();
+  const { profile, edition, forgeMode, user } = useAuth();
+  const queryClient = useQueryClient();
   const userCohortType = (edition?.cohort_type as CohortType) || 'FORGE';
   const cohortName = cohortDisplayNames[userCohortType];
   const [previewCohort, setPreviewCohort] = useState<CohortType | null>(null);
+  const [activeSection, setActiveSection] = useState('journey');
   const timelineRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(400);
   const [scrollProgress, setScrollProgress] = useState(0);
 
+  // Fetch roadmap days
   const { data: roadmapDays, isLoading } = useQuery({
     queryKey: ['roadmap-days', profile?.edition_id],
     queryFn: async () => {
@@ -50,8 +54,89 @@ const Roadmap: React.FC = () => {
     enabled: !!profile?.edition_id
   });
 
+  // Fetch galleries
+  const { data: galleries } = useQuery({
+    queryKey: ['roadmap-galleries', profile?.edition_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('roadmap_galleries')
+        .select('*')
+        .eq('edition_id', profile?.edition_id || '')
+        .order('order_index');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!profile?.edition_id
+  });
+
+  // Fetch student films
+  const { data: studentFilms } = useQuery({
+    queryKey: ['student-films', profile?.edition_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('student_films')
+        .select('*')
+        .order('order_index');
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fetch prep checklist items
+  const { data: prepItems } = useQuery({
+    queryKey: ['prep-checklist-items', profile?.edition_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('prep_checklist_items')
+        .select('*')
+        .order('order_index');
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fetch user's prep progress
+  const { data: userProgress } = useQuery({
+    queryKey: ['user-prep-progress', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from('user_prep_progress')
+        .select('checklist_item_id')
+        .eq('user_id', user.id);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id
+  });
+
+  const completedIds = useMemo(() => 
+    new Set(userProgress?.map(p => p.checklist_item_id) || []),
+    [userProgress]
+  );
+
+  // Toggle prep item completion
+  const togglePrepMutation = useMutation({
+    mutationFn: async ({ itemId, completed }: { itemId: string; completed: boolean }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+      if (completed) {
+        await supabase.from('user_prep_progress').insert({
+          user_id: user.id,
+          checklist_item_id: itemId
+        });
+      } else {
+        await supabase.from('user_prep_progress')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('checklist_item_id', itemId);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-prep-progress'] });
+    }
+  });
+
   const forgeStartDate = edition?.forge_start_date ? new Date(edition.forge_start_date) : null;
-  const daysUntilForge = forgeStartDate ? differenceInDays(forgeStartDate, new Date()) : null;
 
   const getDayStatus = (day: RoadmapDay): 'completed' | 'current' | 'upcoming' | 'locked' => {
     if (!day.is_active) return 'locked';
@@ -75,21 +160,17 @@ const Roadmap: React.FC = () => {
   };
 
   const completedCount = roadmapDays?.filter(d => getDayStatus(d) === 'completed').length || 0;
-  const currentIndex = roadmapDays?.findIndex(d => getDayStatus(d) === 'current') ?? -1;
   const totalCount = roadmapDays?.length || 0;
+  const nodeStatuses = useMemo(() => roadmapDays?.map(getDayStatus) || [], [roadmapDays]);
 
-  const nodeStatuses = useMemo(() => 
-    roadmapDays?.map(getDayStatus) || [], 
-    [roadmapDays]
-  );
+  // Separate galleries by type
+  const stayGallery = galleries?.filter(g => g.gallery_type === 'stay_location') || [];
+  const momentsGallery = galleries?.filter(g => g.gallery_type === 'forge_moment') || [];
 
   useEffect(() => {
     const updateWidth = () => {
-      if (timelineRef.current) {
-        setContainerWidth(timelineRef.current.offsetWidth);
-      }
+      if (timelineRef.current) setContainerWidth(timelineRef.current.offsetWidth);
     };
-    
     const handleScroll = () => {
       if (!timelineRef.current) return;
       const rect = timelineRef.current.getBoundingClientRect();
@@ -98,27 +179,15 @@ const Roadmap: React.FC = () => {
       const endThreshold = windowHeight * 0.2;
       const totalScrollableDistance = rect.height + (startThreshold - endThreshold);
       const scrolled = startThreshold - rect.top;
-      const progress = scrolled / totalScrollableDistance;
-      setScrollProgress(Math.max(0, Math.min(1, progress)));
+      setScrollProgress(Math.max(0, Math.min(1, scrolled / totalScrollableDistance)));
     };
-    
     updateWidth();
     setTimeout(handleScroll, 100);
-    
     window.addEventListener('resize', updateWidth);
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    const mainContent = document.querySelector('main');
-    if (mainContent) {
-      mainContent.addEventListener('scroll', handleScroll, { passive: true });
-    }
-    
     return () => {
       window.removeEventListener('resize', updateWidth);
       window.removeEventListener('scroll', handleScroll);
-      if (mainContent) {
-        mainContent.removeEventListener('scroll', handleScroll);
-      }
     };
   }, [roadmapDays]);
 
@@ -126,10 +195,7 @@ const Roadmap: React.FC = () => {
     return (
       <div className="container py-6 flex items-center justify-center min-h-[50vh]">
         <div className="flex flex-col items-center gap-4">
-          <div className="relative">
-            <Loader2 className="w-10 h-10 animate-spin text-primary" />
-            <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-accent animate-pulse" />
-          </div>
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
           <p className="text-muted-foreground text-sm">Loading your journey...</p>
         </div>
       </div>
@@ -142,9 +208,7 @@ const Roadmap: React.FC = () => {
         <div className="p-8 rounded-2xl glass-premium text-center">
           <Anchor className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-foreground mb-2">No Edition Assigned</h2>
-          <p className="text-muted-foreground">
-            You haven't been assigned to a Forge edition yet. Please contact the team.
-          </p>
+          <p className="text-muted-foreground">Please contact the team.</p>
         </div>
       </div>
     );
@@ -153,10 +217,6 @@ const Roadmap: React.FC = () => {
   if (!roadmapDays || roadmapDays.length === 0) {
     return (
       <div className="container py-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground mb-2">Your {cohortName} Journey</h1>
-          <p className="text-muted-foreground">Your adventure is being prepared...</p>
-        </div>
         <div className="p-8 rounded-2xl glass-premium text-center">
           <Sparkles className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
           <p className="text-muted-foreground">The roadmap is coming soon!</p>
@@ -168,192 +228,156 @@ const Roadmap: React.FC = () => {
   return (
     <div className="container py-6 pb-24">
       <div className="flex gap-6 max-w-5xl mx-auto">
-        {/* Main roadmap content */}
         <div className="flex-1 max-w-2xl">
-          {/* Header */}
-          {forgeMode === 'PRE_FORGE' && (
-            <div className="mb-6 text-center">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
-                <Rocket className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium text-primary">
-                  {daysUntilForge !== null && daysUntilForge > 0 
-                    ? `${daysUntilForge} days until Forge begins`
-                    : 'Forge is about to begin!'}
-                </span>
-              </div>
-              <h1 className="text-2xl font-bold gradient-text mb-2">Your {cohortName} Awaits</h1>
+          {/* Hero */}
+          <RoadmapHero
+            cohortName={cohortName}
+            forgeMode={forgeMode}
+            forgeStartDate={forgeStartDate}
+            completedCount={completedCount}
+            totalCount={totalCount}
+          />
+
+          {/* Quick Actions */}
+          <QuickActionsBar
+            activeSection={activeSection}
+            onSectionClick={setActiveSection}
+            hasGallery={stayGallery.length > 0 || momentsGallery.length > 0}
+            hasFilms={(studentFilms?.length || 0) > 0}
+          />
+
+          {/* Stay Gallery */}
+          {stayGallery.length > 0 && (
+            <div id="roadmap-gallery">
+              <MasonryGallery
+                images={stayGallery}
+                title="Where You'll Create"
+                subtitle="Your Forge home base"
+              />
             </div>
           )}
 
-          {forgeMode === 'DURING_FORGE' && (
-            <div className="mb-6 text-center">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 border border-primary/30 mb-4 animate-pulse-soft">
-                <Star className="w-4 h-4 text-primary fill-primary" />
-                <span className="text-sm font-bold text-primary">FORGE IS LIVE</span>
+          {/* Journey Map */}
+          <section id="roadmap-journey" className="py-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Map className="w-5 h-5 text-primary" />
               </div>
-              <h1 className="text-2xl font-bold gradient-text mb-2">Your {cohortName} Journey</h1>
-            </div>
-          )}
-
-          {forgeMode === 'POST_FORGE' && (
-            <div className="mb-6 text-center">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 border border-accent/30 mb-4">
-                <Trophy className="w-4 h-4 text-accent" />
-                <span className="text-sm font-bold text-accent">FORGE COMPLETE</span>
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Your Journey</h2>
+                <p className="text-sm text-muted-foreground">Day by day through the Forge</p>
               </div>
-              <h1 className="text-2xl font-bold gradient-text mb-2">Your {cohortName} Legacy</h1>
             </div>
-          )}
 
-          {/* Tabs for Journey / Rules / Checklist */}
-          <Tabs defaultValue="journey" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
-              <TabsTrigger value="journey" className="flex items-center gap-2">
-                <Map className="w-4 h-4" />
-                <span className="hidden sm:inline">Journey</span>
-              </TabsTrigger>
-              <TabsTrigger value="rules" className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4" />
-                <span className="hidden sm:inline">Rules</span>
-              </TabsTrigger>
-              <TabsTrigger value="checklist" className="flex items-center gap-2">
-                <CheckSquare className="w-4 h-4" />
-                <span className="hidden sm:inline">Packing</span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="journey">
-              {/* Progress Overview Card */}
-              <div className="mb-8 p-5 rounded-2xl glass-premium">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full gradient-primary flex items-center justify-center shadow-glow">
-                      {forgeMode === 'POST_FORGE' ? (
-                        <Trophy className="w-5 h-5 text-primary-foreground" />
-                      ) : (
-                        <Rocket className="w-5 h-5 text-primary-foreground" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Progress</p>
-                      <p className="text-xl font-bold text-foreground">{completedCount} / {totalCount}</p>
-                    </div>
+            <div ref={timelineRef} className="relative" style={{ minHeight: (totalCount - 1) * 160 + 140 }}>
+              <EnhancedSmoothPath
+                nodeCount={totalCount}
+                getNodePosition={getNodePosition}
+                nodeStatuses={nodeStatuses}
+                containerWidth={containerWidth}
+                scrollProgress={scrollProgress}
+              />
+              <div className="relative z-10 space-y-16 py-8 px-2">
+                {roadmapDays.map((day, index) => (
+                  <div key={day.id} className="animate-slide-up" style={{ animationDelay: `${index * 0.08}s` }}>
+                    <EnhancedRoadmapNode
+                      day={{
+                        id: day.id,
+                        day_number: day.day_number,
+                        title: day.title,
+                        description: day.description,
+                        date: day.date,
+                        location: day.location,
+                        call_time: day.call_time,
+                        checklist: (day.checklist as string[]) || [],
+                        mentors: (day.mentors as string[]) || [],
+                        key_learnings: (day.key_learnings as string[]) || [],
+                        activity_type: day.activity_type,
+                        duration_hours: day.duration_hours ? Number(day.duration_hours) : undefined,
+                        intensity_level: day.intensity_level,
+                        teaser_text: day.teaser_text,
+                        reveal_days_before: day.reveal_days_before,
+                        theme_name: day.theme_name,
+                        objective: day.objective,
+                        schedule: Array.isArray(day.schedule) ? day.schedule as { time: string; activity: string; icon?: string }[] : [],
+                        location_image_url: (day as any).location_image_url,
+                        milestone_type: (day as any).milestone_type,
+                      }}
+                      status={getDayStatus(day)}
+                      position={getNodePosition(index)}
+                      isFirst={index === 0}
+                      isLast={index === roadmapDays.length - 1}
+                      forgeMode={forgeMode}
+                      forgeStartDate={forgeStartDate}
+                      cohortType={userCohortType}
+                    />
                   </div>
-                  <p className="text-2xl font-black gradient-text">
-                    {totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0}%
-                  </p>
-                </div>
-                
-                <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
-                  <div 
-                    className="h-full gradient-primary rounded-full transition-all duration-700"
-                    style={{ width: totalCount > 0 ? `${(completedCount / totalCount) * 100}%` : '0%' }}
-                  />
-                </div>
+                ))}
               </div>
-
-              {/* Serpentine Path Timeline */}
-              <div ref={timelineRef} className="relative" style={{ minHeight: (totalCount - 1) * 180 + 180 }}>
-                <SmoothPath
-                  nodeCount={totalCount}
-                  getNodePosition={getNodePosition}
-                  nodeStatuses={nodeStatuses}
-                  containerWidth={containerWidth}
-                  scrollProgress={scrollProgress}
-                />
-
-                <div className="relative z-10 space-y-20 py-10 px-2">
-                  {roadmapDays.map((day, index) => {
-                    const status = getDayStatus(day);
-                    const position = getNodePosition(index);
-                    const checklist = (day.checklist as string[]) || [];
-                    const mentors = (day.mentors as string[]) || [];
-                    const keyLearnings = (day.key_learnings as string[]) || [];
-                    
-                    return (
-                      <div key={day.id} className="animate-slide-up" style={{ animationDelay: `${index * 0.08}s` }}>
-                        <RoadmapNode
-                          day={{
-                            ...day,
-                            checklist,
-                            mentors,
-                            key_learnings: keyLearnings,
-                            activity_type: day.activity_type,
-                            duration_hours: day.duration_hours ? Number(day.duration_hours) : null,
-                            intensity_level: day.intensity_level,
-                            teaser_text: day.teaser_text,
-                            reveal_days_before: day.reveal_days_before,
-                            theme_name: (day as any).theme_name,
-                            objective: (day as any).objective,
-                            schedule: (day as any).schedule,
-                          }}
-                          status={status}
-                          position={position}
-                          isFirst={index === 0}
-                          isLast={index === roadmapDays.length - 1}
-                          totalChecklist={checklist.length}
-                          completedChecklist={status === 'completed' ? checklist.length : 0}
-                          forgeMode={forgeMode}
-                          forgeStartDate={forgeStartDate}
-                          cohortType={userCohortType}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* End destination marker */}
-                <div className="relative flex justify-center mt-6 pt-6">
-                  <div className="glass-premium rounded-2xl p-4 flex items-center gap-3 shadow-glow">
-                    <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center">
-                      <Flag className="w-5 h-5 text-primary-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Destination</p>
-                      <p className="font-bold text-foreground text-sm">
-                        {forgeMode === 'POST_FORGE' ? 'Journey Complete!' : `${cohortName} Complete`}
-                      </p>
-                    </div>
+              <div className="relative flex justify-center mt-6 pt-6">
+                <div className="glass-premium rounded-2xl p-4 flex items-center gap-3 shadow-glow">
+                  <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center">
+                    <Flag className="w-5 h-5 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Destination</p>
+                    <p className="font-bold text-foreground text-sm">{cohortName} Complete</p>
                   </div>
                 </div>
               </div>
-            </TabsContent>
+            </div>
+          </section>
 
-            <TabsContent value="rules">
-              <RulesGuidelines />
-            </TabsContent>
+          {/* Prep Checklist */}
+          <div id="roadmap-prep">
+            <PrepChecklistSection
+              items={prepItems || []}
+              completedIds={completedIds}
+              onToggle={(itemId, completed) => togglePrepMutation.mutate({ itemId, completed })}
+              forgeStartDate={forgeStartDate}
+            />
+          </div>
 
-            <TabsContent value="checklist">
-              <EssentialChecklist />
-            </TabsContent>
-          </Tabs>
+          {/* Forge Moments Gallery */}
+          {momentsGallery.length > 0 && (
+            <MasonryGallery
+              images={momentsGallery}
+              title="Past Forge Magic"
+              subtitle="Moments from previous editions"
+            />
+          )}
+
+          {/* Student Films */}
+          {studentFilms && studentFilms.length > 0 && (
+            <div id="roadmap-films">
+              <StudentFilmStrip 
+                films={studentFilms.map(f => ({
+                  ...f,
+                  award_tags: Array.isArray(f.award_tags) ? f.award_tags as string[] : []
+                }))} 
+                title="Best Student Work" 
+                subtitle="Top films from past Forge editions" 
+              />
+            </div>
+          )}
+
+          {/* Rules */}
+          <RulesAccordion />
         </div>
 
-        {/* Cross-sell sidebar - Desktop only */}
+        {/* Sidebar */}
         <div className="hidden lg:block w-56 flex-shrink-0">
           <div className="sticky top-24">
-            <CohortCrossSell 
-              currentCohort={userCohortType}
-              onCohortClick={(cohort) => setPreviewCohort(cohort)}
-            />
+            <CohortCrossSell currentCohort={userCohortType} onCohortClick={(cohort) => setPreviewCohort(cohort)} />
           </div>
         </div>
       </div>
 
-      {/* Mobile cross-sell - Bottom section */}
       <div className="lg:hidden mt-12 max-w-2xl mx-auto">
-        <CohortCrossSell 
-          currentCohort={userCohortType}
-          onCohortClick={(cohort) => setPreviewCohort(cohort)}
-        />
+        <CohortCrossSell currentCohort={userCohortType} onCohortClick={(cohort) => setPreviewCohort(cohort)} />
       </div>
 
-      {/* Preview Modal */}
-      <CohortPreviewModal
-        isOpen={!!previewCohort}
-        onClose={() => setPreviewCohort(null)}
-        cohortType={previewCohort}
-      />
+      <CohortPreviewModal isOpen={!!previewCohort} onClose={() => setPreviewCohort(null)} cohortType={previewCohort} />
     </div>
   );
 };

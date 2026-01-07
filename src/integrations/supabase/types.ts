@@ -1142,6 +1142,50 @@ export type Database = {
         }
         Relationships: []
       }
+      prep_checklist_items: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          due_days_before: number | null
+          edition_id: string | null
+          id: string
+          is_required: boolean
+          order_index: number
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          due_days_before?: number | null
+          edition_id?: string | null
+          id?: string
+          is_required?: boolean
+          order_index?: number
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          due_days_before?: number | null
+          edition_id?: string | null
+          id?: string
+          is_required?: boolean
+          order_index?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prep_checklist_items_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1232,7 +1276,9 @@ export type Database = {
           is_active: boolean
           key_learnings: string[] | null
           location: string | null
+          location_image_url: string | null
           mentors: string[] | null
+          milestone_type: string | null
           objective: string | null
           reveal_days_before: number | null
           schedule: Json | null
@@ -1256,7 +1302,9 @@ export type Database = {
           is_active?: boolean
           key_learnings?: string[] | null
           location?: string | null
+          location_image_url?: string | null
           mentors?: string[] | null
+          milestone_type?: string | null
           objective?: string | null
           reveal_days_before?: number | null
           schedule?: Json | null
@@ -1280,7 +1328,9 @@ export type Database = {
           is_active?: boolean
           key_learnings?: string[] | null
           location?: string | null
+          location_image_url?: string | null
           mentors?: string[] | null
+          milestone_type?: string | null
           objective?: string | null
           reveal_days_before?: number | null
           schedule?: Json | null
@@ -1295,6 +1345,138 @@ export type Database = {
             columns: ["edition_id"]
             isOneToOne: false
             referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roadmap_galleries: {
+        Row: {
+          created_at: string
+          description: string | null
+          edition_id: string | null
+          gallery_type: string
+          id: string
+          image_url: string
+          is_featured: boolean
+          location_name: string | null
+          order_index: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          edition_id?: string | null
+          gallery_type: string
+          id?: string
+          image_url: string
+          is_featured?: boolean
+          location_name?: string | null
+          order_index?: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          edition_id?: string | null
+          gallery_type?: string
+          id?: string
+          image_url?: string
+          is_featured?: boolean
+          location_name?: string | null
+          order_index?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roadmap_galleries_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_films: {
+        Row: {
+          award_tags: Json | null
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          edition_id: string | null
+          id: string
+          is_featured: boolean
+          order_index: number
+          student_name: string
+          thumbnail_url: string | null
+          title: string
+          video_url: string
+        }
+        Insert: {
+          award_tags?: Json | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          edition_id?: string | null
+          id?: string
+          is_featured?: boolean
+          order_index?: number
+          student_name: string
+          thumbnail_url?: string | null
+          title: string
+          video_url: string
+        }
+        Update: {
+          award_tags?: Json | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          edition_id?: string | null
+          id?: string
+          is_featured?: boolean
+          order_index?: number
+          student_name?: string
+          thumbnail_url?: string | null
+          title?: string
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_films_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_prep_progress: {
+        Row: {
+          checklist_item_id: string
+          completed_at: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          checklist_item_id: string
+          completed_at?: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          checklist_item_id?: string
+          completed_at?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_prep_progress_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "prep_checklist_items"
             referencedColumns: ["id"]
           },
         ]
