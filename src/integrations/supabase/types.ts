@@ -767,6 +767,7 @@ export type Database = {
           instructor_name: string | null
           is_premium: boolean
           order_index: number
+          program_id: string | null
           section_type: string
           thumbnail_url: string | null
           title: string
@@ -788,6 +789,7 @@ export type Database = {
           instructor_name?: string | null
           is_premium?: boolean
           order_index?: number
+          program_id?: string | null
           section_type?: string
           thumbnail_url?: string | null
           title: string
@@ -809,6 +811,7 @@ export type Database = {
           instructor_name?: string | null
           is_premium?: boolean
           order_index?: number
+          program_id?: string | null
           section_type?: string
           thumbnail_url?: string | null
           title?: string
@@ -816,6 +819,56 @@ export type Database = {
           video_source_type?: string | null
           video_url?: string | null
           views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learn_content_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "learn_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learn_programs: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          instructor_avatar: string | null
+          instructor_bio: string | null
+          instructor_name: string | null
+          is_active: boolean
+          name: string
+          order_index: number
+          slug: string
+          thumbnail_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          instructor_avatar?: string | null
+          instructor_bio?: string | null
+          instructor_name?: string | null
+          is_active?: boolean
+          name: string
+          order_index?: number
+          slug: string
+          thumbnail_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          instructor_avatar?: string | null
+          instructor_bio?: string | null
+          instructor_name?: string | null
+          is_active?: boolean
+          name?: string
+          order_index?: number
+          slug?: string
+          thumbnail_url?: string | null
         }
         Relationships: []
       }
@@ -859,6 +912,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "learn_resources_learn_content_id_fkey"
+            columns: ["learn_content_id"]
+            isOneToOne: false
+            referencedRelation: "learn_content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learn_watch_progress: {
+        Row: {
+          completed: boolean
+          created_at: string
+          id: string
+          last_watched_at: string
+          learn_content_id: string
+          progress_seconds: number
+          total_seconds: number | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          last_watched_at?: string
+          learn_content_id: string
+          progress_seconds?: number
+          total_seconds?: number | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          last_watched_at?: string
+          learn_content_id?: string
+          progress_seconds?: number
+          total_seconds?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learn_watch_progress_learn_content_id_fkey"
             columns: ["learn_content_id"]
             isOneToOne: false
             referencedRelation: "learn_content"
