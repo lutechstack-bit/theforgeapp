@@ -192,13 +192,13 @@ const CourseDetail: React.FC = () => {
         <div className="absolute -bottom-40 right-1/4 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
         
-        <div className="container relative py-12 lg:py-16">
+        <div className="container relative py-6 lg:py-8">
           <div className="grid lg:grid-cols-[1.4fr_1fr] gap-8 lg:gap-12 items-start">
             
             {/* Left - Premium Featured Thumbnail */}
             <div className="relative group">
               {/* Decorative glow behind thumbnail */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-accent/10 to-primary/20 rounded-3xl blur-2xl opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+              <div className="absolute -inset-2 bg-gradient-to-r from-primary/20 via-accent/10 to-primary/20 rounded-3xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
               
               {/* Main Thumbnail Container */}
               <div className="relative aspect-video rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl border border-white/10 group-hover:border-primary/30 transition-all duration-500">
@@ -246,14 +246,11 @@ const CourseDetail: React.FC = () => {
                   </Button>
                 </div>
               </div>
-              
-              {/* Subtle reflection effect */}
-              <div className="absolute -bottom-6 left-6 right-6 h-6 bg-gradient-to-b from-primary/10 to-transparent rounded-b-3xl blur-sm opacity-40" />
             </div>
             
             {/* Right - Floating Premium Info Card */}
             <div className="lg:sticky lg:top-24 animate-fade-in" style={{ animationDelay: '200ms' }}>
-              <div className="bg-card rounded-2xl lg:rounded-3xl p-6 lg:p-8 shadow-2xl border border-border/50 hover:shadow-[0_30px_80px_rgba(0,0,0,0.3)] transition-all duration-500">
+              <div className="bg-card rounded-2xl lg:rounded-3xl p-5 lg:p-6 shadow-2xl border border-border/50 hover:shadow-[0_30px_80px_rgba(0,0,0,0.3)] transition-all duration-500">
                 {/* Premium Badge */}
                 {course.is_premium && (
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-6">
@@ -273,7 +270,7 @@ const CourseDetail: React.FC = () => {
                 )}
 
                 {/* Key Features */}
-                <div className="space-y-4 mb-8">
+                <div className="space-y-3 mb-6">
                   {keyFeatures.map((feature, index) => (
                     <div 
                       key={index} 
@@ -293,7 +290,7 @@ const CourseDetail: React.FC = () => {
                   onClick={handlePlayVideo}
                   className="w-full rounded-full h-14 text-base lg:text-lg font-semibold bg-foreground text-background hover:bg-foreground/90 shadow-lg transition-all duration-300 hover:shadow-xl group"
                 >
-                  {course.is_premium && !isFullAccess ? 'Unlock with Full Access' : 'Enrol with full membership'}
+                  {course.is_premium && !isFullAccess ? 'Unlock Full Access' : 'Start Learning'}
                   <ArrowRight className="h-5 w-5 ml-2 transition-transform group-hover:translate-x-1" />
                 </Button>
 
@@ -323,16 +320,7 @@ const CourseDetail: React.FC = () => {
       </div>
 
       {/* Course Content Section */}
-      <div className="container py-12 lg:py-16">
-        {/* Large Course Title */}
-        <div className="max-w-4xl mb-10">
-          <h2 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-foreground mb-6 leading-tight">
-            {course.title}
-          </h2>
-          <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed">
-            {course.full_description || course.description || 'Unlock your potential with this comprehensive course designed to take your skills to the next level.'}
-          </p>
-        </div>
+      <div className="container py-6 lg:py-8">
 
         {/* Taught By Section */}
         {course.instructor_name && (
