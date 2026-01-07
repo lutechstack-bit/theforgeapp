@@ -38,6 +38,53 @@ export type Database = {
         }
         Relationships: []
       }
+      community_highlights: {
+        Row: {
+          created_at: string
+          description: string | null
+          edition_id: string | null
+          highlight_date: string
+          highlight_type: string
+          id: string
+          image_url: string | null
+          is_pinned: boolean
+          order_index: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          edition_id?: string | null
+          highlight_date?: string
+          highlight_type?: string
+          id?: string
+          image_url?: string | null
+          is_pinned?: boolean
+          order_index?: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          edition_id?: string | null
+          highlight_date?: string
+          highlight_type?: string
+          id?: string
+          image_url?: string | null
+          is_pinned?: boolean
+          order_index?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_highlights_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_messages: {
         Row: {
           content: string
@@ -1200,6 +1247,7 @@ export type Database = {
           instagram_handle: string | null
           ky_form_completed: boolean
           kyf_completed: boolean
+          last_active_at: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
           phone: string | null
           profile_setup_completed: boolean
@@ -1221,6 +1269,7 @@ export type Database = {
           instagram_handle?: string | null
           ky_form_completed?: boolean
           kyf_completed?: boolean
+          last_active_at?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           phone?: string | null
           profile_setup_completed?: boolean
@@ -1242,6 +1291,7 @@ export type Database = {
           instagram_handle?: string | null
           ky_form_completed?: boolean
           kyf_completed?: boolean
+          last_active_at?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           phone?: string | null
           profile_setup_completed?: boolean
