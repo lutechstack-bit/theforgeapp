@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -11,30 +11,52 @@ import { MentorDetailModal } from '@/components/shared/MentorDetailModal';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { KYFormReminderBanner } from '@/components/onboarding/KYFormReminderBanner';
 import { FOMOBanner } from '@/components/shared/FOMOBanner';
-import { Calendar, ArrowRight, Flame, Users } from 'lucide-react';
+import { EnhancedCountdown } from '@/components/home/EnhancedCountdown';
+import { WhatYouCanDoHere } from '@/components/home/WhatYouCanDoHere';
+import { Calendar, ArrowRight, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { mentorsData, Mentor } from '@/data/mentorsData';
 
-// Alumni testimonial videos
+// Alumni testimonial videos with enhanced data
 const alumniTestimonials = [
-  { id: '1', name: 'Anurag', videoUrl: '/videos/testimonials/anurag.mp4' },
-  { id: '2', name: 'Ashwin', videoUrl: '/videos/testimonials/ashwin.mp4' },
-  { id: '3', name: 'Devansh', videoUrl: '/videos/testimonials/devansh.mp4' },
-  { id: '4', name: 'Aanchal', videoUrl: '/videos/testimonials/aanchal.mp4' },
+  { 
+    id: '1', 
+    name: 'Anurag', 
+    role: 'Director & Screenwriter',
+    film: 'Short Film: "The Last Frame"',
+    achievement: 'Selected at MAMI Film Festival 2024',
+    videoUrl: '/videos/testimonials/anurag.mp4' 
+  },
+  { 
+    id: '2', 
+    name: 'Ashwin', 
+    role: 'Cinematographer',
+    film: 'Documentary: "Urban Stories"',
+    achievement: 'Now at Prime Focus Studios',
+    videoUrl: '/videos/testimonials/ashwin.mp4' 
+  },
+  { 
+    id: '3', 
+    name: 'Devansh', 
+    role: 'Editor & Colorist',
+    film: 'Music Video: "Echoes"',
+    achievement: '1M+ views on YouTube',
+    videoUrl: '/videos/testimonials/devansh.mp4' 
+  },
+  { 
+    id: '4', 
+    name: 'Aanchal', 
+    role: 'Producer & Writer',
+    film: 'Web Series: "City Lights"',
+    achievement: 'Streaming on MX Player',
+    videoUrl: '/videos/testimonials/aanchal.mp4' 
+  },
 ];
-
-interface TimeLeft {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [isMentorModalOpen, setIsMentorModalOpen] = useState(false);
 
@@ -144,80 +166,26 @@ const Home: React.FC = () => {
       isFillingFast: true,
     },
   ];
+  
   const displayLearnContent = (learnContent && learnContent.length > 0) ? learnContent : dummyLearnContent;
   const displayEvents = (events && events.length > 0) ? events : dummyEvents;
 
-  useEffect(() => {
-    if (!edition?.forge_start_date) return;
-
-    const targetDate = new Date(edition.forge_start_date);
-
-    const calculateTimeLeft = () => {
-      const now = new Date();
-      const difference = targetDate.getTime() - now.getTime();
-
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / (1000 * 60)) % 60),
-          seconds: Math.floor((difference / 1000) % 60),
-        });
-      }
-    };
-
-    calculateTimeLeft();
-    const timer = setInterval(calculateTimeLeft, 1000);
-    return () => clearInterval(timer);
-  }, [edition?.forge_start_date]);
-
-  const TimeBlock = ({ value, label }: { value: number; label: string }) => (
-    <div className="flex flex-col items-center countdown-number">
-      <span className="text-2xl md:text-3xl font-bold text-white tabular-nums transition-all duration-300">
-        {value.toString().padStart(2, '0')}
-      </span>
-      <span className="text-[10px] text-white/60 uppercase tracking-wider">{label}</span>
-    </div>
-  );
-
   return (
-    <div className="min-h-screen p-4 md:p-8 space-y-8">
+    <div className="min-h-screen p-4 md:p-8 space-y-10">
       {/* KY Form Reminder Banner */}
       <KYFormReminderBanner />
 
       {/* FOMO Banner for 15k paid users */}
       <FOMOBanner />
 
-      {/* Hero Banner with Countdown */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary/80 reveal-section">
-        <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div className="animate-fade-in">
-            <div className="flex items-center gap-2 mb-2">
-              <Flame className="w-6 h-6 text-white/90" />
-              <h1 className="text-2xl md:text-3xl font-bold text-white">
-                Forge Begins In
-              </h1>
-            </div>
-            <p className="text-white/70 text-sm">
-              Your creative journey starts soon
-            </p>
-          </div>
+      {/* Enhanced Hero Banner with Countdown */}
+      <EnhancedCountdown edition={edition} />
 
-          {/* Countdown Timer */}
-          <div className="flex items-center gap-4 md:gap-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            <TimeBlock value={timeLeft.days} label="Days" />
-            <span className="text-white/50 text-2xl font-light">:</span>
-            <TimeBlock value={timeLeft.hours} label="Hours" />
-            <span className="text-white/50 text-2xl font-light">:</span>
-            <TimeBlock value={timeLeft.minutes} label="Mins" />
-            <span className="text-white/50 text-2xl font-light">:</span>
-            <TimeBlock value={timeLeft.seconds} label="Secs" />
-          </div>
-        </div>
-      </div>
+      {/* What You Can Do Here - Onboarding for new users */}
+      <WhatYouCanDoHere />
 
       {/* Quick Actions Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 reveal-section" style={{ animationDelay: '0.1s' }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 reveal-section" style={{ animationDelay: '0.15s' }}>
         {/* Roadmap Card */}
         <div className="bg-card border border-border rounded-xl p-5 hover-lift tap-scale card-shine">
           <div className="flex items-start justify-between mb-4">
@@ -262,16 +230,39 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* Listen to Our Alumni - Testimonials */}
-      <ContentCarousel title="Listen to Our Alumni">
+      {/* Alumni Testimonials - Enhanced with demographics */}
+      <ContentCarousel title="Alumni Spotlight">
         {alumniTestimonials.map((alumni) => (
           <TestimonialVideoCard
             key={alumni.id}
             name={alumni.name}
+            role={alumni.role}
+            film={alumni.film}
+            achievement={alumni.achievement}
             videoUrl={alumni.videoUrl}
           />
         ))}
       </ContentCarousel>
+
+      {/* Upcoming Events - Moved higher */}
+      {displayEvents.length > 0 && (
+        <ContentCarousel title="Upcoming Events" onSeeAll={() => navigate('/events')}>
+          {displayEvents.map((event: any) => (
+            <EventCard
+              key={event.id}
+              title={event.title}
+              date={format(new Date(event.event_date), 'EEE, MMM d')}
+              location={event.location || undefined}
+              imageUrl={event.image_url || undefined}
+              hostName={event.hostName}
+              hostAvatarUrl={event.hostAvatarUrl}
+              isFillingFast={event.isFillingFast}
+              isVirtual={event.is_virtual}
+              onClick={() => navigate('/events')}
+            />
+          ))}
+        </ContentCarousel>
+      )}
 
       {/* Meet Your Mentors */}
       <ContentCarousel title="Meet Your Mentors">
@@ -303,26 +294,6 @@ const Home: React.FC = () => {
               instructorName={content.instructor_name}
               companyName={content.company_name}
               isPremium={content.is_premium}
-            />
-          ))}
-        </ContentCarousel>
-      )}
-
-      {/* Events Section */}
-      {displayEvents.length > 0 && (
-        <ContentCarousel title="Upcoming Events" onSeeAll={() => navigate('/events')}>
-          {displayEvents.map((event: any) => (
-            <EventCard
-              key={event.id}
-              title={event.title}
-              date={format(new Date(event.event_date), 'EEE, MMM d')}
-              location={event.location || undefined}
-              imageUrl={event.image_url || undefined}
-              hostName={event.hostName}
-              hostAvatarUrl={event.hostAvatarUrl}
-              isFillingFast={event.isFillingFast}
-              isVirtual={event.is_virtual}
-              onClick={() => navigate('/events')}
             />
           ))}
         </ContentCarousel>

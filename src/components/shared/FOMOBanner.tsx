@@ -63,15 +63,15 @@ export const FOMOBanner: React.FC = () => {
   if (isBalancePaid || isDismissed) return null;
 
   return (
-    <div className="relative mx-4 mb-4 overflow-hidden rounded-xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 border border-amber-500/30 backdrop-blur-sm">
+    <div className="relative mx-0 sm:mx-4 mb-4 overflow-hidden rounded-xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 border border-amber-500/30 backdrop-blur-sm">
       {/* Animated pulse effect */}
       <div className="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-amber-500/10 to-amber-500/0 animate-shimmer" />
       
-      <div className="relative flex items-center justify-between gap-3 px-4 py-3">
-        <div className="flex items-center gap-4 flex-wrap">
+      <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
           {/* Social proof */}
           <div className="flex items-center gap-2 text-amber-200">
-            <Users className="h-4 w-4" />
+            <Users className="h-4 w-4 shrink-0" />
             <span className="text-sm font-medium">
               {usersUnlocked} users unlocked full access today
             </span>
@@ -80,7 +80,7 @@ export const FOMOBanner: React.FC = () => {
           {/* Countdown */}
           {timeLeft && (
             <div className="flex items-center gap-2 text-amber-100/80">
-              <Clock className="h-4 w-4" />
+              <Clock className="h-4 w-4 shrink-0" />
               <span className="text-sm">
                 Forge starts in {timeLeft.days}d {timeLeft.hours}h
               </span>
@@ -88,11 +88,11 @@ export const FOMOBanner: React.FC = () => {
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Button
             size="sm"
             onClick={handlePayClick}
-            className="bg-amber-500 hover:bg-amber-600 text-black font-semibold gap-1.5 whitespace-nowrap"
+            className="bg-amber-500 hover:bg-amber-600 text-black font-semibold gap-1.5 whitespace-nowrap flex-1 sm:flex-initial"
           >
             <Sparkles className="h-3.5 w-3.5" />
             Pay Balance
@@ -100,7 +100,7 @@ export const FOMOBanner: React.FC = () => {
           
           <button
             onClick={handleDismiss}
-            className="p-1.5 rounded-full hover:bg-white/10 text-amber-200/60 hover:text-amber-200 transition-colors"
+            className="p-1.5 rounded-full hover:bg-white/10 text-amber-200/60 hover:text-amber-200 transition-colors shrink-0"
             aria-label="Dismiss"
           >
             <X className="h-4 w-4" />
