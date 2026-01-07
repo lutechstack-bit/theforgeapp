@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -23,8 +24,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Calendar, MapPin, Video } from 'lucide-react';
-import { format } from 'date-fns';
+import { Plus, Pencil, Trash2, Calendar, MapPin, Video, FileText } from 'lucide-react';
+import { format, isPast } from 'date-fns';
 
 interface EventForm {
   title: string;
@@ -178,7 +179,7 @@ const AdminEvents: React.FC = () => {
                 {editingId ? 'Update the event details below' : 'Fill in the event details below'}
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
               <div>
                 <Label htmlFor="title">Title</Label>
                 <Input
@@ -189,6 +190,26 @@ const AdminEvents: React.FC = () => {
                   required
                 />
               </div>
+
+              <div>
+                <Label htmlFor="event_type">Event Type</Label>
+                <Select
+                  value={form.event_type_id || ''}
+                  onValueChange={(value) => setForm({ ...form, event_type_id: value || null })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select event type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {eventTypes.map((type) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div>
                 <Label htmlFor="description">Description</Label>
                 <Textarea
@@ -199,25 +220,29 @@ const AdminEvents: React.FC = () => {
                   rows={3}
                 />
               </div>
-              <div>
-                <Label htmlFor="event_date">Date & Time</Label>
-                <Input
-                  id="event_date"
-                  type="datetime-local"
-                  value={form.event_date}
-                  onChange={(e) => setForm({ ...form, event_date: e.target.value })}
-                  required
-                />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="event_date">Date & Time</Label>
+                  <Input
+                    id="event_date"
+                    type="datetime-local"
+                    value={form.event_date}
+                    onChange={(e) => setForm({ ...form, event_date: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    value={form.location}
+                    onChange={(e) => setForm({ ...form, location: e.target.value })}
+                    placeholder="City or venue"
+                  />
+                </div>
               </div>
-              <div>
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  value={form.location}
-                  onChange={(e) => setForm({ ...form, location: e.target.value })}
-                  placeholder="City or venue"
-                />
-              </div>
+
               <div>
                 <Label htmlFor="image_url">Image URL</Label>
                 <Input
@@ -227,6 +252,7 @@ const AdminEvents: React.FC = () => {
                   placeholder="https://..."
                 />
               </div>
+
               <div className="flex items-center gap-3">
                 <Switch
                   id="is_virtual"
@@ -235,6 +261,38 @@ const AdminEvents: React.FC = () => {
                 />
                 <Label htmlFor="is_virtual">Virtual Event</Label>
               </div>
+
+              {/* Archive Fields - Only show for past events or when editing */}
+              {editingId && (
+                <div className="border-t border-border/50 pt-4 mt-4 space-y-4">
+                  <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Archive Content (for past events)
+                  </h4>
+                  
+                  <div>
+                    <Label htmlFor="recording_url">Recording URL</Label>
+                    <Input
+                      id="recording_url"
+                      value={form.recording_url}
+                      onChange={(e) => setForm({ ...form, recording_url: e.target.value })}
+                      placeholder="YouTube or Vimeo URL"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="notes">Event Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={form.notes}
+                      onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                      placeholder="Summary, key takeaways, or notes from the event..."
+                      rows={4}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-end gap-3 pt-4">
                 <Button type="button" variant="outline" onClick={resetForm}>
                   Cancel
@@ -262,9 +320,11 @@ const AdminEvents: React.FC = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Location</TableHead>
-                <TableHead>Type</TableHead>
+                <TableHead>Format</TableHead>
+                <TableHead>Archive</TableHead>
                 <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -273,6 +333,15 @@ const AdminEvents: React.FC = () => {
                 <TableRow key={event.id}>
                   <TableCell className="font-medium">{event.title}</TableCell>
                   <TableCell>
+                    {event.event_types?.name ? (
+                      <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
+                        {event.event_types.name}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     {format(new Date(event.event_date), 'MMM d, yyyy h:mm a')}
                   </TableCell>
                   <TableCell>{event.location || '-'}</TableCell>
@@ -280,11 +349,24 @@ const AdminEvents: React.FC = () => {
                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                       event.is_virtual
                         ? 'bg-secondary text-foreground'
-                        : 'bg-primary/10 text-primary'
+                        : 'bg-accent/10 text-accent-foreground'
                     }`}>
                       {event.is_virtual ? <Video className="h-3 w-3" /> : <MapPin className="h-3 w-3" />}
                       {event.is_virtual ? 'Virtual' : 'In-Person'}
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      {event.recording_url && (
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-green-500/20 text-green-600">Video</span>
+                      )}
+                      {event.notes && (
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-600">Notes</span>
+                      )}
+                      {!event.recording_url && !event.notes && (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
