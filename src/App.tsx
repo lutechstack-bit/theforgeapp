@@ -197,6 +197,7 @@ const AppRoutes = () => {
         <Route path="hero-banners" element={<AdminHeroBanners />} />
         <Route path="roadmap" element={<AdminRoadmap />} />
         <Route path="ky-forms" element={<AdminKYForms />} />
+        <Route path="community-highlights" element={<AdminCommunityHighlights />} />
       </Route>
       
       {/* Catch-all */}
