@@ -1,15 +1,17 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { AlertCircle, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export const KYFormReminderBanner: React.FC = () => {
   const { profile, edition } = useAuth();
+  const { isAdmin } = useAdminCheck();
   const navigate = useNavigate();
 
-  // Don't show if profile setup not done or KY form already completed
-  if (!profile?.profile_setup_completed || profile?.ky_form_completed) {
+  // Don't show for admins, if profile setup not done, or if KY form already completed
+  if (isAdmin || !profile?.profile_setup_completed || profile?.ky_form_completed) {
     return null;
   }
 
@@ -40,20 +42,21 @@ export const KYFormReminderBanner: React.FC = () => {
   };
 
   return (
-    <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 mb-6 animate-pulse-slow">
-      <div className="flex items-center justify-between gap-4">
+    <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 md:p-5 mb-6 animate-pulse-slow">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/20 rounded-lg">
-            <AlertCircle className="h-5 w-5 text-primary" />
+          <div className="p-2 md:p-3 bg-primary/20 rounded-lg">
+            <AlertCircle className="h-5 w-5 md:h-6 md:w-6 text-primary" />
           </div>
           <div>
-            <h3 className="font-semibold text-foreground">Complete Your {getFormName()} Form</h3>
-            <p className="text-sm text-muted-foreground">Help us personalize your Forge experience</p>
+            <h3 className="font-semibold text-foreground text-base md:text-lg">Complete Your {getFormName()} Form</h3>
+            <p className="text-sm md:text-base text-muted-foreground">Help us personalize your Forge experience</p>
           </div>
         </div>
         <Button 
           onClick={() => navigate(getFormRoute())}
-          className="shrink-0"
+          className="shrink-0 w-full sm:w-auto"
+          size="lg"
         >
           Continue
           <ChevronRight className="h-4 w-4 ml-1" />

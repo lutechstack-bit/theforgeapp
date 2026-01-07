@@ -13,6 +13,7 @@ import { RadioSelectField } from '@/components/onboarding/RadioSelectField';
 import { MultiSelectField } from '@/components/onboarding/MultiSelectField';
 import { ProficiencyField } from '@/components/onboarding/ProficiencyField';
 import { PhotoUploadField } from '@/components/onboarding/PhotoUploadField';
+import { TermsModal } from '@/components/onboarding/TermsModal';
 import { User, MapPin, Heart, Film, Camera, Sparkles, FileCheck, ExternalLink } from 'lucide-react';
 import {
   AlertDialog,
@@ -136,6 +137,7 @@ const KYFForm: React.FC = () => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     certificate_name: '',
     current_occupation: '',
@@ -358,7 +360,7 @@ const KYFForm: React.FC = () => {
       case 0: return !!(formData.certificate_name && formData.current_occupation && formData.instagram_id);
       case 1: return !!(formData.age && formData.date_of_birth && formData.address_line_1 && formData.state && formData.pincode);
       case 2: return !!(formData.gender && formData.tshirt_size && formData.has_editing_laptop && formData.emergency_contact_name && formData.emergency_contact_number);
-      case 3: return !!(formData.proficiency_screenwriting && formData.proficiency_direction && formData.proficiency_cinematography && formData.proficiency_editing);
+      case 3: return true; // Proficiency is now optional
       case 4: return !!(formData.top_3_movies && formData.chronotype && formData.meal_preference && formData.food_allergies && formData.medication_support);
       case 5: return formData.languages_known.length > 0 && !!formData.height_ft;
       case 6: return !!(formData.photo_favorite_url && formData.headshot_front_url && formData.full_body_url);
@@ -377,21 +379,21 @@ const KYFForm: React.FC = () => {
               <div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                 <User className="h-7 w-7 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground">General Details</h2>
-              <p className="text-muted-foreground">Let's start with the basics</p>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">General Details</h2>
+              <p className="text-muted-foreground text-sm md:text-base">Let's start with the basics</p>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div className="space-y-2">
-                <Label>Full name (as you want it on your certificate) *</Label>
-                <Input value={formData.certificate_name} onChange={e => updateField('certificate_name', e.target.value)} className="h-12 bg-secondary/50" />
+                <Label className="text-sm md:text-base">Full name (as you want it on your certificate) *</Label>
+                <Input value={formData.certificate_name} onChange={e => updateField('certificate_name', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
               </div>
               <div className="space-y-2">
-                <Label>What are you currently doing? *</Label>
-                <Input value={formData.current_occupation} onChange={e => updateField('current_occupation', e.target.value)} placeholder="e.g. Student, Working Professional" className="h-12 bg-secondary/50" />
+                <Label className="text-sm md:text-base">What are you currently doing? *</Label>
+                <Input value={formData.current_occupation} onChange={e => updateField('current_occupation', e.target.value)} placeholder="e.g. Student, Working Professional" className="h-12 md:h-14 text-base bg-secondary/50" />
               </div>
               <div className="space-y-2">
-                <Label>Your Instagram ID *</Label>
-                <Input value={formData.instagram_id} onChange={e => updateField('instagram_id', e.target.value)} placeholder="@yourhandle" className="h-12 bg-secondary/50" />
+                <Label className="text-sm md:text-base">Your Instagram ID *</Label>
+                <Input value={formData.instagram_id} onChange={e => updateField('instagram_id', e.target.value)} placeholder="@yourhandle" className="h-12 md:h-14 text-base bg-secondary/50" />
               </div>
             </div>
           </div>
@@ -404,34 +406,34 @@ const KYFForm: React.FC = () => {
               <div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                 <MapPin className="h-7 w-7 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground">Personal Details</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Personal Details</h2>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Your Age *</Label>
-                  <Input type="number" value={formData.age} onChange={e => updateField('age', e.target.value)} className="h-12 bg-secondary/50" />
+                  <Label className="text-sm md:text-base">Your Age *</Label>
+                  <Input type="number" value={formData.age} onChange={e => updateField('age', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Date of Birth *</Label>
-                  <Input type="date" value={formData.date_of_birth} onChange={e => updateField('date_of_birth', e.target.value)} className="h-12 bg-secondary/50" />
+                  <Label className="text-sm md:text-base">Date of Birth *</Label>
+                  <Input type="date" value={formData.date_of_birth} onChange={e => updateField('date_of_birth', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Address Line 1 *</Label>
-                <Input value={formData.address_line_1} onChange={e => updateField('address_line_1', e.target.value)} className="h-12 bg-secondary/50" />
+                <Label className="text-sm md:text-base">Address Line 1 *</Label>
+                <Input value={formData.address_line_1} onChange={e => updateField('address_line_1', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
               </div>
               <div className="space-y-2">
-                <Label>Address Line 2</Label>
-                <Input value={formData.address_line_2} onChange={e => updateField('address_line_2', e.target.value)} className="h-12 bg-secondary/50" />
+                <Label className="text-sm md:text-base">Address Line 2</Label>
+                <Input value={formData.address_line_2} onChange={e => updateField('address_line_2', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
               </div>
               <div className="space-y-2">
-                <Label>State *</Label>
-                <Input value={formData.state} onChange={e => updateField('state', e.target.value)} className="h-12 bg-secondary/50" />
+                <Label className="text-sm md:text-base">State *</Label>
+                <Input value={formData.state} onChange={e => updateField('state', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
               </div>
               <div className="space-y-2">
-                <Label>Pincode *</Label>
-                <Input value={formData.pincode} onChange={e => updateField('pincode', e.target.value)} className="h-12 bg-secondary/50" />
+                <Label className="text-sm md:text-base">Pincode *</Label>
+                <Input value={formData.pincode} onChange={e => updateField('pincode', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
               </div>
             </div>
           </div>
@@ -444,9 +446,9 @@ const KYFForm: React.FC = () => {
               <div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                 <Heart className="h-7 w-7 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground">Basic Preferences & Emergency Details</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Basic Preferences & Emergency Details</h2>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-5">
               <RadioSelectField
                 label="Your Gender"
                 required
@@ -460,8 +462,8 @@ const KYFForm: React.FC = () => {
                 columns={3}
               />
               <div className="space-y-2">
-                <Label>Your T-shirt size *</Label>
-                <Input value={formData.tshirt_size} onChange={e => updateField('tshirt_size', e.target.value)} placeholder="S / M / L / XL / XXL" className="h-12 bg-secondary/50" />
+                <Label className="text-sm md:text-base">Your T-shirt size *</Label>
+                <Input value={formData.tshirt_size} onChange={e => updateField('tshirt_size', e.target.value)} placeholder="S / M / L / XL / XXL" className="h-12 md:h-14 text-base bg-secondary/50" />
               </div>
               <RadioSelectField
                 label="Do you have a laptop that supports video editing that you can bring?"
@@ -474,14 +476,14 @@ const KYFForm: React.FC = () => {
                 onChange={v => updateField('has_editing_laptop', v)}
                 columns={2}
               />
-              <p className="text-xs text-muted-foreground -mt-2">(having your laptop makes the process faster for you and easier to edit your final cut back home)</p>
+              <p className="text-xs md:text-sm text-muted-foreground -mt-2">(having your laptop makes the process faster for you and easier to edit your final cut back home)</p>
               <div className="space-y-2">
-                <Label>Emergency contact name *</Label>
-                <Input value={formData.emergency_contact_name} onChange={e => updateField('emergency_contact_name', e.target.value)} className="h-12 bg-secondary/50" />
+                <Label className="text-sm md:text-base">Emergency contact name *</Label>
+                <Input value={formData.emergency_contact_name} onChange={e => updateField('emergency_contact_name', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
               </div>
               <div className="space-y-2">
-                <Label>Emergency contact number *</Label>
-                <Input value={formData.emergency_contact_number} onChange={e => updateField('emergency_contact_number', e.target.value)} className="h-12 bg-secondary/50" />
+                <Label className="text-sm md:text-base">Emergency contact number *</Label>
+                <Input value={formData.emergency_contact_number} onChange={e => updateField('emergency_contact_number', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
               </div>
             </div>
           </div>
@@ -494,14 +496,14 @@ const KYFForm: React.FC = () => {
               <div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                 <Film className="h-7 w-7 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground">Proficiency Level</h2>
-              <p className="text-muted-foreground">We want to understand your proficiency level to curate the best learning experience for you.</p>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Proficiency Level</h2>
+              <p className="text-muted-foreground text-sm md:text-base">Help us understand your experience level (optional)</p>
             </div>
             <div className="space-y-6">
-              <ProficiencyField label="Screenwriting" required options={SCREENWRITING_OPTIONS} value={formData.proficiency_screenwriting} onChange={v => updateField('proficiency_screenwriting', v)} />
-              <ProficiencyField label="Film Direction" required options={DIRECTION_OPTIONS} value={formData.proficiency_direction} onChange={v => updateField('proficiency_direction', v)} />
-              <ProficiencyField label="Cinematography" required options={CINEMATOGRAPHY_OPTIONS} value={formData.proficiency_cinematography} onChange={v => updateField('proficiency_cinematography', v)} />
-              <ProficiencyField label="Editing" required options={EDITING_OPTIONS} value={formData.proficiency_editing} onChange={v => updateField('proficiency_editing', v)} />
+              <ProficiencyField label="Screenwriting" options={SCREENWRITING_OPTIONS} value={formData.proficiency_screenwriting} onChange={v => updateField('proficiency_screenwriting', v)} />
+              <ProficiencyField label="Film Direction" options={DIRECTION_OPTIONS} value={formData.proficiency_direction} onChange={v => updateField('proficiency_direction', v)} />
+              <ProficiencyField label="Cinematography" options={CINEMATOGRAPHY_OPTIONS} value={formData.proficiency_cinematography} onChange={v => updateField('proficiency_cinematography', v)} />
+              <ProficiencyField label="Editing" options={EDITING_OPTIONS} value={formData.proficiency_editing} onChange={v => updateField('proficiency_editing', v)} />
             </div>
           </div>
         );
@@ -650,17 +652,29 @@ const KYFForm: React.FC = () => {
               <div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                 <FileCheck className="h-7 w-7 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground">Terms and Conditions</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Terms and Conditions</h2>
             </div>
-            <div className="p-4 rounded-xl border border-border bg-card">
+            <div className="p-4 md:p-5 rounded-xl border border-border bg-card">
               <div className="flex items-start gap-3">
                 <Checkbox
                   id="terms"
                   checked={formData.terms_accepted}
                   onCheckedChange={(checked) => updateField('terms_accepted', checked === true)}
+                  className="mt-0.5"
                 />
-                <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                  I agree to the <a href="#" className="text-primary underline">terms and conditions</a> of the Forge program. I understand and accept the rules and guidelines that have been shared with me.
+                <label htmlFor="terms" className="text-sm md:text-base text-muted-foreground leading-relaxed cursor-pointer">
+                  I agree to the{' '}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowTermsModal(true);
+                    }}
+                    className="text-primary underline hover:text-primary/80 transition-colors"
+                  >
+                    terms and conditions
+                  </button>{' '}
+                  of the Forge program. I understand and accept the rules and guidelines that have been shared with me.
                 </label>
               </div>
             </div>
@@ -681,16 +695,16 @@ const KYFForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start py-8 px-6 bg-background">
+    <div className="min-h-screen flex flex-col items-center justify-start py-6 md:py-10 px-4 md:px-8 bg-background">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 -left-32 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 -right-32 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative w-full max-w-lg">
+      <div className="relative w-full max-w-lg md:max-w-xl lg:max-w-2xl">
         <KYFormProgress currentStep={step} totalSteps={STEP_TITLES.length} stepTitles={STEP_TITLES} />
         
-        <div className="mt-8 mb-4 max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
+        <div className="mt-6 md:mt-8 mb-4 max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
           {renderStep()}
         </div>
 
@@ -723,6 +737,8 @@ const KYFForm: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <TermsModal open={showTermsModal} onOpenChange={setShowTermsModal} />
     </div>
   );
 };
