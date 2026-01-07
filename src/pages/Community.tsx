@@ -2,12 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CommunityHeader } from '@/components/community/CommunityHeader';
-import { CommunityStatsBar } from '@/components/community/CommunityStatsBar';
-import { MemberGrid } from '@/components/community/MemberGrid';
-import { WhatsAppChat } from '@/components/community/WhatsAppChat';
-import { HighlightsCard } from '@/components/community/HighlightsCard';
-import { AfterForgeCard } from '@/components/community/AfterForgeCard';
-import { Loader2, Users, MessageCircle } from 'lucide-react';
+import { MemberAvatarStrip } from '@/components/community/MemberAvatarStrip';
+import { CompactChat } from '@/components/community/CompactChat';
+import { CompactHighlights } from '@/components/community/CompactHighlights';
+import { QuickAccessBar } from '@/components/community/QuickAccessBar';
+import { Loader2 } from 'lucide-react';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface CityGroup {
@@ -40,11 +39,8 @@ const Community = () => {
       initializeCommunity();
       setupPresenceChannel();
     }
-
     return () => {
-      if (presenceChannelRef.current) {
-        supabase.removeChannel(presenceChannelRef.current);
-      }
+      if (presenceChannelRef.current) supabase.removeChannel(presenceChannelRef.current);
       Object.values(typingTimeoutRef.current).forEach(clearTimeout);
     };
   }, [user]);
@@ -57,7 +53,6 @@ const Community = () => {
 
   const setupPresenceChannel = () => {
     if (!user) return;
-
     presenceChannelRef.current = supabase
       .channel('community-presence')
       .on('presence', { event: 'sync' }, () => {
@@ -95,73 +90,57 @@ const Community = () => {
       supabase.from('profiles').select('city').eq('profile_setup_completed', true).not('city', 'is', null),
       supabase.from('student_films').select('*', { count: 'exact', head: true }),
     ]);
-    setStats({ 
-      totalMembers: members || 0, 
-      totalCities: new Set(cities?.map((p) => p.city).filter(Boolean)).size, 
-      totalFilms: films || 0 
-    });
+    setStats({ totalMembers: members || 0, totalCities: new Set(cities?.map((p) => p.city).filter(Boolean)).size, totalFilms: films || 0 });
   };
 
-  // Subscribe to member count changes
   useEffect(() => {
-    const channel = supabase
-      .channel('stats-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, fetchStats)
-      .subscribe();
+    const channel = supabase.channel('stats-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, fetchStats).subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center h-[80vh]">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 pb-20 md:pb-6">
-      {/* Header */}
-      <CommunityHeader memberCount={stats.totalMembers} onlineCount={onlineUserIds.length} />
-
-      {/* Stats Bar */}
-      <CommunityStatsBar
-        totalMembers={stats.totalMembers}
-        totalCities={stats.totalCities}
-        onlineNow={onlineUserIds.length}
-        totalFilms={stats.totalFilms}
-      />
-
-      {/* Main Grid - Responsive */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Members Section */}
-        <div className="bg-card rounded-2xl border border-border/50 p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Users className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold text-foreground">Members</h3>
-          </div>
-          <MemberGrid onlineUserIds={onlineUserIds} />
+    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-6rem)]">
+      {/* Top Section - Compact Header */}
+      <div className="space-y-3 pb-3">
+        {/* Header Row */}
+        <CommunityHeader memberCount={stats.totalMembers} onlineCount={onlineUserIds.length} />
+        
+        {/* Members Strip */}
+        <div className="space-y-1.5">
+          <span className="text-xs font-medium text-muted-foreground px-1">Members</span>
+          <MemberAvatarStrip onlineUserIds={onlineUserIds} />
         </div>
 
-        {/* Chat Section */}
-        <div className="h-[400px] lg:h-[500px]">
-          <div className="flex items-center gap-2 mb-2">
-            <MessageCircle className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold text-foreground">Chat</h3>
-          </div>
-          <WhatsAppChat
-            groups={groups}
-            activeGroupId={activeGroupId}
-            onGroupChange={setActiveGroupId}
-            typingUsers={typingUsers}
-          />
+        {/* Highlights (if any) */}
+        <CompactHighlights />
+
+        {/* Quick Access */}
+        <div className="hidden md:block">
+          <QuickAccessBar />
         </div>
+      </div>
 
-        {/* Highlights */}
-        <HighlightsCard />
+      {/* Main Chat Area - Takes remaining space */}
+      <div className="flex-1 min-h-0">
+        <CompactChat
+          groups={groups}
+          activeGroupId={activeGroupId}
+          onGroupChange={setActiveGroupId}
+          typingUsers={typingUsers}
+        />
+      </div>
 
-        {/* After Forge Benefits */}
-        <AfterForgeCard />
+      {/* Mobile Quick Access */}
+      <div className="md:hidden pt-3 pb-16">
+        <QuickAccessBar />
       </div>
     </div>
   );
