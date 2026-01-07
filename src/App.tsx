@@ -43,6 +43,7 @@ import AdminRoadmap from "./pages/admin/AdminRoadmap";
 import AdminKYForms from "./pages/admin/AdminKYForms";
 import AdminEventTypes from "./pages/admin/AdminEventTypes";
 import AdminPastPrograms from "./pages/admin/AdminPastPrograms";
+import AdminCommunityHighlights from "./pages/admin/AdminCommunityHighlights";
 import DynamicKYForm from "./pages/DynamicKYForm";
 import EventDetail from "./pages/EventDetail";
 
