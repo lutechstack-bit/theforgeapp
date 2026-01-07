@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Calendar, MapPin, Zap } from 'lucide-react';
+import { Calendar, MapPin, Zap, Video, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -14,6 +14,8 @@ interface PremiumEventCardProps {
   hostName?: string;
   hostAvatar?: string;
   isFillingFast?: boolean;
+  hasRecording?: boolean;
+  hasNotes?: boolean;
   onClick?: () => void;
   className?: string;
 }
@@ -27,6 +29,8 @@ export const PremiumEventCard: React.FC<PremiumEventCardProps> = ({
   hostName,
   hostAvatar,
   isFillingFast,
+  hasRecording,
+  hasNotes,
   onClick,
   className,
 }) => {
@@ -62,6 +66,22 @@ export const PremiumEventCard: React.FC<PremiumEventCardProps> = ({
           <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-primary/90 backdrop-blur-md text-primary-foreground text-xs font-semibold flex items-center gap-1.5 shadow-[0_0_20px_hsl(var(--primary)/0.4)] border border-primary/30">
             <Zap className="h-3 w-3" />
             FILLING FAST
+          </div>
+        )}
+        
+        {/* Recording/Notes Badges */}
+        {(hasRecording || hasNotes) && (
+          <div className="absolute top-4 right-4 flex gap-1.5">
+            {hasRecording && (
+              <div className="p-1.5 rounded-full bg-background/80 backdrop-blur-sm border border-border/50">
+                <Video className="h-3 w-3 text-primary" />
+              </div>
+            )}
+            {hasNotes && (
+              <div className="p-1.5 rounded-full bg-background/80 backdrop-blur-sm border border-border/50">
+                <FileText className="h-3 w-3 text-primary" />
+              </div>
+            )}
           </div>
         )}
         

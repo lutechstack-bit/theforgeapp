@@ -106,38 +106,82 @@ export type Database = {
         }
         Relationships: []
       }
+      event_types: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          order_index: number
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          order_index?: number
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          order_index?: number
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string
           description: string | null
           event_date: string
+          event_type_id: string | null
           id: string
           image_url: string | null
           is_virtual: boolean
           location: string | null
+          notes: string | null
+          recording_url: string | null
           title: string
         }
         Insert: {
           created_at?: string
           description?: string | null
           event_date: string
+          event_type_id?: string | null
           id?: string
           image_url?: string | null
           is_virtual?: boolean
           location?: string | null
+          notes?: string | null
+          recording_url?: string | null
           title: string
         }
         Update: {
           created_at?: string
           description?: string | null
           event_date?: string
+          event_type_id?: string | null
           id?: string
           image_url?: string | null
           is_virtual?: boolean
           location?: string | null
+          notes?: string | null
+          recording_url?: string | null
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "events_event_type_id_fkey"
+            columns: ["event_type_id"]
+            isOneToOne: false
+            referencedRelation: "event_types"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hero_banners: {
         Row: {
@@ -932,6 +976,42 @@ export type Database = {
           id?: string
           task_key?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      past_programs: {
+        Row: {
+          completion_date: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          program_type: string
+          recording_url: string | null
+        }
+        Insert: {
+          completion_date: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          program_type?: string
+          recording_url?: string | null
+        }
+        Update: {
+          completion_date?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          program_type?: string
+          recording_url?: string | null
         }
         Relationships: []
       }

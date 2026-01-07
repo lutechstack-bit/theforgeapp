@@ -33,6 +33,9 @@ interface EventForm {
   location: string;
   image_url: string;
   is_virtual: boolean;
+  event_type_id: string | null;
+  recording_url: string;
+  notes: string;
 }
 
 const initialForm: EventForm = {
@@ -42,6 +45,9 @@ const initialForm: EventForm = {
   location: '',
   image_url: '',
   is_virtual: false,
+  event_type_id: null,
+  recording_url: '',
+  notes: '',
 };
 
 const AdminEvents: React.FC = () => {
@@ -50,13 +56,32 @@ const AdminEvents: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<EventForm>(initialForm);
 
+  // Fetch event types
+  const { data: eventTypes = [] } = useQuery({
+    queryKey: ['admin-event-types'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('event_types')
+        .select('*')
+        .order('order_index');
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Fetch events
   const { data: events, isLoading } = useQuery({
     queryKey: ['admin-events'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('events')
-        .select('*')
+        .select(`
+          *,
+          event_types (
+            id,
+            name
+          )
+        `)
         .order('event_date', { ascending: false });
 
       if (error) throw error;
@@ -111,7 +136,7 @@ const AdminEvents: React.FC = () => {
     setIsDialogOpen(false);
   };
 
-  const handleEdit = (event: typeof events[0]) => {
+  const handleEdit = (event: NonNullable<typeof events>[0]) => {
     setForm({
       title: event.title,
       description: event.description || '',
@@ -119,6 +144,9 @@ const AdminEvents: React.FC = () => {
       location: event.location || '',
       image_url: event.image_url || '',
       is_virtual: event.is_virtual,
+      event_type_id: event.event_type_id || null,
+      recording_url: event.recording_url || '',
+      notes: event.notes || '',
     });
     setEditingId(event.id);
     setIsDialogOpen(true);
