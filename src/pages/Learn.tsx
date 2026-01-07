@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { UnlockModal } from '@/components/shared/UnlockModal';
-import { Button } from '@/components/ui/button';
-import { ProgramTabs } from '@/components/learn/ProgramTabs';
-import { PremiumVideoCarousel } from '@/components/learn/PremiumVideoCarousel';
+import { CourseCard } from '@/components/learn/CourseCard';
 import { ContinueWatchingCarousel } from '@/components/learn/ContinueWatchingCarousel';
-import { InstructorSpotlight } from '@/components/learn/InstructorSpotlight';
 import { VideoPlayerModal } from '@/components/learn/VideoPlayerModal';
-import { Film, Sparkles, Lock, Users, Calendar } from 'lucide-react';
+import { Film, Sparkles, ChevronRight } from 'lucide-react';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
 import { toast } from 'sonner';
 
 const PAYMENT_LINK = "https://razorpay.com/payment-link/your-link-here";
@@ -29,19 +32,6 @@ interface LearnContent {
   duration_minutes?: number;
   section_type: string;
   category: string;
-  order_index: number;
-  program_id?: string;
-}
-
-interface LearnProgram {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  thumbnail_url?: string;
-  instructor_name?: string;
-  instructor_avatar?: string;
-  instructor_bio?: string;
   order_index: number;
 }
 
@@ -63,26 +53,10 @@ interface LearnResource {
 }
 
 const Learn: React.FC = () => {
-  const navigate = useNavigate();
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [selectedContent, setSelectedContent] = useState<LearnContent | null>(null);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
-  const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
-  const { user, isFullAccess, isBalancePaid } = useAuth();
-
-  // Fetch programs
-  const { data: programs = [] } = useQuery({
-    queryKey: ['learn_programs'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('learn_programs')
-        .select('*')
-        .eq('is_active', true)
-        .order('order_index', { ascending: true });
-      if (error) throw error;
-      return (data || []) as LearnProgram[];
-    },
-  });
+  const { user, isFullAccess } = useAuth();
 
   // Fetch learn content
   const { data: courses = [], isLoading } = useQuery({
@@ -157,16 +131,9 @@ const Learn: React.FC = () => {
     setShowVideoPlayer(true);
   };
 
-  // Filter content
-  const filteredContent = selectedProgramId
-    ? courses.filter(c => c.program_id === selectedProgramId)
-    : courses;
-
-  // Group content by category
-  const categories = [...new Set(filteredContent.map(c => c.category))];
-
-  // Get featured program (first with instructor info)
-  const featuredProgram = programs.find(p => p.instructor_name && p.instructor_bio);
+  // Group content by section_type
+  const forgeOnlineSessions = courses.filter(c => c.section_type === 'bfp_sessions');
+  const communitySessions = courses.filter(c => c.section_type === 'community_sessions');
 
   // Prepare continue watching items
   const continueWatchingItems = courses
@@ -185,9 +152,69 @@ const Learn: React.FC = () => {
     }))
     .sort((a, b) => b.progress_percent - a.progress_percent);
 
+  const renderCourseCarousel = (items: LearnContent[], title: string, subtitle?: string) => {
+    if (items.length === 0) return null;
+
+    return (
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-foreground">{title}</h2>
+            {subtitle && (
+              <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+            )}
+          </div>
+          {items.length > 3 && (
+            <button className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors">
+              View All <ChevronRight className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        <Carousel
+          opts={{
+            align: 'start',
+            loop: items.length > 3,
+          }}
+          className="w-full"
+        >
+          <CarouselContent className="-ml-4">
+            {items.map((item) => (
+              <CarouselItem
+                key={item.id}
+                className="pl-4 basis-auto"
+              >
+                <CourseCard
+                  id={item.id}
+                  title={item.title}
+                  thumbnailUrl={item.thumbnail_url}
+                  instructorName={item.instructor_name}
+                  companyName={item.company_name}
+                  durationMinutes={item.duration_minutes}
+                  isPremium={item.is_premium}
+                  isLocked={item.is_premium && !isFullAccess}
+                  progressPercent={getProgressPercent(item.id, item.duration_minutes)}
+                  isCompleted={isCompleted(item.id)}
+                  onClick={() => handlePlayContent(item)}
+                />
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          
+          {items.length > 3 && (
+            <>
+              <CarouselPrevious className="-left-4 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
+              <CarouselNext className="-right-4 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
+            </>
+          )}
+        </Carousel>
+      </section>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="p-4 space-y-8">
+      <div className="p-4 space-y-10">
         {/* Header */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -195,7 +222,7 @@ const Learn: React.FC = () => {
             <h1 className="text-2xl font-bold text-foreground">Forge Online Sessions</h1>
           </div>
           <p className="text-muted-foreground">
-            Exclusive workshops, masterclasses, and resources from industry leaders
+            Learn from industry experts and breakthrough filmmakers
           </p>
         </div>
 
@@ -210,33 +237,14 @@ const Learn: React.FC = () => {
           />
         )}
 
-        {/* Program Filter Tabs */}
-        <ProgramTabs
-          programs={programs}
-          selectedProgramId={selectedProgramId}
-          onSelectProgram={setSelectedProgramId}
-        />
-
-        {/* Featured Instructor Spotlight */}
-        {featuredProgram && !selectedProgramId && (
-          <InstructorSpotlight
-            name={featuredProgram.instructor_name || 'Expert Instructor'}
-            avatar={featuredProgram.instructor_avatar}
-            bio={featuredProgram.instructor_bio}
-            programName={featuredProgram.name}
-            thumbnailUrl={featuredProgram.thumbnail_url}
-            onViewProgram={() => setSelectedProgramId(featuredProgram.id)}
-          />
-        )}
-
-        {/* Content Sections */}
+        {/* Loading State */}
         {isLoading ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="aspect-video rounded-2xl bg-card animate-pulse" />
+              <div key={i} className="aspect-[3/4] rounded-2xl bg-card animate-pulse" />
             ))}
           </div>
-        ) : filteredContent.length === 0 ? (
+        ) : courses.length === 0 ? (
           <div className="text-center py-16 glass-card rounded-2xl">
             <Sparkles className="h-12 w-12 text-primary/50 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">
@@ -248,52 +256,21 @@ const Learn: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-10">
-            {categories.map((category) => {
-              const categoryContent = filteredContent
-                .filter(c => c.category === category)
-                .map(c => ({
-                  ...c,
-                  progress_percent: getProgressPercent(c.id, c.duration_minutes),
-                  is_completed: isCompleted(c.id),
-                }));
+            {/* Forge Online Sessions (BFP) */}
+            {renderCourseCarousel(
+              forgeOnlineSessions,
+              'Breakthrough Filmmaker Program',
+              'Exclusive sessions from the BFP curriculum'
+            )}
 
-              return (
-                <PremiumVideoCarousel
-                  key={category}
-                  title={category}
-                  items={categoryContent}
-                  isFullAccess={isFullAccess}
-                  onItemClick={handlePlayContent}
-                />
-              );
-            })}
+            {/* Community Sessions */}
+            {renderCourseCarousel(
+              communitySessions,
+              'Community Sessions',
+              'Workshops and masterclasses from industry leaders'
+            )}
           </div>
         )}
-
-        {/* Live Session Banner */}
-        <div className="glass-card rounded-2xl p-6 relative overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/20 rounded-full blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-accent/20 rounded-full blur-3xl" />
-          
-          <div className="relative z-10 flex flex-col md:flex-row items-start gap-6">
-            <div className="w-14 h-14 rounded-2xl bg-primary/20 backdrop-blur-md border border-primary/20 flex items-center justify-center shrink-0 shadow-[0_0_20px_hsl(var(--primary)/0.2)]">
-              <Users className="h-7 w-7 text-primary" />
-            </div>
-            <div className="flex-1">
-              <span className="inline-block px-3 py-1 text-xs font-semibold text-primary bg-primary/10 rounded-full border border-primary/20 backdrop-blur-sm mb-3">
-                Live Session
-              </span>
-              <h3 className="font-bold text-foreground text-xl mb-2">Weekly Community Call</h3>
-              <p className="text-muted-foreground mb-4">
-                Join fellow creators every Friday at 6 PM IST for discussions, Q&A, and networking.
-              </p>
-              <Button className="rounded-full gap-2" variant="outline">
-                <Calendar className="h-4 w-4" />
-                Add to Calendar
-              </Button>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Video Player Modal */}
