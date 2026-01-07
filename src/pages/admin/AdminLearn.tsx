@@ -67,7 +67,7 @@ const initialForm: LearnContentForm = {
   full_description: '',
   instructor_name: '',
   company_name: '',
-  category: 'Workshop',
+  category: 'Session',
   section_type: 'community_sessions',
   thumbnail_url: '',
   video_url: '',
@@ -87,10 +87,9 @@ const initialResourceForm: ResourceForm = {
   order_index: 0,
 };
 
-const categories = ['Workshop', 'Masterclass', 'Q&A Session', 'Panel Discussion', 'Tutorial', 'Case Study'];
 const sectionTypes = [
   { value: 'community_sessions', label: 'Community Sessions' },
-  { value: 'bfp_sessions', label: 'BFP Sessions' },
+  { value: 'bfp_sessions', label: 'Forge Online Sessions' },
 ];
 const fileTypes = ['pdf', 'doc', 'xlsx', 'pptx', 'zip', 'other'];
 
@@ -491,21 +490,12 @@ const AdminLearn: React.FC = () => {
 
                 <div>
                   <Label htmlFor="category">Category</Label>
-                  <Select
+                  <Input
+                    id="category"
                     value={form.category}
-                    onValueChange={(value) => setForm({ ...form, category: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    placeholder="e.g., Session, Workshop, Masterclass"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
