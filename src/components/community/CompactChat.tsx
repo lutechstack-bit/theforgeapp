@@ -124,19 +124,57 @@ export const CompactChat: React.FC<CompactChatProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if ((!message.trim() && !imageFile) || sending || !user || !activeGroupId) return;
+    
+    const messageContent = message.trim();
+    const currentImageFile = imageFile;
+    const currentImagePreview = imagePreview;
+    
+    // Clear input immediately for better UX
+    setMessage('');
+    removeImage();
     setSending(true);
+    
+    // Create optimistic message
+    const optimisticId = `temp-${Date.now()}`;
+    const optimisticMessage: Message = {
+      id: optimisticId,
+      content: messageContent,
+      user_id: user.id,
+      created_at: new Date().toISOString(),
+      image_url: currentImagePreview,
+      is_announcement: false,
+      sender_name: user.user_metadata?.full_name || 'You',
+      sender_avatar: null,
+      reactions: [],
+    };
+    
+    // Add optimistic message immediately
+    setMessages((prev) => [...prev, optimisticMessage]);
+    scrollToBottom();
+    
     let imageUrl: string | null = null;
-    if (imageFile) {
-      const fileName = `${user.id}-${Date.now()}.${imageFile.name.split('.').pop()}`;
-      const { error: uploadError } = await supabase.storage.from('community-images').upload(fileName, imageFile);
+    if (currentImageFile) {
+      const fileName = `${user.id}-${Date.now()}.${currentImageFile.name.split('.').pop()}`;
+      const { error: uploadError } = await supabase.storage.from('community-images').upload(fileName, currentImageFile);
       if (!uploadError) {
         const { data: urlData } = supabase.storage.from('community-images').getPublicUrl(fileName);
         imageUrl = urlData.publicUrl;
       }
     }
-    await supabase.from('community_messages').insert({ content: message.trim(), user_id: user.id, group_id: activeGroupId, image_url: imageUrl });
-    setMessage('');
-    removeImage();
+    
+    const { error } = await supabase.from('community_messages').insert({ 
+      content: messageContent, 
+      user_id: user.id, 
+      group_id: activeGroupId, 
+      image_url: imageUrl 
+    });
+    
+    if (error) {
+      // Remove optimistic message on error
+      setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+      console.error('Failed to send message:', error);
+    }
+    
     setSending(false);
   };
 
