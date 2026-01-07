@@ -41,7 +41,10 @@ import AdminAutoUpdates from "./pages/admin/AdminAutoUpdates";
 import AdminHeroBanners from "./pages/admin/AdminHeroBanners";
 import AdminRoadmap from "./pages/admin/AdminRoadmap";
 import AdminKYForms from "./pages/admin/AdminKYForms";
+import AdminEventTypes from "./pages/admin/AdminEventTypes";
+import AdminPastPrograms from "./pages/admin/AdminPastPrograms";
 import DynamicKYForm from "./pages/DynamicKYForm";
+import EventDetail from "./pages/EventDetail";
 
 const queryClient = new QueryClient();
 
@@ -171,6 +174,7 @@ const AppRoutes = () => {
         <Route path="/learn" element={<Learn />} />
         <Route path="/learn/:id" element={<CourseDetail />} />
         <Route path="/events" element={<Events />} />
+        <Route path="/events/:id" element={<EventDetail />} />
         <Route path="/roadmap" element={<Roadmap />} />
         <Route path="/perks" element={<Perks />} />
         <Route path="/updates" element={<Updates />} />
@@ -185,6 +189,8 @@ const AppRoutes = () => {
         <Route path="notifications" element={<AdminNotifications />} />
         <Route path="content" element={<AdminContent />} />
         <Route path="events" element={<AdminEvents />} />
+        <Route path="event-types" element={<AdminEventTypes />} />
+        <Route path="past-programs" element={<AdminPastPrograms />} />
         <Route path="learn" element={<AdminLearn />} />
         <Route path="auto-updates" element={<AdminAutoUpdates />} />
         <Route path="hero-banners" element={<AdminHeroBanners />} />

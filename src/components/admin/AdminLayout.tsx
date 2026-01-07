@@ -25,6 +25,8 @@ const adminNavItems = [
   { to: '/admin/hero-banners', icon: Image, label: 'Hero Banners' },
   { to: '/admin/notifications', icon: Bell, label: 'Notifications' },
   { to: '/admin/events', icon: Calendar, label: 'Events' },
+  { to: '/admin/event-types', icon: FileText, label: 'Event Types' },
+  { to: '/admin/past-programs', icon: Calendar, label: 'Past Programs' },
   { to: '/admin/learn', icon: FileText, label: 'Learn' },
 ];
 
