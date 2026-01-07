@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PremiumEventCard } from '@/components/shared/PremiumEventCard';
 import { EventTypeTabs } from '@/components/events/EventTypeTabs';
 import { PastProgramsCarousel } from '@/components/events/PastProgramsCarousel';
+import { CalendarSyncModal } from '@/components/events/CalendarSyncModal';
 import { Search, CalendarPlus, Clock, History, Video, MapPin, Sparkles } from 'lucide-react';
 import { isPast } from 'date-fns';
 
@@ -20,6 +21,7 @@ const Events: React.FC = () => {
   const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('upcoming');
   const [locationFilter, setLocationFilter] = useState<LocationFilter>('all');
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
 
   // Fetch event types
   const { data: eventTypes = [] } = useQuery({
@@ -241,7 +243,10 @@ const Events: React.FC = () => {
         )}
 
         {/* Calendar Sync CTA */}
-        <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-2xl p-6 border border-primary/20">
+        <div 
+          onClick={() => setIsCalendarModalOpen(true)}
+          className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-2xl p-6 border border-primary/20 cursor-pointer hover:border-primary/40 transition-colors"
+        >
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-lg bg-primary/20">
               <CalendarPlus className="h-5 w-5 text-primary" />
@@ -252,14 +257,21 @@ const Events: React.FC = () => {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="flex-1">
+            <Button variant="outline" size="sm" className="flex-1 pointer-events-none">
               Google Calendar
             </Button>
-            <Button variant="outline" size="sm" className="flex-1">
+            <Button variant="outline" size="sm" className="flex-1 pointer-events-none">
               Apple Calendar
             </Button>
           </div>
         </div>
+
+        {/* Calendar Sync Modal */}
+        <CalendarSyncModal
+          isOpen={isCalendarModalOpen}
+          onClose={() => setIsCalendarModalOpen(false)}
+          events={events}
+        />
       </div>
     </div>
   );
