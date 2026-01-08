@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { UnlockModal } from '@/components/shared/UnlockModal';
 import { CourseCard } from '@/components/learn/CourseCard';
 import { ContinueWatchingCarousel } from '@/components/learn/ContinueWatchingCarousel';
-import { VideoPlayerModal } from '@/components/learn/VideoPlayerModal';
 import { Film, Sparkles, ChevronRight } from 'lucide-react';
 import {
   Carousel,
@@ -14,7 +14,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import { toast } from 'sonner';
+
 
 const PAYMENT_LINK = "https://razorpay.com/payment-link/your-link-here";
 
@@ -42,20 +42,10 @@ interface WatchProgress {
   completed: boolean;
 }
 
-interface LearnResource {
-  id: string;
-  learn_content_id: string;
-  title: string;
-  description?: string;
-  file_url: string;
-  file_type: string;
-  file_size_mb?: number;
-}
 
 const Learn: React.FC = () => {
+  const navigate = useNavigate();
   const [showUnlockModal, setShowUnlockModal] = useState(false);
-  const [selectedContent, setSelectedContent] = useState<LearnContent | null>(null);
-  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
   const { user, isFullAccess } = useAuth();
 
   // Fetch learn content
@@ -86,21 +76,6 @@ const Learn: React.FC = () => {
     enabled: !!user?.id,
   });
 
-  // Fetch resources for selected content
-  const { data: resources } = useQuery({
-    queryKey: ['learn_resources', selectedContent?.id],
-    queryFn: async () => {
-      if (!selectedContent?.id) return [];
-      const { data, error } = await supabase
-        .from('learn_resources')
-        .select('*')
-        .eq('learn_content_id', selectedContent.id)
-        .order('order_index', { ascending: true });
-      if (error) throw error;
-      return (data || []) as LearnResource[];
-    },
-    enabled: !!selectedContent?.id,
-  });
 
   // Calculate progress for each content
   const getProgressPercent = (contentId: string, durationMinutes?: number) => {
@@ -116,19 +91,12 @@ const Learn: React.FC = () => {
     return progress?.completed || false;
   };
 
-  const handlePlayContent = (content: LearnContent) => {
+  const handleCardClick = (content: LearnContent) => {
     if (content.is_premium && !isFullAccess) {
       setShowUnlockModal(true);
       return;
     }
-    
-    if (!content.video_url) {
-      toast.error('Video not available for this content');
-      return;
-    }
-    
-    setSelectedContent(content);
-    setShowVideoPlayer(true);
+    navigate(`/learn/${content.id}`);
   };
 
   // Group content by section_type
@@ -195,7 +163,7 @@ const Learn: React.FC = () => {
                   isLocked={item.is_premium && !isFullAccess}
                   progressPercent={getProgressPercent(item.id, item.duration_minutes)}
                   isCompleted={isCompleted(item.id)}
-                  onClick={() => handlePlayContent(item)}
+                  onClick={() => handleCardClick(item)}
                 />
               </CarouselItem>
             ))}
@@ -232,7 +200,7 @@ const Learn: React.FC = () => {
             items={continueWatchingItems}
             onItemClick={(item) => {
               const content = courses.find(c => c.id === item.id);
-              if (content) handlePlayContent(content);
+              if (content) handleCardClick(content);
             }}
           />
         )}
@@ -273,30 +241,6 @@ const Learn: React.FC = () => {
         )}
       </div>
 
-      {/* Video Player Modal */}
-      <VideoPlayerModal
-        open={showVideoPlayer}
-        onOpenChange={setShowVideoPlayer}
-        content={selectedContent ? {
-          id: selectedContent.id,
-          title: selectedContent.title,
-          video_url: selectedContent.video_url || '',
-          thumbnail_url: selectedContent.thumbnail_url,
-          instructor_name: selectedContent.instructor_name,
-          company_name: selectedContent.company_name,
-          full_description: selectedContent.full_description,
-          duration_minutes: selectedContent.duration_minutes,
-          video_source_type: (selectedContent.video_source_type as 'upload' | 'embed') || 'upload',
-        } : undefined}
-        resources={resources?.map(r => ({
-          id: r.id,
-          title: r.title,
-          description: r.description,
-          file_url: r.file_url,
-          file_type: r.file_type,
-          file_size_mb: r.file_size_mb,
-        }))}
-      />
 
       {/* Unlock Modal */}
       <UnlockModal
