@@ -45,6 +45,7 @@ import AdminEventTypes from "./pages/admin/AdminEventTypes";
 import AdminPastPrograms from "./pages/admin/AdminPastPrograms";
 import AdminCommunityHighlights from "./pages/admin/AdminCommunityHighlights";
 import AdminNightlyRituals from "./pages/admin/AdminNightlyRituals";
+import AdminEquipment from "./pages/admin/AdminEquipment";
 import DynamicKYForm from "./pages/DynamicKYForm";
 import EventDetail from "./pages/EventDetail";
 
@@ -197,6 +198,7 @@ const AppRoutes = () => {
         <Route path="auto-updates" element={<AdminAutoUpdates />} />
         <Route path="hero-banners" element={<AdminHeroBanners />} />
         <Route path="roadmap" element={<AdminRoadmap />} />
+        <Route path="equipment" element={<AdminEquipment />} />
         <Route path="ky-forms" element={<AdminKYForms />} />
         <Route path="community-highlights" element={<AdminCommunityHighlights />} />
         <Route path="nightly-rituals" element={<AdminNightlyRituals />} />

@@ -230,6 +230,54 @@ export type Database = {
           },
         ]
       }
+      forge_equipment: {
+        Row: {
+          brand: string
+          category: string
+          cohort_type: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          is_featured: boolean
+          model: string | null
+          name: string
+          order_index: number
+          specs: Json | null
+        }
+        Insert: {
+          brand: string
+          category: string
+          cohort_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_featured?: boolean
+          model?: string | null
+          name: string
+          order_index?: number
+          specs?: Json | null
+        }
+        Update: {
+          brand?: string
+          category?: string
+          cohort_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_featured?: boolean
+          model?: string | null
+          name?: string
+          order_index?: number
+          specs?: Json | null
+        }
+        Relationships: []
+      }
       hero_banners: {
         Row: {
           audience: string
