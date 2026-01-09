@@ -265,7 +265,7 @@ const Roadmap: React.FC = () => {
             onSectionClick={setActiveSection}
             hasGallery={stayGallery.length > 0 || momentsGallery.length > 0}
             hasFilms={(studentFilms?.length || 0) > 0}
-            hasEquipment={(equipmentCount || 0) > 0}
+            hasEquipment={true}
           />
 
           {/* Equipment Section */}
