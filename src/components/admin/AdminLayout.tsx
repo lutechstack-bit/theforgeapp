@@ -11,7 +11,8 @@ import {
   Sparkles,
   Image,
   Map,
-  ClipboardList
+  ClipboardList,
+  Moon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +22,7 @@ const adminNavItems = [
   { to: '/admin/editions', icon: Calendar, label: 'Editions' },
   { to: '/admin/ky-forms', icon: ClipboardList, label: 'KY Forms' },
   { to: '/admin/roadmap', icon: Map, label: 'Roadmap' },
+  { to: '/admin/nightly-rituals', icon: Moon, label: 'Nightly Rituals' },
   { to: '/admin/auto-updates', icon: Sparkles, label: 'Auto Updates' },
   { to: '/admin/hero-banners', icon: Image, label: 'Hero Banners' },
   { to: '/admin/notifications', icon: Bell, label: 'Notifications' },
