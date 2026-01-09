@@ -23,7 +23,8 @@ import Community from "./pages/Community";
 import Learn from "./pages/Learn";
 import CourseDetail from "./pages/CourseDetail";
 import Events from "./pages/Events";
-import Roadmap from "./pages/Roadmap";
+import RoadmapLayout from "./components/roadmap/RoadmapLayout";
+import { RoadmapJourney, RoadmapPrep, RoadmapEquipment, RoadmapRules, RoadmapGallery, RoadmapFilms } from "./pages/roadmap";
 import Perks from "./pages/Perks";
 import Updates from "./pages/Updates";
 import Profile from "./pages/Profile";
@@ -178,7 +179,14 @@ const AppRoutes = () => {
         <Route path="/learn/:id" element={<CourseDetail />} />
         <Route path="/events" element={<Events />} />
         <Route path="/events/:id" element={<EventDetail />} />
-        <Route path="/roadmap" element={<Roadmap />} />
+        <Route path="/roadmap" element={<RoadmapLayout />}>
+          <Route index element={<RoadmapJourney />} />
+          <Route path="prep" element={<RoadmapPrep />} />
+          <Route path="equipment" element={<RoadmapEquipment />} />
+          <Route path="rules" element={<RoadmapRules />} />
+          <Route path="gallery" element={<RoadmapGallery />} />
+          <Route path="films" element={<RoadmapFilms />} />
+        </Route>
         <Route path="/perks" element={<Perks />} />
         <Route path="/updates" element={<Updates />} />
         <Route path="/profile" element={<Profile />} />

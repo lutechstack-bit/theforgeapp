@@ -1,46 +1,38 @@
 import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Map, FileText, Package, Film, Image, BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface QuickActionsBarProps {
-  activeSection: string;
-  onSectionClick: (section: string) => void;
   hasGallery?: boolean;
   hasFilms?: boolean;
   hasEquipment?: boolean;
 }
 
 const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
-  activeSection,
-  onSectionClick,
   hasGallery = false,
   hasFilms = false,
   hasEquipment = false
 }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const sections = [
-    { id: 'journey', label: 'Journey', icon: Map },
-    { id: 'prep', label: 'Prep', icon: FileText },
-    ...(hasEquipment ? [{ id: 'equipment', label: 'Equipment', icon: Package }] : []),
-    { id: 'rules', label: 'Rules', icon: BookOpen },
-    ...(hasGallery ? [{ id: 'gallery', label: 'Gallery', icon: Image }] : []),
-    ...(hasFilms ? [{ id: 'films', label: 'Films', icon: Film }] : []),
+    { id: 'journey', path: '/roadmap', label: 'Journey', icon: Map },
+    { id: 'prep', path: '/roadmap/prep', label: 'Prep', icon: FileText },
+    ...(hasEquipment ? [{ id: 'equipment', path: '/roadmap/equipment', label: 'Equipment', icon: Package }] : []),
+    { id: 'rules', path: '/roadmap/rules', label: 'Rules', icon: BookOpen },
+    ...(hasGallery ? [{ id: 'gallery', path: '/roadmap/gallery', label: 'Gallery', icon: Image }] : []),
+    ...(hasFilms ? [{ id: 'films', path: '/roadmap/films', label: 'Films', icon: Film }] : []),
   ];
 
-  const scrollToSection = (sectionId: string) => {
-    onSectionClick(sectionId);
-    const element = document.getElementById(`roadmap-${sectionId}`);
-    if (element) {
-      const offset = 80; // Account for sticky header
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.scrollY - offset;
-      
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
+  const isActive = (path: string) => {
+    if (path === '/roadmap') {
+      return location.pathname === '/roadmap';
     }
+    return location.pathname === path;
   };
 
   return (
@@ -48,16 +40,16 @@ const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
       <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
         {sections.map((section) => {
           const Icon = section.icon;
-          const isActive = activeSection === section.id;
+          const active = isActive(section.path);
           
           return (
             <Button
               key={section.id}
-              variant={isActive ? "default" : "ghost"}
+              variant={active ? "default" : "ghost"}
               size="sm"
-              onClick={() => scrollToSection(section.id)}
+              onClick={() => navigate(section.path)}
               className={`flex-shrink-0 gap-2 ${
-                isActive 
+                active 
                   ? 'bg-primary text-primary-foreground' 
                   : 'text-muted-foreground hover:text-foreground'
               }`}
