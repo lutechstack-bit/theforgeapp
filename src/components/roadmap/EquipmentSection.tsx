@@ -57,14 +57,32 @@ const EquipmentSection: React.FC<EquipmentSectionProps> = ({ cohortType }) => {
 
   if (isLoading) {
     return (
-      <div className="py-12 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
+      <section id="roadmap-equipment" className="py-8">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </section>
     );
   }
 
   if (!equipment || equipment.length === 0) {
-    return null;
+    return (
+      <section id="roadmap-equipment" className="py-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Package className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-foreground">Your Filmmaking Arsenal</h2>
+            <p className="text-sm text-muted-foreground">Professional gear at your fingertips</p>
+          </div>
+        </div>
+        <div className="glass-premium rounded-2xl p-8 text-center">
+          <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">Equipment list coming soon!</p>
+        </div>
+      </section>
+    );
   }
 
   const featuredItem = equipment.find(e => e.is_featured);
