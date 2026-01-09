@@ -1039,6 +1039,45 @@ export type Database = {
           },
         ]
       }
+      nightly_ritual_items: {
+        Row: {
+          category: string
+          cohort_type: string
+          created_at: string
+          day_number: number
+          description: string | null
+          icon: string | null
+          id: string
+          is_required: boolean
+          order_index: number
+          title: string
+        }
+        Insert: {
+          category: string
+          cohort_type?: string
+          created_at?: string
+          day_number: number
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_required?: boolean
+          order_index?: number
+          title: string
+        }
+        Update: {
+          category?: string
+          cohort_type?: string
+          created_at?: string
+          day_number?: number
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_required?: boolean
+          order_index?: number
+          title?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           auto_update: boolean
@@ -1495,6 +1534,38 @@ export type Database = {
             columns: ["edition_id"]
             isOneToOne: false
             referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_nightly_progress: {
+        Row: {
+          completed_at: string
+          created_at: string
+          id: string
+          ritual_item_id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          ritual_item_id: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          ritual_item_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_nightly_progress_ritual_item_id_fkey"
+            columns: ["ritual_item_id"]
+            isOneToOne: false
+            referencedRelation: "nightly_ritual_items"
             referencedColumns: ["id"]
           },
         ]

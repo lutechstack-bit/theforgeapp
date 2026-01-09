@@ -15,6 +15,7 @@ import EnhancedSmoothPath from '@/components/roadmap/EnhancedSmoothPath';
 import MasonryGallery from '@/components/roadmap/MasonryGallery';
 import StudentFilmStrip from '@/components/roadmap/StudentFilmStrip';
 import PrepChecklistSection from '@/components/roadmap/PrepChecklistSection';
+import NightlyRitualSection from '@/components/roadmap/NightlyRitualSection';
 import RulesAccordion from '@/components/roadmap/RulesAccordion';
 import CohortCrossSell from '@/components/roadmap/CohortCrossSell';
 import CohortPreviewModal from '@/components/roadmap/CohortPreviewModal';
@@ -158,6 +159,12 @@ const Roadmap: React.FC = () => {
     if (row === 1) return 'center';
     return 'right';
   };
+
+  // Calculate current day number (for nightly ritual)
+  const currentDayNumber = useMemo(() => {
+    const currentDay = roadmapDays?.find(d => getDayStatus(d) === 'current');
+    return currentDay?.day_number || 1;
+  }, [roadmapDays]);
 
   const completedCount = roadmapDays?.filter(d => getDayStatus(d) === 'completed').length || 0;
   const totalCount = roadmapDays?.length || 0;
@@ -337,6 +344,9 @@ const Roadmap: React.FC = () => {
               forgeStartDate={forgeStartDate}
             />
           </div>
+
+          {/* Nightly Ritual */}
+          <NightlyRitualSection currentDayNumber={currentDayNumber} />
 
           {/* Forge Moments Gallery */}
           {momentsGallery.length > 0 && (
