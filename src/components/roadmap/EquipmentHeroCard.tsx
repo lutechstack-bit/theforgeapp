@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, Sparkles } from 'lucide-react';
+import { Camera, Sparkles, Star, Zap } from 'lucide-react';
 
 interface EquipmentHeroCardProps {
   equipment: {
@@ -16,18 +16,23 @@ interface EquipmentHeroCardProps {
 
 const EquipmentHeroCard: React.FC<EquipmentHeroCardProps> = ({ equipment }) => {
   return (
-    <div className="relative glass-premium rounded-3xl overflow-hidden mb-6">
-      {/* Glow Effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 pointer-events-none" />
+    <div className="relative rounded-3xl overflow-hidden mb-6 bg-gradient-to-br from-card via-card to-muted/30 border border-border/50">
+      {/* Animated Background Glow */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
+      <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
+      <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-accent/10 rounded-full blur-3xl" />
       
       <div className="relative p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center">
-        {/* Image */}
-        <div className="w-full md:w-1/2 aspect-square md:aspect-[4/3] flex items-center justify-center">
+        {/* Image Container */}
+        <div className="w-full md:w-1/2 aspect-square md:aspect-[4/3] flex items-center justify-center relative">
+          {/* Subtle circular backdrop */}
+          <div className="absolute inset-8 rounded-full bg-gradient-to-br from-muted/20 to-muted/5 blur-2xl" />
+          
           {equipment.image_url ? (
             <img
               src={equipment.image_url}
               alt={`${equipment.brand} ${equipment.name}`}
-              className="w-full h-full object-contain drop-shadow-2xl animate-float"
+              className="w-full h-full object-contain drop-shadow-2xl relative z-10 animate-float"
             />
           ) : (
             <div className="w-32 h-32 rounded-full bg-muted/50 flex items-center justify-center">
@@ -39,33 +44,34 @@ const EquipmentHeroCard: React.FC<EquipmentHeroCardProps> = ({ equipment }) => {
         {/* Content */}
         <div className="w-full md:w-1/2 space-y-4 text-center md:text-left">
           {/* Featured Badge */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/20 border border-primary/30">
-            <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span className="text-xs font-medium text-primary">Featured Gear</span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/30">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="text-xs font-semibold text-primary uppercase tracking-wider">Featured Gear</span>
           </div>
 
           {/* Brand & Model */}
-          <div>
-            <p className="text-sm text-muted-foreground uppercase tracking-wider">{equipment.brand}</p>
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground">{equipment.name}</h2>
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground uppercase tracking-widest font-medium">{equipment.brand}</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">{equipment.name}</h2>
             {equipment.model && (
-              <p className="text-lg text-primary font-medium">{equipment.model}</p>
+              <p className="text-xl text-primary font-semibold">{equipment.model}</p>
             )}
           </div>
 
           {/* Description */}
           {equipment.description && (
-            <p className="text-muted-foreground">{equipment.description}</p>
+            <p className="text-muted-foreground leading-relaxed">{equipment.description}</p>
           )}
 
-          {/* Specs */}
+          {/* Specs Grid */}
           {equipment.specs && equipment.specs.length > 0 && (
-            <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+            <div className="flex flex-wrap gap-2 justify-center md:justify-start pt-2">
               {equipment.specs.map((spec, index) => (
                 <span
                   key={index}
-                  className="px-3 py-1.5 rounded-full bg-muted/50 border border-border/50 text-sm text-foreground"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/40 border border-border/50 text-sm font-medium text-foreground"
                 >
+                  <Zap className="w-3 h-3 text-primary" />
                   {spec}
                 </span>
               ))}

@@ -139,8 +139,8 @@ const EquipmentSection: React.FC<EquipmentSectionProps> = ({ cohortType }) => {
         <EquipmentHeroCard equipment={featuredItem} />
       )}
 
-      {/* Equipment Grid - 2 columns for larger cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Equipment Grid - Responsive grid with clean spacing */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
         {filteredEquipment.map((item) => (
           <EquipmentCard key={item.id} equipment={item} />
         ))}
