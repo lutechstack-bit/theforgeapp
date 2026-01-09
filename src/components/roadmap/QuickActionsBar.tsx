@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  Map, FileText, Package, Film, Image, BookOpen, ChevronDown
+  Map, FileText, Package, Film, Image, BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -9,17 +9,20 @@ interface QuickActionsBarProps {
   onSectionClick: (section: string) => void;
   hasGallery?: boolean;
   hasFilms?: boolean;
+  hasEquipment?: boolean;
 }
 
 const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
   activeSection,
   onSectionClick,
   hasGallery = false,
-  hasFilms = false
+  hasFilms = false,
+  hasEquipment = false
 }) => {
   const sections = [
     { id: 'journey', label: 'Journey', icon: Map },
     { id: 'prep', label: 'Prep', icon: FileText },
+    ...(hasEquipment ? [{ id: 'equipment', label: 'Equipment', icon: Package }] : []),
     { id: 'rules', label: 'Rules', icon: BookOpen },
     ...(hasGallery ? [{ id: 'gallery', label: 'Gallery', icon: Image }] : []),
     ...(hasFilms ? [{ id: 'films', label: 'Films', icon: Film }] : []),

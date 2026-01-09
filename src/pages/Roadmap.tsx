@@ -19,6 +19,7 @@ import NightlyRitualSection from '@/components/roadmap/NightlyRitualSection';
 import RulesAccordion from '@/components/roadmap/RulesAccordion';
 import CohortCrossSell from '@/components/roadmap/CohortCrossSell';
 import CohortPreviewModal from '@/components/roadmap/CohortPreviewModal';
+import EquipmentSection from '@/components/roadmap/EquipmentSection';
 
 type RoadmapDay = Database['public']['Tables']['roadmap_days']['Row'];
 
@@ -80,6 +81,19 @@ const Roadmap: React.FC = () => {
         .order('order_index');
       if (error) throw error;
       return data;
+    }
+  });
+
+  // Fetch equipment count for current cohort
+  const { data: equipmentCount } = useQuery({
+    queryKey: ['equipment-count', userCohortType],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('forge_equipment')
+        .select('*', { count: 'exact', head: true })
+        .eq('cohort_type', userCohortType);
+      if (error) throw error;
+      return count || 0;
     }
   });
 
@@ -251,7 +265,11 @@ const Roadmap: React.FC = () => {
             onSectionClick={setActiveSection}
             hasGallery={stayGallery.length > 0 || momentsGallery.length > 0}
             hasFilms={(studentFilms?.length || 0) > 0}
+            hasEquipment={(equipmentCount || 0) > 0}
           />
+
+          {/* Equipment Section */}
+          <EquipmentSection cohortType={userCohortType} />
 
           {/* Stay Gallery */}
           {stayGallery.length > 0 && (
