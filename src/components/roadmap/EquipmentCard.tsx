@@ -23,67 +23,49 @@ const categoryIcons: Record<string, React.ElementType> = {
   software: Code,
 };
 
-const categoryColors: Record<string, string> = {
-  camera: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  lens: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  audio: 'bg-green-500/20 text-green-400 border-green-500/30',
-  lighting: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  grip: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-  software: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
-};
-
 const EquipmentCard: React.FC<EquipmentCardProps> = ({ equipment }) => {
   const Icon = categoryIcons[equipment.category] || Package;
-  const colorClass = categoryColors[equipment.category] || 'bg-muted text-muted-foreground border-border';
+  
+  // Consolidate specs into one line
+  const specsLine = equipment.specs?.slice(0, 3).join(' • ') || '';
 
   return (
-    <div className="group glass-card-hover rounded-2xl overflow-hidden">
-      {/* Image Container */}
-      <div className="aspect-square bg-gradient-to-br from-muted/50 to-background p-6 flex items-center justify-center relative overflow-hidden">
+    <div className="group relative rounded-2xl overflow-hidden bg-card border border-border/30 hover:border-primary/30 transition-all duration-300 hover:shadow-[0_0_30px_hsl(var(--primary)/0.15)]">
+      {/* Full Bleed Image Container - Cropped & Zoomed */}
+      <div className="aspect-[4/3] relative overflow-hidden bg-gradient-to-br from-muted/30 to-background">
         {equipment.image_url ? (
           <img
             src={equipment.image_url}
             alt={`${equipment.brand} ${equipment.name}`}
-            className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+            className="w-full h-full object-cover scale-125 transition-transform duration-500 group-hover:scale-140"
+            style={{ objectPosition: 'center 40%' }}
           />
         ) : (
-          <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center">
-            <Icon className="w-10 h-10 text-muted-foreground" />
+          <div className="w-full h-full flex items-center justify-center">
+            <Icon className="w-16 h-16 text-muted-foreground/50" />
           </div>
         )}
         
-        {/* Category Badge */}
-        <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-medium border ${colorClass}`}>
+        {/* Gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        
+        {/* Category Badge - Subtle */}
+        <div className="absolute top-3 left-3 px-2 py-0.5 rounded-md bg-background/60 backdrop-blur-sm text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
           {equipment.category}
         </div>
       </div>
 
-      {/* Content */}
-      <div className="p-4 space-y-3">
-        <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">{equipment.brand}</p>
-          <h3 className="font-semibold text-foreground line-clamp-1">{equipment.name}</h3>
-          {equipment.model && (
-            <p className="text-sm text-muted-foreground">{equipment.model}</p>
-          )}
-        </div>
-
-        {equipment.description && (
-          <p className="text-xs text-muted-foreground line-clamp-2">{equipment.description}</p>
+      {/* Content Overlay - Positioned at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 space-y-1">
+        <p className="text-[10px] text-primary font-medium uppercase tracking-wider">{equipment.brand}</p>
+        <h3 className="font-bold text-foreground text-lg leading-tight">{equipment.name}</h3>
+        {equipment.model && (
+          <p className="text-sm text-muted-foreground">{equipment.model}</p>
         )}
-
-        {/* Specs Pills */}
-        {equipment.specs && equipment.specs.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {equipment.specs.slice(0, 3).map((spec, index) => (
-              <span
-                key={index}
-                className="px-2 py-0.5 rounded-full bg-muted/50 text-[10px] text-muted-foreground"
-              >
-                {spec}
-              </span>
-            ))}
-          </div>
+        
+        {/* Consolidated Specs Line */}
+        {specsLine && (
+          <p className="text-xs text-muted-foreground/80 pt-1">{specsLine}</p>
         )}
       </div>
     </div>
