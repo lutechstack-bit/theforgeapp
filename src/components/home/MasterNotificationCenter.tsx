@@ -219,15 +219,15 @@ const StatsCard: React.FC<{
   icon: React.ElementType;
 }> = ({ value, label, color, icon: Icon }) => (
   <div className={cn(
-    "flex-shrink-0 w-[140px] sm:w-[160px] p-4 rounded-2xl",
+    "flex-shrink-0 w-[120px] sm:w-[140px] p-3 rounded-xl",
     "border border-border/50",
     color
   )}>
-    <div className="flex items-center justify-between mb-2">
-      <span className="text-2xl font-bold text-foreground">{value}</span>
-      <Icon className="w-5 h-5 text-foreground/60" />
+    <div className="flex items-center justify-between mb-1">
+      <span className="text-xl font-bold text-foreground">{value}</span>
+      <Icon className="w-4 h-4 text-foreground/60" />
     </div>
-    <p className="text-xs text-muted-foreground">{label}</p>
+    <p className="text-[11px] text-muted-foreground">{label}</p>
   </div>
 );
 
@@ -293,21 +293,21 @@ export const MasterNotificationCenter: React.FC = () => {
   const totalItems = notifications.length + upcomingEvents.length;
 
   return (
-    <div className="space-y-5 reveal-section" style={{ animationDelay: '0.1s' }}>
+    <div className="space-y-4 reveal-section" style={{ animationDelay: '0.1s' }}>
       {/* Header: Greeting + Avatar */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-11 w-11 border-2 border-primary/30 ring-2 ring-primary/10">
+        <div className="flex items-center gap-2.5">
+          <Avatar className="h-10 w-10 border-2 border-primary/30 ring-2 ring-primary/10">
             <AvatarImage src={profile?.avatar_url || undefined} />
-            <AvatarFallback className="bg-primary/20 text-primary font-bold">
+            <AvatarFallback className="bg-primary/20 text-primary font-bold text-sm">
               {firstName.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h2 className="text-lg sm:text-xl font-bold text-foreground">
+            <h2 className="text-base sm:text-lg font-bold text-foreground">
               {getGreeting()}, {firstName}!
             </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground">
+            <p className="text-[11px] sm:text-xs text-muted-foreground">
               {totalItems > 0 
                 ? `You have ${totalItems} update${totalItems > 1 ? 's' : ''} to check`
                 : "You're all caught up! 🎉"}
@@ -318,11 +318,11 @@ export const MasterNotificationCenter: React.FC = () => {
           variant="ghost"
           size="icon"
           onClick={() => navigate('/updates')}
-          className="rounded-full glass-card-hover relative"
+          className="rounded-full glass-card-hover relative h-9 w-9"
         >
-          <Bell className="h-5 w-5 text-muted-foreground" />
+          <Bell className="h-4 w-4 text-muted-foreground" />
           {totalItems > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[9px] font-bold rounded-full flex items-center justify-center">
               {totalItems > 9 ? '9+' : totalItems}
             </span>
           )}
@@ -330,7 +330,7 @@ export const MasterNotificationCenter: React.FC = () => {
       </div>
 
       {/* Quick Stats Row */}
-      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+      <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4">
         <StatsCard 
           value={`${notifications.length}`} 
           label="New Updates" 
