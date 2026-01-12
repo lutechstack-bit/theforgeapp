@@ -11,7 +11,7 @@ import { MentorDetailModal } from '@/components/shared/MentorDetailModal';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { KYFormReminderBanner } from '@/components/onboarding/KYFormReminderBanner';
 import { FOMOBanner } from '@/components/shared/FOMOBanner';
-import { EnhancedCountdown } from '@/components/home/EnhancedCountdown';
+import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
 import { MasterNotificationCenter } from '@/components/home/MasterNotificationCenter';
 import { WhatYouCanDoHere } from '@/components/home/WhatYouCanDoHere';
 import { OnboardingChecklist } from '@/components/home/OnboardingChecklist';
@@ -173,8 +173,8 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen p-4 md:p-6 space-y-6">
-      {/* Countdown Timer - Moved to TOP */}
-      <EnhancedCountdown edition={edition} />
+      {/* Compact Countdown Timer - Sleek strip at top */}
+      <CompactCountdownTimer edition={edition} />
 
       {/* Master Notification Center - New Hero Section */}
       <MasterNotificationCenter />
