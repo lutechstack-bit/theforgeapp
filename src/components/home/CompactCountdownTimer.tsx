@@ -136,7 +136,7 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
             <Button
               onClick={handlePayClick}
               size="sm"
-              className="h-7 px-2.5 text-xs bg-amber-500 hover:bg-amber-600 text-black font-semibold gap-1 shrink-0 shadow-md shadow-amber-500/20 rounded-md"
+              className="h-7 px-2.5 text-xs bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-1 shrink-0 shadow-md shadow-primary/20 rounded-md"
             >
               <Sparkles className="h-3 w-3" />
               <span className="hidden sm:inline">Pay Balance</span>
