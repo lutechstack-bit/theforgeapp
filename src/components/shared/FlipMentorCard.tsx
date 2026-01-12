@@ -15,10 +15,6 @@ export const FlipMentorCard: React.FC<FlipMentorCardProps> = ({
 }) => {
   const [isFlipped, setIsFlipped] = useState(false);
 
-  const handleClick = () => {
-    setIsFlipped(!isFlipped);
-  };
-
   const handleViewMore = (e: React.MouseEvent) => {
     e.stopPropagation();
     onClick?.();
@@ -35,7 +31,8 @@ export const FlipMentorCard: React.FC<FlipMentorCardProps> = ({
         scrollSnapAlign: 'start',
         perspective: '1000px',
       }}
-      onClick={handleClick}
+      onMouseEnter={() => setIsFlipped(true)}
+      onMouseLeave={() => setIsFlipped(false)}
     >
       <div
         className={cn(
@@ -76,13 +73,6 @@ export const FlipMentorCard: React.FC<FlipMentorCardProps> = ({
               {mentor.roles.slice(0, 2).join(' • ')}
             </p>
             
-            {/* Tap hint */}
-            <div className="mt-3 flex items-center gap-1.5 text-xs text-primary/80">
-              <span className="inline-block w-4 h-4 rounded-full border border-primary/50 flex items-center justify-center">
-                <span className="text-[10px]">↻</span>
-              </span>
-              <span>Tap to flip</span>
-            </div>
           </div>
 
           {/* Premium corner accent */}
@@ -157,10 +147,6 @@ export const FlipMentorCard: React.FC<FlipMentorCardProps> = ({
               View Full Profile
             </button>
 
-            {/* Tap hint */}
-            <div className="mt-2 flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground">
-              <span>Tap to flip back</span>
-            </div>
           </div>
         </div>
       </div>
