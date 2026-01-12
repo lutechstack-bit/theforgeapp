@@ -58,7 +58,7 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
     window.open(PAYMENT_LINK, '_blank');
   };
 
-  // Compact time block with flip animation feel
+  // Ultra compact time block
   const TimeBlock = ({ value, label, prevValue }: { value: number; label: string; prevValue: number }) => {
     const hasChanged = value !== prevValue;
     
@@ -66,25 +66,25 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
       <div className="flex flex-col items-center">
         <div 
           className={cn(
-            "relative w-11 h-12 sm:w-12 sm:h-14 rounded-lg overflow-hidden",
+            "relative w-9 h-10 sm:w-10 sm:h-11 rounded-md overflow-hidden",
             "bg-gradient-to-b from-primary to-accent",
-            "shadow-lg shadow-primary/30",
+            "shadow-md shadow-primary/25",
             "border border-primary/30"
           )}
         >
           {/* Top shine */}
-          <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent" />
+          <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent" />
           
           {/* Center divider line */}
-          <div className="absolute inset-x-0 top-1/2 h-px bg-black/30" />
+          <div className="absolute inset-x-0 top-1/2 h-px bg-black/25" />
           
           {/* Number */}
           <div className="absolute inset-0 flex items-center justify-center">
             <span 
               className={cn(
-                "text-xl sm:text-2xl font-bold text-primary-foreground tabular-nums drop-shadow-lg",
+                "text-base sm:text-lg font-bold text-primary-foreground tabular-nums drop-shadow-md",
                 "transition-transform duration-200",
-                hasChanged && "scale-110"
+                hasChanged && "scale-105"
               )}
             >
               {value.toString().padStart(2, '0')}
@@ -92,9 +92,9 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
           </div>
           
           {/* Bottom shadow */}
-          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/20 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/15 to-transparent" />
         </div>
-        <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mt-1.5 font-medium">
+        <span className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wider mt-1 font-medium">
           {label}
         </span>
       </div>
@@ -102,32 +102,32 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
   };
 
   return (
-    <div className="relative overflow-hidden rounded-xl glass-card reveal-section">
+    <div className="relative overflow-hidden rounded-lg glass-card reveal-section">
       {/* Subtle background glow */}
       <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-accent/10" />
       
-      <div className="relative px-4 py-3 sm:px-5 sm:py-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+      <div className="relative px-3 py-2 sm:px-4 sm:py-2.5">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-3">
           {/* Left: Title with icon */}
-          <div className="flex items-center gap-2 sm:gap-3 animate-fade-in">
-            <div className="p-1.5 sm:p-2 rounded-lg bg-primary/20 shrink-0">
-              <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+          <div className="flex items-center gap-2 animate-fade-in">
+            <div className="p-1 sm:p-1.5 rounded-md bg-primary/20 shrink-0">
+              <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
             </div>
             <div className="text-center sm:text-left">
-              <p className="text-xs sm:text-sm font-medium text-muted-foreground">
-                {edition?.city ? `${edition.city} Edition` : 'Forge'} starts in
+              <p className="text-[10px] sm:text-xs font-medium text-muted-foreground">
+                {edition?.city ? `${edition.city}` : 'Forge'} starts in
               </p>
             </div>
           </div>
 
           {/* Center: Timer blocks */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-1.5">
             <TimeBlock value={timeLeft.days} label="Days" prevValue={prevTimeLeft.days} />
-            <span className="text-muted-foreground/50 text-lg font-light pb-4">:</span>
+            <span className="text-muted-foreground/50 text-sm font-light pb-3">:</span>
             <TimeBlock value={timeLeft.hours} label="Hrs" prevValue={prevTimeLeft.hours} />
-            <span className="text-muted-foreground/50 text-lg font-light pb-4">:</span>
+            <span className="text-muted-foreground/50 text-sm font-light pb-3">:</span>
             <TimeBlock value={timeLeft.minutes} label="Min" prevValue={prevTimeLeft.minutes} />
-            <span className="text-muted-foreground/50 text-lg font-light pb-4">:</span>
+            <span className="text-muted-foreground/50 text-sm font-light pb-3">:</span>
             <TimeBlock value={timeLeft.seconds} label="Sec" prevValue={prevTimeLeft.seconds} />
           </div>
 
@@ -136,9 +136,9 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
             <Button
               onClick={handlePayClick}
               size="sm"
-              className="bg-amber-500 hover:bg-amber-600 text-black font-semibold gap-1.5 shrink-0 shadow-lg shadow-amber-500/20 rounded-lg"
+              className="h-7 px-2.5 text-xs bg-amber-500 hover:bg-amber-600 text-black font-semibold gap-1 shrink-0 shadow-md shadow-amber-500/20 rounded-md"
             >
-              <Sparkles className="h-4 w-4" />
+              <Sparkles className="h-3 w-3" />
               <span className="hidden sm:inline">Pay Balance</span>
               <span className="sm:hidden">Pay</span>
             </Button>
