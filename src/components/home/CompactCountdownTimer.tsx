@@ -67,22 +67,22 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
         <div 
           className={cn(
             "relative w-11 h-12 sm:w-12 sm:h-14 rounded-lg overflow-hidden",
-            "bg-gradient-to-b from-blue-500 to-blue-600",
-            "shadow-lg shadow-blue-500/30",
-            "border border-blue-400/30"
+            "bg-gradient-to-b from-primary to-accent",
+            "shadow-lg shadow-primary/30",
+            "border border-primary/30"
           )}
         >
           {/* Top shine */}
-          <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent" />
+          <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent" />
           
           {/* Center divider line */}
-          <div className="absolute inset-x-0 top-1/2 h-px bg-blue-900/50" />
+          <div className="absolute inset-x-0 top-1/2 h-px bg-black/30" />
           
           {/* Number */}
           <div className="absolute inset-0 flex items-center justify-center">
             <span 
               className={cn(
-                "text-xl sm:text-2xl font-bold text-white tabular-nums drop-shadow-lg",
+                "text-xl sm:text-2xl font-bold text-primary-foreground tabular-nums drop-shadow-lg",
                 "transition-transform duration-200",
                 hasChanged && "scale-110"
               )}
@@ -92,7 +92,7 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
           </div>
           
           {/* Bottom shadow */}
-          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-blue-900/30 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/20 to-transparent" />
         </div>
         <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mt-1.5 font-medium">
           {label}
@@ -104,7 +104,7 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
   return (
     <div className="relative overflow-hidden rounded-xl glass-card reveal-section">
       {/* Subtle background glow */}
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-blue-500/5" />
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-accent/10" />
       
       <div className="relative px-4 py-3 sm:px-5 sm:py-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
