@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Clock } from 'lucide-react';
 
 interface LearnCourseCardProps {
   id: string;
@@ -10,18 +11,16 @@ interface LearnCourseCardProps {
   companyName?: string;
   companyLogoUrl?: string;
   isPremium?: boolean;
+  durationMinutes?: number;
   onClick?: () => void;
 }
 
 export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
   id,
   title,
-  subtitle,
   thumbnailUrl,
-  instructorName,
-  companyName,
-  companyLogoUrl,
   isPremium,
+  durationMinutes,
   onClick,
 }) => {
   const navigate = useNavigate();
@@ -34,10 +33,16 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
     }
   };
 
-  // Split title for styling (first word italic, rest bold)
-  const titleParts = title.split(' ');
-  const firstWord = titleParts[0];
-  const restOfTitle = titleParts.slice(1).join(' ');
+  // Format duration
+  const formatDuration = (minutes?: number) => {
+    if (!minutes) return null;
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  };
+
+  const duration = formatDuration(durationMinutes);
 
   return (
     <div
@@ -57,66 +62,31 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
         )}
       </div>
 
-      {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+      {/* Subtle gradient overlay for depth */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
       {/* Premium Badge */}
       {isPremium && (
         <div className="absolute top-3 right-3 z-10">
-          <span className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground rounded-full">
+          <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground rounded-full shadow-lg">
             Premium
           </span>
         </div>
       )}
 
-      {/* Content Overlay */}
-      <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col justify-end">
-        {/* Title - styled like reference */}
-        <div className="mb-3">
-          {firstWord && restOfTitle ? (
-            <>
-              <span className="text-white/90 italic text-lg font-light block leading-tight">
-                {firstWord}
-              </span>
-              <span className="text-white font-bold text-xl uppercase tracking-wide leading-tight">
-                {restOfTitle}
-              </span>
-            </>
-          ) : (
-            <span className="text-white font-bold text-xl uppercase tracking-wide leading-tight">
-              {title}
-            </span>
-          )}
-        </div>
-
-        {/* Instructor Info */}
-        {(instructorName || companyName) && (
-          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-3 py-1.5 w-fit border border-white/10">
-            <span className="text-white text-sm font-medium">
-              {instructorName}
-            </span>
-            {companyName && (
-              <>
-                {companyLogoUrl ? (
-                  <img
-                    src={companyLogoUrl}
-                    alt={companyName}
-                    className="h-4 w-auto object-contain"
-                  />
-                ) : (
-                  <span className="text-white/70 text-xs bg-white/20 px-2 py-0.5 rounded">
-                    {companyName}
-                  </span>
-                )}
-              </>
-            )}
+      {/* Duration Badge - positioned outside card on right */}
+      {duration && (
+        <div className="absolute -right-2 top-1/2 -translate-y-1/2 z-10">
+          <div className="flex items-center gap-1 bg-background/90 backdrop-blur-sm text-foreground px-2.5 py-1.5 rounded-full shadow-lg border border-border/50">
+            <Clock className="w-3 h-3" />
+            <span className="text-xs font-medium">{duration}</span>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Hover Glow Effect */}
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-        <div className="absolute inset-0 bg-primary/10" />
+        <div className="absolute inset-0 bg-primary/5" />
       </div>
     </div>
   );

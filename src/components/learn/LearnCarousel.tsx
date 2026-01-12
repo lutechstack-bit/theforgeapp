@@ -68,9 +68,8 @@ export const LearnCarousel: React.FC<LearnCarouselProps> = ({
                 id={item.id}
                 title={item.title}
                 thumbnailUrl={item.thumbnail_url}
-                instructorName={item.instructor_name}
-                companyName={item.company_name}
                 isPremium={item.is_premium}
+                durationMinutes={item.duration_minutes}
                 onClick={() => navigate(`/learn/${item.id}`)}
               />
             </CarouselItem>
