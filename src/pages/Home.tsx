@@ -13,7 +13,7 @@ import { KYFormReminderBanner } from '@/components/onboarding/KYFormReminderBann
 import { FOMOBanner } from '@/components/shared/FOMOBanner';
 import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
 import { ProgressHeroSection } from '@/components/home/ProgressHeroSection';
-import { MasterNotificationCenter } from '@/components/home/MasterNotificationCenter';
+
 import { WhatYouCanDoHere } from '@/components/home/WhatYouCanDoHere';
 import { OnboardingChecklist } from '@/components/home/OnboardingChecklist';
 import { Calendar, ArrowRight, Users } from 'lucide-react';
@@ -180,23 +180,8 @@ const Home: React.FC = () => {
       {/* Progress Hero Section - My Progress dashboard */}
       <ProgressHeroSection />
 
-      {/* Master Notification Center - Updates & Reminders */}
-      <MasterNotificationCenter />
-
-      {/* KY Form Reminder Banner */}
-      <KYFormReminderBanner />
-
-      {/* FOMO Banner for 15k paid users */}
-      <FOMOBanner />
-
-      {/* What You Can Do Here - Onboarding for new users */}
-      <WhatYouCanDoHere />
-
-      {/* Onboarding Checklist - Getting Started Tasks */}
-      <OnboardingChecklist />
-
-      {/* Quick Actions Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 reveal-section" style={{ animationDelay: '0.15s' }}>
+      {/* Quick Actions Row - Moved up */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 reveal-section" style={{ animationDelay: '0.1s' }}>
         {/* Roadmap Card */}
         <div className="bg-card border border-border rounded-xl p-5 hover-lift tap-scale card-shine">
           <div className="flex items-start justify-between mb-4">
@@ -240,6 +225,18 @@ const Home: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* KY Form Reminder Banner */}
+      <KYFormReminderBanner />
+
+      {/* FOMO Banner for 15k paid users */}
+      <FOMOBanner />
+
+      {/* What You Can Do Here - Onboarding for new users */}
+      <WhatYouCanDoHere />
+
+      {/* Onboarding Checklist - Getting Started Tasks */}
+      <OnboardingChecklist />
 
       {/* Alumni Testimonials - Enhanced with demographics */}
       <ContentCarousel title="Alumni Spotlight">

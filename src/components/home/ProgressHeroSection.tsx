@@ -169,13 +169,13 @@ export const ProgressHeroSection: React.FC = () => {
     : '0 items';
 
   return (
-    <div className="relative overflow-hidden rounded-2xl reveal-section" style={{ animationDelay: '0.05s' }}>
+    <div className="relative rounded-2xl reveal-section" style={{ animationDelay: '0.05s' }}>
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[hsl(220,20%,12%)] via-[hsl(220,18%,10%)] to-[hsl(220,15%,8%)]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[hsl(220,20%,12%)] via-[hsl(220,18%,10%)] to-[hsl(220,15%,8%)] rounded-2xl" />
       
       {/* Subtle gold glow */}
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent" />
-      <div className="absolute bottom-0 left-0 w-1/3 h-1/2 bg-gradient-to-tr from-accent/5 to-transparent" />
+      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent rounded-2xl" />
+      <div className="absolute bottom-0 left-0 w-1/3 h-1/2 bg-gradient-to-tr from-accent/5 to-transparent rounded-2xl" />
 
       <div className="relative p-5 sm:p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
@@ -198,8 +198,8 @@ export const ProgressHeroSection: React.FC = () => {
             </Button>
           </div>
 
-          {/* Right side: Progress cards */}
-          <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 sm:mx-0 sm:px-0 scrollbar-hide">
+          {/* Right side: Progress cards - with proper overflow spacing for badges */}
+          <div className="flex gap-4 overflow-x-auto pt-3 pb-3 pl-3 -mx-5 pr-5 sm:mx-0 sm:px-0 sm:pl-3 scrollbar-hide">
             <ProgressCard
               number="01"
               title="KYF Form"
