@@ -12,13 +12,13 @@ import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { KYFormReminderBanner } from '@/components/onboarding/KYFormReminderBanner';
 import { FOMOBanner } from '@/components/shared/FOMOBanner';
 import { EnhancedCountdown } from '@/components/home/EnhancedCountdown';
+import { MasterNotificationCenter } from '@/components/home/MasterNotificationCenter';
 import { WhatYouCanDoHere } from '@/components/home/WhatYouCanDoHere';
 import { OnboardingChecklist } from '@/components/home/OnboardingChecklist';
 import { Calendar, ArrowRight, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { mentorsData, Mentor } from '@/data/mentorsData';
-
 // Alumni testimonial videos with enhanced data
 const alumniTestimonials = [
   { 
@@ -172,15 +172,18 @@ const Home: React.FC = () => {
   const displayEvents = (events && events.length > 0) ? events : dummyEvents;
 
   return (
-    <div className="min-h-screen p-4 md:p-8 space-y-10">
+    <div className="min-h-screen p-4 md:p-6 space-y-6">
+      {/* Countdown Timer - Moved to TOP */}
+      <EnhancedCountdown edition={edition} />
+
+      {/* Master Notification Center - New Hero Section */}
+      <MasterNotificationCenter />
+
       {/* KY Form Reminder Banner */}
       <KYFormReminderBanner />
 
       {/* FOMO Banner for 15k paid users */}
       <FOMOBanner />
-
-      {/* Enhanced Hero Banner with Countdown */}
-      <EnhancedCountdown edition={edition} />
 
       {/* What You Can Do Here - Onboarding for new users */}
       <WhatYouCanDoHere />
