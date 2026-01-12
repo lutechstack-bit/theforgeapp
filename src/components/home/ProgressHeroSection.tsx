@@ -13,7 +13,7 @@ interface ProgressCardProps {
   subtitle: string;
   progress: string;
   icon: React.ReactNode;
-  variant: 'dark' | 'purple' | 'gold';
+  variant: 'dark' | 'gold' | 'accent';
   onClick: () => void;
 }
 
@@ -27,15 +27,15 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
   onClick,
 }) => {
   const variantStyles = {
-    dark: 'bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-slate-700/50',
-    purple: 'bg-gradient-to-br from-purple-600/80 to-purple-800/80 border-purple-500/30',
-    gold: 'bg-gradient-to-br from-primary to-accent border-primary/50',
+    dark: 'bg-gradient-to-br from-card to-background border-border',
+    gold: 'bg-gradient-to-br from-accent to-forge-orange border-accent/50',
+    accent: 'bg-gradient-to-br from-primary to-accent border-primary/50',
   };
 
   const textStyles = {
     dark: 'text-foreground',
-    purple: 'text-white',
-    gold: 'text-primary-foreground',
+    gold: 'text-foreground',
+    accent: 'text-primary-foreground',
   };
 
   return (
@@ -52,7 +52,7 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
       <div className={cn(
         "absolute -top-2 -left-2 w-7 h-7 rounded-full flex items-center justify-center",
         "text-xs font-bold shadow-lg",
-        variant === 'gold' ? 'bg-primary-foreground text-primary' : 'bg-foreground/90 text-background'
+        variant === 'accent' ? 'bg-primary-foreground text-primary' : 'bg-primary text-primary-foreground'
       )}>
         {number}
       </div>
@@ -60,7 +60,7 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
       {/* Icon */}
       <div className={cn(
         "w-10 h-10 rounded-lg flex items-center justify-center mb-3",
-        variant === 'gold' ? 'bg-primary-foreground/20' : 'bg-white/10'
+        variant === 'accent' ? 'bg-primary-foreground/20' : 'bg-primary/20'
       )}>
         {icon}
       </div>
@@ -71,7 +71,7 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
       </h4>
       <p className={cn(
         "text-xs mb-2",
-        variant === 'gold' ? 'text-primary-foreground/80' : 'text-white/70'
+        variant === 'accent' ? 'text-primary-foreground/80' : 'text-muted-foreground'
       )}>
         {subtitle}
       </p>
@@ -79,7 +79,7 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
       {/* Progress indicator */}
       <div className={cn(
         "text-xs font-medium flex items-center gap-1",
-        variant === 'gold' ? 'text-primary-foreground' : 'text-white/90'
+        variant === 'accent' ? 'text-primary-foreground' : 'text-primary'
       )}>
         <Sparkles className="w-3 h-3" />
         {progress}
@@ -170,8 +170,8 @@ export const ProgressHeroSection: React.FC = () => {
 
   return (
     <div className="relative rounded-2xl reveal-section" style={{ animationDelay: '0.05s' }}>
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[hsl(220,20%,12%)] via-[hsl(220,18%,10%)] to-[hsl(220,15%,8%)] rounded-2xl" />
+      {/* Background gradient - pure black to dark */}
+      <div className="absolute inset-0 bg-gradient-to-br from-card via-background to-background rounded-2xl border border-border" />
       
       {/* Subtle gold glow */}
       <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent rounded-2xl" />
@@ -205,7 +205,7 @@ export const ProgressHeroSection: React.FC = () => {
               title="KYF Form"
               subtitle="Complete your profile"
               progress={kyfStatus}
-              icon={<FileText className="w-5 h-5 text-foreground/80" />}
+              icon={<FileText className="w-5 h-5 text-primary" />}
               variant="dark"
               onClick={() => navigate('/kyf')}
             />
@@ -214,8 +214,8 @@ export const ProgressHeroSection: React.FC = () => {
               title="Roadmap"
               subtitle="Explore your journey"
               progress={roadmapStatus}
-              icon={<Map className="w-5 h-5 text-white" />}
-              variant="purple"
+              icon={<Map className="w-5 h-5 text-foreground" />}
+              variant="gold"
               onClick={() => navigate('/roadmap')}
             />
             <ProgressCard
@@ -224,7 +224,7 @@ export const ProgressHeroSection: React.FC = () => {
               subtitle="Get ready for Forge"
               progress={prepStatus}
               icon={<CheckCircle className="w-5 h-5 text-primary-foreground" />}
-              variant="gold"
+              variant="accent"
               onClick={() => navigate('/roadmap/prep')}
             />
           </div>
