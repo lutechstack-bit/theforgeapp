@@ -1,5 +1,5 @@
-import React from 'react';
-import { Plus, MoreVertical, Edit2, Trash2, Play, ExternalLink, FileText, Image as ImageIcon } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, MoreVertical, Edit2, Trash2, Play, ExternalLink, FileText, Image as ImageIcon, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -8,6 +8,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+} from '@/components/ui/dialog';
 import { UserWork } from '@/hooks/useUserWorks';
 
 interface WorksSectionProps {
@@ -33,17 +37,63 @@ const mediaTypeIcons: Record<string, React.ReactNode> = {
   link: <ExternalLink className="h-3 w-3" />,
 };
 
+// Helper to extract YouTube video ID and create embed URL
+const getYouTubeEmbedUrl = (url: string): string | null => {
+  if (!url) return null;
+  
+  // Match various YouTube URL formats
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+  ];
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) {
+      return `https://www.youtube.com/embed/${match[1]}?autoplay=1`;
+    }
+  }
+  return null;
+};
+
+// Helper to get YouTube thumbnail
+const getYouTubeThumbnail = (url: string): string | null => {
+  if (!url) return null;
+  
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+  ];
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) {
+      return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
+    }
+  }
+  return null;
+};
+
 const WorkCard: React.FC<{
   work: UserWork;
   isOwner: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
-}> = ({ work, isOwner, onEdit, onDelete }) => {
+  onPlay?: () => void;
+}> = ({ work, isOwner, onEdit, onDelete, onPlay }) => {
+  const youtubeEmbed = getYouTubeEmbedUrl(work.media_url || '');
+  const youtubeThumbnail = getYouTubeThumbnail(work.media_url || '');
+  const isYouTube = !!youtubeEmbed;
+  
   const handleClick = () => {
-    if (work.media_url) {
+    if (isYouTube) {
+      onPlay?.();
+    } else if (work.media_url) {
       window.open(work.media_url, '_blank');
     }
   };
+
+  const displayThumbnail = work.thumbnail_url || youtubeThumbnail;
 
   return (
     <div 
@@ -52,12 +102,21 @@ const WorkCard: React.FC<{
     >
       {/* Thumbnail */}
       <div className="aspect-video bg-secondary/50 relative">
-        {work.thumbnail_url ? (
-          <img
-            src={work.thumbnail_url}
-            alt={work.title}
-            className="w-full h-full object-cover"
-          />
+        {displayThumbnail ? (
+          <>
+            <img
+              src={displayThumbnail}
+              alt={work.title}
+              className="w-full h-full object-cover"
+            />
+            {isYouTube && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                <div className="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                  <Play className="h-8 w-8 text-white ml-1" fill="white" />
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             {work.media_type === 'video' && <Play className="h-12 w-12 text-muted-foreground/30" />}
@@ -79,11 +138,12 @@ const WorkCard: React.FC<{
         {/* Actions Menu */}
         {isOwner && (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
                 className="absolute top-2 right-2 h-8 w-8 bg-background/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => e.stopPropagation()}
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>
@@ -127,6 +187,40 @@ const WorkCard: React.FC<{
   );
 };
 
+// Video Player Modal for embedded playback
+const VideoPlayerModal: React.FC<{
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  embedUrl: string;
+  title: string;
+}> = ({ open, onOpenChange, embedUrl, title }) => {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl w-[95vw] p-0 bg-black border-none">
+        <div className="relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute -top-12 right-0 text-white hover:bg-white/20 z-10"
+            onClick={() => onOpenChange(false)}
+          >
+            <X className="h-6 w-6" />
+          </Button>
+          <div className="aspect-video w-full">
+            <iframe
+              src={embedUrl}
+              title={title}
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export const WorksSection: React.FC<WorksSectionProps> = ({
   works,
   isOwner = false,
@@ -134,6 +228,19 @@ export const WorksSection: React.FC<WorksSectionProps> = ({
   onEditWork,
   onDeleteWork,
 }) => {
+  const [videoModal, setVideoModal] = useState<{ open: boolean; embedUrl: string; title: string }>({
+    open: false,
+    embedUrl: '',
+    title: '',
+  });
+
+  const handlePlayVideo = (work: UserWork) => {
+    const embedUrl = getYouTubeEmbedUrl(work.media_url || '');
+    if (embedUrl) {
+      setVideoModal({ open: true, embedUrl, title: work.title });
+    }
+  };
+
   return (
     <div className="glass-card rounded-xl p-5">
       <div className="flex items-center justify-between mb-4">
@@ -155,6 +262,7 @@ export const WorksSection: React.FC<WorksSectionProps> = ({
               isOwner={isOwner}
               onEdit={() => onEditWork?.(work)}
               onDelete={() => onDeleteWork?.(work.id)}
+              onPlay={() => handlePlayVideo(work)}
             />
           ))}
         </div>
@@ -176,6 +284,14 @@ export const WorksSection: React.FC<WorksSectionProps> = ({
           )}
         </div>
       )}
+
+      {/* Video Player Modal */}
+      <VideoPlayerModal
+        open={videoModal.open}
+        onOpenChange={(open) => setVideoModal({ ...videoModal, open })}
+        embedUrl={videoModal.embedUrl}
+        title={videoModal.title}
+      />
     </div>
   );
 };

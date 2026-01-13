@@ -84,17 +84,9 @@ export const ProfileHero: React.FC<ProfileHeroProps> = ({
         {/* Name & Badges */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl sm:text-4xl font-bold text-foreground tracking-tight">
-                {profile?.full_name || 'Anonymous Creator'}
-              </h1>
-              {isVerified && (
-                <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold border border-primary/30">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Verified Forger
-                </div>
-              )}
-            </div>
+            <h1 className="text-2xl sm:text-4xl font-bold text-foreground tracking-tight">
+              {profile?.full_name || 'Anonymous Creator'}
+            </h1>
 
             {/* Role/Specialty */}
             {profile?.specialty && (
