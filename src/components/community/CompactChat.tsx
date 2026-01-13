@@ -75,23 +75,69 @@ export const CompactChat: React.FC<CompactChatProps> = ({
 
   const setupRealtimeSubscription = () => {
     if (channelRef.current) supabase.removeChannel(channelRef.current);
+    
+    // Build server-side filter for better performance
+    const filterColumn = activeGroupType === 'cohort' ? 'cohort_group_id' : 'group_id';
+    
     channelRef.current = supabase
       .channel(`chat-${activeGroupType}-${activeGroupId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_messages' },
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'community_messages',
+        filter: `${filterColumn}=eq.${activeGroupId}`
+      },
         async (payload) => {
           const newMsg = payload.new as any;
           
-          // Check if message is relevant to current view
-          const isRelevant = activeGroupType === 'cohort' 
-            ? newMsg.cohort_group_id === activeGroupId 
-            : newMsg.group_id === activeGroupId && !newMsg.cohort_group_id;
+          // For city groups, also filter out cohort messages on client side
+          if (activeGroupType === 'city' && newMsg.cohort_group_id) return;
           
-          if (!isRelevant) return;
+          // Check if we already have this message (avoid duplicates with optimistic updates)
+          setMessages((prev) => {
+            // If message with this ID already exists, skip
+            if (prev.some(m => m.id === newMsg.id)) return prev;
+            
+            // Check if this is our own message by looking for a temp message with same content/timestamp
+            const isOwnMessage = newMsg.user_id === user?.id;
+            if (isOwnMessage) {
+              // Find and replace the optimistic message (temp-*) with the real one
+              const tempMsgIndex = prev.findIndex(m => 
+                m.id.startsWith('temp-') && 
+                m.user_id === newMsg.user_id &&
+                m.content === newMsg.content
+              );
+              
+              if (tempMsgIndex !== -1) {
+                // Replace optimistic with real message
+                const updated = [...prev];
+                updated[tempMsgIndex] = {
+                  ...newMsg,
+                  sender_name: prev[tempMsgIndex].sender_name,
+                  sender_avatar: prev[tempMsgIndex].sender_avatar,
+                  reactions: []
+                };
+                return updated;
+              }
+            }
+            
+            // For other users' messages, fetch profile and add
+            return prev;
+          });
           
-          const { data: profile } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', newMsg.user_id).single();
-          const messageWithSender: Message = { ...newMsg, sender_name: profile?.full_name || 'Unknown', sender_avatar: profile?.avatar_url, reactions: [] };
-          setMessages((prev) => prev.some(m => m.id === newMsg.id) ? prev : [...prev, messageWithSender]);
-          scrollToBottom();
+          // If it's someone else's message, fetch their profile and add
+          if (newMsg.user_id !== user?.id) {
+            const { data: profile } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', newMsg.user_id).single();
+            const messageWithSender: Message = { 
+              ...newMsg, 
+              sender_name: profile?.full_name || 'Unknown', 
+              sender_avatar: profile?.avatar_url, 
+              reactions: [] 
+            };
+            setMessages((prev) => prev.some(m => m.id === newMsg.id) ? prev : [...prev, messageWithSender]);
+          }
+          
+          setTimeout(() => scrollToBottom(), 50);
         }
       )
       .subscribe();

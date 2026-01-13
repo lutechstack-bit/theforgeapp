@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { CommunityHeader } from '@/components/community/CommunityHeader';
 import { CompactChat } from '@/components/community/CompactChat';
 import { GroupSwitcher } from '@/components/community/GroupSwitcher';
+import { MembersDrawer } from '@/components/community/MembersDrawer';
 import { Loader2 } from 'lucide-react';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { getCityGroupKey } from '@/lib/cityUtils';
@@ -148,8 +149,11 @@ const Community = () => {
 
   return (
     <div className="flex flex-col h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] px-2 md:px-4 gap-3">
-      {/* Header - More Spacious */}
-      <CommunityHeader memberCount={stats.totalMembers} onlineCount={onlineUserIds.length} />
+      {/* Header with Members Button */}
+      <div className="flex items-center justify-between gap-3">
+        <CommunityHeader memberCount={stats.totalMembers} onlineCount={onlineUserIds.length} />
+        <MembersDrawer onlineUserIds={onlineUserIds} memberCount={stats.totalMembers} />
+      </div>
 
       {/* Horizontal Pill Tabs */}
       <GroupSwitcher
