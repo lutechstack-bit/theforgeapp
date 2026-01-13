@@ -145,7 +145,7 @@ export const CompactChat: React.FC<CompactChatProps> = ({
         is_announcement: msg.is_announcement,
         sender_name: profile?.full_name || 'Unknown', 
         sender_avatar: profile?.avatar_url || null, 
-        reactions: Object.entries(reactionCounts).map(([emoji, data]) => ({ emoji, count: data.count, hasReacted: data.hasReacted })) 
+        reactions: Object.entries(reactionCounts).map(([emoji, data]) => ({ emoji, count: (data as { count: number; hasReacted: boolean }).count, hasReacted: (data as { count: number; hasReacted: boolean }).hasReacted })) 
       };
     });
     setMessages(messagesWithSenders);
