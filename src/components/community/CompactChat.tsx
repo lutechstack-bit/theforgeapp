@@ -3,9 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { MessageBubble } from './MessageBubble';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Loader2, Send, Image as ImageIcon, X } from 'lucide-react';
+import { ChevronDown, Loader2, Send, Image as ImageIcon, X, Users, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { Input } from '@/components/ui/input';
 
 interface Message {
   id: string;
@@ -26,17 +27,29 @@ interface CityGroup {
   is_main: boolean;
 }
 
+interface CohortGroup {
+  id: string;
+  edition_id: string;
+  name: string;
+}
+
 interface CompactChatProps {
   groups: CityGroup[];
+  cohortGroup: CohortGroup | null;
+  activeGroupType: 'cohort' | 'city';
   activeGroupId: string | null;
   onGroupChange: (groupId: string) => void;
+  onCohortSelect: () => void;
   typingUsers: string[];
 }
 
 export const CompactChat: React.FC<CompactChatProps> = ({
   groups,
+  cohortGroup,
+  activeGroupType,
   activeGroupId,
   onGroupChange,
+  onCohortSelect,
   typingUsers,
 }) => {
   const { user } = useAuth();
@@ -58,15 +71,23 @@ export const CompactChat: React.FC<CompactChatProps> = ({
       setupRealtimeSubscription();
     }
     return () => { if (channelRef.current) supabase.removeChannel(channelRef.current); };
-  }, [activeGroupId]);
+  }, [activeGroupId, activeGroupType]);
 
   const setupRealtimeSubscription = () => {
     if (channelRef.current) supabase.removeChannel(channelRef.current);
     channelRef.current = supabase
-      .channel(`chat-${activeGroupId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_messages', filter: `group_id=eq.${activeGroupId}` },
+      .channel(`chat-${activeGroupType}-${activeGroupId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_messages' },
         async (payload) => {
           const newMsg = payload.new as any;
+          
+          // Check if message is relevant to current view
+          const isRelevant = activeGroupType === 'cohort' 
+            ? newMsg.cohort_group_id === activeGroupId 
+            : newMsg.group_id === activeGroupId && !newMsg.cohort_group_id;
+          
+          if (!isRelevant) return;
+          
           const { data: profile } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', newMsg.user_id).single();
           const messageWithSender: Message = { ...newMsg, sender_name: profile?.full_name || 'Unknown', sender_avatar: profile?.avatar_url, reactions: [] };
           setMessages((prev) => prev.some(m => m.id === newMsg.id) ? prev : [...prev, messageWithSender]);
@@ -79,12 +100,33 @@ export const CompactChat: React.FC<CompactChatProps> = ({
   const fetchMessages = async () => {
     if (!activeGroupId) return;
     setLoading(true);
-    const { data: messagesData } = await supabase.from('community_messages').select('*').eq('group_id', activeGroupId).order('created_at', { ascending: true }).limit(100);
+    
+    let query = supabase
+      .from('community_messages')
+      .select('*')
+      .order('created_at', { ascending: true })
+      .limit(100);
+    
+    if (activeGroupType === 'cohort') {
+      query = query.eq('cohort_group_id', activeGroupId);
+    } else {
+      query = query.eq('group_id', activeGroupId).is('cohort_group_id', null);
+    }
+    
+    const { data: messagesData } = await query;
+    
     const userIds = [...new Set(messagesData?.map((m) => m.user_id) || [])];
-    const { data: profiles } = await supabase.from('profiles').select('id, full_name, avatar_url').in('id', userIds);
+    const { data: profiles } = userIds.length > 0 
+      ? await supabase.from('profiles').select('id, full_name, avatar_url').in('id', userIds)
+      : { data: [] };
     const messageIds = messagesData?.map((m) => m.id) || [];
-    const { data: reactions } = await supabase.from('message_reactions').select('*').in('message_id', messageIds);
-    const profileMap = new Map(profiles?.map((p) => [p.id, p]));
+    const { data: reactions } = messageIds.length > 0 
+      ? await supabase.from('message_reactions').select('*').in('message_id', messageIds)
+      : { data: [] };
+    
+    const profileMap = new Map<string, { id: string; full_name: string | null; avatar_url: string | null }>();
+    profiles?.forEach((p) => profileMap.set(p.id, p));
+    
     const messagesWithSenders: Message[] = (messagesData || []).map((msg) => {
       const profile = profileMap.get(msg.user_id);
       const msgReactions = reactions?.filter((r) => r.message_id === msg.id) || [];
@@ -94,7 +136,17 @@ export const CompactChat: React.FC<CompactChatProps> = ({
         if (r.user_id === user?.id) acc[r.emoji].hasReacted = true;
         return acc;
       }, {} as Record<string, { count: number; hasReacted: boolean }>);
-      return { ...msg, sender_name: profile?.full_name || 'Unknown', sender_avatar: profile?.avatar_url, reactions: Object.entries(reactionCounts).map(([emoji, data]) => ({ emoji, ...data })) };
+      return { 
+        id: msg.id,
+        content: msg.content,
+        user_id: msg.user_id,
+        created_at: msg.created_at,
+        image_url: msg.image_url,
+        is_announcement: msg.is_announcement,
+        sender_name: profile?.full_name || 'Unknown', 
+        sender_avatar: profile?.avatar_url || null, 
+        reactions: Object.entries(reactionCounts).map(([emoji, data]) => ({ emoji, count: data.count, hasReacted: data.hasReacted })) 
+      };
     });
     setMessages(messagesWithSenders);
     setLoading(false);
@@ -162,12 +214,23 @@ export const CompactChat: React.FC<CompactChatProps> = ({
       }
     }
     
-    const { error } = await supabase.from('community_messages').insert({ 
-      content: messageContent, 
-      user_id: user.id, 
-      group_id: activeGroupId, 
-      image_url: imageUrl 
-    });
+    // Prepare insert data based on group type
+    const insertData: any = {
+      content: messageContent || (imageUrl ? '📷 Image' : ''),
+      user_id: user.id,
+      image_url: imageUrl,
+    };
+
+    if (activeGroupType === 'cohort') {
+      insertData.cohort_group_id = activeGroupId;
+      // Need a group_id for the FK, use first city group as fallback
+      const firstCityGroup = groups[0];
+      if (firstCityGroup) insertData.group_id = firstCityGroup.id;
+    } else {
+      insertData.group_id = activeGroupId;
+    }
+    
+    const { error } = await supabase.from('community_messages').insert(insertData);
     
     if (error) {
       // Remove optimistic message on error
@@ -186,34 +249,46 @@ export const CompactChat: React.FC<CompactChatProps> = ({
     fetchMessages();
   };
 
-  const activeGroup = groups.find((g) => g.id === activeGroupId);
+  const groupName = activeGroupType === 'cohort' ? cohortGroup?.name : groups.find((g) => g.id === activeGroupId)?.name;
 
   return (
-    <div className="flex flex-col h-full bg-card/50 backdrop-blur-sm rounded-2xl border border-border/30 overflow-hidden">
-      {/* Compact Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/30 bg-background/50">
-        <select
-          value={activeGroupId || ''}
-          onChange={(e) => onGroupChange(e.target.value)}
-          className="bg-transparent text-sm font-semibold text-foreground border-0 focus:ring-0 focus:outline-none cursor-pointer pr-6"
-        >
-          {groups.map((group) => (
-            <option key={group.id} value={group.id}>{group.name}</option>
-          ))}
-        </select>
+    <div className="flex flex-col h-full bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-border/40 bg-secondary/20">
+        <div className={cn(
+          "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+          activeGroupType === 'cohort' ? "bg-primary/10" : "bg-green-500/10"
+        )}>
+          {activeGroupType === 'cohort' ? (
+            <Users className="w-4 h-4 text-primary" />
+          ) : (
+            <MapPin className="w-4 h-4 text-green-500" />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-semibold text-foreground truncate">
+            {groupName || 'Community Chat'}
+          </h3>
+          <p className="text-[10px] text-muted-foreground">
+            {activeGroupType === 'cohort' ? 'Your cohort members' : 'Regional community'}
+          </p>
+        </div>
         {typingUsers.length > 0 && (
-          <span className="text-xs text-muted-foreground animate-pulse">
+          <span className="text-xs text-muted-foreground animate-pulse shrink-0">
             {typingUsers[0]} typing...
           </span>
         )}
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-3 space-y-2">
+      <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 space-y-4">
         {loading ? (
-          <div className="flex items-center justify-center h-full"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
+          <div className="flex items-center justify-center h-32"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
         ) : messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Start the conversation!</div>
+          <div className="flex flex-col items-center justify-center h-32 text-center">
+            <p className="text-sm text-muted-foreground">No messages yet</p>
+            <p className="text-xs text-muted-foreground/70 mt-1">Be the first to say hello!</p>
+          </div>
         ) : (
           messages.map((msg) => (
             <MessageBubble key={msg.id} message={msg} isOwn={msg.user_id === user?.id} onReact={(emoji) => handleReact(msg.id, emoji)} />
@@ -223,46 +298,50 @@ export const CompactChat: React.FC<CompactChatProps> = ({
       </div>
 
       {showScrollButton && (
-        <Button size="icon" variant="secondary" className="absolute bottom-20 right-4 rounded-full shadow-lg w-8 h-8" onClick={scrollToBottom}>
+        <Button size="icon" variant="secondary" className="absolute bottom-24 right-6 rounded-full shadow-lg w-8 h-8" onClick={scrollToBottom}>
           <ChevronDown className="w-4 h-4" />
         </Button>
       )}
 
       {/* Image Preview */}
       {imagePreview && (
-        <div className="px-3 py-2 border-t border-border/30">
+        <div className="px-4 py-2 border-t border-border/40">
           <div className="relative inline-block">
             <img src={imagePreview} alt="Preview" className="h-16 rounded-lg object-cover" />
-            <button onClick={removeImage} className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs">
+            <button onClick={removeImage} className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs">
               <X className="w-3 h-3" />
             </button>
           </div>
         </div>
       )}
 
-      {/* Compact Input */}
-      <form onSubmit={handleSubmit} className="flex items-center gap-2 p-3 border-t border-border/30 bg-background/50">
+      {/* Input */}
+      <form onSubmit={handleSubmit} className="flex items-center gap-2 p-4 border-t border-border/40 bg-secondary/10">
         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
-        <button type="button" onClick={() => fileInputRef.current?.click()} disabled={sending} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-          <ImageIcon className="w-5 h-5" />
-        </button>
-        <input
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={sending}
+          className="shrink-0 h-10 w-10"
+        >
+          <ImageIcon className="w-5 h-5 text-muted-foreground" />
+        </Button>
+        <Input
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder={`Message ${activeGroup?.name || ''}...`}
+          placeholder="Type a message..."
           disabled={sending}
-          className="flex-1 bg-secondary/50 rounded-full px-4 py-2 text-sm border-0 focus:ring-2 focus:ring-primary/50 focus:outline-none"
+          className="flex-1 h-10 bg-background border-border/50 focus-visible:ring-1 focus-visible:ring-primary"
         />
-        <button
+        <Button
           type="submit"
           disabled={(!message.trim() && !imageFile) || sending}
-          className={cn(
-            "p-2 rounded-full transition-all",
-            (message.trim() || imageFile) && !sending ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-          )}
+          className="shrink-0 h-10 w-10 p-0"
         >
-          {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-        </button>
+          {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+        </Button>
       </form>
     </div>
   );

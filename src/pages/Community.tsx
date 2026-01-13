@@ -5,15 +5,22 @@ import { CommunityHeader } from '@/components/community/CommunityHeader';
 import { MemberAvatarStrip } from '@/components/community/MemberAvatarStrip';
 import { CompactChat } from '@/components/community/CompactChat';
 import { CompactHighlights } from '@/components/community/CompactHighlights';
-import { QuickAccessBar } from '@/components/community/QuickAccessBar';
+import { GroupSwitcher } from '@/components/community/GroupSwitcher';
 import { Loader2 } from 'lucide-react';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { getCityGroupKey } from '@/lib/cityUtils';
 
 interface CityGroup {
   id: string;
   name: string;
   city_key: string;
   is_main: boolean;
+}
+
+interface CohortGroup {
+  id: string;
+  edition_id: string;
+  name: string;
 }
 
 interface Stats {
@@ -25,8 +32,11 @@ interface Stats {
 const Community = () => {
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [groups, setGroups] = useState<CityGroup[]>([]);
+  const [cityGroups, setCityGroups] = useState<CityGroup[]>([]);
+  const [cohortGroup, setCohortGroup] = useState<CohortGroup | null>(null);
+  const [activeGroupType, setActiveGroupType] = useState<'cohort' | 'city'>('cohort');
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+  const [userCityGroupId, setUserCityGroupId] = useState<string | null>(null);
   const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [stats, setStats] = useState<Stats>({ totalMembers: 0, totalCities: 0, totalFilms: 0 });
@@ -47,7 +57,7 @@ const Community = () => {
 
   const initializeCommunity = async () => {
     setLoading(true);
-    await Promise.all([fetchGroups(), fetchStats()]);
+    await Promise.all([fetchCityGroups(), fetchCohortGroup(), fetchStats()]);
     setLoading(false);
   };
 
@@ -75,12 +85,32 @@ const Community = () => {
       });
   };
 
-  const fetchGroups = async () => {
+  const fetchCityGroups = async () => {
     const { data } = await supabase.from('city_groups').select('*').order('is_main', { ascending: false });
-    setGroups(data || []);
-    if (data?.length) {
-      const userGroup = data.find((g) => g.city_key === profile?.city?.toLowerCase());
-      setActiveGroupId(userGroup?.id || data.find((g) => g.is_main)?.id || data[0].id);
+    setCityGroups(data || []);
+    
+    if (data?.length && profile?.city) {
+      const userCityKey = getCityGroupKey(profile.city);
+      const matchingGroup = data.find((g) => g.city_key === userCityKey);
+      if (matchingGroup) {
+        setUserCityGroupId(matchingGroup.id);
+      }
+    }
+  };
+
+  const fetchCohortGroup = async () => {
+    if (!profile?.edition_id) return;
+    
+    const { data } = await supabase
+      .from('cohort_groups')
+      .select('*')
+      .eq('edition_id', profile.edition_id)
+      .single();
+    
+    if (data) {
+      setCohortGroup(data);
+      setActiveGroupId(data.id);
+      setActiveGroupType('cohort');
     }
   };
 
@@ -98,6 +128,18 @@ const Community = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  const handleSelectCohort = () => {
+    if (cohortGroup) {
+      setActiveGroupType('cohort');
+      setActiveGroupId(cohortGroup.id);
+    }
+  };
+
+  const handleSelectCity = (groupId: string) => {
+    setActiveGroupType('city');
+    setActiveGroupId(groupId);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[80vh]">
@@ -107,40 +149,54 @@ const Community = () => {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-6rem)]">
-      {/* Top Section - Compact Header */}
-      <div className="space-y-3 pb-3">
-        {/* Header Row */}
+    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-5rem)] gap-4">
+      {/* Top Section - Header & Members */}
+      <div className="space-y-3">
         <CommunityHeader memberCount={stats.totalMembers} onlineCount={onlineUserIds.length} />
-        
-        {/* Members Strip */}
-        <div className="space-y-1.5">
-          <span className="text-xs font-medium text-muted-foreground px-1">Members</span>
-          <MemberAvatarStrip onlineUserIds={onlineUserIds} />
-        </div>
-
-        {/* Highlights (if any) */}
+        <MemberAvatarStrip onlineUserIds={onlineUserIds} />
         <CompactHighlights />
+      </div>
 
-        {/* Quick Access */}
-        <div className="hidden md:block">
-          <QuickAccessBar />
+      {/* Main Content - Sidebar + Chat */}
+      <div className="flex-1 min-h-0 flex gap-4">
+        {/* Sidebar - Desktop only */}
+        <div className="hidden md:block w-48 shrink-0">
+          <GroupSwitcher
+            cohortGroup={cohortGroup}
+            cityGroups={cityGroups}
+            userCityGroupId={userCityGroupId}
+            activeGroupType={activeGroupType}
+            activeGroupId={activeGroupId}
+            onSelectCohort={handleSelectCohort}
+            onSelectCity={handleSelectCity}
+          />
+        </div>
+
+        {/* Chat Area */}
+        <div className="flex-1 min-w-0">
+          <CompactChat
+            groups={cityGroups}
+            cohortGroup={cohortGroup}
+            activeGroupType={activeGroupType}
+            activeGroupId={activeGroupId}
+            onGroupChange={handleSelectCity}
+            onCohortSelect={handleSelectCohort}
+            typingUsers={typingUsers}
+          />
         </div>
       </div>
 
-      {/* Main Chat Area - Takes remaining space */}
-      <div className="flex-1 min-h-0">
-        <CompactChat
-          groups={groups}
+      {/* Mobile Group Switcher - Bottom */}
+      <div className="md:hidden pb-16">
+        <GroupSwitcher
+          cohortGroup={cohortGroup}
+          cityGroups={cityGroups}
+          userCityGroupId={userCityGroupId}
+          activeGroupType={activeGroupType}
           activeGroupId={activeGroupId}
-          onGroupChange={setActiveGroupId}
-          typingUsers={typingUsers}
+          onSelectCohort={handleSelectCohort}
+          onSelectCity={handleSelectCity}
         />
-      </div>
-
-      {/* Mobile Quick Access */}
-      <div className="md:hidden pt-3 pb-16">
-        <QuickAccessBar />
       </div>
     </div>
   );

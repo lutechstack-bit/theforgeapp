@@ -38,6 +38,35 @@ export type Database = {
         }
         Relationships: []
       }
+      cohort_groups: {
+        Row: {
+          created_at: string | null
+          edition_id: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          edition_id?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          edition_id?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cohort_groups_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: true
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_highlights: {
         Row: {
           created_at: string
@@ -87,6 +116,7 @@ export type Database = {
       }
       community_messages: {
         Row: {
+          cohort_group_id: string | null
           content: string
           created_at: string
           group_id: string
@@ -96,6 +126,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cohort_group_id?: string | null
           content: string
           created_at?: string
           group_id: string
@@ -105,6 +136,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cohort_group_id?: string | null
           content?: string
           created_at?: string
           group_id?: string
@@ -114,6 +146,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "community_messages_cohort_group_id_fkey"
+            columns: ["cohort_group_id"]
+            isOneToOne: false
+            referencedRelation: "cohort_groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "community_messages_group_id_fkey"
             columns: ["group_id"]
