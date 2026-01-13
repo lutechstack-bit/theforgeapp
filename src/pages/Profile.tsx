@@ -71,7 +71,16 @@ const Profile: React.FC = () => {
   };
 
   const handleSignOut = async () => {
-    await signOut();
+    try {
+      await signOut();
+      toast({
+        title: 'Signed Out',
+        description: 'You have been successfully signed out.',
+      });
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+    // Always navigate to auth page regardless of success/failure
     navigate('/auth');
   };
 
