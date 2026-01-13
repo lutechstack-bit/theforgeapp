@@ -15,7 +15,6 @@ import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
 import { ProgressHeroSection } from '@/components/home/ProgressHeroSection';
 
 import { WhatYouCanDoHere } from '@/components/home/WhatYouCanDoHere';
-import { OnboardingChecklist } from '@/components/home/OnboardingChecklist';
 import { Calendar, ArrowRight, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
@@ -234,9 +233,6 @@ const Home: React.FC = () => {
 
       {/* What You Can Do Here - Onboarding for new users */}
       <WhatYouCanDoHere />
-
-      {/* Onboarding Checklist - Getting Started Tasks */}
-      <OnboardingChecklist />
 
       {/* Alumni Testimonials - Enhanced with demographics */}
       <ContentCarousel title="Alumni Spotlight">
