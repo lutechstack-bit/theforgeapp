@@ -1,5 +1,4 @@
 export { ProfileHero } from './ProfileHero';
-export { QuickStatsRow } from './QuickStatsRow';
 export { AboutSection } from './AboutSection';
 export { VerifiedInfoCard, getSkillsCount } from './VerifiedInfoCard';
 export { WorksSection } from './WorksSection';

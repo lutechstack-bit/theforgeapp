@@ -10,7 +10,6 @@ import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   ProfileHero,
-  QuickStatsRow,
   AboutSection,
   VerifiedInfoCard,
   WorksSection,
@@ -19,7 +18,6 @@ import {
   SharePortfolio,
   ProfileEditSheet,
   PrintableProfile,
-  getSkillsCount,
 } from '@/components/profile';
 
 const Profile: React.FC = () => {
@@ -36,11 +34,6 @@ const Profile: React.FC = () => {
   const printRef = useRef<HTMLDivElement>(null);
 
   const isVerified = profile?.ky_form_completed && profile?.payment_status === 'BALANCE_PAID';
-  const skillsCount = getSkillsCount(
-    profileData?.cohortType || null,
-    profileData?.kyfResponse,
-    profileData?.kywResponse
-  );
 
   const handleSignOut = async () => {
     try {
@@ -90,22 +83,13 @@ const Profile: React.FC = () => {
   };
 
   return (
-    <div className="container py-6 space-y-6 max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto px-4 md:px-6 space-y-5 pb-6">
       {/* Profile Hero */}
       <ProfileHero
         profile={profile}
         edition={edition}
         isOwner={true}
         onEdit={() => setEditSheetOpen(true)}
-      />
-
-      {/* Quick Stats */}
-      <QuickStatsRow
-        editionName={(edition as any)?.name}
-        city={(edition as any)?.city}
-        skillsCount={skillsCount}
-        messageCount={profileData?.messageCount || 0}
-        worksCount={profileData?.worksCount || 0}
       />
 
       {/* About Section */}
