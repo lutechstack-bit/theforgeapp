@@ -202,7 +202,8 @@ export const CompactChat: React.FC<CompactChatProps> = ({
     
     // Add optimistic message immediately
     setMessages((prev) => [...prev, optimisticMessage]);
-    scrollToBottom();
+    // Use setTimeout to ensure DOM has updated before scrolling
+    setTimeout(() => scrollToBottom(), 50);
     
     let imageUrl: string | null = null;
     if (currentImageFile) {
@@ -252,9 +253,9 @@ export const CompactChat: React.FC<CompactChatProps> = ({
   const groupName = activeGroupType === 'cohort' ? cohortGroup?.name : groups.find((g) => g.id === activeGroupId)?.name;
 
   return (
-    <div className="flex flex-col h-full bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden">
+    <div className="relative flex flex-col h-full bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border/40 bg-secondary/20">
+      <div className="flex items-center gap-3 px-4 py-4 border-b border-border/40 bg-secondary/20">
         <div className={cn(
           "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
           activeGroupType === 'cohort' ? "bg-primary/10" : "bg-green-500/10"
@@ -281,7 +282,7 @@ export const CompactChat: React.FC<CompactChatProps> = ({
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 md:p-5 space-y-3 md:space-y-4">
         {loading ? (
           <div className="flex items-center justify-center h-32"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
         ) : messages.length === 0 ? (
@@ -316,7 +317,7 @@ export const CompactChat: React.FC<CompactChatProps> = ({
       )}
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="flex items-center gap-2 p-4 border-t border-border/40 bg-secondary/10">
+      <form onSubmit={handleSubmit} className="flex items-center gap-3 p-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] md:pb-4 border-t border-border/40 bg-secondary/10">
         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
         <Button
           type="button"
@@ -324,7 +325,7 @@ export const CompactChat: React.FC<CompactChatProps> = ({
           size="icon"
           onClick={() => fileInputRef.current?.click()}
           disabled={sending}
-          className="shrink-0 h-10 w-10"
+          className="shrink-0 h-11 w-11 md:h-10 md:w-10"
         >
           <ImageIcon className="w-5 h-5 text-muted-foreground" />
         </Button>
@@ -333,12 +334,12 @@ export const CompactChat: React.FC<CompactChatProps> = ({
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Type a message..."
           disabled={sending}
-          className="flex-1 h-10 bg-background border-border/50 focus-visible:ring-1 focus-visible:ring-primary"
+          className="flex-1 h-11 md:h-10 text-base md:text-sm bg-background border-border/50 focus-visible:ring-1 focus-visible:ring-primary"
         />
         <Button
           type="submit"
           disabled={(!message.trim() && !imageFile) || sending}
-          className="shrink-0 h-10 w-10 p-0"
+          className="shrink-0 h-11 w-11 md:h-10 md:w-10 p-0"
         >
           {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </Button>

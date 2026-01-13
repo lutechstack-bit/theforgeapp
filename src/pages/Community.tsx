@@ -147,7 +147,7 @@ const Community = () => {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-5rem)] gap-4">
+    <div className="flex flex-col h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] px-2 md:px-4 gap-3">
       {/* Header - More Spacious */}
       <CommunityHeader memberCount={stats.totalMembers} onlineCount={onlineUserIds.length} />
 
