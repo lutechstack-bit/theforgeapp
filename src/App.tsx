@@ -28,6 +28,7 @@ import { RoadmapJourney, RoadmapPrep, RoadmapEquipment, RoadmapRules, RoadmapGal
 import Perks from "./pages/Perks";
 import Updates from "./pages/Updates";
 import Profile from "./pages/Profile";
+import PublicPortfolio from "./pages/PublicPortfolio";
 import NotFound from "./pages/NotFound";
 
 // Admin Pages
@@ -127,6 +128,7 @@ const AppRoutes = () => {
       <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
       <Route path="/forgot-password" element={user ? <Navigate to="/" replace /> : <ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/portfolio/:slug" element={<PublicPortfolio />} />
       <Route path="/welcome" element={
         <ProtectedRoute>
           <ProfileSetupCheck>
