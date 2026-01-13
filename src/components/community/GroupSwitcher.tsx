@@ -36,87 +36,39 @@ export const GroupSwitcher: React.FC<GroupSwitcherProps> = ({
 }) => {
   const userCityGroup = cityGroups.find(g => g.id === userCityGroupId);
   const mainGroup = cityGroups.find(g => g.is_main);
+  const displayCityGroup = userCityGroup || mainGroup;
 
   return (
-    <div className="flex flex-col gap-1.5 p-2 bg-secondary/30 rounded-xl border border-border/40">
-      {/* Cohort Group */}
+    <div className="flex items-center gap-2 p-1.5 bg-secondary/40 rounded-full border border-border/40 w-fit">
+      {/* Cohort Tab */}
       {cohortGroup && (
         <button
           onClick={onSelectCohort}
           className={cn(
-            "flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all text-left",
+            "flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all",
             activeGroupType === 'cohort'
               ? "bg-primary text-primary-foreground shadow-sm"
-              : "bg-background/50 hover:bg-background text-foreground border border-border/40"
+              : "text-muted-foreground hover:text-foreground hover:bg-background/50"
           )}
         >
-          <div className={cn(
-            "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-            activeGroupType === 'cohort' 
-              ? "bg-primary-foreground/20" 
-              : "bg-primary/10"
-          )}>
-            <Users className={cn(
-              "w-4 h-4",
-              activeGroupType === 'cohort' ? "text-primary-foreground" : "text-primary"
-            )} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold truncate">My Cohort</p>
-            <p className={cn(
-              "text-[10px] truncate",
-              activeGroupType === 'cohort' ? "text-primary-foreground/70" : "text-muted-foreground"
-            )}>
-              {cohortGroup.name}
-            </p>
-          </div>
+          <Users className="w-4 h-4" />
+          <span>My Cohort</span>
         </button>
       )}
 
-      {/* Divider */}
-      <div className="flex items-center gap-2 px-2 py-1">
-        <div className="flex-1 h-px bg-border/50" />
-        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">City</span>
-        <div className="flex-1 h-px bg-border/50" />
-      </div>
-
-      {/* User's City Group or Main Group */}
-      {(userCityGroup || mainGroup) && (
+      {/* City Tab */}
+      {displayCityGroup && (
         <button
-          onClick={() => onSelectCity((userCityGroup || mainGroup)!.id)}
+          onClick={() => onSelectCity(displayCityGroup.id)}
           className={cn(
-            "flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all text-left",
-            activeGroupType === 'city' && activeGroupId === (userCityGroup || mainGroup)?.id
+            "flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all",
+            activeGroupType === 'city' && activeGroupId === displayCityGroup.id
               ? "bg-primary text-primary-foreground shadow-sm"
-              : "bg-background/50 hover:bg-background text-foreground border border-border/40"
+              : "text-muted-foreground hover:text-foreground hover:bg-background/50"
           )}
         >
-          <div className={cn(
-            "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-            activeGroupType === 'city' && activeGroupId === (userCityGroup || mainGroup)?.id
-              ? "bg-primary-foreground/20" 
-              : "bg-green-500/10"
-          )}>
-            <MapPin className={cn(
-              "w-4 h-4",
-              activeGroupType === 'city' && activeGroupId === (userCityGroup || mainGroup)?.id
-                ? "text-primary-foreground" 
-                : "text-green-500"
-            )} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold truncate">
-              {(userCityGroup || mainGroup)?.name}
-            </p>
-            <p className={cn(
-              "text-[10px] truncate",
-              activeGroupType === 'city' && activeGroupId === (userCityGroup || mainGroup)?.id
-                ? "text-primary-foreground/70" 
-                : "text-muted-foreground"
-            )}>
-              Regional community
-            </p>
-          </div>
+          <MapPin className="w-4 h-4" />
+          <span>{displayCityGroup.name}</span>
         </button>
       )}
     </div>

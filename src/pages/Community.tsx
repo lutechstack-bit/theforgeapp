@@ -2,9 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CommunityHeader } from '@/components/community/CommunityHeader';
-import { MemberAvatarStrip } from '@/components/community/MemberAvatarStrip';
 import { CompactChat } from '@/components/community/CompactChat';
-import { CompactHighlights } from '@/components/community/CompactHighlights';
 import { GroupSwitcher } from '@/components/community/GroupSwitcher';
 import { Loader2 } from 'lucide-react';
 import { RealtimeChannel } from '@supabase/supabase-js';
@@ -150,52 +148,30 @@ const Community = () => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-5rem)] gap-4">
-      {/* Top Section - Header & Members */}
-      <div className="space-y-3">
-        <CommunityHeader memberCount={stats.totalMembers} onlineCount={onlineUserIds.length} />
-        <MemberAvatarStrip onlineUserIds={onlineUserIds} />
-        <CompactHighlights />
-      </div>
+      {/* Header - More Spacious */}
+      <CommunityHeader memberCount={stats.totalMembers} onlineCount={onlineUserIds.length} />
 
-      {/* Main Content - Sidebar + Chat */}
-      <div className="flex-1 min-h-0 flex gap-4">
-        {/* Sidebar - Desktop only */}
-        <div className="hidden md:block w-48 shrink-0">
-          <GroupSwitcher
-            cohortGroup={cohortGroup}
-            cityGroups={cityGroups}
-            userCityGroupId={userCityGroupId}
-            activeGroupType={activeGroupType}
-            activeGroupId={activeGroupId}
-            onSelectCohort={handleSelectCohort}
-            onSelectCity={handleSelectCity}
-          />
-        </div>
+      {/* Horizontal Pill Tabs */}
+      <GroupSwitcher
+        cohortGroup={cohortGroup}
+        cityGroups={cityGroups}
+        userCityGroupId={userCityGroupId}
+        activeGroupType={activeGroupType}
+        activeGroupId={activeGroupId}
+        onSelectCohort={handleSelectCohort}
+        onSelectCity={handleSelectCity}
+      />
 
-        {/* Chat Area */}
-        <div className="flex-1 min-w-0">
-          <CompactChat
-            groups={cityGroups}
-            cohortGroup={cohortGroup}
-            activeGroupType={activeGroupType}
-            activeGroupId={activeGroupId}
-            onGroupChange={handleSelectCity}
-            onCohortSelect={handleSelectCohort}
-            typingUsers={typingUsers}
-          />
-        </div>
-      </div>
-
-      {/* Mobile Group Switcher - Bottom */}
-      <div className="md:hidden pb-16">
-        <GroupSwitcher
+      {/* Chat Area - Full Width */}
+      <div className="flex-1 min-h-0">
+        <CompactChat
+          groups={cityGroups}
           cohortGroup={cohortGroup}
-          cityGroups={cityGroups}
-          userCityGroupId={userCityGroupId}
           activeGroupType={activeGroupType}
           activeGroupId={activeGroupId}
-          onSelectCohort={handleSelectCohort}
-          onSelectCity={handleSelectCity}
+          onGroupChange={handleSelectCity}
+          onCohortSelect={handleSelectCohort}
+          typingUsers={typingUsers}
         />
       </div>
     </div>
