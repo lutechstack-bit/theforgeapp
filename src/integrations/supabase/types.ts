@@ -1378,6 +1378,7 @@ export type Database = {
           phone: string | null
           profile_setup_completed: boolean
           specialty: string | null
+          tagline: string | null
           twitter_handle: string | null
           unlock_level: Database["public"]["Enums"]["unlock_level"]
           updated_at: string
@@ -1400,6 +1401,7 @@ export type Database = {
           phone?: string | null
           profile_setup_completed?: boolean
           specialty?: string | null
+          tagline?: string | null
           twitter_handle?: string | null
           unlock_level?: Database["public"]["Enums"]["unlock_level"]
           updated_at?: string
@@ -1422,6 +1424,7 @@ export type Database = {
           phone?: string | null
           profile_setup_completed?: boolean
           specialty?: string | null
+          tagline?: string | null
           twitter_handle?: string | null
           unlock_level?: Database["public"]["Enums"]["unlock_level"]
           updated_at?: string
@@ -1432,6 +1435,41 @@ export type Database = {
             columns: ["edition_id"]
             isOneToOne: false
             referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_portfolios: {
+        Row: {
+          created_at: string
+          id: string
+          is_public: boolean
+          slug: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          slug: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          slug?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_portfolios_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1706,6 +1744,59 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_works: {
+        Row: {
+          award_tags: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          media_type: string
+          media_url: string | null
+          order_index: number
+          thumbnail_url: string | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          award_tags?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          media_type?: string
+          media_url?: string | null
+          order_index?: number
+          thumbnail_url?: string | null
+          title: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          award_tags?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          media_type?: string
+          media_url?: string | null
+          order_index?: number
+          thumbnail_url?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_works_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       video_access_logs: {
         Row: {
