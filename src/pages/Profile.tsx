@@ -101,8 +101,8 @@ const Profile: React.FC = () => {
 
       {/* Quick Stats */}
       <QuickStatsRow
-        editionName={edition?.name}
-        city={edition?.city}
+        editionName={(edition as any)?.name}
+        city={(edition as any)?.city}
         skillsCount={skillsCount}
         messageCount={profileData?.messageCount || 0}
         worksCount={profileData?.worksCount || 0}
@@ -136,7 +136,7 @@ const Profile: React.FC = () => {
         isVerified={isVerified}
         messageCount={profileData?.messageCount || 0}
         hasStudentFilm={false}
-        memberSince={profile?.created_at}
+        memberSince={(profile as any)?.created_at}
       />
 
       {/* Share Portfolio */}

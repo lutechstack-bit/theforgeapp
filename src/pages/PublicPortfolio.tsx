@@ -38,8 +38,15 @@ const PublicPortfolio: React.FC = () => {
     );
   }
 
-  const { profile, works, kyResponse, cohortType } = data;
+  const { profile, works: rawWorks, kyResponse, cohortType } = data;
   const edition = profile?.editions;
+  
+  // Transform works to ensure award_tags is properly typed
+  const works = rawWorks.map(work => ({
+    ...work,
+    award_tags: Array.isArray(work.award_tags) ? work.award_tags as string[] : []
+  }));
+  
   const skillsCount = getSkillsCount(cohortType, 
     cohortType === 'FORGE' || cohortType === 'FORGE_CREATORS' ? kyResponse : null,
     cohortType === 'FORGE_WRITING' ? kyResponse : null
