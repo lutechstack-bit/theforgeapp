@@ -164,30 +164,36 @@ export type Database = {
       }
       editions: {
         Row: {
+          archived_at: string | null
           city: string
           cohort_type: Database["public"]["Enums"]["cohort_type"]
           created_at: string
           forge_end_date: string | null
           forge_start_date: string | null
           id: string
+          is_archived: boolean
           name: string
         }
         Insert: {
+          archived_at?: string | null
           city: string
           cohort_type?: Database["public"]["Enums"]["cohort_type"]
           created_at?: string
           forge_end_date?: string | null
           forge_start_date?: string | null
           id?: string
+          is_archived?: boolean
           name: string
         }
         Update: {
+          archived_at?: string | null
           city?: string
           cohort_type?: Database["public"]["Enums"]["cohort_type"]
           created_at?: string
           forge_end_date?: string | null
           forge_start_date?: string | null
           id?: string
+          is_archived?: boolean
           name?: string
         }
         Relationships: []

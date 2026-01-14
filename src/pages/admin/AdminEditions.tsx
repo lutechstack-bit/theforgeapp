@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Edit, Trash2, Loader2, Calendar } from 'lucide-react';
+import { Plus, Edit, Loader2, Calendar, Archive, ArchiveRestore } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -35,12 +37,14 @@ import { format } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
 
 type Edition = Database['public']['Tables']['editions']['Row'];
+type EditionWithCount = Edition & { userCount: number };
 
 export default function AdminEditions() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isDialogOpen, setIsDialogOpen] = useState(searchParams.get('action') === 'create');
   const [editingEdition, setEditingEdition] = useState<Edition | null>(null);
-  const [deletingEdition, setDeletingEdition] = useState<Edition | null>(null);
+  const [archivingEdition, setArchivingEdition] = useState<EditionWithCount | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch editions with user counts
@@ -65,6 +69,9 @@ export default function AdminEditions() {
       return editionsData.map(e => ({ ...e, userCount: userCounts[e.id] || 0 }));
     }
   });
+
+  // Filter editions based on archive toggle
+  const filteredEditions = editions?.filter(e => showArchived ? e.is_archived : !e.is_archived);
 
   // Create edition mutation
   const createMutation = useMutation({
@@ -99,21 +106,30 @@ export default function AdminEditions() {
     }
   });
 
-  // Delete edition mutation
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('editions').delete().eq('id', id);
+  // Archive/Restore edition mutation
+  const archiveMutation = useMutation({
+    mutationFn: async ({ id, archive }: { id: string; archive: boolean }) => {
+      const { error } = await supabase
+        .from('editions')
+        .update({ 
+          is_archived: archive,
+          archived_at: archive ? new Date().toISOString() : null 
+        })
+        .eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      toast.success('Edition deleted successfully');
+    onSuccess: (_, { archive }) => {
+      toast.success(archive ? 'Edition archived successfully' : 'Edition restored successfully');
       queryClient.invalidateQueries({ queryKey: ['admin-editions'] });
-      setDeletingEdition(null);
+      setArchivingEdition(null);
     },
     onError: (error: Error) => {
       toast.error(error.message);
     }
   });
+
+  const archivedCount = editions?.filter(e => e.is_archived).length || 0;
+  const activeCount = editions?.filter(e => !e.is_archived).length || 0;
 
   return (
     <div className="p-8">
@@ -128,24 +144,56 @@ export default function AdminEditions() {
         </Button>
       </div>
 
+      {/* Archive Filter Toggle */}
+      <div className="flex items-center justify-between mb-6 p-4 bg-card/50 border border-border/50 rounded-lg">
+        <div className="flex items-center gap-3">
+          <Switch
+            id="show-archived"
+            checked={showArchived}
+            onCheckedChange={setShowArchived}
+          />
+          <Label htmlFor="show-archived" className="text-sm cursor-pointer">
+            {showArchived ? 'Showing archived editions' : 'Show archived editions'}
+          </Label>
+        </div>
+        <div className="flex gap-4 text-sm text-muted-foreground">
+          <span>{activeCount} active</span>
+          <span>{archivedCount} archived</span>
+        </div>
+      </div>
+
       {/* Editions Grid */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
-      ) : editions?.length === 0 ? (
+      ) : filteredEditions?.length === 0 ? (
         <Card className="bg-card/50 border-border/50">
           <CardContent className="py-12 text-center text-muted-foreground">
-            No editions yet. Create your first edition to get started.
+            {showArchived 
+              ? 'No archived editions.' 
+              : 'No active editions. Create your first edition to get started.'}
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {editions?.map((edition) => (
-            <Card key={edition.id} className="bg-card/50 border-border/50">
+          {filteredEditions?.map((edition) => (
+            <Card 
+              key={edition.id} 
+              className={`bg-card/50 border-border/50 transition-opacity ${
+                edition.is_archived ? 'opacity-60' : ''
+              }`}
+            >
               <CardHeader className="flex flex-row items-start justify-between">
                 <div>
-                  <CardTitle className="text-lg">{edition.name}</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-lg">{edition.name}</CardTitle>
+                    {edition.is_archived && (
+                      <Badge variant="secondary" className="bg-amber-500/20 text-amber-400 text-xs">
+                        Archived
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground mt-1">{edition.city}</p>
                   <span className={`mt-2 inline-block px-2 py-0.5 rounded text-xs font-medium ${
                     edition.cohort_type === 'FORGE' ? 'bg-forge-yellow/20 text-forge-yellow' :
@@ -166,9 +214,14 @@ export default function AdminEditions() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setDeletingEdition(edition)}
+                    onClick={() => setArchivingEdition(edition)}
+                    title={edition.is_archived ? 'Restore edition' : 'Archive edition'}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    {edition.is_archived ? (
+                      <ArchiveRestore className="w-4 h-4" />
+                    ) : (
+                      <Archive className="w-4 h-4" />
+                    )}
                   </Button>
                 </div>
               </CardHeader>
@@ -189,6 +242,11 @@ export default function AdminEditions() {
                     <span className="text-primary font-medium">{edition.userCount}</span>
                     <span className="text-muted-foreground">users enrolled</span>
                   </div>
+                  {edition.is_archived && edition.archived_at && (
+                    <p className="text-xs text-muted-foreground">
+                      Archived on {format(new Date(edition.archived_at), 'MMM d, yyyy')}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -217,22 +275,46 @@ export default function AdminEditions() {
         isLoading={createMutation.isPending || updateMutation.isPending}
       />
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deletingEdition} onOpenChange={() => setDeletingEdition(null)}>
+      {/* Archive/Restore Confirmation */}
+      <AlertDialog open={!!archivingEdition} onOpenChange={() => setArchivingEdition(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Edition?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete "{deletingEdition?.name}". Users assigned to this edition will need to be reassigned.
+            <AlertDialogTitle>
+              {archivingEdition?.is_archived ? 'Restore Edition?' : 'Archive Edition?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              {archivingEdition?.is_archived ? (
+                <span>
+                  "{archivingEdition?.name}" will be restored and appear in active edition lists.
+                </span>
+              ) : (
+                <>
+                  <span>
+                    "{archivingEdition?.name}" will be hidden from active lists but all data will be preserved.
+                  </span>
+                  {archivingEdition && archivingEdition.userCount > 0 && (
+                    <span className="block mt-2 text-amber-400">
+                      {archivingEdition.userCount} users will remain in this edition but it won't appear in dropdowns for new user assignments.
+                    </span>
+                  )}
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deletingEdition && deleteMutation.mutate(deletingEdition.id)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => archivingEdition && archiveMutation.mutate({ 
+                id: archivingEdition.id, 
+                archive: !archivingEdition.is_archived 
+              })}
+              className={archivingEdition?.is_archived 
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                : 'bg-amber-600 text-white hover:bg-amber-700'
+              }
             >
-              Delete
+              {archiveMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {archivingEdition?.is_archived ? 'Restore' : 'Archive'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
