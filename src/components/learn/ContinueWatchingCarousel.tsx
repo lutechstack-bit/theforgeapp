@@ -50,7 +50,7 @@ export const ContinueWatchingCarousel: React.FC<ContinueWatchingCarouselProps> =
         }}
         className="w-full"
       >
-        <CarouselContent className="-ml-4">
+        <CarouselContent className="-ml-4 py-4 -my-4">
           {inProgressItems.map((item) => (
             <CarouselItem
               key={item.id}
