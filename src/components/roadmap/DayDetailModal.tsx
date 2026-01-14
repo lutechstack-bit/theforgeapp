@@ -8,9 +8,9 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Clock, MapPin, Users, Lightbulb, Zap, Calendar,
-  CheckCircle2, Target, ChevronRight
+import {
+  Clock, MapPin, Users, Lightbulb, Calendar,
+  CheckCircle2, Target, ChevronRight, Backpack, Trophy, Sparkles
 } from 'lucide-react';
 import { getDayIcon, getScheduleIcon } from '@/lib/roadmapIcons';
 import type { CohortType } from '@/lib/roadmapIcons';
@@ -41,6 +41,10 @@ interface DayDetailModalProps {
     theme_name?: string | null;
     objective?: string | null;
     schedule?: ScheduleItem[];
+    what_youll_learn?: string[] | null;
+    gear_materials?: string[] | null;
+    expected_outcomes?: string[] | null;
+    pro_tips?: string[] | null;
   };
   status: 'completed' | 'current' | 'upcoming' | 'locked';
   cohortType: CohortType;
@@ -55,19 +59,7 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({
   cohortType,
   forgeMode,
 }) => {
-  const getIntensityBadge = () => {
-    const level = day.intensity_level || 'medium';
-    const config = {
-      low: { label: 'Light Day', variant: 'secondary' as const },
-      medium: { label: 'Moderate', variant: 'default' as const },
-      high: { label: 'Intensive', variant: 'destructive' as const },
-      intense: { label: 'Full Power', variant: 'destructive' as const },
-    };
-    return config[level as keyof typeof config] || config.medium;
-  };
-
   const schedule = day.schedule || [];
-  const intensityConfig = getIntensityBadge();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -141,10 +133,10 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({
                 {day.location}
               </span>
             )}
-            {day.intensity_level && (
+            {day.duration_hours && (
               <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-secondary/50">
-                <Zap className="w-3.5 h-3.5" />
-                {intensityConfig.label}
+                <Clock className="w-3.5 h-3.5" />
+                {day.duration_hours}h
               </span>
             )}
           </div>
@@ -211,18 +203,92 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({
               </div>
             )}
 
-            {/* Key Learnings */}
+            {/* What You'll Learn */}
+            {day.what_youll_learn && day.what_youll_learn.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4 text-primary" />
+                  What You'll Learn
+                </h4>
+                <ul className="space-y-2">
+                  {day.what_youll_learn.map((item, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <ChevronRight className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Key Learnings (from previous cohorts) */}
             {day.key_learnings && day.key_learnings.length > 0 && (
               <div>
                 <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4 text-accent" />
-                  Key Learnings
+                  <Sparkles className="w-4 h-4 text-accent" />
+                  Key Takeaways
                 </h4>
                 <ul className="space-y-2">
                   {day.key_learnings.map((learning, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                       <ChevronRight className="w-4 h-4 mt-0.5 text-accent flex-shrink-0" />
                       <span>{learning}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Gear & Materials */}
+            {day.gear_materials && day.gear_materials.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Backpack className="w-4 h-4 text-primary" />
+                  Bring With You
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {day.gear_materials.map((item, i) => (
+                    <span 
+                      key={i} 
+                      className="px-3 py-1.5 rounded-full text-xs bg-secondary/70 text-foreground border border-border/50"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Expected Outcomes */}
+            {day.expected_outcomes && day.expected_outcomes.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Trophy className="w-4 h-4 text-primary" />
+                  Expected Outcomes
+                </h4>
+                <ul className="space-y-2">
+                  {day.expected_outcomes.map((outcome, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                      <span>{outcome}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Pro Tips */}
+            {day.pro_tips && day.pro_tips.length > 0 && (
+              <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  Pro Tips
+                </h4>
+                <ul className="space-y-2">
+                  {day.pro_tips.map((tip, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <span className="text-primary">💡</span>
+                      <span>{tip}</span>
                     </li>
                   ))}
                 </ul>

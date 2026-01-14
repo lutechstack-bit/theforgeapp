@@ -1485,6 +1485,8 @@ export type Database = {
           description: string | null
           duration_hours: number | null
           edition_id: string | null
+          expected_outcomes: string[] | null
+          gear_materials: string[] | null
           id: string
           intensity_level: string | null
           is_active: boolean
@@ -1494,12 +1496,14 @@ export type Database = {
           mentors: string[] | null
           milestone_type: string | null
           objective: string | null
+          pro_tips: string[] | null
           reveal_days_before: number | null
           schedule: Json | null
           teaser_text: string | null
           theme_name: string | null
           title: string
           updated_at: string
+          what_youll_learn: string[] | null
         }
         Insert: {
           activity_type?: string | null
@@ -1511,6 +1515,8 @@ export type Database = {
           description?: string | null
           duration_hours?: number | null
           edition_id?: string | null
+          expected_outcomes?: string[] | null
+          gear_materials?: string[] | null
           id?: string
           intensity_level?: string | null
           is_active?: boolean
@@ -1520,12 +1526,14 @@ export type Database = {
           mentors?: string[] | null
           milestone_type?: string | null
           objective?: string | null
+          pro_tips?: string[] | null
           reveal_days_before?: number | null
           schedule?: Json | null
           teaser_text?: string | null
           theme_name?: string | null
           title: string
           updated_at?: string
+          what_youll_learn?: string[] | null
         }
         Update: {
           activity_type?: string | null
@@ -1537,6 +1545,8 @@ export type Database = {
           description?: string | null
           duration_hours?: number | null
           edition_id?: string | null
+          expected_outcomes?: string[] | null
+          gear_materials?: string[] | null
           id?: string
           intensity_level?: string | null
           is_active?: boolean
@@ -1546,12 +1556,14 @@ export type Database = {
           mentors?: string[] | null
           milestone_type?: string | null
           objective?: string | null
+          pro_tips?: string[] | null
           reveal_days_before?: number | null
           schedule?: Json | null
           teaser_text?: string | null
           theme_name?: string | null
           title?: string
           updated_at?: string
+          what_youll_learn?: string[] | null
         }
         Relationships: [
           {
