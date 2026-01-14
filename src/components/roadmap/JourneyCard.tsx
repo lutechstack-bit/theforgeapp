@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { MapPin, Clock, Lock, CheckCircle2, Sparkles } from 'lucide-react';
+import { MapPin, Clock, Lock, CheckCircle2, Sparkles, Trophy } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
 import DayDetailModal from './DayDetailModal';
 import type { CohortType } from '@/lib/roadmapIcons';
@@ -34,6 +34,7 @@ interface JourneyCardProps {
   forgeMode: 'PRE_FORGE' | 'DURING_FORGE' | 'POST_FORGE';
   forgeStartDate?: Date | null;
   cohortType?: CohortType;
+  onHover?: (isHovered: boolean) => void;
 }
 
 const JourneyCard: React.FC<JourneyCardProps> = ({
@@ -41,7 +42,8 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
   status,
   forgeMode,
   forgeStartDate,
-  cohortType = 'FORGE'
+  cohortType = 'FORGE',
+  onHover
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -61,8 +63,19 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
   const dayNum = dayDate ? format(dayDate, 'dd') : String(day.day_number).padStart(2, '0');
   const month = dayDate ? format(dayDate, 'MMM') : null;
 
-  // Get status-based styling
+  // Get forge mode + status-based styling
   const getCardStyles = () => {
+    // PRE_FORGE: Muted preview state
+    if (forgeMode === 'PRE_FORGE') {
+      return 'border-l-muted/40 bg-card/20 opacity-70 hover:opacity-85';
+    }
+    
+    // POST_FORGE: All completed/archive look
+    if (forgeMode === 'POST_FORGE') {
+      return 'border-l-primary/40 bg-card/25 opacity-90';
+    }
+    
+    // DURING_FORGE: Active status-based styling
     switch (status) {
       case 'completed':
         return 'border-l-primary/50 bg-card/30';
@@ -77,6 +90,19 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
     }
   };
 
+  // Get date number styling based on mode
+  const getDateStyles = () => {
+    if (forgeMode === 'PRE_FORGE') {
+      return 'text-muted-foreground';
+    }
+    if (forgeMode === 'POST_FORGE') {
+      return 'text-primary/80';
+    }
+    if (status === 'current') return 'gradient-text';
+    if (status === 'completed') return 'text-primary';
+    return 'text-foreground';
+  };
+
   return (
     <>
       <div
@@ -87,6 +113,8 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
           ${getCardStyles()}
         `}
         onClick={() => setIsModalOpen(true)}
+        onMouseEnter={() => onHover?.(true)}
+        onMouseLeave={() => onHover?.(false)}
       >
         <div className="flex gap-4">
           {/* Date Block - Left side */}
@@ -96,7 +124,7 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
                 {dayOfWeek}
               </p>
             )}
-            <p className={`text-2xl font-bold ${status === 'current' ? 'gradient-text' : status === 'completed' ? 'text-primary' : 'text-foreground'}`}>
+            <p className={`text-2xl font-bold ${getDateStyles()}`}>
               {dayNum}
             </p>
             {month && (
@@ -115,7 +143,11 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
             <div className="flex items-center justify-between gap-2 mb-1.5">
               <span className={`
                 text-[10px] font-semibold px-2 py-0.5 rounded-md
-                ${status === 'current' 
+                ${forgeMode === 'PRE_FORGE'
+                  ? 'bg-muted/50 text-muted-foreground'
+                  : forgeMode === 'POST_FORGE'
+                  ? 'bg-primary/20 text-primary'
+                  : status === 'current' 
                   ? 'bg-primary text-primary-foreground' 
                   : status === 'completed'
                   ? 'bg-primary/20 text-primary'
@@ -132,14 +164,18 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
                 </span>
               )}
               
-              {status === 'current' && (
+              {status === 'current' && forgeMode === 'DURING_FORGE' && (
                 <span className="flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                   <span className="text-[10px] text-primary font-semibold">NOW</span>
                 </span>
               )}
               
-              {status === 'completed' && (
+              {forgeMode === 'POST_FORGE' && (
+                <Trophy className="w-4 h-4 text-primary/60" />
+              )}
+              
+              {status === 'completed' && forgeMode === 'DURING_FORGE' && (
                 <CheckCircle2 className="w-4 h-4 text-primary" />
               )}
             </div>
