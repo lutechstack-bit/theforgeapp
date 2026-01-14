@@ -73,6 +73,31 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+// KYF Route - Smart redirect based on cohort type
+const KYFRedirect: React.FC = () => {
+  const { profile, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-primary">Loading...</div>
+      </div>
+    );
+  }
+  
+  // Get cohort type from edition if available
+  const cohortType = (profile as any)?.edition?.cohort_type;
+  
+  switch (cohortType) {
+    case 'FORGE_WRITING':
+      return <Navigate to="/kyw-form" replace />;
+    case 'FORGE_CREATORS':
+      return <Navigate to="/kyc-form" replace />;
+    default:
+      return <Navigate to="/kyf-form" replace />;
+  }
+};
+
 // Profile Setup Check wrapper - ensures profile setup is completed first
 const ProfileSetupCheck: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { profile, loading } = useAuth();
@@ -146,6 +171,13 @@ const AppRoutes = () => {
           </ProfileSetupRoute>
         </ProtectedRoute>
       } />
+      <Route path="/kyf" element={
+        <ProtectedRoute>
+          <ProfileSetupCheck>
+            <KYFRedirect />
+          </ProfileSetupCheck>
+        </ProtectedRoute>
+      } />
       <Route path="/kyf-form" element={
         <ProtectedRoute>
           <ProfileSetupCheck>
@@ -157,6 +189,13 @@ const AppRoutes = () => {
         <ProtectedRoute>
           <ProfileSetupCheck>
             <KYCForm />
+          </ProfileSetupCheck>
+        </ProtectedRoute>
+      } />
+      <Route path="/kyw-form" element={
+        <ProtectedRoute>
+          <ProfileSetupCheck>
+            <KYWForm />
           </ProfileSetupCheck>
         </ProtectedRoute>
       } />
