@@ -70,7 +70,7 @@ const RulesAccordion: React.FC = () => {
         </div>
       </div>
 
-      <Accordion type="multiple" defaultValue={['zero-tolerance']} className="space-y-3">
+      <Accordion type="multiple" defaultValue={[]} className="space-y-3">
         {/* Zero Tolerance */}
         <AccordionItem value="zero-tolerance" className="glass-card rounded-xl border-destructive/20 overflow-hidden">
           <AccordionTrigger className="px-4 py-3 hover:no-underline">

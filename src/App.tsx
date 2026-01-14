@@ -42,6 +42,7 @@ import AdminLearn from "./pages/admin/AdminLearn";
 import AdminAutoUpdates from "./pages/admin/AdminAutoUpdates";
 import AdminHeroBanners from "./pages/admin/AdminHeroBanners";
 import AdminRoadmap from "./pages/admin/AdminRoadmap";
+import AdminRoadmapSidebar from "./pages/admin/AdminRoadmapSidebar";
 import AdminKYForms from "./pages/admin/AdminKYForms";
 import AdminEventTypes from "./pages/admin/AdminEventTypes";
 import AdminPastPrograms from "./pages/admin/AdminPastPrograms";
@@ -208,6 +209,7 @@ const AppRoutes = () => {
         <Route path="auto-updates" element={<AdminAutoUpdates />} />
         <Route path="hero-banners" element={<AdminHeroBanners />} />
         <Route path="roadmap" element={<AdminRoadmap />} />
+        <Route path="roadmap-sidebar" element={<AdminRoadmapSidebar />} />
         <Route path="equipment" element={<AdminEquipment />} />
         <Route path="ky-forms" element={<AdminKYForms />} />
         <Route path="community-highlights" element={<AdminCommunityHighlights />} />

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Map, FileText, Package, Film, Image, BookOpen
+  Map, FileText, Package, Film, Image, BookOpen, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -9,12 +9,14 @@ interface QuickActionsBarProps {
   hasGallery?: boolean;
   hasFilms?: boolean;
   hasEquipment?: boolean;
+  mobileHighlightsButton?: React.ReactNode;
 }
 
 const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
   hasGallery = false,
   hasFilms = false,
-  hasEquipment = false
+  hasEquipment = false,
+  mobileHighlightsButton
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -59,6 +61,13 @@ const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
             </Button>
           );
         })}
+        
+        {/* Mobile Highlights Button - Only visible on mobile/tablet */}
+        {mobileHighlightsButton && (
+          <div className="lg:hidden flex-shrink-0 ml-auto">
+            {mobileHighlightsButton}
+          </div>
+        )}
       </div>
     </div>
   );
