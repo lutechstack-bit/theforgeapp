@@ -34,7 +34,7 @@ import type { Database } from '@/integrations/supabase/types';
 type Profile = Database['public']['Tables']['profiles']['Row'];
 type Edition = Database['public']['Tables']['editions']['Row'];
 type PaymentStatus = Database['public']['Enums']['payment_status'];
-type ForgeMode = Database['public']['Enums']['forge_mode'];
+
 
 export default function AdminUsers() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -77,7 +77,6 @@ export default function AdminUsers() {
       edition_id?: string;
       specialty?: string;
       payment_status: PaymentStatus;
-      forge_mode: ForgeMode;
     }) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
@@ -174,7 +173,6 @@ export default function AdminUsers() {
               <TableHead>City</TableHead>
               <TableHead>Edition</TableHead>
               <TableHead>Payment</TableHead>
-              <TableHead>Forge Mode</TableHead>
               <TableHead>KYF</TableHead>
               <TableHead className="w-12"></TableHead>
             </TableRow>
@@ -182,13 +180,13 @@ export default function AdminUsers() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
                 </TableCell>
               </TableRow>
             ) : filteredUsers?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   No users found
                 </TableCell>
               </TableRow>
@@ -202,11 +200,6 @@ export default function AdminUsers() {
                   <TableCell>
                     <Badge variant={user.payment_status === 'BALANCE_PAID' ? 'default' : 'secondary'}>
                       {user.payment_status === 'BALANCE_PAID' ? 'Full' : '₹15K'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="capitalize">
-                      {user.forge_mode?.replace('_', ' ').toLowerCase()}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -276,8 +269,7 @@ function CreateUserDialog({
     city: '',
     edition_id: '',
     specialty: '',
-    payment_status: 'CONFIRMED_15K' as PaymentStatus,
-    forge_mode: 'PRE_FORGE' as ForgeMode
+    payment_status: 'CONFIRMED_15K' as PaymentStatus
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -366,38 +358,20 @@ function CreateUserDialog({
               placeholder="e.g., Filmmaking, Writing"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Payment Status</Label>
-              <Select
-                value={formData.payment_status}
-                onValueChange={(value: PaymentStatus) => setFormData({ ...formData, payment_status: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CONFIRMED_15K">₹15K Confirmed</SelectItem>
-                  <SelectItem value="BALANCE_PAID">Balance Paid</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Forge Mode</Label>
-              <Select
-                value={formData.forge_mode}
-                onValueChange={(value: ForgeMode) => setFormData({ ...formData, forge_mode: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PRE_FORGE">Pre-Forge</SelectItem>
-                  <SelectItem value="DURING_FORGE">During Forge</SelectItem>
-                  <SelectItem value="POST_FORGE">Post-Forge</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label>Payment Status</Label>
+            <Select
+              value={formData.payment_status}
+              onValueChange={(value: PaymentStatus) => setFormData({ ...formData, payment_status: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CONFIRMED_15K">₹15K Confirmed</SelectItem>
+                <SelectItem value="BALANCE_PAID">Balance Paid</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -434,7 +408,6 @@ function EditUserDialog({
         edition_id: user.edition_id,
         specialty: user.specialty,
         payment_status: user.payment_status,
-        forge_mode: user.forge_mode,
         kyf_completed: user.kyf_completed
       });
     }
@@ -507,38 +480,20 @@ function EditUserDialog({
               onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Payment Status</Label>
-              <Select
-                value={formData.payment_status}
-                onValueChange={(value: PaymentStatus) => setFormData({ ...formData, payment_status: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CONFIRMED_15K">₹15K Confirmed</SelectItem>
-                  <SelectItem value="BALANCE_PAID">Balance Paid</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Forge Mode</Label>
-              <Select
-                value={formData.forge_mode}
-                onValueChange={(value: ForgeMode) => setFormData({ ...formData, forge_mode: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PRE_FORGE">Pre-Forge</SelectItem>
-                  <SelectItem value="DURING_FORGE">During Forge</SelectItem>
-                  <SelectItem value="POST_FORGE">Post-Forge</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label>Payment Status</Label>
+            <Select
+              value={formData.payment_status}
+              onValueChange={(value: PaymentStatus) => setFormData({ ...formData, payment_status: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CONFIRMED_15K">₹15K Confirmed</SelectItem>
+                <SelectItem value="BALANCE_PAID">Balance Paid</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
