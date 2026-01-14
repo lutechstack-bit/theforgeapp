@@ -97,8 +97,8 @@ const EnhancedRoadmapNode: React.FC<EnhancedRoadmapNodeProps> = ({
     <>
       <div 
         className={`relative flex items-center ${
-          position === 'left' ? 'justify-start pl-4' : 
-          position === 'right' ? 'justify-end pr-4' : 
+          position === 'left' ? 'justify-start pl-2 sm:pl-4' : 
+          position === 'right' ? 'justify-end pr-2 sm:pr-4' : 
           'justify-center'
         }`}
       >
@@ -228,7 +228,7 @@ const EnhancedRoadmapNode: React.FC<EnhancedRoadmapNodeProps> = ({
           </div>
 
           {/* Info Card */}
-          <div className={`glass-card rounded-xl px-4 py-3 min-w-[140px] max-w-[200px] group-hover:border-primary/30 transition-all duration-300 ${
+          <div className={`glass-card rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 min-w-[120px] sm:min-w-[140px] max-w-[160px] sm:max-w-[200px] group-hover:border-primary/30 transition-all duration-300 ${
             status === 'current' ? 'border-primary/40 shadow-glow' : ''
           }`}>
             <div className="flex items-center gap-2 mb-1">
