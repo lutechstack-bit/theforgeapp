@@ -43,7 +43,9 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
       onClick={onClick}
       className={cn(
         "relative flex-shrink-0 w-[140px] sm:w-[160px] md:w-[180px] p-3 sm:p-4 rounded-xl border",
-        "transition-all duration-300 hover:scale-105 hover:shadow-xl",
+        "transition-all duration-300 hover:scale-[1.02]",
+        "hover:shadow-[0_0_25px_hsl(41_100%_62%/0.3),0_0_50px_hsl(39_90%_44%/0.2)]",
+        "hover:border-primary/50",
         "text-left group",
         variantStyles[variant]
       )}

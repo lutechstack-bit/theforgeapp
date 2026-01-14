@@ -180,7 +180,7 @@ const Home: React.FC = () => {
       <ProgressHeroSection />
 
       {/* Compact Community Card */}
-      <div className="bg-card border border-border rounded-xl p-3 sm:p-4 hover-lift tap-scale card-shine reveal-section" style={{ animationDelay: '0.1s' }}>
+      <div className="bg-card border border-border rounded-xl p-3 sm:p-4 hover-gold-glow tap-scale card-shine reveal-section" style={{ animationDelay: '0.1s' }}>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-muted">
