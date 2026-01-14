@@ -24,10 +24,11 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Calendar, MapPin, Video, FileText } from 'lucide-react';
+import { Plus, Pencil, Trash2, Calendar, MapPin, Video, FileText, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { FileUpload } from '@/components/admin/FileUpload';
 import { DateTimePicker } from '@/components/admin/DateTimePicker';
+import { EventRegistrationsModal } from '@/components/admin/EventRegistrationsModal';
 
 interface EventForm {
   title: string;
@@ -58,6 +59,7 @@ const AdminEvents: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<EventForm>(initialForm);
+  const [registrationsModal, setRegistrationsModal] = useState<{ eventId: string; eventTitle: string } | null>(null);
 
   // Fetch event types
   const { data: eventTypes = [] } = useQuery({
@@ -89,6 +91,23 @@ const AdminEvents: React.FC = () => {
 
       if (error) throw error;
       return data;
+    },
+  });
+
+  // Fetch registration counts per event
+  const { data: registrationCounts = {} } = useQuery({
+    queryKey: ['event-registration-counts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('event_registrations')
+        .select('event_id');
+      if (error) throw error;
+
+      const counts: Record<string, number> = {};
+      data.forEach((r) => {
+        counts[r.event_id] = (counts[r.event_id] || 0) + 1;
+      });
+      return counts;
     },
   });
 
@@ -331,6 +350,7 @@ const AdminEvents: React.FC = () => {
                 <TableHead>Date</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Format</TableHead>
+                <TableHead>Registrations</TableHead>
                 <TableHead>Archive</TableHead>
                 <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
@@ -361,6 +381,17 @@ const AdminEvents: React.FC = () => {
                       {event.is_virtual ? <Video className="h-3 w-3" /> : <MapPin className="h-3 w-3" />}
                       {event.is_virtual ? 'Virtual' : 'In-Person'}
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto py-1 px-2"
+                      onClick={() => setRegistrationsModal({ eventId: event.id, eventTitle: event.title })}
+                    >
+                      <Users className="h-4 w-4 mr-1" />
+                      {registrationCounts[event.id] || 0}
+                    </Button>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
@@ -403,6 +434,13 @@ const AdminEvents: React.FC = () => {
           </Table>
         </div>
       )}
+
+      {/* Registrations Modal */}
+      <EventRegistrationsModal
+        eventId={registrationsModal?.eventId || null}
+        eventTitle={registrationsModal?.eventTitle || ''}
+        onClose={() => setRegistrationsModal(null)}
+      />
     </div>
   );
 };
