@@ -404,8 +404,8 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
       );
     }
 
-    // Build Vimeo embed URL with full controls
-    let embedUrl = `https://player.vimeo.com/video/${vimeoData.videoId}?autoplay=0&controls=1&title=1&byline=0&portrait=0&pip=1&dnt=1`;
+    // Build Vimeo embed URL with full controls (title=0 to hide video name)
+    let embedUrl = `https://player.vimeo.com/video/${vimeoData.videoId}?autoplay=0&controls=1&title=0&byline=0&portrait=0&pip=1&dnt=1`;
     if (vimeoData.hash) {
       embedUrl += `&h=${vimeoData.hash}`;
     }
@@ -501,15 +501,6 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
         </button>
       )}
 
-      {/* Title Overlay */}
-      <div 
-        className={cn(
-          "absolute top-0 left-0 right-0 bg-gradient-to-b from-black/70 to-transparent p-4 transition-opacity duration-300",
-          showControls ? "opacity-100" : "opacity-0"
-        )}
-      >
-        <h3 className="text-white font-semibold text-lg truncate">{title}</h3>
-      </div>
 
       {/* Custom Controls */}
       <div 

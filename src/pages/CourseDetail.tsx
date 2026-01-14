@@ -162,17 +162,17 @@ const CourseDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Ultra-Compact Hero Section */}
+      {/* Portrait-Optimized Hero Section */}
       <div className="relative overflow-hidden">
         {/* Single subtle gradient orb */}
         <div className="absolute -top-10 left-1/3 w-[300px] h-[300px] bg-primary/8 rounded-full blur-[100px] pointer-events-none" />
         
         <div className="container relative py-3 lg:py-4">
-          <div className="grid lg:grid-cols-[1.3fr_1fr] gap-4 lg:gap-5 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 lg:gap-6 items-start">
             
-            {/* Left - Thumbnail */}
-            <div className="relative group">
-              <div className="relative aspect-video rounded-xl lg:rounded-2xl overflow-hidden shadow-xl border border-border/30 group-hover:border-primary/30 transition-all duration-300">
+            {/* Left - Portrait Thumbnail */}
+            <div className="relative group mx-auto lg:mx-0">
+              <div className="relative aspect-[3/4] w-[240px] lg:w-[280px] rounded-xl lg:rounded-2xl overflow-hidden shadow-xl ring-1 ring-primary/20 group-hover:ring-primary/40 transition-all duration-300">
                 {course.thumbnail_url ? (
                   <img 
                     src={course.thumbnail_url} 
@@ -183,8 +183,8 @@ const CourseDetail: React.FC = () => {
                   <div className="w-full h-full bg-gradient-to-br from-primary/20 via-card to-accent/10" />
                 )}
                 
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                {/* Gradient overlay for title */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 
                 {/* Premium badge */}
                 {course.is_premium && (
@@ -194,25 +194,32 @@ const CourseDetail: React.FC = () => {
                   </div>
                 )}
                 
-                {/* Duration badge */}
-                {course.duration_minutes && (
-                  <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-md bg-black/60 backdrop-blur-sm">
-                    <Clock className="h-3 w-3 text-white/80" />
-                    <span className="text-xs font-medium text-white">{course.duration_minutes}m</span>
-                  </div>
-                )}
-                
-                {/* Play Button */}
+                {/* Play Button - Centered, smaller for portrait */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Button 
                     onClick={handlePlayVideo}
-                    className="rounded-full bg-white/95 text-gray-900 hover:bg-white shadow-xl gap-2 px-5 py-4 text-sm font-semibold transition-all hover:scale-105"
+                    size="sm"
+                    className="rounded-full bg-white/95 text-gray-900 hover:bg-white shadow-xl gap-1.5 px-3 py-2 text-xs font-semibold transition-all hover:scale-105"
                   >
-                    <div className="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center">
-                      <Play className="h-4 w-4 text-white ml-0.5" fill="white" />
+                    <div className="w-6 h-6 rounded-full bg-gray-900 flex items-center justify-center">
+                      <Play className="h-3 w-3 text-white ml-0.5" fill="white" />
                     </div>
-                    Start Course
+                    Play
                   </Button>
+                </div>
+
+                {/* Title overlay at bottom */}
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <h3 className="text-white font-semibold text-sm leading-tight line-clamp-2 drop-shadow-lg">
+                    {course.title}
+                  </h3>
+                  {/* Duration badge */}
+                  {course.duration_minutes && (
+                    <div className="flex items-center gap-1 mt-1.5">
+                      <Clock className="h-3 w-3 text-white/80" />
+                      <span className="text-xs font-medium text-white/90">{course.duration_minutes}m</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

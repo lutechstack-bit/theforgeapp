@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { SecureVideoPlayer } from './SecureVideoPlayer';
 import { Download, FileText, ExternalLink } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -64,11 +64,8 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl w-[95vw] max-h-[95vh] p-0 gap-0 overflow-hidden bg-background border border-border shadow-xl">
-        <DialogHeader className="p-4 pb-2 bg-background border-b border-border">
-          <DialogTitle className="text-lg font-bold truncate pr-8 text-foreground">
-            {content.title}
-          </DialogTitle>
-        </DialogHeader>
+        {/* Visually hidden title for accessibility */}
+        <DialogTitle className="sr-only">{content.title}</DialogTitle>
 
         <div className="flex flex-col lg:flex-row bg-background">
           {/* Video Player */}
