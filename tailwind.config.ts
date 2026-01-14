@@ -111,12 +111,32 @@ export default {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-5px)" },
         },
+        "stack-pop-out": {
+          "0%": { transform: "scale(1) translateY(0)", opacity: "1" },
+          "100%": { transform: "scale(1.02) translateY(-120%)", opacity: "0" },
+        },
+        "stack-pop-in": {
+          "0%": { transform: "scale(0.95) translateY(8px)", opacity: "0.7" },
+          "100%": { transform: "scale(1) translateY(0)", opacity: "1" },
+        },
+        "stack-reveal": {
+          "0%": { transform: "scale(0.9) translateY(16px)", opacity: "0.4" },
+          "100%": { transform: "scale(0.95) translateY(8px)", opacity: "0.7" },
+        },
+        "confetti-fall": {
+          "0%": { transform: "translateY(-100vh) rotate(0deg)", opacity: "1" },
+          "100%": { transform: "translateY(100vh) rotate(720deg)", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "shimmer": "shimmer 2s linear infinite",
         "bounce-subtle": "bounce-subtle 2s ease-in-out infinite",
+        "stack-pop-out": "stack-pop-out 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards",
+        "stack-pop-in": "stack-pop-in 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards",
+        "stack-reveal": "stack-reveal 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards",
+        "confetti-fall": "confetti-fall 3s linear forwards",
       },
     },
   },

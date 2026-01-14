@@ -7,14 +7,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { KYFormProgress } from '@/components/onboarding/KYFormProgress';
-import { KYFormNavigation } from '@/components/onboarding/KYFormNavigation';
+import { Button } from '@/components/ui/button';
+import { KYFormProgressBar } from '@/components/kyform/KYFormProgressBar';
+import { KYFormCard } from '@/components/kyform/KYFormCard';
+import { KYFormCardStack } from '@/components/kyform/KYFormCardStack';
+import { KYFormCompletion } from '@/components/kyform/KYFormCompletion';
 import { RadioSelectField } from '@/components/onboarding/RadioSelectField';
 import { MultiSelectField } from '@/components/onboarding/MultiSelectField';
 import { ProficiencyField } from '@/components/onboarding/ProficiencyField';
 import { PhotoUploadField } from '@/components/onboarding/PhotoUploadField';
 import { TermsModal } from '@/components/onboarding/TermsModal';
-import { User, MapPin, Heart, Film, Camera, Sparkles, FileCheck, ExternalLink } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, ExternalLink } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -138,6 +141,7 @@ const KYFForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showCompletion, setShowCompletion] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     certificate_name: '',
     current_occupation: '',
@@ -295,7 +299,6 @@ const KYFForm: React.FC = () => {
     setLoading(true);
 
     try {
-      // Insert KYF response
       const { error: kyfError } = await supabase.from('kyf_responses').upsert({
         user_id: user.id,
         certificate_name: formData.certificate_name,
@@ -337,7 +340,6 @@ const KYFForm: React.FC = () => {
 
       if (kyfError) throw kyfError;
 
-      // Update profile
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ ky_form_completed: true, kyf_completed: true })
@@ -346,8 +348,7 @@ const KYFForm: React.FC = () => {
       if (profileError) throw profileError;
 
       await refreshProfile();
-      toast({ title: 'Welcome to the Forge!', description: 'Your KYF form has been submitted successfully.' });
-      navigate('/');
+      setShowCompletion(true);
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } finally {
@@ -360,329 +361,13 @@ const KYFForm: React.FC = () => {
       case 0: return !!(formData.certificate_name && formData.current_occupation && formData.instagram_id);
       case 1: return !!(formData.age && formData.date_of_birth && formData.address_line_1 && formData.state && formData.pincode);
       case 2: return !!(formData.gender && formData.tshirt_size && formData.has_editing_laptop && formData.emergency_contact_name && formData.emergency_contact_number);
-      case 3: return true; // Proficiency is now optional
+      case 3: return true;
       case 4: return !!(formData.top_3_movies && formData.chronotype && formData.meal_preference && formData.food_allergies && formData.medication_support);
       case 5: return formData.languages_known.length > 0 && !!formData.height_ft;
       case 6: return !!(formData.photo_favorite_url && formData.headshot_front_url && formData.full_body_url);
       case 7: return !!(formData.mbti_type && formData.forge_intent && (formData.forge_intent !== 'other' || formData.forge_intent_other));
       case 8: return formData.terms_accepted;
       default: return false;
-    }
-  };
-
-  const renderStep = () => {
-    switch (step) {
-      case 0:
-        return (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center space-y-2">
-              <div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <User className="h-7 w-7 text-primary" />
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground">General Details</h2>
-              <p className="text-muted-foreground text-sm md:text-base">Let's start with the basics</p>
-            </div>
-            <div className="space-y-5">
-              <div className="space-y-2">
-                <Label className="text-sm md:text-base">Full name (as you want it on your certificate) *</Label>
-                <Input value={formData.certificate_name} onChange={e => updateField('certificate_name', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm md:text-base">What are you currently doing? *</Label>
-                <Input value={formData.current_occupation} onChange={e => updateField('current_occupation', e.target.value)} placeholder="e.g. Student, Working Professional" className="h-12 md:h-14 text-base bg-secondary/50" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm md:text-base">Your Instagram ID *</Label>
-                <Input value={formData.instagram_id} onChange={e => updateField('instagram_id', e.target.value)} placeholder="@yourhandle" className="h-12 md:h-14 text-base bg-secondary/50" />
-              </div>
-            </div>
-          </div>
-        );
-
-      case 1:
-        return (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center space-y-2">
-              <div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <MapPin className="h-7 w-7 text-primary" />
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Personal Details</h2>
-            </div>
-            <div className="space-y-5">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm md:text-base">Your Age *</Label>
-                  <Input type="number" value={formData.age} onChange={e => updateField('age', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm md:text-base">Date of Birth *</Label>
-                  <Input type="date" value={formData.date_of_birth} onChange={e => updateField('date_of_birth', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm md:text-base">Address Line 1 *</Label>
-                <Input value={formData.address_line_1} onChange={e => updateField('address_line_1', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm md:text-base">Address Line 2</Label>
-                <Input value={formData.address_line_2} onChange={e => updateField('address_line_2', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm md:text-base">State *</Label>
-                <Input value={formData.state} onChange={e => updateField('state', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm md:text-base">Pincode *</Label>
-                <Input value={formData.pincode} onChange={e => updateField('pincode', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
-              </div>
-            </div>
-          </div>
-        );
-
-      case 2:
-        return (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center space-y-2">
-              <div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Heart className="h-7 w-7 text-primary" />
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Basic Preferences & Emergency Details</h2>
-            </div>
-            <div className="space-y-5">
-              <RadioSelectField
-                label="Your Gender"
-                required
-                options={[
-                  { value: 'male', label: 'Male' },
-                  { value: 'female', label: 'Female' },
-                  { value: 'other', label: 'Other' },
-                ]}
-                value={formData.gender}
-                onChange={v => updateField('gender', v)}
-                columns={3}
-              />
-              <div className="space-y-2">
-                <Label className="text-sm md:text-base">Your T-shirt size *</Label>
-                <Input value={formData.tshirt_size} onChange={e => updateField('tshirt_size', e.target.value)} placeholder="S / M / L / XL / XXL" className="h-12 md:h-14 text-base bg-secondary/50" />
-              </div>
-              <RadioSelectField
-                label="Do you have a laptop that supports video editing that you can bring?"
-                required
-                options={[
-                  { value: 'yes', label: 'Yes' },
-                  { value: 'no', label: 'No' },
-                ]}
-                value={formData.has_editing_laptop}
-                onChange={v => updateField('has_editing_laptop', v)}
-                columns={2}
-              />
-              <p className="text-xs md:text-sm text-muted-foreground -mt-2">(having your laptop makes the process faster for you and easier to edit your final cut back home)</p>
-              <div className="space-y-2">
-                <Label className="text-sm md:text-base">Emergency contact name *</Label>
-                <Input value={formData.emergency_contact_name} onChange={e => updateField('emergency_contact_name', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm md:text-base">Emergency contact number *</Label>
-                <Input value={formData.emergency_contact_number} onChange={e => updateField('emergency_contact_number', e.target.value)} className="h-12 md:h-14 text-base bg-secondary/50" />
-              </div>
-            </div>
-          </div>
-        );
-
-      case 3:
-        return (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center space-y-2">
-              <div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Film className="h-7 w-7 text-primary" />
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Proficiency Level</h2>
-              <p className="text-muted-foreground text-sm md:text-base">Help us understand your experience level (optional)</p>
-            </div>
-            <div className="space-y-6">
-              <ProficiencyField label="Screenwriting" options={SCREENWRITING_OPTIONS} value={formData.proficiency_screenwriting} onChange={v => updateField('proficiency_screenwriting', v)} />
-              <ProficiencyField label="Film Direction" options={DIRECTION_OPTIONS} value={formData.proficiency_direction} onChange={v => updateField('proficiency_direction', v)} />
-              <ProficiencyField label="Cinematography" options={CINEMATOGRAPHY_OPTIONS} value={formData.proficiency_cinematography} onChange={v => updateField('proficiency_cinematography', v)} />
-              <ProficiencyField label="Editing" options={EDITING_OPTIONS} value={formData.proficiency_editing} onChange={v => updateField('proficiency_editing', v)} />
-            </div>
-          </div>
-        );
-
-      case 4:
-        return (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center space-y-2">
-              <div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Sparkles className="h-7 w-7 text-primary" />
-              </div>
-              <h2 className="text-2xl font-bold text-foreground">Personality & Preferences</h2>
-            </div>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Your top 3 movies? *</Label>
-                <Textarea value={formData.top_3_movies} onChange={e => updateField('top_3_movies', e.target.value)} placeholder="Separate with commas: Movie 1, Movie 2, Movie 3" className="bg-secondary/50" />
-              </div>
-              <RadioSelectField
-                label="You are"
-                required
-                options={[
-                  { value: 'early_bird', label: '🌅 An Early bird' },
-                  { value: 'night_owl', label: '🦉 A Night Owl' },
-                ]}
-                value={formData.chronotype}
-                onChange={v => updateField('chronotype', v)}
-                columns={2}
-              />
-              <RadioSelectField
-                label="Your Meal preference"
-                required
-                options={[
-                  { value: 'vegetarian', label: '🌱 Vegetarian' },
-                  { value: 'non_vegetarian', label: '🟥 Non-Vegetarian' },
-                ]}
-                value={formData.meal_preference}
-                onChange={v => updateField('meal_preference', v)}
-                columns={2}
-              />
-              <div className="space-y-2">
-                <Label>Are you allergic to any type of food/any particular thing? *</Label>
-                <Textarea value={formData.food_allergies} onChange={e => updateField('food_allergies', e.target.value)} placeholder="Please let us know :)" className="bg-secondary/50" />
-              </div>
-              <div className="space-y-2">
-                <Label>Do you require any support with regard to medication? *</Label>
-                <Textarea value={formData.medication_support} onChange={e => updateField('medication_support', e.target.value)} className="bg-secondary/50" />
-              </div>
-            </div>
-          </div>
-        );
-
-      case 5:
-        return (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center space-y-2">
-              <div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Camera className="h-7 w-7 text-primary" />
-              </div>
-              <h2 className="text-2xl font-bold text-foreground">Casting Call</h2>
-            </div>
-            <div className="space-y-4">
-              <MultiSelectField
-                label="What languages do you know?"
-                required
-                options={LANGUAGES}
-                value={formData.languages_known}
-                onChange={v => updateField('languages_known', v)}
-              />
-              <div className="space-y-2">
-                <Label>Your Height (in ft) *</Label>
-                <Input value={formData.height_ft} onChange={e => updateField('height_ft', e.target.value)} placeholder="e.g. 5'8" className="h-12 bg-secondary/50" />
-              </div>
-            </div>
-          </div>
-        );
-
-      case 6:
-        return (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center space-y-2">
-              <div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Camera className="h-7 w-7 text-primary" />
-              </div>
-              <h2 className="text-2xl font-bold text-foreground">Your Pictures</h2>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <PhotoUploadField label="A photo you love" description="(your face should be seen, for social media)" required value={formData.photo_favorite_url} onChange={v => updateField('photo_favorite_url', v)} folder="favorite" />
-              <PhotoUploadField label="HeadShot Front" required value={formData.headshot_front_url} onChange={v => updateField('headshot_front_url', v)} folder="headshot-front" />
-              <PhotoUploadField label="HeadShot Right" value={formData.headshot_right_url} onChange={v => updateField('headshot_right_url', v)} folder="headshot-right" />
-              <PhotoUploadField label="HeadShot Left" value={formData.headshot_left_url} onChange={v => updateField('headshot_left_url', v)} folder="headshot-left" />
-              <PhotoUploadField label="Full Body Shot" required value={formData.full_body_url} onChange={v => updateField('full_body_url', v)} folder="full-body" />
-            </div>
-          </div>
-        );
-
-      case 7:
-        return (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center space-y-2">
-              <div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Sparkles className="h-7 w-7 text-primary" />
-              </div>
-              <h2 className="text-2xl font-bold text-foreground">To Understand You Deeper</h2>
-              <p className="text-muted-foreground text-sm">To assign you to groups with individuals who are compatible with your style of thinking and filmmaking, we would like you to take a short test to determine your personality type.</p>
-            </div>
-            <div className="space-y-4">
-              <a href="https://www.16personalities.com/free-personality-test" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-4 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors">
-                <ExternalLink className="h-5 w-5 text-primary" />
-                <span className="text-primary font-medium">Take the personality test</span>
-              </a>
-              <div className="space-y-2">
-                <Label>Your Myers-Briggs Type Indicator Test Result *</Label>
-                <div className="grid grid-cols-4 gap-2">
-                  {MBTI_TYPES.map(type => (
-                    <button key={type} type="button" onClick={() => updateField('mbti_type', type)} className={`p-3 rounded-lg border text-sm font-medium transition-all ${formData.mbti_type === type ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card hover:border-primary/50'}`}>
-                      {type}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="pt-4 border-t border-border">
-                <h3 className="font-semibold text-foreground mb-3">Intent at the Forge</h3>
-                <RadioSelectField
-                  label="What is the one thing you really, really want to do at the Forge?"
-                  required
-                  options={INTENT_OPTIONS}
-                  value={formData.forge_intent}
-                  onChange={v => updateField('forge_intent', v)}
-                />
-                {formData.forge_intent === 'other' && (
-                  <div className="mt-3 space-y-2">
-                    <Label>If Other, what?</Label>
-                    <Input value={formData.forge_intent_other} onChange={e => updateField('forge_intent_other', e.target.value)} className="h-12 bg-secondary/50" />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-
-      case 8:
-        return (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center space-y-2">
-              <div className="mx-auto w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <FileCheck className="h-7 w-7 text-primary" />
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Terms and Conditions</h2>
-            </div>
-            <div className="p-4 md:p-5 rounded-xl border border-border bg-card">
-              <div className="flex items-start gap-3">
-                <Checkbox
-                  id="terms"
-                  checked={formData.terms_accepted}
-                  onCheckedChange={(checked) => updateField('terms_accepted', checked === true)}
-                  className="mt-0.5"
-                />
-                <label htmlFor="terms" className="text-sm md:text-base text-muted-foreground leading-relaxed cursor-pointer">
-                  I agree to the{' '}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setShowTermsModal(true);
-                    }}
-                    className="text-primary underline hover:text-primary/80 transition-colors"
-                  >
-                    terms and conditions
-                  </button>{' '}
-                  of the Forge program. I understand and accept the rules and guidelines that have been shared with me.
-                </label>
-              </div>
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
     }
   };
 
@@ -694,42 +379,290 @@ const KYFForm: React.FC = () => {
     }
   };
 
+  const handleNext = async () => {
+    await saveProgress();
+    setStep(s => s + 1);
+  };
+
+  // Show completion screen if form was submitted
+  if (showCompletion) {
+    return <KYFormCompletion cohortType="FORGE" />;
+  }
+
+  const renderStepContent = (stepIndex: number) => {
+    switch (stepIndex) {
+      case 0:
+        return (
+          <KYFormCard questionNumber={1}>
+            <div className="space-y-5">
+              <div className="text-center mb-6">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">General Details</h2>
+                <p className="text-sm text-muted-foreground mt-1">Let's start with the basics</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Full name (as you want it on your certificate) *</Label>
+                <Input value={formData.certificate_name} onChange={e => updateField('certificate_name', e.target.value)} className="h-12 bg-secondary/50" />
+              </div>
+              <div className="space-y-2">
+                <Label>What are you currently doing? *</Label>
+                <Input value={formData.current_occupation} onChange={e => updateField('current_occupation', e.target.value)} placeholder="e.g. Student, Working Professional" className="h-12 bg-secondary/50" />
+              </div>
+              <div className="space-y-2">
+                <Label>Your Instagram ID *</Label>
+                <Input value={formData.instagram_id} onChange={e => updateField('instagram_id', e.target.value)} placeholder="@yourhandle" className="h-12 bg-secondary/50" />
+              </div>
+            </div>
+          </KYFormCard>
+        );
+
+      case 1:
+        return (
+          <KYFormCard questionNumber={2}>
+            <div className="space-y-5">
+              <div className="text-center mb-6">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">Personal Details</h2>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Your Age *</Label>
+                  <Input type="number" value={formData.age} onChange={e => updateField('age', e.target.value)} className="h-12 bg-secondary/50" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date of Birth *</Label>
+                  <Input type="date" value={formData.date_of_birth} onChange={e => updateField('date_of_birth', e.target.value)} className="h-12 bg-secondary/50" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Address Line 1 *</Label>
+                <Input value={formData.address_line_1} onChange={e => updateField('address_line_1', e.target.value)} className="h-12 bg-secondary/50" />
+              </div>
+              <div className="space-y-2">
+                <Label>Address Line 2</Label>
+                <Input value={formData.address_line_2} onChange={e => updateField('address_line_2', e.target.value)} className="h-12 bg-secondary/50" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>State *</Label>
+                  <Input value={formData.state} onChange={e => updateField('state', e.target.value)} className="h-12 bg-secondary/50" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Pincode *</Label>
+                  <Input value={formData.pincode} onChange={e => updateField('pincode', e.target.value)} className="h-12 bg-secondary/50" />
+                </div>
+              </div>
+            </div>
+          </KYFormCard>
+        );
+
+      case 2:
+        return (
+          <KYFormCard questionNumber={3}>
+            <div className="space-y-5">
+              <div className="text-center mb-6">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">Preferences & Emergency</h2>
+              </div>
+              <RadioSelectField label="Your Gender" required options={[{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }, { value: 'other', label: 'Other' }]} value={formData.gender} onChange={v => updateField('gender', v)} columns={3} />
+              <div className="space-y-2">
+                <Label>Your T-shirt size *</Label>
+                <Input value={formData.tshirt_size} onChange={e => updateField('tshirt_size', e.target.value)} placeholder="S / M / L / XL / XXL" className="h-12 bg-secondary/50" />
+              </div>
+              <RadioSelectField label="Do you have a laptop that supports video editing?" required options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} value={formData.has_editing_laptop} onChange={v => updateField('has_editing_laptop', v)} columns={2} />
+              <div className="space-y-2">
+                <Label>Emergency contact name *</Label>
+                <Input value={formData.emergency_contact_name} onChange={e => updateField('emergency_contact_name', e.target.value)} className="h-12 bg-secondary/50" />
+              </div>
+              <div className="space-y-2">
+                <Label>Emergency contact number *</Label>
+                <Input value={formData.emergency_contact_number} onChange={e => updateField('emergency_contact_number', e.target.value)} className="h-12 bg-secondary/50" />
+              </div>
+            </div>
+          </KYFormCard>
+        );
+
+      case 3:
+        return (
+          <KYFormCard questionNumber={4}>
+            <div className="space-y-5">
+              <div className="text-center mb-6">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">Proficiency Level</h2>
+                <p className="text-sm text-muted-foreground mt-1">Help us understand your experience (optional)</p>
+              </div>
+              <ProficiencyField label="Screenwriting" options={SCREENWRITING_OPTIONS} value={formData.proficiency_screenwriting} onChange={v => updateField('proficiency_screenwriting', v)} />
+              <ProficiencyField label="Film Direction" options={DIRECTION_OPTIONS} value={formData.proficiency_direction} onChange={v => updateField('proficiency_direction', v)} />
+              <ProficiencyField label="Cinematography" options={CINEMATOGRAPHY_OPTIONS} value={formData.proficiency_cinematography} onChange={v => updateField('proficiency_cinematography', v)} />
+              <ProficiencyField label="Editing" options={EDITING_OPTIONS} value={formData.proficiency_editing} onChange={v => updateField('proficiency_editing', v)} />
+            </div>
+          </KYFormCard>
+        );
+
+      case 4:
+        return (
+          <KYFormCard questionNumber={5}>
+            <div className="space-y-5">
+              <div className="text-center mb-6">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">Personality & Preferences</h2>
+              </div>
+              <div className="space-y-2">
+                <Label>Your top 3 movies? *</Label>
+                <Textarea value={formData.top_3_movies} onChange={e => updateField('top_3_movies', e.target.value)} placeholder="Separate with commas" className="bg-secondary/50" />
+              </div>
+              <RadioSelectField label="You are" required options={[{ value: 'early_bird', label: '🌅 An Early bird' }, { value: 'night_owl', label: '🦉 A Night Owl' }]} value={formData.chronotype} onChange={v => updateField('chronotype', v)} columns={2} />
+              <RadioSelectField label="Your Meal preference" required options={[{ value: 'vegetarian', label: '🌱 Vegetarian' }, { value: 'non_vegetarian', label: '🟥 Non-Vegetarian' }]} value={formData.meal_preference} onChange={v => updateField('meal_preference', v)} columns={2} />
+              <div className="space-y-2">
+                <Label>Are you allergic to any type of food? *</Label>
+                <Textarea value={formData.food_allergies} onChange={e => updateField('food_allergies', e.target.value)} placeholder="Please let us know" className="bg-secondary/50" />
+              </div>
+              <div className="space-y-2">
+                <Label>Do you require any medication support? *</Label>
+                <Textarea value={formData.medication_support} onChange={e => updateField('medication_support', e.target.value)} className="bg-secondary/50" />
+              </div>
+            </div>
+          </KYFormCard>
+        );
+
+      case 5:
+        return (
+          <KYFormCard questionNumber={6}>
+            <div className="space-y-5">
+              <div className="text-center mb-6">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">Casting Call</h2>
+              </div>
+              <MultiSelectField label="What languages do you know?" required options={LANGUAGES} value={formData.languages_known} onChange={v => updateField('languages_known', v)} />
+              <div className="space-y-2">
+                <Label>Your Height (in ft) *</Label>
+                <Input value={formData.height_ft} onChange={e => updateField('height_ft', e.target.value)} placeholder="e.g. 5'8" className="h-12 bg-secondary/50" />
+              </div>
+            </div>
+          </KYFormCard>
+        );
+
+      case 6:
+        return (
+          <KYFormCard questionNumber={7}>
+            <div className="space-y-5">
+              <div className="text-center mb-6">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">Your Pictures</h2>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <PhotoUploadField label="A photo you love" description="(your face should be seen)" required value={formData.photo_favorite_url} onChange={v => updateField('photo_favorite_url', v)} folder="favorite" />
+                <PhotoUploadField label="HeadShot Front" required value={formData.headshot_front_url} onChange={v => updateField('headshot_front_url', v)} folder="headshot-front" />
+                <PhotoUploadField label="HeadShot Right" value={formData.headshot_right_url} onChange={v => updateField('headshot_right_url', v)} folder="headshot-right" />
+                <PhotoUploadField label="HeadShot Left" value={formData.headshot_left_url} onChange={v => updateField('headshot_left_url', v)} folder="headshot-left" />
+                <PhotoUploadField label="Full Body Shot" required value={formData.full_body_url} onChange={v => updateField('full_body_url', v)} folder="full-body" />
+              </div>
+            </div>
+          </KYFormCard>
+        );
+
+      case 7:
+        return (
+          <KYFormCard questionNumber={8}>
+            <div className="space-y-5">
+              <div className="text-center mb-6">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">Understanding You</h2>
+                <p className="text-sm text-muted-foreground mt-1">To assign you to compatible groups</p>
+              </div>
+              <a href="https://www.16personalities.com/free-personality-test" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-4 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors">
+                <ExternalLink className="h-5 w-5 text-primary" />
+                <span className="text-primary font-medium">Take the personality test</span>
+              </a>
+              <div className="space-y-2">
+                <Label>Your MBTI Result *</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {MBTI_TYPES.map(type => (
+                    <button key={type} type="button" onClick={() => updateField('mbti_type', type)} className={`p-3 rounded-lg border text-sm font-medium transition-all ${formData.mbti_type === type ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card hover:border-primary/50'}`}>
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <RadioSelectField label="What is the one thing you really want to do at the Forge?" required options={INTENT_OPTIONS} value={formData.forge_intent} onChange={v => updateField('forge_intent', v)} />
+              {formData.forge_intent === 'other' && (
+                <div className="space-y-2">
+                  <Label>If Other, what?</Label>
+                  <Input value={formData.forge_intent_other} onChange={e => updateField('forge_intent_other', e.target.value)} className="h-12 bg-secondary/50" />
+                </div>
+              )}
+            </div>
+          </KYFormCard>
+        );
+
+      case 8:
+        return (
+          <KYFormCard questionNumber={9}>
+            <div className="space-y-5">
+              <div className="text-center mb-6">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">Terms and Conditions</h2>
+              </div>
+              <div className="p-4 rounded-xl border border-border bg-card">
+                <div className="flex items-start gap-3">
+                  <Checkbox id="terms" checked={formData.terms_accepted} onCheckedChange={(checked) => updateField('terms_accepted', checked === true)} className="mt-0.5" />
+                  <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                    I agree to the{' '}
+                    <button type="button" onClick={() => setShowTermsModal(true)} className="text-primary underline hover:text-primary/80 transition-colors">
+                      terms and conditions
+                    </button>{' '}
+                    of the Forge program.
+                  </label>
+                </div>
+              </div>
+            </div>
+          </KYFormCard>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start py-6 md:py-10 px-4 md:px-8 bg-background">
+    <div className="min-h-screen flex flex-col items-center justify-start py-6 px-4 bg-background">
+      {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 -left-32 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 -right-32 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative w-full max-w-lg md:max-w-xl lg:max-w-2xl">
-        <KYFormProgress currentStep={step} totalSteps={STEP_TITLES.length} stepTitles={STEP_TITLES} />
-        
-        <div className="mt-6 md:mt-8 mb-4 max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
-          {renderStep()}
+      <div className="relative w-full max-w-lg">
+        {/* Progress bar */}
+        <KYFormProgressBar currentStep={step} totalSteps={STEP_TITLES.length} stepTitles={STEP_TITLES} />
+
+        {/* Card stack */}
+        <div className="mt-8 mb-6">
+          <KYFormCardStack currentStep={step} totalSteps={STEP_TITLES.length}>
+            {STEP_TITLES.map((_, index) => (
+              <div key={index} className="max-h-[calc(100vh-320px)] overflow-y-auto">
+                {renderStepContent(index)}
+              </div>
+            ))}
+          </KYFormCardStack>
         </div>
 
-        <KYFormNavigation
-          currentStep={step}
-          totalSteps={STEP_TITLES.length}
-          canProceed={canProceed()}
-          loading={loading}
-          onBack={handleBack}
-          onNext={async () => {
-            await saveProgress();
-            setStep(s => s + 1);
-          }}
-          onSubmit={handleSubmit}
-          showBackOnFirstStep={true}
-        />
+        {/* Navigation */}
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={handleBack} className="flex-1 h-12">
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
+          {step < STEP_TITLES.length - 1 ? (
+            <Button onClick={handleNext} disabled={!canProceed()} className="flex-1 h-12 gradient-primary text-primary-foreground">
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          ) : (
+            <Button onClick={handleSubmit} disabled={!canProceed() || loading} className="flex-1 h-12 gradient-primary text-primary-foreground">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Submit'}
+            </Button>
+          )}
+        </div>
       </div>
 
+      {/* Exit dialog */}
       <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Save and leave?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Your progress will be saved and you can continue later.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Your progress will be saved and you can continue later.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Continue filling</AlertDialogCancel>
@@ -738,6 +671,7 @@ const KYFForm: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Terms modal */}
       <TermsModal open={showTermsModal} onOpenChange={setShowTermsModal} />
     </div>
   );
