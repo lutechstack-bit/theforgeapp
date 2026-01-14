@@ -146,7 +146,7 @@ const Learn: React.FC = () => {
           }}
           className="w-full"
         >
-          <CarouselContent className="-ml-4">
+          <CarouselContent className="-ml-4 py-4 -my-4">
             {items.map((item) => (
               <CarouselItem
                 key={item.id}

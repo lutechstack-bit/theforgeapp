@@ -91,7 +91,7 @@ export const ContentCarousel: React.FC<ContentCarouselProps> = ({
       
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1"
+        className="flex gap-4 overflow-x-auto scrollbar-hide py-4 -my-4 px-4 -mx-4"
         style={{ scrollSnapType: 'x mandatory' }}
       >
         {React.Children.map(children, (child, index) => (
