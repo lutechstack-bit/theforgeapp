@@ -6,16 +6,16 @@ interface KYFormProgressBarProps {
   totalSteps: number;
 }
 
-// Multi-colored progress segments - Forge gold tones
+// Multi-colored progress segments - vibrant cycling colors
 const SEGMENT_COLORS = [
+  'bg-rose-400',
+  'bg-orange-400',
+  'bg-amber-400',
   'bg-forge-yellow',
   'bg-forge-gold',
-  'bg-amber-500',
-  'bg-orange-500',
-  'bg-forge-yellow',
-  'bg-forge-gold',
-  'bg-amber-500',
-  'bg-orange-500',
+  'bg-rose-400',
+  'bg-orange-400',
+  'bg-amber-400',
   'bg-forge-yellow',
   'bg-forge-gold',
 ];
@@ -25,7 +25,7 @@ export const KYFormProgressBar: React.FC<KYFormProgressBarProps> = ({
   totalSteps,
 }) => {
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1.5">
       {Array.from({ length: totalSteps }).map((_, index) => {
         const isCompleted = index < currentStep;
         const isCurrent = index === currentStep;
@@ -35,8 +35,8 @@ export const KYFormProgressBar: React.FC<KYFormProgressBarProps> = ({
           <div
             key={index}
             className={cn(
-              'h-1 flex-1 rounded-full transition-all duration-300',
-              isCompleted || isCurrent ? colorClass : 'bg-muted/30'
+              'h-1.5 flex-1 rounded-full transition-all duration-300',
+              isCompleted || isCurrent ? colorClass : 'bg-muted/20'
             )}
           />
         );

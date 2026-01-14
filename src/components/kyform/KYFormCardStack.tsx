@@ -23,12 +23,12 @@ export const KYFormCardStack: React.FC<KYFormCardStackProps> = ({
       const direction = currentStep > prevStepRef.current ? 'forward' : 'backward';
       setIsAnimating(direction);
       
-      // Update display step immediately for smoother transition
+      // Update display step after animation starts for smooth transition
       const timer = setTimeout(() => {
         setDisplayStep(currentStep);
         setIsAnimating(null);
         onAnimationComplete?.();
-      }, 450);
+      }, 500);
 
       prevStepRef.current = currentStep;
       return () => clearTimeout(timer);
@@ -38,18 +38,18 @@ export const KYFormCardStack: React.FC<KYFormCardStackProps> = ({
   const childArray = React.Children.toArray(children);
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative">
       {/* Card stack visual - rotation-based depth effect */}
       <div className="relative">
-        {/* Third card (behind) - rotated offset */}
+        {/* Third card (behind) - more rotation and offset */}
         {displayStep < totalSteps - 2 && (
           <div
             className={cn(
-              'absolute inset-0 rounded-2xl pointer-events-none',
-              'bg-card/40 border border-forge-gold/10',
-              'transform rotate-[4deg] translate-y-4 translate-x-4',
-              'opacity-30',
-              'transition-all duration-300'
+              'absolute inset-0 rounded-3xl pointer-events-none',
+              'bg-card/30 border border-forge-gold/5',
+              'transform rotate-[3deg] translate-y-4 translate-x-4',
+              'opacity-35',
+              'transition-all duration-500 ease-out'
             )}
           />
         )}
@@ -58,11 +58,11 @@ export const KYFormCardStack: React.FC<KYFormCardStackProps> = ({
         {displayStep < totalSteps - 1 && (
           <div
             className={cn(
-              'absolute inset-0 rounded-2xl pointer-events-none',
-              'bg-card/60 border border-forge-gold/15',
-              'transform rotate-[2deg] translate-y-2 translate-x-2',
-              'opacity-50',
-              'transition-all duration-300',
+              'absolute inset-0 rounded-3xl pointer-events-none',
+              'bg-card/50 border border-forge-gold/10',
+              'transform rotate-[1.5deg] translate-y-2 translate-x-2',
+              'opacity-60',
+              'transition-all duration-500 ease-out',
               isAnimating === 'forward' && 'animate-stack-reveal'
             )}
           />
