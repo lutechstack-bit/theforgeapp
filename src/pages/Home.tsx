@@ -57,7 +57,7 @@ const alumniTestimonials = [
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, isFullAccess } = useAuth();
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [isMentorModalOpen, setIsMentorModalOpen] = useState(false);
 
@@ -273,9 +273,8 @@ const Home: React.FC = () => {
               id={content.id}
               title={content.title}
               thumbnailUrl={content.thumbnail_url || undefined}
-              instructorName={content.instructor_name}
-              companyName={content.company_name}
-              isPremium={content.is_premium}
+              durationMinutes={content.duration_minutes}
+              isLocked={content.is_premium && !isFullAccess}
             />
           ))}
         </ContentCarousel>
