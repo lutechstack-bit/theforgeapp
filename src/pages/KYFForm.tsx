@@ -393,23 +393,20 @@ const KYFForm: React.FC = () => {
     switch (stepIndex) {
       case 0:
         return (
-          <KYFormCard>
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">General Details</h2>
-                <p className="text-sm text-muted-foreground mt-1">Let's start with the basics</p>
-              </div>
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={1} stepTitle="General Details">
+            <p className="text-sm text-muted-foreground mb-5">Let's start with the basics</p>
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Full name (as you want it on your certificate) *</Label>
-                <Input value={formData.certificate_name} onChange={e => updateField('certificate_name', e.target.value)} className="h-12 bg-secondary/50" />
+                <Input value={formData.certificate_name} onChange={e => updateField('certificate_name', e.target.value)} className="h-11 bg-secondary/50" />
               </div>
               <div className="space-y-2">
                 <Label>What are you currently doing? *</Label>
-                <Input value={formData.current_occupation} onChange={e => updateField('current_occupation', e.target.value)} placeholder="e.g. Student, Working Professional" className="h-12 bg-secondary/50" />
+                <Input value={formData.current_occupation} onChange={e => updateField('current_occupation', e.target.value)} placeholder="e.g. Student, Working Professional" className="h-11 bg-secondary/50" />
               </div>
               <div className="space-y-2">
                 <Label>Your Instagram ID *</Label>
-                <Input value={formData.instagram_id} onChange={e => updateField('instagram_id', e.target.value)} placeholder="@yourhandle" className="h-12 bg-secondary/50" />
+                <Input value={formData.instagram_id} onChange={e => updateField('instagram_id', e.target.value)} placeholder="@yourhandle" className="h-11 bg-secondary/50" />
               </div>
             </div>
           </KYFormCard>
@@ -417,37 +414,34 @@ const KYFForm: React.FC = () => {
 
       case 1:
         return (
-          <KYFormCard>
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">Personal Details</h2>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={2} stepTitle="Personal Details">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Your Age *</Label>
-                  <Input type="number" value={formData.age} onChange={e => updateField('age', e.target.value)} className="h-12 bg-secondary/50" />
+                  <Input type="number" value={formData.age} onChange={e => updateField('age', e.target.value)} className="h-11 bg-secondary/50" />
                 </div>
                 <div className="space-y-2">
                   <Label>Date of Birth *</Label>
-                  <Input type="date" value={formData.date_of_birth} onChange={e => updateField('date_of_birth', e.target.value)} className="h-12 bg-secondary/50" />
+                  <Input type="date" value={formData.date_of_birth} onChange={e => updateField('date_of_birth', e.target.value)} className="h-11 bg-secondary/50" />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Address Line 1 *</Label>
-                <Input value={formData.address_line_1} onChange={e => updateField('address_line_1', e.target.value)} className="h-12 bg-secondary/50" />
+                <Input value={formData.address_line_1} onChange={e => updateField('address_line_1', e.target.value)} className="h-11 bg-secondary/50" />
               </div>
               <div className="space-y-2">
                 <Label>Address Line 2</Label>
-                <Input value={formData.address_line_2} onChange={e => updateField('address_line_2', e.target.value)} className="h-12 bg-secondary/50" />
+                <Input value={formData.address_line_2} onChange={e => updateField('address_line_2', e.target.value)} className="h-11 bg-secondary/50" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>State *</Label>
-                  <Input value={formData.state} onChange={e => updateField('state', e.target.value)} className="h-12 bg-secondary/50" />
+                  <Input value={formData.state} onChange={e => updateField('state', e.target.value)} className="h-11 bg-secondary/50" />
                 </div>
                 <div className="space-y-2">
                   <Label>Pincode *</Label>
-                  <Input value={formData.pincode} onChange={e => updateField('pincode', e.target.value)} className="h-12 bg-secondary/50" />
+                  <Input value={formData.pincode} onChange={e => updateField('pincode', e.target.value)} className="h-11 bg-secondary/50" />
                 </div>
               </div>
             </div>
@@ -456,24 +450,21 @@ const KYFForm: React.FC = () => {
 
       case 2:
         return (
-          <KYFormCard>
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">Preferences & Emergency</h2>
-              </div>
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={3} stepTitle="Preferences & Emergency">
+            <div className="space-y-4">
               <RadioSelectField label="Your Gender" required options={[{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }, { value: 'other', label: 'Other' }]} value={formData.gender} onChange={v => updateField('gender', v)} columns={3} />
               <div className="space-y-2">
                 <Label>Your T-shirt size *</Label>
-                <Input value={formData.tshirt_size} onChange={e => updateField('tshirt_size', e.target.value)} placeholder="S / M / L / XL / XXL" className="h-12 bg-secondary/50" />
+                <Input value={formData.tshirt_size} onChange={e => updateField('tshirt_size', e.target.value)} placeholder="S / M / L / XL / XXL" className="h-11 bg-secondary/50" />
               </div>
               <RadioSelectField label="Do you have a laptop that supports video editing?" required options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} value={formData.has_editing_laptop} onChange={v => updateField('has_editing_laptop', v)} columns={2} />
               <div className="space-y-2">
                 <Label>Emergency contact name *</Label>
-                <Input value={formData.emergency_contact_name} onChange={e => updateField('emergency_contact_name', e.target.value)} className="h-12 bg-secondary/50" />
+                <Input value={formData.emergency_contact_name} onChange={e => updateField('emergency_contact_name', e.target.value)} className="h-11 bg-secondary/50" />
               </div>
               <div className="space-y-2">
                 <Label>Emergency contact number *</Label>
-                <Input value={formData.emergency_contact_number} onChange={e => updateField('emergency_contact_number', e.target.value)} className="h-12 bg-secondary/50" />
+                <Input value={formData.emergency_contact_number} onChange={e => updateField('emergency_contact_number', e.target.value)} className="h-11 bg-secondary/50" />
               </div>
             </div>
           </KYFormCard>
@@ -481,12 +472,9 @@ const KYFForm: React.FC = () => {
 
       case 3:
         return (
-          <KYFormCard>
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">Proficiency Level</h2>
-                <p className="text-sm text-muted-foreground mt-1">Help us understand your experience (optional)</p>
-              </div>
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={4} stepTitle="Proficiency Level">
+            <p className="text-sm text-muted-foreground mb-4">Help us understand your experience (optional)</p>
+            <div className="space-y-4">
               <ProficiencyField label="Screenwriting" options={SCREENWRITING_OPTIONS} value={formData.proficiency_screenwriting} onChange={v => updateField('proficiency_screenwriting', v)} />
               <ProficiencyField label="Film Direction" options={DIRECTION_OPTIONS} value={formData.proficiency_direction} onChange={v => updateField('proficiency_direction', v)} />
               <ProficiencyField label="Cinematography" options={CINEMATOGRAPHY_OPTIONS} value={formData.proficiency_cinematography} onChange={v => updateField('proficiency_cinematography', v)} />
@@ -497,11 +485,8 @@ const KYFForm: React.FC = () => {
 
       case 4:
         return (
-          <KYFormCard>
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">Personality & Preferences</h2>
-              </div>
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={5} stepTitle="Personality & Preferences">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Your top 3 movies? *</Label>
                 <Textarea value={formData.top_3_movies} onChange={e => updateField('top_3_movies', e.target.value)} placeholder="Separate with commas" className="bg-secondary/50" />
@@ -522,15 +507,12 @@ const KYFForm: React.FC = () => {
 
       case 5:
         return (
-          <KYFormCard>
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">Casting Call</h2>
-              </div>
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={6} stepTitle="Casting Call">
+            <div className="space-y-4">
               <MultiSelectField label="What languages do you know?" required options={LANGUAGES} value={formData.languages_known} onChange={v => updateField('languages_known', v)} />
               <div className="space-y-2">
                 <Label>Your Height (in ft) *</Label>
-                <Input value={formData.height_ft} onChange={e => updateField('height_ft', e.target.value)} placeholder="e.g. 5'8" className="h-12 bg-secondary/50" />
+                <Input value={formData.height_ft} onChange={e => updateField('height_ft', e.target.value)} placeholder="e.g. 5'8" className="h-11 bg-secondary/50" />
               </div>
             </div>
           </KYFormCard>
@@ -538,39 +520,31 @@ const KYFForm: React.FC = () => {
 
       case 6:
         return (
-          <KYFormCard>
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">Your Pictures</h2>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <PhotoUploadField label="A photo you love" description="(your face should be seen)" required value={formData.photo_favorite_url} onChange={v => updateField('photo_favorite_url', v)} folder="favorite" />
-                <PhotoUploadField label="HeadShot Front" required value={formData.headshot_front_url} onChange={v => updateField('headshot_front_url', v)} folder="headshot-front" />
-                <PhotoUploadField label="HeadShot Right" value={formData.headshot_right_url} onChange={v => updateField('headshot_right_url', v)} folder="headshot-right" />
-                <PhotoUploadField label="HeadShot Left" value={formData.headshot_left_url} onChange={v => updateField('headshot_left_url', v)} folder="headshot-left" />
-                <PhotoUploadField label="Full Body Shot" required value={formData.full_body_url} onChange={v => updateField('full_body_url', v)} folder="full-body" />
-              </div>
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={7} stepTitle="Your Pictures">
+            <div className="grid grid-cols-2 gap-3">
+              <PhotoUploadField label="A photo you love" description="(your face should be seen)" required value={formData.photo_favorite_url} onChange={v => updateField('photo_favorite_url', v)} folder="favorite" />
+              <PhotoUploadField label="HeadShot Front" required value={formData.headshot_front_url} onChange={v => updateField('headshot_front_url', v)} folder="headshot-front" />
+              <PhotoUploadField label="HeadShot Right" value={formData.headshot_right_url} onChange={v => updateField('headshot_right_url', v)} folder="headshot-right" />
+              <PhotoUploadField label="HeadShot Left" value={formData.headshot_left_url} onChange={v => updateField('headshot_left_url', v)} folder="headshot-left" />
+              <PhotoUploadField label="Full Body Shot" required value={formData.full_body_url} onChange={v => updateField('full_body_url', v)} folder="full-body" />
             </div>
           </KYFormCard>
         );
 
       case 7:
         return (
-          <KYFormCard>
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">Understanding You</h2>
-                <p className="text-sm text-muted-foreground mt-1">To assign you to compatible groups</p>
-              </div>
-              <a href="https://www.16personalities.com/free-personality-test" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-4 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors">
-                <ExternalLink className="h-5 w-5 text-primary" />
-                <span className="text-primary font-medium">Take the personality test</span>
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={8} stepTitle="Understanding You">
+            <p className="text-sm text-muted-foreground mb-4">To assign you to compatible groups</p>
+            <div className="space-y-4">
+              <a href="https://www.16personalities.com/free-personality-test" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 rounded-xl border border-forge-gold/30 bg-forge-gold/10 hover:bg-forge-gold/20 transition-colors">
+                <ExternalLink className="h-5 w-5 text-forge-gold" />
+                <span className="text-forge-gold font-medium">Take the personality test</span>
               </a>
               <div className="space-y-2">
                 <Label>Your MBTI Result *</Label>
                 <div className="grid grid-cols-4 gap-2">
                   {MBTI_TYPES.map(type => (
-                    <button key={type} type="button" onClick={() => updateField('mbti_type', type)} className={`p-3 rounded-lg border text-sm font-medium transition-all ${formData.mbti_type === type ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card hover:border-primary/50'}`}>
+                    <button key={type} type="button" onClick={() => updateField('mbti_type', type)} className={`p-2.5 rounded-lg border text-sm font-medium transition-all ${formData.mbti_type === type ? 'border-forge-gold bg-forge-gold/20 text-forge-gold' : 'border-border bg-card hover:border-forge-gold/50'}`}>
                       {type}
                     </button>
                   ))}
@@ -580,7 +554,7 @@ const KYFForm: React.FC = () => {
               {formData.forge_intent === 'other' && (
                 <div className="space-y-2">
                   <Label>If Other, what?</Label>
-                  <Input value={formData.forge_intent_other} onChange={e => updateField('forge_intent_other', e.target.value)} className="h-12 bg-secondary/50" />
+                  <Input value={formData.forge_intent_other} onChange={e => updateField('forge_intent_other', e.target.value)} className="h-11 bg-secondary/50" />
                 </div>
               )}
             </div>
@@ -589,22 +563,17 @@ const KYFForm: React.FC = () => {
 
       case 8:
         return (
-          <KYFormCard>
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">Terms and Conditions</h2>
-              </div>
-              <div className="p-4 rounded-xl border border-border bg-card">
-                <div className="flex items-start gap-3">
-                  <Checkbox id="terms" checked={formData.terms_accepted} onCheckedChange={(checked) => updateField('terms_accepted', checked === true)} className="mt-0.5" />
-                  <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                    I agree to the{' '}
-                    <button type="button" onClick={() => setShowTermsModal(true)} className="text-primary underline hover:text-primary/80 transition-colors">
-                      terms and conditions
-                    </button>{' '}
-                    of the Forge program.
-                  </label>
-                </div>
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={9} stepTitle="Terms and Conditions">
+            <div className="p-4 rounded-xl border border-border bg-secondary/30">
+              <div className="flex items-start gap-3">
+                <Checkbox id="terms" checked={formData.terms_accepted} onCheckedChange={(checked) => updateField('terms_accepted', checked === true)} className="mt-0.5" />
+                <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                  I agree to the{' '}
+                  <button type="button" onClick={() => setShowTermsModal(true)} className="text-forge-gold underline hover:text-forge-yellow transition-colors">
+                    terms and conditions
+                  </button>{' '}
+                  of the Forge program.
+                </label>
               </div>
             </div>
           </KYFormCard>
@@ -616,41 +585,38 @@ const KYFForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start py-6 px-4 bg-background">
+    <div className="min-h-screen flex flex-col items-center justify-center py-6 px-4 bg-background">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-32 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-32 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 -left-32 w-64 h-64 bg-forge-gold/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 -right-32 w-64 h-64 bg-forge-yellow/10 rounded-full blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-lg">
-        {/* Progress bar */}
-        <KYFormProgressBar currentStep={step} totalSteps={STEP_TITLES.length} />
-
-        {/* Card stack */}
-        <div className="mt-8 mb-6">
+        {/* Card stack - no external progress bar */}
+        <div className="mb-6">
           <KYFormCardStack currentStep={step} totalSteps={STEP_TITLES.length}>
-            {STEP_TITLES.map((_, index) => (
-              <div key={index} className="max-h-[calc(100vh-320px)] overflow-y-auto">
+            {STEP_TITLES.map((title, index) => (
+              <div key={index}>
                 {renderStepContent(index)}
               </div>
             ))}
           </KYFormCardStack>
         </div>
 
-        {/* Navigation */}
+        {/* Navigation - compact gold buttons */}
         <div className="flex gap-3">
-          <Button variant="outline" onClick={handleBack} className="flex-1 h-12">
+          <Button variant="ghost" onClick={handleBack} className="flex-1 h-11 border border-border hover:bg-secondary/50">
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back
           </Button>
           {step < STEP_TITLES.length - 1 ? (
-            <Button onClick={handleNext} disabled={!canProceed()} className="flex-1 h-12 gradient-primary text-primary-foreground">
+            <Button onClick={handleNext} disabled={!canProceed()} className="flex-1 h-11 bg-forge-yellow text-black hover:bg-forge-gold font-semibold">
               Next
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={!canProceed() || loading} className="flex-1 h-12 gradient-primary text-primary-foreground">
+            <Button onClick={handleSubmit} disabled={!canProceed() || loading} className="flex-1 h-11 bg-forge-yellow text-black hover:bg-forge-gold font-semibold">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Submit'}
             </Button>
           )}

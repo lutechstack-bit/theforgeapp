@@ -176,18 +176,15 @@ const KYWForm: React.FC = () => {
     switch (stepIndex) {
       case 0:
         return (
-          <KYFormCard>
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">General Details</h2>
-              </div>
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={1} stepTitle="General Details">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Full name (as you want it on your certificate) *</Label>
-                <Input value={formData.certificate_name} onChange={e => updateField('certificate_name', e.target.value)} className="h-12 bg-secondary/50" />
+                <Input value={formData.certificate_name} onChange={e => updateField('certificate_name', e.target.value)} className="h-11 bg-secondary/50" />
               </div>
               <div className="space-y-2">
                 <Label>What are you currently doing? *</Label>
-                <Input value={formData.current_occupation} onChange={e => updateField('current_occupation', e.target.value)} className="h-12 bg-secondary/50" />
+                <Input value={formData.current_occupation} onChange={e => updateField('current_occupation', e.target.value)} className="h-11 bg-secondary/50" />
               </div>
             </div>
           </KYFormCard>
@@ -195,18 +192,15 @@ const KYWForm: React.FC = () => {
 
       case 1:
         return (
-          <KYFormCard>
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">Personal Details</h2>
-              </div>
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={2} stepTitle="Personal Details">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Your Age *</Label>
-                <Input type="number" value={formData.age} onChange={e => updateField('age', e.target.value)} className="h-12 bg-secondary/50" />
+                <Input type="number" value={formData.age} onChange={e => updateField('age', e.target.value)} className="h-11 bg-secondary/50" />
               </div>
               <div className="space-y-2">
                 <Label>Your Primary Language of Writing *</Label>
-                <Input value={formData.primary_language} onChange={e => updateField('primary_language', e.target.value)} className="h-12 bg-secondary/50" />
+                <Input value={formData.primary_language} onChange={e => updateField('primary_language', e.target.value)} className="h-11 bg-secondary/50" />
               </div>
             </div>
           </KYFormCard>
@@ -214,19 +208,16 @@ const KYWForm: React.FC = () => {
 
       case 2:
         return (
-          <KYFormCard>
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">Writing Practice & Emergency</h2>
-              </div>
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={3} stepTitle="Writing Practice & Emergency">
+            <div className="space-y-4">
               <MultiSelectField label="What type of writing do you currently do?" required options={['Fiction', 'Non-fiction', 'Poetry', 'Screenwriting', 'Journaling', 'Not writing consistently yet']} value={formData.writing_types} onChange={v => updateField('writing_types', v)} />
               <div className="space-y-2">
                 <Label>Emergency contact name *</Label>
-                <Input value={formData.emergency_contact_name} onChange={e => updateField('emergency_contact_name', e.target.value)} className="h-12 bg-secondary/50" />
+                <Input value={formData.emergency_contact_name} onChange={e => updateField('emergency_contact_name', e.target.value)} className="h-11 bg-secondary/50" />
               </div>
               <div className="space-y-2">
                 <Label>Emergency contact number *</Label>
-                <Input value={formData.emergency_contact_number} onChange={e => updateField('emergency_contact_number', e.target.value)} className="h-12 bg-secondary/50" />
+                <Input value={formData.emergency_contact_number} onChange={e => updateField('emergency_contact_number', e.target.value)} className="h-11 bg-secondary/50" />
               </div>
             </div>
           </KYFormCard>
@@ -234,11 +225,8 @@ const KYWForm: React.FC = () => {
 
       case 3:
         return (
-          <KYFormCard>
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">Proficiency Level</h2>
-              </div>
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={4} stepTitle="Proficiency Level">
+            <div className="space-y-4">
               <ProficiencyField label="Writing" required options={[{value:'consistent',label:'I write consistently and have finished multiple pieces'},{value:'struggle',label:'I write but struggle to finish'},{value:'shared',label:'I have shared my writing publicly'},{value:'private',label:'I mostly write for myself'},{value:'starting',label:'I am just getting started'}]} value={formData.proficiency_writing} onChange={v => updateField('proficiency_writing', v)} />
               <ProficiencyField label="Story & Voice" required options={[{value:'clear_voice',label:'I have a clear writing voice'},{value:'experimenting',label:'I experiment with tone and style'},{value:'structure',label:'I struggle with structure'},{value:'confidence',label:'I struggle with confidence'},{value:'starting',label:'I am just getting started'}]} value={formData.proficiency_story_voice} onChange={v => updateField('proficiency_story_voice', v)} />
             </div>
@@ -247,11 +235,8 @@ const KYWForm: React.FC = () => {
 
       case 4:
         return (
-          <KYFormCard>
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">Personality & Preferences</h2>
-              </div>
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={5} stepTitle="Personality & Preferences">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Your top 3 writers or books that inspire you? *</Label>
                 <Textarea value={formData.top_3_writers_books} onChange={e => updateField('top_3_writers_books', e.target.value)} placeholder="Separate with commas" className="bg-secondary/50" />
@@ -263,19 +248,16 @@ const KYWForm: React.FC = () => {
 
       case 5:
         return (
-          <KYFormCard>
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">Understanding You Deeper</h2>
-              </div>
-              <a href="https://www.16personalities.com/free-personality-test" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-4 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors">
-                <ExternalLink className="h-5 w-5 text-primary" />
-                <span className="text-primary font-medium">Take the personality test</span>
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={6} stepTitle="Understanding You Deeper">
+            <div className="space-y-4">
+              <a href="https://www.16personalities.com/free-personality-test" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 rounded-xl border border-forge-gold/30 bg-forge-gold/10 hover:bg-forge-gold/20 transition-colors">
+                <ExternalLink className="h-5 w-5 text-forge-gold" />
+                <span className="text-forge-gold font-medium">Take the personality test</span>
               </a>
               <div className="space-y-2">
                 <Label>Your MBTI Result *</Label>
                 <div className="grid grid-cols-4 gap-2">
-                  {MBTI_TYPES.map(t => <button key={t} onClick={() => updateField('mbti_type', t)} className={`p-3 rounded-lg border text-sm font-medium ${formData.mbti_type === t ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card'}`}>{t}</button>)}
+                  {MBTI_TYPES.map(t => <button key={t} onClick={() => updateField('mbti_type', t)} className={`p-2.5 rounded-lg border text-sm font-medium ${formData.mbti_type === t ? 'border-forge-gold bg-forge-gold/20 text-forge-gold' : 'border-border bg-card'}`}>{t}</button>)}
                 </div>
               </div>
             </div>
@@ -284,16 +266,13 @@ const KYWForm: React.FC = () => {
 
       case 6:
         return (
-          <KYFormCard>
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">Intent at the Forge</h2>
-              </div>
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={7} stepTitle="Intent at the Forge">
+            <div className="space-y-4">
               <RadioSelectField label="What is the one thing you want to unlock as a writer?" required options={[{value:'discipline',label:'Writing discipline'},{value:'finishing',label:'Finishing my work'},{value:'voice',label:'Finding my voice'},{value:'sharing',label:'Sharing my work publicly'},{value:'confidence',label:'Building confidence'},{value:'other',label:'Other'}]} value={formData.forge_intent} onChange={v => updateField('forge_intent', v)} />
               {formData.forge_intent === 'other' && (
                 <div className="space-y-2">
                   <Label>If Other, what?</Label>
-                  <Input value={formData.forge_intent_other} onChange={e => updateField('forge_intent_other', e.target.value)} className="h-12 bg-secondary/50" />
+                  <Input value={formData.forge_intent_other} onChange={e => updateField('forge_intent_other', e.target.value)} className="h-11 bg-secondary/50" />
                 </div>
               )}
             </div>
@@ -302,18 +281,13 @@ const KYWForm: React.FC = () => {
 
       case 7:
         return (
-          <KYFormCard>
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">Terms and Conditions</h2>
-              </div>
-              <div className="p-4 rounded-xl border border-border bg-card">
-                <div className="flex items-start gap-3">
-                  <Checkbox id="terms" checked={formData.terms_accepted} onCheckedChange={(c) => updateField('terms_accepted', c === true)} />
-                  <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">
-                    I agree to the <button type="button" onClick={() => setShowTermsModal(true)} className="text-primary underline">terms and conditions</button> of the Forge program.
-                  </label>
-                </div>
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={8} stepTitle="Terms and Conditions">
+            <div className="p-4 rounded-xl border border-border bg-secondary/30">
+              <div className="flex items-start gap-3">
+                <Checkbox id="terms" checked={formData.terms_accepted} onCheckedChange={(c) => updateField('terms_accepted', c === true)} />
+                <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">
+                  I agree to the <button type="button" onClick={() => setShowTermsModal(true)} className="text-forge-gold underline">terms and conditions</button> of the Forge program.
+                </label>
               </div>
             </div>
           </KYFormCard>
@@ -325,19 +299,17 @@ const KYWForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start py-6 px-4 bg-background">
+    <div className="min-h-screen flex flex-col items-center justify-center py-6 px-4 bg-background">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-32 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-32 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 -left-32 w-64 h-64 bg-forge-gold/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 -right-32 w-64 h-64 bg-forge-yellow/10 rounded-full blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-lg">
-        <KYFormProgressBar currentStep={step} totalSteps={STEP_TITLES.length} />
-
-        <div className="mt-8 mb-6">
+        <div className="mb-6">
           <KYFormCardStack currentStep={step} totalSteps={STEP_TITLES.length}>
-            {STEP_TITLES.map((_, index) => (
-              <div key={index} className="max-h-[calc(100vh-320px)] overflow-y-auto">
+            {STEP_TITLES.map((title, index) => (
+              <div key={index}>
                 {renderStepContent(index)}
               </div>
             ))}
@@ -345,17 +317,17 @@ const KYWForm: React.FC = () => {
         </div>
 
         <div className="flex gap-3">
-          <Button variant="outline" onClick={handleBack} className="flex-1 h-12">
+          <Button variant="ghost" onClick={handleBack} className="flex-1 h-11 border border-border hover:bg-secondary/50">
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back
           </Button>
           {step < STEP_TITLES.length - 1 ? (
-            <Button onClick={handleNext} disabled={!canProceed()} className="flex-1 h-12 gradient-primary text-primary-foreground">
+            <Button onClick={handleNext} disabled={!canProceed()} className="flex-1 h-11 bg-forge-yellow text-black hover:bg-forge-gold font-semibold">
               Next
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={!canProceed() || loading} className="flex-1 h-12 gradient-primary text-primary-foreground">
+            <Button onClick={handleSubmit} disabled={!canProceed() || loading} className="flex-1 h-11 bg-forge-yellow text-black hover:bg-forge-gold font-semibold">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Submit'}
             </Button>
           )}
