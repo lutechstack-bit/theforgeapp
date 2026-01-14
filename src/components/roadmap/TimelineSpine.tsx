@@ -40,27 +40,27 @@ export const TimelineNode: React.FC<{
   };
 
   const getLineStyles = (isPrevLine: boolean) => {
-    // PRE_FORGE: All lines are muted dashed
+    // PRE_FORGE: All lines are muted dashed with hover effect
     if (forgeMode === 'PRE_FORGE') {
       return `border-l-2 border-dashed ${isHighlighted ? 'border-primary/50 timeline-hover-active' : 'border-muted/30'}`;
     }
     
-    // POST_FORGE: All lines are solid gold
+    // POST_FORGE: Gold lines with hover effect
     if (forgeMode === 'POST_FORGE') {
-      return 'bg-primary';
+      return isHighlighted ? 'bg-primary/70 timeline-hover-active-gold' : 'bg-primary';
     }
     
     // DURING_FORGE: Based on status
     if (isPrevLine) {
       // Line above node - check if previous was completed
       if (prevStatus === 'completed') {
-        return 'bg-primary';
+        return isHighlighted ? 'bg-primary/80 timeline-hover-active-gold' : 'bg-primary';
       }
       return `border-l-2 border-dashed ${isHighlighted ? 'border-primary/50 timeline-hover-active' : 'border-muted/30'}`;
     } else {
       // Line below node - check if current is completed
       if (status === 'completed') {
-        return 'bg-primary';
+        return isHighlighted ? 'bg-primary/80 timeline-hover-active-gold' : 'bg-primary';
       }
       return `border-l-2 border-dashed ${isHighlighted ? 'border-primary/50 timeline-hover-active' : 'border-muted/30'}`;
     }
