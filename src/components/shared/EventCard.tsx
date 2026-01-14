@@ -33,7 +33,7 @@ export const EventCard: React.FC<EventCardProps> = ({
     <div
       onClick={onClick}
       className={cn(
-        "min-w-[280px] sm:min-w-[320px] rounded-2xl overflow-hidden cursor-pointer flex-shrink-0 group",
+        "min-w-[240px] sm:min-w-[280px] md:min-w-[320px] rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer flex-shrink-0 group",
         "bg-card border border-border hover:border-primary/30 transition-all duration-500",
         "hover:shadow-[0_12px_40px_hsl(var(--primary)/0.15)] hover:-translate-y-1",
         className
@@ -81,8 +81,8 @@ export const EventCard: React.FC<EventCardProps> = ({
       </div>
 
       {/* Info Section */}
-      <div className="p-4 bg-card">
-        <div className="flex items-center justify-between gap-3">
+      <div className="p-3 sm:p-4 bg-card">
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
           {/* Host Info */}
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
             {hostAvatarUrl ? (

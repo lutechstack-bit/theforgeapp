@@ -41,7 +41,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className="group relative flex-shrink-0 w-[280px] cursor-pointer"
+      className="group relative flex-shrink-0 w-[220px] sm:w-[260px] md:w-[280px] cursor-pointer"
     >
       {/* Card Container - Tall aspect ratio like reference */}
       <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-card border border-border/30 transition-all duration-300 group-hover:border-primary/30 group-hover:shadow-[0_0_30px_hsl(var(--primary)/0.15)]">

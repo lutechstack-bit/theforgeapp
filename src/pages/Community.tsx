@@ -148,9 +148,9 @@ const Community = () => {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] px-2 md:px-4 gap-3">
+    <div className="flex flex-col h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] px-3 sm:px-4 gap-2.5 sm:gap-3">
       {/* Header with Members Button */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-2 sm:gap-3">
         <CommunityHeader memberCount={stats.totalMembers} onlineCount={onlineUserIds.length} />
         <MembersDrawer onlineUserIds={onlineUserIds} memberCount={stats.totalMembers} />
       </div>

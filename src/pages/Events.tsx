@@ -120,11 +120,11 @@ const Events: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="p-4 space-y-6">
+      <div className="p-3 sm:p-4 space-y-4 sm:space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Events</h1>
-          <p className="text-muted-foreground text-sm">Discover and join community events</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Events</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm">Discover and join community events</p>
         </div>
 
         {/* Search */}
@@ -196,7 +196,7 @@ const Events: React.FC = () => {
 
         {/* Events Grid */}
         {eventsLoading ? (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 sm:gap-4">
             {[...Array(4)].map((_, i) => (
               <Skeleton key={i} className="aspect-[4/5] rounded-2xl" />
             ))}
@@ -219,7 +219,7 @@ const Events: React.FC = () => {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 sm:gap-4">
             {sortedEvents.map((event) => {
               const isEventPast = isPast(new Date(event.event_date));
               return (
@@ -245,22 +245,22 @@ const Events: React.FC = () => {
         {/* Calendar Sync CTA */}
         <div 
           onClick={() => setIsCalendarModalOpen(true)}
-          className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-2xl p-6 border border-primary/20 cursor-pointer hover:border-primary/40 transition-colors"
+          className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-primary/20 cursor-pointer hover:border-primary/40 transition-colors"
         >
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-lg bg-primary/20">
-              <CalendarPlus className="h-5 w-5 text-primary" />
+              <CalendarPlus className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">Sync to Calendar</h3>
+              <h3 className="font-semibold text-foreground text-sm sm:text-base">Sync to Calendar</h3>
               <p className="text-xs text-muted-foreground">Never miss an event</p>
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="flex-1 pointer-events-none">
+            <Button variant="outline" size="sm" className="flex-1 pointer-events-none text-xs sm:text-sm">
               Google Calendar
             </Button>
-            <Button variant="outline" size="sm" className="flex-1 pointer-events-none">
+            <Button variant="outline" size="sm" className="flex-1 pointer-events-none text-xs sm:text-sm">
               Apple Calendar
             </Button>
           </div>

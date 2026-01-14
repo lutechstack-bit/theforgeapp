@@ -12,10 +12,10 @@ const AppLayoutContent: React.FC = () => {
   const showNav = !hideNavRoutes.includes(location.pathname);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background safe-area-pt">
       {showNav && <SideNav />}
       <main className={cn(
-        "relative pb-20 md:pb-0 transition-all duration-300 ease-in-out",
+        "relative pb-20 md:pb-0 transition-all duration-300 ease-in-out safe-area-pb",
         showNav && (collapsed ? "md:ml-[72px]" : "md:ml-64")
       )}>
         <Outlet />

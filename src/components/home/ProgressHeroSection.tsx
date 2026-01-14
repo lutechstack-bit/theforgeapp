@@ -42,7 +42,7 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
     <button
       onClick={onClick}
       className={cn(
-        "relative flex-shrink-0 w-[160px] sm:w-[180px] p-4 rounded-xl border",
+        "relative flex-shrink-0 w-[140px] sm:w-[160px] md:w-[180px] p-3 sm:p-4 rounded-xl border",
         "transition-all duration-300 hover:scale-105 hover:shadow-xl",
         "text-left group",
         variantStyles[variant]
@@ -50,8 +50,8 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
     >
       {/* Number badge */}
       <div className={cn(
-        "absolute -top-2 -left-2 w-7 h-7 rounded-full flex items-center justify-center",
-        "text-xs font-bold shadow-lg",
+        "absolute -top-2 -left-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center",
+        "text-[10px] sm:text-xs font-bold shadow-lg",
         variant === 'accent' ? 'bg-primary-foreground text-primary' : 'bg-primary text-primary-foreground'
       )}>
         {number}
@@ -59,18 +59,18 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
 
       {/* Icon */}
       <div className={cn(
-        "w-10 h-10 rounded-lg flex items-center justify-center mb-3",
+        "w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center mb-2 sm:mb-3",
         variant === 'accent' ? 'bg-primary-foreground/20' : 'bg-primary/20'
       )}>
-        {icon}
+        {React.cloneElement(icon as React.ReactElement, { className: 'w-4 h-4 sm:w-5 sm:h-5' })}
       </div>
 
       {/* Content */}
-      <h4 className={cn("text-sm font-semibold mb-1", textStyles[variant])}>
+      <h4 className={cn("text-xs sm:text-sm font-semibold mb-0.5 sm:mb-1 line-clamp-1", textStyles[variant])}>
         {title}
       </h4>
       <p className={cn(
-        "text-xs mb-2",
+        "text-[10px] sm:text-xs mb-1.5 sm:mb-2 line-clamp-1",
         variant === 'accent' ? 'text-primary-foreground/80' : 'text-muted-foreground'
       )}>
         {subtitle}
@@ -78,16 +78,16 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
 
       {/* Progress indicator */}
       <div className={cn(
-        "text-xs font-medium flex items-center gap-1",
+        "text-[10px] sm:text-xs font-medium flex items-center gap-1",
         variant === 'accent' ? 'text-primary-foreground' : 'text-primary'
       )}>
-        <Sparkles className="w-3 h-3" />
+        <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
         {progress}
       </div>
 
       {/* Hover arrow */}
       <ArrowRight className={cn(
-        "absolute bottom-4 right-4 w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity",
+        "absolute bottom-3 right-3 sm:bottom-4 sm:right-4 w-3 h-3 sm:w-4 sm:h-4 opacity-0 group-hover:opacity-100 transition-opacity",
         textStyles[variant]
       )} />
     </button>
@@ -177,14 +177,14 @@ export const ProgressHeroSection: React.FC = () => {
       <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent rounded-2xl" />
       <div className="absolute bottom-0 left-0 w-1/3 h-1/2 bg-gradient-to-tr from-accent/5 to-transparent rounded-2xl" />
 
-      <div className="relative p-5 sm:p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+      <div className="relative p-4 sm:p-5 md:p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-5">
           {/* Left side: Greeting */}
           <div className="flex-shrink-0">
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-1.5 sm:mb-2">
               Hi, {firstName}! 👋
             </h2>
-            <p className="text-sm sm:text-base text-muted-foreground mb-4 max-w-sm">
+            <p className="text-xs sm:text-sm md:text-base text-muted-foreground mb-3 sm:mb-4 max-w-sm">
               {progressMessage}
             </p>
             <Button
@@ -199,7 +199,7 @@ export const ProgressHeroSection: React.FC = () => {
           </div>
 
           {/* Right side: Progress cards - with proper overflow spacing for badges */}
-          <div className="flex gap-4 overflow-x-auto pt-3 pb-3 pl-3 -mx-5 pr-5 sm:mx-0 sm:px-0 sm:pl-3 scrollbar-hide">
+          <div className="flex gap-2.5 sm:gap-4 overflow-x-auto pt-3 pb-3 pl-3 -mx-4 pr-4 sm:-mx-5 sm:pr-5 md:mx-0 md:px-0 md:pl-3 scrollbar-hide">
             <ProgressCard
               number="01"
               title="KYF Form"

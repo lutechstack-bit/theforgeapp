@@ -172,7 +172,7 @@ const Home: React.FC = () => {
   const displayEvents = (events && events.length > 0) ? events : dummyEvents;
 
   return (
-    <div className="min-h-screen p-4 md:p-6 space-y-6">
+    <div className="min-h-screen p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
       {/* Compact Countdown Timer - Gold themed strip at top */}
       <CompactCountdownTimer edition={edition} />
 
@@ -180,9 +180,9 @@ const Home: React.FC = () => {
       <ProgressHeroSection />
 
       {/* Quick Actions Row - Moved up */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 reveal-section" style={{ animationDelay: '0.1s' }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 reveal-section" style={{ animationDelay: '0.1s' }}>
         {/* Roadmap Card */}
-        <div className="bg-card border border-border rounded-xl p-5 hover-lift tap-scale card-shine">
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-5 hover-lift tap-scale card-shine">
           <div className="flex items-start justify-between mb-4">
             <div>
               <h3 className="text-lg font-semibold text-foreground">Your Roadmap</h3>
@@ -205,7 +205,7 @@ const Home: React.FC = () => {
         </div>
 
         {/* Community Card */}
-        <div className="bg-card border border-border rounded-xl p-5 hover-lift tap-scale card-shine">
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-5 hover-lift tap-scale card-shine">
           <div className="flex items-start justify-between mb-4">
             <div>
               <h3 className="text-lg font-semibold text-foreground">Connect with Peers</h3>
