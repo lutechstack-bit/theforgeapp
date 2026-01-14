@@ -33,14 +33,29 @@ const formatDateForInput = (dateString: string): string => {
   if (!dateString) return '';
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return '';
-  
+
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
-  
+
   return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+const isValidDatetimeLocal = (value: string) =>
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value);
+
+// Some browsers briefly produce partial values; avoid feeding invalid values back into the input.
+const normalizeDatetimeLocal = (value: string) => {
+  if (!value) return '';
+  if (isValidDatetimeLocal(value)) return value;
+
+  // If only a date is present, default to midnight.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return `${value}T00:00`;
+
+  // If partial/invalid, keep empty to prevent native validation tooltip.
+  return '';
 };
 
 interface EventForm {
@@ -169,8 +184,14 @@ const AdminEvents: React.FC = () => {
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isValidDatetimeLocal(form.event_date)) {
+      toast.error('Please select a valid Date & Time');
+      return;
+    }
+
     saveMutation.mutate(form);
   };
 
@@ -239,13 +260,14 @@ const AdminEvents: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="event_date">Date & Time</Label>
+<Label htmlFor="event_date">Date & Time</Label>
                   <Input
                     id="event_date"
                     type="datetime-local"
                     value={form.event_date}
-                    onChange={(e) => setForm({ ...form, event_date: e.target.value })}
-                    required
+                    onChange={(e) =>
+                      setForm({ ...form, event_date: normalizeDatetimeLocal(e.target.value) })
+                    }
                   />
                 </div>
                 <div>
