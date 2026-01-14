@@ -190,7 +190,7 @@ const KYCForm: React.FC = () => {
     switch (stepIndex) {
       case 0:
         return (
-          <KYFormCard questionNumber={1}>
+          <KYFormCard>
             <div className="space-y-5">
               <div className="text-center mb-6">
                 <h2 className="text-xl md:text-2xl font-bold text-foreground">General Details</h2>
@@ -210,7 +210,7 @@ const KYCForm: React.FC = () => {
 
       case 1:
         return (
-          <KYFormCard questionNumber={2}>
+          <KYFormCard>
             <div className="space-y-5">
               <div className="text-center mb-6">
                 <h2 className="text-xl md:text-2xl font-bold text-foreground">Personal Details</h2>
@@ -241,7 +241,7 @@ const KYCForm: React.FC = () => {
 
       case 2:
         return (
-          <KYFormCard questionNumber={3}>
+          <KYFormCard>
             <div className="space-y-5">
               <div className="text-center mb-6">
                 <h2 className="text-xl md:text-2xl font-bold text-foreground">Creator Setup & Emergency</h2>
@@ -261,7 +261,7 @@ const KYCForm: React.FC = () => {
 
       case 3:
         return (
-          <KYFormCard questionNumber={4}>
+          <KYFormCard>
             <div className="space-y-5">
               <div className="text-center mb-6">
                 <h2 className="text-xl md:text-2xl font-bold text-foreground">Proficiency Level</h2>
@@ -276,7 +276,7 @@ const KYCForm: React.FC = () => {
 
       case 4:
         return (
-          <KYFormCard questionNumber={5}>
+          <KYFormCard>
             <div className="space-y-5">
               <div className="text-center mb-6">
                 <h2 className="text-xl md:text-2xl font-bold text-foreground">Personality & Preferences</h2>
@@ -293,7 +293,7 @@ const KYCForm: React.FC = () => {
 
       case 5:
         return (
-          <KYFormCard questionNumber={6}>
+          <KYFormCard>
             <div className="space-y-5">
               <div className="text-center mb-6">
                 <h2 className="text-xl md:text-2xl font-bold text-foreground">Understanding You Deeper</h2>
@@ -314,7 +314,7 @@ const KYCForm: React.FC = () => {
 
       case 6:
         return (
-          <KYFormCard questionNumber={7}>
+          <KYFormCard>
             <div className="space-y-5">
               <div className="text-center mb-6">
                 <h2 className="text-xl md:text-2xl font-bold text-foreground">Intent at the Forge</h2>
@@ -332,7 +332,7 @@ const KYCForm: React.FC = () => {
 
       case 7:
         return (
-          <KYFormCard questionNumber={8}>
+          <KYFormCard>
             <div className="space-y-5">
               <div className="text-center mb-6">
                 <h2 className="text-xl md:text-2xl font-bold text-foreground">Terms and Conditions</h2>
@@ -362,7 +362,7 @@ const KYCForm: React.FC = () => {
       </div>
 
       <div className="relative w-full max-w-lg">
-        <KYFormProgressBar currentStep={step} totalSteps={STEP_TITLES.length} stepTitles={STEP_TITLES} />
+        <KYFormProgressBar currentStep={step} totalSteps={STEP_TITLES.length} />
 
         <div className="mt-8 mb-6">
           <KYFormCardStack currentStep={step} totalSteps={STEP_TITLES.length}>

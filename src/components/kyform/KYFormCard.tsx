@@ -3,19 +3,15 @@ import { cn } from '@/lib/utils';
 
 interface KYFormCardProps {
   children: React.ReactNode;
-  questionNumber: number;
   className?: string;
   isAnimating?: 'out' | 'in' | null;
 }
 
 export const KYFormCard: React.FC<KYFormCardProps> = ({
   children,
-  questionNumber,
   className,
   isAnimating,
 }) => {
-  const formattedNumber = String(questionNumber).padStart(2, '0');
-
   return (
     <div
       className={cn(
@@ -28,15 +24,7 @@ export const KYFormCard: React.FC<KYFormCardProps> = ({
         className
       )}
     >
-      {/* Question number badge */}
-      <div className="absolute -top-3 left-6 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold">
-        Q.{formattedNumber}
-      </div>
-
-      {/* Card content */}
-      <div className="pt-2">
-        {children}
-      </div>
+      {children}
     </div>
   );
 };

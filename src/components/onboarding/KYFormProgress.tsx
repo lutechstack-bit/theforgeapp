@@ -9,10 +9,16 @@ interface KYFormProgressProps {
 export const KYFormProgress: React.FC<KYFormProgressProps> = ({ 
   currentStep, 
   totalSteps,
-  stepTitles 
 }) => {
   return (
     <div className="space-y-2">
+      {/* Step counter */}
+      <div className="flex justify-end">
+        <span className="text-sm text-muted-foreground">
+          {currentStep + 1} of {totalSteps}
+        </span>
+      </div>
+      
       {/* Progress bar */}
       <div className="flex gap-1.5">
         {Array.from({ length: totalSteps }).map((_, i) => (
@@ -23,18 +29,6 @@ export const KYFormProgress: React.FC<KYFormProgressProps> = ({
             }`}
           />
         ))}
-      </div>
-      
-      {/* Step indicator */}
-      <div className="flex justify-between items-center">
-        <span className="text-sm text-muted-foreground">
-          Step {currentStep + 1} of {totalSteps}
-        </span>
-        {stepTitles && stepTitles[currentStep] && (
-          <span className="text-sm font-medium text-foreground">
-            {stepTitles[currentStep]}
-          </span>
-        )}
       </div>
     </div>
   );
