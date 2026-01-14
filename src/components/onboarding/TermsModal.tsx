@@ -19,7 +19,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({ open, onOpenChange }) =>
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Terms and Conditions</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-[60vh] pr-4">
+        <ScrollArea className="h-[50vh] sm:h-[60vh] pr-4">
           <div className="space-y-6 text-sm text-muted-foreground">
             <section>
               <h3 className="text-base font-semibold text-foreground mb-2">1. Program Overview</h3>

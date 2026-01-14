@@ -33,7 +33,7 @@ export const EventCard: React.FC<EventCardProps> = ({
     <div
       onClick={onClick}
       className={cn(
-        "min-w-[240px] sm:min-w-[280px] md:min-w-[320px] rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer flex-shrink-0 group",
+        "min-w-[200px] xs:min-w-[220px] sm:min-w-[260px] md:min-w-[300px] rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer flex-shrink-0 group tap-scale",
         "bg-card border border-border hover-gold-glow",
         className
       )}

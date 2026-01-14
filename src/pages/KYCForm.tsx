@@ -286,8 +286,8 @@ const KYCForm: React.FC = () => {
               </a>
               <div className="space-y-2">
                 <Label>Your MBTI Result *</Label>
-                <div className="grid grid-cols-4 gap-2">
-                  {MBTI_TYPES.map(t => <button key={t} onClick={() => updateField('mbti_type', t)} className={`p-2.5 rounded-lg border text-sm font-medium ${formData.mbti_type === t ? 'border-forge-gold bg-forge-gold/20 text-forge-gold' : 'border-border bg-card'}`}>{t}</button>)}
+                <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+                  {MBTI_TYPES.map(t => <button key={t} onClick={() => updateField('mbti_type', t)} className={`p-2 sm:p-2.5 rounded-lg border text-xs sm:text-sm font-medium tap-scale ${formData.mbti_type === t ? 'border-forge-gold bg-forge-gold/20 text-forge-gold' : 'border-border bg-card'}`}>{t}</button>)}
                 </div>
               </div>
             </div>
@@ -329,7 +329,7 @@ const KYCForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center py-6 px-4 bg-background">
+    <div className="min-h-[100dvh] flex flex-col items-center justify-center py-4 sm:py-6 px-3 sm:px-4 bg-background">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 -left-32 w-64 h-64 bg-forge-gold/10 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 -right-32 w-64 h-64 bg-forge-yellow/10 rounded-full blur-3xl" />

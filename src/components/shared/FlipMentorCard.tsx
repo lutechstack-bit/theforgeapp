@@ -23,7 +23,7 @@ export const FlipMentorCard: React.FC<FlipMentorCardProps> = ({
   return (
     <div
       className={cn(
-        "relative min-w-[200px] sm:min-w-[220px] md:min-w-[240px] aspect-[3/4] cursor-pointer flex-shrink-0",
+        "relative min-w-[160px] xs:min-w-[180px] sm:min-w-[200px] md:min-w-[220px] aspect-[3/4] cursor-pointer flex-shrink-0 tap-scale",
         "perspective-1000",
         className
       )}

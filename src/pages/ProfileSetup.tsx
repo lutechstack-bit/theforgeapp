@@ -182,7 +182,7 @@ const ProfileSetup: React.FC = () => {
   const canSubmit = formData.full_name && formData.email && formData.phone && formData.city && formData.edition_id;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-background">
+    <div className="min-h-[100dvh] flex flex-col items-center justify-center p-4 sm:p-6 bg-background">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 -left-32 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 -right-32 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
@@ -312,8 +312,8 @@ const ProfileSetup: React.FC = () => {
                     type="button"
                     onClick={() => updateFormData('edition_id', edition.id)}
                     className={`
-                      group relative flex items-center gap-4 p-5 rounded-2xl border 
-                      text-left transition-all duration-300 overflow-hidden
+                      group relative flex items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl sm:rounded-2xl border 
+                      text-left transition-all duration-300 overflow-hidden tap-scale
                       ${isSelected 
                         ? 'border-primary bg-gradient-to-br from-primary/15 to-primary/5 shadow-lg shadow-primary/20' 
                         : 'border-border/50 bg-card/50 hover:border-primary/40 hover:bg-card/80'}

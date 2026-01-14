@@ -98,7 +98,7 @@ export const CleanEventCard: React.FC<CleanEventCardProps> = ({
       </div>
       
       {/* Footer */}
-      <div className="p-4 space-y-3">
+      <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
         {/* Date & Location */}
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
