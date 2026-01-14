@@ -24,10 +24,11 @@ export const KYFormCard: React.FC<KYFormCardProps> = ({
   return (
     <div
       className={cn(
-        'relative rounded-2xl p-5 md:p-6',
-        'bg-card border border-forge-gold/20',
-        'shadow-xl shadow-black/30',
-        'ring-1 ring-forge-gold/10',
+        'relative rounded-3xl p-6 md:p-7',
+        'bg-card/95 backdrop-blur-sm',
+        'border border-forge-gold/15',
+        'shadow-[0_8px_32px_-8px_rgba(0,0,0,0.4),inset_0_1px_0_0_rgba(255,188,59,0.08)]',
+        'ring-1 ring-white/5',
         isAnimating === 'out' && 'animate-stack-pop-out',
         isAnimating === 'in' && 'animate-stack-pop-in',
         className
@@ -40,8 +41,8 @@ export const KYFormCard: React.FC<KYFormCardProps> = ({
       
       {/* Question number indicator */}
       {questionNumber !== undefined && (
-        <div className="mt-4 mb-2">
-          <span className="text-sm font-semibold text-forge-gold tracking-wide">
+        <div className="mt-5 mb-1">
+          <span className="text-xs font-bold text-forge-gold/80 tracking-widest uppercase">
             Q.{String(questionNumber).padStart(2, '0')}
           </span>
         </div>
@@ -49,7 +50,7 @@ export const KYFormCard: React.FC<KYFormCardProps> = ({
       
       {/* Step title */}
       {stepTitle && (
-        <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
+        <h2 className="text-xl md:text-2xl font-bold text-foreground mb-5">
           {stepTitle}
         </h2>
       )}

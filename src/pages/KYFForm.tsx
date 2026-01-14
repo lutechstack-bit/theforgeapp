@@ -604,19 +604,31 @@ const KYFForm: React.FC = () => {
           </KYFormCardStack>
         </div>
 
-        {/* Navigation - compact gold buttons */}
-        <div className="flex gap-3">
-          <Button variant="ghost" onClick={handleBack} className="flex-1 h-11 border border-border hover:bg-secondary/50">
+        {/* Navigation - compact pill buttons */}
+        <div className="flex gap-4 items-center justify-center">
+          <Button 
+            variant="ghost" 
+            onClick={handleBack} 
+            className="text-muted-foreground hover:text-foreground hover:bg-transparent px-6"
+          >
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back
           </Button>
           {step < STEP_TITLES.length - 1 ? (
-            <Button onClick={handleNext} disabled={!canProceed()} className="flex-1 h-11 bg-forge-yellow text-black hover:bg-forge-gold font-semibold">
+            <Button 
+              onClick={handleNext} 
+              disabled={!canProceed()} 
+              className="bg-foreground text-background rounded-full px-8 hover:bg-foreground/90 font-semibold shadow-lg"
+            >
               Next
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={!canProceed() || loading} className="flex-1 h-11 bg-forge-yellow text-black hover:bg-forge-gold font-semibold">
+            <Button 
+              onClick={handleSubmit} 
+              disabled={!canProceed() || loading} 
+              className="bg-forge-yellow text-black rounded-full px-8 hover:bg-forge-gold font-semibold shadow-lg"
+            >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Submit'}
             </Button>
           )}
