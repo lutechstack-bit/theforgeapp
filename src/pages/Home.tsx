@@ -179,48 +179,26 @@ const Home: React.FC = () => {
       {/* Progress Hero Section - My Progress dashboard */}
       <ProgressHeroSection />
 
-      {/* Quick Actions Row - Moved up */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 reveal-section" style={{ animationDelay: '0.1s' }}>
-        {/* Roadmap Card */}
-        <div className="bg-card border border-border rounded-xl p-4 sm:p-5 hover-lift tap-scale card-shine">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">Your Roadmap</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Track your progress and upcoming milestones
-              </p>
+      {/* Compact Community Card */}
+      <div className="bg-card border border-border rounded-xl p-3 sm:p-4 hover-lift tap-scale card-shine reveal-section" style={{ animationDelay: '0.1s' }}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-muted">
+              <Users className="h-4 w-4 text-foreground" />
             </div>
-            <div className="p-2 rounded-lg bg-primary/10 transition-transform duration-300 group-hover:scale-110">
-              <Calendar className="h-5 w-5 text-primary" />
-            </div>
-          </div>
-          <Button 
-            onClick={() => navigate('/roadmap')}
-            className="w-full rounded-lg bg-primary hover:bg-primary/90 btn-press transition-all duration-200"
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            Go to Roadmap
-            <ArrowRight className="h-4 w-4 ml-auto transition-transform duration-200 group-hover:translate-x-1" />
-          </Button>
-        </div>
-
-        {/* Community Card */}
-        <div className="bg-card border border-border rounded-xl p-4 sm:p-5 hover-lift tap-scale card-shine">
-          <div className="flex items-start justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-foreground">Connect with Peers</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Join the conversation with fellow creators
-              </p>
+              <h3 className="text-sm font-semibold text-foreground">Connect with Peers</h3>
+              <p className="text-xs text-muted-foreground">Join the conversation</p>
             </div>
           </div>
           <Button 
             onClick={() => navigate('/community')}
             variant="outline"
-            className="w-full rounded-lg border-border hover:bg-muted btn-press transition-all duration-200"
+            size="sm"
+            className="rounded-lg border-border hover:bg-muted"
           >
-            View Community
-            <ArrowRight className="h-4 w-4 ml-auto transition-transform duration-200 group-hover:translate-x-1" />
+            View
+            <ArrowRight className="h-3 w-3 ml-1" />
           </Button>
         </div>
       </div>
