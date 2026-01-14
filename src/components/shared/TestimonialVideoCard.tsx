@@ -63,7 +63,7 @@ export const TestimonialVideoCard: React.FC<TestimonialVideoCardProps> = ({
     <div
       onClick={handleCardClick}
       className={cn(
-        "relative min-w-[220px] sm:min-w-[260px] md:min-w-[280px] aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer flex-shrink-0 group",
+        "relative min-w-[160px] xs:min-w-[180px] sm:min-w-[220px] md:min-w-[260px] aspect-[3/4] rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer flex-shrink-0 group tap-scale",
         "border border-transparent hover-gold-glow",
         className
       )}
