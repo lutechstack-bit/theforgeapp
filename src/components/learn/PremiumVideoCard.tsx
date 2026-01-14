@@ -55,14 +55,13 @@ export const PremiumVideoCard: React.FC<PremiumVideoCardProps> = ({
     <div
       onClick={handleClick}
       className={cn(
-        "group relative cursor-pointer rounded-2xl overflow-hidden transition-all duration-500",
-        "hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1",
-        "bg-card border border-border/50",
+        "group relative cursor-pointer rounded-2xl transition-all duration-300",
+        "bg-card border border-border/50 hover-gold-glow",
         className
       )}
     >
       {/* Thumbnail Container */}
-      <div className="relative aspect-video overflow-hidden">
+      <div className="relative aspect-video overflow-hidden rounded-t-2xl">
         {thumbnailUrl ? (
           <img
             src={thumbnailUrl}
