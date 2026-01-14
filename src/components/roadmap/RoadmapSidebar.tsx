@@ -20,24 +20,68 @@ interface SidebarItem {
 }
 
 const RoadmapSidebar: React.FC<RoadmapSidebarProps> = ({ editionId }) => {
-  const { data: sidebarContent } = useQuery({
-    queryKey: ['roadmap-sidebar-content', editionId],
+  // First, fetch content IDs linked to this edition via junction table
+  const { data: linkedContentIds } = useQuery({
+    queryKey: ['roadmap-sidebar-content-ids', editionId],
     queryFn: async () => {
-      let query = supabase
+      if (!editionId) return null;
+      
+      const { data, error } = await supabase
+        .from('roadmap_sidebar_content_editions')
+        .select('content_id')
+        .eq('edition_id', editionId);
+      
+      if (error) throw error;
+      return data.map(item => item.content_id);
+    },
+    enabled: !!editionId
+  });
+
+  // Fetch all content IDs that have ANY edition mapping (to identify global content)
+  const { data: allMappedContentIds } = useQuery({
+    queryKey: ['all-mapped-content-ids'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('roadmap_sidebar_content_editions')
+        .select('content_id');
+      
+      if (error) throw error;
+      // Get unique content IDs that have mappings
+      return [...new Set(data.map(item => item.content_id))];
+    }
+  });
+
+  const { data: sidebarContent } = useQuery({
+    queryKey: ['roadmap-sidebar-content', editionId, linkedContentIds, allMappedContentIds],
+    queryFn: async () => {
+      const { data: allContent, error } = await supabase
         .from('roadmap_sidebar_content')
         .select('*')
         .eq('is_active', true)
         .order('order_index');
 
-      if (editionId) {
-        query = query.or(`edition_id.eq.${editionId},edition_id.is.null`);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
-      return data as SidebarItem[];
+      
+      // Filter content based on edition
+      const filteredContent = (allContent || []).filter(item => {
+        // If no edition specified, show all content
+        if (!editionId) return true;
+        
+        // Check if content has any edition mappings
+        const hasMappings = allMappedContentIds?.includes(item.id);
+        
+        if (!hasMappings) {
+          // No mappings = global content, show to everyone
+          return true;
+        }
+        
+        // Has mappings, check if this edition is included
+        return linkedContentIds?.includes(item.id);
+      });
+
+      return filteredContent as SidebarItem[];
     },
-    enabled: true
+    enabled: allMappedContentIds !== undefined
   });
 
   // Group content by block type

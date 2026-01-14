@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
   Plus, Edit2, Trash2, Loader2, Camera, Film, MapPin,
-  Image as ImageIcon, Youtube, Instagram, Save, X, Upload
+  Image as ImageIcon, Youtube, Instagram, Save, X, Upload, Check
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -29,6 +29,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { FileUpload } from '@/components/admin/FileUpload';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface SidebarContentItem {
   id: string;
@@ -43,8 +45,13 @@ interface SidebarContentItem {
   created_at: string;
 }
 
-interface ContentForm {
+interface ContentEdition {
+  content_id: string;
   edition_id: string;
+}
+
+interface ContentForm {
+  edition_ids: string[];
   block_type: string;
   title: string;
   media_url: string;
@@ -55,7 +62,7 @@ interface ContentForm {
 }
 
 const initialForm: ContentForm = {
-  edition_id: '',
+  edition_ids: [],
   block_type: 'past_moments',
   title: '',
   media_url: '',
@@ -122,11 +129,40 @@ const AdminRoadmapSidebar: React.FC = () => {
     }
   });
 
-  const handleOpenDialog = (item?: SidebarContentItem) => {
+  // Fetch content-edition mappings
+  const { data: contentEditions, refetch: refetchEditions } = useQuery({
+    queryKey: ['content-editions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('roadmap_sidebar_content_editions')
+        .select('content_id, edition_id');
+      if (error) throw error;
+      return data as ContentEdition[];
+    }
+  });
+
+  // Get edition IDs for a specific content item
+  const getEditionIdsForContent = (contentId: string): string[] => {
+    return (contentEditions || [])
+      .filter(ce => ce.content_id === contentId)
+      .map(ce => ce.edition_id);
+  };
+
+  // Get edition names for display
+  const getEditionNamesForContent = (contentId: string): string[] => {
+    const editionIds = getEditionIdsForContent(contentId);
+    if (editionIds.length === 0) return ['All Editions'];
+    return editionIds
+      .map(id => editions?.find(e => e.id === id)?.name || 'Unknown')
+      .slice(0, 2);
+  };
+
+  const handleOpenDialog = async (item?: SidebarContentItem) => {
     if (item) {
       setEditingItem(item);
+      const editionIds = getEditionIdsForContent(item.id);
       setForm({
-        edition_id: item.edition_id || '',
+        edition_ids: editionIds,
         block_type: item.block_type,
         title: item.title || '',
         media_url: item.media_url,
@@ -142,6 +178,15 @@ const AdminRoadmapSidebar: React.FC = () => {
     setIsDialogOpen(true);
   };
 
+  const handleEditionToggle = (editionId: string) => {
+    setForm(f => ({
+      ...f,
+      edition_ids: f.edition_ids.includes(editionId)
+        ? f.edition_ids.filter(id => id !== editionId)
+        : [...f.edition_ids, editionId]
+    }));
+  };
+
   const handleSave = async () => {
     if (!form.media_url) {
       toast.error('Media URL is required');
@@ -150,7 +195,7 @@ const AdminRoadmapSidebar: React.FC = () => {
 
     try {
       const payload = {
-        edition_id: form.edition_id || null,
+        edition_id: null, // Keep for backward compatibility but we use junction table now
         block_type: form.block_type,
         title: form.title || null,
         media_url: form.media_url,
@@ -160,23 +205,49 @@ const AdminRoadmapSidebar: React.FC = () => {
         is_active: form.is_active
       };
 
+      let contentId: string;
+
       if (editingItem) {
         const { error } = await supabase
           .from('roadmap_sidebar_content')
           .update(payload)
           .eq('id', editingItem.id);
         if (error) throw error;
-        toast.success('Content updated successfully');
+        contentId = editingItem.id;
+
+        // Delete existing edition mappings
+        await supabase
+          .from('roadmap_sidebar_content_editions')
+          .delete()
+          .eq('content_id', contentId);
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('roadmap_sidebar_content')
-          .insert(payload);
+          .insert(payload)
+          .select('id')
+          .single();
         if (error) throw error;
-        toast.success('Content added successfully');
+        contentId = data.id;
       }
 
+      // Insert new edition mappings
+      if (form.edition_ids.length > 0) {
+        const editionMappings = form.edition_ids.map(edition_id => ({
+          content_id: contentId,
+          edition_id
+        }));
+
+        const { error: mappingError } = await supabase
+          .from('roadmap_sidebar_content_editions')
+          .insert(editionMappings);
+
+        if (mappingError) throw mappingError;
+      }
+
+      toast.success(editingItem ? 'Content updated successfully' : 'Content added successfully');
       setIsDialogOpen(false);
       refetch();
+      refetchEditions();
     } catch (error: any) {
       toast.error(error.message || 'Failed to save content');
     }
@@ -186,6 +257,7 @@ const AdminRoadmapSidebar: React.FC = () => {
     if (!confirm('Are you sure you want to delete this item?')) return;
     
     try {
+      // Junction table entries will be deleted via CASCADE
       const { error } = await supabase
         .from('roadmap_sidebar_content')
         .delete()
@@ -193,6 +265,7 @@ const AdminRoadmapSidebar: React.FC = () => {
       if (error) throw error;
       toast.success('Content deleted');
       refetch();
+      refetchEditions();
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete');
     }
@@ -271,50 +344,67 @@ const AdminRoadmapSidebar: React.FC = () => {
                   </Card>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {items.map(item => (
-                      <Card key={item.id} className="overflow-hidden">
-                        <div className="aspect-video bg-secondary/30 relative">
-                          {item.media_type === 'image' ? (
-                            <img 
-                              src={item.media_url} 
-                              alt={item.title || ''} 
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              {item.media_type === 'youtube' ? (
-                                <Youtube className="w-12 h-12 text-red-500" />
-                              ) : (
-                                <Instagram className="w-12 h-12 text-pink-500" />
-                              )}
-                            </div>
-                          )}
-                          {!item.is_active && (
-                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                              <Badge variant="secondary">Inactive</Badge>
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="font-medium text-sm truncate">{item.title || 'Untitled'}</p>
-                              {item.caption && (
-                                <p className="text-xs text-muted-foreground truncate">{item.caption}</p>
-                              )}
-                            </div>
-                            <div className="flex gap-1 flex-shrink-0">
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOpenDialog(item)}>
-                                <Edit2 className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(item.id)}>
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
+                    {items.map(item => {
+                      const editionNames = getEditionNamesForContent(item.id);
+                      const editionCount = getEditionIdsForContent(item.id).length;
+                      
+                      return (
+                        <Card key={item.id} className="overflow-hidden">
+                          <div className="aspect-video bg-secondary/30 relative">
+                            {item.media_type === 'image' ? (
+                              <img 
+                                src={item.media_url} 
+                                alt={item.title || ''} 
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                {item.media_type === 'youtube' ? (
+                                  <Youtube className="w-12 h-12 text-red-500" />
+                                ) : (
+                                  <Instagram className="w-12 h-12 text-pink-500" />
+                                )}
+                              </div>
+                            )}
+                            {!item.is_active && (
+                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                <Badge variant="secondary">Inactive</Badge>
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="font-medium text-sm truncate">{item.title || 'Untitled'}</p>
+                                {item.caption && (
+                                  <p className="text-xs text-muted-foreground truncate">{item.caption}</p>
+                                )}
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {editionNames.map((name, idx) => (
+                                    <Badge key={idx} variant="outline" className="text-[10px] px-1.5 py-0">
+                                      {name}
+                                    </Badge>
+                                  ))}
+                                  {editionCount > 2 && (
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                      +{editionCount - 2} more
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex gap-1 flex-shrink-0">
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOpenDialog(item)}>
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(item.id)}>
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </Card>
-                    ))}
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -362,18 +452,53 @@ const AdminRoadmapSidebar: React.FC = () => {
             </div>
 
             <div>
-              <Label>Edition (optional)</Label>
-              <Select value={form.edition_id || 'none'} onValueChange={(v) => setForm(f => ({ ...f, edition_id: v === 'none' ? '' : v }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All editions" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">All Editions</SelectItem>
-                  {editions?.map(edition => (
-                    <SelectItem key={edition.id} value={edition.id}>{edition.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="mb-2 block">Editions</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Select editions to show this content. Leave empty for all editions.
+              </p>
+              <Card className="p-2">
+                <ScrollArea className="h-32">
+                  <div className="space-y-2">
+                    {editions?.map(edition => (
+                      <div
+                        key={edition.id}
+                        className="flex items-center gap-2 p-2 hover:bg-secondary/50 rounded cursor-pointer"
+                        onClick={() => handleEditionToggle(edition.id)}
+                      >
+                        <Checkbox
+                          checked={form.edition_ids.includes(edition.id)}
+                          onCheckedChange={() => handleEditionToggle(edition.id)}
+                        />
+                        <span className="text-sm">{edition.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </Card>
+              {form.edition_ids.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {form.edition_ids.map(id => {
+                    const edition = editions?.find(e => e.id === id);
+                    return edition ? (
+                      <Badge
+                        key={id}
+                        variant="secondary"
+                        className="text-xs cursor-pointer"
+                        onClick={() => handleEditionToggle(id)}
+                      >
+                        {edition.name}
+                        <X className="w-3 h-3 ml-1" />
+                      </Badge>
+                    ) : null;
+                  })}
+                </div>
+              )}
+              {form.edition_ids.length === 0 && (
+                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                  <Check className="w-3 h-3 text-green-500" />
+                  Showing to all editions
+                </p>
+              )}
             </div>
 
             <div>
