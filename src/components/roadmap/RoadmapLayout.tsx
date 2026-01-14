@@ -58,9 +58,9 @@ const RoadmapLayout: React.FC = () => {
 
   return (
     <div className="container px-3 sm:px-4 md:px-6 py-4 md:py-6 pb-24">
-      <div className="flex gap-4 md:gap-6 max-w-6xl mx-auto">
+      <div className="flex gap-4 md:gap-6">
         {/* Main Content */}
-        <div className="flex-1 max-w-2xl min-w-0">
+        <div className="flex-1 min-w-0">
           {/* Hero */}
           <RoadmapHero
             cohortName={cohortName}
