@@ -1610,6 +1610,53 @@ export type Database = {
           },
         ]
       }
+      roadmap_sidebar_content: {
+        Row: {
+          block_type: string
+          caption: string | null
+          created_at: string | null
+          edition_id: string | null
+          id: string
+          is_active: boolean | null
+          media_type: string | null
+          media_url: string
+          order_index: number | null
+          title: string | null
+        }
+        Insert: {
+          block_type: string
+          caption?: string | null
+          created_at?: string | null
+          edition_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          media_type?: string | null
+          media_url: string
+          order_index?: number | null
+          title?: string | null
+        }
+        Update: {
+          block_type?: string
+          caption?: string | null
+          created_at?: string | null
+          edition_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          media_type?: string | null
+          media_url?: string
+          order_index?: number | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roadmap_sidebar_content_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_films: {
         Row: {
           award_tags: Json | null

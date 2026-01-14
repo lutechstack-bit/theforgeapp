@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Loader2, Anchor, Sparkles } from 'lucide-react';
 import { useRoadmapData } from '@/hooks/useRoadmapData';
 import RoadmapHero from '@/components/roadmap/RoadmapHero';
 import QuickActionsBar from '@/components/roadmap/QuickActionsBar';
-import CohortCrossSell from '@/components/roadmap/CohortCrossSell';
-import CohortPreviewModal from '@/components/roadmap/CohortPreviewModal';
-import { CohortType } from '@/contexts/ThemeContext';
+import RoadmapSidebar from '@/components/roadmap/RoadmapSidebar';
+import MobileHighlightsSheet from '@/components/roadmap/MobileHighlightsSheet';
 
 const RoadmapLayout: React.FC = () => {
   const {
@@ -21,10 +20,7 @@ const RoadmapLayout: React.FC = () => {
     stayGallery,
     momentsGallery,
     studentFilms,
-    userCohortType,
   } = useRoadmapData();
-
-  const [previewCohort, setPreviewCohort] = useState<CohortType | null>(null);
 
   if (isLoadingDays) {
     return (
@@ -62,7 +58,8 @@ const RoadmapLayout: React.FC = () => {
 
   return (
     <div className="container px-3 sm:px-4 md:px-6 py-4 md:py-6 pb-24">
-      <div className="flex gap-4 md:gap-6 max-w-5xl mx-auto">
+      <div className="flex gap-4 md:gap-6 max-w-6xl mx-auto">
+        {/* Main Content */}
         <div className="flex-1 max-w-2xl min-w-0">
           {/* Hero */}
           <RoadmapHero
@@ -73,30 +70,27 @@ const RoadmapLayout: React.FC = () => {
             totalCount={totalCount}
           />
 
-          {/* Quick Actions */}
+          {/* Quick Actions with Highlights button for mobile */}
           <QuickActionsBar
             hasGallery={stayGallery.length > 0 || momentsGallery.length > 0}
             hasFilms={(studentFilms?.length || 0) > 0}
             hasEquipment={true}
+            mobileHighlightsButton={
+              <MobileHighlightsSheet editionId={profile.edition_id} />
+            }
           />
 
           {/* Page Content */}
           <Outlet />
         </div>
 
-        {/* Sidebar */}
-        <div className="hidden lg:block w-56 flex-shrink-0">
+        {/* Right Sidebar - Desktop only */}
+        <div className="hidden lg:block w-60 xl:w-64 flex-shrink-0">
           <div className="sticky top-24">
-            <CohortCrossSell currentCohort={userCohortType} onCohortClick={(cohort) => setPreviewCohort(cohort)} />
+            <RoadmapSidebar editionId={profile.edition_id} />
           </div>
         </div>
       </div>
-
-      <div className="lg:hidden mt-12 max-w-2xl mx-auto">
-        <CohortCrossSell currentCohort={userCohortType} onCohortClick={(cohort) => setPreviewCohort(cohort)} />
-      </div>
-
-      <CohortPreviewModal isOpen={!!previewCohort} onClose={() => setPreviewCohort(null)} cohortType={previewCohort} />
     </div>
   );
 };
