@@ -26,6 +26,22 @@ import {
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Calendar, MapPin, Video, FileText } from 'lucide-react';
 import { format, isPast } from 'date-fns';
+import { FileUpload } from '@/components/admin/FileUpload';
+
+// Format ISO date to datetime-local input format (YYYY-MM-DDTHH:MM)
+const formatDateForInput = (dateString: string): string => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+  
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
 
 interface EventForm {
   title: string;
@@ -141,7 +157,7 @@ const AdminEvents: React.FC = () => {
     setForm({
       title: event.title,
       description: event.description || '',
-      event_date: event.event_date,
+      event_date: formatDateForInput(event.event_date),
       location: event.location || '',
       image_url: event.image_url || '',
       is_virtual: event.is_virtual,
@@ -244,12 +260,15 @@ const AdminEvents: React.FC = () => {
               </div>
 
               <div>
-                <Label htmlFor="image_url">Image URL</Label>
-                <Input
-                  id="image_url"
-                  value={form.image_url}
-                  onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                  placeholder="https://..."
+                <Label>Event Image</Label>
+                <FileUpload
+                  bucket="event-images"
+                  accept="image/*"
+                  maxSizeMB={10}
+                  label=""
+                  helperText="Upload event banner (recommended: 16:9 ratio)"
+                  currentUrl={form.image_url}
+                  onUploadComplete={(url) => setForm({ ...form, image_url: url })}
                 />
               </div>
 
