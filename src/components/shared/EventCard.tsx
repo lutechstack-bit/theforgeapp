@@ -34,8 +34,7 @@ export const EventCard: React.FC<EventCardProps> = ({
       onClick={onClick}
       className={cn(
         "min-w-[240px] sm:min-w-[280px] md:min-w-[320px] rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer flex-shrink-0 group",
-        "bg-card border border-border hover:border-primary/30 transition-all duration-500",
-        "hover:shadow-[0_12px_40px_hsl(var(--primary)/0.15)] hover:-translate-y-1",
+        "bg-card border border-border hover-gold-glow",
         className
       )}
       style={{ scrollSnapAlign: 'start' }}

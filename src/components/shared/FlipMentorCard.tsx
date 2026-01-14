@@ -81,7 +81,7 @@ export const FlipMentorCard: React.FC<FlipMentorCardProps> = ({
           </div>
 
           {/* Border glow on hover */}
-          <div className="absolute inset-0 rounded-2xl border border-border/50 hover:border-primary/50 transition-colors duration-300" />
+          <div className="absolute inset-0 rounded-2xl border border-border/50 hover:border-primary/50 hover:shadow-[0_0_25px_hsl(41_100%_62%/0.3),0_0_50px_hsl(39_90%_44%/0.2)] transition-all duration-300" />
         </div>
 
         {/* Back Side */}

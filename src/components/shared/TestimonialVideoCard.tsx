@@ -64,8 +64,7 @@ export const TestimonialVideoCard: React.FC<TestimonialVideoCardProps> = ({
       onClick={handleCardClick}
       className={cn(
         "relative min-w-[220px] sm:min-w-[260px] md:min-w-[280px] aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer flex-shrink-0 group",
-        "transition-all duration-500 hover:shadow-xl hover:shadow-primary/10",
-        "hover:-translate-y-1",
+        "border border-transparent hover-gold-glow",
         className
       )}
       style={{ scrollSnapAlign: 'start' }}
