@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface FileUploadProps {
-  bucket: 'learn-videos' | 'learn-thumbnails' | 'learn-resources';
+  bucket: 'learn-videos' | 'learn-thumbnails' | 'learn-resources' | 'roadmap-assets' | 'user-uploads';
   onUploadComplete: (url: string, path: string) => void;
   onUploadingChange?: (uploading: boolean) => void;
   onDurationDetected?: (durationMinutes: number) => void;
@@ -214,9 +214,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
       setProgress(100);
 
-      // Get public URL for thumbnails, signed URL for videos/resources
+      // Get public URL for public buckets, signed URL for private buckets
       let url: string;
-      if (bucket === 'learn-thumbnails') {
+      if (bucket === 'learn-thumbnails' || bucket === 'roadmap-assets' || bucket === 'user-uploads') {
         const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(uploadFileName);
         url = urlData.publicUrl;
       } else {

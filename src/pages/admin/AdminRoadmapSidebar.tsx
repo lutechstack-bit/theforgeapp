@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
   Plus, Edit2, Trash2, Loader2, Camera, Film, MapPin,
-  Image as ImageIcon, Youtube, Instagram, Save, X
+  Image as ImageIcon, Youtube, Instagram, Save, X, Upload
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -27,6 +27,8 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { FileUpload } from '@/components/admin/FileUpload';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface SidebarContentItem {
   id: string;
@@ -384,12 +386,46 @@ const AdminRoadmapSidebar: React.FC = () => {
             </div>
 
             <div>
-              <Label>Media URL *</Label>
-              <Input
-                value={form.media_url}
-                onChange={(e) => setForm(f => ({ ...f, media_url: e.target.value }))}
-                placeholder={form.media_type === 'image' ? 'https://example.com/image.jpg' : 'https://youtube.com/watch?v=...'}
-              />
+              <Label>Media {form.media_type === 'image' ? '(Upload or URL)' : 'URL'} *</Label>
+              {form.media_type === 'image' ? (
+                <Tabs defaultValue="upload" className="mt-2">
+                  <TabsList className="grid w-full grid-cols-2 h-8">
+                    <TabsTrigger value="upload" className="text-xs">
+                      <Upload className="w-3 h-3 mr-1" />
+                      Upload
+                    </TabsTrigger>
+                    <TabsTrigger value="url" className="text-xs">
+                      <ImageIcon className="w-3 h-3 mr-1" />
+                      URL
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="upload" className="mt-2">
+                    <FileUpload
+                      bucket="roadmap-assets"
+                      accept="image/*"
+                      maxSizeMB={10}
+                      label=""
+                      currentUrl={form.media_url?.startsWith('http') ? form.media_url : undefined}
+                      onUploadComplete={(url) => setForm(f => ({ ...f, media_url: url }))}
+                      helperText="Upload JPG, PNG, or WebP images up to 10MB"
+                    />
+                  </TabsContent>
+                  <TabsContent value="url" className="mt-2">
+                    <Input
+                      value={form.media_url}
+                      onChange={(e) => setForm(f => ({ ...f, media_url: e.target.value }))}
+                      placeholder="https://example.com/image.jpg"
+                    />
+                  </TabsContent>
+                </Tabs>
+              ) : (
+                <Input
+                  value={form.media_url}
+                  onChange={(e) => setForm(f => ({ ...f, media_url: e.target.value }))}
+                  placeholder={form.media_type === 'youtube' ? 'https://youtube.com/watch?v=...' : 'https://instagram.com/p/...'}
+                  className="mt-2"
+                />
+              )}
             </div>
 
             <div>
