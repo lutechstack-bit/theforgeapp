@@ -66,8 +66,7 @@ serve(async (req) => {
       city,
       edition_id,
       specialty,
-      payment_status = 'CONFIRMED_15K',
-      forge_mode = 'PRE_FORGE'
+      payment_status = 'CONFIRMED_15K'
     } = await req.json();
 
     if (!email || !password) {
@@ -114,7 +113,6 @@ serve(async (req) => {
         edition_id,
         specialty,
         payment_status,
-        forge_mode,
         unlock_level: payment_status === 'BALANCE_PAID' ? 'FULL' : 'PREVIEW'
       })
       .eq('id', newUserId);
