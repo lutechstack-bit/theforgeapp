@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { MapPin, Clock, Lock, CheckCircle2, Sparkles, Trophy } from 'lucide-react';
-import { differenceInDays } from 'date-fns';
+import { MapPin, Clock, CheckCircle2, Trophy } from 'lucide-react';
 import DayDetailModal from './DayDetailModal';
 import type { CohortType } from '@/lib/roadmapIcons';
 
@@ -47,15 +46,7 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const shouldRevealContent = () => {
-    if (forgeMode !== 'PRE_FORGE') return true;
-    if (!forgeStartDate) return false;
-    const daysUntilForge = differenceInDays(forgeStartDate, new Date());
-    const revealDays = day.reveal_days_before ?? 7;
-    return daysUntilForge <= revealDays;
-  };
-
-  const isRevealed = shouldRevealContent();
+  // Content is always visible - only visual styling differentiates forge modes
 
   // Parse date for display
   const dayDate = day.date ? new Date(day.date) : null;
@@ -157,7 +148,7 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
                 {day.day_number === 0 ? 'Pre-Forge' : `Day ${day.day_number}`}
               </span>
               
-              {day.call_time && isRevealed && (
+              {day.call_time && (
                 <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   {day.call_time}
@@ -181,7 +172,7 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
             </div>
 
             {/* Theme name (movie/session name) */}
-            {isRevealed && day.theme_name && (
+            {day.theme_name && (
               <p className="text-[10px] text-primary/80 font-medium tracking-wide uppercase mb-0.5">
                 {day.theme_name}
               </p>
@@ -189,27 +180,11 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
 
             {/* Title */}
             <h3 className={`font-semibold text-sm leading-tight line-clamp-2 ${status === 'locked' ? 'text-muted-foreground' : 'text-foreground'}`}>
-              {isRevealed ? day.title : '???'}
+              {day.title}
             </h3>
 
-            {/* Locked state message */}
-            {status === 'locked' && (
-              <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1">
-                <Lock className="w-3 h-3" />
-                Coming soon
-              </p>
-            )}
-
-            {/* Reveal soon message */}
-            {!isRevealed && status !== 'locked' && (
-              <p className="text-[10px] text-primary flex items-center gap-1 mt-1">
-                <Sparkles className="w-3 h-3" />
-                Reveal soon
-              </p>
-            )}
-
             {/* Location and duration row */}
-            {isRevealed && (day.location || day.duration_hours) && (
+            {(day.location || day.duration_hours) && (
               <div className="flex flex-wrap items-center gap-3 mt-2 text-[10px] text-muted-foreground">
                 {day.location && (
                   <span className="flex items-center gap-1">

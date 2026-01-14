@@ -474,6 +474,19 @@
   border: none !important;
 }
 
+/* Timeline hover animation - gold variant for POST_FORGE and completed segments */
+.timeline-hover-active-gold {
+  background: repeating-linear-gradient(
+    to bottom,
+    hsl(var(--primary) / 0.95) 0px,
+    hsl(var(--primary) / 0.95) 4px,
+    hsl(var(--primary) / 0.4) 4px,
+    hsl(var(--primary) / 0.4) 8px
+  ) !important;
+  background-size: 2px 16px;
+  animation: timeline-dot-flow 0.6s ease-in-out infinite;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
