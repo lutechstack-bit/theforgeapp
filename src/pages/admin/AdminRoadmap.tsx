@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Edit, Trash2, Loader2, Calendar, Clock, MapPin, GripVertical } from 'lucide-react';
+import { Plus, Edit, Trash2, Loader2, Clock, MapPin, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -24,54 +24,29 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
 
 type RoadmapDay = Database['public']['Tables']['roadmap_days']['Row'];
-type Edition = Database['public']['Tables']['editions']['Row'];
 
 export default function AdminRoadmap() {
-  const [selectedEditionId, setSelectedEditionId] = useState<string>('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDay, setEditingDay] = useState<RoadmapDay | null>(null);
   const [deletingDay, setDeletingDay] = useState<RoadmapDay | null>(null);
   const queryClient = useQueryClient();
 
-  // Fetch editions
-  const { data: editions, isLoading: editionsLoading } = useQuery({
-    queryKey: ['admin-editions'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('editions')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data as Edition[];
-    }
-  });
-
-  // Fetch roadmap days for selected edition
+  // Fetch shared template roadmap days (edition_id IS NULL)
   const { data: roadmapDays, isLoading: daysLoading } = useQuery({
-    queryKey: ['admin-roadmap-days', selectedEditionId],
+    queryKey: ['admin-roadmap-days-template'],
     queryFn: async () => {
-      if (!selectedEditionId) return [];
       const { data, error } = await supabase
         .from('roadmap_days')
         .select('*')
-        .eq('edition_id', selectedEditionId)
+        .is('edition_id', null)
         .order('day_number', { ascending: true });
       if (error) throw error;
       return data as RoadmapDay[];
-    },
-    enabled: !!selectedEditionId
+    }
   });
 
   // Create mutation
@@ -110,55 +85,27 @@ export default function AdminRoadmap() {
     },
     onSuccess: () => {
       toast.success('Day deleted');
-      queryClient.invalidateQueries({ queryKey: ['admin-roadmap-days'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-roadmap-days-template'] });
       setDeletingDay(null);
     },
     onError: (error: Error) => toast.error(error.message)
   });
 
-  const selectedEdition = editions?.find(e => e.id === selectedEditionId);
-
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Roadmap</h1>
-          <p className="text-muted-foreground mt-1">Manage roadmap days for each edition</p>
+          <h1 className="text-3xl font-bold text-foreground">Roadmap Template</h1>
+          <p className="text-muted-foreground mt-1">Shared roadmap content for all editions. Dates are calculated from each edition's start date.</p>
         </div>
-      </div>
-
-      {/* Edition Selector */}
-      <div className="mb-6 flex items-center gap-4">
-        <div className="w-80">
-          <Select value={selectedEditionId} onValueChange={setSelectedEditionId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select an edition" />
-            </SelectTrigger>
-            <SelectContent>
-              {editions?.map((edition) => (
-                <SelectItem key={edition.id} value={edition.id}>
-                  {edition.name} ({edition.cohort_type?.replace('_', ' ')})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {selectedEditionId && (
-          <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Add Day
-          </Button>
-        )}
+        <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
+          <Plus className="w-4 h-4" />
+          Add Day
+        </Button>
       </div>
 
       {/* Roadmap Days List */}
-      {!selectedEditionId ? (
-        <Card className="bg-card/50 border-border/50">
-          <CardContent className="py-12 text-center text-muted-foreground">
-            Select an edition to manage its roadmap
-          </CardContent>
-        </Card>
-      ) : daysLoading ? (
+      {daysLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
@@ -183,12 +130,6 @@ export default function AdminRoadmap() {
                   <div>
                     <h3 className="font-semibold text-foreground">{day.title}</h3>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                      {day.date && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {format(new Date(day.date), 'MMM d, yyyy')}
-                        </span>
-                      )}
                       {day.call_time && (
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
@@ -231,7 +172,6 @@ export default function AdminRoadmap() {
           }
         }}
         day={editingDay}
-        editionId={selectedEditionId}
         onSubmit={(data) => {
           if (editingDay) {
             updateMutation.mutate({ id: editingDay.id, ...data });
@@ -270,14 +210,12 @@ function RoadmapDayDialog({
   open,
   onOpenChange,
   day,
-  editionId,
   onSubmit,
   isLoading
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   day: RoadmapDay | null;
-  editionId: string;
   onSubmit: (data: Partial<RoadmapDay>) => void;
   isLoading: boolean;
 }) {
@@ -285,7 +223,6 @@ function RoadmapDayDialog({
     day_number: 0,
     title: '',
     description: '',
-    date: '',
     call_time: '',
     location: '',
     is_active: false,
@@ -299,7 +236,6 @@ function RoadmapDayDialog({
         day_number: day.day_number,
         title: day.title,
         description: day.description || '',
-        date: day.date || '',
         call_time: day.call_time || '',
         location: day.location || '',
         is_active: day.is_active,
@@ -310,7 +246,6 @@ function RoadmapDayDialog({
         day_number: 0,
         title: '',
         description: '',
-        date: '',
         call_time: '',
         location: '',
         is_active: false,
@@ -339,11 +274,11 @@ function RoadmapDayDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
-      edition_id: editionId,
+      edition_id: null, // Template days have no edition
       day_number: formData.day_number,
       title: formData.title,
       description: formData.description || null,
-      date: formData.date || null,
+      date: null, // Dates are calculated dynamically
       call_time: formData.call_time || null,
       location: formData.location || null,
       is_active: formData.is_active,
@@ -395,23 +330,14 @@ function RoadmapDayDialog({
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Date</Label>
-              <Input
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Call Time</Label>
-              <Input
-                type="time"
-                value={formData.call_time}
-                onChange={(e) => setFormData({ ...formData, call_time: e.target.value })}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label>Call Time</Label>
+            <Input
+              type="time"
+              value={formData.call_time}
+              onChange={(e) => setFormData({ ...formData, call_time: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">Dates are calculated automatically from edition start date</p>
           </div>
           <div className="space-y-2">
             <Label>Location</Label>
