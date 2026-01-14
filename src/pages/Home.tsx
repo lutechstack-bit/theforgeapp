@@ -21,38 +21,10 @@ import { format } from 'date-fns';
 import { mentorsData, Mentor } from '@/data/mentorsData';
 // Alumni testimonial videos with enhanced data
 const alumniTestimonials = [
-  { 
-    id: '1', 
-    name: 'Anurag', 
-    role: 'Director & Screenwriter',
-    film: 'Short Film: "The Last Frame"',
-    achievement: 'Selected at MAMI Film Festival 2024',
-    videoUrl: '/videos/testimonials/anurag.mp4' 
-  },
-  { 
-    id: '2', 
-    name: 'Ashwin', 
-    role: 'Cinematographer',
-    film: 'Documentary: "Urban Stories"',
-    achievement: 'Now at Prime Focus Studios',
-    videoUrl: '/videos/testimonials/ashwin.mp4' 
-  },
-  { 
-    id: '3', 
-    name: 'Devansh', 
-    role: 'Editor & Colorist',
-    film: 'Music Video: "Echoes"',
-    achievement: '1M+ views on YouTube',
-    videoUrl: '/videos/testimonials/devansh.mp4' 
-  },
-  { 
-    id: '4', 
-    name: 'Aanchal', 
-    role: 'Producer & Writer',
-    film: 'Web Series: "City Lights"',
-    achievement: 'Streaming on MX Player',
-    videoUrl: '/videos/testimonials/aanchal.mp4' 
-  },
+  { id: '1', name: 'Anurag', role: 'Director & Screenwriter', videoUrl: '/videos/testimonials/anurag.mp4' },
+  { id: '2', name: 'Ashwin', role: 'Cinematographer', videoUrl: '/videos/testimonials/ashwin.mp4' },
+  { id: '3', name: 'Devansh', role: 'Editor & Colorist', videoUrl: '/videos/testimonials/devansh.mp4' },
+  { id: '4', name: 'Aanchal', role: 'Producer & Writer', videoUrl: '/videos/testimonials/aanchal.mp4' },
 ];
 
 const Home: React.FC = () => {
@@ -219,8 +191,6 @@ const Home: React.FC = () => {
             key={alumni.id}
             name={alumni.name}
             role={alumni.role}
-            film={alumni.film}
-            achievement={alumni.achievement}
             videoUrl={alumni.videoUrl}
           />
         ))}

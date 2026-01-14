@@ -122,16 +122,10 @@ export const TestimonialVideoCard: React.FC<TestimonialVideoCardProps> = ({
 
       {/* Person Info Overlay */}
       <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-        <div className="space-y-1">
-          <span className="text-sm sm:text-base font-semibold text-foreground block">{name}</span>
+        <div className="space-y-0.5">
+          <span className="text-base sm:text-lg font-bold text-foreground block">{name}</span>
           {role && (
-            <span className="text-xs text-foreground/70 block">{role}</span>
-          )}
-          {film && (
-            <span className="text-xs text-primary/90 block">{film}</span>
-          )}
-          {achievement && (
-            <span className="text-[10px] text-foreground/60 block mt-1 line-clamp-1">{achievement}</span>
+            <span className="text-xs text-muted-foreground/80 font-medium uppercase tracking-wide block">{role}</span>
           )}
         </div>
       </div>
