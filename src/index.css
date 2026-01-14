@@ -306,6 +306,21 @@
     border-color: hsl(var(--primary) / 0.3);
   }
 
+  /* Gold glow effect for premium cards */
+  .hover-gold-glow {
+    transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                border-color 0.3s ease, 
+                transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .hover-gold-glow:hover {
+    box-shadow: 
+      0 0 20px hsl(var(--primary) / 0.3),
+      0 0 40px hsl(var(--forge-gold) / 0.2),
+      0 8px 24px hsl(0 0% 0% / 0.4);
+    border-color: hsl(var(--primary) / 0.5);
+    transform: translateY(-2px);
+  }
+
   /* Smooth scale on tap for mobile */
   .tap-scale {
     transition: transform 0.15s ease;
