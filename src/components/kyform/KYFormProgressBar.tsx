@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils';
 interface KYFormProgressBarProps {
   currentStep: number;
   totalSteps: number;
-  stepTitles?: string[];
 }
 
 // Multi-colored progress segments matching the design reference
@@ -24,18 +23,12 @@ const SEGMENT_COLORS = [
 export const KYFormProgressBar: React.FC<KYFormProgressBarProps> = ({
   currentStep,
   totalSteps,
-  stepTitles,
 }) => {
-  const questionNumber = String(currentStep + 1).padStart(2, '0');
-
   return (
-    <div className="space-y-3">
-      {/* Question number badge */}
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-muted-foreground tracking-wider">
-          Q.{questionNumber}
-        </span>
-        <span className="text-xs text-muted-foreground">
+    <div className="space-y-2">
+      {/* Step counter */}
+      <div className="flex justify-end">
+        <span className="text-sm text-muted-foreground">
           {currentStep + 1} of {totalSteps}
         </span>
       </div>
@@ -52,20 +45,12 @@ export const KYFormProgressBar: React.FC<KYFormProgressBarProps> = ({
               key={index}
               className={cn(
                 'h-1.5 flex-1 rounded-full transition-all duration-300',
-                isCompleted || isCurrent ? colorClass : 'bg-muted/40',
-                isCurrent && 'animate-pulse'
+                isCompleted || isCurrent ? colorClass : 'bg-muted/40'
               )}
             />
           );
         })}
       </div>
-
-      {/* Current step title */}
-      {stepTitles && stepTitles[currentStep] && (
-        <p className="text-sm font-medium text-foreground">
-          {stepTitles[currentStep]}
-        </p>
-      )}
     </div>
   );
 };
