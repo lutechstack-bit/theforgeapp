@@ -34,8 +34,8 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
 
   const textStyles = {
     dark: 'text-foreground',
-    gold: 'text-foreground',
-    accent: 'text-primary-foreground',
+    gold: 'text-black',
+    accent: 'text-black',
   };
 
   return (
@@ -62,9 +62,9 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
       {/* Icon */}
       <div className={cn(
         "w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center mb-2 sm:mb-3",
-        variant === 'accent' ? 'bg-primary-foreground/20' : 'bg-primary/20'
+        variant === 'dark' ? 'bg-primary/20' : 'bg-black/10'
       )}>
-        {React.cloneElement(icon as React.ReactElement, { className: 'w-4 h-4 sm:w-5 sm:h-5' })}
+        {React.cloneElement(icon as React.ReactElement, { className: cn('w-4 h-4 sm:w-5 sm:h-5', variant !== 'dark' && 'text-black') })}
       </div>
 
       {/* Content */}
@@ -73,7 +73,7 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
       </h4>
       <p className={cn(
         "text-[10px] sm:text-xs mb-1.5 sm:mb-2 line-clamp-1",
-        variant === 'accent' ? 'text-primary-foreground/80' : 'text-muted-foreground'
+        variant === 'dark' ? 'text-muted-foreground' : 'text-black/70'
       )}>
         {subtitle}
       </p>
@@ -81,7 +81,7 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
       {/* Progress indicator */}
       <div className={cn(
         "text-[10px] sm:text-xs font-medium flex items-center gap-1",
-        variant === 'accent' ? 'text-primary-foreground' : 'text-primary'
+        variant === 'dark' ? 'text-primary' : 'text-black/90'
       )}>
         <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
         {progress}
