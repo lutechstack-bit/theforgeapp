@@ -25,38 +25,9 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Calendar, MapPin, Video, FileText } from 'lucide-react';
-import { format, isPast } from 'date-fns';
+import { format } from 'date-fns';
 import { FileUpload } from '@/components/admin/FileUpload';
-
-// Format ISO date to datetime-local input format (YYYY-MM-DDTHH:MM)
-const formatDateForInput = (dateString: string): string => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return '';
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-};
-
-const isValidDatetimeLocal = (value: string) =>
-  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value);
-
-// Some browsers briefly produce partial values; avoid feeding invalid values back into the input.
-const normalizeDatetimeLocal = (value: string) => {
-  if (!value) return '';
-  if (isValidDatetimeLocal(value)) return value;
-
-  // If only a date is present, default to midnight.
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return `${value}T00:00`;
-
-  // If partial/invalid, keep empty to prevent native validation tooltip.
-  return '';
-};
+import { DateTimePicker } from '@/components/admin/DateTimePicker';
 
 interface EventForm {
   title: string;
@@ -172,7 +143,7 @@ const AdminEvents: React.FC = () => {
     setForm({
       title: event.title,
       description: event.description || '',
-      event_date: formatDateForInput(event.event_date),
+      event_date: event.event_date, // Keep as ISO string
       location: event.location || '',
       image_url: event.image_url || '',
       is_virtual: event.is_virtual,
@@ -184,11 +155,11 @@ const AdminEvents: React.FC = () => {
     setIsDialogOpen(true);
   };
 
-const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isValidDatetimeLocal(form.event_date)) {
-      toast.error('Please select a valid Date & Time');
+    if (!form.event_date || isNaN(new Date(form.event_date).getTime())) {
+      toast.error('Please select a valid date and time');
       return;
     }
 
@@ -258,27 +229,22 @@ const handleSubmit = (e: React.FormEvent) => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-<Label htmlFor="event_date">Date & Time</Label>
-                  <Input
-                    id="event_date"
-                    type="datetime-local"
-                    value={form.event_date}
-                    onChange={(e) =>
-                      setForm({ ...form, event_date: normalizeDatetimeLocal(e.target.value) })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    value={form.location}
-                    onChange={(e) => setForm({ ...form, location: e.target.value })}
-                    placeholder="City or venue"
-                  />
-                </div>
+              <div>
+                <Label>Date & Time</Label>
+                <DateTimePicker
+                  value={form.event_date}
+                  onChange={(isoString) => setForm({ ...form, event_date: isoString })}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  value={form.location}
+                  onChange={(e) => setForm({ ...form, location: e.target.value })}
+                  placeholder="City or venue"
+                />
               </div>
 
               <div>
