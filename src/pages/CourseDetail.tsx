@@ -16,7 +16,6 @@ import {
   Download,
   BookOpen,
   ArrowRight,
-  Award,
   Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -215,7 +214,7 @@ const CourseDetail: React.FC = () => {
             </div>
             
             {/* Right - Info Section */}
-            <div className="flex-1 p-4 md:p-5 lg:p-6 flex flex-col">
+            <div className="flex-1 p-4 md:p-5 lg:p-6 flex flex-col justify-center">
               {/* Premium Badge */}
               {course.is_premium && (
                 <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 w-fit mb-2">
@@ -249,13 +248,10 @@ const CourseDetail: React.FC = () => {
                 </div>
               )}
 
-              {/* Spacer */}
-              <div className="flex-1" />
-
               {/* CTA Button */}
               <Button 
                 onClick={handlePlayVideo}
-                className="w-full rounded-full h-11 text-sm font-semibold bg-foreground text-background hover:bg-foreground/90 group mb-4"
+                className="w-full rounded-full h-11 text-sm font-semibold bg-foreground text-background hover:bg-foreground/90 group mt-4 mb-3"
               >
                 {course.is_premium && !isFullAccess ? 'Unlock Access' : 'Start Learning'}
                 <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
@@ -271,11 +267,6 @@ const CourseDetail: React.FC = () => {
                 <div className="flex items-center gap-1.5">
                   <BookOpen className="h-3.5 w-3.5 text-primary" />
                   <span>Self-Paced</span>
-                </div>
-                <span className="text-border">•</span>
-                <div className="flex items-center gap-1.5">
-                  <Award className="h-3.5 w-3.5 text-primary" />
-                  <span>Certificate</span>
                 </div>
               </div>
             </div>
