@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { UnlockModal } from '@/components/shared/UnlockModal';
-import { CourseCard } from '@/components/learn/CourseCard';
+import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { ContinueWatchingCarousel } from '@/components/learn/ContinueWatchingCarousel';
 import { Film, Sparkles, ChevronRight } from 'lucide-react';
 import {
@@ -152,17 +152,12 @@ const Learn: React.FC = () => {
                 key={item.id}
                 className="pl-4 basis-auto"
               >
-                <CourseCard
+                <LearnCourseCard
                   id={item.id}
                   title={item.title}
                   thumbnailUrl={item.thumbnail_url}
-                  instructorName={item.instructor_name}
-                  companyName={item.company_name}
                   durationMinutes={item.duration_minutes}
-                  isPremium={item.is_premium}
                   isLocked={item.is_premium && !isFullAccess}
-                  progressPercent={getProgressPercent(item.id, item.duration_minutes)}
-                  isCompleted={isCompleted(item.id)}
                   onClick={() => handleCardClick(item)}
                 />
               </CarouselItem>
