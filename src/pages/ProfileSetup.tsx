@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRight, Loader2, Camera, Upload, Film, Pen, Users } from 'lucide-react';
+import { ArrowRight, Loader2, Camera, Upload, Film, Pen, Users, CheckCircle2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const cohortOptions = [
@@ -29,8 +29,20 @@ const ProfileSetup: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { toast } = useToast();
+
+  // Pre-fill name and email from auth/profile data
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        full_name: user.user_metadata?.full_name || profile?.full_name || prev.full_name,
+        email: user.email || prev.email,
+        avatar_url: profile?.avatar_url || prev.avatar_url,
+      }));
+    }
+  }, [user, profile]);
 
   const updateFormData = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -149,9 +161,9 @@ const ProfileSetup: React.FC = () => {
       <div className="relative w-full max-w-lg space-y-8">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">Let's set up your profile</h1>
+          <h1 className="text-3xl font-bold text-foreground">Confirm your details</h1>
           <p className="text-muted-foreground">
-            This helps us personalise your experience inside the Forge app.
+            Just a few more details to personalise your Forge experience.
             <br />
             <span className="text-sm">You can update this later.</span>
           </p>
@@ -202,14 +214,19 @@ const ProfileSetup: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Your Email ID *</Label>
+            <Label htmlFor="email" className="flex items-center gap-2">
+              Your Email ID
+              <span className="inline-flex items-center gap-1 text-xs text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                <CheckCircle2 className="h-3 w-3" />
+                Verified
+              </span>
+            </Label>
             <Input
               id="email"
               type="email"
-              placeholder="your@email.com"
               value={formData.email}
-              onChange={(e) => updateFormData('email', e.target.value)}
-              className="h-12 bg-secondary/50"
+              disabled
+              className="h-12 bg-secondary/30 text-muted-foreground cursor-not-allowed"
             />
           </div>
 
