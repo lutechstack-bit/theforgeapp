@@ -162,17 +162,14 @@ const CourseDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Portrait-Optimized Hero Section */}
-      <div className="relative overflow-hidden">
-        {/* Single subtle gradient orb */}
-        <div className="absolute -top-10 left-1/3 w-[300px] h-[300px] bg-primary/8 rounded-full blur-[100px] pointer-events-none" />
-        
-        <div className="container relative py-3 lg:py-4">
-          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 lg:gap-6 items-start">
+      {/* Full-Width Hero Card */}
+      <div className="container py-4">
+        <div className="bg-card rounded-2xl border border-border/50 overflow-hidden shadow-lg">
+          <div className="flex flex-col md:flex-row">
             
             {/* Left - Portrait Thumbnail */}
-            <div className="relative group mx-auto lg:mx-0">
-              <div className="relative aspect-[3/4] w-[240px] lg:w-[280px] rounded-xl lg:rounded-2xl overflow-hidden shadow-xl ring-1 ring-primary/20 group-hover:ring-primary/40 transition-all duration-300">
+            <div className="relative group shrink-0 md:w-[280px] lg:w-[320px]">
+              <div className="relative aspect-[3/4] w-full overflow-hidden">
                 {course.thumbnail_url ? (
                   <img 
                     src={course.thumbnail_url} 
@@ -183,93 +180,102 @@ const CourseDetail: React.FC = () => {
                   <div className="w-full h-full bg-gradient-to-br from-primary/20 via-card to-accent/10" />
                 )}
                 
-                {/* Gradient overlay for title */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 
                 {/* Premium badge */}
                 {course.is_premium && (
-                  <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm">
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm">
                     <Sparkles className="h-3 w-3 text-primary" />
-                    <span className="text-[10px] font-semibold text-white uppercase">Premium</span>
+                    <span className="text-[10px] font-semibold text-white uppercase tracking-wide">Premium</span>
                   </div>
                 )}
                 
-                {/* Play Button - Centered, smaller for portrait */}
+                {/* Play Button - Centered */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Button 
                     onClick={handlePlayVideo}
-                    size="sm"
-                    className="rounded-full bg-white/95 text-gray-900 hover:bg-white shadow-xl gap-1.5 px-3 py-2 text-xs font-semibold transition-all hover:scale-105"
+                    className="rounded-full bg-white/95 text-gray-900 hover:bg-white shadow-2xl gap-2 px-4 py-2.5 text-sm font-semibold transition-all hover:scale-105"
                   >
-                    <div className="w-6 h-6 rounded-full bg-gray-900 flex items-center justify-center">
-                      <Play className="h-3 w-3 text-white ml-0.5" fill="white" />
+                    <div className="w-7 h-7 rounded-full bg-gray-900 flex items-center justify-center">
+                      <Play className="h-3.5 w-3.5 text-white ml-0.5" fill="white" />
                     </div>
                     Play
                   </Button>
                 </div>
 
-                {/* Title overlay at bottom */}
-                <div className="absolute bottom-0 left-0 right-0 p-3">
-                  <h3 className="text-white font-semibold text-sm leading-tight line-clamp-2 drop-shadow-lg">
-                    {course.title}
-                  </h3>
-                  {/* Duration badge */}
-                  {course.duration_minutes && (
-                    <div className="flex items-center gap-1 mt-1.5">
-                      <Clock className="h-3 w-3 text-white/80" />
-                      <span className="text-xs font-medium text-white/90">{course.duration_minutes}m</span>
-                    </div>
-                  )}
-                </div>
+                {/* Duration badge at bottom */}
+                {course.duration_minutes && (
+                  <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-md bg-black/60 backdrop-blur-sm">
+                    <Clock className="h-3 w-3 text-white/80" />
+                    <span className="text-xs font-medium text-white">{course.duration_minutes}m</span>
+                  </div>
+                )}
               </div>
             </div>
             
-            {/* Right - Ultra-Compact Info Card */}
-            <div className="lg:sticky lg:top-16">
-              <div className="bg-card rounded-xl p-3 lg:p-4 shadow-md border border-border/50">
-                {/* Premium Badge - inline with title */}
-                <div className="flex items-start gap-2 mb-1.5">
-                  {course.is_premium && (
-                    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 shrink-0">
-                      <Sparkles className="h-2.5 w-2.5 text-primary" />
-                      <span className="text-[9px] font-semibold text-primary uppercase">Premium</span>
-                    </div>
-                  )}
+            {/* Right - Info Section */}
+            <div className="flex-1 p-4 md:p-5 lg:p-6 flex flex-col">
+              {/* Premium Badge */}
+              {course.is_premium && (
+                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 w-fit mb-2">
+                  <Sparkles className="h-2.5 w-2.5 text-primary" />
+                  <span className="text-[9px] font-semibold text-primary uppercase tracking-wide">Premium</span>
                 </div>
+              )}
 
-                <h1 className="text-base lg:text-lg font-bold text-foreground mb-1 leading-tight">
-                  {course.title}
-                </h1>
-                
-                {course.description && (
-                  <p className="text-muted-foreground text-xs mb-3 leading-relaxed line-clamp-2">
-                    {course.description}
-                  </p>
-                )}
+              <h1 className="text-lg md:text-xl lg:text-2xl font-bold text-foreground mb-2 leading-tight">
+                {course.title}
+              </h1>
+              
+              {course.description && (
+                <p className="text-muted-foreground text-sm mb-4 leading-relaxed line-clamp-3">
+                  {course.description}
+                </p>
+              )}
 
-                {/* CTA Button */}
-                <Button 
-                  onClick={handlePlayVideo}
-                  className="w-full rounded-full h-9 text-xs font-semibold bg-foreground text-background hover:bg-foreground/90 group"
-                >
-                  {course.is_premium && !isFullAccess ? 'Unlock Access' : 'Start Learning'}
-                  <ArrowRight className="h-3.5 w-3.5 ml-1.5 transition-transform group-hover:translate-x-1" />
-                </Button>
+              {/* Instructor */}
+              {course.instructor_name && (
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/30 to-accent/20 flex items-center justify-center ring-1 ring-primary/20">
+                    <User className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-foreground">{course.instructor_name}</span>
+                    {course.company_name && (
+                      <span className="text-xs text-muted-foreground ml-1.5">• {course.company_name}</span>
+                    )}
+                  </div>
+                </div>
+              )}
 
-                {/* Ultra-Compact Stats */}
-                <div className="grid grid-cols-3 gap-1.5 mt-3 pt-3 border-t border-border/50">
-                  <div className="text-center p-1.5 rounded-md bg-muted/50">
-                    <Clock className="h-3.5 w-3.5 text-primary mx-auto mb-0.5" />
-                    <p className="text-[10px] font-semibold text-foreground">{course.duration_minutes || '30'}m</p>
-                  </div>
-                  <div className="text-center p-1.5 rounded-md bg-muted/50">
-                    <BookOpen className="h-3.5 w-3.5 text-primary mx-auto mb-0.5" />
-                    <p className="text-[10px] font-semibold text-foreground">Self-Paced</p>
-                  </div>
-                  <div className="text-center p-1.5 rounded-md bg-muted/50">
-                    <Award className="h-3.5 w-3.5 text-primary mx-auto mb-0.5" />
-                    <p className="text-[10px] font-semibold text-foreground">Certificate</p>
-                  </div>
+              {/* Spacer */}
+              <div className="flex-1" />
+
+              {/* CTA Button */}
+              <Button 
+                onClick={handlePlayVideo}
+                className="w-full rounded-full h-11 text-sm font-semibold bg-foreground text-background hover:bg-foreground/90 group mb-4"
+              >
+                {course.is_premium && !isFullAccess ? 'Unlock Access' : 'Start Learning'}
+                <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
+              </Button>
+
+              {/* Stats Row */}
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5 text-primary" />
+                  <span>{course.duration_minutes || '30'} min</span>
+                </div>
+                <span className="text-border">•</span>
+                <div className="flex items-center gap-1.5">
+                  <BookOpen className="h-3.5 w-3.5 text-primary" />
+                  <span>Self-Paced</span>
+                </div>
+                <span className="text-border">•</span>
+                <div className="flex items-center gap-1.5">
+                  <Award className="h-3.5 w-3.5 text-primary" />
+                  <span>Certificate</span>
                 </div>
               </div>
             </div>
@@ -280,24 +286,6 @@ const CourseDetail: React.FC = () => {
 
       {/* Course Content Section */}
       <div className="container py-3 lg:py-4">
-
-        {/* Ultra-Compact Instructor Section */}
-        {course.instructor_name && (
-          <div className="mb-3 pt-2 border-t border-border/30">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary/30 to-accent/20 flex items-center justify-center ring-1 ring-primary/10">
-                <User className="h-3.5 w-3.5 text-primary" />
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-muted-foreground">by</span>
-                <span className="text-xs font-semibold text-foreground">{course.instructor_name}</span>
-                {course.company_name && (
-                  <span className="text-[10px] text-muted-foreground">• {course.company_name}</span>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Ultra-Compact Tabs */}
         <Tabs defaultValue="about" className="space-y-2">
