@@ -6,14 +6,37 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRight, Loader2, Camera, Upload, Film, Pen, Users, CheckCircle2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { ArrowRight, Loader2, Camera, Upload, Film, Pen, Users, CheckCircle2, MapPin, Calendar } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { format } from 'date-fns';
+import type { Database } from '@/integrations/supabase/types';
 
-const cohortOptions = [
-  { value: 'FORGE', label: 'Forge Filmmaking', icon: Film, description: 'For aspiring filmmakers' },
-  { value: 'FORGE_CREATORS', label: 'Forge Creators', icon: Users, description: 'For content creators' },
-  { value: 'FORGE_WRITING', label: 'Forge Writing', icon: Pen, description: 'For writers' },
-];
+type Edition = Database['public']['Tables']['editions']['Row'];
+
+const getCohortIcon = (cohortType: string) => {
+  switch (cohortType) {
+    case 'FORGE': return Film;
+    case 'FORGE_WRITING': return Pen;
+    case 'FORGE_CREATORS': return Users;
+    default: return Film;
+  }
+};
+
+const getCohortLabel = (cohortType: string) => {
+  switch (cohortType) {
+    case 'FORGE': return 'Filmmaking';
+    case 'FORGE_WRITING': return 'Writing';
+    case 'FORGE_CREATORS': return 'Creators';
+    default: return 'Forge';
+  }
+};
+
+const formatDateRange = (start: string, end: string) => {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  return `${format(startDate, 'MMM d')} - ${format(endDate, 'MMM d, yyyy')}`;
+};
 
 const ProfileSetup: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -23,7 +46,7 @@ const ProfileSetup: React.FC = () => {
     email: '',
     phone: '',
     city: '',
-    cohort_type: '' as 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS' | '',
+    edition_id: '',
     avatar_url: '',
   });
 
@@ -31,6 +54,20 @@ const ProfileSetup: React.FC = () => {
   const navigate = useNavigate();
   const { user, profile, refreshProfile } = useAuth();
   const { toast } = useToast();
+
+  // Fetch active editions
+  const { data: editions, isLoading: editionsLoading } = useQuery({
+    queryKey: ['active-editions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('editions')
+        .select('*')
+        .eq('is_archived', false)
+        .order('forge_start_date', { ascending: true });
+      if (error) throw error;
+      return data as Edition[];
+    }
+  });
 
   // Pre-fill name and email from auth/profile data
   useEffect(() => {
@@ -80,28 +117,21 @@ const ProfileSetup: React.FC = () => {
     }
   };
 
+  const selectedEdition = editions?.find(e => e.id === formData.edition_id);
+
   const handleSubmit = async () => {
     if (!user) return;
 
-    if (!formData.full_name || !formData.email || !formData.phone || !formData.city || !formData.cohort_type) {
+    if (!formData.full_name || !formData.phone || !formData.city || !formData.edition_id) {
       toast({
         title: 'Missing fields',
-        description: 'Please fill in all required fields.',
+        description: 'Please fill in all required fields and select an edition.',
         variant: 'destructive',
       });
       return;
     }
 
     setLoading(true);
-
-    // First, find or create an edition for this cohort type
-    const { data: editions } = await supabase
-      .from('editions')
-      .select('id')
-      .eq('cohort_type', formData.cohort_type)
-      .limit(1);
-
-    const editionId = editions?.[0]?.id || null;
 
     const { error } = await supabase
       .from('profiles')
@@ -111,7 +141,7 @@ const ProfileSetup: React.FC = () => {
         phone: formData.phone,
         city: formData.city,
         avatar_url: formData.avatar_url || null,
-        edition_id: editionId,
+        edition_id: formData.edition_id,
         profile_setup_completed: true,
       })
       .eq('id', user.id);
@@ -133,8 +163,8 @@ const ProfileSetup: React.FC = () => {
       description: 'Now let\'s get to know you better.',
     });
     
-    // Navigate to the appropriate KY form based on cohort
-    switch (formData.cohort_type) {
+    // Navigate to the appropriate KY form based on selected edition's cohort type
+    switch (selectedEdition?.cohort_type) {
       case 'FORGE':
         navigate('/kyf-form');
         break;
@@ -149,7 +179,7 @@ const ProfileSetup: React.FC = () => {
     }
   };
 
-  const canSubmit = formData.full_name && formData.email && formData.phone && formData.city && formData.cohort_type;
+  const canSubmit = formData.full_name && formData.email && formData.phone && formData.city && formData.edition_id;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-background">
@@ -254,32 +284,87 @@ const ProfileSetup: React.FC = () => {
           </div>
         </div>
 
-        {/* Cohort Selection */}
-        <div className="space-y-3">
-          <Label>Which Forge program are you part of? *</Label>
-          <div className="grid gap-3">
-            {cohortOptions.map(({ value, label, icon: Icon, description }) => (
-              <button
-                key={value}
-                onClick={() => updateFormData('cohort_type', value)}
-                className={`flex items-center gap-4 p-4 rounded-xl border text-left transition-all ${
-                  formData.cohort_type === value
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border bg-card hover:border-primary/50'
-                }`}
-              >
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                  formData.cohort_type === value ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
-                }`}>
-                  <Icon className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">{label}</h3>
-                  <p className="text-sm text-muted-foreground">{description}</p>
-                </div>
-              </button>
-            ))}
+        {/* Edition Selection */}
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <Label className="text-lg font-semibold">Choose Your Forge Edition *</Label>
+            <p className="text-sm text-muted-foreground">Select the program and batch you want to join</p>
           </div>
+          
+          {editionsLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : editions?.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No editions available at the moment.</p>
+              <p className="text-sm">Please check back later.</p>
+            </div>
+          ) : (
+            <div className="grid gap-3">
+              {editions?.map((edition) => {
+                const Icon = getCohortIcon(edition.cohort_type);
+                const isSelected = formData.edition_id === edition.id;
+                
+                return (
+                  <button
+                    key={edition.id}
+                    type="button"
+                    onClick={() => updateFormData('edition_id', edition.id)}
+                    className={`
+                      group relative flex items-center gap-4 p-5 rounded-2xl border 
+                      text-left transition-all duration-300 overflow-hidden
+                      ${isSelected 
+                        ? 'border-primary bg-gradient-to-br from-primary/15 to-primary/5 shadow-lg shadow-primary/20' 
+                        : 'border-border/50 bg-card/50 hover:border-primary/40 hover:bg-card/80'}
+                    `}
+                  >
+                    {/* Selection indicator */}
+                    {isSelected && (
+                      <div className="absolute top-3 right-3">
+                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                      </div>
+                    )}
+                    
+                    {/* Icon */}
+                    <div className={`
+                      w-14 h-14 rounded-xl flex items-center justify-center shrink-0
+                      transition-all duration-300
+                      ${isSelected 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-secondary/80 text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary'}
+                    `}>
+                      <Icon className="h-7 w-7" />
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-foreground text-lg truncate pr-8">
+                        {edition.name}
+                      </h3>
+                      <div className="flex items-center gap-4 mt-1.5 flex-wrap">
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="h-3.5 w-3.5 text-primary" />
+                          <span className="text-sm text-muted-foreground">{edition.city}</span>
+                        </div>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">
+                          {getCohortLabel(edition.cohort_type)}
+                        </span>
+                      </div>
+                      {edition.forge_start_date && edition.forge_end_date && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <Calendar className="h-3.5 w-3.5 text-muted-foreground/60" />
+                          <span className="text-xs text-muted-foreground/80">
+                            {formatDateRange(edition.forge_start_date, edition.forge_end_date)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Submit Button */}

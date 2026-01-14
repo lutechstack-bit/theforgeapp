@@ -56,11 +56,15 @@ export default function AdminUsers() {
     }
   });
 
-  // Fetch editions for dropdown
+  // Fetch active editions for dropdown (exclude archived)
   const { data: editions } = useQuery({
-    queryKey: ['editions'],
+    queryKey: ['editions-active'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('editions').select('*');
+      const { data, error } = await supabase
+        .from('editions')
+        .select('*')
+        .eq('is_archived', false)
+        .order('forge_start_date', { ascending: true });
       if (error) throw error;
       return data as Edition[];
     }
