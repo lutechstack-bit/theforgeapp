@@ -1,16 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Calendar, MapPin, Clock, Video, FileText, User, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Clock, Video, FileText, User, ExternalLink, CheckCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, isPast } from 'date-fns';
+import { useEventRegistration } from '@/hooks/useEventRegistration';
+import { EventRegistrationModal } from '@/components/events/EventRegistrationModal';
 
 const EventDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: event, isLoading } = useQuery({
     queryKey: ['event', id],
@@ -34,6 +37,7 @@ const EventDetail: React.FC = () => {
     enabled: !!id,
   });
 
+  const { isRegistered, isCheckingRegistration } = useEventRegistration(id);
   const isEventPast = event ? isPast(new Date(event.event_date)) : false;
 
   // Extract video embed URL
@@ -82,7 +86,7 @@ const EventDetail: React.FC = () => {
   const embedUrl = event.recording_url ? getEmbedUrl(event.recording_url) : null;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-28">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border/50 p-4">
         <Button
@@ -92,22 +96,26 @@ const EventDetail: React.FC = () => {
           className="gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Events
+          Back
         </Button>
       </div>
 
-      <div className="p-4 space-y-6">
+      <div className="p-4 space-y-6 max-w-3xl mx-auto">
         {/* Hero Image */}
-        {event.image_url && (
-          <div className="relative aspect-video rounded-2xl overflow-hidden">
+        <div className="relative aspect-video rounded-2xl overflow-hidden bg-card/60">
+          {event.image_url ? (
             <img
               src={event.image_url}
               alt={event.title}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
-          </div>
-        )}
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary/20 via-primary/10 to-muted/30 flex items-center justify-center">
+              <Calendar className="h-16 w-16 text-primary/30" />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+        </div>
 
         {/* Event Info */}
         <div className="space-y-4">
@@ -125,9 +133,15 @@ const EventDetail: React.FC = () => {
             {event.is_virtual && (
               <Badge variant="outline">Virtual</Badge>
             )}
+            {isRegistered && !isEventPast && (
+              <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Registered
+              </Badge>
+            )}
           </div>
 
-          <h1 className="text-2xl font-bold text-foreground">{event.title}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{event.title}</h1>
 
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
@@ -138,7 +152,7 @@ const EventDetail: React.FC = () => {
               <Clock className="h-4 w-4 text-primary" />
               <span>{format(new Date(event.event_date), 'h:mm a')}</span>
             </div>
-            {event.location && (
+            {(event.location || event.is_virtual) && (
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-primary" />
                 <span>{event.is_virtual ? 'Virtual Event' : event.location}</span>
@@ -202,16 +216,41 @@ const EventDetail: React.FC = () => {
             </div>
           </div>
         )}
+      </div>
 
-        {/* CTA for upcoming events */}
-        {!isEventPast && (
-          <div className="fixed bottom-20 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent">
-            <Button className="w-full" size="lg">
-              Register for Event
+      {/* CTA for upcoming events */}
+      {!isEventPast && (
+        <div className="fixed bottom-20 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent">
+          <div className="max-w-3xl mx-auto">
+            <Button 
+              className="w-full gap-2" 
+              size="lg"
+              variant={isRegistered ? 'secondary' : 'default'}
+              onClick={() => setIsModalOpen(true)}
+              disabled={isCheckingRegistration}
+            >
+              {isRegistered ? (
+                <>
+                  <CheckCircle className="h-5 w-5" />
+                  You're Registered
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-5 w-5" />
+                  Attend Event
+                </>
+              )}
             </Button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Registration Modal */}
+      <EventRegistrationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        event={event}
+      />
     </div>
   );
 };
