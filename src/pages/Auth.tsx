@@ -91,10 +91,9 @@ const Auth: React.FC = () => {
 
       toast({
         title: 'Welcome to the Circle!',
-        description: 'Please check your email to verify your account.',
+        description: 'Your account has been created successfully.',
       });
-      setIsSignUp(false);
-      resetForm();
+      navigate('/welcome');
     } else {
       const validation = authSchema.safeParse({ email, password });
       if (!validation.success) {
