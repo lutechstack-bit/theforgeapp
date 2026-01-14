@@ -8,14 +8,14 @@ interface KYFormProgressBarProps {
 
 // Multi-colored progress segments - vibrant cycling colors
 const SEGMENT_COLORS = [
-  'bg-rose-400',
-  'bg-orange-400',
-  'bg-amber-400',
+  'bg-forge-orange',
+  'bg-forge-gold',
   'bg-forge-yellow',
   'bg-forge-gold',
-  'bg-rose-400',
-  'bg-orange-400',
-  'bg-amber-400',
+  'bg-forge-orange',
+  'bg-forge-yellow',
+  'bg-forge-gold',
+  'bg-forge-orange',
   'bg-forge-yellow',
   'bg-forge-gold',
 ];
