@@ -20,21 +20,36 @@ export const useRoadmapData = () => {
   const cohortName = cohortDisplayNames[userCohortType];
   const forgeStartDate = edition?.forge_start_date ? new Date(edition.forge_start_date) : null;
 
-  // Fetch roadmap days
-  const { data: roadmapDays, isLoading: isLoadingDays } = useQuery({
-    queryKey: ['roadmap-days', profile?.edition_id],
+  // Fetch shared template roadmap days (edition_id IS NULL)
+  const { data: templateDays, isLoading: isLoadingDays } = useQuery({
+    queryKey: ['roadmap-days-template'],
     queryFn: async () => {
-      if (!profile?.edition_id) return [];
       const { data, error } = await supabase
         .from('roadmap_days')
         .select('*')
-        .eq('edition_id', profile.edition_id)
+        .is('edition_id', null)
         .order('day_number', { ascending: true });
       if (error) throw error;
       return data as RoadmapDay[];
-    },
-    enabled: !!profile?.edition_id
+    }
   });
+
+  // Calculate dates dynamically based on forge_start_date + day_number
+  const roadmapDays = useMemo(() => {
+    if (!templateDays) return [];
+    return templateDays.map(day => {
+      let calculatedDate: string | null = null;
+      if (forgeStartDate && day.day_number > 0) {
+        const dayDate = new Date(forgeStartDate);
+        dayDate.setDate(dayDate.getDate() + (day.day_number - 1));
+        calculatedDate = dayDate.toISOString().split('T')[0];
+      }
+      return {
+        ...day,
+        date: calculatedDate
+      };
+    });
+  }, [templateDays, forgeStartDate]);
 
   // Fetch galleries
   const { data: galleries } = useQuery({
