@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { AdminRoute } from "@/components/admin/AdminRoute";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 
@@ -270,6 +271,7 @@ function App() {
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <ScrollToTop />
               <AppRoutes />
             </BrowserRouter>
           </TooltipProvider>
