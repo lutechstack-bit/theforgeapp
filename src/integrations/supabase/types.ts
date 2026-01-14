@@ -1657,6 +1657,42 @@ export type Database = {
           },
         ]
       }
+      roadmap_sidebar_content_editions: {
+        Row: {
+          content_id: string
+          created_at: string | null
+          edition_id: string
+          id: string
+        }
+        Insert: {
+          content_id: string
+          created_at?: string | null
+          edition_id: string
+          id?: string
+        }
+        Update: {
+          content_id?: string
+          created_at?: string | null
+          edition_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roadmap_sidebar_content_editions_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "roadmap_sidebar_content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roadmap_sidebar_content_editions_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_films: {
         Row: {
           award_tags: Json | null
