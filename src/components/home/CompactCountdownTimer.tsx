@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Flame, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Flame } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TimeLeft {
@@ -21,10 +19,7 @@ interface CompactCountdownTimerProps {
   } | null;
 }
 
-const PAYMENT_LINK = 'https://razorpay.com/payment-link/your-link-here';
-
 export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ edition }) => {
-  const { isBalancePaid } = useAuth();
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [prevTimeLeft, setPrevTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
@@ -53,10 +48,6 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
     const timer = setInterval(calculateTimeLeft, 1000);
     return () => clearInterval(timer);
   }, [edition?.forge_start_date]);
-
-  const handlePayClick = () => {
-    window.open(PAYMENT_LINK, '_blank');
-  };
 
   // Ultra compact time block
   const TimeBlock = ({ value, label, prevValue }: { value: number; label: string; prevValue: number }) => {
@@ -131,18 +122,6 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
             <TimeBlock value={timeLeft.seconds} label="Sec" prevValue={prevTimeLeft.seconds} />
           </div>
 
-          {/* Right: Payment CTA */}
-          {!isBalancePaid && (
-            <Button
-              onClick={handlePayClick}
-              size="sm"
-              className="h-7 px-2.5 text-xs bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-1 shrink-0 shadow-md shadow-primary/20 rounded-md"
-            >
-              <Sparkles className="h-3 w-3" />
-              <span className="hidden sm:inline">Pay Balance</span>
-              <span className="sm:hidden">Pay</span>
-            </Button>
-          )}
         </div>
       </div>
     </div>
