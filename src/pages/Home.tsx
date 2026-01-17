@@ -14,17 +14,10 @@ import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
 import { ProgressHeroSection } from '@/components/home/ProgressHeroSection';
 
 import { WhatYouCanDoHere } from '@/components/home/WhatYouCanDoHere';
-import { Calendar, ArrowRight, Users } from 'lucide-react';
+import { ArrowRight, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
-import { mentorsData, Mentor } from '@/data/mentorsData';
-// Alumni testimonial videos with enhanced data
-const alumniTestimonials = [
-  { id: '1', name: 'Anurag', role: 'Director & Screenwriter', videoUrl: '/videos/testimonials/anurag.mp4' },
-  { id: '2', name: 'Ashwin', role: 'Cinematographer', videoUrl: '/videos/testimonials/ashwin.mp4' },
-  { id: '3', name: 'Devansh', role: 'Editor & Colorist', videoUrl: '/videos/testimonials/devansh.mp4' },
-  { id: '4', name: 'Aanchal', role: 'Producer & Writer', videoUrl: '/videos/testimonials/aanchal.mp4' },
-];
+import { Mentor } from '@/data/mentorsData';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -91,6 +84,34 @@ const Home: React.FC = () => {
         .select('*')
         .order('order_index', { ascending: true })
         .limit(6);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Fetch mentors from database
+  const { data: mentors } = useQuery({
+    queryKey: ['home_mentors'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('mentors')
+        .select('*')
+        .eq('is_active', true)
+        .order('order_index', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Fetch alumni testimonials from database
+  const { data: alumniTestimonials } = useQuery({
+    queryKey: ['home_alumni_testimonials'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('alumni_testimonials')
+        .select('*')
+        .eq('is_active', true)
+        .order('order_index', { ascending: true });
       if (error) throw error;
       return data || [];
     },
@@ -182,16 +203,18 @@ const Home: React.FC = () => {
       <WhatYouCanDoHere />
 
       {/* Alumni Testimonials - Enhanced with demographics */}
-      <ContentCarousel title="Alumni Spotlight">
-        {alumniTestimonials.map((alumni) => (
-          <TestimonialVideoCard
-            key={alumni.id}
-            name={alumni.name}
-            role={alumni.role}
-            videoUrl={alumni.videoUrl}
-          />
-        ))}
-      </ContentCarousel>
+      {alumniTestimonials && alumniTestimonials.length > 0 && (
+        <ContentCarousel title="Alumni Spotlight">
+          {alumniTestimonials.map((alumni) => (
+            <TestimonialVideoCard
+              key={alumni.id}
+              name={alumni.name}
+              role={alumni.role || undefined}
+              videoUrl={alumni.video_url}
+            />
+          ))}
+        </ContentCarousel>
+      )}
 
       {/* Upcoming Events - Moved higher */}
       {displayEvents.length > 0 && (
@@ -214,15 +237,30 @@ const Home: React.FC = () => {
       )}
 
       {/* Meet Your Mentors */}
-      <ContentCarousel title="Meet Your Mentors">
-        {mentorsData.map((mentor) => (
-          <FlipMentorCard
-            key={mentor.id}
-            mentor={mentor}
-            onClick={() => handleMentorClick(mentor)}
-          />
-        ))}
-      </ContentCarousel>
+      {mentors && mentors.length > 0 && (
+        <ContentCarousel title="Meet Your Mentors">
+          {mentors.map((mentor) => {
+            // Transform DB mentor to Mentor type for FlipMentorCard
+            const mentorData: Mentor = {
+              id: mentor.id,
+              name: mentor.name,
+              title: mentor.title,
+              roles: (mentor.roles as string[]) || [],
+              imageUrl: mentor.image_url || '',
+              modalImageUrl: mentor.modal_image_url || undefined,
+              bio: (mentor.bio as string[]) || [],
+              brands: (mentor.brands as any[]) || [],
+            };
+            return (
+              <FlipMentorCard
+                key={mentor.id}
+                mentor={mentorData}
+                onClick={() => handleMentorClick(mentorData)}
+              />
+            );
+          })}
+        </ContentCarousel>
+      )}
 
       {/* Mentor Detail Modal */}
       <MentorDetailModal
@@ -248,7 +286,7 @@ const Home: React.FC = () => {
       )}
 
       {/* Empty State */}
-      {(!alumniTestimonials.length && !mentorsData.length && !learnContent?.length && !events?.length) && (
+      {(!alumniTestimonials?.length && !mentors?.length && !learnContent?.length && !events?.length) && (
         <div className="glass-premium rounded-2xl p-8 text-center">
           <Users className="h-12 w-12 text-primary/50 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">Content Coming Soon</h3>
