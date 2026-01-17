@@ -36,20 +36,18 @@ import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminEditions from "./pages/admin/AdminEditions";
-import AdminNotifications from "./pages/admin/AdminNotifications";
-import AdminContent from "./pages/admin/AdminContent";
 import AdminEvents from "./pages/admin/AdminEvents";
 import AdminLearn from "./pages/admin/AdminLearn";
 import AdminAutoUpdates from "./pages/admin/AdminAutoUpdates";
-import AdminHeroBanners from "./pages/admin/AdminHeroBanners";
 import AdminRoadmap from "./pages/admin/AdminRoadmap";
 import AdminRoadmapSidebar from "./pages/admin/AdminRoadmapSidebar";
 import AdminKYForms from "./pages/admin/AdminKYForms";
-import AdminEventTypes from "./pages/admin/AdminEventTypes";
 import AdminPastPrograms from "./pages/admin/AdminPastPrograms";
 import AdminCommunityHighlights from "./pages/admin/AdminCommunityHighlights";
 import AdminNightlyRituals from "./pages/admin/AdminNightlyRituals";
 import AdminEquipment from "./pages/admin/AdminEquipment";
+import AdminMentors from "./pages/admin/AdminMentors";
+import AdminAlumniTestimonials from "./pages/admin/AdminAlumniTestimonials";
 import DynamicKYForm from "./pages/DynamicKYForm";
 import EventDetail from "./pages/EventDetail";
 
@@ -240,20 +238,18 @@ const AppRoutes = () => {
         <Route index element={<AdminDashboard />} />
         <Route path="users" element={<AdminUsers />} />
         <Route path="editions" element={<AdminEditions />} />
-        <Route path="notifications" element={<AdminNotifications />} />
-        <Route path="content" element={<AdminContent />} />
         <Route path="events" element={<AdminEvents />} />
-        <Route path="event-types" element={<AdminEventTypes />} />
         <Route path="past-programs" element={<AdminPastPrograms />} />
         <Route path="learn" element={<AdminLearn />} />
         <Route path="auto-updates" element={<AdminAutoUpdates />} />
-        <Route path="hero-banners" element={<AdminHeroBanners />} />
         <Route path="roadmap" element={<AdminRoadmap />} />
         <Route path="roadmap-sidebar" element={<AdminRoadmapSidebar />} />
         <Route path="equipment" element={<AdminEquipment />} />
         <Route path="ky-forms" element={<AdminKYForms />} />
         <Route path="community-highlights" element={<AdminCommunityHighlights />} />
         <Route path="nightly-rituals" element={<AdminNightlyRituals />} />
+        <Route path="mentors" element={<AdminMentors />} />
+        <Route path="alumni-testimonials" element={<AdminAlumniTestimonials />} />
       </Route>
       
       {/* Catch-all */}

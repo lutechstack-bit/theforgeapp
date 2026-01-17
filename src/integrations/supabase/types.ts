@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      alumni_testimonials: {
+        Row: {
+          achievement: string | null
+          created_at: string | null
+          film: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          order_index: number | null
+          role: string | null
+          thumbnail_url: string | null
+          video_url: string
+        }
+        Insert: {
+          achievement?: string | null
+          created_at?: string | null
+          film?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          order_index?: number | null
+          role?: string | null
+          thumbnail_url?: string | null
+          video_url: string
+        }
+        Update: {
+          achievement?: string | null
+          created_at?: string | null
+          film?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          order_index?: number | null
+          role?: string | null
+          thumbnail_url?: string | null
+          video_url?: string
+        }
+        Relationships: []
+      }
       city_groups: {
         Row: {
           city_key: string
@@ -1128,6 +1167,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      mentors: {
+        Row: {
+          bio: string[] | null
+          brands: Json | null
+          created_at: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          modal_image_url: string | null
+          name: string
+          order_index: number | null
+          roles: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          bio?: string[] | null
+          brands?: Json | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          modal_image_url?: string | null
+          name: string
+          order_index?: number | null
+          roles?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          bio?: string[] | null
+          brands?: Json | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          modal_image_url?: string | null
+          name?: string
+          order_index?: number | null
+          roles?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       message_reactions: {
         Row: {

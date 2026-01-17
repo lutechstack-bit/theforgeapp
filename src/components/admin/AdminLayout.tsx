@@ -5,16 +5,17 @@ import {
   Users, 
   Calendar, 
   FileText, 
-  Bell,
   ArrowLeft,
   Shield,
   Sparkles,
-  Image,
   Map,
   ClipboardList,
   Moon,
   Package,
-  PanelRight
+  PanelRight,
+  UserCircle,
+  Video,
+  Star
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,13 +28,13 @@ const adminNavItems = [
   { to: '/admin/roadmap-sidebar', icon: PanelRight, label: 'Roadmap Sidebar' },
   { to: '/admin/equipment', icon: Package, label: 'Equipment' },
   { to: '/admin/nightly-rituals', icon: Moon, label: 'Nightly Rituals' },
-  { to: '/admin/auto-updates', icon: Sparkles, label: 'Auto Updates' },
-  { to: '/admin/hero-banners', icon: Image, label: 'Hero Banners' },
-  { to: '/admin/notifications', icon: Bell, label: 'Notifications' },
   { to: '/admin/events', icon: Calendar, label: 'Events' },
-  { to: '/admin/event-types', icon: FileText, label: 'Event Types' },
   { to: '/admin/past-programs', icon: Calendar, label: 'Past Programs' },
   { to: '/admin/learn', icon: FileText, label: 'Learn' },
+  { to: '/admin/mentors', icon: UserCircle, label: 'Mentors' },
+  { to: '/admin/alumni-testimonials', icon: Video, label: 'Alumni Testimonials' },
+  { to: '/admin/community-highlights', icon: Star, label: 'Community Highlights' },
+  { to: '/admin/auto-updates', icon: Sparkles, label: 'Auto Updates' },
 ];
 
 export const AdminLayout: React.FC = () => {
