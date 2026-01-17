@@ -17,6 +17,7 @@ export type Database = {
       alumni_testimonials: {
         Row: {
           achievement: string | null
+          cohort_types: string[] | null
           created_at: string | null
           film: string | null
           id: string
@@ -29,6 +30,7 @@ export type Database = {
         }
         Insert: {
           achievement?: string | null
+          cohort_types?: string[] | null
           created_at?: string | null
           film?: string | null
           id?: string
@@ -41,6 +43,7 @@ export type Database = {
         }
         Update: {
           achievement?: string | null
+          cohort_types?: string[] | null
           created_at?: string | null
           film?: string | null
           id?: string
@@ -1172,6 +1175,7 @@ export type Database = {
         Row: {
           bio: string[] | null
           brands: Json | null
+          cohort_types: string[] | null
           created_at: string | null
           id: string
           image_url: string | null
@@ -1186,6 +1190,7 @@ export type Database = {
         Insert: {
           bio?: string[] | null
           brands?: Json | null
+          cohort_types?: string[] | null
           created_at?: string | null
           id?: string
           image_url?: string | null
@@ -1200,6 +1205,7 @@ export type Database = {
         Update: {
           bio?: string[] | null
           brands?: Json | null
+          cohort_types?: string[] | null
           created_at?: string | null
           id?: string
           image_url?: string | null

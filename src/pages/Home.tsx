@@ -30,7 +30,7 @@ const Home: React.FC = () => {
     setIsMentorModalOpen(true);
   };
 
-  // Fetch edition data for countdown
+  // Fetch edition data for countdown and cohort filtering
   const { data: edition } = useQuery({
     queryKey: ['user-edition', profile?.edition_id],
     queryFn: async () => {
@@ -45,6 +45,9 @@ const Home: React.FC = () => {
     },
     enabled: !!profile?.edition_id,
   });
+
+  // Get user's cohort type from their edition
+  const userCohortType = edition?.cohort_type;
 
   // Fetch home cards (students, mentors, etc.)
   const { data: homeCards } = useQuery({
@@ -89,29 +92,43 @@ const Home: React.FC = () => {
     },
   });
 
-  // Fetch mentors from database
+  // Fetch mentors from database - filtered by user's cohort type
   const { data: mentors } = useQuery({
-    queryKey: ['home_mentors'],
+    queryKey: ['home_mentors', userCohortType],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('mentors')
         .select('*')
         .eq('is_active', true)
         .order('order_index', { ascending: true });
+      
+      // Filter by cohort if user has an edition with cohort_type
+      if (userCohortType) {
+        query = query.contains('cohort_types', [userCohortType]);
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
   });
 
-  // Fetch alumni testimonials from database
+  // Fetch alumni testimonials from database - filtered by user's cohort type
   const { data: alumniTestimonials } = useQuery({
-    queryKey: ['home_alumni_testimonials'],
+    queryKey: ['home_alumni_testimonials', userCohortType],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('alumni_testimonials')
         .select('*')
         .eq('is_active', true)
         .order('order_index', { ascending: true });
+      
+      // Filter by cohort if user has an edition with cohort_type
+      if (userCohortType) {
+        query = query.contains('cohort_types', [userCohortType]);
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
