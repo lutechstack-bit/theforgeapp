@@ -1,7 +1,8 @@
 import React from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import { SideNav } from './SideNav';
+import { AnimatedOutlet } from './AnimatedOutlet';
 import { SidebarProvider, useSidebar } from '@/contexts/SidebarContext';
 import { cn } from '@/lib/utils';
 
@@ -15,10 +16,10 @@ const AppLayoutContent: React.FC = () => {
     <div className="min-h-[100dvh] bg-background safe-area-pt">
       {showNav && <SideNav />}
       <main className={cn(
-        "relative pb-20 md:pb-0 transition-all duration-300 ease-in-out safe-area-pb",
+        "relative pb-24 md:pb-0 transition-all duration-300 ease-in-out",
         showNav && (collapsed ? "md:ml-[72px]" : "md:ml-64")
       )}>
-        <Outlet />
+        <AnimatedOutlet />
       </main>
       {showNav && <BottomNav />}
     </div>
