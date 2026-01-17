@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Flame, MapPin, Calendar, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Flame, MapPin, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -28,8 +26,6 @@ interface EnhancedCountdownProps {
     cohort_type: string;
   } | null;
 }
-
-const PAYMENT_LINK = 'https://razorpay.com/payment-link/your-link-here';
 
 const parseEditionInfo = (edition: EnhancedCountdownProps['edition']): EditionInfo | null => {
   if (!edition) return null;
@@ -74,7 +70,6 @@ const parseEditionInfo = (edition: EnhancedCountdownProps['edition']): EditionIn
 };
 
 export const EnhancedCountdown: React.FC<EnhancedCountdownProps> = ({ edition }) => {
-  const { isBalancePaid } = useAuth();
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [prevTimeLeft, setPrevTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
@@ -105,10 +100,6 @@ export const EnhancedCountdown: React.FC<EnhancedCountdownProps> = ({ edition })
     const timer = setInterval(calculateTimeLeft, 1000);
     return () => clearInterval(timer);
   }, [edition?.forge_start_date]);
-
-  const handlePayClick = () => {
-    window.open(PAYMENT_LINK, '_blank');
-  };
 
   const TimeBlock = ({ value, label, prevValue }: { value: number; label: string; prevValue: number }) => {
     const hasChanged = value !== prevValue;
@@ -207,17 +198,6 @@ export const EnhancedCountdown: React.FC<EnhancedCountdownProps> = ({ edition })
             </div>
           </div>
 
-          {/* Right: Payment CTA */}
-          {!isBalancePaid && (
-            <Button
-              onClick={handlePayClick}
-              size="sm"
-              className="bg-amber-500 hover:bg-amber-600 text-black font-semibold gap-1.5 shrink-0 shadow-lg shadow-amber-500/20"
-            >
-              <Sparkles className="h-4 w-4" />
-              Pay Balance
-            </Button>
-          )}
         </div>
       </div>
     </div>

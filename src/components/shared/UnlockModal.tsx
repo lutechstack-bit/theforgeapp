@@ -16,7 +16,7 @@ export const UnlockModal: React.FC<UnlockModalProps> = ({
   open,
   onOpenChange,
   title = "Unlock the Full Experience",
-  description = "Complete your balance payment to access exclusive BFP sessions, masterclasses, and premium content from industry experts.",
+  description = "Complete your balance payment to access exclusive Pre Forge sessions, masterclasses, and premium content from industry experts.",
   paymentLink,
   onPayClick,
 }) => {
@@ -58,7 +58,7 @@ export const UnlockModal: React.FC<UnlockModalProps> = ({
               🎬 What you'll unlock:
             </p>
             <ul className="text-xs text-muted-foreground space-y-1">
-              <li>• BFP Sessions & Masterclasses</li>
+              <li>• Pre Forge Sessions & Masterclasses</li>
               <li>• Premium workshops from industry experts</li>
               <li>• Exclusive resources & downloadables</li>
             </ul>

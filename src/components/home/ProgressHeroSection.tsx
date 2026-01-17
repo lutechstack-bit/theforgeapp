@@ -164,6 +164,23 @@ export const ProgressHeroSection: React.FC = () => {
     return "Complete your onboarding to get started.";
   }, [daysUntilForge, profile?.ky_form_completed]);
 
+  // Get form name and route based on cohort type
+  const getFormName = (cohortType: string | undefined) => {
+    switch (cohortType) {
+      case 'FORGE_CREATORS': return 'KYC Form';
+      case 'FORGE_WRITING': return 'KYW Form';
+      default: return 'KYF Form';
+    }
+  };
+
+  const getFormRoute = (cohortType: string | undefined) => {
+    switch (cohortType) {
+      case 'FORGE_CREATORS': return '/kyc-form';
+      case 'FORGE_WRITING': return '/kyw-form';
+      default: return '/kyf-form';
+    }
+  };
+
   const kyfStatus = profile?.ky_form_completed ? '100% done' : 'Pending';
   const roadmapStatus = daysUntilForge !== null ? `${daysUntilForge} days` : 'Explore now';
   const prepStatus = prepProgress?.total 
@@ -204,12 +221,12 @@ export const ProgressHeroSection: React.FC = () => {
           <div className="flex gap-2.5 sm:gap-4 overflow-x-auto pt-3 pb-3 pl-3 -mx-4 pr-4 sm:-mx-5 sm:pr-5 md:mx-0 md:px-0 md:pl-3 scrollbar-hide">
             <ProgressCard
               number="01"
-              title="KYF Form"
+              title={getFormName(edition?.cohort_type)}
               subtitle="Complete your profile"
               progress={kyfStatus}
               icon={<FileText className="w-5 h-5 text-primary" />}
               variant="dark"
-              onClick={() => navigate('/kyf')}
+              onClick={() => navigate(getFormRoute(edition?.cohort_type))}
             />
             <ProgressCard
               number="02"

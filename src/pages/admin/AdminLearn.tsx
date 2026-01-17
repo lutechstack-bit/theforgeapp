@@ -89,7 +89,7 @@ const initialResourceForm: ResourceForm = {
 
 const sectionTypes = [
   { value: 'community_sessions', label: 'Community Sessions' },
-  { value: 'bfp_sessions', label: 'Forge Online Sessions' },
+  { value: 'bfp_sessions', label: 'Pre Forge Sessions' },
 ];
 const fileTypes = ['pdf', 'doc', 'xlsx', 'pptx', 'zip', 'other'];
 
@@ -559,7 +559,7 @@ const AdminLearn: React.FC = () => {
           </TabsTrigger>
           <TabsTrigger value="bfp_sessions" className="rounded-md px-4 py-2">
             <Sparkles className="h-4 w-4 mr-2" />
-            BFP Sessions
+            Pre Forge Sessions
           </TabsTrigger>
         </TabsList>
 
