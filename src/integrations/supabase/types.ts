@@ -308,6 +308,7 @@ export type Database = {
           location: string | null
           notes: string | null
           recording_url: string | null
+          show_on_homepage: boolean
           title: string
         }
         Insert: {
@@ -321,6 +322,7 @@ export type Database = {
           location?: string | null
           notes?: string | null
           recording_url?: string | null
+          show_on_homepage?: boolean
           title: string
         }
         Update: {
@@ -334,6 +336,7 @@ export type Database = {
           location?: string | null
           notes?: string | null
           recording_url?: string | null
+          show_on_homepage?: boolean
           title?: string
         }
         Relationships: [

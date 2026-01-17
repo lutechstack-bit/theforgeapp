@@ -40,6 +40,7 @@ interface EventForm {
   event_type_id: string | null;
   recording_url: string;
   notes: string;
+  show_on_homepage: boolean;
 }
 
 const initialForm: EventForm = {
@@ -52,6 +53,7 @@ const initialForm: EventForm = {
   event_type_id: null,
   recording_url: '',
   notes: '',
+  show_on_homepage: false,
 };
 
 const AdminEvents: React.FC = () => {
@@ -169,6 +171,7 @@ const AdminEvents: React.FC = () => {
       event_type_id: event.event_type_id || null,
       recording_url: event.recording_url || '',
       notes: event.notes || '',
+      show_on_homepage: event.show_on_homepage || false,
     });
     setEditingId(event.id);
     setIsDialogOpen(true);
@@ -288,6 +291,15 @@ const AdminEvents: React.FC = () => {
                 <Label htmlFor="is_virtual">Virtual Event</Label>
               </div>
 
+              <div className="flex items-center gap-3">
+                <Switch
+                  id="show_on_homepage"
+                  checked={form.show_on_homepage}
+                  onCheckedChange={(checked) => setForm({ ...form, show_on_homepage: checked })}
+                />
+                <Label htmlFor="show_on_homepage">Show on Homepage</Label>
+              </div>
+
               {/* Archive Fields - Only show for past events or when editing */}
               {editingId && (
                 <div className="border-t border-border/50 pt-4 mt-4 space-y-4">
@@ -350,6 +362,7 @@ const AdminEvents: React.FC = () => {
                 <TableHead>Date</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Format</TableHead>
+                <TableHead>Homepage</TableHead>
                 <TableHead>Registrations</TableHead>
                 <TableHead>Archive</TableHead>
                 <TableHead className="w-[100px]">Actions</TableHead>
@@ -381,6 +394,13 @@ const AdminEvents: React.FC = () => {
                       {event.is_virtual ? <Video className="h-3 w-3" /> : <MapPin className="h-3 w-3" />}
                       {event.is_virtual ? 'Virtual' : 'In-Person'}
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    {event.show_on_homepage ? (
+                      <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary">Featured</span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Button
