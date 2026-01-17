@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Calendar, Play, Film, Pen } from 'lucide-react';
+import { Calendar, Play, Film, Pen, BookOpen } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface PastProgramCardProps {
@@ -11,6 +11,7 @@ interface PastProgramCardProps {
   imageUrl?: string;
   description?: string;
   hasRecording?: boolean;
+  learnContentId?: string;
   onClick?: () => void;
   className?: string;
 }
@@ -22,6 +23,7 @@ export const PastProgramCard: React.FC<PastProgramCardProps> = ({
   imageUrl,
   description,
   hasRecording,
+  learnContentId,
   onClick,
   className,
 }) => {
@@ -54,7 +56,7 @@ export const PastProgramCard: React.FC<PastProgramCardProps> = ({
         "group relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300",
         "bg-card/60 backdrop-blur-sm border border-border/50 hover:border-primary/30",
         "hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1",
-        "w-[200px] flex-shrink-0",
+        "w-full flex-shrink-0",
         className
       )}
     >
@@ -81,10 +83,20 @@ export const PastProgramCard: React.FC<PastProgramCardProps> = ({
           {programType}
         </div>
 
-        {/* Recording Badge */}
-        {hasRecording && (
-          <div className="absolute top-2 right-2 p-1.5 rounded-full bg-background/80 backdrop-blur-sm">
-            <Play className="h-3 w-3 text-primary" />
+        {/* Watch Session / Recording Badge */}
+        {(learnContentId || hasRecording) && (
+          <div className="absolute top-2 right-2 px-2 py-1 rounded-md bg-background/80 backdrop-blur-sm flex items-center gap-1 text-xs font-medium text-foreground">
+            {learnContentId ? (
+              <>
+                <BookOpen className="h-3 w-3 text-primary" />
+                <span>Watch</span>
+              </>
+            ) : (
+              <>
+                <Play className="h-3 w-3 text-primary" />
+                <span>Recording</span>
+              </>
+            )}
           </div>
         )}
 

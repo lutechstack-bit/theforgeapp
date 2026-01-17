@@ -10,8 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Link } from 'lucide-react';
 import { format } from 'date-fns';
+import { FileUpload } from '@/components/admin/FileUpload';
 
 interface PastProgramForm {
   name: string;
@@ -21,6 +22,7 @@ interface PastProgramForm {
   description: string;
   recording_url: string;
   is_active: boolean;
+  learn_content_id: string;
 }
 
 const initialForm: PastProgramForm = {
@@ -31,6 +33,7 @@ const initialForm: PastProgramForm = {
   description: '',
   recording_url: '',
   is_active: true,
+  learn_content_id: '',
 };
 
 const AdminPastPrograms: React.FC = () => {
@@ -51,16 +54,35 @@ const AdminPastPrograms: React.FC = () => {
     },
   });
 
+  // Fetch community sessions from learn_content
+  const { data: learnSessions = [] } = useQuery({
+    queryKey: ['learn-community-sessions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('learn_content')
+        .select('id, title, instructor_name')
+        .eq('section_type', 'community_sessions')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const saveMutation = useMutation({
     mutationFn: async (data: PastProgramForm) => {
+      const payload = {
+        ...data,
+        learn_content_id: data.learn_content_id || null,
+      };
+      
       if (editingId) {
         const { error } = await supabase
           .from('past_programs')
-          .update(data)
+          .update(payload)
           .eq('id', editingId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('past_programs').insert(data);
+        const { error } = await supabase.from('past_programs').insert(payload);
         if (error) throw error;
       }
     },
@@ -105,6 +127,7 @@ const AdminPastPrograms: React.FC = () => {
       description: program.description || '',
       recording_url: program.recording_url || '',
       is_active: program.is_active,
+      learn_content_id: program.learn_content_id || '',
     });
     setEditingId(program.id);
     setIsOpen(true);
@@ -113,6 +136,12 @@ const AdminPastPrograms: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     saveMutation.mutate(form);
+  };
+
+  const getLinkedSessionName = (learnContentId: string | null) => {
+    if (!learnContentId) return null;
+    const session = learnSessions.find(s => s.id === learnContentId);
+    return session?.title || null;
   };
 
   return (
@@ -130,7 +159,7 @@ const AdminPastPrograms: React.FC = () => {
               Add Program
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? 'Edit Program' : 'Add Program'}</DialogTitle>
             </DialogHeader>
@@ -176,15 +205,16 @@ const AdminPastPrograms: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="image">Cover Image URL</Label>
-                <Input
-                  id="image"
-                  value={form.image_url}
-                  onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                  placeholder="https://..."
-                />
-              </div>
+              {/* Event Poster Upload */}
+              <FileUpload
+                bucket="user-uploads"
+                accept="image/*"
+                maxSizeMB={10}
+                label="Event Poster"
+                helperText="Upload an event poster image (max 10MB)"
+                currentUrl={form.image_url}
+                onUploadComplete={(url) => setForm({ ...form, image_url: url })}
+              />
 
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
@@ -197,13 +227,38 @@ const AdminPastPrograms: React.FC = () => {
                 />
               </div>
 
+              {/* Link to Learn Session */}
               <div className="space-y-2">
-                <Label htmlFor="recording">Recording URL (optional)</Label>
+                <Label htmlFor="learn_content">Link to Learn Session</Label>
+                <Select
+                  value={form.learn_content_id}
+                  onValueChange={(value) => setForm({ ...form, learn_content_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a community session (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No linked session</SelectItem>
+                    {learnSessions.map((session) => (
+                      <SelectItem key={session.id} value={session.id}>
+                        {session.title}
+                        {session.instructor_name && ` - ${session.instructor_name}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  When linked, clicking this past program will open the Learn session
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="recording">Recording URL (fallback)</Label>
                 <Input
                   id="recording"
                   value={form.recording_url}
                   onChange={(e) => setForm({ ...form, recording_url: e.target.value })}
-                  placeholder="YouTube or Vimeo URL"
+                  placeholder="YouTube or Vimeo URL (used if no Learn session linked)"
                 />
               </div>
 
@@ -242,7 +297,7 @@ const AdminPastPrograms: React.FC = () => {
                 <TableHead>Program</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Completion Date</TableHead>
-                <TableHead>Recording</TableHead>
+                <TableHead>Learn Link</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -250,7 +305,18 @@ const AdminPastPrograms: React.FC = () => {
             <TableBody>
               {programs.map((program) => (
                 <TableRow key={program.id}>
-                  <TableCell className="font-medium">{program.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-3">
+                      {program.image_url && (
+                        <img 
+                          src={program.image_url} 
+                          alt={program.name}
+                          className="w-10 h-10 rounded object-cover"
+                        />
+                      )}
+                      {program.name}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <span className={`text-xs px-2 py-1 rounded-full ${
                       program.program_type === 'FORGE' 
@@ -264,8 +330,13 @@ const AdminPastPrograms: React.FC = () => {
                   </TableCell>
                   <TableCell>{format(new Date(program.completion_date), 'MMM d, yyyy')}</TableCell>
                   <TableCell>
-                    {program.recording_url ? (
-                      <span className="text-xs text-green-500">Available</span>
+                    {program.learn_content_id ? (
+                      <span className="flex items-center gap-1 text-xs text-primary">
+                        <Link className="h-3 w-3" />
+                        {getLinkedSessionName(program.learn_content_id) || 'Linked'}
+                      </span>
+                    ) : program.recording_url ? (
+                      <span className="text-xs text-muted-foreground">Recording only</span>
                     ) : (
                       <span className="text-xs text-muted-foreground">None</span>
                     )}
