@@ -231,14 +231,17 @@ const AdminPastPrograms: React.FC = () => {
               <div className="space-y-2">
                 <Label htmlFor="learn_content">Link to Learn Session</Label>
                 <Select
-                  value={form.learn_content_id}
-                  onValueChange={(value) => setForm({ ...form, learn_content_id: value })}
+                  value={form.learn_content_id || 'none'}
+                  onValueChange={(value) => setForm({ 
+                    ...form, 
+                    learn_content_id: value === 'none' ? '' : value 
+                  })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a community session (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No linked session</SelectItem>
+                    <SelectItem value="none">No linked session</SelectItem>
                     {learnSessions.map((session) => (
                       <SelectItem key={session.id} value={session.id}>
                         {session.title}
