@@ -1379,6 +1379,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          learn_content_id: string | null
           name: string
           program_type: string
           recording_url: string | null
@@ -1390,6 +1391,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          learn_content_id?: string | null
           name: string
           program_type?: string
           recording_url?: string | null
@@ -1401,11 +1403,20 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          learn_content_id?: string | null
           name?: string
           program_type?: string
           recording_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "past_programs_learn_content_id_fkey"
+            columns: ["learn_content_id"]
+            isOneToOne: false
+            referencedRelation: "learn_content"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       perks: {
         Row: {
