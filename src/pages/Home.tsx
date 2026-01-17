@@ -63,18 +63,35 @@ const Home: React.FC = () => {
     },
   });
 
-  // Fetch events from database
-  const { data: events } = useQuery({
+  // Fetch events from database - prioritize homepage featured, then past events fallback
+  const { data: events, data: eventsType } = useQuery({
     queryKey: ['home_events'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First try to get events marked for homepage
+      const { data: homepageEvents, error: homepageError } = await supabase
         .from('events')
         .select('*')
-        .gte('event_date', new Date().toISOString())
-        .order('event_date', { ascending: true })
+        .eq('show_on_homepage', true)
+        .order('event_date', { ascending: false })
         .limit(6);
-      if (error) throw error;
-      return data || [];
+      
+      if (homepageError) throw homepageError;
+      
+      // If we have homepage events, return them
+      if (homepageEvents && homepageEvents.length > 0) {
+        return { events: homepageEvents, isPastEvents: false };
+      }
+      
+      // Fallback to recent past events
+      const { data: pastEvents, error: pastError } = await supabase
+        .from('events')
+        .select('*')
+        .lt('event_date', new Date().toISOString())
+        .order('event_date', { ascending: false })
+        .limit(6);
+      
+      if (pastError) throw pastError;
+      return { events: pastEvents || [], isPastEvents: true };
     },
   });
 
@@ -141,44 +158,9 @@ const Home: React.FC = () => {
     { id: '4', title: 'Post-Production Workflow', duration_minutes: 55, thumbnail_url: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=400' },
   ];
 
-  const dummyEvents = [
-    { 
-      id: '1', 
-      title: 'Masterclass: Creating Award-Winning Short Films', 
-      event_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-      location: 'Los Angeles, CA',
-      image_url: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=600',
-      is_virtual: false,
-      hostName: 'Steven Spielberg',
-      hostAvatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
-      isFillingFast: true,
-    },
-    { 
-      id: '2', 
-      title: 'Virtual Networking: Connect with Industry Pros', 
-      event_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      location: null,
-      image_url: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=600',
-      is_virtual: true,
-      hostName: 'Film Connect',
-      hostAvatarUrl: null,
-      isFillingFast: false,
-    },
-    { 
-      id: '3', 
-      title: 'Documentary Filmmaking Workshop', 
-      event_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-      location: 'New York, NY',
-      image_url: 'https://images.unsplash.com/photo-1524712245354-2c4e5e7121c0?w=600',
-      is_virtual: false,
-      hostName: 'Documentary Guild',
-      hostAvatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100',
-      isFillingFast: true,
-    },
-  ];
-  
   const displayLearnContent = (learnContent && learnContent.length > 0) ? learnContent : dummyLearnContent;
-  const displayEvents = (events && events.length > 0) ? events : dummyEvents;
+  const displayEvents = events?.events || [];
+  const isPastEvents = events?.isPastEvents ?? false;
 
   return (
     <div className="min-h-screen p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
@@ -233,9 +215,9 @@ const Home: React.FC = () => {
         </ContentCarousel>
       )}
 
-      {/* Upcoming Events - Moved higher */}
+      {/* Events Section - Dynamic title based on content */}
       {displayEvents.length > 0 && (
-        <ContentCarousel title="Upcoming Events" onSeeAll={() => navigate('/events')}>
+        <ContentCarousel title={isPastEvents ? "Past Events" : "Featured Events"} onSeeAll={() => navigate('/events')}>
           {displayEvents.map((event: any) => (
             <EventCard
               key={event.id}
@@ -243,9 +225,6 @@ const Home: React.FC = () => {
               date={format(new Date(event.event_date), 'EEE, MMM d')}
               location={event.location || undefined}
               imageUrl={event.image_url || undefined}
-              hostName={event.hostName}
-              hostAvatarUrl={event.hostAvatarUrl}
-              isFillingFast={event.isFillingFast}
               isVirtual={event.is_virtual}
               onClick={() => navigate('/events')}
             />
@@ -303,7 +282,7 @@ const Home: React.FC = () => {
       )}
 
       {/* Empty State */}
-      {(!alumniTestimonials?.length && !mentors?.length && !learnContent?.length && !events?.length) && (
+      {(!alumniTestimonials?.length && !mentors?.length && !learnContent?.length && !displayEvents?.length) && (
         <div className="glass-premium rounded-2xl p-8 text-center">
           <Users className="h-12 w-12 text-primary/50 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">Content Coming Soon</h3>
