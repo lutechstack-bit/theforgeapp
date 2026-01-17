@@ -6,11 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, GripVertical, X } from 'lucide-react';
 import { Json } from '@/integrations/supabase/types';
+import { FileUpload } from '@/components/admin/FileUpload';
 
 interface MentorBrand {
   name: string;
@@ -27,7 +29,14 @@ interface MentorForm {
   brands: MentorBrand[];
   is_active: boolean;
   order_index: number;
+  cohort_types: string[];
 }
+
+const COHORT_OPTIONS = [
+  { value: 'FORGE', label: 'Filmmaking' },
+  { value: 'FORGE_WRITING', label: 'Writing' },
+  { value: 'FORGE_CREATORS', label: 'Creators' },
+];
 
 const defaultForm: MentorForm = {
   name: '',
@@ -39,6 +48,7 @@ const defaultForm: MentorForm = {
   brands: [{ name: '', logoUrl: '' }],
   is_active: true,
   order_index: 0,
+  cohort_types: ['FORGE', 'FORGE_WRITING', 'FORGE_CREATORS'],
 };
 
 const AdminMentors: React.FC = () => {
@@ -73,6 +83,7 @@ const AdminMentors: React.FC = () => {
         brands: data.brands.filter(b => b.name.trim()) as unknown as Json,
         is_active: data.is_active,
         order_index: data.order_index,
+        cohort_types: data.cohort_types,
       };
 
       if (editingId) {
@@ -131,6 +142,7 @@ const AdminMentors: React.FC = () => {
       brands: mentor.brands?.length ? mentor.brands : [{ name: '', logoUrl: '' }],
       is_active: mentor.is_active,
       order_index: mentor.order_index,
+      cohort_types: mentor.cohort_types?.length ? mentor.cohort_types : ['FORGE', 'FORGE_WRITING', 'FORGE_CREATORS'],
     });
     setIsDialogOpen(true);
   };
@@ -141,7 +153,21 @@ const AdminMentors: React.FC = () => {
       toast.error('Name and title are required');
       return;
     }
+    if (form.cohort_types.length === 0) {
+      toast.error('Please select at least one cohort');
+      return;
+    }
     saveMutation.mutate(form);
+  };
+
+  // Cohort toggle helper
+  const toggleCohort = (cohort: string) => {
+    setForm(prev => ({
+      ...prev,
+      cohort_types: prev.cohort_types.includes(cohort)
+        ? prev.cohort_types.filter(c => c !== cohort)
+        : [...prev.cohort_types, cohort]
+    }));
   };
 
   // Array field helpers
@@ -167,6 +193,12 @@ const AdminMentors: React.FC = () => {
     const newBrands = [...form.brands];
     newBrands[idx] = { ...newBrands[idx], [field]: value };
     setForm({ ...form, brands: newBrands });
+  };
+
+  // Get cohort labels for display
+  const getCohortLabels = (cohortTypes: string[] | null) => {
+    if (!cohortTypes || cohortTypes.length === 0) return [];
+    return cohortTypes.map(ct => COHORT_OPTIONS.find(o => o.value === ct)?.label || ct);
   };
 
   return (
@@ -198,14 +230,75 @@ const AdminMentors: React.FC = () => {
                 </div>
               </div>
 
+              {/* Cohort Selection */}
+              <div className="space-y-2">
+                <Label>Show in Cohorts *</Label>
+                <p className="text-xs text-muted-foreground">Select which cohort types should see this mentor</p>
+                <div className="flex flex-wrap gap-4 pt-2">
+                  {COHORT_OPTIONS.map((option) => (
+                    <div key={option.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`cohort-${option.value}`}
+                        checked={form.cohort_types.includes(option.value)}
+                        onCheckedChange={() => toggleCohort(option.value)}
+                      />
+                      <Label htmlFor={`cohort-${option.value}`} className="text-sm font-normal cursor-pointer">
+                        {option.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Image Uploads */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="image_url">Card Image URL</Label>
-                  <Input id="image_url" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="/images/mentors/..." />
+                  <Label>Card Image</Label>
+                  <FileUpload
+                    bucket="user-uploads"
+                    onUploadComplete={(url) => setForm({ ...form, image_url: url })}
+                    accept="image/*"
+                    maxSizeMB={10}
+                    label="Upload card image"
+                  />
+                  {form.image_url && (
+                    <div className="mt-2 relative">
+                      <img src={form.image_url} alt="Card preview" className="w-full h-32 object-cover rounded-lg" />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6"
+                        onClick={() => setForm({ ...form, image_url: '' })}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="modal_image_url">Modal Image URL</Label>
-                  <Input id="modal_image_url" value={form.modal_image_url} onChange={(e) => setForm({ ...form, modal_image_url: e.target.value })} placeholder="/images/mentors/..." />
+                  <Label>Modal Image</Label>
+                  <FileUpload
+                    bucket="user-uploads"
+                    onUploadComplete={(url) => setForm({ ...form, modal_image_url: url })}
+                    accept="image/*"
+                    maxSizeMB={10}
+                    label="Upload modal image"
+                  />
+                  {form.modal_image_url && (
+                    <div className="mt-2 relative">
+                      <img src={form.modal_image_url} alt="Modal preview" className="w-full h-32 object-cover rounded-lg" />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6"
+                        onClick={() => setForm({ ...form, modal_image_url: '' })}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -296,9 +389,15 @@ const AdminMentors: React.FC = () => {
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">{mentor.title}</p>
-                  <div className="flex gap-1 mt-1">
+                  <div className="flex gap-1 mt-1 flex-wrap">
                     {(mentor.roles as string[])?.slice(0, 3).map((role, idx) => (
                       <span key={idx} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">{role}</span>
+                    ))}
+                  </div>
+                  {/* Cohort badges */}
+                  <div className="flex gap-1 mt-2 flex-wrap">
+                    {getCohortLabels(mentor.cohort_types as string[]).map((label, idx) => (
+                      <span key={idx} className="text-xs bg-accent/50 text-accent-foreground px-2 py-0.5 rounded">{label}</span>
                     ))}
                   </div>
                 </div>
