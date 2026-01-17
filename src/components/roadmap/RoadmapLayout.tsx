@@ -20,7 +20,11 @@ const RoadmapLayout: React.FC = () => {
     stayGallery,
     momentsGallery,
     studentFilms,
+    userCohortType,
   } = useRoadmapData();
+
+  // Hide equipment for Writers cohort
+  const showEquipment = userCohortType !== 'FORGE_WRITING';
 
   if (isLoadingDays) {
     return (
@@ -74,7 +78,7 @@ const RoadmapLayout: React.FC = () => {
           <QuickActionsBar
             hasGallery={stayGallery.length > 0 || momentsGallery.length > 0}
             hasFilms={(studentFilms?.length || 0) > 0}
-            hasEquipment={true}
+            hasEquipment={showEquipment}
             mobileHighlightsButton={
               <MobileHighlightsSheet editionId={profile.edition_id} />
             }

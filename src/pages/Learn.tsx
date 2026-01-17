@@ -182,7 +182,7 @@ const Learn: React.FC = () => {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Film className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Forge Online Sessions</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Pre Forge Sessions</h1>
           </div>
           <p className="text-muted-foreground">
             Learn from industry experts and breakthrough filmmakers
@@ -219,11 +219,11 @@ const Learn: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-10">
-            {/* Forge Online Sessions (BFP) */}
+            {/* Pre Forge Sessions */}
             {renderCourseCarousel(
               forgeOnlineSessions,
-              'Breakthrough Filmmaker Program',
-              'Exclusive sessions from the BFP curriculum'
+              'Pre Forge Sessions',
+              'Exclusive sessions to prepare you for the Forge'
             )}
 
             {/* Community Sessions */}
