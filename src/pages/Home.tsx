@@ -10,7 +10,6 @@ import { FlipMentorCard } from '@/components/shared/FlipMentorCard';
 import { MentorDetailModal } from '@/components/shared/MentorDetailModal';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { KYFormReminderBanner } from '@/components/onboarding/KYFormReminderBanner';
-import { FOMOBanner } from '@/components/shared/FOMOBanner';
 import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
 import { ProgressHeroSection } from '@/components/home/ProgressHeroSection';
 
@@ -178,8 +177,6 @@ const Home: React.FC = () => {
       {/* KY Form Reminder Banner */}
       <KYFormReminderBanner />
 
-      {/* FOMO Banner for 15k paid users */}
-      <FOMOBanner />
 
       {/* What You Can Do Here - Onboarding for new users */}
       <WhatYouCanDoHere />

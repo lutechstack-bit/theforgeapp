@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Sparkles, X, Users, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-
-const PAYMENT_LINK = 'https://razorpay.com/payment-link/your-link-here';
+import { X, Users, Clock } from 'lucide-react';
 
 interface TimeLeft {
   days: number;
@@ -55,9 +52,6 @@ export const FOMOBanner: React.FC = () => {
     sessionStorage.setItem('fomo-banner-dismissed', 'true');
   };
 
-  const handlePayClick = () => {
-    window.open(PAYMENT_LINK, '_blank');
-  };
 
   // Don't show if user has paid balance or banner is dismissed
   if (isBalancePaid || isDismissed) return null;
@@ -89,15 +83,6 @@ export const FOMOBanner: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Button
-            size="sm"
-            onClick={handlePayClick}
-            className="bg-amber-500 hover:bg-amber-600 text-black font-semibold gap-1.5 whitespace-nowrap flex-1 sm:flex-initial"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Pay Balance
-          </Button>
-          
           <button
             onClick={handleDismiss}
             className="p-1.5 rounded-full hover:bg-white/10 text-amber-200/60 hover:text-amber-200 transition-colors shrink-0"
