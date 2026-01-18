@@ -20,6 +20,7 @@ export const SimpleEventCard: React.FC<SimpleEventCardProps> = ({
     <div
       className={cn(
         'relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer',
+        'min-w-[180px] sm:min-w-[200px] md:min-w-[220px]',
         'hover-gold-glow tap-scale transition-transform duration-300',
         'bg-muted',
         className
