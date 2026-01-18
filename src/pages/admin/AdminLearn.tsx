@@ -40,6 +40,7 @@ interface LearnContentForm {
   description: string;
   full_description: string;
   instructor_name: string;
+  instructor_avatar_url: string;
   company_name: string;
   category: string;
   section_type: string;
@@ -66,6 +67,7 @@ const initialForm: LearnContentForm = {
   description: '',
   full_description: '',
   instructor_name: '',
+  instructor_avatar_url: '',
   company_name: '',
   category: 'Session',
   section_type: 'community_sessions',
@@ -256,6 +258,7 @@ const AdminLearn: React.FC = () => {
       description: item.description || '',
       full_description: item.full_description || '',
       instructor_name: item.instructor_name || '',
+      instructor_avatar_url: (item as any).instructor_avatar_url || '',
       company_name: item.company_name || '',
       category: item.category,
       section_type: item.section_type || 'community_sessions',
@@ -446,25 +449,44 @@ const AdminLearn: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="instructor_name">Instructor Name</Label>
-                    <Input
-                      id="instructor_name"
-                      value={form.instructor_name}
-                      onChange={(e) => setForm({ ...form, instructor_name: e.target.value })}
-                      placeholder="John Doe"
-                    />
+                {/* Instructor Details Section */}
+                <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 space-y-4">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2">
+                    <Users className="h-4 w-4 text-primary" />
+                    Instructor Details
+                  </h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="instructor_name">Instructor Name</Label>
+                      <Input
+                        id="instructor_name"
+                        value={form.instructor_name}
+                        onChange={(e) => setForm({ ...form, instructor_name: e.target.value })}
+                        placeholder="John Doe"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="company_name">Company</Label>
+                      <Input
+                        id="company_name"
+                        value={form.company_name}
+                        onChange={(e) => setForm({ ...form, company_name: e.target.value })}
+                        placeholder="Google"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="company_name">Company</Label>
-                    <Input
-                      id="company_name"
-                      value={form.company_name}
-                      onChange={(e) => setForm({ ...form, company_name: e.target.value })}
-                      placeholder="Google"
-                    />
-                  </div>
+
+                  {/* Instructor Profile Photo */}
+                  <FileUpload
+                    bucket="learn-thumbnails"
+                    accept="image/*"
+                    maxSizeMB={5}
+                    label="Instructor Profile Photo"
+                    helperText="Square image recommended (1:1 ratio), min 200x200px"
+                    currentUrl={form.instructor_avatar_url}
+                    onUploadComplete={(url) => setForm(prev => ({ ...prev, instructor_avatar_url: url }))}
+                  />
                 </div>
 
                 <div>

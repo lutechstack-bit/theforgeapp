@@ -181,7 +181,43 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     logAccess();
   }, [user, contentId]);
 
-  // Update watch duration periodically
+  // Save learn progress to learn_watch_progress table (real-time tracking)
+  useEffect(() => {
+    if (!user || !contentId || duration === 0) return;
+
+    const saveProgress = async () => {
+      const progressPercent = currentTime / duration;
+      const isCompleted = progressPercent >= 0.9; // 90% = completed
+
+      try {
+        await supabase
+          .from('learn_watch_progress')
+          .upsert({
+            user_id: user.id,
+            learn_content_id: contentId,
+            progress_seconds: Math.floor(currentTime),
+            total_seconds: Math.floor(duration),
+            completed: isCompleted,
+            last_watched_at: new Date().toISOString(),
+          }, {
+            onConflict: 'user_id,learn_content_id'
+          });
+      } catch (err) {
+        console.error('Failed to save watch progress:', err);
+      }
+    };
+
+    // Save progress every 10 seconds
+    const interval = setInterval(saveProgress, 10000);
+    
+    // Also save when component unmounts or video ends
+    return () => {
+      clearInterval(interval);
+      saveProgress(); // Save final progress on unmount
+    };
+  }, [user, contentId, currentTime, duration]);
+
+  // Update watch duration periodically (for video_access_logs)
   useEffect(() => {
     const interval = setInterval(() => {
       if (accessLogIdRef.current && watchTimeRef.current > 0) {

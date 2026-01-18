@@ -978,6 +978,7 @@ export type Database = {
           duration_minutes: number | null
           full_description: string | null
           id: string
+          instructor_avatar_url: string | null
           instructor_name: string | null
           is_premium: boolean
           order_index: number
@@ -1000,6 +1001,7 @@ export type Database = {
           duration_minutes?: number | null
           full_description?: string | null
           id?: string
+          instructor_avatar_url?: string | null
           instructor_name?: string | null
           is_premium?: boolean
           order_index?: number
@@ -1022,6 +1024,7 @@ export type Database = {
           duration_minutes?: number | null
           full_description?: string | null
           id?: string
+          instructor_avatar_url?: string | null
           instructor_name?: string | null
           is_premium?: boolean
           order_index?: number

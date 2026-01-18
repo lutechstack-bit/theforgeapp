@@ -4,6 +4,7 @@ import { SecureVideoPlayer } from './SecureVideoPlayer';
 import { Download, FileText, ExternalLink } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface VideoResource {
   id: string;
@@ -20,6 +21,7 @@ interface VideoContent {
   video_url: string;
   thumbnail_url?: string;
   instructor_name?: string;
+  instructor_avatar_url?: string;
   company_name?: string;
   full_description?: string;
   duration_minutes?: number;
@@ -84,14 +86,15 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-border bg-card/50">
             <ScrollArea className="h-full max-h-[40vh] lg:max-h-[70vh]">
               <div className="p-4 space-y-6">
-                {/* Instructor Info */}
+                {/* Instructor Info with Avatar */}
                 {(content.instructor_name || content.company_name) && (
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                      <span className="text-primary font-semibold text-sm">
+                    <Avatar className="h-10 w-10 border border-primary/20">
+                      <AvatarImage src={content.instructor_avatar_url} alt={content.instructor_name} />
+                      <AvatarFallback className="bg-primary/20 text-primary font-semibold text-sm">
                         {content.instructor_name?.charAt(0) || 'I'}
-                      </span>
-                    </div>
+                      </AvatarFallback>
+                    </Avatar>
                     <div>
                       <p className="font-medium text-foreground text-sm">
                         {content.instructor_name || 'Instructor'}
@@ -105,8 +108,8 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
                   </div>
                 )}
 
-                {/* Duration */}
-                {content.duration_minutes && (
+                {/* Duration - Only show if > 0 */}
+                {content.duration_minutes && content.duration_minutes > 0 && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <span className="px-2 py-0.5 rounded-full bg-secondary text-xs">
                       {content.duration_minutes} min
