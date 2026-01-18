@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Mentor } from '@/data/mentorsData';
 
@@ -14,6 +14,17 @@ export const FlipMentorCard: React.FC<FlipMentorCardProps> = ({
   className,
 }) => {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
+
+  const handleCardClick = () => {
+    if (isTouchDevice) {
+      setIsFlipped(prev => !prev);
+    }
+  };
 
   const handleViewMore = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -31,8 +42,9 @@ export const FlipMentorCard: React.FC<FlipMentorCardProps> = ({
         scrollSnapAlign: 'start',
         perspective: '1000px',
       }}
-      onMouseEnter={() => setIsFlipped(true)}
-      onMouseLeave={() => setIsFlipped(false)}
+      onClick={handleCardClick}
+      onMouseEnter={() => !isTouchDevice && setIsFlipped(true)}
+      onMouseLeave={() => !isTouchDevice && setIsFlipped(false)}
     >
       <div
         className={cn(
