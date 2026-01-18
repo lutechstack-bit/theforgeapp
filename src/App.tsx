@@ -22,6 +22,7 @@ import KYWForm from "./pages/KYWForm";
 import Home from "./pages/Home";
 import Community from "./pages/Community";
 import Learn from "./pages/Learn";
+import AllCourses from "./pages/AllCourses";
 import CourseDetail from "./pages/CourseDetail";
 import Events from "./pages/Events";
 import RoadmapLayout from "./components/roadmap/RoadmapLayout";
@@ -217,6 +218,7 @@ const AppRoutes = () => {
         <Route path="/" element={<Home />} />
         <Route path="/community" element={<Community />} />
         <Route path="/learn" element={<Learn />} />
+        <Route path="/learn/all" element={<AllCourses />} />
         <Route path="/learn/:id" element={<CourseDetail />} />
         <Route path="/events" element={<Events />} />
         <Route path="/events/:id" element={<EventDetail />} />
