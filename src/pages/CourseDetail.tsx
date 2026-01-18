@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { VideoPlayerModal } from '@/components/learn/VideoPlayerModal';
 import { UnlockModal } from '@/components/shared/UnlockModal';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Progress } from '@/components/ui/progress';
 import { 
   ArrowLeft, 
   Play, 
@@ -16,7 +18,8 @@ import {
   Download,
   BookOpen,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  CheckCircle2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -29,6 +32,7 @@ interface LearnContent {
   video_url?: string;
   video_source_type?: 'upload' | 'embed';
   instructor_name?: string;
+  instructor_avatar_url?: string;
   company_name?: string;
   is_premium: boolean;
   duration_minutes?: number;
@@ -48,10 +52,21 @@ interface LearnResource {
   is_premium: boolean;
 }
 
+interface WatchProgress {
+  id: string;
+  user_id: string;
+  learn_content_id: string;
+  progress_seconds: number;
+  total_seconds: number | null;
+  completed: boolean;
+  last_watched_at: string;
+}
+
 const CourseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isFullAccess } = useAuth();
+  const queryClient = useQueryClient();
+  const { isFullAccess, user } = useAuth();
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
 
@@ -89,6 +104,63 @@ const CourseDetail: React.FC = () => {
     enabled: !!id,
   });
 
+  // Fetch watch progress for the current user
+  const { data: watchProgress, refetch: refetchProgress } = useQuery({
+    queryKey: ['learn_watch_progress', id, user?.id],
+    queryFn: async () => {
+      if (!id || !user?.id) return null;
+      const { data, error } = await supabase
+        .from('learn_watch_progress')
+        .select('*')
+        .eq('learn_content_id', id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data as WatchProgress | null;
+    },
+    enabled: !!id && !!user?.id,
+  });
+
+  // Subscribe to realtime progress updates
+  useEffect(() => {
+    if (!id || !user?.id) return;
+
+    const channel = supabase
+      .channel(`watch-progress-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'learn_watch_progress',
+          filter: `learn_content_id=eq.${id}`,
+        },
+        (payload) => {
+          if ((payload.new as any)?.user_id === user.id) {
+            refetchProgress();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, user?.id, refetchProgress]);
+
+  // Refetch progress when video player closes
+  useEffect(() => {
+    if (!showVideoPlayer) {
+      refetchProgress();
+    }
+  }, [showVideoPlayer, refetchProgress]);
+
+  // Calculate progress percentage
+  const progressPercent = watchProgress?.total_seconds 
+    ? Math.min(100, Math.round((watchProgress.progress_seconds / watchProgress.total_seconds) * 100))
+    : 0;
+  const isCompleted = watchProgress?.completed || false;
   const handlePlayVideo = () => {
     if (!course) return;
     
@@ -190,24 +262,61 @@ const CourseDetail: React.FC = () => {
                   </div>
                 )}
                 
-                {/* Play Button - Centered */}
+                {/* Progress Ring + Play Button - Centered */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Button 
-                    onClick={handlePlayVideo}
-                    className="rounded-full bg-white/95 text-gray-900 hover:bg-white shadow-2xl gap-2 px-4 py-2.5 text-sm font-semibold transition-all hover:scale-105"
-                  >
-                    <div className="w-7 h-7 rounded-full bg-gray-900 flex items-center justify-center">
-                      <Play className="h-3.5 w-3.5 text-white ml-0.5" fill="white" />
-                    </div>
-                    Play
-                  </Button>
+                  <div className="relative">
+                    {/* Circular Progress Ring */}
+                    {progressPercent > 0 && (
+                      <svg className="absolute -inset-2 w-[calc(100%+16px)] h-[calc(100%+16px)] -rotate-90">
+                        <circle
+                          cx="50%"
+                          cy="50%"
+                          r="calc(50% - 2px)"
+                          fill="none"
+                          stroke="hsl(var(--primary) / 0.2)"
+                          strokeWidth="3"
+                        />
+                        <circle
+                          cx="50%"
+                          cy="50%"
+                          r="calc(50% - 2px)"
+                          fill="none"
+                          stroke="hsl(var(--primary))"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeDasharray={`${progressPercent * 2.51} 251`}
+                        />
+                      </svg>
+                    )}
+                    <Button 
+                      onClick={handlePlayVideo}
+                      className="relative rounded-full bg-white/95 text-gray-900 hover:bg-white shadow-2xl gap-2 px-4 py-2.5 text-sm font-semibold transition-all hover:scale-105"
+                    >
+                      <div className="w-7 h-7 rounded-full bg-gray-900 flex items-center justify-center">
+                        {isCompleted ? (
+                          <CheckCircle2 className="h-4 w-4 text-primary" />
+                        ) : (
+                          <Play className="h-3.5 w-3.5 text-white ml-0.5" fill="white" />
+                        )}
+                      </div>
+                      {isCompleted ? 'Rewatch' : progressPercent > 0 ? 'Continue' : 'Play'}
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Duration badge at bottom */}
-                {course.duration_minutes && (
+                {course.duration_minutes && course.duration_minutes > 0 && (
                   <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-md bg-black/60 backdrop-blur-sm">
                     <Clock className="h-3 w-3 text-white/80" />
                     <span className="text-xs font-medium text-white">{course.duration_minutes}m</span>
+                  </div>
+                )}
+
+                {/* Completion badge */}
+                {isCompleted && (
+                  <div className="absolute bottom-3 left-3 flex items-center gap-1 px-2 py-1 rounded-md bg-primary/90 backdrop-blur-sm">
+                    <CheckCircle2 className="h-3 w-3 text-primary-foreground" />
+                    <span className="text-xs font-semibold text-primary-foreground">Completed</span>
                   </div>
                 )}
               </div>
@@ -233,12 +342,15 @@ const CourseDetail: React.FC = () => {
                 </p>
               )}
 
-              {/* Instructor */}
+              {/* Instructor with Avatar */}
               {course.instructor_name && (
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/30 to-accent/20 flex items-center justify-center ring-1 ring-primary/20">
-                    <User className="h-4 w-4 text-primary" />
-                  </div>
+                <div className="flex items-center gap-2.5 mb-4">
+                  <Avatar className="h-9 w-9 ring-2 ring-primary/20">
+                    <AvatarImage src={course.instructor_avatar_url} alt={course.instructor_name} />
+                    <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/20 text-primary font-semibold text-sm">
+                      {course.instructor_name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
                   <div>
                     <span className="text-sm font-medium text-foreground">{course.instructor_name}</span>
                     {course.company_name && (
@@ -257,17 +369,41 @@ const CourseDetail: React.FC = () => {
                 <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
               </Button>
 
+              {/* Progress Bar (if started) */}
+              {progressPercent > 0 && (
+                <div className="mb-3">
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="text-muted-foreground">Your Progress</span>
+                    <span className="font-semibold text-primary">{progressPercent}%</span>
+                  </div>
+                  <Progress value={progressPercent} className="h-1.5" />
+                </div>
+              )}
+
               {/* Stats Row */}
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 text-primary" />
-                  <span>{course.duration_minutes || '30'} min</span>
-                </div>
-                <span className="text-border">•</span>
+                {course.duration_minutes && course.duration_minutes > 0 && (
+                  <>
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5 text-primary" />
+                      <span>{course.duration_minutes} min</span>
+                    </div>
+                    <span className="text-border">•</span>
+                  </>
+                )}
                 <div className="flex items-center gap-1.5">
                   <BookOpen className="h-3.5 w-3.5 text-primary" />
                   <span>Self-Paced</span>
                 </div>
+                {isCompleted && (
+                  <>
+                    <span className="text-border">•</span>
+                    <div className="flex items-center gap-1 text-primary font-medium">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      <span>Completed</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
             
@@ -376,6 +512,7 @@ const CourseDetail: React.FC = () => {
           video_source_type: course.video_source_type,
           thumbnail_url: course.thumbnail_url,
           instructor_name: course.instructor_name,
+          instructor_avatar_url: course.instructor_avatar_url,
           company_name: course.company_name,
           full_description: course.full_description,
           duration_minutes: course.duration_minutes,
