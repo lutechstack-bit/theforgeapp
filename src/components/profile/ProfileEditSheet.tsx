@@ -14,6 +14,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Camera, Loader2, User } from 'lucide-react';
+import { ImageCropperModal } from './ImageCropperModal';
+import { readFileAsDataURL } from '@/lib/cropImage';
 
 interface ProfileEditSheetProps {
   open: boolean;
@@ -34,6 +36,11 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '');
+  
+  // Cropper state
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string>('');
+  
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
     bio: profile?.bio || '',
@@ -61,7 +68,7 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
     }
   }, [profile]);
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user?.id) return;
 
@@ -75,22 +82,45 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    // Validate file size (max 10MB for cropping, will be compressed after)
+    if (file.size > 10 * 1024 * 1024) {
       toast({
         title: 'File Too Large',
-        description: 'Please select an image under 5MB.',
+        description: 'Please select an image under 10MB.',
         variant: 'destructive',
       });
       return;
     }
 
+    try {
+      // Convert file to base64 for cropper
+      const dataUrl = await readFileAsDataURL(file);
+      setImageToCrop(dataUrl);
+      setCropperOpen(true);
+    } catch (error) {
+      console.error('Error reading file:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to read image file.',
+        variant: 'destructive',
+      });
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    if (!user?.id) return;
+
     setUploadingAvatar(true);
 
     try {
-      // Get file extension
-      const ext = file.name.split('.').pop() || 'jpg';
-      const filePath = `${user.id}/avatar.${ext}`;
+      // Create file from blob
+      const file = new File([croppedBlob], 'avatar.webp', { type: 'image/webp' });
+      const filePath = `${user.id}/avatar.webp`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
@@ -161,179 +191,191 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Edit Profile</SheetTitle>
-        </SheetHeader>
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent className="overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Edit Profile</SheetTitle>
+          </SheetHeader>
 
-        <div className="space-y-6 py-6">
-          {/* Avatar Upload Section */}
-          <div className="flex flex-col items-center gap-4">
-            <div className="relative group">
-              <Avatar className="h-24 w-24 border-2 border-primary/30">
-                <AvatarImage src={avatarUrl} alt={formData.full_name} />
-                <AvatarFallback className="bg-secondary text-muted-foreground">
-                  <User className="h-10 w-10" />
-                </AvatarFallback>
-              </Avatar>
+          <div className="space-y-6 py-6">
+            {/* Avatar Upload Section */}
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative group">
+                <Avatar className="h-24 w-24 border-2 border-primary/30">
+                  <AvatarImage src={avatarUrl} alt={formData.full_name} />
+                  <AvatarFallback className="bg-secondary text-muted-foreground">
+                    <User className="h-10 w-10" />
+                  </AvatarFallback>
+                </Avatar>
+                
+                {/* Camera overlay */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {uploadingAvatar ? (
+                    <Loader2 className="h-6 w-6 text-white animate-spin" />
+                  ) : (
+                    <Camera className="h-6 w-6 text-white" />
+                  )}
+                </button>
+              </div>
               
-              {/* Camera overlay */}
-              <button
-                type="button"
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingAvatar}
-                className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer disabled:cursor-not-allowed"
+                className="text-xs"
               >
                 {uploadingAvatar ? (
-                  <Loader2 className="h-6 w-6 text-white animate-spin" />
+                  <>
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    Uploading...
+                  </>
                 ) : (
-                  <Camera className="h-6 w-6 text-white" />
+                  <>
+                    <Camera className="h-3 w-3 mr-1" />
+                    Change Photo
+                  </>
                 )}
-              </button>
-            </div>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadingAvatar}
-              className="text-xs"
-            >
-              {uploadingAvatar ? (
-                <>
-                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Camera className="h-3 w-3 mr-1" />
-                  Change Photo
-                </>
-              )}
-            </Button>
+              </Button>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarChange}
-              className="hidden"
-            />
-          </div>
-
-          {/* Basic Info */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-              Basic Info
-            </h3>
-            
-            <div className="space-y-2">
-              <Label htmlFor="full_name">Full Name</Label>
-              <Input
-                id="full_name"
-                value={formData.full_name}
-                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="tagline">Tagline</Label>
-              <Input
-                id="tagline"
-                value={formData.tagline}
-                onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
-                placeholder="Your creative one-liner..."
-              />
+            {/* Basic Info */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                Basic Info
+              </h3>
+              
+              <div className="space-y-2">
+                <Label htmlFor="full_name">Full Name</Label>
+                <Input
+                  id="full_name"
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tagline">Tagline</Label>
+                <Input
+                  id="tagline"
+                  value={formData.tagline}
+                  onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+                  placeholder="Your creative one-liner..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="specialty">Role / Specialty</Label>
+                <Input
+                  id="specialty"
+                  value={formData.specialty}
+                  onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
+                  placeholder="e.g., Filmmaker, Writer, Director"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea
+                  id="bio"
+                  value={formData.bio}
+                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                  placeholder="Tell the community about your creative journey..."
+                  className="min-h-[120px] resize-none"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="specialty">Role / Specialty</Label>
-              <Input
-                id="specialty"
-                value={formData.specialty}
-                onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
-                placeholder="e.g., Filmmaker, Writer, Director"
-              />
+            {/* Contact Info */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                Contact Info
+              </h3>
+              
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="+91 12345 67890"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="instagram">Instagram Handle</Label>
+                <Input
+                  id="instagram"
+                  value={formData.instagram_handle}
+                  onChange={(e) => setFormData({ ...formData, instagram_handle: e.target.value })}
+                  placeholder="@handle"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="twitter">Twitter Handle</Label>
+                <Input
+                  id="twitter"
+                  value={formData.twitter_handle}
+                  onChange={(e) => setFormData({ ...formData, twitter_handle: e.target.value })}
+                  placeholder="@handle"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
-              <Input
-                id="city"
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                value={formData.bio}
-                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                placeholder="Tell the community about your creative journey..."
-                className="min-h-[120px] resize-none"
-              />
-            </div>
-          </div>
-
-          {/* Contact Info */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-              Contact Info
-            </h3>
-            
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="+91 12345 67890"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="instagram">Instagram Handle</Label>
-              <Input
-                id="instagram"
-                value={formData.instagram_handle}
-                onChange={(e) => setFormData({ ...formData, instagram_handle: e.target.value })}
-                placeholder="@handle"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="twitter">Twitter Handle</Label>
-              <Input
-                id="twitter"
-                value={formData.twitter_handle}
-                onChange={(e) => setFormData({ ...formData, twitter_handle: e.target.value })}
-                placeholder="@handle"
-              />
+            {/* Actions */}
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
             </div>
           </div>
+        </SheetContent>
+      </Sheet>
 
-          {/* Actions */}
-          <div className="flex gap-3 pt-4">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              className="flex-1"
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
+      {/* Image Cropper Modal */}
+      <ImageCropperModal
+        open={cropperOpen}
+        onOpenChange={setCropperOpen}
+        imageSrc={imageToCrop}
+        onCropComplete={handleCropComplete}
+        aspectRatio={1}
+        cropShape="round"
+      />
+    </>
   );
 };
