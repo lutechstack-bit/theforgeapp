@@ -1460,6 +1460,7 @@ export type Database = {
       prep_checklist_items: {
         Row: {
           category: string
+          cohort_type: string
           created_at: string
           description: string | null
           due_days_before: number | null
@@ -1471,6 +1472,7 @@ export type Database = {
         }
         Insert: {
           category: string
+          cohort_type?: string
           created_at?: string
           description?: string | null
           due_days_before?: number | null
@@ -1482,6 +1484,7 @@ export type Database = {
         }
         Update: {
           category?: string
+          cohort_type?: string
           created_at?: string
           description?: string | null
           due_days_before?: number | null
