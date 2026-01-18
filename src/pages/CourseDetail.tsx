@@ -382,7 +382,7 @@ const CourseDetail: React.FC = () => {
 
               {/* Stats Row */}
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                {course.duration_minutes && course.duration_minutes > 0 && (
+                {course.duration_minutes > 0 && (
                   <>
                     <div className="flex items-center gap-1.5">
                       <Clock className="h-3.5 w-3.5 text-primary" />
