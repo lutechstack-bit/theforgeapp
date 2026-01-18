@@ -79,17 +79,19 @@ export const useRoadmapData = () => {
     }
   });
 
-  // Fetch prep checklist items
+  // Fetch prep checklist items filtered by cohort type
   const { data: prepItems } = useQuery({
-    queryKey: ['prep-checklist-items', profile?.edition_id],
+    queryKey: ['prep-checklist-items', userCohortType],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('prep_checklist_items')
         .select('*')
+        .eq('cohort_type', userCohortType)
         .order('order_index');
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!userCohortType
   });
 
   // Fetch user's prep progress

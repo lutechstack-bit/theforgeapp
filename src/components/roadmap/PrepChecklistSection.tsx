@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   CheckCircle2, Circle, FileText, Wrench, Brain, Package,
-  Clock, AlertCircle
+  Clock, AlertCircle, BookOpen, Video
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -27,6 +27,16 @@ const categoryConfig: Record<string, { label: string; icon: React.ReactNode; col
   script_prep: { 
     label: 'Script Preparation', 
     icon: <FileText className="w-5 h-5" />,
+    color: 'text-primary'
+  },
+  writing_prep: { 
+    label: 'Writing Preparation', 
+    icon: <BookOpen className="w-5 h-5" />,
+    color: 'text-primary'
+  },
+  content_prep: { 
+    label: 'Content Preparation', 
+    icon: <Video className="w-5 h-5" />,
     color: 'text-primary'
   },
   technical: { 
