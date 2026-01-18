@@ -120,7 +120,7 @@ const Learn: React.FC = () => {
     }))
     .sort((a, b) => b.progress_percent - a.progress_percent);
 
-  const renderCourseCarousel = (items: LearnContent[], title: string, subtitle?: string) => {
+  const renderCourseCarousel = (items: LearnContent[], title: string, subtitle?: string, sectionType?: string) => {
     if (items.length === 0) return null;
 
     return (
@@ -133,7 +133,10 @@ const Learn: React.FC = () => {
             )}
           </div>
           {items.length > 3 && (
-            <button className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors">
+            <button 
+              onClick={() => navigate(`/learn/all${sectionType ? `?section=${sectionType}` : ''}`)}
+              className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors"
+            >
               View All <ChevronRight className="h-4 w-4" />
             </button>
           )}
@@ -223,14 +226,16 @@ const Learn: React.FC = () => {
             {renderCourseCarousel(
               forgeOnlineSessions,
               'Pre Forge Sessions',
-              'Exclusive sessions to prepare you for the Forge'
+              'Exclusive sessions to prepare you for the Forge',
+              'bfp_sessions'
             )}
 
             {/* Community Sessions */}
             {renderCourseCarousel(
               communitySessions,
               'Community Sessions',
-              'Workshops and masterclasses from industry leaders'
+              'Workshops and masterclasses from industry leaders',
+              'community_sessions'
             )}
           </div>
         )}
