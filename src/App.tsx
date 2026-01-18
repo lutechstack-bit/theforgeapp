@@ -42,7 +42,7 @@ import AdminAutoUpdates from "./pages/admin/AdminAutoUpdates";
 import AdminRoadmap from "./pages/admin/AdminRoadmap";
 import AdminRoadmapSidebar from "./pages/admin/AdminRoadmapSidebar";
 import AdminKYForms from "./pages/admin/AdminKYForms";
-import AdminPastPrograms from "./pages/admin/AdminPastPrograms";
+
 import AdminCommunityHighlights from "./pages/admin/AdminCommunityHighlights";
 import AdminNightlyRituals from "./pages/admin/AdminNightlyRituals";
 import AdminEquipment from "./pages/admin/AdminEquipment";
@@ -239,7 +239,6 @@ const AppRoutes = () => {
         <Route path="users" element={<AdminUsers />} />
         <Route path="editions" element={<AdminEditions />} />
         <Route path="events" element={<AdminEvents />} />
-        <Route path="past-programs" element={<AdminPastPrograms />} />
         <Route path="learn" element={<AdminLearn />} />
         <Route path="auto-updates" element={<AdminAutoUpdates />} />
         <Route path="roadmap" element={<AdminRoadmap />} />

@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CleanEventCard } from '@/components/shared/CleanEventCard';
 import { EventRegistrationModal } from '@/components/events/EventRegistrationModal';
-import { PastProgramCard } from '@/components/events/PastProgramCard';
 import { Search, Calendar } from 'lucide-react';
 import { isPast } from 'date-fns';
 import { useEventRegistration } from '@/hooks/useEventRegistration';
@@ -19,8 +18,8 @@ const Events: React.FC = () => {
 
   const { userRegistrations } = useEventRegistration();
 
-  // Fetch events
-  const { data: events = [], isLoading: eventsLoading } = useQuery({
+  // Fetch events (single source of truth)
+  const { data: events = [], isLoading } = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -39,21 +38,7 @@ const Events: React.FC = () => {
     },
   });
 
-  // Fetch past programs (community events)
-  const { data: pastPrograms = [], isLoading: pastProgramsLoading } = useQuery({
-    queryKey: ['past-programs-events'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('past_programs')
-        .select('*')
-        .eq('is_active', true)
-        .order('completion_date', { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Filter and sort events
+  // Filter events by search
   const filteredEvents = events.filter((event) => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -66,20 +51,7 @@ const Events: React.FC = () => {
     return true;
   });
 
-  // Filter past programs by search
-  const filteredPastPrograms = pastPrograms.filter((program) => {
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      return (
-        program.name.toLowerCase().includes(query) ||
-        program.description?.toLowerCase().includes(query) ||
-        program.program_type?.toLowerCase().includes(query)
-      );
-    }
-    return true;
-  });
-
-  // Separate upcoming and past, then combine with upcoming first
+  // Separate upcoming and past events
   const upcomingEvents = filteredEvents
     .filter(e => !isPast(new Date(e.event_date)))
     .sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
@@ -94,20 +66,7 @@ const Events: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handlePastProgramClick = (program: typeof pastPrograms[0]) => {
-    if (program.learn_content_id) {
-      // Navigate to the learn content detail page
-      navigate(`/learn/${program.learn_content_id}`);
-    } else if (program.recording_url) {
-      // Open recording URL in new tab
-      window.open(program.recording_url, '_blank');
-    }
-  };
-
-  const isLoading = eventsLoading || pastProgramsLoading;
-  const hasNoResults = !isLoading && 
-    filteredEvents.length === 0 && 
-    filteredPastPrograms.length === 0;
+  const hasNoResults = !isLoading && filteredEvents.length === 0;
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -184,7 +143,7 @@ const Events: React.FC = () => {
               </section>
             )}
 
-            {/* Past Events (from events table) */}
+            {/* Past Events */}
             {pastEvents.length > 0 && (
               <section>
                 <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
@@ -203,32 +162,6 @@ const Events: React.FC = () => {
                       eventType={event.event_types?.name}
                       isPastEvent={true}
                       onClick={() => navigate(`/events/${event.id}`)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Past Community Sessions (from past_programs table) */}
-            {filteredPastPrograms.length > 0 && (
-              <section>
-                <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
-                  Past Community Sessions
-                </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {filteredPastPrograms.map((program) => (
-                    <PastProgramCard
-                      key={program.id}
-                      id={program.id}
-                      name={program.name}
-                      programType={program.program_type}
-                      completionDate={new Date(program.completion_date)}
-                      imageUrl={program.image_url || undefined}
-                      description={program.description || undefined}
-                      hasRecording={!!(program.learn_content_id || program.recording_url)}
-                      learnContentId={program.learn_content_id || undefined}
-                      onClick={() => handlePastProgramClick(program)}
-                      className="w-full"
                     />
                   ))}
                 </div>
