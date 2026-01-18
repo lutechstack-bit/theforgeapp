@@ -305,7 +305,7 @@ const CourseDetail: React.FC = () => {
                 </div>
 
                 {/* Duration badge at bottom */}
-                {course.duration_minutes && course.duration_minutes > 0 && (
+                {(course.duration_minutes ?? 0) > 0 && (
                   <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-md bg-black/60 backdrop-blur-sm">
                     <Clock className="h-3 w-3 text-white/80" />
                     <span className="text-xs font-medium text-white">{course.duration_minutes}m</span>

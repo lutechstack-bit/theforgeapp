@@ -69,7 +69,7 @@ const StudentFilmCard: React.FC<StudentFilmCardProps> = ({ film }) => {
         )}
 
         {/* Duration */}
-        {film.duration_minutes && (
+        {(film.duration_minutes ?? 0) > 0 && (
           <div className="absolute bottom-3 right-3">
             <span className="text-xs text-white bg-black/60 px-2 py-1 rounded flex items-center gap-1">
               <Clock className="w-3 h-3" />
