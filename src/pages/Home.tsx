@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentCarousel } from '@/components/shared/ContentCarousel';
-import { EventCard } from '@/components/shared/EventCard';
+import { SimpleEventCard } from '@/components/shared/SimpleEventCard';
 import { TestimonialVideoCard } from '@/components/shared/TestimonialVideoCard';
 import { FlipMentorCard } from '@/components/shared/FlipMentorCard';
 import { MentorDetailModal } from '@/components/shared/MentorDetailModal';
@@ -16,7 +16,6 @@ import { ProgressHeroSection } from '@/components/home/ProgressHeroSection';
 import { WhatYouCanDoHere } from '@/components/home/WhatYouCanDoHere';
 import { ArrowRight, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
 import { Mentor } from '@/data/mentorsData';
 
 const Home: React.FC = () => {
@@ -215,17 +214,15 @@ const Home: React.FC = () => {
         </ContentCarousel>
       )}
 
-      {/* Events Section - Dynamic title based on content */}
+      {/* Events Section - Image-only cards */}
       {displayEvents.length > 0 && (
         <ContentCarousel title={isPastEvents ? "Past Events" : "Featured Events"} onSeeAll={() => navigate('/events')}>
           {displayEvents.map((event: any) => (
-            <EventCard
+            <SimpleEventCard
               key={event.id}
+              id={event.id}
               title={event.title}
-              date={format(new Date(event.event_date), 'EEE, MMM d')}
-              location={event.location || undefined}
               imageUrl={event.image_url || undefined}
-              isVirtual={event.is_virtual}
               onClick={() => navigate('/events')}
             />
           ))}

@@ -29,7 +29,6 @@ const adminNavItems = [
   { to: '/admin/equipment', icon: Package, label: 'Equipment' },
   { to: '/admin/nightly-rituals', icon: Moon, label: 'Nightly Rituals' },
   { to: '/admin/events', icon: Calendar, label: 'Events' },
-  { to: '/admin/past-programs', icon: Calendar, label: 'Past Programs' },
   { to: '/admin/learn', icon: FileText, label: 'Learn' },
   { to: '/admin/mentors', icon: UserCircle, label: 'Mentors' },
   { to: '/admin/alumni-testimonials', icon: Video, label: 'Alumni Testimonials' },
