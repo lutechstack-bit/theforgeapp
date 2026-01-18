@@ -77,6 +77,11 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
   const accessLogIdRef = useRef<string | null>(null);
   const watchTimeRef = useRef<number>(0);
+  
+  // Refs for stable progress saving (prevents interval from resetting)
+  const currentTimeRef = useRef<number>(0);
+  const durationRef = useRef<number>(0);
+  const isPlayingRef = useRef<boolean>(false);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -181,19 +186,35 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     logAccess();
   }, [user, contentId]);
 
-  // Save learn progress to learn_watch_progress table (real-time tracking)
+  // Keep refs in sync with state for stable interval access
+  useEffect(() => {
+    currentTimeRef.current = currentTime;
+  }, [currentTime]);
+
+  useEffect(() => {
+    durationRef.current = duration;
+  }, [duration]);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  // Save learn progress to learn_watch_progress table (stable interval)
   useEffect(() => {
     if (!user || !contentId) return;
-    
-    // Don't save if we have no meaningful progress
-    if (currentTime === 0 && duration === 0) return;
 
     const saveProgress = async () => {
-      // Use duration if available, otherwise estimate based on current time
-      const effectiveDuration = duration > 0 ? duration : currentTime * 1.1;
+      const time = currentTimeRef.current;
+      const dur = durationRef.current;
+      
+      // Don't save if no meaningful progress
+      if (time === 0) return;
+      
+      // Use duration if available, otherwise estimate
+      const effectiveDuration = dur > 0 ? dur : time * 1.1;
       if (effectiveDuration === 0) return;
       
-      const progressPercent = currentTime / effectiveDuration;
+      const progressPercent = time / effectiveDuration;
       const isCompleted = progressPercent >= 0.9; // 90% = completed
 
       try {
@@ -202,27 +223,28 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
           .upsert({
             user_id: user.id,
             learn_content_id: contentId,
-            progress_seconds: Math.floor(currentTime),
+            progress_seconds: Math.floor(time),
             total_seconds: Math.floor(effectiveDuration),
             completed: isCompleted,
             last_watched_at: new Date().toISOString(),
           }, {
             onConflict: 'user_id,learn_content_id'
           });
+        console.log('[SecureVideoPlayer] Progress saved:', { time, effectiveDuration, isCompleted });
       } catch (err) {
         console.error('Failed to save watch progress:', err);
       }
     };
 
-    // Save progress every 10 seconds
+    // Save progress every 10 seconds (stable - doesn't reset)
     const interval = setInterval(saveProgress, 10000);
     
-    // Also save when component unmounts or video ends
+    // Save on unmount
     return () => {
       clearInterval(interval);
-      saveProgress(); // Save final progress on unmount
+      saveProgress();
     };
-  }, [user, contentId, currentTime, duration]);
+  }, [user?.id, contentId]); // Only depend on stable values
 
   // Update watch duration periodically (for video_access_logs)
   useEffect(() => {

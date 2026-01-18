@@ -85,7 +85,7 @@ export const PremiumVideoCard: React.FC<PremiumVideoCardProps> = ({
         </div>
 
         {/* Duration Badge */}
-        {durationMinutes && (
+        {(durationMinutes ?? 0) > 0 && (
           <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-sm text-white text-xs font-medium flex items-center gap-1.5">
             <Clock className="h-3 w-3" />
             {formatDuration(durationMinutes)}
