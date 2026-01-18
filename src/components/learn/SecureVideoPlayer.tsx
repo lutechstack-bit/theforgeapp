@@ -183,10 +183,17 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
 
   // Save learn progress to learn_watch_progress table (real-time tracking)
   useEffect(() => {
-    if (!user || !contentId || duration === 0) return;
+    if (!user || !contentId) return;
+    
+    // Don't save if we have no meaningful progress
+    if (currentTime === 0 && duration === 0) return;
 
     const saveProgress = async () => {
-      const progressPercent = currentTime / duration;
+      // Use duration if available, otherwise estimate based on current time
+      const effectiveDuration = duration > 0 ? duration : currentTime * 1.1;
+      if (effectiveDuration === 0) return;
+      
+      const progressPercent = currentTime / effectiveDuration;
       const isCompleted = progressPercent >= 0.9; // 90% = completed
 
       try {
@@ -196,7 +203,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
             user_id: user.id,
             learn_content_id: contentId,
             progress_seconds: Math.floor(currentTime),
-            total_seconds: Math.floor(duration),
+            total_seconds: Math.floor(effectiveDuration),
             completed: isCompleted,
             last_watched_at: new Date().toISOString(),
           }, {
