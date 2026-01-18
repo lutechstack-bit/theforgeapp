@@ -83,7 +83,7 @@ const Profile: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-3 sm:px-4 md:px-6 space-y-4 sm:space-y-5 pb-6 pt-2 sm:pt-0">
+    <div className="max-w-3xl mx-auto px-3 sm:px-4 md:px-6 space-y-4 sm:space-y-5 pb-24 md:pb-6 pt-2 sm:pt-0">
       {/* Profile Hero */}
       <ProfileHero
         profile={profile}
