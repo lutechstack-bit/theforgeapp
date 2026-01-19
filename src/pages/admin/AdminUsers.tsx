@@ -178,6 +178,36 @@ const WRITING_E5_STUDENTS = [
 
 const WRITING_E5_ID = "cf2b9fd2-a3da-4d0b-8370-da0937f9d786";
 
+// Writing Edition 4 Goa Students
+const WRITING_E4_STUDENTS = [
+  { full_name: "Tanvi Vedak", email: "tanvi.vedak45@gmail.com", phone: "9022131111" },
+  { full_name: "Rohan Panwala", email: "rohanpanwala@yahoo.co.in", phone: "9824386807" },
+  { full_name: "Manaswini Jois", email: "manaswinijois@gmail.com", phone: "919916081944" },
+  { full_name: "Pranay Dhongade", email: "pranayd786@gmail.com", phone: "9004008494" },
+  { full_name: "Rakesh Kapoor", email: "itsrakeshkapoor1704@gmail.com", phone: "919581023378" },
+  { full_name: "Anantha Eashwar V M", email: "eashwaranand@yahoo.in", phone: "9094040366" },
+  { full_name: "Ansath Thendral", email: "Ansathcivil786@gmail.com", phone: "919942452906" },
+  { full_name: "Neeraj Kumari", email: "neerajrani124@gmail.com", phone: "8287323516" },
+  { full_name: "Chandrama Majumdar", email: "chandrama031@gmail.com", phone: "919820467569" },
+  { full_name: "Gunjan Katyal", email: "theblissfromwithin@gmail.com", phone: "919911273555" },
+  { full_name: "Sudhansu Ranjan", email: "Ranjansudhansu844@gmail.com", phone: "917004630336" },
+  { full_name: "Aditya", email: "aditya.vundamati@gmail.com", phone: "7032821128" },
+  { full_name: "Abdul Muqeet najar", email: "Foodpedegry761@gmail.com", phone: "6005398531" },
+  { full_name: "Anurag Challapalli", email: "anuragchallapalli@gmail.com", phone: "919700123092" },
+  { full_name: "Abhinav Bainslay", email: "ads1734@gmail.com", phone: "919999804907" },
+  { full_name: "Nelabhra Borah", email: "neelcreates@gmail.com", phone: "8131982954" },
+  { full_name: "Pratik", email: "pratiksanghar44@gmail.com", phone: "9725983249" },
+  { full_name: "Aarya Jadhav", email: "aarya.ete@gmail.com", phone: "9321013185" },
+  { full_name: "Rachit Sharma", email: "rs220195@gmail.com", phone: "8810598242" },
+  { full_name: "Sri Narayan Prakash", email: "srinarayanprakash@gmail.com", phone: "919844462378" },
+  { full_name: "Khushboo Hanjura", email: "khushboo.hanjura@gmail.com", phone: "8130723742" },
+  { full_name: "Teja Nemani", email: "mail.tejanemani@gmail.com", phone: "7036733393" },
+  { full_name: "Tuheena Sharma", email: "tuhinawellness@gmail.com", phone: "8054799156" },
+  { full_name: "Rakshika chauhan", email: "rakshik.c09@gmail.com", phone: "9971069267" }
+];
+
+const WRITING_E4_ID = "9a4b17e1-3d5c-4f9d-9e21-2ac694bc196c";
+
 // Cohort Card Component
 function CohortCard({ 
   edition, 
@@ -723,6 +753,68 @@ export default function AdminUsers() {
     }
   });
 
+  // Bulk import Writing Edition 4 Goa students (24 students)
+  const importWritingE4Mutation = useMutation({
+    mutationFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const results = { success: 0, failed: 0, errors: [] as { name: string; error: string }[] };
+      
+      for (let i = 0; i < WRITING_E4_STUDENTS.length; i++) {
+        const student = WRITING_E4_STUDENTS[i];
+        setImportProgress({ current: i + 1, total: WRITING_E4_STUDENTS.length });
+        
+        try {
+          const response = await supabase.functions.invoke('create-user', {
+            body: {
+              email: student.email,
+              password: "Forge2026!",
+              full_name: student.full_name,
+              phone: student.phone,
+              city: "Goa",
+              edition_id: WRITING_E4_ID,
+              payment_status: "BALANCE_PAID"
+            }
+          });
+
+          if (response.error || response.data?.error) {
+            results.failed++;
+            results.errors.push({ 
+              name: student.full_name, 
+              error: response.error?.message || response.data?.error || 'Unknown error' 
+            });
+          } else {
+            results.success++;
+          }
+        } catch (err) {
+          results.failed++;
+          results.errors.push({ 
+            name: student.full_name, 
+            error: err instanceof Error ? err.message : 'Unknown error' 
+          });
+        }
+      }
+      
+      return results;
+    },
+    onSuccess: (data) => {
+      setImportProgress(null);
+      if (data.failed > 0) {
+        toast.error(`Imported ${data.success} students, ${data.failed} failed`, {
+          description: data.errors.slice(0, 3).map(e => `${e.name}: ${e.error}`).join('\n')
+        });
+      } else {
+        toast.success(`Successfully imported all ${data.success} Writing E4 Goa students!`);
+      }
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+    onError: (error: Error) => {
+      setImportProgress(null);
+      toast.error(error.message);
+    }
+  });
+
   // Filter users by search and edition
   const filteredUsers = useMemo(() => {
     return users?.filter(user => {
@@ -884,7 +976,7 @@ export default function AdminUsers() {
             variant="outline"
             onClick={() => importWritingE5Mutation.mutate()} 
             className="gap-2"
-            disabled={importWritingE5Mutation.isPending || importCreatorsE2GoaMutation.isPending || importCreatorsE1Mutation.isPending || importEdition15Mutation.isPending || importEdition14Mutation.isPending}
+            disabled={importWritingE5Mutation.isPending || importWritingE4Mutation.isPending || importCreatorsE2GoaMutation.isPending || importCreatorsE1Mutation.isPending || importEdition15Mutation.isPending || importEdition14Mutation.isPending}
           >
             {importWritingE5Mutation.isPending ? (
               <>
@@ -895,6 +987,24 @@ export default function AdminUsers() {
               <>
                 <Upload className="w-4 h-4" />
                 Import Writing E5 (27)
+              </>
+            )}
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => importWritingE4Mutation.mutate()} 
+            className="gap-2"
+            disabled={importWritingE4Mutation.isPending || importWritingE5Mutation.isPending || importCreatorsE2GoaMutation.isPending || importCreatorsE1Mutation.isPending || importEdition15Mutation.isPending || importEdition14Mutation.isPending}
+          >
+            {importWritingE4Mutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Importing {importProgress?.current}/{importProgress?.total}...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                Import Writing E4 (24)
               </>
             )}
           </Button>
