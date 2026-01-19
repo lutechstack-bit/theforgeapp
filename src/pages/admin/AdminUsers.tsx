@@ -77,6 +77,36 @@ const EDITION_14_STUDENTS = [
 
 const EDITION_14_ID = "1b9e4712-1965-47ef-9fb5-dfb1beaf7e54";
 
+// Edition 15 Filmmaking Goa Students
+const EDITION_15_STUDENTS = [
+  { full_name: "Nilesh Dattatray Shinde", email: "nileshshinde2301106@gmail.com", phone: "7385290178" },
+  { full_name: "Jay Arora", email: "jayaroranyc@gmail.com", phone: "9870499422" },
+  { full_name: "Swati Jain", email: "swatzain@yahoo.com", phone: "9845116683" },
+  { full_name: "Jay", email: "jaisimha078@gmail.com", phone: "8639529860" },
+  { full_name: "Vaibhav Kammar", email: "vaibhav.but.filmmaking@gmail.com", phone: "8147646756" },
+  { full_name: "Rajnikant Revabhai Parmar", email: "rjparmar09@gmail.com", phone: "14164736585" },
+  { full_name: "Jayanth Moharier", email: "moherier.jayanth@gmail.com", phone: "12674371621" },
+  { full_name: "Imran Khan", email: "aceik346@gmail.com", phone: "9845920258" },
+  { full_name: "Asishey Uranw", email: "at7050791@gmail.com", phone: "6299706776" },
+  { full_name: "Krunal Pandya", email: "mr.krunalpandya@gmail.com", phone: "8980701011" },
+  { full_name: "Manoj Kinger", email: "manoj.kinger@outlook.com", phone: "9971369702" },
+  { full_name: "Ravi Singh", email: "mithepurfarms@gmail.com", phone: "9873832002" },
+  { full_name: "Anil Kumar Bhaskar", email: "anil.bhaskar9899@gmail.com", phone: "9871920726" },
+  { full_name: "V Sai Rithik Reddy", email: "rithikreddy247@gmail.com", phone: "9989097237" },
+  { full_name: "Pramod Kumar", email: "pramod0511kumar@gmail.com", phone: "9980614869" },
+  { full_name: "Sockalingam", email: "socklin91096@gmail.com", phone: "7397779870" },
+  { full_name: "Ruthvik Veera", email: "ww.ruthvik@gmail.com", phone: "9502624969" },
+  { full_name: "Asit Aanand", email: "asitaanand10887@gmail.com", phone: "8175903388" },
+  { full_name: "Ajinkya Sambhare", email: "ajinkyasambhare2411@gmail.com", phone: "9175356723" },
+  { full_name: "Adarsh Ranjan Jha", email: "adarshrjha@gmail.com", phone: "918851733625" },
+  { full_name: "Ashik Salim", email: "ashik6@gmail.com", phone: "919746575743" },
+  { full_name: "Kanan Bahl", email: "kananbahl@gmail.com", phone: "9205742633" },
+  { full_name: "Anirudh G S", email: "gsanirudh123@gmail.com", phone: "9019145543" },
+  { full_name: "Ravi Kiran", email: "bychancebychoice@gmail.com", phone: "9866094144" },
+];
+
+const EDITION_15_ID = "ec048e00-421e-4ceb-bcc0-df675173b296";
+
 // Cohort Card Component
 function CohortCard({ 
   edition, 
@@ -374,6 +404,68 @@ export default function AdminUsers() {
     }
   });
 
+  // Bulk import Edition 15 students
+  const importEdition15Mutation = useMutation({
+    mutationFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const results = { success: 0, failed: 0, errors: [] as { name: string; error: string }[] };
+      
+      for (let i = 0; i < EDITION_15_STUDENTS.length; i++) {
+        const student = EDITION_15_STUDENTS[i];
+        setImportProgress({ current: i + 1, total: EDITION_15_STUDENTS.length });
+        
+        try {
+          const response = await supabase.functions.invoke('create-user', {
+            body: {
+              email: student.email,
+              password: "Forge2026!",
+              full_name: student.full_name,
+              phone: student.phone,
+              city: "Goa",
+              edition_id: EDITION_15_ID,
+              payment_status: "CONFIRMED_15K"
+            }
+          });
+
+          if (response.error || response.data?.error) {
+            results.failed++;
+            results.errors.push({ 
+              name: student.full_name, 
+              error: response.error?.message || response.data?.error || 'Unknown error' 
+            });
+          } else {
+            results.success++;
+          }
+        } catch (err) {
+          results.failed++;
+          results.errors.push({ 
+            name: student.full_name, 
+            error: err instanceof Error ? err.message : 'Unknown error' 
+          });
+        }
+      }
+      
+      return results;
+    },
+    onSuccess: (data) => {
+      setImportProgress(null);
+      if (data.failed > 0) {
+        toast.error(`Imported ${data.success} students, ${data.failed} failed`, {
+          description: data.errors.slice(0, 3).map(e => `${e.name}: ${e.error}`).join('\n')
+        });
+      } else {
+        toast.success(`Successfully imported all ${data.success} Edition 15 students!`);
+      }
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+    onError: (error: Error) => {
+      setImportProgress(null);
+      toast.error(error.message);
+    }
+  });
+
   // Filter users by search and edition
   const filteredUsers = useMemo(() => {
     return users?.filter(user => {
@@ -474,6 +566,24 @@ export default function AdminUsers() {
               <>
                 <Upload className="w-4 h-4" />
                 Import Edition 14 (24)
+              </>
+            )}
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => importEdition15Mutation.mutate()} 
+            className="gap-2"
+            disabled={importEdition15Mutation.isPending || importEdition14Mutation.isPending}
+          >
+            {importEdition15Mutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Importing {importProgress?.current}/{importProgress?.total}...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                Import Edition 15 (24)
               </>
             )}
           </Button>
