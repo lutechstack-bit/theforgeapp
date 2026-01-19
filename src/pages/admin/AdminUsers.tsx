@@ -566,7 +566,7 @@ export default function AdminUsers() {
     }
   });
 
-  // Bulk import Creators Edition 2 Goa students
+  // Bulk import Creators Edition 2 Goa students (16 students)
   const importCreatorsE2GoaMutation = useMutation({
     mutationFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
