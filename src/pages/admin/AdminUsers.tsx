@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, Edit, Loader2, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -52,6 +52,7 @@ export default function AdminUsers() {
   const [isCreateOpen, setIsCreateOpen] = useState(searchParams.get('action') === 'create');
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [userToDelete, setUserToDelete] = useState<Profile | null>(null);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch users
@@ -167,6 +168,29 @@ export default function AdminUsers() {
     }
   });
 
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const response = await supabase.functions.invoke('bulk-delete-users');
+
+      if (response.error) throw new Error(response.error.message);
+      if (response.data?.error) throw new Error(response.data.error);
+      
+      return response.data as { deleted: number; failed: number; errors: { email: string; error: string }[] };
+    },
+    onSuccess: (data) => {
+      toast.success(`Deleted ${data.deleted} users${data.failed > 0 ? `, ${data.failed} failed` : ''}`);
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      setShowBulkDeleteConfirm(false);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    }
+  });
+
   const filteredUsers = users?.filter(user =>
     user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -186,10 +210,21 @@ export default function AdminUsers() {
           <h1 className="text-3xl font-bold text-foreground">Users</h1>
           <p className="text-muted-foreground mt-1">Manage community members</p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Create User
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="destructive" 
+            onClick={() => setShowBulkDeleteConfirm(true)} 
+            className="gap-2"
+            disabled={!users || users.length <= 1}
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete All Users
+          </Button>
+          <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Create User
+          </Button>
+        </div>
       </div>
 
       {/* Search */}
@@ -312,6 +347,32 @@ export default function AdminUsers() {
               disabled={deleteUserMutation.isPending}
             >
               {deleteUserMutation.isPending ? 'Deleting...' : 'Delete User'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={showBulkDeleteConfirm} onOpenChange={setShowBulkDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-5 h-5" />
+              Delete All Users
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>This will permanently delete <strong>{(users?.length || 1) - 1} users</strong> (except your admin account).</p>
+              <p className="text-destructive font-medium">This action cannot be undone!</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => bulkDeleteMutation.mutate()}
+              disabled={bulkDeleteMutation.isPending}
+            >
+              {bulkDeleteMutation.isPending ? 'Deleting...' : 'Yes, Delete All'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
