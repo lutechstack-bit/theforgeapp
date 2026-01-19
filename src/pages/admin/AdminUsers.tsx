@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +46,36 @@ type Profile = Database['public']['Tables']['profiles']['Row'];
 type Edition = Database['public']['Tables']['editions']['Row'];
 type PaymentStatus = Database['public']['Enums']['payment_status'];
 
+// Edition 14 Filmmaking Goa Students
+const EDITION_14_STUDENTS = [
+  { full_name: "Ashish Maske", email: "ashish.maske89@gmail.com", phone: "9561317768" },
+  { full_name: "Mukul Das", email: "mukuldas77@gmail.com", phone: "8553849837" },
+  { full_name: "Karthik Rengasamy", email: "karthik.rengasamy.work@gmail.com", phone: "919944647016" },
+  { full_name: "Sandeep Kumar H", email: "sandukumarh@gmail.com", phone: "918860476865" },
+  { full_name: "Balgopal Hota", email: "balgopalh@gmail.com", phone: "917749041226" },
+  { full_name: "Krishna Dev Sharma", email: "kd6279@gmail.com", phone: "919810244550" },
+  { full_name: "Rajeshkumar Bachu", email: "rajk.bachu@gmail.com", phone: "7989256200" },
+  { full_name: "Srikanth Dangetti", email: "srikanthdangeti@gmail.com", phone: "919573800042" },
+  { full_name: "Kabishek", email: "ka.ek2121@gmail.com", phone: "6383197396" },
+  { full_name: "Sushant Sinha", email: "writetosushantsinha@gmail.com", phone: "9665142117" },
+  { full_name: "Praveen Choudari", email: "praveenbchoudari@gmail.com", phone: "7019809364" },
+  { full_name: "Milee Patel", email: "patelmilee903@gmail.com", phone: "8849998216" },
+  { full_name: "Anunay Gupta", email: "anunayg2001@gmail.com", phone: "8318674416" },
+  { full_name: "Sourav Saha", email: "souravsaha.here@gmail.com", phone: "6297876090" },
+  { full_name: "Sandeep Pradhan", email: "drsandyscbaiims@gmail.com", phone: "7978134375" },
+  { full_name: "Kalyan Chakravarthy", email: "chakravarthy.ca@gmail.com", phone: "9962579968" },
+  { full_name: "Anshul Karasi", email: "anshulkarasi009@gmail.com", phone: "7406654816" },
+  { full_name: "Omkar Devane", email: "omkardevane@gmail.com", phone: "9167957262" },
+  { full_name: "Kishore", email: "kishor.ramakrishna@gmail.com", phone: "31628051304" },
+  { full_name: "Ranjeeth", email: "branjeeth97@gmail.com", phone: "8867523877" },
+  { full_name: "Vineeth Reddy", email: "vineethreddy.vakiti@gmail.com", phone: "9550046000" },
+  { full_name: "Raj Vudali", email: "raj.vudali@gmail.com", phone: "9731000795" },
+  { full_name: "Aniket Dolas", email: "aniketdolas424@gmail.com", phone: "7620971766" },
+  { full_name: "Nandipati Adi Siva Sai Kartheek", email: "kartheek.0774@gmail.com", phone: "8247702956" },
+];
+
+const EDITION_14_ID = "1b9e4712-1965-47ef-9fb5-dfb1beaf7e54";
+
 
 export default function AdminUsers() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -55,6 +85,7 @@ export default function AdminUsers() {
   const [userToDelete, setUserToDelete] = useState<Profile | null>(null);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
+  const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
   const queryClient = useQueryClient();
 
   // Fetch users
@@ -196,6 +227,68 @@ export default function AdminUsers() {
     }
   });
 
+  // Bulk import Edition 14 students
+  const importEdition14Mutation = useMutation({
+    mutationFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const results = { success: 0, failed: 0, errors: [] as { name: string; error: string }[] };
+      
+      for (let i = 0; i < EDITION_14_STUDENTS.length; i++) {
+        const student = EDITION_14_STUDENTS[i];
+        setImportProgress({ current: i + 1, total: EDITION_14_STUDENTS.length });
+        
+        try {
+          const response = await supabase.functions.invoke('create-user', {
+            body: {
+              email: student.email,
+              password: "Forge2026!",
+              full_name: student.full_name,
+              phone: student.phone,
+              city: "Goa",
+              edition_id: EDITION_14_ID,
+              payment_status: "CONFIRMED_15K"
+            }
+          });
+
+          if (response.error || response.data?.error) {
+            results.failed++;
+            results.errors.push({ 
+              name: student.full_name, 
+              error: response.error?.message || response.data?.error || 'Unknown error' 
+            });
+          } else {
+            results.success++;
+          }
+        } catch (err) {
+          results.failed++;
+          results.errors.push({ 
+            name: student.full_name, 
+            error: err instanceof Error ? err.message : 'Unknown error' 
+          });
+        }
+      }
+      
+      return results;
+    },
+    onSuccess: (data) => {
+      setImportProgress(null);
+      if (data.failed > 0) {
+        toast.error(`Imported ${data.success} students, ${data.failed} failed`, {
+          description: data.errors.slice(0, 3).map(e => `${e.name}: ${e.error}`).join('\n')
+        });
+      } else {
+        toast.success(`Successfully imported all ${data.success} Edition 14 students!`);
+      }
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+    onError: (error: Error) => {
+      setImportProgress(null);
+      toast.error(error.message);
+    }
+  });
+
   const filteredUsers = users?.filter(user =>
     user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -250,6 +343,24 @@ export default function AdminUsers() {
           >
             <Trash2 className="w-4 h-4" />
             Delete Selected ({selectedUserIds.size})
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => importEdition14Mutation.mutate()} 
+            className="gap-2"
+            disabled={importEdition14Mutation.isPending}
+          >
+            {importEdition14Mutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Importing {importProgress?.current}/{importProgress?.total}...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                Import Edition 14 (24)
+              </>
+            )}
           </Button>
           <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
             <Plus className="w-4 h-4" />
