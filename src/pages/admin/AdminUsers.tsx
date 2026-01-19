@@ -107,6 +107,22 @@ const EDITION_15_STUDENTS = [
 
 const EDITION_15_ID = "ec048e00-421e-4ceb-bcc0-df675173b296";
 
+// Creators Edition 1 Bali Students
+const CREATORS_E1_STUDENTS = [
+  { full_name: "Vanmathi", email: "vanmathi@uvagro.com", phone: "919442921029" },
+  { full_name: "Varsha", email: "varsha.babani@gmail.com", phone: "919892873704" },
+  { full_name: "Arush Thapar", email: "arush@brandingpioneers.com", phone: "919789565515" },
+  { full_name: "Siddharth", email: "sid.balhara1694@gmail.com", phone: "917290051900" },
+  { full_name: "Naveen Nagdaune", email: "nnnaveenhot7@gmail.com", phone: "919522222521" },
+  { full_name: "Pankaj Kumar", email: "forpankaj.prasar@gmail.com", phone: "9074451965" },
+  { full_name: "Mohammad Kashif", email: "kashif170017@gmail.com", phone: "918273336161" },
+  { full_name: "Manoj", email: "manoj.pothani@gmail.com", phone: "919700987224" },
+  { full_name: "Shoaib", email: "shoaibmustaque10@gmail.com", phone: "7980978482" },
+  { full_name: "Sajitha", email: "sajidashaje@gmail.com", phone: "8921587407" }
+];
+
+const CREATORS_E1_ID = "da818745-0904-41b6-8182-3a338265dd68";
+
 // Cohort Card Component
 function CohortCard({ 
   edition, 
@@ -466,6 +482,68 @@ export default function AdminUsers() {
     }
   });
 
+  // Bulk import Creators Edition 1 Bali students
+  const importCreatorsE1Mutation = useMutation({
+    mutationFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const results = { success: 0, failed: 0, errors: [] as { name: string; error: string }[] };
+      
+      for (let i = 0; i < CREATORS_E1_STUDENTS.length; i++) {
+        const student = CREATORS_E1_STUDENTS[i];
+        setImportProgress({ current: i + 1, total: CREATORS_E1_STUDENTS.length });
+        
+        try {
+          const response = await supabase.functions.invoke('create-user', {
+            body: {
+              email: student.email,
+              password: "Forge2026!",
+              full_name: student.full_name,
+              phone: student.phone,
+              city: "Bali",
+              edition_id: CREATORS_E1_ID,
+              payment_status: "BALANCE_PAID"
+            }
+          });
+
+          if (response.error || response.data?.error) {
+            results.failed++;
+            results.errors.push({ 
+              name: student.full_name, 
+              error: response.error?.message || response.data?.error || 'Unknown error' 
+            });
+          } else {
+            results.success++;
+          }
+        } catch (err) {
+          results.failed++;
+          results.errors.push({ 
+            name: student.full_name, 
+            error: err instanceof Error ? err.message : 'Unknown error' 
+          });
+        }
+      }
+      
+      return results;
+    },
+    onSuccess: (data) => {
+      setImportProgress(null);
+      if (data.failed > 0) {
+        toast.error(`Imported ${data.success} students, ${data.failed} failed`, {
+          description: data.errors.slice(0, 3).map(e => `${e.name}: ${e.error}`).join('\n')
+        });
+      } else {
+        toast.success(`Successfully imported all ${data.success} Creators E1 students!`);
+      }
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+    onError: (error: Error) => {
+      setImportProgress(null);
+      toast.error(error.message);
+    }
+  });
+
   // Filter users by search and edition
   const filteredUsers = useMemo(() => {
     return users?.filter(user => {
@@ -584,6 +662,24 @@ export default function AdminUsers() {
               <>
                 <Upload className="w-4 h-4" />
                 Import Edition 15 (24)
+              </>
+            )}
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => importCreatorsE1Mutation.mutate()} 
+            className="gap-2"
+            disabled={importCreatorsE1Mutation.isPending || importEdition15Mutation.isPending || importEdition14Mutation.isPending}
+          >
+            {importCreatorsE1Mutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Importing {importProgress?.current}/{importProgress?.total}...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                Import Creators E1 (10)
               </>
             )}
           </Button>
