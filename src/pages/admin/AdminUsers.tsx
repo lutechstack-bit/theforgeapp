@@ -123,6 +123,28 @@ const CREATORS_E1_STUDENTS = [
 
 const CREATORS_E1_ID = "da818745-0904-41b6-8182-3a338265dd68";
 
+// Creators Edition 2 Goa Students
+const CREATORS_E2_GOA_STUDENTS = [
+  { full_name: "Suryanarayanan", email: "surya.ckv@gmail.com", phone: "9884461009" },
+  { full_name: "Reema Abbas", email: "reema.abbas0786@gmail.com", phone: "7042745425" },
+  { full_name: "Prashan Saraf", email: "saraf.prashant72@gmail.com", phone: "9820065475" },
+  { full_name: "Rohit Alluri", email: "rohit@leamss.com", phone: "7718882427" },
+  { full_name: "Shivain Sacheti", email: "sachetishivain97@gmail.com", phone: "9079120024" },
+  { full_name: "Vinita Tanwani", email: "vinitaatanwani@gmail.com", phone: "9901307135" },
+  { full_name: "Parmeet Singh Chadha", email: "parmeet.wscc@gmail.com", phone: "7699000007" },
+  { full_name: "Dr.Karthik Balaji", email: "ubkdental@gmail.com", phone: "919444418307" },
+  { full_name: "Mohit Vyas", email: "mohitvyas009@gmail.com", phone: "919660570463" },
+  { full_name: "Vinod", email: "vinod.morya@bytesigma.com", phone: "919971034666" },
+  { full_name: "Ramesh", email: "ramesh@safestorage.in", phone: "9686566697" },
+  { full_name: "Raghul Ravi", email: "raghulravidx@gmail.com", phone: "9150175026" },
+  { full_name: "Sathimaa", email: "we.are.sacredbody@gmail.com", phone: "918792689234" },
+  { full_name: "Nishit Badaya", email: "nishitbadaya18@gmail.com", phone: "916378311154" },
+  { full_name: "Jagruti Shinde", email: "jagruti.c.shinde@gmail.com", phone: "7038524008" },
+  { full_name: "Madhav Bairathi", email: "madhav.bairathi@gmail.com", phone: "919079269035" }
+];
+
+const CREATORS_E2_GOA_ID = "995324e9-5a14-4d36-8c99-fec40fd35d70";
+
 // Cohort Card Component
 function CohortCard({ 
   edition, 
@@ -544,6 +566,68 @@ export default function AdminUsers() {
     }
   });
 
+  // Bulk import Creators Edition 2 Goa students
+  const importCreatorsE2GoaMutation = useMutation({
+    mutationFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const results = { success: 0, failed: 0, errors: [] as { name: string; error: string }[] };
+      
+      for (let i = 0; i < CREATORS_E2_GOA_STUDENTS.length; i++) {
+        const student = CREATORS_E2_GOA_STUDENTS[i];
+        setImportProgress({ current: i + 1, total: CREATORS_E2_GOA_STUDENTS.length });
+        
+        try {
+          const response = await supabase.functions.invoke('create-user', {
+            body: {
+              email: student.email,
+              password: "Forge2026!",
+              full_name: student.full_name,
+              phone: student.phone,
+              city: "Goa",
+              edition_id: CREATORS_E2_GOA_ID,
+              payment_status: "BALANCE_PAID"
+            }
+          });
+
+          if (response.error || response.data?.error) {
+            results.failed++;
+            results.errors.push({ 
+              name: student.full_name, 
+              error: response.error?.message || response.data?.error || 'Unknown error' 
+            });
+          } else {
+            results.success++;
+          }
+        } catch (err) {
+          results.failed++;
+          results.errors.push({ 
+            name: student.full_name, 
+            error: err instanceof Error ? err.message : 'Unknown error' 
+          });
+        }
+      }
+      
+      return results;
+    },
+    onSuccess: (data) => {
+      setImportProgress(null);
+      if (data.failed > 0) {
+        toast.error(`Imported ${data.success} students, ${data.failed} failed`, {
+          description: data.errors.slice(0, 3).map(e => `${e.name}: ${e.error}`).join('\n')
+        });
+      } else {
+        toast.success(`Successfully imported all ${data.success} Creators E2 Goa students!`);
+      }
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+    onError: (error: Error) => {
+      setImportProgress(null);
+      toast.error(error.message);
+    }
+  });
+
   // Filter users by search and edition
   const filteredUsers = useMemo(() => {
     return users?.filter(user => {
@@ -680,6 +764,24 @@ export default function AdminUsers() {
               <>
                 <Upload className="w-4 h-4" />
                 Import Creators E1 (10)
+              </>
+            )}
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => importCreatorsE2GoaMutation.mutate()} 
+            className="gap-2"
+            disabled={importCreatorsE2GoaMutation.isPending || importCreatorsE1Mutation.isPending || importEdition15Mutation.isPending || importEdition14Mutation.isPending}
+          >
+            {importCreatorsE2GoaMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Importing {importProgress?.current}/{importProgress?.total}...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                Import Creators E2 Goa (16)
               </>
             )}
           </Button>
