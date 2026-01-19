@@ -145,6 +145,39 @@ const CREATORS_E2_GOA_STUDENTS = [
 
 const CREATORS_E2_GOA_ID = "995324e9-5a14-4d36-8c99-fec40fd35d70";
 
+// Writing Edition 5 Goa Students
+const WRITING_E5_STUDENTS = [
+  { full_name: "Rupashri", email: "yrupashri@gmail.com", phone: "7619673337" },
+  { full_name: "Yoagandran AR", email: "yogu@kuviyam.co", phone: "9003786755" },
+  { full_name: "Kynan D'Souza", email: "kynan.dsouza@gmail.com", phone: "9886775295" },
+  { full_name: "Tanvi Vedak", email: "tanvi.vedak45@gmail.com", phone: "9022131111" },
+  { full_name: "Harish R Soundararajan", email: "harish.rsoundar@gmail.com", phone: "919843844448" },
+  { full_name: "Rohan Panwala", email: "rohanpanwala@yahoo.co.in", phone: "9824386807" },
+  { full_name: "Aishwarya Girnekar", email: "aishwaryagirnekar06@gmail.com", phone: "8779837419" },
+  { full_name: "Pranay Dhongade", email: "pranayd786@gmail.com", phone: "9004008494" },
+  { full_name: "Khushboo Hanjura", email: "khushboo.hanjura@gmail.com", phone: "8130723742" },
+  { full_name: "Harish dachepalli", email: "dachepalli.harish@gmail.com", phone: "9885603639" },
+  { full_name: "Rakesh Kapoor", email: "itsrakeshkapoor1704@gmail.com", phone: "919581023378" },
+  { full_name: "Anantha Eashwar V M", email: "eashwaranand@yahoo.in", phone: "9094040366" },
+  { full_name: "Uday Jain", email: "udayvandana983@gmail.com", phone: "8630270233" },
+  { full_name: "Ansath Thendral", email: "Ansathcivil786@gmail.com", phone: "9942452906" },
+  { full_name: "Gunjan Katyal", email: "theblissfromwithin@gmail.com", phone: "9911273555" },
+  { full_name: "Chandu Shri Vaishnav", email: "dvcsv96@gmail.com", phone: "9555760612" },
+  { full_name: "Sudhansu Ranjan", email: "Ranjansudhansu844@gmail.com", phone: "917004630336" },
+  { full_name: "Pallavi Minnaganti", email: "pallaviminnaganti@gmail.com", phone: "6302176475" },
+  { full_name: "Abhinav Bainslay", email: "ads1734@gmail.com", phone: "9999804907" },
+  { full_name: "Abdul Muqeet", email: "foodpedigry@gmail.com", phone: "6005398531" },
+  { full_name: "Rajashree Gupta", email: "rajashreegupta2021@gmail.com", phone: "7428190596" },
+  { full_name: "Aaditya Vundamati", email: "aditya.vundamati@gmail.com", phone: "7032821128" },
+  { full_name: "Anurag Challapalli", email: "anuragchallapalli@gmail.com", phone: "9700123092" },
+  { full_name: "Rachit Sharma", email: "rs220195@gmail.com", phone: "8810598242" },
+  { full_name: "Nelabhra Borah", email: "neelcreates@gmail.com", phone: "8131982954" },
+  { full_name: "Pratik", email: "pratiksanghar44@gmail.com", phone: "9725983249" },
+  { full_name: "Aarya Jadhav", email: "aarya.ete@gmail.com", phone: "9321013185" }
+];
+
+const WRITING_E5_ID = "cf2b9fd2-a3da-4d0b-8370-da0937f9d786";
+
 // Cohort Card Component
 function CohortCard({ 
   edition, 
@@ -628,6 +661,68 @@ export default function AdminUsers() {
     }
   });
 
+  // Bulk import Writing Edition 5 Goa students (27 students)
+  const importWritingE5Mutation = useMutation({
+    mutationFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const results = { success: 0, failed: 0, errors: [] as { name: string; error: string }[] };
+      
+      for (let i = 0; i < WRITING_E5_STUDENTS.length; i++) {
+        const student = WRITING_E5_STUDENTS[i];
+        setImportProgress({ current: i + 1, total: WRITING_E5_STUDENTS.length });
+        
+        try {
+          const response = await supabase.functions.invoke('create-user', {
+            body: {
+              email: student.email,
+              password: "Forge2026!",
+              full_name: student.full_name,
+              phone: student.phone,
+              city: "Goa",
+              edition_id: WRITING_E5_ID,
+              payment_status: "BALANCE_PAID"
+            }
+          });
+
+          if (response.error || response.data?.error) {
+            results.failed++;
+            results.errors.push({ 
+              name: student.full_name, 
+              error: response.error?.message || response.data?.error || 'Unknown error' 
+            });
+          } else {
+            results.success++;
+          }
+        } catch (err) {
+          results.failed++;
+          results.errors.push({ 
+            name: student.full_name, 
+            error: err instanceof Error ? err.message : 'Unknown error' 
+          });
+        }
+      }
+      
+      return results;
+    },
+    onSuccess: (data) => {
+      setImportProgress(null);
+      if (data.failed > 0) {
+        toast.error(`Imported ${data.success} students, ${data.failed} failed`, {
+          description: data.errors.slice(0, 3).map(e => `${e.name}: ${e.error}`).join('\n')
+        });
+      } else {
+        toast.success(`Successfully imported all ${data.success} Writing E5 Goa students!`);
+      }
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+    onError: (error: Error) => {
+      setImportProgress(null);
+      toast.error(error.message);
+    }
+  });
+
   // Filter users by search and edition
   const filteredUsers = useMemo(() => {
     return users?.filter(user => {
@@ -782,6 +877,24 @@ export default function AdminUsers() {
               <>
                 <Upload className="w-4 h-4" />
                 Import Creators E2 Goa (16)
+              </>
+            )}
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => importWritingE5Mutation.mutate()} 
+            className="gap-2"
+            disabled={importWritingE5Mutation.isPending || importCreatorsE2GoaMutation.isPending || importCreatorsE1Mutation.isPending || importEdition15Mutation.isPending || importEdition14Mutation.isPending}
+          >
+            {importWritingE5Mutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Importing {importProgress?.current}/{importProgress?.total}...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                Import Writing E5 (27)
               </>
             )}
           </Button>
