@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload } from 'lucide-react';
+import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload, Users, LayoutGrid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -76,6 +77,58 @@ const EDITION_14_STUDENTS = [
 
 const EDITION_14_ID = "1b9e4712-1965-47ef-9fb5-dfb1beaf7e54";
 
+// Cohort Card Component
+function CohortCard({ 
+  edition, 
+  userCount, 
+  onSelect,
+  isSelected 
+}: { 
+  edition: Edition | null; 
+  userCount: number; 
+  onSelect: () => void;
+  isSelected: boolean;
+}) {
+  const cohortTypeColors: Record<string, string> = {
+    'FORGE': 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+    'FORGE_WRITING': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    'FORGE_CREATORS': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  };
+  
+  return (
+    <Card 
+      className={`cursor-pointer transition-all hover:border-forge-gold/50 hover:shadow-lg ${
+        isSelected ? 'border-forge-gold ring-2 ring-forge-gold/30' : 'border-border/50'
+      } ${edition?.is_archived ? 'opacity-60' : ''}`}
+      onClick={onSelect}
+    >
+      <CardHeader className="pb-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {edition ? (
+            <Badge variant="outline" className={cohortTypeColors[edition.cohort_type] || ''}>
+              {edition.cohort_type.replace('FORGE_', '').replace('FORGE', 'FILMMAKING')}
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="bg-muted/50">NO EDITION</Badge>
+          )}
+          {edition?.is_archived && (
+            <Badge variant="secondary" className="text-xs">Archived</Badge>
+          )}
+        </div>
+        <CardTitle className="text-base line-clamp-2">
+          {edition?.name || 'Unassigned Users'}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-baseline gap-1">
+          <span className="text-3xl font-bold text-foreground">{userCount}</span>
+          <span className="text-muted-foreground text-sm">users</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 
 export default function AdminUsers() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -86,6 +139,8 @@ export default function AdminUsers() {
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'cohort'>('list');
+  const [selectedEditionFilter, setSelectedEditionFilter] = useState<string>('all');
   const queryClient = useQueryClient();
 
   // Fetch users
@@ -98,6 +153,19 @@ export default function AdminUsers() {
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as Profile[];
+    }
+  });
+
+  // Fetch ALL editions for cohort view (including archived)
+  const { data: allEditions } = useQuery({
+    queryKey: ['editions-all'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('editions')
+        .select('*')
+        .order('forge_start_date', { ascending: false });
+      if (error) throw error;
+      return data as Edition[];
     }
   });
 
@@ -114,6 +182,23 @@ export default function AdminUsers() {
       return data as Edition[];
     }
   });
+
+  // Calculate user counts per edition
+  const editionUserCounts = useMemo(() => {
+    if (!users || !allEditions) return new Map<string | null, number>();
+    
+    const counts = new Map<string | null, number>();
+    counts.set(null, 0); // For unassigned users
+    
+    allEditions.forEach(edition => counts.set(edition.id, 0));
+    
+    users.forEach(user => {
+      const currentCount = counts.get(user.edition_id) || 0;
+      counts.set(user.edition_id, currentCount + 1);
+    });
+    
+    return counts;
+  }, [users, allEditions]);
 
   // Create user mutation
   const createUserMutation = useMutation({
@@ -289,17 +374,43 @@ export default function AdminUsers() {
     }
   });
 
-  const filteredUsers = users?.filter(user =>
-    user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.city?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter users by search and edition
+  const filteredUsers = useMemo(() => {
+    return users?.filter(user => {
+      const matchesSearch = 
+        user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.city?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesEdition = 
+        selectedEditionFilter === 'all' ||
+        (selectedEditionFilter === 'none' && !user.edition_id) ||
+        user.edition_id === selectedEditionFilter;
+        
+      return matchesSearch && matchesEdition;
+    });
+  }, [users, searchQuery, selectedEditionFilter]);
 
   const getEditionName = (editionId: string | null) => {
-    if (!editionId || !editions) return '-';
-    const edition = editions.find(e => e.id === editionId);
+    if (!editionId || !allEditions) return '-';
+    const edition = allEditions.find(e => e.id === editionId);
     return edition?.name || '-';
   };
+
+  // Get editions with users for cohort view (sorted by user count)
+  const editionsWithUsers = useMemo(() => {
+    if (!allEditions) return [];
+    
+    return allEditions
+      .map(edition => ({
+        edition,
+        userCount: editionUserCounts.get(edition.id) || 0
+      }))
+      .filter(item => item.userCount > 0)
+      .sort((a, b) => b.userCount - a.userCount);
+  }, [allEditions, editionUserCounts]);
+
+  const unassignedCount = editionUserCounts.get(null) || 0;
 
   // Get selectable users (exclude admin)
   const selectableUsers = filteredUsers?.filter(u => u.email?.toLowerCase() !== 'admin@admin.in') || [];
@@ -332,18 +443,22 @@ export default function AdminUsers() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Users</h1>
-          <p className="text-muted-foreground mt-1">Manage community members</p>
+          <p className="text-muted-foreground mt-1">
+            {users?.length || 0} community members
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="destructive" 
-            onClick={() => setShowBulkDeleteConfirm(true)} 
-            className="gap-2"
-            disabled={selectedUserIds.size === 0}
-          >
-            <Trash2 className="w-4 h-4" />
-            Delete Selected ({selectedUserIds.size})
-          </Button>
+          {viewMode === 'list' && (
+            <Button 
+              variant="destructive" 
+              onClick={() => setShowBulkDeleteConfirm(true)} 
+              className="gap-2"
+              disabled={selectedUserIds.size === 0}
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Selected ({selectedUserIds.size})
+            </Button>
+          )}
           <Button 
             variant="outline"
             onClick={() => importEdition14Mutation.mutate()} 
@@ -369,114 +484,194 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Search users..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 bg-card/50"
-        />
+      {/* View Toggle + Filters */}
+      <div className="flex flex-wrap gap-4 mb-6 items-center">
+        {/* View Mode Toggle */}
+        <div className="flex border border-border/50 rounded-lg p-1 bg-card/30">
+          <Button
+            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+            size="sm"
+            onClick={() => setViewMode('list')}
+            className="gap-2"
+          >
+            <List className="w-4 h-4" />
+            List
+          </Button>
+          <Button
+            variant={viewMode === 'cohort' ? 'secondary' : 'ghost'}
+            size="sm"
+            onClick={() => setViewMode('cohort')}
+            className="gap-2"
+          >
+            <LayoutGrid className="w-4 h-4" />
+            By Cohort
+          </Button>
+        </div>
+
+        {/* Edition Filter (only in list view) */}
+        {viewMode === 'list' && (
+          <>
+            <Select
+              value={selectedEditionFilter}
+              onValueChange={setSelectedEditionFilter}
+            >
+              <SelectTrigger className="w-[280px] bg-card/50">
+                <SelectValue placeholder="All Editions" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Editions ({users?.length || 0})</SelectItem>
+                <SelectItem value="none">No Edition Assigned ({unassignedCount})</SelectItem>
+                {allEditions?.map(edition => (
+                  <SelectItem key={edition.id} value={edition.id}>
+                    {edition.name} ({editionUserCounts.get(edition.id) || 0})
+                    {edition.is_archived ? ' [Archived]' : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Search */}
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search users..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-card/50"
+              />
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Users Table */}
-      <div className="rounded-lg border border-border/50 bg-card/30">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={isAllSelected}
-                  ref={(el) => {
-                    if (el) {
-                      (el as unknown as HTMLInputElement).indeterminate = isSomeSelected;
-                    }
-                  }}
-                  onCheckedChange={toggleAllSelection}
-                  aria-label="Select all"
-                />
-              </TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>City</TableHead>
-              <TableHead>Edition</TableHead>
-              <TableHead>Payment</TableHead>
-              <TableHead>KYF</TableHead>
-              <TableHead className="w-12"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
+      {/* Cohort View */}
+      {viewMode === 'cohort' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+          {editionsWithUsers.map(({ edition, userCount }) => (
+            <CohortCard
+              key={edition.id}
+              edition={edition}
+              userCount={userCount}
+              isSelected={selectedEditionFilter === edition.id}
+              onSelect={() => {
+                setSelectedEditionFilter(edition.id);
+                setViewMode('list');
+              }}
+            />
+          ))}
+          {unassignedCount > 0 && (
+            <CohortCard
+              edition={null}
+              userCount={unassignedCount}
+              isSelected={selectedEditionFilter === 'none'}
+              onSelect={() => {
+                setSelectedEditionFilter('none');
+                setViewMode('list');
+              }}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Users Table (List View) */}
+      {viewMode === 'list' && (
+        <div className="rounded-lg border border-border/50 bg-card/30">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
-                </TableCell>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={isAllSelected}
+                    ref={(el) => {
+                      if (el) {
+                        (el as unknown as HTMLInputElement).indeterminate = isSomeSelected;
+                      }
+                    }}
+                    onCheckedChange={toggleAllSelection}
+                    aria-label="Select all"
+                  />
+                </TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>City</TableHead>
+                <TableHead>Edition</TableHead>
+                <TableHead>Payment</TableHead>
+                <TableHead>KYF</TableHead>
+                <TableHead className="w-12"></TableHead>
               </TableRow>
-            ) : filteredUsers?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                  No users found
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredUsers?.map((user) => {
-                const isAdmin = user.email?.toLowerCase() === 'admin@admin.in';
-                const isSelected = selectedUserIds.has(user.id);
-                return (
-                  <TableRow 
-                    key={user.id} 
-                    className={isSelected ? 'bg-primary/5' : undefined}
-                  >
-                    <TableCell>
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => toggleUserSelection(user.id)}
-                        disabled={isAdmin}
-                        aria-label={`Select ${user.full_name || user.email}`}
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">{user.full_name || '-'}</TableCell>
-                    <TableCell>{user.email || '-'}</TableCell>
-                    <TableCell>{user.city || '-'}</TableCell>
-                    <TableCell>{getEditionName(user.edition_id)}</TableCell>
-                    <TableCell>
-                      <Badge variant={user.payment_status === 'BALANCE_PAID' ? 'default' : 'secondary'}>
-                        {user.payment_status === 'BALANCE_PAID' ? 'Full' : '₹15K'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={user.kyf_completed ? 'default' : 'outline'}>
-                        {user.kyf_completed ? 'Done' : 'Pending'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setEditingUser(user)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => setUserToDelete(user)}
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
+                  </TableCell>
+                </TableRow>
+              ) : filteredUsers?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    No users found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredUsers?.map((user) => {
+                  const isAdmin = user.email?.toLowerCase() === 'admin@admin.in';
+                  const isSelected = selectedUserIds.has(user.id);
+                  return (
+                    <TableRow 
+                      key={user.id} 
+                      className={isSelected ? 'bg-primary/5' : undefined}
+                    >
+                      <TableCell>
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleUserSelection(user.id)}
                           disabled={isAdmin}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                          aria-label={`Select ${user.full_name || user.email}`}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">{user.full_name || '-'}</TableCell>
+                      <TableCell>{user.email || '-'}</TableCell>
+                      <TableCell>{user.city || '-'}</TableCell>
+                      <TableCell>{getEditionName(user.edition_id)}</TableCell>
+                      <TableCell>
+                        <Badge variant={user.payment_status === 'BALANCE_PAID' ? 'default' : 'secondary'}>
+                          {user.payment_status === 'BALANCE_PAID' ? 'Full' : '₹15K'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={user.kyf_completed ? 'default' : 'outline'}>
+                          {user.kyf_completed ? 'Done' : 'Pending'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setEditingUser(user)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => setUserToDelete(user)}
+                            disabled={isAdmin}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       {/* Create User Dialog */}
       <CreateUserDialog
