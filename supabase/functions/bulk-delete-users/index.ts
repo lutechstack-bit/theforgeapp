@@ -20,6 +20,16 @@ serve(async (req) => {
       });
     }
 
+    // Parse request body
+    const { user_ids } = await req.json();
+    
+    if (!user_ids || !Array.isArray(user_ids) || user_ids.length === 0) {
+      return new Response(JSON.stringify({ error: "user_ids array is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -53,14 +63,16 @@ serve(async (req) => {
       });
     }
 
-    // Fetch all users except the calling admin
-    const { data: allUsers, error: fetchError } = await adminClient.auth.admin.listUsers();
-    if (fetchError) {
-      throw fetchError;
+    // Filter out the calling admin's ID for safety
+    const idsToDelete = user_ids.filter((id: string) => id !== caller.id);
+    
+    if (idsToDelete.length === 0) {
+      return new Response(JSON.stringify({ error: "No valid users to delete" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const usersToDelete = allUsers.users.filter(u => u.id !== caller.id);
-    
     const results = {
       deleted: 0,
       failed: 0,
@@ -89,25 +101,29 @@ serve(async (req) => {
       "user_works",
     ];
 
-    for (const user of usersToDelete) {
+    for (const userId of idsToDelete) {
       try {
+        // Get user email for logging
+        const { data: userData } = await adminClient.auth.admin.getUserById(userId);
+        const userEmail = userData?.user?.email || userId;
+
         // Delete from all related tables
         for (const table of tablesToClean) {
-          await adminClient.from(table).delete().eq("user_id", user.id);
+          await adminClient.from(table).delete().eq("user_id", userId);
         }
 
         // Delete the auth user
-        const { error: deleteError } = await adminClient.auth.admin.deleteUser(user.id);
+        const { error: deleteError } = await adminClient.auth.admin.deleteUser(userId);
         if (deleteError) {
           throw deleteError;
         }
 
         results.deleted++;
-        results.deletedEmails.push(user.email || user.id);
+        results.deletedEmails.push(userEmail);
       } catch (error: unknown) {
         results.failed++;
         results.errors.push({
-          email: user.email || user.id,
+          email: userId,
           error: error instanceof Error ? error.message : "Unknown error",
         });
       }

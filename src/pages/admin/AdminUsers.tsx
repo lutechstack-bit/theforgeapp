@@ -5,6 +5,7 @@ import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle } from 'lucide-react
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -53,6 +54,7 @@ export default function AdminUsers() {
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [userToDelete, setUserToDelete] = useState<Profile | null>(null);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
 
   // Fetch users
@@ -170,11 +172,13 @@ export default function AdminUsers() {
 
   // Bulk delete mutation
   const bulkDeleteMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (userIds: string[]) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
-      const response = await supabase.functions.invoke('bulk-delete-users');
+      const response = await supabase.functions.invoke('bulk-delete-users', {
+        body: { user_ids: userIds }
+      });
 
       if (response.error) throw new Error(response.error.message);
       if (response.data?.error) throw new Error(response.data.error);
@@ -185,6 +189,7 @@ export default function AdminUsers() {
       toast.success(`Deleted ${data.deleted} users${data.failed > 0 ? `, ${data.failed} failed` : ''}`);
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       setShowBulkDeleteConfirm(false);
+      setSelectedUserIds(new Set());
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -203,6 +208,32 @@ export default function AdminUsers() {
     return edition?.name || '-';
   };
 
+  // Get selectable users (exclude admin)
+  const selectableUsers = filteredUsers?.filter(u => u.email?.toLowerCase() !== 'admin@admin.in') || [];
+
+  // Toggle single user selection
+  const toggleUserSelection = (userId: string) => {
+    const newSelection = new Set(selectedUserIds);
+    if (newSelection.has(userId)) {
+      newSelection.delete(userId);
+    } else {
+      newSelection.add(userId);
+    }
+    setSelectedUserIds(newSelection);
+  };
+
+  // Toggle all visible users
+  const toggleAllSelection = () => {
+    if (selectedUserIds.size === selectableUsers.length && selectableUsers.length > 0) {
+      setSelectedUserIds(new Set());
+    } else {
+      setSelectedUserIds(new Set(selectableUsers.map(u => u.id)));
+    }
+  };
+
+  const isAllSelected = selectableUsers.length > 0 && selectedUserIds.size === selectableUsers.length;
+  const isSomeSelected = selectedUserIds.size > 0 && selectedUserIds.size < selectableUsers.length;
+
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
@@ -215,10 +246,10 @@ export default function AdminUsers() {
             variant="destructive" 
             onClick={() => setShowBulkDeleteConfirm(true)} 
             className="gap-2"
-            disabled={!users || users.length <= 1}
+            disabled={selectedUserIds.size === 0}
           >
             <Trash2 className="w-4 h-4" />
-            Delete All Users
+            Delete Selected ({selectedUserIds.size})
           </Button>
           <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
             <Plus className="w-4 h-4" />
@@ -243,6 +274,18 @@ export default function AdminUsers() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={isAllSelected}
+                  ref={(el) => {
+                    if (el) {
+                      (el as unknown as HTMLInputElement).indeterminate = isSomeSelected;
+                    }
+                  }}
+                  onCheckedChange={toggleAllSelection}
+                  aria-label="Select all"
+                />
+              </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>City</TableHead>
@@ -255,54 +298,70 @@ export default function AdminUsers() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={8} className="text-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
                 </TableCell>
               </TableRow>
             ) : filteredUsers?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No users found
                 </TableCell>
               </TableRow>
             ) : (
-              filteredUsers?.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.full_name || '-'}</TableCell>
-                  <TableCell>{user.email || '-'}</TableCell>
-                  <TableCell>{user.city || '-'}</TableCell>
-                  <TableCell>{getEditionName(user.edition_id)}</TableCell>
-                  <TableCell>
-                    <Badge variant={user.payment_status === 'BALANCE_PAID' ? 'default' : 'secondary'}>
-                      {user.payment_status === 'BALANCE_PAID' ? 'Full' : '₹15K'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={user.kyf_completed ? 'default' : 'outline'}>
-                      {user.kyf_completed ? 'Done' : 'Pending'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setEditingUser(user)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => setUserToDelete(user)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+              filteredUsers?.map((user) => {
+                const isAdmin = user.email?.toLowerCase() === 'admin@admin.in';
+                const isSelected = selectedUserIds.has(user.id);
+                return (
+                  <TableRow 
+                    key={user.id} 
+                    className={isSelected ? 'bg-primary/5' : undefined}
+                  >
+                    <TableCell>
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleUserSelection(user.id)}
+                        disabled={isAdmin}
+                        aria-label={`Select ${user.full_name || user.email}`}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">{user.full_name || '-'}</TableCell>
+                    <TableCell>{user.email || '-'}</TableCell>
+                    <TableCell>{user.city || '-'}</TableCell>
+                    <TableCell>{getEditionName(user.edition_id)}</TableCell>
+                    <TableCell>
+                      <Badge variant={user.payment_status === 'BALANCE_PAID' ? 'default' : 'secondary'}>
+                        {user.payment_status === 'BALANCE_PAID' ? 'Full' : '₹15K'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={user.kyf_completed ? 'default' : 'outline'}>
+                        {user.kyf_completed ? 'Done' : 'Pending'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setEditingUser(user)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setUserToDelete(user)}
+                          disabled={isAdmin}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
@@ -358,10 +417,10 @@ export default function AdminUsers() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="w-5 h-5" />
-              Delete All Users
+              Delete {selectedUserIds.size} Users
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>This will permanently delete <strong>{(users?.length || 1) - 1} users</strong> (except your admin account).</p>
+              <p>This will permanently delete <strong>{selectedUserIds.size} selected users</strong> and all their data.</p>
               <p className="text-destructive font-medium">This action cannot be undone!</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -369,10 +428,10 @@ export default function AdminUsers() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => bulkDeleteMutation.mutate()}
+              onClick={() => bulkDeleteMutation.mutate(Array.from(selectedUserIds))}
               disabled={bulkDeleteMutation.isPending}
             >
-              {bulkDeleteMutation.isPending ? 'Deleting...' : 'Yes, Delete All'}
+              {bulkDeleteMutation.isPending ? 'Deleting...' : `Delete ${selectedUserIds.size} Users`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
