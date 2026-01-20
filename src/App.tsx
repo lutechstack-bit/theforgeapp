@@ -9,6 +9,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { AdminRoute } from "@/components/admin/AdminRoute";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { MarkerProvider } from "@/components/feedback/MarkerProvider";
 
 // Pages
 import Auth from "./pages/Auth";
@@ -269,6 +270,7 @@ function App() {
             <Sonner />
             <BrowserRouter>
               <ScrollToTop />
+              <MarkerProvider />
               <AppRoutes />
             </BrowserRouter>
           </TooltipProvider>
