@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Film, Play, ExternalLink } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Film, Play, ExternalLink, Expand } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface StudentWorkItem {
@@ -12,9 +12,10 @@ interface StudentWorkItem {
 
 interface SidebarStudentWorkCarouselProps {
   items: StudentWorkItem[];
+  onViewAll?: () => void;
 }
 
-const SidebarStudentWorkCarousel: React.FC<SidebarStudentWorkCarouselProps> = ({ items }) => {
+const SidebarStudentWorkCarousel: React.FC<SidebarStudentWorkCarouselProps> = ({ items, onViewAll }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVideoActive, setIsVideoActive] = useState(false);
 
@@ -117,27 +118,40 @@ const SidebarStudentWorkCarousel: React.FC<SidebarStudentWorkCarouselProps> = ({
           <Film className="w-4 h-4 text-accent" />
           <h3 className="text-sm font-semibold text-foreground">Student Work</h3>
         </div>
-        {items.length > 1 && (
-          <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1">
+          {items.length > 1 && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={prevSlide}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-xs text-muted-foreground">{currentIndex + 1}/{items.length}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={nextSlide}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </>
+          )}
+          {onViewAll && (
             <Button
               variant="ghost"
               size="icon"
               className="h-6 w-6"
-              onClick={prevSlide}
+              onClick={onViewAll}
+              title="View all"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <Expand className="w-3.5 h-3.5" />
             </Button>
-            <span className="text-xs text-muted-foreground">{currentIndex + 1}/{items.length}</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={nextSlide}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Video Container */}

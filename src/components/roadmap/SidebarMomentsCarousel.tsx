@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Camera } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Camera, Expand } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface MomentsItem {
   id: string;
@@ -11,11 +12,13 @@ interface MomentsItem {
 interface SidebarMomentsCarouselProps {
   items: MomentsItem[];
   autoScrollInterval?: number;
+  onViewAll?: () => void;
 }
 
 const SidebarMomentsCarousel: React.FC<SidebarMomentsCarouselProps> = ({
   items,
-  autoScrollInterval = 5000
+  autoScrollInterval = 5000,
+  onViewAll
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -66,13 +69,27 @@ const SidebarMomentsCarousel: React.FC<SidebarMomentsCarouselProps> = ({
           <Camera className="w-4 h-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Past Moments</h3>
         </div>
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          {currentIndex + 1}/{items.length}
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-muted-foreground">{currentIndex + 1}/{items.length}</span>
+          {onViewAll && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={onViewAll}
+              title="View all"
+            >
+              <Expand className="w-3.5 h-3.5" />
+            </Button>
+          )}
         </div>
       </div>
 
       {/* Image Container */}
-      <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-secondary/30">
+      <div 
+        className="relative aspect-[4/3] rounded-lg overflow-hidden bg-secondary/30 cursor-pointer"
+        onClick={onViewAll}
+      >
         <img
           src={currentItem.media_url}
           alt={currentItem.title || 'Forge moment'}

@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import SidebarMomentsCarousel from './SidebarMomentsCarousel';
 import SidebarStudentWorkCarousel from './SidebarStudentWorkCarousel';
 import SidebarStayCarousel from './SidebarStayCarousel';
+import { RoadmapHighlightsModal } from '@/components/home/RoadmapHighlightsModal';
 
 interface RoadmapSidebarProps {
   editionId?: string;
@@ -19,7 +20,11 @@ interface SidebarItem {
   order_index: number;
 }
 
+type ModalType = 'moments' | 'studentWork' | 'stayLocation' | null;
+
 const RoadmapSidebar: React.FC<RoadmapSidebarProps> = ({ editionId }) => {
+  const [activeModal, setActiveModal] = useState<ModalType>(null);
+
   // First, fetch content IDs linked to this edition via junction table
   const { data: linkedContentIds } = useQuery({
     queryKey: ['roadmap-sidebar-content-ids', editionId],
@@ -121,22 +126,71 @@ const RoadmapSidebar: React.FC<RoadmapSidebarProps> = ({ editionId }) => {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Block 1: Past Cohort Moments */}
-      {momentsItems.length > 0 && (
-        <SidebarMomentsCarousel items={momentsItems} />
-      )}
+    <>
+      <div className="space-y-4">
+        {/* Block 1: Past Cohort Moments */}
+        {momentsItems.length > 0 && (
+          <SidebarMomentsCarousel 
+            items={momentsItems} 
+            onViewAll={() => setActiveModal('moments')}
+          />
+        )}
 
-      {/* Block 2: Student Work */}
-      {studentWorkItems.length > 0 && (
-        <SidebarStudentWorkCarousel items={studentWorkItems} />
-      )}
+        {/* Block 2: Student Work */}
+        {studentWorkItems.length > 0 && (
+          <SidebarStudentWorkCarousel 
+            items={studentWorkItems}
+            onViewAll={() => setActiveModal('studentWork')}
+          />
+        )}
 
-      {/* Block 3: Stay Locations */}
-      {stayItems.length > 0 && (
-        <SidebarStayCarousel items={stayItems} />
-      )}
-    </div>
+        {/* Block 3: Stay Locations */}
+        {stayItems.length > 0 && (
+          <SidebarStayCarousel 
+            items={stayItems}
+            onViewAll={() => setActiveModal('stayLocation')}
+          />
+        )}
+      </div>
+
+      {/* Modals */}
+      <RoadmapHighlightsModal
+        open={activeModal === 'moments'}
+        onOpenChange={(open) => !open && setActiveModal(null)}
+        type="moments"
+        items={momentsItems.map(item => ({
+          id: item.id,
+          media_url: item.media_url,
+          title: item.title,
+          caption: item.caption,
+        }))}
+      />
+      
+      <RoadmapHighlightsModal
+        open={activeModal === 'studentWork'}
+        onOpenChange={(open) => !open && setActiveModal(null)}
+        type="studentWork"
+        items={studentWorkItems.map(item => ({
+          id: item.id,
+          media_url: item.media_url,
+          media_type: item.media_type,
+          title: item.title,
+          caption: item.caption,
+        }))}
+      />
+      
+      <RoadmapHighlightsModal
+        open={activeModal === 'stayLocation'}
+        onOpenChange={(open) => !open && setActiveModal(null)}
+        type="stayLocation"
+        items={stayItems.map(item => ({
+          id: item.id,
+          media_url: item.media_url,
+          title: item.title,
+          caption: item.caption,
+        }))}
+      />
+    </>
   );
 };
 
