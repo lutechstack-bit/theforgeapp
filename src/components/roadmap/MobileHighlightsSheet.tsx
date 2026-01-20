@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import {
   Sheet,
@@ -19,8 +19,10 @@ const MobileHighlightsSheet: React.FC<MobileHighlightsSheetProps> = ({
   editionId,
   trigger 
 }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         {trigger || (
           <Button variant="ghost" size="sm" className="gap-2">

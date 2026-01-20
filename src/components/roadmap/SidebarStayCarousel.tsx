@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Expand } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface StayItem {
@@ -11,9 +11,10 @@ interface StayItem {
 
 interface SidebarStayCarouselProps {
   items: StayItem[];
+  onViewAll?: () => void;
 }
 
-const SidebarStayCarousel: React.FC<SidebarStayCarouselProps> = ({ items }) => {
+const SidebarStayCarousel: React.FC<SidebarStayCarouselProps> = ({ items, onViewAll }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const nextSlide = () => {
@@ -47,31 +48,47 @@ const SidebarStayCarousel: React.FC<SidebarStayCarouselProps> = ({ items }) => {
           <MapPin className="w-4 h-4 text-green-500" />
           <h3 className="text-sm font-semibold text-foreground">Stay Location</h3>
         </div>
-        {items.length > 1 && (
-          <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1">
+          {items.length > 1 && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={prevSlide}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-xs text-muted-foreground">{currentIndex + 1}/{items.length}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={nextSlide}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </>
+          )}
+          {onViewAll && (
             <Button
               variant="ghost"
               size="icon"
               className="h-6 w-6"
-              onClick={prevSlide}
+              onClick={onViewAll}
+              title="View all"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <Expand className="w-3.5 h-3.5" />
             </Button>
-            <span className="text-xs text-muted-foreground">{currentIndex + 1}/{items.length}</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={nextSlide}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Image Container */}
-      <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-secondary/30">
+      <div 
+        className="relative aspect-[4/3] rounded-lg overflow-hidden bg-secondary/30 cursor-pointer"
+        onClick={onViewAll}
+      >
         <img
           src={currentItem.media_url}
           alt={currentItem.title || 'Stay location'}
