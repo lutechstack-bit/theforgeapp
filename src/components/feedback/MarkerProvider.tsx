@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 
@@ -17,16 +17,39 @@ declare global {
 export const MarkerProvider = () => {
   const { user, profile, edition } = useAuth();
   const { isAdmin, loading } = useAdminCheck();
+  const [markerReady, setMarkerReady] = useState(false);
 
+  // Poll for Marker.io to be ready
   useEffect(() => {
-    // Wait for Marker to be available and admin check to complete
-    if (loading || !window.Marker) return;
+    if (window.Marker) {
+      setMarkerReady(true);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (window.Marker) {
+        setMarkerReady(true);
+        clearInterval(interval);
+      }
+    }, 100);
+
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+    }, 10000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, []);
+
+  // Show/hide widget based on admin status
+  useEffect(() => {
+    if (loading || !markerReady || !window.Marker) return;
 
     if (isAdmin) {
-      // Show widget for admins
       window.Marker.show();
 
-      // Set reporter info
       if (user && profile) {
         window.Marker.setReporter({
           email: user.email || '',
@@ -34,7 +57,6 @@ export const MarkerProvider = () => {
         });
       }
 
-      // Set custom data
       window.Marker.setCustomData({
         environment: import.meta.env.MODE,
         app: 'the-forge',
@@ -43,10 +65,9 @@ export const MarkerProvider = () => {
         cohortType: edition?.cohort_type || 'Unknown',
       });
     } else {
-      // Hide widget for non-admins
       window.Marker.hide();
     }
-  }, [isAdmin, loading, user, profile, edition]);
+  }, [isAdmin, loading, markerReady, user, profile, edition]);
 
   return null;
 };
