@@ -56,6 +56,50 @@ export type Database = {
         }
         Relationships: []
       }
+      app_doc_versions: {
+        Row: {
+          changelog: string | null
+          content_snapshot: Json
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_current: boolean | null
+          release_notes: string | null
+          title: string
+          version: string
+        }
+        Insert: {
+          changelog?: string | null
+          content_snapshot?: Json
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_current?: boolean | null
+          release_notes?: string | null
+          title: string
+          version: string
+        }
+        Update: {
+          changelog?: string | null
+          content_snapshot?: Json
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_current?: boolean | null
+          release_notes?: string | null
+          title?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_doc_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       city_groups: {
         Row: {
           city_key: string
