@@ -1,0 +1,20 @@
+declare module 'html2pdf.js' {
+  interface Html2PdfOptions {
+    margin?: number | number[];
+    filename?: string;
+    image?: { type: string; quality: number };
+    html2canvas?: { scale: number; useCORS?: boolean; logging?: boolean };
+    jsPDF?: { unit: string; format: string; orientation: string };
+    pagebreak?: { mode: string[] };
+  }
+
+  interface Html2Pdf {
+    set: (options: Html2PdfOptions) => Html2Pdf;
+    from: (element: HTMLElement | null) => Html2Pdf;
+    save: () => Promise<void>;
+    toPdf: () => Html2Pdf;
+    get: (type: string) => Promise<any>;
+  }
+
+  export default function html2pdf(): Html2Pdf;
+}

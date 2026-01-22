@@ -50,6 +50,7 @@ import AdminNightlyRituals from "./pages/admin/AdminNightlyRituals";
 import AdminEquipment from "./pages/admin/AdminEquipment";
 import AdminMentors from "./pages/admin/AdminMentors";
 import AdminAlumniTestimonials from "./pages/admin/AdminAlumniTestimonials";
+import AdminDocs from "./pages/admin/AdminDocs";
 import DynamicKYForm from "./pages/DynamicKYForm";
 import EventDetail from "./pages/EventDetail";
 
@@ -252,6 +253,7 @@ const AppRoutes = () => {
         <Route path="nightly-rituals" element={<AdminNightlyRituals />} />
         <Route path="mentors" element={<AdminMentors />} />
         <Route path="alumni-testimonials" element={<AdminAlumniTestimonials />} />
+        <Route path="docs" element={<AdminDocs />} />
       </Route>
       
       {/* Catch-all */}

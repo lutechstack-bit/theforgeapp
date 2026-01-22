@@ -15,7 +15,8 @@ import {
   PanelRight,
   UserCircle,
   Video,
-  Star
+  Star,
+  BookOpen
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +35,7 @@ const adminNavItems = [
   { to: '/admin/alumni-testimonials', icon: Video, label: 'Alumni Testimonials' },
   { to: '/admin/community-highlights', icon: Star, label: 'Community Highlights' },
   { to: '/admin/auto-updates', icon: Sparkles, label: 'Auto Updates' },
+  { to: '/admin/docs', icon: BookOpen, label: 'Documentation' },
 ];
 
 export const AdminLayout: React.FC = () => {
