@@ -531,6 +531,98 @@ export type Database = {
         }
         Relationships: []
       }
+      journey_stages: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          days_after_start: number | null
+          days_before_start: number | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          order_index: number
+          stage_key: string
+          title: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          days_after_start?: number | null
+          days_before_start?: number | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          order_index: number
+          stage_key: string
+          title: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          days_after_start?: number | null
+          days_before_start?: number | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          order_index?: number
+          stage_key?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      journey_tasks: {
+        Row: {
+          auto_complete_field: string | null
+          cohort_types: string[] | null
+          created_at: string | null
+          deep_link: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_required: boolean | null
+          order_index: number
+          stage_id: string | null
+          title: string
+        }
+        Insert: {
+          auto_complete_field?: string | null
+          cohort_types?: string[] | null
+          created_at?: string | null
+          deep_link?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_required?: boolean | null
+          order_index?: number
+          stage_id?: string | null
+          title: string
+        }
+        Update: {
+          auto_complete_field?: string | null
+          cohort_types?: string[] | null
+          created_at?: string | null
+          deep_link?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_required?: boolean | null
+          order_index?: number
+          stage_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_tasks_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "journey_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ky_dynamic_responses: {
         Row: {
           created_at: string
@@ -1943,6 +2035,41 @@ export type Database = {
             columns: ["edition_id"]
             isOneToOne: false
             referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_journey_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          status: string | null
+          task_id: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          task_id?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          task_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_journey_progress_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "journey_tasks"
             referencedColumns: ["id"]
           },
         ]

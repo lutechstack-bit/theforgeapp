@@ -9,9 +9,8 @@ import { TestimonialVideoCard } from '@/components/shared/TestimonialVideoCard';
 import { FlipMentorCard } from '@/components/shared/FlipMentorCard';
 import { MentorDetailModal } from '@/components/shared/MentorDetailModal';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
-import { KYFormReminderBanner } from '@/components/onboarding/KYFormReminderBanner';
 import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
-import { ProgressHeroSection } from '@/components/home/ProgressHeroSection';
+import { JourneyBentoHero } from '@/components/journey';
 import { RoadmapBentoBox } from '@/components/home/RoadmapBentoBox';
 import { Users } from 'lucide-react';
 import { Mentor } from '@/data/mentorsData';
@@ -143,11 +142,8 @@ const Home: React.FC = () => {
       {/* Compact Countdown Timer - Gold themed strip at top */}
       <CompactCountdownTimer edition={edition} />
 
-      {/* Progress Hero Section - My Progress dashboard */}
-      <ProgressHeroSection />
-
-      {/* KY Form Reminder Banner */}
-      <KYFormReminderBanner />
+      {/* Journey Bento Hero - 6-stage student journey */}
+      <JourneyBentoHero />
 
       {/* Meet Your Mentors - Moved up after hero */}
       {mentors && mentors.length > 0 && (
