@@ -16,7 +16,9 @@ import {
   UserCircle,
   Video,
   Star,
-  BookOpen
+  BookOpen,
+  Route,
+  ListTodo
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,6 +27,8 @@ const adminNavItems = [
   { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/editions', icon: Calendar, label: 'Editions' },
   { to: '/admin/ky-forms', icon: ClipboardList, label: 'KY Forms' },
+  { to: '/admin/journey-stages', icon: Route, label: 'Journey Stages' },
+  { to: '/admin/journey-tasks', icon: ListTodo, label: 'Journey Tasks' },
   { to: '/admin/roadmap', icon: Map, label: 'Roadmap' },
   { to: '/admin/roadmap-sidebar', icon: PanelRight, label: 'Roadmap Sidebar' },
   { to: '/admin/equipment', icon: Package, label: 'Equipment' },
