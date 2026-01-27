@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Map, FileText, Package, Film, Image, BookOpen, Sparkles
+  Map, FileText, Package, Film, Image, BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -9,14 +9,12 @@ interface QuickActionsBarProps {
   hasGallery?: boolean;
   hasFilms?: boolean;
   hasEquipment?: boolean;
-  mobileHighlightsButton?: React.ReactNode;
 }
 
 const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
   hasGallery = false,
   hasFilms = false,
-  hasEquipment = false,
-  mobileHighlightsButton
+  hasEquipment = false
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -39,7 +37,7 @@ const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
 
   return (
     <div className="sticky top-16 z-30 -mx-3 sm:-mx-4 px-3 sm:px-4 py-2.5 sm:py-3 mb-4 sm:mb-6 glass-nav">
-      <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide pr-3">
+      <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide">
         {sections.map((section) => {
           const Icon = section.icon;
           const active = isActive(section.path);
@@ -61,13 +59,6 @@ const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
             </Button>
           );
         })}
-        
-        {/* Mobile Highlights Button - Visible on mobile/tablet, positioned prominently */}
-        {mobileHighlightsButton && (
-          <div className="lg:hidden flex-shrink-0 ml-2 pl-2 border-l border-border">
-            {mobileHighlightsButton}
-          </div>
-        )}
       </div>
     </div>
   );

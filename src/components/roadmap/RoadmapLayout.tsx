@@ -5,7 +5,7 @@ import { useRoadmapData } from '@/hooks/useRoadmapData';
 import RoadmapHero from '@/components/roadmap/RoadmapHero';
 import QuickActionsBar from '@/components/roadmap/QuickActionsBar';
 import RoadmapSidebar from '@/components/roadmap/RoadmapSidebar';
-import MobileHighlightsSheet from '@/components/roadmap/MobileHighlightsSheet';
+import FloatingHighlightsButton from '@/components/roadmap/FloatingHighlightsButton';
 
 const RoadmapLayout: React.FC = () => {
   const {
@@ -74,14 +74,11 @@ const RoadmapLayout: React.FC = () => {
             totalCount={totalCount}
           />
 
-          {/* Quick Actions with Highlights button for mobile */}
+          {/* Quick Actions - Clean navigation tabs */}
           <QuickActionsBar
             hasGallery={stayGallery.length > 0 || momentsGallery.length > 0}
             hasFilms={(studentFilms?.length || 0) > 0}
             hasEquipment={showEquipment}
-            mobileHighlightsButton={
-              <MobileHighlightsSheet editionId={profile.edition_id} />
-            }
           />
 
           {/* Page Content */}
@@ -95,6 +92,9 @@ const RoadmapLayout: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Floating Highlights Button - Mobile/Tablet only */}
+      <FloatingHighlightsButton editionId={profile.edition_id} />
     </div>
   );
 };
