@@ -20,9 +20,20 @@ export const StickyNoteCardStack: React.FC<StickyNoteCardStackProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const startXRef = useRef(0);
+  const lastXRef = useRef(0);
+  const lastTimeRef = useRef(Date.now());
+  const velocityRef = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const isDraggingRef = useRef(false);
 
   const SWIPE_THRESHOLD = 50;
+  const VELOCITY_THRESHOLD = 0.3;
+
+  // Keep ref in sync with state for native event handler
+  useEffect(() => {
+    isDraggingRef.current = isDragging;
+  }, [isDragging]);
 
   // Native touch handler for passive: false
   useEffect(() => {
@@ -30,35 +41,83 @@ export const StickyNoteCardStack: React.FC<StickyNoteCardStackProps> = ({
     if (!container) return;
 
     const handleTouchMoveNative = (e: TouchEvent) => {
-      if (!isDragging) return;
+      if (!isDraggingRef.current) return;
+      
       const currentX = e.touches[0].clientX;
+      const currentTime = Date.now();
+      const timeDelta = currentTime - lastTimeRef.current;
+      
+      // Track velocity for momentum
+      if (timeDelta > 0) {
+        velocityRef.current = (currentX - lastXRef.current) / timeDelta;
+      }
+      
+      lastXRef.current = currentX;
+      lastTimeRef.current = currentTime;
+      
       const diff = currentX - startXRef.current;
       
       // Prevent vertical scroll when swiping horizontally
       if (Math.abs(diff) > 10) {
         e.preventDefault();
       }
-      setDragOffset(diff);
+      
+      // Use RAF for smooth animation
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+      
+      rafRef.current = requestAnimationFrame(() => {
+        setDragOffset(diff);
+      });
     };
 
     container.addEventListener('touchmove', handleTouchMoveNative, { passive: false });
     return () => container.removeEventListener('touchmove', handleTouchMoveNative);
-  }, [isDragging]);
+  }, []);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     setIsDragging(true);
     startXRef.current = e.touches[0].clientX;
+    lastXRef.current = e.touches[0].clientX;
+    lastTimeRef.current = Date.now();
+    velocityRef.current = 0;
     setDragOffset(0);
   }, []);
 
   const handleTouchEnd = useCallback(() => {
+    // Cancel any pending RAF
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    
     if (!isDragging) return;
     setIsDragging(false);
 
-    if (dragOffset > SWIPE_THRESHOLD && currentIndex > 0) {
-      onStageChange(currentIndex - 1);
-    } else if (dragOffset < -SWIPE_THRESHOLD && currentIndex < stages.length - 1) {
-      onStageChange(currentIndex + 1);
+    const velocity = velocityRef.current;
+    const shouldSwipeByVelocity = Math.abs(velocity) > VELOCITY_THRESHOLD;
+    const shouldSwipeByDistance = Math.abs(dragOffset) > SWIPE_THRESHOLD;
+
+    let newIndex = currentIndex;
+
+    if (shouldSwipeByVelocity || shouldSwipeByDistance) {
+      // Use velocity direction if fast enough, otherwise use distance
+      const direction = shouldSwipeByVelocity ? velocity : dragOffset;
+      
+      if (direction > 0 && currentIndex > 0) {
+        newIndex = currentIndex - 1;
+      } else if (direction < 0 && currentIndex < stages.length - 1) {
+        newIndex = currentIndex + 1;
+      }
+    }
+
+    if (newIndex !== currentIndex) {
+      // Haptic feedback on successful swipe
+      if ('vibrate' in navigator) {
+        navigator.vibrate(10);
+      }
+      onStageChange(newIndex);
     }
     
     setDragOffset(0);
@@ -68,11 +127,25 @@ export const StickyNoteCardStack: React.FC<StickyNoteCardStackProps> = ({
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     setIsDragging(true);
     startXRef.current = e.clientX;
+    lastXRef.current = e.clientX;
+    lastTimeRef.current = Date.now();
+    velocityRef.current = 0;
     setDragOffset(0);
   }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging) return;
+    
+    const currentTime = Date.now();
+    const timeDelta = currentTime - lastTimeRef.current;
+    
+    if (timeDelta > 0) {
+      velocityRef.current = (e.clientX - lastXRef.current) / timeDelta;
+    }
+    
+    lastXRef.current = e.clientX;
+    lastTimeRef.current = currentTime;
+    
     const diff = e.clientX - startXRef.current;
     setDragOffset(diff);
   }, [isDragging]);
@@ -126,14 +199,14 @@ export const StickyNoteCardStack: React.FC<StickyNoteCardStackProps> = ({
               key={stage.id}
               className={cn(
                 'absolute inset-0',
-                isDragging && offset === 0 ? 'transition-none' : 'transition-all duration-300 ease-out',
                 offset !== 0 && 'pointer-events-none'
               )}
               style={{
                 transform: `translateX(${translateX}px) translateY(${baseTranslateY}px) rotate(${rotation}deg) scale(${scale})`,
                 zIndex,
                 opacity,
-                willChange: 'transform, opacity',
+                transition: isDragging && offset === 0 ? 'none' : 'transform 300ms ease-out, opacity 300ms ease-out',
+                willChange: isDragging ? 'transform' : 'auto',
                 backfaceVisibility: 'hidden',
               }}
             >
