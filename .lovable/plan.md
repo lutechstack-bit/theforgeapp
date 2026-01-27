@@ -1,218 +1,248 @@
 
 
-# Smart Announcement Center + Personal User Sticky Note
+# Fix: Mobile PWA Issues - Sticky Notes, Personal Note, and Sidebar Highlights
 
-## Architecture Clarification - No Impact on Existing Sticky Notes
+## Issues Identified from Screenshots
 
-The new features are **completely independent** from your existing journey sticky notes:
+### Issue 1: Sticky Note Card Stack - Overlapping/Glitchy Swipe
+**Screenshots 1 & 2** show multiple cards overlapping awkwardly during swipe transitions. The cards are stacking incorrectly, with visible "Coming soon" overlays from background cards bleeding through.
 
-| Component | Purpose | Impact on StickyNoteCard |
-|-----------|---------|--------------------------|
-| `AnnouncementBanner.tsx` | NEW - Hero notification banner | None - separate component |
-| `PersonalNoteCard.tsx` | NEW - User's personal memo | None - separate component |
-| `StickyNoteCard.tsx` | EXISTING - Journey stage cards | **Unchanged** |
-
-The `StickyNoteCard` component with its distinct colored borders (yellow, emerald, orange, blue, gold, purple) remains exactly as-is.
-
----
-
-## Feature 1: Announcement Banner (Admin + Smart Triggers)
-
-### Three Announcement Sources
-
-1. **Manual Admin Announcements**
-   - Created via new Admin panel section
-   - Marked as `is_hero_announcement: true`
-   - Full control over message, icon, link, expiry
-
-2. **Smart Automatic Triggers**
-   - Computed client-side based on user state
-   - Examples:
-     - KYF deadline approaching
-     - Forge countdown milestones (7, 3, 1, 0 days)
-     - Stage transition welcome
-     - Streak celebrations (7, 14, 30 days)
-
-3. **Admin-Configurable Trigger Rules**
-   - Enable/disable specific triggers
-   - Customize message templates
-   - Set timing parameters
-
-### Visual Design
-
-```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│  📋  Complete your KYF form before Jan 30! →                       ✕   │
-└─────────────────────────────────────────────────────────────────────────┘
-     ↑ Gold glass banner (bg-primary/10, border-primary/30)
-```
-
-### Features
-- Auto-cycles through multiple announcements (5s)
-- Dismissible (stored in localStorage)
-- Click navigates to deep_link
-- Priority ordering: Pinned > Urgent > Stage-specific > General
+**Root Cause:** The `StickyNoteCardStack` component has issues with:
+- Cards not clipping properly within their container
+- Background cards visible and overlapping the foreground
+- Transform calculations creating visual artifacts on mobile Safari
+- Touch events potentially conflicting with parent scroll
 
 ---
 
-## Feature 2: Personal User Sticky Note
-
-A small, editable memo card for users - **completely separate** from journey sticky notes.
-
-### Visual Design
-
-```text
-┌────────────────────────────────────┐
-│  📝 My Notes               [Edit] │
-│  ─────────────────────────────────│
-│  "Remember to pack charger        │
-│   and download Day 0 video"       │
-│                                   │
-│  Updated 2 hours ago              │
-└────────────────────────────────────┘
-     ↑ Rose accent border (#F43F5E)
-```
-
-### Features
-- Inline editing (click to edit)
-- Auto-save (debounced 500ms)
-- 200 character limit
-- Syncs across devices
-- Rose color distinguishes from journey sticky notes
+### Issue 2: Personal Note Card Missing on Mobile
+The `PersonalNoteCard` is only rendered in the **desktop grid layout** (`!isMobile` section). Looking at JourneyBentoHero.tsx:
+- Lines 261-385: Desktop layout includes `<PersonalNoteCard />`
+- Lines 388-479: Mobile layout (StickyNoteCardStack) does **NOT** include PersonalNoteCard
 
 ---
 
-## Database Changes
+### Issue 3: Sidebar Highlights Not Visible in PWA
+**Screenshots 4 & 5** show the sidebar content (Past Moments, Student Work, Stay Location) working on desktop but missing on mobile.
 
-### New Table: `user_notes`
+**Root Cause:** In `RoadmapLayout.tsx`:
+- Lines 91-96: Sidebar is hidden with `hidden lg:block`
+- Lines 82-84: `MobileHighlightsSheet` is passed to `QuickActionsBar` as a trigger button
+- BUT the trigger button (Highlights) may not be clearly visible or the sheet content may not render properly
 
-```sql
-CREATE TABLE public.user_notes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  content TEXT DEFAULT '',
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(user_id)
-);
+The home page uses `RoadmapBentoBox` which shows these items as compact cards - this should work on mobile. The issue appears to be on the Roadmap page specifically.
 
-ALTER TABLE public.user_notes ENABLE ROW LEVEL SECURITY;
+---
 
-CREATE POLICY "Users can manage own notes"
-  ON public.user_notes FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-```
+## Solution Plan
 
-### New Table: `announcement_triggers`
+### Part 1: Fix Sticky Note Card Stack Swipe
 
-```sql
-CREATE TABLE public.announcement_triggers (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  trigger_type TEXT NOT NULL UNIQUE,
-  title_template TEXT NOT NULL,
-  message_template TEXT,
-  deep_link TEXT,
-  icon_emoji TEXT DEFAULT '📢',
-  is_active BOOLEAN DEFAULT true,
-  priority INTEGER DEFAULT 0,
-  config JSONB DEFAULT '{}',
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
+**File:** `src/components/journey/StickyNoteCardStack.tsx`
 
-ALTER TABLE public.announcement_triggers ENABLE ROW LEVEL SECURITY;
+1. **Use Embla Carousel** instead of custom swipe implementation for reliable touch handling
+2. If keeping custom implementation:
+   - Add `overflow-hidden` to container to clip background cards
+   - Reduce visible background cards from 2 to 1
+   - Add `touch-pan-x` for better touch handling
+   - Reduce rotation and offset values for less visual clutter
+   - Add `will-change: transform` for GPU acceleration
+   - Prevent touch events from bubbling up
+   - Add haptic feedback on successful swipe
 
-CREATE POLICY "Everyone can view triggers"
-  ON public.announcement_triggers FOR SELECT TO authenticated USING (true);
+**Key Changes:**
+```typescript
+// Container with proper clipping
+<div 
+  ref={containerRef}
+  className="relative min-h-[320px] overflow-hidden touch-pan-x"
+  style={{ touchAction: 'pan-x' }}
+  // ... handlers
+>
 
-CREATE POLICY "Admins can manage triggers"
-  ON public.announcement_triggers FOR ALL
-  USING (public.has_role(auth.uid(), 'admin'));
-```
+// Limit visible cards to 1 in each direction
+const isVisible = Math.abs(offset) <= 1;
 
-### Modify: `notifications` Table
-
-```sql
-ALTER TABLE public.notifications
-  ADD COLUMN IF NOT EXISTS is_hero_announcement BOOLEAN DEFAULT false,
-  ADD COLUMN IF NOT EXISTS display_style TEXT DEFAULT 'card',
-  ADD COLUMN IF NOT EXISTS icon_emoji TEXT DEFAULT '📢',
-  ADD COLUMN IF NOT EXISTS target_stage TEXT;
+// Reduce visual clutter
+const baseRotation = offset * 1; // Was 2
+const baseTranslateX = offset * 4; // Was 8
+const baseTranslateY = Math.abs(offset) * 4; // Was 6
+const scale = 1 - Math.abs(offset) * 0.05;
+const opacity = 1 - Math.abs(offset) * 0.4;
 ```
 
 ---
 
-## New Files
+### Part 2: Add Personal Note Card to Mobile View
 
-| File | Purpose |
-|------|---------|
-| `src/components/journey/AnnouncementBanner.tsx` | Hero notification banner |
-| `src/components/journey/PersonalNoteCard.tsx` | User's personal memo card |
-| `src/hooks/useSmartAnnouncements.ts` | Compute smart triggers client-side |
-| `src/hooks/usePersonalNote.ts` | User note CRUD operations |
-| `src/pages/admin/AdminAnnouncements.tsx` | Admin page for announcements + triggers |
+**File:** `src/components/journey/JourneyBentoHero.tsx`
 
-## Modified Files
+Add `PersonalNoteCard` below the `StickyNoteCardStack` in the mobile section:
+
+```tsx
+{/* Mobile: Stacked Card UI */}
+{isMobile && (
+  <>
+    <StickyNoteCardStack
+      stages={allOrderedStages}
+      currentIndex={effectiveMobileIndex}
+      onStageChange={setMobileCurrentIndex}
+    >
+      {/* ... existing children */}
+    </StickyNoteCardStack>
+    
+    {/* Personal Note - Mobile placement */}
+    <PersonalNoteCard compact className="mt-4" />
+  </>
+)}
+```
+
+---
+
+### Part 3: Fix Mobile Highlights Sheet Visibility
+
+**File:** `src/components/roadmap/QuickActionsBar.tsx`
+
+Improve the Highlights button visibility:
+
+```tsx
+{/* Mobile Highlights Button */}
+{mobileHighlightsButton && (
+  <div className="lg:hidden flex-shrink-0">
+    {mobileHighlightsButton}
+  </div>
+)}
+```
+
+**File:** `src/components/roadmap/MobileHighlightsSheet.tsx`
+
+Improve trigger visibility with a more prominent button:
+
+```tsx
+<SheetTrigger asChild>
+  {trigger || (
+    <Button 
+      variant="outline" 
+      size="sm" 
+      className="gap-2 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
+    >
+      <Sparkles className="w-4 h-4" />
+      Highlights
+    </Button>
+  )}
+</SheetTrigger>
+```
+
+Also ensure the sheet content scrolls properly and renders the sidebar content.
+
+---
+
+## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/journey/JourneyBentoHero.tsx` | Integrate AnnouncementBanner + PersonalNoteCard |
-| `src/components/journey/index.ts` | Export new components |
-| `src/components/admin/AdminLayout.tsx` | Add Announcements nav item |
-
-## Files NOT Modified
-
-| File | Status |
-|------|--------|
-| `src/components/journey/StickyNoteCard.tsx` | **Unchanged** - journey stage cards stay as-is |
-| `src/components/journey/StickyNoteCardStack.tsx` | **Unchanged** |
-| `src/components/journey/StickyNoteDetailModal.tsx` | **Unchanged** |
+| `src/components/journey/StickyNoteCardStack.tsx` | Fix swipe mechanics, reduce visual artifacts, better touch handling |
+| `src/components/journey/JourneyBentoHero.tsx` | Add PersonalNoteCard to mobile layout section |
+| `src/components/roadmap/QuickActionsBar.tsx` | Improve mobile highlights button visibility |
+| `src/components/roadmap/MobileHighlightsSheet.tsx` | More prominent trigger button styling |
 
 ---
 
-## Hero Section Layout
+## Visual Before/After
+
+### Mobile Journey Section (After Fix)
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│  Good morning, Prashanth! 👋                   🔥 7-day streak         │
-│  14 days until Forge                                    Stage 3 of 6    │
-├─────────────────────────────────────────────────────────────────────────┤
-│  📋  Complete your KYF form before Jan 30 →                        ✕   │  ← NEW: AnnouncementBanner
-├─────────────────────────────────────────────────────────────────────────┤
-│  [Stage Navigation Strip: ✓1 ✓2 ●3 ○4 ○5 ○6]                            │
-├───────────────────────────────────────────────┬─────────────────────────┤
-│                                               │                         │
-│  ┌─ CURRENT: Final Prep ─────────┐            │  ┌─ 📝 My Notes ───────┐│  ← NEW: PersonalNoteCard
-│  │  [Orange border - UNCHANGED]  │            │  │  [Rose border]      ││
-│  │  3/5 tasks                    │            │  │  "Pack camera..."   ││
-│  │  [✓] Review Day 0 arrival     │            │  └─────────────────────┘│
-│  │  [ ] Download offline content │            │                         │
-│  └───────────────────────────────┘            │  ┌─ Pre-Travel ────────┐│
-│                                               │  │  [Emerald border]   ││
-│  EXISTING STICKY NOTES UNCHANGED              │  │  ✓ 6/6 complete     ││
-│                                               │  └─────────────────────┘│
-└───────────────────────────────────────────────┴─────────────────────────┘
+┌─────────────────────────────────────────┐
+│  Good morning! 👋        🔥 7-day      │
+│  10 days until Forge     Stage 1 of 6  │
+├─────────────────────────────────────────┤
+│  📢 Announcement Banner                 │
+├─────────────────────────────────────────┤
+│  [●1] [○2] [○3] [○4] [○5] [○6]          │  ← Stage Nav
+├─────────────────────────────────────────┤
+│  ┌─────────────────────────────────────┐│
+│  │ 📋 Pre-Registration          1/6   ││  ← Single clean card
+│  │ ──────────────────────────────────── ││    (no background overlap)
+│  │ [✓] Complete KYF Form               ││
+│  │ [ ] Book your travel                ││
+│  │ Tap to see all 6 tasks              ││
+│  └─────────────────────────────────────┘│
+│  ●  ○  ○  ○  ○  ○                       │  ← Dot indicators
+├─────────────────────────────────────────┤
+│  ┌─ 📝 My Notes ───────────────────────┐│  ← Personal Note (NEW)
+│  │  Tap to add a personal note...      ││
+│  └─────────────────────────────────────┘│
+├─────────────────────────────────────────┤
+│  [View Roadmap]   [Open Community]      │  ← Quick Actions
+└─────────────────────────────────────────┘
+```
+
+### Roadmap Mobile (After Fix)
+
+```text
+┌─────────────────────────────────────────┐
+│  Journey  Prep  Equipment  [✨Highlights]│  ← Visible button
+└─────────────────────────────────────────┘
+     When tapped, opens bottom sheet with:
+     - Past Moments carousel
+     - Student Work carousel
+     - Stay Location carousel
 ```
 
 ---
 
-## Smart Trigger Types (Pre-configured)
+## Technical Details
 
-| Trigger | Template | Config |
-|---------|----------|--------|
-| `kyf_deadline` | "📋 KYF deadline in {days} days!" | days_before: [3, 2, 1] |
-| `forge_countdown` | "⏰ {days} days until Forge!" | days: [14, 7, 3, 1, 0] |
-| `stage_entry` | "🎯 Welcome to {stage}!" | all_stages: true |
-| `streak_milestone` | "🔥 {days}-day streak!" | days: [3, 7, 14, 30] |
-| `event_reminder` | "🎬 {event} in {hours} hours" | hours_before: [24, 2] |
+### 1. Card Stack Touch Improvements
+
+```typescript
+// Prevent default on touch move to avoid scroll interference
+const handleTouchMove = useCallback((e: React.TouchEvent) => {
+  if (!isDragging) return;
+  
+  const currentX = e.touches[0].clientX;
+  const diff = currentX - startXRef.current;
+  
+  // Only prevent default if horizontal swipe detected
+  if (Math.abs(diff) > 10) {
+    e.preventDefault();
+  }
+  
+  setDragOffset(diff);
+}, [isDragging]);
+
+// Use passive: false for touchmove to allow preventDefault
+useEffect(() => {
+  const container = containerRef.current;
+  if (!container) return;
+  
+  const options = { passive: false };
+  container.addEventListener('touchmove', handleTouchMoveNative, options);
+  
+  return () => {
+    container.removeEventListener('touchmove', handleTouchMoveNative);
+  };
+}, []);
+```
+
+### 2. GPU Acceleration for Smoother Animations
+
+```typescript
+style={{
+  transform: `translateX(${translateX}px) translateY(${baseTranslateY}px) rotate(${rotation}deg) scale(${scale})`,
+  zIndex,
+  opacity: offset === 0 ? 1 : opacity,
+  willChange: 'transform, opacity',
+  backfaceVisibility: 'hidden',
+}}
+```
 
 ---
 
-## Summary
+## Expected Results
 
-- **Existing journey sticky notes**: Completely unchanged
-- **AnnouncementBanner**: New gold-accented banner for notifications
-- **PersonalNoteCard**: New rose-accented card for user memos
-- **Admin control**: Full management of manual + automatic announcements
-- **Smart triggers**: System-generated based on user journey state
+1. **Smooth Card Swiping**: Single card visible with minimal background peek, clean transitions
+2. **Personal Note Visible**: Rose-colored note card appears below journey stack on mobile
+3. **Highlights Accessible**: Prominent button in Roadmap nav opens bottom sheet with all sidebar content
 
