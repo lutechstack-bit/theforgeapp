@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Check, ChevronRight, Sparkles, X } from 'lucide-react';
+import { Check, ChevronRight, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { JourneyStage, JourneyTask } from '@/hooks/useStudentJourney';
 import * as LucideIcons from 'lucide-react';
@@ -49,17 +49,6 @@ export const StickyNoteDetailModal: React.FC<StickyNoteDetailModalProps> = ({
   const IconComponent = stage.icon 
     ? (LucideIcons as any)[stage.icon] || LucideIcons.Circle 
     : LucideIcons.Circle;
-
-  const handleTaskClick = (task: JourneyTask, isCompleted: boolean) => {
-    // If task has deep_link, navigate to it
-    if (task.deep_link && !isCompleted) {
-      navigate(task.deep_link);
-      onClose();
-    } else {
-      // Toggle the task completion
-      onToggleTask(task.id);
-    }
-  };
 
   const handleDeepLinkClick = (e: React.MouseEvent, deepLink: string) => {
     e.stopPropagation();
@@ -114,7 +103,7 @@ export const StickyNoteDetailModal: React.FC<StickyNoteDetailModalProps> = ({
                   'hover:bg-muted/50',
                   isCompleted && 'opacity-70'
                 )}
-                onClick={() => handleTaskClick(task, isCompleted)}
+                onClick={() => onToggleTask(task.id)}
               >
                 {/* Checkbox */}
                 <button
