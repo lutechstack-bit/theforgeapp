@@ -77,11 +77,8 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
   return (
     <div
       onClick={!isLocked ? onClick : undefined}
-      style={{ 
-        transform: `rotate(${rotation}deg)`,
-      }}
       className={cn(
-        'relative rounded-xl p-4 transition-all duration-300',
+        'relative rounded-xl p-4 transition-all duration-300 overflow-hidden',
         // Light mode background
         'bg-[var(--sticky-bg-light)]',
         // Dark mode background
@@ -100,7 +97,6 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
         fullWidth && 'w-full',
         className
       )}
-      // @ts-ignore - CSS variables for dynamic colors
       style={{
         '--sticky-bg-light': lightBg,
         '--sticky-bg-dark': darkBg,

@@ -21,7 +21,7 @@ export const StageNavigationStrip: React.FC<StageNavigationStripProps> = ({
 
   return (
     <div className="w-full overflow-x-auto scrollbar-hide">
-      <div className="flex items-center justify-between min-w-[500px] px-2 py-3">
+      <div className="flex items-center gap-1 sm:gap-2 px-2 py-3">
         {stages.map((stage, index) => {
           const isCompleted = index < currentIndex;
           const isCurrent = stage.stage_key === currentStageKey;
@@ -39,7 +39,7 @@ export const StageNavigationStrip: React.FC<StageNavigationStripProps> = ({
               {/* Stage dot with progress ring */}
               <button
                 onClick={() => onStageClick?.(stage)}
-                className="flex flex-col items-center gap-1.5 group"
+                className="flex flex-col items-center gap-1.5 group flex-shrink-0"
               >
                 {/* Progress Ring wrapping the dot */}
                 <ProgressRing
@@ -83,7 +83,7 @@ export const StageNavigationStrip: React.FC<StageNavigationStripProps> = ({
               {index < stages.length - 1 && (
                 <div
                   className={cn(
-                    'flex-1 h-0.5 mx-1',
+                    'flex-1 h-0.5 mx-0.5 sm:mx-1 min-w-[16px] sm:min-w-[24px]',
                     index < currentIndex && 'bg-emerald-500',
                     index === currentIndex && 'bg-gradient-to-r from-primary to-muted-foreground/30',
                     index > currentIndex && 'bg-muted-foreground/20'

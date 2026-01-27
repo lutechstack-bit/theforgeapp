@@ -1,6 +1,7 @@
 export { JourneyBentoHero } from './JourneyBentoHero';
 export { StageNavigationStrip } from './StageNavigationStrip';
 export { StickyNoteCard } from './StickyNoteCard';
+export { StickyNoteCardStack } from './StickyNoteCardStack';
 export { StickyNoteDetailModal } from './StickyNoteDetailModal';
 export { StickyNoteBottomSheet } from './StickyNoteBottomSheet';
 export { JourneyTaskItem } from './JourneyTaskItem';
