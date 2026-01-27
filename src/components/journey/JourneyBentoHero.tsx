@@ -13,7 +13,7 @@ import { TaskFilters, TaskFilterType } from './TaskFilters';
 import { QuickActionsRow } from './QuickActionsRow';
 import { ConfettiCelebration } from './ConfettiCelebration';
 import { StreakBadge } from './StreakBadge';
-import { FloatingActionButton } from './FloatingActionButton';
+
 import { AnnouncementBanner } from './AnnouncementBanner';
 import { PersonalNoteCard } from './PersonalNoteCard';
 
@@ -487,11 +487,6 @@ export const JourneyBentoHero: React.FC = () => {
       {/* Quick Actions Row */}
       <QuickActionsRow className="mt-4" />
 
-      {/* Floating Action Button - Available on all devices */}
-      <FloatingActionButton
-        onMarkAsReviewed={handleMarkAsReviewed}
-        currentStageName={currentStage?.title}
-      />
 
       {/* Bottom Sheet for Mobile, Dialog for Desktop */}
       {isMobile ? (

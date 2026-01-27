@@ -12,7 +12,7 @@ export { ConfettiCelebration } from './ConfettiCelebration';
 export { QuickActionsRow } from './QuickActionsRow';
 export { StreakBadge } from './StreakBadge';
 export { SwipeableTaskItem } from './SwipeableTaskItem';
-export { FloatingActionButton } from './FloatingActionButton';
+
 export { StickyProgressBar } from './StickyProgressBar';
 export { PullToRefreshWrapper } from './PullToRefreshWrapper';
 export { AnnouncementBanner } from './AnnouncementBanner';
