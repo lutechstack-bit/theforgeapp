@@ -28,7 +28,7 @@ export const PullToRefreshWrapper: React.FC<PullToRefreshWrapperProps> = ({
   return (
     <div
       ref={containerRef}
-      className={cn('relative overflow-hidden', className)}
+      className={cn('relative', className)}
     >
       {/* Pull indicator */}
       <div

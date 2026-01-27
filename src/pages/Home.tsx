@@ -138,7 +138,7 @@ const Home: React.FC = () => {
   const isPastEvents = events?.isPastEvents ?? false;
 
   return (
-    <div className="min-h-screen p-3 sm:p-4 md:p-6 space-y-5 sm:space-y-6">
+    <div className="min-h-screen px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-6 space-y-5 sm:space-y-6">
       {/* Compact Countdown Timer - Gold themed strip at top */}
       <CompactCountdownTimer edition={edition} />
 

@@ -214,7 +214,7 @@ export const JourneyBentoHero: React.FC = () => {
   const effectiveMobileIndex = mobileCurrentIndex ?? currentStageIndex;
 
   const heroContent = (
-    <div className="space-y-4 relative overflow-hidden" ref={heroRef}>
+    <div className="space-y-4 relative" ref={heroRef}>
       {/* Celebration overlay */}
       <ConfettiCelebration
         isActive={showCelebration}
