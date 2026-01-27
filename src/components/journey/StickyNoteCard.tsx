@@ -16,37 +16,21 @@ interface StickyNoteCardProps {
   onClick?: () => void;
 }
 
-const colorVariants: Record<string, { bg: string; accent: string; pin: string }> = {
-  emerald: {
-    bg: 'from-emerald-50/90 to-emerald-100/80 dark:from-emerald-950/40 dark:to-emerald-900/30',
-    accent: 'text-emerald-600 dark:text-emerald-400',
-    pin: 'from-emerald-500 to-emerald-600',
-  },
-  amber: {
-    bg: 'from-amber-50/90 to-amber-100/80 dark:from-amber-950/40 dark:to-amber-900/30',
-    accent: 'text-amber-600 dark:text-amber-400',
-    pin: 'from-amber-500 to-amber-600',
-  },
-  blue: {
-    bg: 'from-blue-50/90 to-blue-100/80 dark:from-blue-950/40 dark:to-blue-900/30',
-    accent: 'text-blue-600 dark:text-blue-400',
-    pin: 'from-blue-500 to-blue-600',
-  },
-  purple: {
-    bg: 'from-purple-50/90 to-purple-100/80 dark:from-purple-950/40 dark:to-purple-900/30',
-    accent: 'text-purple-600 dark:text-purple-400',
-    pin: 'from-purple-500 to-purple-600',
-  },
-  rose: {
-    bg: 'from-rose-50/90 to-rose-100/80 dark:from-rose-950/40 dark:to-rose-900/30',
-    accent: 'text-rose-600 dark:text-rose-400',
-    pin: 'from-rose-500 to-rose-600',
-  },
-  primary: {
-    bg: 'from-primary/10 to-primary/20',
-    accent: 'text-primary',
-    pin: 'from-primary to-primary/80',
-  },
+// Paper backgrounds - solid light colors for visibility
+const paperBackgrounds: Record<string, string> = {
+  'pre_registration': '#FEF7E0', // warm cream
+  'pre_travel': '#FFF8E6',       // pale amber
+  'final_prep': '#FEF3C7',       // light gold
+  'online_forge': '#FDF6E3',     // soft cream
+  'physical_forge': '#FFFBEB',   // warm white
+  'post_forge': '#FEF9E7',       // champagne
+  // Fallback colors
+  'emerald': '#ECFDF5',
+  'amber': '#FEF3C7',
+  'blue': '#EFF6FF',
+  'purple': '#FAF5FF',
+  'rose': '#FFF1F2',
+  'primary': '#FEF7E0',
 };
 
 export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
@@ -61,52 +45,65 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
   className,
   onClick,
 }) => {
-  const colorStyle = colorVariants[color] || colorVariants.amber;
   const IconComponent = (LucideIcons as any)[icon] || LucideIcons.Circle;
   const isLocked = variant === 'upcoming';
   const isCompleted = variant === 'completed';
   const isCurrent = variant === 'current';
   const allDone = completedCount === totalCount && totalCount > 0;
 
+  // Get paper background color
+  const paperBg = paperBackgrounds[color] || paperBackgrounds.amber;
+
   return (
     <div
       onClick={!isLocked ? onClick : undefined}
-      style={{ transform: `rotate(${rotation}deg)` }}
+      style={{ 
+        transform: `rotate(${rotation}deg)`,
+        backgroundColor: paperBg,
+      }}
       className={cn(
         'relative rounded-xl p-4 transition-all duration-300',
-        'bg-gradient-to-br shadow-md',
-        colorStyle.bg,
+        'shadow-[0_1px_3px_rgba(0,0,0,0.08),0_4px_6px_rgba(0,0,0,0.05),0_10px_20px_rgba(0,0,0,0.08)]',
+        'border border-black/5',
+        // Paper texture effect
+        'before:absolute before:inset-0 before:rounded-xl before:pointer-events-none',
+        'before:bg-[linear-gradient(90deg,transparent_95%,rgba(0,0,0,0.02)_100%),linear-gradient(transparent_95%,rgba(0,0,0,0.02)_100%)]',
         !isLocked && 'cursor-pointer hover:rotate-0 hover:-translate-y-1 hover:shadow-lg',
         isLocked && 'opacity-60',
-        isCurrent && 'ring-2 ring-primary/50 shadow-lg',
+        isCurrent && 'ring-2 ring-[#D38F0C]/50 shadow-lg shadow-[#D38F0C]/20',
         className
       )}
     >
-      {/* Paper clip/pin */}
+      {/* Paper clip/pin - Forge brand gradient */}
       <div
         className={cn(
           'absolute -top-2 left-1/2 -translate-x-1/2 w-6 h-3 rounded-b-sm',
-          'bg-gradient-to-b shadow-sm',
-          colorStyle.pin
+          'shadow-[0_2px_4px_rgba(0,0,0,0.3)]'
         )}
+        style={{
+          background: 'linear-gradient(to bottom, #FFBC3B, #D38F0C)',
+        }}
       />
 
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className={cn('p-1.5 rounded-lg bg-background/50', colorStyle.accent)}>
+          <div className={cn(
+            'p-1.5 rounded-lg',
+            isCompleted ? 'bg-emerald-500/20 text-emerald-700' : 'bg-gray-900/10 text-gray-700'
+          )}>
             {isLocked ? (
-              <Lock className="w-4 h-4" />
+              <Lock className="w-4 h-4 text-gray-500" />
             ) : (
               <IconComponent className="w-4 h-4" />
             )}
           </div>
           <div>
-            <h3 className={cn('font-semibold text-sm', colorStyle.accent)}>
+            <h3 className="font-semibold text-sm text-gray-900">
               {title}
             </h3>
             {isCompleted && allDone && (
-              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <span className="text-[10px] text-emerald-600 flex items-center gap-1">
                 <Check className="w-3 h-3" /> All done!
               </span>
             )}
@@ -118,8 +115,8 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
           <div className={cn(
             'text-xs font-medium px-2 py-0.5 rounded-full',
             allDone 
-              ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
-              : 'bg-background/50 text-muted-foreground'
+              ? 'bg-emerald-500/20 text-emerald-700'
+              : 'bg-gray-900/10 text-gray-700'
           )}>
             {completedCount}/{totalCount}
           </div>
@@ -133,8 +130,8 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
 
       {/* Locked overlay */}
       {isLocked && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-background/20 backdrop-blur-[1px]">
-          <span className="text-xs text-muted-foreground font-medium">Coming soon</span>
+        <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-white/30 backdrop-blur-[1px]">
+          <span className="text-xs text-gray-600 font-medium">Coming soon</span>
         </div>
       )}
     </div>

@@ -2,17 +2,20 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { JourneyStage } from '@/hooks/useStudentJourney';
 import { Check } from 'lucide-react';
+import { ProgressRing } from './ProgressRing';
 
 interface StageNavigationStripProps {
   stages: JourneyStage[];
   currentStageKey: string;
   onStageClick?: (stage: JourneyStage) => void;
+  getStageStats?: (stageId: string) => { completed: number; total: number };
 }
 
 export const StageNavigationStrip: React.FC<StageNavigationStripProps> = ({
   stages,
   currentStageKey,
   onStageClick,
+  getStageStats,
 }) => {
   const currentIndex = stages.findIndex(s => s.stage_key === currentStageKey);
 
@@ -24,30 +27,44 @@ export const StageNavigationStrip: React.FC<StageNavigationStripProps> = ({
           const isCurrent = stage.stage_key === currentStageKey;
           const isUpcoming = index > currentIndex;
 
+          // Calculate progress for this stage
+          const stats = getStageStats?.(stage.id) || { completed: 0, total: 0 };
+          const progress = stats.total > 0 ? (stats.completed / stats.total) * 100 : 0;
+
+          // Determine variant for progress ring
+          const ringVariant = isCompleted ? 'completed' : isCurrent ? 'current' : 'upcoming';
+
           return (
             <React.Fragment key={stage.id}>
-              {/* Stage dot and label */}
+              {/* Stage dot with progress ring */}
               <button
                 onClick={() => onStageClick?.(stage)}
                 className="flex flex-col items-center gap-1.5 group"
               >
-                {/* Dot */}
-                <div
-                  className={cn(
-                    'w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300',
-                    'border-2',
-                    isCompleted && 'bg-emerald-500 border-emerald-500 text-white',
-                    isCurrent && 'bg-primary border-primary text-primary-foreground scale-110 shadow-lg shadow-primary/30',
-                    isUpcoming && 'bg-muted/50 border-muted-foreground/30 text-muted-foreground',
-                    !isUpcoming && 'cursor-pointer hover:scale-105'
-                  )}
+                {/* Progress Ring wrapping the dot */}
+                <ProgressRing
+                  progress={isCompleted ? 100 : progress}
+                  size={isCurrent ? 40 : 36}
+                  strokeWidth={3}
+                  variant={ringVariant}
                 >
-                  {isCompleted ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <span className="text-xs font-bold">{index + 1}</span>
-                  )}
-                </div>
+                  {/* Inner dot */}
+                  <div
+                    className={cn(
+                      'w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300',
+                      isCompleted && 'bg-emerald-500 text-white',
+                      isCurrent && 'bg-primary text-primary-foreground shadow-lg shadow-primary/30',
+                      isUpcoming && 'bg-muted/50 text-muted-foreground',
+                      !isUpcoming && 'cursor-pointer group-hover:scale-105'
+                    )}
+                  >
+                    {isCompleted ? (
+                      <Check className="w-3.5 h-3.5" />
+                    ) : (
+                      <span className="text-[10px] font-bold">{index + 1}</span>
+                    )}
+                  </div>
+                </ProgressRing>
                 
                 {/* Label */}
                 <span

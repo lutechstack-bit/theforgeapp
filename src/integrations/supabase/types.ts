@@ -580,6 +580,7 @@ export type Database = {
           created_at: string | null
           deep_link: string | null
           description: string | null
+          due_days_offset: number | null
           id: string
           is_active: boolean | null
           is_required: boolean | null
@@ -593,6 +594,7 @@ export type Database = {
           created_at?: string | null
           deep_link?: string | null
           description?: string | null
+          due_days_offset?: number | null
           id?: string
           is_active?: boolean | null
           is_required?: boolean | null
@@ -606,6 +608,7 @@ export type Database = {
           created_at?: string | null
           deep_link?: string | null
           description?: string | null
+          due_days_offset?: number | null
           id?: string
           is_active?: boolean | null
           is_required?: boolean | null
@@ -2155,6 +2158,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_task_preferences: {
+        Row: {
+          created_at: string
+          filter_preference: string | null
+          id: string
+          stage_id: string
+          task_order: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          filter_preference?: string | null
+          id?: string
+          stage_id: string
+          task_order?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          filter_preference?: string | null
+          id?: string
+          stage_id?: string
+          task_order?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_task_preferences_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "journey_stages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_works: {
         Row: {

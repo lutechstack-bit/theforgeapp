@@ -2,3 +2,8 @@ export { JourneyBentoHero } from './JourneyBentoHero';
 export { StageNavigationStrip } from './StageNavigationStrip';
 export { StickyNoteCard } from './StickyNoteCard';
 export { JourneyTaskItem } from './JourneyTaskItem';
+export { ProgressRing } from './ProgressRing';
+export { TaskFilters } from './TaskFilters';
+export { DueDateBadge } from './DueDateBadge';
+export { ConfettiCelebration } from './ConfettiCelebration';
+export { QuickActionsRow } from './QuickActionsRow';

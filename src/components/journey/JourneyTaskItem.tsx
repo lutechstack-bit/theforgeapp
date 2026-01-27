@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Check, ChevronRight, Sparkles } from 'lucide-react';
+import { Check, ChevronRight, Sparkles, GripVertical } from 'lucide-react';
 import { JourneyTask } from '@/hooks/useStudentJourney';
+import { DueDateBadge } from './DueDateBadge';
+import { TaskCompletedPop } from './ConfettiCelebration';
 
 interface JourneyTaskItemProps {
   task: JourneyTask;
@@ -10,6 +12,11 @@ interface JourneyTaskItemProps {
   isAutoCompleted: boolean;
   onToggle: () => void;
   variant?: 'default' | 'compact';
+  forgeStartDate?: string | null;
+  draggable?: boolean;
+  onDragStart?: (e: React.DragEvent, taskId: string) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent, taskId: string) => void;
 }
 
 export const JourneyTaskItem: React.FC<JourneyTaskItemProps> = ({
@@ -18,13 +25,24 @@ export const JourneyTaskItem: React.FC<JourneyTaskItemProps> = ({
   isAutoCompleted,
   onToggle,
   variant = 'default',
+  forgeStartDate,
+  draggable = false,
+  onDragStart,
+  onDragOver,
+  onDrop,
 }) => {
   const navigate = useNavigate();
+  const [showPop, setShowPop] = useState(false);
 
   const handleClick = () => {
     if (task.deep_link && !isCompleted) {
       navigate(task.deep_link);
     } else if (!isAutoCompleted) {
+      // Show pop animation on completion
+      if (!isCompleted) {
+        setShowPop(true);
+        setTimeout(() => setShowPop(false), 600);
+      }
       onToggle();
     }
   };
@@ -35,7 +53,7 @@ export const JourneyTaskItem: React.FC<JourneyTaskItemProps> = ({
         onClick={handleClick}
         className={cn(
           'flex items-center gap-2 w-full text-left py-1 transition-colors',
-          isCompleted ? 'text-muted-foreground' : 'text-foreground hover:text-primary'
+          isCompleted ? 'text-gray-500' : 'text-gray-800 hover:text-gray-900'
         )}
       >
         <div
@@ -43,7 +61,7 @@ export const JourneyTaskItem: React.FC<JourneyTaskItemProps> = ({
             'w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors',
             isCompleted
               ? 'bg-emerald-500 border-emerald-500'
-              : 'border-muted-foreground/40 hover:border-primary'
+              : 'border-gray-400 hover:border-gray-600'
           )}
         >
           {isCompleted && <Check className="w-3 h-3 text-white" />}
@@ -56,52 +74,76 @@ export const JourneyTaskItem: React.FC<JourneyTaskItemProps> = ({
   }
 
   return (
-    <button
-      onClick={handleClick}
+    <div
+      draggable={draggable}
+      onDragStart={(e) => onDragStart?.(e, task.id)}
+      onDragOver={onDragOver}
+      onDrop={(e) => onDrop?.(e, task.id)}
       className={cn(
-        'flex items-center gap-3 w-full text-left p-2 rounded-lg transition-all',
-        'hover:bg-background/50',
-        isCompleted && 'opacity-70'
+        'relative',
+        draggable && 'cursor-grab active:cursor-grabbing'
       )}
     >
-      {/* Checkbox */}
-      <div
+      <TaskCompletedPop isActive={showPop} />
+      <button
+        onClick={handleClick}
         className={cn(
-          'w-5 h-5 rounded-md flex items-center justify-center shrink-0 border-2 transition-all',
-          isCompleted
-            ? 'bg-emerald-500 border-emerald-500'
-            : 'border-muted-foreground/40 hover:border-primary hover:scale-105'
+          'flex items-center gap-3 w-full text-left p-2 rounded-lg transition-all',
+          'hover:bg-black/5',
+          isCompleted && 'opacity-70'
         )}
       >
-        {isCompleted && <Check className="w-3.5 h-3.5 text-white" />}
-      </div>
+        {/* Drag handle */}
+        {draggable && (
+          <GripVertical className="w-4 h-4 text-gray-400 shrink-0 touch-none" />
+        )}
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              'text-sm font-medium truncate',
-              isCompleted && 'line-through text-muted-foreground'
+        {/* Checkbox */}
+        <div
+          className={cn(
+            'w-5 h-5 rounded-md flex items-center justify-center shrink-0 border-2 transition-all',
+            isCompleted
+              ? 'bg-emerald-500 border-emerald-500'
+              : 'border-gray-400 hover:border-gray-600 hover:scale-105'
+          )}
+        >
+          {isCompleted && <Check className="w-3.5 h-3.5 text-white" />}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                'text-sm font-medium truncate text-gray-900',
+                isCompleted && 'line-through text-gray-500'
+              )}
+            >
+              {task.title}
+            </span>
+            {isAutoCompleted && (
+              <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
             )}
-          >
-            {task.title}
-          </span>
-          {isAutoCompleted && (
-            <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            {/* Due date badge */}
+            <DueDateBadge
+              dueDaysOffset={task.due_days_offset}
+              forgeStartDate={forgeStartDate}
+              isCompleted={isCompleted}
+              compact
+            />
+          </div>
+          {task.description && (
+            <p className="text-xs text-gray-600 truncate">
+              {task.description}
+            </p>
           )}
         </div>
-        {task.description && (
-          <p className="text-xs text-muted-foreground truncate">
-            {task.description}
-          </p>
-        )}
-      </div>
 
-      {/* Arrow for deep link */}
-      {task.deep_link && !isCompleted && (
-        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-      )}
-    </button>
+        {/* Arrow for deep link */}
+        {task.deep_link && !isCompleted && (
+          <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+        )}
+      </button>
+    </div>
   );
 };
