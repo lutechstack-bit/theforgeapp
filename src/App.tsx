@@ -53,6 +53,7 @@ import AdminAlumniTestimonials from "./pages/admin/AdminAlumniTestimonials";
 import AdminDocs from "./pages/admin/AdminDocs";
 import AdminJourneyStages from "./pages/admin/AdminJourneyStages";
 import AdminJourneyTasks from "./pages/admin/AdminJourneyTasks";
+import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
 import DynamicKYForm from "./pages/DynamicKYForm";
 import EventDetail from "./pages/EventDetail";
 
@@ -253,6 +254,7 @@ const AppRoutes = () => {
         <Route path="ky-forms" element={<AdminKYForms />} />
         <Route path="journey-stages" element={<AdminJourneyStages />} />
         <Route path="journey-tasks" element={<AdminJourneyTasks />} />
+        <Route path="announcements" element={<AdminAnnouncements />} />
         <Route path="community-highlights" element={<AdminCommunityHighlights />} />
         <Route path="nightly-rituals" element={<AdminNightlyRituals />} />
         <Route path="mentors" element={<AdminMentors />} />
