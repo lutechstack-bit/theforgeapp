@@ -131,7 +131,11 @@ export const useRoadmapData = () => {
       }
     },
     onSuccess: () => {
+      // Invalidate prep progress
       queryClient.invalidateQueries({ queryKey: ['user-prep-progress'] });
+      // Bidirectional sync: Also invalidate journey progress so sticky notes refresh
+      queryClient.invalidateQueries({ queryKey: ['user_journey_progress'] });
+      queryClient.invalidateQueries({ queryKey: ['prep-checklist-items'] });
     }
   });
 

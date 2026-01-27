@@ -5,6 +5,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useQueryClient } from '@tanstack/react-query';
 import { StageNavigationStrip } from './StageNavigationStrip';
 import { StickyNoteCard } from './StickyNoteCard';
+import { StickyNoteCardStack } from './StickyNoteCardStack';
 import { StickyNoteDetailModal } from './StickyNoteDetailModal';
 import { StickyNoteBottomSheet } from './StickyNoteBottomSheet';
 import { JourneyTaskItem } from './JourneyTaskItem';
@@ -18,11 +19,6 @@ import { PullToRefreshWrapper } from './PullToRefreshWrapper';
 import { differenceInDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Flame } from 'lucide-react';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from '@/components/ui/carousel';
 
 export const JourneyBentoHero: React.FC = () => {
   const { profile, edition } = useAuth();
@@ -55,6 +51,9 @@ export const JourneyBentoHero: React.FC = () => {
   // Modal/Sheet state for sticky note detail
   const [selectedStage, setSelectedStage] = useState<JourneyStage | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Mobile stacked card state
+  const [mobileCurrentIndex, setMobileCurrentIndex] = useState<number | null>(null);
 
   // Drag state for reordering
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
@@ -92,6 +91,7 @@ export const JourneyBentoHero: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['journey_tasks'] }),
       queryClient.invalidateQueries({ queryKey: ['user_journey_progress'] }),
       queryClient.invalidateQueries({ queryKey: ['user_streak'] }),
+      queryClient.invalidateQueries({ queryKey: ['user-prep-progress'] }),
     ]);
   }, [queryClient]);
 
@@ -203,20 +203,20 @@ export const JourneyBentoHero: React.FC = () => {
   // Get the next upcoming stage
   const nextUpcomingStage = upcomingStages[0];
 
-  // Freeform rotations for desktop
-  const rotations = { completed: -3, current: 0, upcoming: 4 };
-
   // Current stage stats for sticky progress bar
   const currentStageStats = currentStage ? getStageStats(currentStage.id) : { completed: 0, total: 0 };
 
-  // Build carousel stages array: completed + current + upcoming
-  const carouselStages = [...completedStages, currentStage, ...upcomingStages].filter(Boolean) as JourneyStage[];
-  const currentStageCarouselIndex = currentStage 
-    ? carouselStages.findIndex(s => s.id === currentStage.id) 
+  // Build array: completed + current + upcoming
+  const allOrderedStages = [...completedStages, currentStage, ...upcomingStages].filter(Boolean) as JourneyStage[];
+  const currentStageIndex = currentStage 
+    ? allOrderedStages.findIndex(s => s.id === currentStage.id) 
     : 0;
 
+  // Initialize mobile current index if not set
+  const effectiveMobileIndex = mobileCurrentIndex ?? currentStageIndex;
+
   const heroContent = (
-    <div className="space-y-4 relative" ref={heroRef}>
+    <div className="space-y-4 relative overflow-hidden" ref={heroRef}>
       {/* Celebration overlay */}
       <ConfettiCelebration
         isActive={showCelebration}
@@ -255,7 +255,7 @@ export const JourneyBentoHero: React.FC = () => {
       </div>
 
       {/* Stage Navigation Strip with Progress Rings */}
-      <div className="glass-card rounded-xl p-2">
+      <div className="glass-card rounded-xl p-2 overflow-hidden">
         <StageNavigationStrip
           stages={stages}
           currentStageKey={currentStageKey}
@@ -263,55 +263,12 @@ export const JourneyBentoHero: React.FC = () => {
         />
       </div>
 
-      {/* Desktop: Freeform Bento Layout */}
+      {/* Desktop: Responsive Grid Layout */}
       {!isMobile && (
-        <div className="relative min-h-[340px]">
-          {/* Completed Stage Card - Left */}
-          <div 
-            className="absolute left-0 top-4 w-[280px] z-10"
-            style={{ transform: `rotate(${rotations.completed}deg)` }}
-          >
-            {lastCompletedStage ? (
-              <StickyNoteCard
-                title={lastCompletedStage.title}
-                icon={lastCompletedStage.icon || 'Circle'}
-                color={lastCompletedStage.stage_key}
-                rotation={0}
-                variant="completed"
-                completedCount={getStageStats(lastCompletedStage.id).completed}
-                totalCount={getStageStats(lastCompletedStage.id).total}
-                onClick={() => handleStageClick(lastCompletedStage)}
-              >
-                {getTasksForStage(lastCompletedStage.id).slice(0, 4).map((task) => (
-                  <JourneyTaskItem
-                    key={task.id}
-                    task={task}
-                    isCompleted={isTaskCompleted(task.id)}
-                    isAutoCompleted={isTaskAutoCompleted(task)}
-                    onToggle={() => handleTaskToggle(task.id, lastCompletedStage.id)}
-                    variant="compact"
-                    forgeStartDate={edition?.forge_start_date}
-                  />
-                ))}
-                {getTasksForStage(lastCompletedStage.id).length > 4 && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    +{getTasksForStage(lastCompletedStage.id).length - 4} more
-                  </p>
-                )}
-              </StickyNoteCard>
-            ) : (
-              <div className="h-full flex items-center justify-center text-gray-500 dark:text-gray-400 text-sm p-8 bg-gray-100 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-                <p>Complete your first stage!</p>
-              </div>
-            )}
-          </div>
-
-          {/* Current Stage Card - Center (larger) */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+          {/* Main Column - Current Stage */}
           {currentStage && (
-            <div 
-              className="absolute left-1/2 -translate-x-1/2 top-0 w-[340px] z-30"
-              style={{ transform: `translateX(-50%) rotate(${rotations.current}deg)` }}
-            >
+            <div className="relative">
               <StickyNoteCard
                 title={currentStage.title}
                 icon={currentStage.icon || 'Circle'}
@@ -321,17 +278,18 @@ export const JourneyBentoHero: React.FC = () => {
                 completedCount={getStageStats(currentStage.id).completed}
                 totalCount={getStageStats(currentStage.id).total}
                 onClick={() => handleStageClick(currentStage)}
+                fullWidth
               >
                 {/* Task Filters */}
                 <TaskFilters
                   activeFilter={activeFilter}
                   onFilterChange={setActiveFilter}
                   counts={getFilterCounts(currentStage.id)}
-                  className="mb-2"
+                  className="mb-3"
                 />
 
                 {/* Filtered Tasks */}
-                <div className="space-y-0.5 max-h-[220px] overflow-y-auto scrollbar-hide">
+                <div className="space-y-1 max-h-[280px] overflow-y-auto scrollbar-hide">
                   {getFilteredTasks(currentStage.id).map((task) => (
                     <JourneyTaskItem
                       key={task.id}
@@ -347,7 +305,7 @@ export const JourneyBentoHero: React.FC = () => {
                     />
                   ))}
                   {getFilteredTasks(currentStage.id).length === 0 && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-4">
+                    <p className="text-xs text-muted-foreground text-center py-4">
                       No tasks match this filter
                     </p>
                   )}
@@ -356,38 +314,73 @@ export const JourneyBentoHero: React.FC = () => {
             </div>
           )}
 
-          {/* Upcoming Stage Card - Right */}
-          <div 
-            className="absolute right-0 top-6 w-[260px] z-20"
-            style={{ transform: `rotate(${rotations.upcoming}deg)` }}
-          >
+          {/* Side Panel - Completed & Upcoming Stages */}
+          <div className="flex flex-col gap-3">
+            {/* Last Completed Stage */}
+            {lastCompletedStage ? (
+              <StickyNoteCard
+                title={lastCompletedStage.title}
+                icon={lastCompletedStage.icon || 'Circle'}
+                color={lastCompletedStage.stage_key}
+                rotation={-1}
+                variant="completed"
+                completedCount={getStageStats(lastCompletedStage.id).completed}
+                totalCount={getStageStats(lastCompletedStage.id).total}
+                onClick={() => handleStageClick(lastCompletedStage)}
+                fullWidth
+              >
+                {getTasksForStage(lastCompletedStage.id).slice(0, 3).map((task) => (
+                  <JourneyTaskItem
+                    key={task.id}
+                    task={task}
+                    isCompleted={isTaskCompleted(task.id)}
+                    isAutoCompleted={isTaskAutoCompleted(task)}
+                    onToggle={() => handleTaskToggle(task.id, lastCompletedStage.id)}
+                    variant="compact"
+                    forgeStartDate={edition?.forge_start_date}
+                  />
+                ))}
+                {getTasksForStage(lastCompletedStage.id).length > 3 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    +{getTasksForStage(lastCompletedStage.id).length - 3} more
+                  </p>
+                )}
+              </StickyNoteCard>
+            ) : (
+              <div className="flex items-center justify-center text-muted-foreground text-sm p-6 bg-muted/50 rounded-xl border border-border">
+                <p>Complete your first stage!</p>
+              </div>
+            )}
+
+            {/* Next Upcoming Stage */}
             {nextUpcomingStage ? (
               <StickyNoteCard
                 title={nextUpcomingStage.title}
                 icon={nextUpcomingStage.icon || 'Circle'}
                 color={nextUpcomingStage.stage_key}
-                rotation={0}
+                rotation={1}
                 variant="upcoming"
                 completedCount={0}
                 totalCount={getStageStats(nextUpcomingStage.id).total}
+                fullWidth
               >
-                {getTasksForStage(nextUpcomingStage.id).slice(0, 4).map((task) => (
+                {getTasksForStage(nextUpcomingStage.id).slice(0, 3).map((task) => (
                   <div
                     key={task.id}
-                    className="flex items-center gap-2 py-1 text-gray-500 dark:text-gray-400"
+                    className="flex items-center gap-2 py-1 text-muted-foreground"
                   >
-                    <div className="w-4 h-4 rounded border border-gray-300 dark:border-gray-600" />
+                    <div className="w-4 h-4 rounded border border-border" />
                     <span className="text-xs truncate">{task.title}</span>
                   </div>
                 ))}
-                {getTasksForStage(nextUpcomingStage.id).length > 4 && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    +{getTasksForStage(nextUpcomingStage.id).length - 4} more
+                {getTasksForStage(nextUpcomingStage.id).length > 3 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    +{getTasksForStage(nextUpcomingStage.id).length - 3} more
                   </p>
                 )}
               </StickyNoteCard>
             ) : (
-              <div className="h-full flex items-center justify-center text-gray-500 dark:text-gray-400 text-sm p-8 bg-gray-100 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+              <div className="flex items-center justify-center text-muted-foreground text-sm p-6 bg-muted/50 rounded-xl border border-border">
                 <p>You're almost there!</p>
               </div>
             )}
@@ -395,136 +388,108 @@ export const JourneyBentoHero: React.FC = () => {
         </div>
       )}
 
-      {/* Mobile: Horizontal Stage Carousel */}
+      {/* Mobile: Stacked Card UI */}
       {isMobile && (
-        <div className="space-y-3">
-          {/* Swipeable carousel of all stages */}
-          <Carousel
-            opts={{
-              align: 'center',
-              startIndex: currentStageCarouselIndex,
-              loop: false,
-            }}
-            className="w-full"
-          >
-            <CarouselContent className="-ml-2">
-              {carouselStages.map((stage, index) => {
-                const stats = getStageStats(stage.id);
-                const isCurrent = stage.id === currentStage?.id;
-                const isCompleted = completedStages.some(s => s.id === stage.id);
-                const isUpcoming = upcomingStages.some(s => s.id === stage.id);
+        <StickyNoteCardStack
+          stages={allOrderedStages}
+          currentIndex={effectiveMobileIndex}
+          onStageChange={setMobileCurrentIndex}
+        >
+          {(stage, index) => {
+            const stats = getStageStats(stage.id);
+            const isCurrent = stage.id === currentStage?.id;
+            const isCompleted = completedStages.some(s => s.id === stage.id);
+            const isUpcoming = upcomingStages.some(s => s.id === stage.id);
+            const isActive = index === effectiveMobileIndex;
+
+            return (
+              <StickyNoteCard
+                title={stage.title}
+                icon={stage.icon || 'Circle'}
+                color={stage.stage_key}
+                rotation={0}
+                variant={isCompleted ? 'completed' : isCurrent ? 'current' : 'upcoming'}
+                completedCount={stats.completed}
+                totalCount={stats.total}
+                onClick={() => handleStageClick(stage)}
+                fullWidth
+              >
+                {isActive && isCurrent && (
+                  <>
+                    <TaskFilters
+                      activeFilter={activeFilter}
+                      onFilterChange={setActiveFilter}
+                      counts={getFilterCounts(stage.id)}
+                      className="mb-2"
+                    />
+                    <div className="space-y-0.5 max-h-[180px] overflow-y-auto scrollbar-hide">
+                      {getFilteredTasks(stage.id).slice(0, 5).map((task) => (
+                        <JourneyTaskItem
+                          key={task.id}
+                          task={task}
+                          isCompleted={isTaskCompleted(task.id)}
+                          isAutoCompleted={isTaskAutoCompleted(task)}
+                          onToggle={() => handleTaskToggle(task.id, stage.id)}
+                          forgeStartDate={edition?.forge_start_date}
+                        />
+                      ))}
+                      {getFilteredTasks(stage.id).length > 5 && (
+                        <p className="text-xs text-muted-foreground text-center py-2">
+                          Tap to see all {getFilteredTasks(stage.id).length} tasks
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
                 
-                return (
-                  <CarouselItem key={stage.id} className="pl-2 basis-[85%]">
-                    <StickyNoteCard
-                      title={stage.title}
-                      icon={stage.icon || 'Circle'}
-                      color={stage.stage_key}
-                      rotation={0}
-                      variant={isCompleted ? 'completed' : isCurrent ? 'current' : 'upcoming'}
-                      completedCount={stats.completed}
-                      totalCount={stats.total}
-                      onClick={() => handleStageClick(stage)}
-                      fullWidth
-                    >
-                      {isCurrent && (
-                        <>
-                          <TaskFilters
-                            activeFilter={activeFilter}
-                            onFilterChange={setActiveFilter}
-                            counts={getFilterCounts(stage.id)}
-                            className="mb-2"
-                          />
-                          <div className="space-y-0.5 max-h-[200px] overflow-y-auto scrollbar-hide">
-                            {getFilteredTasks(stage.id).slice(0, 5).map((task) => (
-                              <JourneyTaskItem
-                                key={task.id}
-                                task={task}
-                                isCompleted={isTaskCompleted(task.id)}
-                                isAutoCompleted={isTaskAutoCompleted(task)}
-                                onToggle={() => handleTaskToggle(task.id, stage.id)}
-                                forgeStartDate={edition?.forge_start_date}
-                              />
-                            ))}
-                            {getFilteredTasks(stage.id).length > 5 && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-2">
-                                Tap to see all {getFilteredTasks(stage.id).length} tasks
-                              </p>
-                            )}
-                          </div>
-                        </>
-                      )}
-                      
-                      {isCompleted && (
-                        <div className="space-y-0.5">
-                          {getTasksForStage(stage.id).slice(0, 3).map((task) => (
-                            <JourneyTaskItem
-                              key={task.id}
-                              task={task}
-                              isCompleted={isTaskCompleted(task.id)}
-                              isAutoCompleted={isTaskAutoCompleted(task)}
-                              onToggle={() => handleTaskToggle(task.id, stage.id)}
-                              variant="compact"
-                              forgeStartDate={edition?.forge_start_date}
-                            />
-                          ))}
-                          {getTasksForStage(stage.id).length > 3 && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              +{getTasksForStage(stage.id).length - 3} more
-                            </p>
-                          )}
-                        </div>
-                      )}
+                {isActive && isCompleted && (
+                  <div className="space-y-0.5">
+                    {getTasksForStage(stage.id).slice(0, 4).map((task) => (
+                      <JourneyTaskItem
+                        key={task.id}
+                        task={task}
+                        isCompleted={isTaskCompleted(task.id)}
+                        isAutoCompleted={isTaskAutoCompleted(task)}
+                        onToggle={() => handleTaskToggle(task.id, stage.id)}
+                        variant="compact"
+                        forgeStartDate={edition?.forge_start_date}
+                      />
+                    ))}
+                    {getTasksForStage(stage.id).length > 4 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        +{getTasksForStage(stage.id).length - 4} more
+                      </p>
+                    )}
+                  </div>
+                )}
 
-                      {isUpcoming && !isCurrent && (
-                        <div className="space-y-0.5 opacity-50">
-                          {getTasksForStage(stage.id).slice(0, 3).map((task) => (
-                            <div
-                              key={task.id}
-                              className="flex items-center gap-2 py-1 text-gray-500 dark:text-gray-400"
-                            >
-                              <div className="w-4 h-4 rounded border border-gray-300 dark:border-gray-600" />
-                              <span className="text-xs truncate">{task.title}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </StickyNoteCard>
-                  </CarouselItem>
-                );
-              })}
-            </CarouselContent>
-          </Carousel>
-
-          {/* Carousel dot indicators */}
-          <div className="flex justify-center gap-1.5">
-            {carouselStages.map((stage, index) => {
-              const isCurrent = stage.id === currentStage?.id;
-              return (
-                <div
-                  key={stage.id}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    isCurrent
-                      ? 'bg-primary w-4 carousel-dot-active'
-                      : 'bg-muted-foreground/30'
-                  }`}
-                />
-              );
-            })}
-          </div>
-        </div>
+                {isActive && isUpcoming && !isCurrent && (
+                  <div className="space-y-0.5 opacity-60">
+                    {getTasksForStage(stage.id).slice(0, 4).map((task) => (
+                      <div
+                        key={task.id}
+                        className="flex items-center gap-2 py-1 text-muted-foreground"
+                      >
+                        <div className="w-4 h-4 rounded border border-border" />
+                        <span className="text-xs truncate">{task.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </StickyNoteCard>
+            );
+          }}
+        </StickyNoteCardStack>
       )}
 
       {/* Quick Actions Row */}
       <QuickActionsRow className="mt-4" />
 
-      {/* Floating Action Button (mobile) */}
-      {isMobile && (
-        <FloatingActionButton
-          onMarkAsReviewed={handleMarkAsReviewed}
-          currentStageName={currentStage?.title}
-        />
-      )}
+      {/* Floating Action Button - Available on all devices */}
+      <FloatingActionButton
+        onMarkAsReviewed={handleMarkAsReviewed}
+        currentStageName={currentStage?.title}
+      />
 
       {/* Bottom Sheet for Mobile, Dialog for Desktop */}
       {isMobile ? (
