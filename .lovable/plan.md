@@ -1,214 +1,327 @@
 
+## Journey Hero Section Enhancement - 8 Premium Mobile-First Features
 
-## Updated Plan: Bidirectional Task Sync + Popup Modal + Cohort-Specific Stages
-
-### New Requirement: FORGE_WRITING Has No Online Forge Stage
-
-The Writing cohort has a **5-stage journey** instead of 6:
-
-| Stage | FORGE (Filmmakers) | FORGE_WRITING (Writers) | FORGE_CREATORS |
-|-------|-------------------|------------------------|----------------|
-| 1 | Pre-Registration | Pre-Registration | Pre-Registration |
-| 2 | Pre-Travel | Pre-Travel | Pre-Travel |
-| 3 | Final Prep | Final Prep | Final Prep |
-| 4 | Online Forge (Days 1-3) | **SKIPPED** | Online Forge |
-| 5 | Physical Forge (Day 4+) | Physical Forge (Day 1+) | Physical Forge |
-| 6 | Post Forge | Post Forge | Post Forge |
+This plan implements 8 mobile-friendly improvements to the Journey Bento Hero section, enhancing user experience with swipe gestures, bottom sheets, streak tracking, horizontal carousels, pull-to-refresh, floating action buttons, sticky progress bars, and dark mode textures.
 
 ---
 
-### Part 1: Cohort-Aware Stage Detection
+### Features Overview
 
-Update `useStudentJourney.ts` to skip Online Forge for Writers:
+| # | Feature | Mobile Benefit |
+|---|---------|----------------|
+| 1 | Swipe-to-Complete Gesture | iOS-style task completion |
+| 2 | Bottom Sheet Drawer | Thumb-friendly task details |
+| 3 | Streak Counter | Daily motivation tracker |
+| 4 | Horizontal Stage Carousel | Swipeable stage navigation |
+| 5 | Pull-to-Refresh | Native refresh gesture |
+| 6 | Floating Action Button (FAB) | Quick access to key actions |
+| 9 | Sticky Progress Bar | Always-visible completion status |
+| 10 | Dark Mode Textures | Better dark theme contrast |
 
-```typescript
-const getCurrentStage = (): string => {
-  if (!edition?.forge_start_date || !edition?.forge_end_date) {
-    return 'pre_registration';
-  }
+---
 
-  const now = new Date();
-  const forgeStart = new Date(edition.forge_start_date);
-  const forgeEnd = new Date(edition.forge_end_date);
-  const daysUntilStart = differenceInDays(forgeStart, now);
-  const daysSinceStart = differenceInDays(now, forgeStart);
+### Part 1: Swipe-to-Complete Gesture
 
-  if (now > forgeEnd) return 'post_forge';
-  
-  // Writers go directly to physical_forge (no online stage)
-  if (cohortType === 'FORGE_WRITING') {
-    if (daysSinceStart >= 0) return 'physical_forge';
-  } else {
-    // FORGE and FORGE_CREATORS have online forge for first 3 days
-    if (daysSinceStart >= 3) return 'physical_forge';
-    if (daysSinceStart >= 0) return 'online_forge';
-  }
-  
-  if (daysUntilStart <= 15) return 'final_prep';
-  if (daysUntilStart <= 30) return 'pre_travel';
-  return 'pre_registration';
-};
-```
+**What it does:** Allow users to swipe right on a task to complete it, swipe left to undo.
 
-Update stages filtering to exclude Online Forge for Writers:
+**Implementation:**
+- Create new `SwipeableTaskItem.tsx` component with touch event handlers
+- Use CSS transforms for smooth swipe animation
+- Threshold of 80px triggers completion
+- Visual feedback: green checkmark appears during swipe right, red X during swipe left
 
-```typescript
-// Filter out online_forge stage for Writers
-const filteredStages = stages?.filter(stage => {
-  if (cohortType === 'FORGE_WRITING' && stage.stage_key === 'online_forge') {
-    return false;
-  }
-  return true;
-}) || [];
+**Files to create:**
+- `src/components/journey/SwipeableTaskItem.tsx`
+
+**Files to modify:**
+- `src/components/journey/StickyNoteDetailModal.tsx` - Use SwipeableTaskItem instead of current row
+- `src/index.css` - Add swipe animations
+
+**Technical approach:**
+```text
+Touch Events Flow:
+onTouchStart → Record startX position
+onTouchMove → Calculate deltaX, apply translateX transform
+onTouchEnd → If deltaX > 80px, trigger complete/uncomplete
 ```
 
 ---
 
-### Part 2: Database Migration
+### Part 2: Bottom Sheet Drawer (Replace Dialog Modal)
 
-Add `linked_prep_category` column and create `user_task_preferences` table:
+**What it does:** Replace the current Dialog modal with a Vaul bottom sheet drawer for mobile, keeping Dialog for desktop.
+
+**Implementation:**
+- Create new `StickyNoteBottomSheet.tsx` component using existing `Drawer` primitive
+- On mobile: Use bottom sheet that slides up from bottom
+- On desktop: Keep existing Dialog modal
+- Add snap points: 50% (preview), 90% (full)
+
+**Files to create:**
+- `src/components/journey/StickyNoteBottomSheet.tsx`
+
+**Files to modify:**
+- `src/components/journey/JourneyBentoHero.tsx` - Conditionally render Drawer on mobile, Dialog on desktop
+- `src/components/journey/index.ts` - Export new component
+
+**Bottom Sheet Layout:**
+```text
+┌──────────────────────────────┐
+│         ━━━━━━━━━            │ ← Drag handle
+│  FINAL PREP          3/5 ✓  │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━  │ ← Progress bar
+├──────────────────────────────┤
+│  [✓] Complete script prep    │ ← Swipeable rows
+│  [ ] Pack your bags          │
+│  ...                         │
+├──────────────────────────────┤
+│  [  View Full Prep  ]        │ ← Footer CTA
+└──────────────────────────────┘
+```
+
+---
+
+### Part 3: Streak Counter
+
+**What it does:** Track consecutive days of task completion to motivate users.
+
+**Implementation:**
+- Create `useStreak.ts` hook to calculate streak from `user_journey_progress` timestamps
+- Display streak badge in hero header with fire emoji
+- Streak breaks if no task completed in 24 hours
+- Store last activity in localStorage as backup
+
+**Files to create:**
+- `src/hooks/useStreak.ts`
+- `src/components/journey/StreakBadge.tsx`
+
+**Files to modify:**
+- `src/components/journey/JourneyBentoHero.tsx` - Add StreakBadge to header
+
+**Streak Calculation Logic:**
+```text
+1. Query user_journey_progress ORDER BY completed_at DESC
+2. Group completions by date
+3. Count consecutive days from today backwards
+4. If no completion today but yesterday has one, streak continues
+5. If gap > 1 day, streak = 0
+```
+
+**Visual Design:**
+```text
+🔥 3-day streak!
+```
+
+---
+
+### Part 4: Horizontal Stage Carousel (Mobile)
+
+**What it does:** Replace vertical stack of sticky notes with horizontal swipeable carousel on mobile.
+
+**Implementation:**
+- Use existing Embla carousel component
+- Each sticky note becomes a carousel slide
+- Current stage centered, completed/upcoming peek from sides
+- Dot indicators show current position
+- Snap to stage on swipe
+
+**Files to modify:**
+- `src/components/journey/JourneyBentoHero.tsx` - Replace mobile vertical stack with Carousel
+- `src/components/journey/StickyNoteCard.tsx` - Add full-width mode for carousel
+
+**Mobile Layout (Before → After):**
+```text
+BEFORE (Vertical Stack):         AFTER (Horizontal Carousel):
+┌──────────────────┐            ┌────┬──────────────────┬────┐
+│ Current Stage    │            │ <  │  Current Stage   │  > │
+└──────────────────┘            └────┴──────────────────┴────┘
+┌──────────────────┐                     ○ ● ○ ○ ○ ○
+│ Completed        │                     (dot indicators)
+└──────────────────┘
+```
+
+---
+
+### Part 5: Pull-to-Refresh
+
+**What it does:** Allow users to pull down on the hero section to refresh journey data.
+
+**Implementation:**
+- Create `usePullToRefresh.ts` hook with touch event handling
+- Show loading spinner when pulled past threshold (60px)
+- Invalidate and refetch journey queries on release
+- Animate content back to position
+
+**Files to create:**
+- `src/hooks/usePullToRefresh.ts`
+- `src/components/journey/PullToRefreshWrapper.tsx`
+
+**Files to modify:**
+- `src/components/journey/JourneyBentoHero.tsx` - Wrap content in PullToRefreshWrapper
+
+**Visual States:**
+```text
+Pull:     ↓ Pull to refresh...  (< 60px)
+Release:  ↻ Release to refresh  (> 60px)
+Loading:  ⟳ (spinner)           (fetching)
+Done:     ✓ Updated!            (complete)
+```
+
+---
+
+### Part 6: Floating Action Button (FAB)
+
+**What it does:** Quick access button for key actions: Add reminder, Mark all as reviewed, Quick nav.
+
+**Implementation:**
+- Create `FloatingActionButton.tsx` component
+- Fixed position bottom-right (above bottom nav on mobile)
+- Expandable menu with 3 actions:
+  1. Set reminder (opens native notification prompt)
+  2. Mark current stage as reviewed
+  3. Jump to roadmap
+
+**Files to create:**
+- `src/components/journey/FloatingActionButton.tsx`
+
+**Files to modify:**
+- `src/components/journey/JourneyBentoHero.tsx` - Add FAB component
+- `src/index.css` - Add FAB animations
+
+**FAB Layout:**
+```text
+                          ┌─────────┐
+                          │ Roadmap │ ← Action 3
+                          └─────────┘
+                     ┌──────────────────┐
+                     │ Mark as Reviewed │ ← Action 2
+                     └──────────────────┘
+                        ┌────────────┐
+                        │ + Reminder │ ← Action 1
+                        └────────────┘
+                              ⊕        ← Main FAB (tap to expand)
+```
+
+---
+
+### Part 7: Sticky Progress Bar
+
+**What it does:** Always-visible progress indicator at top of viewport showing overall journey completion.
+
+**Implementation:**
+- Create `StickyProgressBar.tsx` component
+- Fixed position at top when scrolling past hero
+- Shows: Current stage name + X/Y tasks + progress bar
+- Uses Intersection Observer to detect when to show/hide
+
+**Files to create:**
+- `src/components/journey/StickyProgressBar.tsx`
+
+**Files to modify:**
+- `src/components/journey/JourneyBentoHero.tsx` - Add StickyProgressBar with ref
+
+**Visual:**
+```text
+┌────────────────────────────────────────────┐
+│ Final Prep  ━━━━━━━━━━━━░░░░  3/5 complete │
+└────────────────────────────────────────────┘
+```
+
+---
+
+### Part 8: Dark Mode Textures
+
+**What it does:** Improve sticky note appearance in dark mode with proper textures and contrast.
+
+**Implementation:**
+- Update `StickyNoteCard.tsx` with dark mode variants
+- Use darker paper colors that still feel "papery"
+- Adjust pin/clip colors for visibility
+- Ensure text remains readable
+- Add subtle noise texture overlay
+
+**Files to modify:**
+- `src/components/journey/StickyNoteCard.tsx` - Add dark mode color mappings
+- `src/index.css` - Add paper texture patterns for dark mode
+
+**Dark Mode Color Palette:**
+```text
+Paper backgrounds (dark mode):
+- pre_registration: #2A2520 (warm dark brown)
+- pre_travel: #2D2618 (amber-tinted dark)
+- final_prep: #332B1C (gold-tinted dark)
+- online_forge: #2A2618 (cream-tinted dark)
+- physical_forge: #302A1E (warm sepia dark)
+- post_forge: #2B2519 (champagne-tinted dark)
+
+Pin gradient: #FFBC3B → #D38F0C (same, high contrast)
+Text: #E8E0D4 (warm cream)
+```
+
+---
+
+### Database Changes
+
+**Add DELETE policy for user_journey_progress** (fixes the ticking issue from earlier):
 
 ```sql
--- Add linked_prep_category to journey_tasks
-ALTER TABLE journey_tasks 
-ADD COLUMN linked_prep_category TEXT DEFAULT NULL;
-
--- Update existing tasks with their category links
-UPDATE journey_tasks 
-SET linked_prep_category = 'packing' 
-WHERE title ILIKE '%pack your bags%';
-
-UPDATE journey_tasks 
-SET linked_prep_category = 'script_prep' 
-WHERE title ILIKE '%script/content prep%' 
-AND 'FORGE' = ANY(cohort_types)
-AND NOT 'FORGE_WRITING' = ANY(cohort_types);
-
-UPDATE journey_tasks 
-SET linked_prep_category = 'writing_prep' 
-WHERE title ILIKE '%script/content prep%' 
-AND 'FORGE_WRITING' = ANY(cohort_types);
-
-UPDATE journey_tasks 
-SET linked_prep_category = 'content_prep' 
-WHERE title ILIKE '%script/content prep%' 
-AND 'FORGE_CREATORS' = ANY(cohort_types)
-AND NOT 'FORGE' = ANY(cohort_types);
+CREATE POLICY "Users can delete their own progress"
+ON user_journey_progress
+FOR DELETE
+TO authenticated
+USING (auth.uid() = user_id);
 ```
 
 ---
 
-### Part 3: Bidirectional Sync Logic
+### File Summary
 
-**Hook updates (`useStudentJourney.ts`):**
-
-1. Add queries to fetch prep progress and items
-2. Add `isPrepCategoryComplete(category)` function
-3. Add `getPrepCategoryProgress(category)` function  
-4. Update `toggleTask` mutation to sync with prep tables
-
-**Sync flow:**
-
-```text
-User ticks "Pack your bags" on sticky note
-         ↓
-Check if task has linked_prep_category = 'packing'
-         ↓
-If completing: Mark ALL packing items in user_prep_progress as done
-If uncompleting: Remove ALL packing items from user_prep_progress
-         ↓
-Invalidate both query caches
-         ↓
-Both Hero sticky notes AND Prep checklist show updated state
-```
-
----
-
-### Part 4: Sticky Note Detail Modal
-
-Create `StickyNoteDetailModal.tsx` - opens when clicking any sticky note:
-
-```text
-+----------------------------------------------------------+
-|                                                    [X]   |
-|     FINAL PREP                          Stage 3 of 5     |
-|     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3/5 complete        |
-+----------------------------------------------------------+
-|                                                          |
-|  [✓] Complete your writing prep                  [Go →]  |
-|      ━━━━━━━━━━━━ 3/3 items • Auto-synced               |
-|                                                          |
-|  [✓] Review Day 0 arrival instructions           [Go →]  |
-|      Check the roadmap for your schedule                 |
-|                                                          |
-|  [ ] Note emergency contacts                             |
-|      Save important numbers to your phone                |
-|                                                          |
-|  [ ] Download offline content                    [Go →]  |
-|      Access materials without WiFi                       |
-|                                                          |
-|  [ ] Pack your bags using checklist              [Go →]  |
-|      ━━━░░░░░░░░░░░ 12/45 items                         |
-|                                                          |
-+----------------------------------------------------------+
-|         [  View Full Prep Checklist  ]                   |
-+----------------------------------------------------------+
-```
-
-**Features:**
-- All tasks can be ticked directly in the modal
-- Prep-linked tasks show inline progress bars
-- Deep link buttons for navigation
-- Ticking syncs to both tables
-
----
-
-### Part 5: Component Wiring
-
-**JourneyBentoHero.tsx changes:**
-- Add modal state (`selectedStage`, `isModalOpen`)
-- Pass `onClick` handler to each `StickyNoteCard`
-- Render `StickyNoteDetailModal` when open
-- Use filtered stages that exclude Online Forge for Writers
-
-**StickyNoteCard.tsx changes:**
-- Ensure `onClick` prop is connected and clickable
-
-**StageNavigationStrip.tsx changes:**
-- Accept filtered stages (5 for Writers, 6 for others)
-- Adjust dot rendering accordingly
-
----
-
-### Files to Create
-
+**New Files (8):**
 | File | Purpose |
 |------|---------|
-| `src/components/journey/StickyNoteDetailModal.tsx` | Full-screen popup for stage task details with sync controls |
+| `src/components/journey/SwipeableTaskItem.tsx` | Swipe gesture for task completion |
+| `src/components/journey/StickyNoteBottomSheet.tsx` | Mobile bottom sheet drawer |
+| `src/components/journey/StreakBadge.tsx` | Streak counter display |
+| `src/components/journey/FloatingActionButton.tsx` | Quick actions FAB |
+| `src/components/journey/StickyProgressBar.tsx` | Fixed progress indicator |
+| `src/components/journey/PullToRefreshWrapper.tsx` | Pull-to-refresh container |
+| `src/hooks/useStreak.ts` | Streak calculation logic |
+| `src/hooks/usePullToRefresh.ts` | Pull-to-refresh touch handling |
 
-### Files to Modify
-
+**Modified Files (5):**
 | File | Changes |
 |------|---------|
-| `src/hooks/useStudentJourney.ts` | Cohort-aware stage detection, prep progress queries, bidirectional sync mutation, stage filtering for Writers |
-| `src/components/journey/JourneyBentoHero.tsx` | Modal state, onClick handlers, filtered stages, render modal |
-| `src/components/journey/StageNavigationStrip.tsx` | Accept dynamic stage count (5 or 6) |
-| `src/components/journey/index.ts` | Export new modal component |
-| Database migration | Add `linked_prep_category` column, update task mappings |
+| `src/components/journey/JourneyBentoHero.tsx` | Integrate all new features, horizontal carousel on mobile |
+| `src/components/journey/StickyNoteCard.tsx` | Dark mode textures, carousel-ready sizing |
+| `src/components/journey/StickyNoteDetailModal.tsx` | Swipeable task rows |
+| `src/components/journey/index.ts` | Export new components |
+| `src/index.css` | Swipe animations, FAB animations, dark mode textures |
+
+**Database Migration (1):**
+- Add DELETE policy to `user_journey_progress`
 
 ---
 
-### User Experience Summary
+### Implementation Order
 
-**For FORGE_WRITING students:**
-1. See 5-stage journey (no Online Forge)
-2. On Day 1 of Forge, jump directly to Physical Forge stage
-3. All other features work identically
+1. **Database migration** - Fix the DELETE policy first
+2. **Dark mode textures** - Quick visual improvement
+3. **Bottom sheet drawer** - Better mobile interaction
+4. **Horizontal carousel** - Transform mobile layout
+5. **Swipe-to-complete** - Add gesture support
+6. **Streak counter** - Motivation feature
+7. **Pull-to-refresh** - Native feel
+8. **Sticky progress bar** - Always-visible status
+9. **Floating action button** - Quick actions
 
-**For all cohorts:**
-1. Click any sticky note → Opens detail modal
-2. Tick any task in modal → Saved to database
-3. If task has prep link → All items in that category sync
-4. Visit `/roadmap/prep` → See synced checkboxes
-5. Complete prep items individually → Journey task auto-completes when all done
+---
 
+### Mobile-First Considerations
+
+All implementations follow these principles:
+- Touch targets minimum 44x44px
+- Safe area padding for notched devices
+- Smooth 60fps animations using CSS transforms
+- No blocking of main thread during gestures
+- Graceful degradation on older devices
+- Works with bottom navigation bar spacing
