@@ -25,20 +25,24 @@ const MobileHighlightsSheet: React.FC<MobileHighlightsSheetProps> = ({
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         {trigger || (
-          <Button variant="ghost" size="sm" className="gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20 hover:text-primary"
+          >
             <Sparkles className="w-4 h-4" />
             Highlights
           </Button>
         )}
       </SheetTrigger>
-      <SheetContent side="bottom" className="h-[80vh] rounded-t-3xl">
-        <SheetHeader className="pb-4">
+      <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl">
+        <SheetHeader className="pb-4 border-b border-border mb-4">
           <SheetTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             Forge Highlights
           </SheetTitle>
         </SheetHeader>
-        <div className="overflow-y-auto h-full pb-8">
+        <div className="overflow-y-auto h-[calc(100%-80px)] pb-8 -mx-4 px-4">
           <RoadmapSidebar editionId={editionId} />
         </div>
       </SheetContent>
