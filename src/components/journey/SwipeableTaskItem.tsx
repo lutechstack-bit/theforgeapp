@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Check, X, ChevronRight, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -27,55 +27,105 @@ export const SwipeableTaskItem: React.FC<SwipeableTaskItemProps> = ({
   const [offsetX, setOffsetX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
   const startX = useRef<number>(0);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const isToggling = useRef(false);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX;
     setIsSwiping(true);
-  };
+  }, []);
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!isSwiping) return;
     
-    const deltaX = e.touches[0].clientX - startX.current;
-    
-    // Add resistance beyond threshold
-    let boundedDelta = deltaX;
-    if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
-      const excess = Math.abs(deltaX) - SWIPE_THRESHOLD;
-      boundedDelta = (deltaX > 0 ? 1 : -1) * (SWIPE_THRESHOLD + excess * 0.3);
+    // Cancel any pending RAF
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
     }
     
-    setOffsetX(boundedDelta);
-  };
+    // Use RAF for smooth 60fps animation
+    rafRef.current = requestAnimationFrame(() => {
+      const deltaX = e.touches[0].clientX - startX.current;
+      
+      // Elastic resistance for natural feel
+      let boundedDelta = deltaX;
+      if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
+        const excess = Math.abs(deltaX) - SWIPE_THRESHOLD;
+        boundedDelta = (deltaX > 0 ? 1 : -1) * (SWIPE_THRESHOLD + excess * 0.2);
+      }
+      
+      setOffsetX(boundedDelta);
+    });
+  }, [isSwiping]);
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = useCallback(() => {
+    // Cancel any pending RAF
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    
     setIsSwiping(false);
     
-    // Complete threshold reached
-    if (offsetX >= SWIPE_THRESHOLD && !isCompleted) {
-      onToggle();
-    }
-    // Uncomplete threshold reached
-    else if (offsetX <= -SWIPE_THRESHOLD && isCompleted) {
-      onToggle();
+    // Prevent double-toggle with debounce
+    if (isToggling.current) {
+      setOffsetX(0);
+      return;
     }
     
-    // Reset position with animation
+    const didComplete = offsetX >= SWIPE_THRESHOLD && !isCompleted;
+    const didUncomplete = offsetX <= -SWIPE_THRESHOLD && isCompleted;
+    
+    if (didComplete || didUncomplete) {
+      // Haptic feedback
+      if ('vibrate' in navigator) {
+        navigator.vibrate(10);
+      }
+      
+      isToggling.current = true;
+      onToggle();
+      
+      // Reset debounce after animation
+      setTimeout(() => {
+        isToggling.current = false;
+      }, 300);
+    }
+    
     setOffsetX(0);
-  };
+  }, [offsetX, isCompleted, onToggle]);
 
-  const handleCheckboxClick = (e: React.MouseEvent) => {
+  const handleCheckboxClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // Prevent double-toggle
+    if (isToggling.current) return;
+    
+    isToggling.current = true;
     onToggle();
-  };
+    
+    setTimeout(() => {
+      isToggling.current = false;
+    }, 300);
+  }, [onToggle]);
 
-  const handleDeepLinkClick = (e: React.MouseEvent) => {
+  const handleDeepLinkClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (task.deep_link && onNavigate) {
       onNavigate(task.deep_link);
     }
-  };
+  }, [task.deep_link, onNavigate]);
+
+  const handleRowClick = useCallback(() => {
+    // Prevent double-toggle
+    if (isToggling.current) return;
+    
+    isToggling.current = true;
+    onToggle();
+    
+    setTimeout(() => {
+      isToggling.current = false;
+    }, 300);
+  }, [onToggle]);
 
   // Calculate background colors based on swipe direction
   const showCompleteIndicator = offsetX > 20 && !isCompleted;
@@ -84,12 +134,12 @@ export const SwipeableTaskItem: React.FC<SwipeableTaskItemProps> = ({
   return (
     <div 
       className="relative overflow-hidden rounded-lg"
-      ref={containerRef}
+      style={{ touchAction: 'pan-y' }}
     >
       {/* Background indicators */}
       <div 
         className={cn(
-          'absolute inset-0 flex items-center justify-start pl-4 transition-opacity',
+          'absolute inset-0 flex items-center justify-start pl-4 transition-opacity duration-150',
           'bg-emerald-500/20',
           showCompleteIndicator ? 'opacity-100' : 'opacity-0'
         )}
@@ -98,7 +148,7 @@ export const SwipeableTaskItem: React.FC<SwipeableTaskItemProps> = ({
       </div>
       <div 
         className={cn(
-          'absolute inset-0 flex items-center justify-end pr-4 transition-opacity',
+          'absolute inset-0 flex items-center justify-end pr-4 transition-opacity duration-150',
           'bg-destructive/20',
           showUncompleteIndicator ? 'opacity-100' : 'opacity-0'
         )}
@@ -109,18 +159,20 @@ export const SwipeableTaskItem: React.FC<SwipeableTaskItemProps> = ({
       {/* Main content */}
       <div
         className={cn(
-          'relative flex items-start gap-3 p-3 rounded-lg bg-background transition-all cursor-pointer',
+          'relative flex items-start gap-3 p-3 rounded-lg bg-background cursor-pointer',
           'hover:bg-muted/50',
-          isCompleted && 'opacity-70',
-          !isSwiping && 'transition-transform duration-200'
+          isCompleted && 'opacity-70'
         )}
         style={{ 
-          transform: `translateX(${offsetX}px)`,
+          transform: `translateX(${offsetX}px) scale(${isSwiping ? 0.98 : 1})`,
+          transition: isSwiping ? 'none' : 'transform 200ms ease-out',
+          willChange: isSwiping ? 'transform' : 'auto',
+          WebkitOverflowScrolling: 'touch',
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onClick={onToggle}
+        onClick={handleRowClick}
       >
         {/* Checkbox */}
         <button

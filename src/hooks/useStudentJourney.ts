@@ -225,7 +225,7 @@ export const useStudentJourney = () => {
     return progressItem?.status === 'completed';
   };
 
-  // Toggle task completion with bidirectional prep sync
+  // Toggle task completion with bidirectional prep sync and optimistic updates
   const toggleTask = useMutation({
     mutationFn: async ({ taskId, completed }: { taskId: string; completed: boolean }) => {
       if (!user?.id) throw new Error('Not authenticated');
@@ -282,8 +282,42 @@ export const useStudentJourney = () => {
         }
       }
     },
-    onSuccess: () => {
-      // Invalidate both journey and prep progress queries
+    // Optimistic update for instant UI feedback
+    onMutate: async ({ taskId, completed }) => {
+      // Cancel any in-flight queries to prevent race conditions
+      await queryClient.cancelQueries({ queryKey: ['user_journey_progress', user?.id] });
+      
+      // Snapshot previous value for rollback
+      const previousProgress = queryClient.getQueryData<UserJourneyProgress[]>(['user_journey_progress', user?.id]);
+      
+      // Optimistically update the cache
+      queryClient.setQueryData<UserJourneyProgress[]>(['user_journey_progress', user?.id], (old) => {
+        if (completed) {
+          // Add completion record
+          const newRecord: UserJourneyProgress = {
+            id: `temp-${taskId}`,
+            user_id: user?.id || '',
+            task_id: taskId,
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+          };
+          return [...(old || []), newRecord];
+        } else {
+          // Remove completion record
+          return (old || []).filter((p) => p.task_id !== taskId);
+        }
+      });
+      
+      return { previousProgress };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousProgress) {
+        queryClient.setQueryData(['user_journey_progress', user?.id], context.previousProgress);
+      }
+    },
+    onSettled: () => {
+      // Invalidate to refetch fresh data
       queryClient.invalidateQueries({ queryKey: ['user_journey_progress'] });
       queryClient.invalidateQueries({ queryKey: ['user-prep-progress'] });
     },
