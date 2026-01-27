@@ -14,6 +14,8 @@ import { QuickActionsRow } from './QuickActionsRow';
 import { ConfettiCelebration } from './ConfettiCelebration';
 import { StreakBadge } from './StreakBadge';
 import { FloatingActionButton } from './FloatingActionButton';
+import { AnnouncementBanner } from './AnnouncementBanner';
+import { PersonalNoteCard } from './PersonalNoteCard';
 
 import { PullToRefreshWrapper } from './PullToRefreshWrapper';
 import { differenceInDays } from 'date-fns';
@@ -243,6 +245,9 @@ export const JourneyBentoHero: React.FC = () => {
         )}
       </div>
 
+      {/* Announcement Banner - Smart triggers + manual announcements */}
+      <AnnouncementBanner className="mt-2" />
+
       {/* Stage Navigation Strip with Progress Rings */}
       <div className="glass-card rounded-xl p-2 overflow-hidden">
         <StageNavigationStrip
@@ -303,8 +308,11 @@ export const JourneyBentoHero: React.FC = () => {
             </div>
           )}
 
-          {/* Side Panel - Completed & Upcoming Stages */}
+          {/* Side Panel - Personal Note + Completed & Upcoming Stages */}
           <div className="flex flex-col gap-3">
+            {/* Personal User Sticky Note */}
+            <PersonalNoteCard />
+
             {/* Last Completed Stage */}
             {lastCompletedStage ? (
               <StickyNoteCard

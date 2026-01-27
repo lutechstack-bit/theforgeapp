@@ -56,6 +56,48 @@ export type Database = {
         }
         Relationships: []
       }
+      announcement_triggers: {
+        Row: {
+          config: Json | null
+          created_at: string | null
+          deep_link: string | null
+          icon_emoji: string | null
+          id: string
+          is_active: boolean | null
+          message_template: string | null
+          priority: number | null
+          title_template: string
+          trigger_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string | null
+          deep_link?: string | null
+          icon_emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          message_template?: string | null
+          priority?: number | null
+          title_template: string
+          trigger_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string | null
+          deep_link?: string | null
+          icon_emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          message_template?: string | null
+          priority?: number | null
+          title_template?: string
+          trigger_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       app_doc_versions: {
         Row: {
           changelog: string | null
@@ -1445,14 +1487,18 @@ export type Database = {
           created_at: string
           created_by: string | null
           deep_link: string | null
+          display_style: string | null
           expiry_at: string | null
+          icon_emoji: string | null
           id: string
           is_global: boolean
+          is_hero_announcement: boolean | null
           is_read: boolean
           link: string | null
           message: string
           pinned: boolean
           priority: number
+          target_stage: string | null
           title: string
           type: Database["public"]["Enums"]["notification_type"]
           user_id: string | null
@@ -1463,14 +1509,18 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deep_link?: string | null
+          display_style?: string | null
           expiry_at?: string | null
+          icon_emoji?: string | null
           id?: string
           is_global?: boolean
+          is_hero_announcement?: boolean | null
           is_read?: boolean
           link?: string | null
           message: string
           pinned?: boolean
           priority?: number
+          target_stage?: string | null
           title: string
           type: Database["public"]["Enums"]["notification_type"]
           user_id?: string | null
@@ -1481,14 +1531,18 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deep_link?: string | null
+          display_style?: string | null
           expiry_at?: string | null
+          icon_emoji?: string | null
           id?: string
           is_global?: boolean
+          is_hero_announcement?: boolean | null
           is_read?: boolean
           link?: string | null
           message?: string
           pinned?: boolean
           priority?: number
+          target_stage?: string | null
           title?: string
           type?: Database["public"]["Enums"]["notification_type"]
           user_id?: string | null
@@ -2111,6 +2165,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_notes: {
+        Row: {
+          content: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_prep_progress: {
         Row: {
