@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { JourneyStage } from '@/hooks/useStudentJourney';
 
@@ -22,7 +22,28 @@ export const StickyNoteCardStack: React.FC<StickyNoteCardStackProps> = ({
   const startXRef = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const SWIPE_THRESHOLD = 60;
+  const SWIPE_THRESHOLD = 50;
+
+  // Native touch handler for passive: false
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleTouchMoveNative = (e: TouchEvent) => {
+      if (!isDragging) return;
+      const currentX = e.touches[0].clientX;
+      const diff = currentX - startXRef.current;
+      
+      // Prevent vertical scroll when swiping horizontally
+      if (Math.abs(diff) > 10) {
+        e.preventDefault();
+      }
+      setDragOffset(diff);
+    };
+
+    container.addEventListener('touchmove', handleTouchMoveNative, { passive: false });
+    return () => container.removeEventListener('touchmove', handleTouchMoveNative);
+  }, [isDragging]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     setIsDragging(true);
@@ -30,22 +51,13 @@ export const StickyNoteCardStack: React.FC<StickyNoteCardStackProps> = ({
     setDragOffset(0);
   }, []);
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isDragging) return;
-    const currentX = e.touches[0].clientX;
-    const diff = currentX - startXRef.current;
-    setDragOffset(diff);
-  }, [isDragging]);
-
   const handleTouchEnd = useCallback(() => {
     if (!isDragging) return;
     setIsDragging(false);
 
     if (dragOffset > SWIPE_THRESHOLD && currentIndex > 0) {
-      // Swiped right - go to previous
       onStageChange(currentIndex - 1);
     } else if (dragOffset < -SWIPE_THRESHOLD && currentIndex < stages.length - 1) {
-      // Swiped left - go to next
       onStageChange(currentIndex + 1);
     }
     
@@ -77,49 +89,52 @@ export const StickyNoteCardStack: React.FC<StickyNoteCardStackProps> = ({
 
   return (
     <div className={cn('space-y-4', className)}>
-      {/* Card Stack Container */}
+      {/* Card Stack Container - with overflow hidden to clip background cards */}
       <div 
         ref={containerRef}
-        className="relative min-h-[320px]"
+        className="relative min-h-[320px] overflow-hidden"
+        style={{ touchAction: 'pan-y pinch-zoom' }}
         onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
       >
-        {/* Background cards for depth effect */}
+        {/* Cards - only show current and immediate neighbors */}
         {stages.map((stage, index) => {
           const offset = index - currentIndex;
-          const isVisible = Math.abs(offset) <= 2;
+          // Only show current card and 1 card on each side for cleaner UI
+          const isVisible = Math.abs(offset) <= 1;
           
           if (!isVisible) return null;
 
-          // Calculate transforms for stacking effect
-          const baseRotation = offset * 2;
-          const baseTranslateX = offset * 8;
-          const baseTranslateY = Math.abs(offset) * 6;
-          const scale = 1 - Math.abs(offset) * 0.03;
+          // Reduced transforms for cleaner look
+          const baseRotation = offset * 1;
+          const baseTranslateX = offset * 4;
+          const baseTranslateY = Math.abs(offset) * 4;
+          const scale = 1 - Math.abs(offset) * 0.04;
           const zIndex = 10 - Math.abs(offset);
-          const opacity = 1 - Math.abs(offset) * 0.25;
+          const opacity = offset === 0 ? 1 : 0.3;
 
-          // Add drag offset to current card
+          // Add drag offset only to current card
           const translateX = offset === 0 ? dragOffset : baseTranslateX;
-          const rotation = offset === 0 ? (dragOffset / 20) : baseRotation;
+          const rotation = offset === 0 ? (dragOffset / 25) : baseRotation;
 
           return (
             <div
               key={stage.id}
               className={cn(
-                'absolute inset-0 transition-all duration-300 ease-out',
-                isDragging && offset === 0 && 'transition-none',
+                'absolute inset-0',
+                isDragging && offset === 0 ? 'transition-none' : 'transition-all duration-300 ease-out',
                 offset !== 0 && 'pointer-events-none'
               )}
               style={{
                 transform: `translateX(${translateX}px) translateY(${baseTranslateY}px) rotate(${rotation}deg) scale(${scale})`,
                 zIndex,
-                opacity: offset === 0 ? 1 : opacity,
+                opacity,
+                willChange: 'transform, opacity',
+                backfaceVisibility: 'hidden',
               }}
             >
               {children(stage, index)}

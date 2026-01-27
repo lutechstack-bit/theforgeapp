@@ -387,96 +387,101 @@ export const JourneyBentoHero: React.FC = () => {
 
       {/* Mobile: Stacked Card UI */}
       {isMobile && (
-        <StickyNoteCardStack
-          stages={allOrderedStages}
-          currentIndex={effectiveMobileIndex}
-          onStageChange={setMobileCurrentIndex}
-        >
-          {(stage, index) => {
-            const stats = getStageStats(stage.id);
-            const isCurrent = stage.id === currentStage?.id;
-            const isCompleted = completedStages.some(s => s.id === stage.id);
-            const isUpcoming = upcomingStages.some(s => s.id === stage.id);
-            const isActive = index === effectiveMobileIndex;
+        <>
+          <StickyNoteCardStack
+            stages={allOrderedStages}
+            currentIndex={effectiveMobileIndex}
+            onStageChange={setMobileCurrentIndex}
+          >
+            {(stage, index) => {
+              const stats = getStageStats(stage.id);
+              const isCurrent = stage.id === currentStage?.id;
+              const isCompleted = completedStages.some(s => s.id === stage.id);
+              const isUpcoming = upcomingStages.some(s => s.id === stage.id);
+              const isActive = index === effectiveMobileIndex;
 
-            return (
-              <StickyNoteCard
-                title={stage.title}
-                icon={stage.icon || 'Circle'}
-                color={stage.stage_key}
-                rotation={0}
-                variant={isCompleted ? 'completed' : isCurrent ? 'current' : 'upcoming'}
-                completedCount={stats.completed}
-                totalCount={stats.total}
-                onClick={() => handleStageClick(stage)}
-                fullWidth
-              >
-                {isActive && isCurrent && (
-                  <>
-                    <TaskFilters
-                      activeFilter={activeFilter}
-                      onFilterChange={setActiveFilter}
-                      counts={getFilterCounts(stage.id)}
-                      className="mb-2"
-                    />
-                    <div className="space-y-0.5 max-h-[180px] overflow-y-auto scrollbar-hide">
-                      {getFilteredTasks(stage.id).slice(0, 5).map((task) => (
+              return (
+                <StickyNoteCard
+                  title={stage.title}
+                  icon={stage.icon || 'Circle'}
+                  color={stage.stage_key}
+                  rotation={0}
+                  variant={isCompleted ? 'completed' : isCurrent ? 'current' : 'upcoming'}
+                  completedCount={stats.completed}
+                  totalCount={stats.total}
+                  onClick={() => handleStageClick(stage)}
+                  fullWidth
+                >
+                  {isActive && isCurrent && (
+                    <>
+                      <TaskFilters
+                        activeFilter={activeFilter}
+                        onFilterChange={setActiveFilter}
+                        counts={getFilterCounts(stage.id)}
+                        className="mb-2"
+                      />
+                      <div className="space-y-0.5 max-h-[180px] overflow-y-auto scrollbar-hide">
+                        {getFilteredTasks(stage.id).slice(0, 5).map((task) => (
+                          <JourneyTaskItem
+                            key={task.id}
+                            task={task}
+                            isCompleted={isTaskCompleted(task.id)}
+                            isAutoCompleted={isTaskAutoCompleted(task)}
+                            onToggle={() => handleTaskToggle(task.id, stage.id)}
+                            forgeStartDate={edition?.forge_start_date}
+                          />
+                        ))}
+                        {getFilteredTasks(stage.id).length > 5 && (
+                          <p className="text-xs text-muted-foreground text-center py-2">
+                            Tap to see all {getFilteredTasks(stage.id).length} tasks
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  
+                  {isActive && isCompleted && (
+                    <div className="space-y-0.5">
+                      {getTasksForStage(stage.id).slice(0, 4).map((task) => (
                         <JourneyTaskItem
                           key={task.id}
                           task={task}
                           isCompleted={isTaskCompleted(task.id)}
                           isAutoCompleted={isTaskAutoCompleted(task)}
                           onToggle={() => handleTaskToggle(task.id, stage.id)}
+                          variant="compact"
                           forgeStartDate={edition?.forge_start_date}
                         />
                       ))}
-                      {getFilteredTasks(stage.id).length > 5 && (
-                        <p className="text-xs text-muted-foreground text-center py-2">
-                          Tap to see all {getFilteredTasks(stage.id).length} tasks
+                      {getTasksForStage(stage.id).length > 4 && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          +{getTasksForStage(stage.id).length - 4} more
                         </p>
                       )}
                     </div>
-                  </>
-                )}
-                
-                {isActive && isCompleted && (
-                  <div className="space-y-0.5">
-                    {getTasksForStage(stage.id).slice(0, 4).map((task) => (
-                      <JourneyTaskItem
-                        key={task.id}
-                        task={task}
-                        isCompleted={isTaskCompleted(task.id)}
-                        isAutoCompleted={isTaskAutoCompleted(task)}
-                        onToggle={() => handleTaskToggle(task.id, stage.id)}
-                        variant="compact"
-                        forgeStartDate={edition?.forge_start_date}
-                      />
-                    ))}
-                    {getTasksForStage(stage.id).length > 4 && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        +{getTasksForStage(stage.id).length - 4} more
-                      </p>
-                    )}
-                  </div>
-                )}
+                  )}
 
-                {isActive && isUpcoming && !isCurrent && (
-                  <div className="space-y-0.5 opacity-60">
-                    {getTasksForStage(stage.id).slice(0, 4).map((task) => (
-                      <div
-                        key={task.id}
-                        className="flex items-center gap-2 py-1 text-muted-foreground"
-                      >
-                        <div className="w-4 h-4 rounded border border-border" />
-                        <span className="text-xs truncate">{task.title}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </StickyNoteCard>
-            );
-          }}
-        </StickyNoteCardStack>
+                  {isActive && isUpcoming && !isCurrent && (
+                    <div className="space-y-0.5 opacity-60">
+                      {getTasksForStage(stage.id).slice(0, 4).map((task) => (
+                        <div
+                          key={task.id}
+                          className="flex items-center gap-2 py-1 text-muted-foreground"
+                        >
+                          <div className="w-4 h-4 rounded border border-border" />
+                          <span className="text-xs truncate">{task.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </StickyNoteCard>
+              );
+            }}
+          </StickyNoteCardStack>
+          
+          {/* Personal Note - Mobile placement */}
+          <PersonalNoteCard compact className="mt-4" />
+        </>
       )}
 
       {/* Quick Actions Row */}

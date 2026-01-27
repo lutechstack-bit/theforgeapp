@@ -62,9 +62,9 @@ const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
           );
         })}
         
-        {/* Mobile Highlights Button - Only visible on mobile/tablet */}
+        {/* Mobile Highlights Button - Visible on mobile/tablet, positioned prominently */}
         {mobileHighlightsButton && (
-          <div className="lg:hidden flex-shrink-0 ml-auto">
+          <div className="lg:hidden flex-shrink-0 ml-2 pl-2 border-l border-border">
             {mobileHighlightsButton}
           </div>
         )}
