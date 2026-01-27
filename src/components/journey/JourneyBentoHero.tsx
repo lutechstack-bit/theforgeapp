@@ -14,7 +14,7 @@ import { QuickActionsRow } from './QuickActionsRow';
 import { ConfettiCelebration } from './ConfettiCelebration';
 import { StreakBadge } from './StreakBadge';
 import { FloatingActionButton } from './FloatingActionButton';
-import { StickyProgressBar } from './StickyProgressBar';
+
 import { PullToRefreshWrapper } from './PullToRefreshWrapper';
 import { differenceInDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -203,8 +203,6 @@ export const JourneyBentoHero: React.FC = () => {
   // Get the next upcoming stage
   const nextUpcomingStage = upcomingStages[0];
 
-  // Current stage stats for sticky progress bar
-  const currentStageStats = currentStage ? getStageStats(currentStage.id) : { completed: 0, total: 0 };
 
   // Build array: completed + current + upcoming
   const allOrderedStages = [...completedStages, currentStage, ...upcomingStages].filter(Boolean) as JourneyStage[];
@@ -223,15 +221,6 @@ export const JourneyBentoHero: React.FC = () => {
         onComplete={() => setShowCelebration(false)}
       />
 
-      {/* Sticky Progress Bar (appears when scrolling) */}
-      {currentStage && (
-        <StickyProgressBar
-          stageName={currentStage.title}
-          completed={currentStageStats.completed}
-          total={currentStageStats.total}
-          observeRef={heroRef}
-        />
-      )}
 
       {/* Header with greeting and streak */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
