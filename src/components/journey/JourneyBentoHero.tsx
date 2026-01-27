@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useStudentJourney } from '@/hooks/useStudentJourney';
+import { useStudentJourney, JourneyStage } from '@/hooks/useStudentJourney';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { StageNavigationStrip } from './StageNavigationStrip';
 import { StickyNoteCard } from './StickyNoteCard';
+import { StickyNoteDetailModal } from './StickyNoteDetailModal';
 import { JourneyTaskItem } from './JourneyTaskItem';
 import { TaskFilters, TaskFilterType } from './TaskFilters';
 import { QuickActionsRow } from './QuickActionsRow';
@@ -27,6 +28,7 @@ export const JourneyBentoHero: React.FC = () => {
     isTaskAutoCompleted,
     toggleTask,
     isLoading,
+    getPrepCategoryProgress,
   } = useStudentJourney();
 
   // Filter state
@@ -35,6 +37,10 @@ export const JourneyBentoHero: React.FC = () => {
   // Celebration state
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationStageId, setCelebrationStageId] = useState<string | null>(null);
+
+  // Modal state for sticky note detail
+  const [selectedStage, setSelectedStage] = useState<JourneyStage | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Drag state for reordering
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
@@ -135,6 +141,18 @@ export const JourneyBentoHero: React.FC = () => {
     }
   };
 
+  // Handle sticky note click to open modal
+  const handleStageClick = (stage: JourneyStage) => {
+    setSelectedStage(stage);
+    setIsModalOpen(true);
+  };
+
+  // Handle task toggle from modal
+  const handleModalTaskToggle = (taskId: string) => {
+    if (!selectedStage) return;
+    handleTaskToggle(taskId, selectedStage.id);
+  };
+
   if (isLoading || !stages) {
     return (
       <div className="space-y-4">
@@ -204,6 +222,7 @@ export const JourneyBentoHero: React.FC = () => {
                 variant="completed"
                 completedCount={getStageStats(lastCompletedStage.id).completed}
                 totalCount={getStageStats(lastCompletedStage.id).total}
+                onClick={() => handleStageClick(lastCompletedStage)}
               >
                 {getTasksForStage(lastCompletedStage.id).slice(0, 4).map((task) => (
                   <JourneyTaskItem
@@ -243,6 +262,7 @@ export const JourneyBentoHero: React.FC = () => {
                 variant="current"
                 completedCount={getStageStats(currentStage.id).completed}
                 totalCount={getStageStats(currentStage.id).total}
+                onClick={() => handleStageClick(currentStage)}
               >
                 {/* Task Filters */}
                 <TaskFilters
@@ -330,6 +350,7 @@ export const JourneyBentoHero: React.FC = () => {
               variant="current"
               completedCount={getStageStats(currentStage.id).completed}
               totalCount={getStageStats(currentStage.id).total}
+              onClick={() => handleStageClick(currentStage)}
             >
               <TaskFilters
                 activeFilter={activeFilter}
@@ -374,6 +395,7 @@ export const JourneyBentoHero: React.FC = () => {
                     variant="completed"
                     completedCount={getStageStats(stage.id).completed}
                     totalCount={getStageStats(stage.id).total}
+                    onClick={() => handleStageClick(stage)}
                   >
                     {getTasksForStage(stage.id).map((task) => (
                       <JourneyTaskItem
@@ -413,6 +435,20 @@ export const JourneyBentoHero: React.FC = () => {
 
       {/* Quick Actions Row */}
       <QuickActionsRow className="mt-4" />
+
+      {/* Sticky Note Detail Modal */}
+      <StickyNoteDetailModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        stage={selectedStage}
+        stageIndex={selectedStage ? stages.findIndex(s => s.id === selectedStage.id) : 0}
+        totalStages={stages.length}
+        tasks={selectedStage ? getTasksForStage(selectedStage.id) : []}
+        isTaskCompleted={isTaskCompleted}
+        isTaskAutoCompleted={isTaskAutoCompleted}
+        onToggleTask={handleModalTaskToggle}
+        getPrepCategoryProgress={getPrepCategoryProgress}
+      />
     </div>
   );
 };
