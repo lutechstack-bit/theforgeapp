@@ -17,67 +17,67 @@ interface StickyNoteCardProps {
   fullWidth?: boolean;
 }
 
-// Dark glassmorphism with gold/orange accents based on brand palette
+// Dark glassmorphism with distinct colors per stage for visual differentiation
 const stageAccentColors: Record<string, { border: string; glow: string; accent: string }> = {
   'pre_registration': { 
     border: '#FFBC3B', 
-    glow: 'rgba(255, 188, 59, 0.15)', 
+    glow: 'rgba(255, 188, 59, 0.25)', 
     accent: '#FFBC3B' 
   },
   'pre_travel': { 
-    border: '#D38F0C', 
-    glow: 'rgba(211, 143, 12, 0.15)', 
-    accent: '#D38F0C' 
+    border: '#10B981', 
+    glow: 'rgba(16, 185, 129, 0.25)', 
+    accent: '#10B981' 
   },
   'final_prep': { 
     border: '#DD6F16', 
-    glow: 'rgba(221, 111, 22, 0.15)', 
+    glow: 'rgba(221, 111, 22, 0.25)', 
     accent: '#DD6F16' 
   },
   'online_forge': { 
-    border: '#FFBC3B', 
-    glow: 'rgba(255, 188, 59, 0.15)', 
-    accent: '#FFBC3B' 
+    border: '#3B82F6', 
+    glow: 'rgba(59, 130, 246, 0.25)', 
+    accent: '#3B82F6' 
   },
   'physical_forge': { 
     border: '#D38F0C', 
-    glow: 'rgba(211, 143, 12, 0.15)', 
+    glow: 'rgba(211, 143, 12, 0.25)', 
     accent: '#D38F0C' 
   },
   'post_forge': { 
-    border: '#DD6F16', 
-    glow: 'rgba(221, 111, 22, 0.15)', 
-    accent: '#DD6F16' 
+    border: '#8B5CF6', 
+    glow: 'rgba(139, 92, 246, 0.25)', 
+    accent: '#8B5CF6' 
   },
   // Fallback colors
   'emerald': { 
     border: '#10B981', 
-    glow: 'rgba(16, 185, 129, 0.15)', 
+    glow: 'rgba(16, 185, 129, 0.25)', 
     accent: '#10B981' 
   },
   'amber': { 
     border: '#FFBC3B', 
-    glow: 'rgba(255, 188, 59, 0.15)', 
+    glow: 'rgba(255, 188, 59, 0.25)', 
     accent: '#FFBC3B' 
   },
   'blue': { 
     border: '#3B82F6', 
-    glow: 'rgba(59, 130, 246, 0.15)', 
+    glow: 'rgba(59, 130, 246, 0.25)', 
     accent: '#3B82F6' 
   },
   'purple': { 
     border: '#8B5CF6', 
-    glow: 'rgba(139, 92, 246, 0.15)', 
+    glow: 'rgba(139, 92, 246, 0.25)', 
     accent: '#8B5CF6' 
   },
   'rose': { 
     border: '#F43F5E', 
-    glow: 'rgba(244, 63, 94, 0.15)', 
+    glow: 'rgba(244, 63, 94, 0.25)', 
     accent: '#F43F5E' 
   },
   'primary': { 
     border: '#FFBC3B', 
-    glow: 'rgba(255, 188, 59, 0.15)', 
+    glow: 'rgba(255, 188, 59, 0.25)', 
     accent: '#FFBC3B' 
   },
 };
@@ -122,16 +122,24 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
         className
       )}
       style={{
-        borderColor: `${colors.border}40`, // 25% opacity border
-        boxShadow: `0 4px 20px ${colors.glow}, 0 0 40px ${colors.glow}`,
+        borderColor: `${colors.border}99`, // 60% opacity border for visibility
+        boxShadow: isCurrent 
+          ? `0 4px 30px ${colors.glow}, 0 0 60px ${colors.glow}, inset 0 1px 0 ${colors.border}30`
+          : `0 4px 20px ${colors.glow}, 0 0 40px ${colors.glow}`,
         transform: `rotate(${rotation}deg)`,
       }}
     >
-      {/* Gold gradient pin at top */}
+      {/* Colored top accent line */}
+      <div 
+        className="absolute top-0 left-0 right-0 h-1 rounded-t-xl"
+        style={{ backgroundColor: colors.border }}
+      />
+      
+      {/* Pin matches stage color */}
       <div
         className="absolute -top-2 left-1/2 -translate-x-1/2 w-6 h-3 rounded-b-sm shadow-md"
         style={{
-          background: 'linear-gradient(to bottom, #FFBC3B, #D38F0C)',
+          background: `linear-gradient(to bottom, ${colors.border}, ${colors.accent})`,
         }}
       />
 
