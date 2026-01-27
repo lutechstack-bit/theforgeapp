@@ -1,205 +1,100 @@
 
-# PWA UI Fixes - Comprehensive Resolution
 
-## Issues Identified from Screenshots
+# Make Sticky Notes Visually Distinct with Unique Border Colors
 
-### 1. Content Overflow / Clipping on Left Side
-**Problem**: In the PWA screenshots, content is being clipped on the left side - the greeting, streak badge, and sticky notes are partially cut off.
+## Problem Identified
 
-**Root Cause**: The `PullToRefreshWrapper` component applies a `translateY` transform when pulling, which combined with `overflow-hidden` on the parent container causes horizontal clipping. Additionally, the Home page uses `p-3` padding which may not be sufficient.
+Looking at the screenshot and code, all sticky notes appear identical because:
+1. The border color opacity is set to only 25% (`${colors.border}40` → hex for ~25% alpha)
+2. The glow effect is also very subtle (15% opacity)
+3. All cards have the same black/dark background
 
-### 2. Light-Colored Sticky Notes Don't Match Dark Theme
-**Problem**: The sticky notes use light cream/beige backgrounds (#FEF7E0, #FFF8E6, etc.) which look out of place against the pure black (#000000) app background.
+While different accent colors exist for each stage in the `stageAccentColors` object, they're barely visible.
 
-**User's Color Reference**:
-- Primary Yellow: #FFBC3B
-- Deep Gold: #D38F0C  
-- Secondary Orange: #DD6F16
-- Cream: #FCF7EF
-- Pure Black: #000000
+## Solution
 
-**Solution**: Update sticky notes to use dark, semi-transparent backgrounds with gold/orange accents instead of light paper colors. This will make them seamlessly integrate with the app's dark theme.
+Increase the border visibility significantly and add more visual differentiation:
+1. **Increase border opacity** from 25% to 60-70% 
+2. **Add a subtle gradient border effect** using the stage accent color
+3. **Make the pin color match the stage** (not always gold)
+4. **Add a colored top accent line** to each card for immediate visual recognition
 
-### 3. Slow PWA Loading / Cognitive Load
-**Problem**: The PWA takes too long to load, creating a poor user experience.
+## Color Scheme Per Stage
 
-**Solution**: Add loading skeletons, lazy load components, and optimize the initial render by deferring non-critical content.
+Using the brand palette with more visible borders:
 
----
+| Stage | Border Color | Visual Accent |
+|-------|-------------|---------------|
+| Pre-Registration | `#FFBC3B` (Primary Yellow) | Bright yellow border |
+| Pre-Travel | `#10B981` (Emerald) | Green for "go/travel" |
+| Final Prep | `#DD6F16` (Secondary Orange) | Orange urgency |
+| Online Forge | `#3B82F6` (Blue) | Digital/online feel |
+| Physical Forge | `#D38F0C` (Deep Gold) | Premium gold |
+| Post Forge | `#8B5CF6` (Purple) | Completion/achievement |
 
-## Implementation Plan
-
-### Part 1: Fix Content Clipping/Overflow
-
-**Files to Modify:**
-- `src/components/journey/PullToRefreshWrapper.tsx`
-- `src/components/journey/JourneyBentoHero.tsx`
-- `src/pages/Home.tsx`
-
-**Changes:**
-1. Remove `overflow-hidden` from containers causing clipping
-2. Ensure proper horizontal padding that accounts for safe areas
-3. Add `overflow-x-hidden` only where needed (not on content)
+## Visual Design
 
 ```text
-Home.tsx changes:
-- Change: "p-3 sm:p-4 md:p-6" 
-- To: "px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-6 overflow-x-hidden"
+┌────────────────────────────────────────┐
+│ ═══════════════════════════════════════ │ ← Colored top accent line (3px)
+│  [Pin]                                  │ ← Pin matches stage color
+│ ┌────────────────────────────────────┐ │
+│ │                                    │ │
+│ │  📋 Final Prep              3/5   │ │
+│ │  ─────────────────────────────────│ │
+│ │  [✓] Task 1                       │ │
+│ │  [ ] Task 2                       │ │
+│ │                                    │ │
+│ └────────────────────────────────────┘ │
+│        ↑ 60% opacity colored border     │
+└────────────────────────────────────────┘
 ```
 
-```text
-JourneyBentoHero.tsx changes:
-- Line 217: Remove "overflow-hidden" from the hero content wrapper
-- Ensure content has proper left/right margins
-```
+## File to Modify
 
-```text
-PullToRefreshWrapper.tsx changes:
-- Line 31: Remove "overflow-hidden" from the wrapper
-- Add overflow control only to the pull indicator area
-```
+**`src/components/journey/StickyNoteCard.tsx`**
 
-### Part 2: Dark Theme Sticky Notes
+### Changes
 
-**File to Modify:**
-- `src/components/journey/StickyNoteCard.tsx`
+1. **Update border opacity** in the `style` prop:
+   - Change: `borderColor: \`${colors.border}40\`` (25%)
+   - To: `borderColor: \`${colors.border}99\`` (60%) or even `\`${colors.border}\`` (100%)
 
-**Current Problem:**
-Light paper backgrounds look disconnected from dark theme:
-- pre_registration: #FEF7E0 (cream)
-- final_prep: #FEF3C7 (light gold)
-- etc.
+2. **Add colored top accent bar**:
+   ```typescript
+   {/* Colored top accent line */}
+   <div 
+     className="absolute top-0 left-0 right-0 h-1 rounded-t-xl"
+     style={{ backgroundColor: colors.border }}
+   />
+   ```
 
-**New Approach - Dark Glassmorphism with Gold Accents:**
-Replace paper-style backgrounds with dark glass cards that use the brand colors as accents/glows:
+3. **Make pin color match the stage accent**:
+   ```typescript
+   style={{
+     background: `linear-gradient(to bottom, ${colors.border}, ${colors.accent})`,
+   }}
+   ```
 
-```text
-New Dark Card Backgrounds:
-- Base: rgba(0, 0, 0, 0.6) with backdrop blur
-- Border: Gold gradient border (#FFBC3B to #D38F0C)
-- Glow: Subtle gold shadow based on stage
-- Text: Cream foreground (#FCF7EF)
-- Accent elements: Use brand gold/orange
-```
+4. **Increase glow intensity** for the current stage:
+   - Change glow from 15% to 25% opacity
+   - Add stronger glow for `variant === 'current'`
 
-**Color Mapping (Stage → Accent):**
-| Stage Key | Accent Color | Glow Color |
-|-----------|--------------|------------|
-| pre_registration | #FFBC3B (Yellow) | rgba(255,188,59,0.15) |
-| pre_travel | #D38F0C (Gold) | rgba(211,143,12,0.15) |
-| final_prep | #DD6F16 (Orange) | rgba(221,111,22,0.15) |
-| online_forge | #FFBC3B | rgba(255,188,59,0.15) |
-| physical_forge | #D38F0C | rgba(211,143,12,0.15) |
-| post_forge | #DD6F16 | rgba(221,111,22,0.15) |
+5. **Update color palette** for better differentiation:
+   - Keep gold/orange for prep stages
+   - Use emerald green for `pre_travel`
+   - Use blue for `online_forge`
+   - Use purple for `post_forge`
 
-**Visual Design:**
-```text
-┌─────────────────────────────────────┐
-│  ┌─ Gold pin ─┐                     │
-│  │    [====]  │                     │
-│  └────────────┘                     │
-│ ┌─────────────────────────────────┐ │
-│ │ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │ │ ← Dark glass background
-│ │ ▓ 📋 Final Prep         3/5 ▓ │ │ ← Cream text
-│ │ ▓━━━━━━━━━━━━━━━━━━━━━━━━━━━▓ │ │
-│ │ ▓ [✓] Task 1                ▓ │ │
-│ │ ▓ [ ] Task 2                ▓ │ │
-│ │ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │ │
-│ └─────────────────────────────────┘ │
-│        ↑ Gold border/glow           │
-└─────────────────────────────────────┘
-```
+## Summary
 
-### Part 3: Improve PWA Loading Performance
+| Change | Description |
+|--------|-------------|
+| Border opacity | Increase from 25% to 60% for visible colored borders |
+| Top accent line | Add 3px colored bar at top of each card |
+| Pin color | Match pin gradient to stage color (not always gold) |
+| Glow intensity | Increase from 15% to 25% for more presence |
+| Color variety | Use emerald, blue, purple for non-prep stages |
 
-**Files to Modify:**
-- `src/components/journey/JourneyBentoHero.tsx`
-- `src/pages/Home.tsx`
+This will make each stage immediately recognizable by its unique border color while maintaining the dark theme aesthetic.
 
-**Changes:**
-1. Show better loading skeletons during data fetch
-2. Use `React.lazy` for non-critical components
-3. Add smooth fade-in transitions when content loads
-4. Reduce initial render complexity
-
----
-
-## Technical Implementation Details
-
-### StickyNoteCard.tsx Updates
-
-```typescript
-// New accent colors based on brand palette
-const stageAccentColors: Record<string, { border: string; glow: string; text: string }> = {
-  'pre_registration': { 
-    border: '#FFBC3B', 
-    glow: 'rgba(255,188,59,0.2)', 
-    text: '#FFBC3B' 
-  },
-  'pre_travel': { 
-    border: '#D38F0C', 
-    glow: 'rgba(211,143,12,0.2)', 
-    text: '#D38F0C' 
-  },
-  'final_prep': { 
-    border: '#DD6F16', 
-    glow: 'rgba(221,111,22,0.2)', 
-    text: '#DD6F16' 
-  },
-  // ... etc
-};
-
-// Card styling changes
-className={cn(
-  'relative rounded-xl p-4 transition-all duration-300',
-  // Dark glass background
-  'bg-black/60 backdrop-blur-xl',
-  // Gold-tinted border
-  'border border-[var(--accent-color)]/30',
-  // Subtle glow
-  'shadow-[0_0_20px_var(--glow-color)]',
-  // ... other classes
-)}
-```
-
-### Home.tsx Padding Fix
-
-```typescript
-// Current
-<div className="min-h-screen p-3 sm:p-4 md:p-6 space-y-5 sm:space-y-6">
-
-// Fixed - More horizontal padding to prevent clipping
-<div className="min-h-screen px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-6 space-y-5 sm:space-y-6">
-```
-
-### PullToRefreshWrapper Overflow Fix
-
-```typescript
-// Current (line 31)
-className={cn('relative overflow-hidden', className)}
-
-// Fixed - Remove overflow-hidden from main wrapper
-className={cn('relative', className)}
-```
-
----
-
-## File Changes Summary
-
-| File | Change |
-|------|--------|
-| `src/components/journey/StickyNoteCard.tsx` | Replace light paper backgrounds with dark glass + gold accents |
-| `src/components/journey/PullToRefreshWrapper.tsx` | Remove `overflow-hidden` causing clipping |
-| `src/components/journey/JourneyBentoHero.tsx` | Remove `overflow-hidden`, add proper margins |
-| `src/pages/Home.tsx` | Increase horizontal padding for safe areas |
-
----
-
-## Expected Outcomes
-
-After implementation:
-
-1. **No Content Clipping**: All content visible, properly padded from edges
-2. **Dark Theme Integration**: Sticky notes use dark glass with gold accents, matching the app's pure black aesthetic
-3. **Brand Consistency**: Gold (#FFBC3B), Deep Gold (#D38F0C), and Orange (#DD6F16) used as accent colors
-4. **Better PWA Experience**: Faster perceived loading with proper skeletons and smooth transitions
