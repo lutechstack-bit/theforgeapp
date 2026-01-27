@@ -1,327 +1,281 @@
 
-## Journey Hero Section Enhancement - 8 Premium Mobile-First Features
+# Comprehensive Journey Hero Section Fixes
 
-This plan implements 8 mobile-friendly improvements to the Journey Bento Hero section, enhancing user experience with swipe gestures, bottom sheets, streak tracking, horizontal carousels, pull-to-refresh, floating action buttons, sticky progress bars, and dark mode textures.
+## Issues Identified
+
+### 1. UI Overflow Issues
+**Problem**: The Stage Navigation Strip uses `min-w-[500px]` causing horizontal overflow on mobile screens. The sticky notes extend beyond their container boundaries.
+
+**Root Cause**: Fixed minimum widths and absolute positioning without proper overflow containment.
+
+### 2. FAB Not Visible on Desktop
+**Problem**: The Floating Action Button is conditionally rendered only on mobile (`{isMobile && <FloatingActionButton />}`).
+
+**Root Cause**: The FAB was intentionally limited to mobile-only, but users expect it on desktop as well.
+
+### 3. Desktop Layout Has Unused Space
+**Problem**: The "freeform" desktop layout uses absolute positioning with fixed widths (280px, 340px, 260px), leaving large gaps on wide screens and looking messy on medium screens.
+
+**Root Cause**: Fixed-width cards with absolute positioning don't scale responsively.
+
+### 4. Mobile Needs Stacked Card UI
+**Current State**: Mobile uses a horizontal carousel where each sticky note takes 85% width.
+
+**Desired State**: Stacked cards like the KYFormCardStack - where you see depth behind the current card with rotated background layers.
+
+### 5. Prep-to-Sticky Sync Not Working
+**Problem**: Ticking items in `/roadmap/prep` doesn't reflect in the journey sticky notes.
+
+**Root Cause Analysis**:
+- The sync works from Journey → Prep (bulk update on toggle)
+- But Prep → Journey is **passive** (only checks if category is complete on render)
+- The `useStudentJourney` hook fetches prep progress but the Roadmap Prep page uses a separate `useRoadmapData` hook
+- When prep items are toggled in RoadmapPrep, it only invalidates `user-prep-progress`
+- The journey page's `useStudentJourney` also watches `user-prep-progress` but may not refresh due to stale query keys
+
+**Fix**: Add bidirectional cache invalidation - when toggling prep items, also invalidate journey progress queries.
+
+### 6. Whiteboard Concept
+**User Request**: Make the sticky notes function like a "whiteboard" - draggable, zoomable, pan-able canvas.
+
+**Recommendation**: This is a significant feature (e.g., using React Flow or similar). Propose a lighter version: draggable sticky notes with snap-to-grid positions that persist, giving a whiteboard feel without the complexity.
 
 ---
 
-### Features Overview
+## Implementation Plan
 
-| # | Feature | Mobile Benefit |
-|---|---------|----------------|
-| 1 | Swipe-to-Complete Gesture | iOS-style task completion |
-| 2 | Bottom Sheet Drawer | Thumb-friendly task details |
-| 3 | Streak Counter | Daily motivation tracker |
-| 4 | Horizontal Stage Carousel | Swipeable stage navigation |
-| 5 | Pull-to-Refresh | Native refresh gesture |
-| 6 | Floating Action Button (FAB) | Quick access to key actions |
-| 9 | Sticky Progress Bar | Always-visible completion status |
-| 10 | Dark Mode Textures | Better dark theme contrast |
+### Part 1: Fix UI Overflow Issues
 
----
+**Stage Navigation Strip** (`StageNavigationStrip.tsx`):
+- Remove `min-w-[500px]` constraint
+- Use `flex-shrink-0` on each stage item to prevent crushing
+- Add proper padding and gaps that scale with screen size
+- Use `gap-2 sm:gap-4` for responsive spacing between nodes
 
-### Part 1: Swipe-to-Complete Gesture
+**StickyNoteCard** (`StickyNoteCard.tsx`):
+- Ensure the pin/clip element doesn't extend beyond container bounds
+- Add `overflow-hidden` to the outer wrapper when needed
 
-**What it does:** Allow users to swipe right on a task to complete it, swipe left to undo.
+### Part 2: Enable FAB on Desktop
 
-**Implementation:**
-- Create new `SwipeableTaskItem.tsx` component with touch event handlers
-- Use CSS transforms for smooth swipe animation
-- Threshold of 80px triggers completion
-- Visual feedback: green checkmark appears during swipe right, red X during swipe left
+**FloatingActionButton** (`FloatingActionButton.tsx`):
+- Always render the FAB (remove `{isMobile &&` condition in JourneyBentoHero)
+- Adjust positioning for desktop: `bottom-8 right-8` with proper z-index
+- Add subtle hover states for desktop mouse interaction
 
-**Files to create:**
-- `src/components/journey/SwipeableTaskItem.tsx`
+**JourneyBentoHero** (`JourneyBentoHero.tsx`):
+- Remove the `{isMobile && ...}` wrapper around FAB
+- The FAB component already has responsive positioning (`bottom-24 right-4 z-40 md:bottom-8 md:right-8`)
 
-**Files to modify:**
-- `src/components/journey/StickyNoteDetailModal.tsx` - Use SwipeableTaskItem instead of current row
-- `src/index.css` - Add swipe animations
+### Part 3: Redesign Desktop Layout
 
-**Technical approach:**
-```text
-Touch Events Flow:
-onTouchStart → Record startX position
-onTouchMove → Calculate deltaX, apply translateX transform
-onTouchEnd → If deltaX > 80px, trigger complete/uncomplete
+Replace the absolute-positioned "freeform" layout with a responsive grid that uses space efficiently:
+
+**New Desktop Layout**:
+```
+┌─────────────────────────────────────────────────────────┐
+│  Stage Navigation Strip (horizontal)                    │
+├───────────────────────┬─────────────────────────────────┤
+│                       │                                 │
+│  CURRENT STAGE        │  CONTEXT PANEL                  │
+│  (Larger sticky note) │  - Next upcoming stage preview  │
+│  - Full task list     │  - Last completed stage summary │
+│  - Filters            │  - Quick stats                  │
+│                       │                                 │
+├───────────────────────┴─────────────────────────────────┤
+│  Quick Actions Row                                      │
+└─────────────────────────────────────────────────────────┘
 ```
 
----
+**Implementation**:
+- Use CSS Grid: `grid-cols-1 lg:grid-cols-[1fr_300px] gap-4`
+- Current stage takes the main column with full task list
+- Side panel shows stacked mini-cards for completed/upcoming stages
+- Utilizes screen real estate efficiently
 
-### Part 2: Bottom Sheet Drawer (Replace Dialog Modal)
+### Part 4: Implement Stacked Card UI for Mobile
 
-**What it does:** Replace the current Dialog modal with a Vaul bottom sheet drawer for mobile, keeping Dialog for desktop.
+Create a new stacked card layout inspired by KYFormCardStack:
 
-**Implementation:**
-- Create new `StickyNoteBottomSheet.tsx` component using existing `Drawer` primitive
-- On mobile: Use bottom sheet that slides up from bottom
-- On desktop: Keep existing Dialog modal
-- Add snap points: 50% (preview), 90% (full)
-
-**Files to create:**
-- `src/components/journey/StickyNoteBottomSheet.tsx`
-
-**Files to modify:**
-- `src/components/journey/JourneyBentoHero.tsx` - Conditionally render Drawer on mobile, Dialog on desktop
-- `src/components/journey/index.ts` - Export new component
-
-**Bottom Sheet Layout:**
-```text
-┌──────────────────────────────┐
-│         ━━━━━━━━━            │ ← Drag handle
-│  FINAL PREP          3/5 ✓  │
-│  ━━━━━━━━━━━━━━━━━━━━━━━━━━  │ ← Progress bar
-├──────────────────────────────┤
-│  [✓] Complete script prep    │ ← Swipeable rows
-│  [ ] Pack your bags          │
-│  ...                         │
-├──────────────────────────────┤
-│  [  View Full Prep  ]        │ ← Footer CTA
-└──────────────────────────────┘
+**New Mobile Layout**:
+```
+┌────────────────────────────────────┐
+│  ░░░░░░░░░░░░░░░░░░░░░░░░░░░  (stage 3 behind)
+│   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  (stage 2 behind)
+│    ┌────────────────────────┐
+│    │   CURRENT STAGE        │
+│    │   ──────────────────   │
+│    │   [✓] Task 1           │
+│    │   [ ] Task 2           │
+│    │   [ ] Task 3           │
+│    └────────────────────────┘
+│         ● ○ ○ ○ ○ ○  (dot indicators)
+└────────────────────────────────────┘
 ```
 
----
+**Implementation**:
+- Create `StickyNoteCardStack.tsx` component
+- Show current stage as the front card
+- Background "ghost" cards (rotated, offset) represent other stages
+- Swipe left/right to navigate between stages
+- Animate card transitions like KYFormCardStack
 
-### Part 3: Streak Counter
+**Technical Approach**:
+- Track `currentStageIndex` state
+- Render 2-3 background layers with increasing rotation/offset
+- Use swipe gestures (touch events) to change stage index
+- Animate with CSS transforms and keyframes
 
-**What it does:** Track consecutive days of task completion to motivate users.
+### Part 5: Fix Bidirectional Prep Sync
 
-**Implementation:**
-- Create `useStreak.ts` hook to calculate streak from `user_journey_progress` timestamps
-- Display streak badge in hero header with fire emoji
-- Streak breaks if no task completed in 24 hours
-- Store last activity in localStorage as backup
+**Problem**: The `useRoadmapData` hook only invalidates `user-prep-progress` when toggling, but doesn't notify the journey system.
 
-**Files to create:**
-- `src/hooks/useStreak.ts`
-- `src/components/journey/StreakBadge.tsx`
+**Solution**: Add cross-query invalidation so both systems stay in sync.
 
-**Files to modify:**
-- `src/components/journey/JourneyBentoHero.tsx` - Add StreakBadge to header
-
-**Streak Calculation Logic:**
-```text
-1. Query user_journey_progress ORDER BY completed_at DESC
-2. Group completions by date
-3. Count consecutive days from today backwards
-4. If no completion today but yesterday has one, streak continues
-5. If gap > 1 day, streak = 0
+**useRoadmapData.ts changes**:
+```typescript
+const togglePrepMutation = useMutation({
+  mutationFn: async ({ itemId, completed }) => {
+    // ... existing logic
+  },
+  onSuccess: () => {
+    // Invalidate prep progress
+    queryClient.invalidateQueries({ queryKey: ['user-prep-progress'] });
+    // NEW: Also invalidate journey progress so sticky notes refresh
+    queryClient.invalidateQueries({ queryKey: ['user_journey_progress'] });
+    queryClient.invalidateQueries({ queryKey: ['prep-checklist-items'] });
+  }
+});
 ```
 
-**Visual Design:**
-```text
-🔥 3-day streak!
-```
+**useStudentJourney.ts changes**:
+- Ensure the `isTaskAutoCompleted` check always uses fresh `prepProgress` data
+- Add a `refetchInterval: false` to prevent stale data issues
 
----
+### Part 6: Lightweight Whiteboard Feel
 
-### Part 4: Horizontal Stage Carousel (Mobile)
+Instead of a full canvas implementation, add these features for a "whiteboard" feel:
 
-**What it does:** Replace vertical stack of sticky notes with horizontal swipeable carousel on mobile.
+1. **Draggable Sticky Notes (Desktop Only)**:
+   - Use `react-draggable` or native drag events
+   - Cards can be repositioned within a bounded area
+   - Positions saved to localStorage for persistence
 
-**Implementation:**
-- Use existing Embla carousel component
-- Each sticky note becomes a carousel slide
-- Current stage centered, completed/upcoming peek from sides
-- Dot indicators show current position
-- Snap to stage on swipe
+2. **Zoom Controls**:
+   - Add zoom in/out buttons (or pinch gesture)
+   - Use CSS transform scale on the container
 
-**Files to modify:**
-- `src/components/journey/JourneyBentoHero.tsx` - Replace mobile vertical stack with Carousel
-- `src/components/journey/StickyNoteCard.tsx` - Add full-width mode for carousel
+3. **Pan Gesture (Mobile)**:
+   - The horizontal carousel already provides panning
+   - Enhance with momentum scrolling
 
-**Mobile Layout (Before → After):**
-```text
-BEFORE (Vertical Stack):         AFTER (Horizontal Carousel):
-┌──────────────────┐            ┌────┬──────────────────┬────┐
-│ Current Stage    │            │ <  │  Current Stage   │  > │
-└──────────────────┘            └────┴──────────────────┴────┘
-┌──────────────────┐                     ○ ● ○ ○ ○ ○
-│ Completed        │                     (dot indicators)
-└──────────────────┘
-```
+**Simpler Alternative (Recommended)**:
+- Skip full whiteboard for now
+- Focus on the stacked card UI which gives a tactile, interactive feel
+- Add subtle parallax/tilt effects on cards for depth
 
 ---
 
-### Part 5: Pull-to-Refresh
+## File Changes Summary
 
-**What it does:** Allow users to pull down on the hero section to refresh journey data.
+### Files to Create
 
-**Implementation:**
-- Create `usePullToRefresh.ts` hook with touch event handling
-- Show loading spinner when pulled past threshold (60px)
-- Invalidate and refetch journey queries on release
-- Animate content back to position
-
-**Files to create:**
-- `src/hooks/usePullToRefresh.ts`
-- `src/components/journey/PullToRefreshWrapper.tsx`
-
-**Files to modify:**
-- `src/components/journey/JourneyBentoHero.tsx` - Wrap content in PullToRefreshWrapper
-
-**Visual States:**
-```text
-Pull:     ↓ Pull to refresh...  (< 60px)
-Release:  ↻ Release to refresh  (> 60px)
-Loading:  ⟳ (spinner)           (fetching)
-Done:     ✓ Updated!            (complete)
-```
-
----
-
-### Part 6: Floating Action Button (FAB)
-
-**What it does:** Quick access button for key actions: Add reminder, Mark all as reviewed, Quick nav.
-
-**Implementation:**
-- Create `FloatingActionButton.tsx` component
-- Fixed position bottom-right (above bottom nav on mobile)
-- Expandable menu with 3 actions:
-  1. Set reminder (opens native notification prompt)
-  2. Mark current stage as reviewed
-  3. Jump to roadmap
-
-**Files to create:**
-- `src/components/journey/FloatingActionButton.tsx`
-
-**Files to modify:**
-- `src/components/journey/JourneyBentoHero.tsx` - Add FAB component
-- `src/index.css` - Add FAB animations
-
-**FAB Layout:**
-```text
-                          ┌─────────┐
-                          │ Roadmap │ ← Action 3
-                          └─────────┘
-                     ┌──────────────────┐
-                     │ Mark as Reviewed │ ← Action 2
-                     └──────────────────┘
-                        ┌────────────┐
-                        │ + Reminder │ ← Action 1
-                        └────────────┘
-                              ⊕        ← Main FAB (tap to expand)
-```
-
----
-
-### Part 7: Sticky Progress Bar
-
-**What it does:** Always-visible progress indicator at top of viewport showing overall journey completion.
-
-**Implementation:**
-- Create `StickyProgressBar.tsx` component
-- Fixed position at top when scrolling past hero
-- Shows: Current stage name + X/Y tasks + progress bar
-- Uses Intersection Observer to detect when to show/hide
-
-**Files to create:**
-- `src/components/journey/StickyProgressBar.tsx`
-
-**Files to modify:**
-- `src/components/journey/JourneyBentoHero.tsx` - Add StickyProgressBar with ref
-
-**Visual:**
-```text
-┌────────────────────────────────────────────┐
-│ Final Prep  ━━━━━━━━━━━━░░░░  3/5 complete │
-└────────────────────────────────────────────┘
-```
-
----
-
-### Part 8: Dark Mode Textures
-
-**What it does:** Improve sticky note appearance in dark mode with proper textures and contrast.
-
-**Implementation:**
-- Update `StickyNoteCard.tsx` with dark mode variants
-- Use darker paper colors that still feel "papery"
-- Adjust pin/clip colors for visibility
-- Ensure text remains readable
-- Add subtle noise texture overlay
-
-**Files to modify:**
-- `src/components/journey/StickyNoteCard.tsx` - Add dark mode color mappings
-- `src/index.css` - Add paper texture patterns for dark mode
-
-**Dark Mode Color Palette:**
-```text
-Paper backgrounds (dark mode):
-- pre_registration: #2A2520 (warm dark brown)
-- pre_travel: #2D2618 (amber-tinted dark)
-- final_prep: #332B1C (gold-tinted dark)
-- online_forge: #2A2618 (cream-tinted dark)
-- physical_forge: #302A1E (warm sepia dark)
-- post_forge: #2B2519 (champagne-tinted dark)
-
-Pin gradient: #FFBC3B → #D38F0C (same, high contrast)
-Text: #E8E0D4 (warm cream)
-```
-
----
-
-### Database Changes
-
-**Add DELETE policy for user_journey_progress** (fixes the ticking issue from earlier):
-
-```sql
-CREATE POLICY "Users can delete their own progress"
-ON user_journey_progress
-FOR DELETE
-TO authenticated
-USING (auth.uid() = user_id);
-```
-
----
-
-### File Summary
-
-**New Files (8):**
 | File | Purpose |
 |------|---------|
-| `src/components/journey/SwipeableTaskItem.tsx` | Swipe gesture for task completion |
-| `src/components/journey/StickyNoteBottomSheet.tsx` | Mobile bottom sheet drawer |
-| `src/components/journey/StreakBadge.tsx` | Streak counter display |
-| `src/components/journey/FloatingActionButton.tsx` | Quick actions FAB |
-| `src/components/journey/StickyProgressBar.tsx` | Fixed progress indicator |
-| `src/components/journey/PullToRefreshWrapper.tsx` | Pull-to-refresh container |
-| `src/hooks/useStreak.ts` | Streak calculation logic |
-| `src/hooks/usePullToRefresh.ts` | Pull-to-refresh touch handling |
+| `src/components/journey/StickyNoteCardStack.tsx` | Stacked card container for mobile with swipe navigation |
 
-**Modified Files (5):**
+### Files to Modify
+
 | File | Changes |
 |------|---------|
-| `src/components/journey/JourneyBentoHero.tsx` | Integrate all new features, horizontal carousel on mobile |
-| `src/components/journey/StickyNoteCard.tsx` | Dark mode textures, carousel-ready sizing |
-| `src/components/journey/StickyNoteDetailModal.tsx` | Swipeable task rows |
-| `src/components/journey/index.ts` | Export new components |
-| `src/index.css` | Swipe animations, FAB animations, dark mode textures |
-
-**Database Migration (1):**
-- Add DELETE policy to `user_journey_progress`
+| `src/components/journey/StageNavigationStrip.tsx` | Remove `min-w-[500px]`, add responsive spacing |
+| `src/components/journey/JourneyBentoHero.tsx` | New grid-based desktop layout, stacked cards for mobile, enable FAB for all devices |
+| `src/components/journey/StickyNoteCard.tsx` | Add overflow handling, ensure pin doesn't cause overflow |
+| `src/components/journey/FloatingActionButton.tsx` | Adjust z-index if needed, ensure visibility |
+| `src/hooks/useRoadmapData.ts` | Add cross-query invalidation for journey sync |
+| `src/index.css` | Add stacked card animations, whiteboard-like interactions |
 
 ---
 
-### Implementation Order
+## Technical Specifications
 
-1. **Database migration** - Fix the DELETE policy first
-2. **Dark mode textures** - Quick visual improvement
-3. **Bottom sheet drawer** - Better mobile interaction
-4. **Horizontal carousel** - Transform mobile layout
-5. **Swipe-to-complete** - Add gesture support
-6. **Streak counter** - Motivation feature
-7. **Pull-to-refresh** - Native feel
-8. **Sticky progress bar** - Always-visible status
-9. **Floating action button** - Quick actions
+### Stacked Card Stack Component
+
+```typescript
+// StickyNoteCardStack.tsx
+interface StickyNoteCardStackProps {
+  stages: JourneyStage[];
+  currentIndex: number;
+  onStageChange: (index: number) => void;
+  children: (stage: JourneyStage, isActive: boolean) => React.ReactNode;
+}
+```
+
+**Key Features**:
+- Swipe detection using touch events
+- Background cards with `rotate-[2deg] translate-y-2 translate-x-2`
+- Animation classes: `animate-stack-pop-out`, `animate-stack-pop-in` (already exist)
+- Dot indicators below the stack
+
+### Responsive Desktop Grid
+
+```css
+/* Desktop layout */
+.journey-hero-desktop {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 1rem;
+}
+
+/* Side panel stacked cards */
+.side-panel-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+```
+
+### Stage Navigation Responsive Fix
+
+```typescript
+// Remove hard min-width
+<div className="w-full overflow-x-auto scrollbar-hide">
+  <div className="flex items-center justify-between gap-2 sm:gap-4 px-2 py-3">
+    {/* Stage items with flex-shrink-0 */}
+  </div>
+</div>
+```
 
 ---
 
-### Mobile-First Considerations
+## Implementation Order
 
-All implementations follow these principles:
-- Touch targets minimum 44x44px
-- Safe area padding for notched devices
-- Smooth 60fps animations using CSS transforms
-- No blocking of main thread during gestures
-- Graceful degradation on older devices
-- Works with bottom navigation bar spacing
+1. **Fix overflow issues** (Stage Navigation Strip) - Quick win
+2. **Enable FAB on desktop** - Simple toggle
+3. **Fix prep sync** - Add query invalidation
+4. **Create stacked card component** - New mobile layout
+5. **Redesign desktop layout** - Grid-based responsive design
+6. **Add whiteboard-lite features** - Stretch goal if time permits
+
+---
+
+## Expected Outcomes
+
+### Mobile
+- Stacked card UI with visible depth layers
+- Swipe between stages smoothly
+- FAB visible and functional
+- No horizontal overflow on stage strip
+- Prep changes sync to sticky notes in real-time
+
+### Desktop
+- Efficient use of screen space with grid layout
+- Current stage prominently displayed with full task list
+- Side panel shows context (upcoming/completed stages)
+- FAB available for quick actions
+- All interactions work with mouse
+
+### Sync Behavior
+- Toggle prep item → Journey sticky note updates automatically
+- Toggle journey task → Prep checklist updates automatically
+- Both directions work seamlessly
