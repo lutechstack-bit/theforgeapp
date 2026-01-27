@@ -27,6 +27,7 @@ export interface JourneyTask {
   order_index: number;
   is_required: boolean;
   is_active: boolean;
+  due_days_offset: number | null;
 }
 
 export interface UserJourneyProgress {
