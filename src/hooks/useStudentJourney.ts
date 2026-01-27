@@ -28,6 +28,7 @@ export interface JourneyTask {
   is_required: boolean;
   is_active: boolean;
   due_days_offset: number | null;
+  linked_prep_category: string | null;
 }
 
 export interface UserJourneyProgress {
@@ -38,6 +39,13 @@ export interface UserJourneyProgress {
   completed_at: string | null;
 }
 
+interface PrepChecklistItem {
+  id: string;
+  category: string;
+  cohort_type: string;
+  title: string;
+}
+
 export const useStudentJourney = () => {
   const { user, profile, edition } = useAuth();
   const queryClient = useQueryClient();
@@ -46,7 +54,7 @@ export const useStudentJourney = () => {
   const cohortType = edition?.cohort_type || 'FORGE';
 
   // Fetch all journey stages
-  const { data: stages, isLoading: stagesLoading } = useQuery({
+  const { data: allStages, isLoading: stagesLoading } = useQuery({
     queryKey: ['journey_stages'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -58,6 +66,14 @@ export const useStudentJourney = () => {
       return data as JourneyStage[];
     },
   });
+
+  // Filter out online_forge stage for FORGE_WRITING cohort
+  const stages = allStages?.filter(stage => {
+    if (cohortType === 'FORGE_WRITING' && stage.stage_key === 'online_forge') {
+      return false;
+    }
+    return true;
+  }) || [];
 
   // Fetch tasks filtered by cohort type
   const { data: tasks, isLoading: tasksLoading } = useQuery({
@@ -104,7 +120,50 @@ export const useStudentJourney = () => {
     enabled: !!user?.id,
   });
 
-  // Determine current stage based on forge dates
+  // Fetch prep checklist items for category progress
+  const { data: prepItems } = useQuery({
+    queryKey: ['prep-checklist-items', cohortType],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('prep_checklist_items')
+        .select('id, category, cohort_type, title')
+        .eq('cohort_type', cohortType);
+      if (error) throw error;
+      return data as PrepChecklistItem[];
+    },
+  });
+
+  // Fetch user's prep progress
+  const { data: prepProgress } = useQuery({
+    queryKey: ['user-prep-progress', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from('user_prep_progress')
+        .select('checklist_item_id')
+        .eq('user_id', user.id);
+      if (error) throw error;
+      return data.map(p => p.checklist_item_id);
+    },
+    enabled: !!user?.id,
+  });
+
+  // Get prep category progress
+  const getPrepCategoryProgress = (category: string): { completed: number; total: number } => {
+    const categoryItems = prepItems?.filter(item => item.category === category) || [];
+    const completedCount = categoryItems.filter(item => 
+      prepProgress?.includes(item.id)
+    ).length;
+    return { completed: completedCount, total: categoryItems.length };
+  };
+
+  // Check if prep category is complete
+  const isPrepCategoryComplete = (category: string): boolean => {
+    const progress = getPrepCategoryProgress(category);
+    return progress.total > 0 && progress.completed === progress.total;
+  };
+
+  // Determine current stage based on forge dates (cohort-aware)
   const getCurrentStage = (): string => {
     if (!edition?.forge_start_date || !edition?.forge_end_date) {
       return 'pre_registration';
@@ -117,8 +176,16 @@ export const useStudentJourney = () => {
     const daysSinceStart = differenceInDays(now, forgeStart);
 
     if (now > forgeEnd) return 'post_forge';
-    if (daysSinceStart >= 3) return 'physical_forge';
-    if (daysSinceStart >= 0) return 'online_forge';
+    
+    // Writers go directly to physical_forge (no online stage)
+    if (cohortType === 'FORGE_WRITING') {
+      if (daysSinceStart >= 0) return 'physical_forge';
+    } else {
+      // FORGE and FORGE_CREATORS have online forge for first 3 days
+      if (daysSinceStart >= 3) return 'physical_forge';
+      if (daysSinceStart >= 0) return 'online_forge';
+    }
+    
     if (daysUntilStart <= 15) return 'final_prep';
     if (daysUntilStart <= 30) return 'pre_travel';
     return 'pre_registration';
@@ -126,6 +193,11 @@ export const useStudentJourney = () => {
 
   // Check if a task is auto-completed based on profile/database data
   const isTaskAutoCompleted = (task: JourneyTask): boolean => {
+    // Check linked prep category first
+    if (task.linked_prep_category) {
+      return isPrepCategoryComplete(task.linked_prep_category);
+    }
+
     if (!task.auto_complete_field) return false;
 
     switch (task.auto_complete_field) {
@@ -153,11 +225,14 @@ export const useStudentJourney = () => {
     return progressItem?.status === 'completed';
   };
 
-  // Toggle task completion
+  // Toggle task completion with bidirectional prep sync
   const toggleTask = useMutation({
     mutationFn: async ({ taskId, completed }: { taskId: string; completed: boolean }) => {
       if (!user?.id) throw new Error('Not authenticated');
 
+      const task = tasks?.find(t => t.id === taskId);
+
+      // Save to user_journey_progress
       if (completed) {
         const { error } = await supabase
           .from('user_journey_progress')
@@ -178,9 +253,39 @@ export const useStudentJourney = () => {
           .eq('task_id', taskId);
         if (error) throw error;
       }
+
+      // Bidirectional sync: If task has linked_prep_category, sync to prep progress
+      if (task?.linked_prep_category && prepItems) {
+        const categoryItems = prepItems.filter(
+          item => item.category === task.linked_prep_category
+        );
+
+        if (completed) {
+          // Mark ALL items in this category as complete
+          for (const item of categoryItems) {
+            await supabase.from('user_prep_progress').upsert({
+              user_id: user.id,
+              checklist_item_id: item.id
+            }, {
+              onConflict: 'user_id,checklist_item_id'
+            });
+          }
+        } else {
+          // Remove ALL items in this category
+          const itemIds = categoryItems.map(i => i.id);
+          if (itemIds.length > 0) {
+            await supabase.from('user_prep_progress')
+              .delete()
+              .eq('user_id', user.id)
+              .in('checklist_item_id', itemIds);
+          }
+        }
+      }
     },
     onSuccess: () => {
+      // Invalidate both journey and prep progress queries
       queryClient.invalidateQueries({ queryKey: ['user_journey_progress'] });
+      queryClient.invalidateQueries({ queryKey: ['user-prep-progress'] });
     },
   });
 
@@ -221,5 +326,7 @@ export const useStudentJourney = () => {
     isTaskAutoCompleted,
     toggleTask,
     cohortType,
+    getPrepCategoryProgress,
+    isPrepCategoryComplete,
   };
 };

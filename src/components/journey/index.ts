@@ -1,6 +1,7 @@
 export { JourneyBentoHero } from './JourneyBentoHero';
 export { StageNavigationStrip } from './StageNavigationStrip';
 export { StickyNoteCard } from './StickyNoteCard';
+export { StickyNoteDetailModal } from './StickyNoteDetailModal';
 export { JourneyTaskItem } from './JourneyTaskItem';
 export { ProgressRing } from './ProgressRing';
 export { TaskFilters } from './TaskFilters';
