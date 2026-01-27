@@ -1,261 +1,182 @@
 
-## Student Journey Bento Box - Complete Visual Overhaul + Features 1-6
 
-### Overview
-This plan addresses the text visibility issues, implements a freeform sticky note layout, applies Forge brand colors, and adds 6 enhancement features to create a polished, engaging journey experience.
+## Updated Plan: Bidirectional Task Sync + Popup Modal + Cohort-Specific Stages
 
----
+### New Requirement: FORGE_WRITING Has No Online Forge Stage
 
-### Problem Analysis
+The Writing cohort has a **5-stage journey** instead of 6:
 
-From the screenshot and code review:
-1. **Text is invisible** - Light cream text (`text-foreground`) on light amber/cream backgrounds
-2. **Layout is rigid** - Current 3-column grid is uniform, lacks organic feel
-3. **Brand colors underutilized** - Using generic Tailwind colors instead of Forge Yellow/Gold/Orange
-
----
-
-### Part 1: Fix Text Visibility & Brand Colors
-
-#### StickyNoteCard.tsx Changes
-
-Replace the color variants with solid light paper backgrounds and ensure all text is black/dark:
-
-| Element | Current (Broken) | Fixed |
-|---------|------------------|-------|
-| Card Background | `from-amber-50/90 to-amber-100/80` | Solid `bg-[#FEF7E0]` (warm cream) |
-| Title Text | `text-{color}-600` (e.g., amber-600) | `text-gray-900 font-bold` |
-| Task Text | `text-foreground` (cream) | `text-gray-800` |
-| Description | `text-muted-foreground` | `text-gray-600` |
-| Pin/Clip | Per-stage gradient | Forge brand gradient (yellow → gold → orange) |
-
-**New Paper-Style Backgrounds (All Stages):**
-```text
-Pre-Registration: #FEF7E0 (warm cream)
-Pre-Travel:       #FFF8E6 (pale amber)
-Final Prep:       #FEF3C7 (light gold)
-Online Forge:     #FDF6E3 (soft cream)
-Physical Forge:   #FFFBEB (warm white)
-Post Forge:       #FEF9E7 (champagne)
-```
-
-All backgrounds are light paper tones with **black text** for maximum contrast.
+| Stage | FORGE (Filmmakers) | FORGE_WRITING (Writers) | FORGE_CREATORS |
+|-------|-------------------|------------------------|----------------|
+| 1 | Pre-Registration | Pre-Registration | Pre-Registration |
+| 2 | Pre-Travel | Pre-Travel | Pre-Travel |
+| 3 | Final Prep | Final Prep | Final Prep |
+| 4 | Online Forge (Days 1-3) | **SKIPPED** | Online Forge |
+| 5 | Physical Forge (Day 4+) | Physical Forge (Day 1+) | Physical Forge |
+| 6 | Post Forge | Post Forge | Post Forge |
 
 ---
 
-### Part 2: Freeform Layout
+### Part 1: Cohort-Aware Stage Detection
 
-Transform the rigid 3-column grid into an organic, scattered layout:
+Update `useStudentJourney.ts` to skip Online Forge for Writers:
 
-**Desktop Layout (Freeform):**
-```text
-+------------------------------------------------------------------+
-|  Hi Rahul! 23 days until Forge                    Stage 2 of 6   |
-+------------------------------------------------------------------+
-|  [o]----[●]----[ ]----[ ]----[ ]----[ ]                          |
-+------------------------------------------------------------------+
-|                                                                   |
-|  +-------------+                                                  |
-| /  COMPLETED   \      +--------------------+                      |
-||  Pre-Reg       |    /   CURRENT STAGE     \     +------------+   |
-||  ✓ Form        |   |   PRE-TRAVEL         |    /  UP NEXT    \  |
-||  ✓ Profile     |   |   ☐ Book travel   →  |   |  Final Prep   | |
-||  4/4 done ✓    |   |   ✓ Review map    →  |   |  ○ Script...  | |
-| \  rotate:-3°  /    |   ☐ Packing...    →  |   |  ○ Day 0...   | |
-|  +-------------+    |   3/6 tasks          |    \  rotate:+4° /  |
-|     z-index:1       \     rotate:0°        /     +------------+   |
-|                      +--------------------+        z-index:2      |
-|                           z-index:3                               |
-+------------------------------------------------------------------+
-```
+```typescript
+const getCurrentStage = (): string => {
+  if (!edition?.forge_start_date || !edition?.forge_end_date) {
+    return 'pre_registration';
+  }
 
-**CSS Implementation:**
-- Completed stage: `left:0, top:16px, rotate(-3deg), z-index:1`
-- Current stage: `left:50%, transform:translateX(-50%), top:0, rotate(0deg), z-index:3`
-- Upcoming stage: `right:0, top:24px, rotate(4deg), z-index:2`
-- Current stage is larger and has enhanced shadow/glow
+  const now = new Date();
+  const forgeStart = new Date(edition.forge_start_date);
+  const forgeEnd = new Date(edition.forge_end_date);
+  const daysUntilStart = differenceInDays(forgeStart, now);
+  const daysSinceStart = differenceInDays(now, forgeStart);
 
-**Mobile Layout:**
-- Stays as vertical stack (no freeform on small screens)
-- Current stage full width at top
-- Completed/Upcoming in accordion
-
----
-
-### Part 3: Enhanced Sticky Note Styling
-
-Add paper texture and improved shadows:
-
-```css
-.sticky-note-paper {
-  /* Solid light background for contrast */
-  background: var(--paper-color);
+  if (now > forgeEnd) return 'post_forge';
   
-  /* Paper texture effect */
-  background-image: 
-    linear-gradient(90deg, transparent 95%, rgba(0,0,0,0.02) 100%),
-    linear-gradient(transparent 95%, rgba(0,0,0,0.02) 100%);
+  // Writers go directly to physical_forge (no online stage)
+  if (cohortType === 'FORGE_WRITING') {
+    if (daysSinceStart >= 0) return 'physical_forge';
+  } else {
+    // FORGE and FORGE_CREATORS have online forge for first 3 days
+    if (daysSinceStart >= 3) return 'physical_forge';
+    if (daysSinceStart >= 0) return 'online_forge';
+  }
   
-  /* Layered realistic shadow */
-  box-shadow: 
-    0 1px 3px rgba(0,0,0,0.08),
-    0 4px 6px rgba(0,0,0,0.05),
-    0 10px 20px rgba(0,0,0,0.08);
-  
-  /* Subtle border for definition */
-  border: 1px solid rgba(0,0,0,0.05);
-}
+  if (daysUntilStart <= 15) return 'final_prep';
+  if (daysUntilStart <= 30) return 'pre_travel';
+  return 'pre_registration';
+};
 ```
 
-**Pin/Clip Styling (Forge Brand):**
-```css
-.sticky-pin {
-  background: linear-gradient(
-    to bottom, 
-    #FFBC3B,  /* Forge Yellow */
-    #D38F0C   /* Forge Gold */
-  );
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
+Update stages filtering to exclude Online Forge for Writers:
+
+```typescript
+// Filter out online_forge stage for Writers
+const filteredStages = stages?.filter(stage => {
+  if (cohortType === 'FORGE_WRITING' && stage.stage_key === 'online_forge') {
+    return false;
+  }
+  return true;
+}) || [];
 ```
 
 ---
 
-### Part 4: Feature 1 - Progress Ring on Stage Navigation
+### Part 2: Database Migration
 
-Add circular progress indicators around each stage dot showing completion percentage.
+Add `linked_prep_category` column and create `user_task_preferences` table:
 
-**Visual:**
-```text
-   ╭──────╮
-   │  ✓   │  ← Completed (100% ring, green fill)
-   ╰──────╯
-   
-   ╭▓▓▓▓──╮
-   │  2   │  ← Current (partial ring showing 50%)
-   ╰──────╯
-   
-   ╭──────╮
-   │  3   │  ← Upcoming (empty ring, muted)
-   ╰──────╯
-```
-
-**Implementation:**
-- Use SVG circle with `stroke-dasharray` and `stroke-dashoffset` to create progress arc
-- Calculate percentage from `getStageStats(stageId)`
-- Colors: Emerald for completed, Primary (gold) for current, Muted for upcoming
-
----
-
-### Part 5: Feature 2 - Drag to Reorder Tasks
-
-Allow students to reorder tasks within a stage by drag-and-drop.
-
-**Implementation:**
-- Add `user_task_order` column to `user_journey_progress` or create new `user_task_preferences` table
-- Use native HTML5 drag-and-drop or lightweight library
-- Save order preference per user
-- Tasks maintain custom order on next visit
-
-**Interaction:**
-- Long press (mobile) or grab handle (desktop) to initiate drag
-- Visual feedback with lift effect and placeholder
-- Save to database on drop
-
----
-
-### Part 6: Feature 3 - Task Categories/Filters
-
-Add filter buttons above the current stage tasks.
-
-**UI:**
-```text
-+--------------------------------------------------+
-|  PRE-TRAVEL                                      |
-|  ┌─────┐ ┌──────────┐ ┌──────────┐ ┌───────────┐ |
-|  │ All │ │ Required │ │ Optional │ │ Completed │ |
-|  └─────┘ └──────────┘ └──────────┘ └───────────┘ |
-+--------------------------------------------------+
-```
-
-**Implementation:**
-- Filter state managed locally
-- Pills/tabs for: All | Required | Optional | Completed
-- Filter applied only to current stage card
-- Persist filter choice in localStorage
-
----
-
-### Part 7: Feature 4 - Due Date Indicators
-
-Show countdown/urgency for time-sensitive tasks.
-
-**Database Change:**
-- Add `due_days_offset` column to `journey_tasks` table (days relative to forge_start)
-
-**Visual:**
-```text
-☐ Book Travel                    Due in 12 days  (green)
-☐ Upload Ticket                  Due in 5 days   (yellow)
-☐ Complete Script                Due in 2 days   (orange)
-☐ Final Balance                  Due tomorrow!   (red)
-```
-
-**Color Coding:**
-- 7+ days: Green (`text-emerald-600`)
-- 4-7 days: Yellow (`text-amber-600`)
-- 1-3 days: Orange (`text-orange-600`)
-- 0 or overdue: Red (`text-red-600`)
-
----
-
-### Part 8: Feature 5 - Celebration Animations
-
-Trigger visual celebrations when completing stages or reaching milestones.
-
-**Triggers:**
-1. Complete a task: Checkbox scales up with checkmark animation
-2. Complete all tasks in a stage: Confetti burst from the stage card
-3. Move to next stage: Stage dots animate with connecting line "flowing"
-
-**Implementation:**
-- Confetti component using CSS keyframe animations
-- Particles spawn from completed stage, fall/drift down
-- Gold/yellow colored particles matching brand
-- Auto-dismiss after 3 seconds
-
----
-
-### Part 9: Feature 6 - Quick Actions Row
-
-Add direct links below the bento box for immediate feature access.
-
-**Visual:**
-```text
-+------------------------------------------------------------------+
-|  [📍 View Roadmap]  [💬 Open Community]  [📚 Watch Next Class]    |
-+------------------------------------------------------------------+
-```
-
-**Implementation:**
-- Horizontal row of pill-style buttons
-- Icons + short labels
-- Links to: /roadmap, /community, /learn
-- Responsive: 3 columns on desktop, horizontal scroll on mobile
-- Glass-card styling with hover gold glow
-
----
-
-### Database Migration
-
-**New columns for `journey_tasks` table:**
 ```sql
+-- Add linked_prep_category to journey_tasks
 ALTER TABLE journey_tasks 
-ADD COLUMN due_days_offset INTEGER DEFAULT NULL;
+ADD COLUMN linked_prep_category TEXT DEFAULT NULL;
 
-COMMENT ON COLUMN journey_tasks.due_days_offset IS 
-  'Number of days before forge_start_date this task is due. NULL means no due date.';
+-- Update existing tasks with their category links
+UPDATE journey_tasks 
+SET linked_prep_category = 'packing' 
+WHERE title ILIKE '%pack your bags%';
+
+UPDATE journey_tasks 
+SET linked_prep_category = 'script_prep' 
+WHERE title ILIKE '%script/content prep%' 
+AND 'FORGE' = ANY(cohort_types)
+AND NOT 'FORGE_WRITING' = ANY(cohort_types);
+
+UPDATE journey_tasks 
+SET linked_prep_category = 'writing_prep' 
+WHERE title ILIKE '%script/content prep%' 
+AND 'FORGE_WRITING' = ANY(cohort_types);
+
+UPDATE journey_tasks 
+SET linked_prep_category = 'content_prep' 
+WHERE title ILIKE '%script/content prep%' 
+AND 'FORGE_CREATORS' = ANY(cohort_types)
+AND NOT 'FORGE' = ANY(cohort_types);
 ```
+
+---
+
+### Part 3: Bidirectional Sync Logic
+
+**Hook updates (`useStudentJourney.ts`):**
+
+1. Add queries to fetch prep progress and items
+2. Add `isPrepCategoryComplete(category)` function
+3. Add `getPrepCategoryProgress(category)` function  
+4. Update `toggleTask` mutation to sync with prep tables
+
+**Sync flow:**
+
+```text
+User ticks "Pack your bags" on sticky note
+         ↓
+Check if task has linked_prep_category = 'packing'
+         ↓
+If completing: Mark ALL packing items in user_prep_progress as done
+If uncompleting: Remove ALL packing items from user_prep_progress
+         ↓
+Invalidate both query caches
+         ↓
+Both Hero sticky notes AND Prep checklist show updated state
+```
+
+---
+
+### Part 4: Sticky Note Detail Modal
+
+Create `StickyNoteDetailModal.tsx` - opens when clicking any sticky note:
+
+```text
++----------------------------------------------------------+
+|                                                    [X]   |
+|     FINAL PREP                          Stage 3 of 5     |
+|     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3/5 complete        |
++----------------------------------------------------------+
+|                                                          |
+|  [✓] Complete your writing prep                  [Go →]  |
+|      ━━━━━━━━━━━━ 3/3 items • Auto-synced               |
+|                                                          |
+|  [✓] Review Day 0 arrival instructions           [Go →]  |
+|      Check the roadmap for your schedule                 |
+|                                                          |
+|  [ ] Note emergency contacts                             |
+|      Save important numbers to your phone                |
+|                                                          |
+|  [ ] Download offline content                    [Go →]  |
+|      Access materials without WiFi                       |
+|                                                          |
+|  [ ] Pack your bags using checklist              [Go →]  |
+|      ━━━░░░░░░░░░░░ 12/45 items                         |
+|                                                          |
++----------------------------------------------------------+
+|         [  View Full Prep Checklist  ]                   |
++----------------------------------------------------------+
+```
+
+**Features:**
+- All tasks can be ticked directly in the modal
+- Prep-linked tasks show inline progress bars
+- Deep link buttons for navigation
+- Ticking syncs to both tables
+
+---
+
+### Part 5: Component Wiring
+
+**JourneyBentoHero.tsx changes:**
+- Add modal state (`selectedStage`, `isModalOpen`)
+- Pass `onClick` handler to each `StickyNoteCard`
+- Render `StickyNoteDetailModal` when open
+- Use filtered stages that exclude Online Forge for Writers
+
+**StickyNoteCard.tsx changes:**
+- Ensure `onClick` prop is connected and clickable
+
+**StageNavigationStrip.tsx changes:**
+- Accept filtered stages (5 for Writers, 6 for others)
+- Adjust dot rendering accordingly
 
 ---
 
@@ -263,70 +184,31 @@ COMMENT ON COLUMN journey_tasks.due_days_offset IS
 
 | File | Purpose |
 |------|---------|
-| `src/components/journey/ProgressRing.tsx` | SVG circular progress indicator |
-| `src/components/journey/TaskFilters.tsx` | Filter pills component |
-| `src/components/journey/DueDateBadge.tsx` | Due date countdown badge |
-| `src/components/journey/ConfettiCelebration.tsx` | Stage completion animation |
-| `src/components/journey/QuickActionsRow.tsx` | Feature shortcut buttons |
+| `src/components/journey/StickyNoteDetailModal.tsx` | Full-screen popup for stage task details with sync controls |
 
 ### Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/journey/StickyNoteCard.tsx` | Light paper backgrounds, black text, Forge brand pins, paper texture, freeform rotation support |
-| `src/components/journey/JourneyBentoHero.tsx` | Freeform layout with absolute positioning, z-index layering, enhanced current stage, quick actions row |
-| `src/components/journey/JourneyTaskItem.tsx` | Dark text colors, due date badge, drag handle, better contrast |
-| `src/components/journey/StageNavigationStrip.tsx` | Progress ring around dots, stage click to celebrate |
-| `src/hooks/useStudentJourney.ts` | Add task order preference, filter support, due date calculations |
-| `src/index.css` | Add confetti keyframes and sticky-note paper classes |
+| `src/hooks/useStudentJourney.ts` | Cohort-aware stage detection, prep progress queries, bidirectional sync mutation, stage filtering for Writers |
+| `src/components/journey/JourneyBentoHero.tsx` | Modal state, onClick handlers, filtered stages, render modal |
+| `src/components/journey/StageNavigationStrip.tsx` | Accept dynamic stage count (5 or 6) |
+| `src/components/journey/index.ts` | Export new modal component |
+| Database migration | Add `linked_prep_category` column, update task mappings |
 
 ---
 
-### Component Architecture
+### User Experience Summary
 
-```text
-JourneyBentoHero
-├── Header (Greeting + Stage Counter)
-├── StageNavigationStrip
-│   └── ProgressRing (for each stage dot)
-├── Freeform Bento Container
-│   ├── StickyNoteCard (Completed - absolute left)
-│   │   └── JourneyTaskItem (compact, completed styling)
-│   ├── StickyNoteCard (Current - absolute center)
-│   │   ├── TaskFilters
-│   │   └── JourneyTaskItem (full, with due dates, draggable)
-│   │       └── DueDateBadge
-│   └── StickyNoteCard (Upcoming - absolute right)
-│       └── JourneyTaskItem (locked preview)
-├── QuickActionsRow
-└── ConfettiCelebration (triggered on stage complete)
-```
+**For FORGE_WRITING students:**
+1. See 5-stage journey (no Online Forge)
+2. On Day 1 of Forge, jump directly to Physical Forge stage
+3. All other features work identically
 
----
+**For all cohorts:**
+1. Click any sticky note → Opens detail modal
+2. Tick any task in modal → Saved to database
+3. If task has prep link → All items in that category sync
+4. Visit `/roadmap/prep` → See synced checkboxes
+5. Complete prep items individually → Journey task auto-completes when all done
 
-### Mobile Responsiveness
-
-All features adapt for mobile:
-- **Freeform layout**: Disabled on mobile, uses vertical stack
-- **Progress rings**: Slightly smaller on mobile
-- **Task filters**: Horizontal scroll if needed
-- **Due dates**: Abbreviated ("5d" instead of "5 days")
-- **Quick actions**: Horizontal scroll row
-- **Confetti**: Reduced particle count for performance
-
----
-
-### Summary
-
-This implementation will:
-1. Fix text visibility with black text on light paper backgrounds
-2. Create organic freeform layout with scattered, overlapping sticky notes
-3. Apply Forge brand colors (Yellow/Gold/Orange) to pins and accents
-4. Add progress rings showing completion % per stage
-5. Enable drag-to-reorder for personal task prioritization
-6. Add filter pills (All/Required/Optional/Completed)
-7. Show due date indicators with color-coded urgency
-8. Trigger celebration animations on stage completion
-9. Provide quick action buttons for feature navigation
-
-The result will be a polished, engaging, and functional journey dashboard that drives app usage while delighting students with premium interactions.
