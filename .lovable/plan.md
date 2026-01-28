@@ -1,108 +1,151 @@
 
 
-# Robust Fix: CSS Mix-Blend-Mode for Automatic Text Contrast
+# Pixel-Perfect Split-Number Progress Bar
 
-## Why Current Approach Fails
+## What You Want
 
-The current approach uses fixed percentage thresholds (35%, 50%, 68%, 88%) to determine when text should be black or cream. This fails because:
+In the reference image, when the progress fill cuts through a number:
+- The portion ON the dark/colored background = **white text**
+- The portion ON the light background = **dark text**
+- The split can happen **mid-character** for that dramatic half-number effect
 
-1. **Flexbox layout** - Elements are positioned by content and gaps, not fixed percentages
-2. **Fixed-width city section** - Uses pixels (`sm:w-32`), not percentages
-3. **Responsive gaps** - `gap-3 sm:gap-4 md:gap-5` changes element spacing
-4. **Screen size variations** - A 70% fill covers different elements on different screens
+## Technical Approach: Dual-Layer Text with Clip Masking
 
-No amount of threshold tuning will work across all scenarios.
+Render the text **twice** with different colors, each clipped to its respective background:
 
-## The Correct Solution: CSS Mix-Blend-Mode
+```text
+Layer Structure:
+┌─────────────────────────────────────────────────────────────────────┐
+│ Container (relative, overflow-hidden)                               │
+│ ├── Layer 1: Dark Background (left portion)                        │
+│ │   └── White text, clipped to 0% → progressPercent%               │
+│ ├── Layer 2: Light/Gold Background (right portion)                 │
+│ │   └── Dark text, clipped to progressPercent% → 100%              │
+│ └── Gold fill overlay (for visual styling)                         │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
-Instead of calculating thresholds, use CSS to **automatically** contrast text against its background:
+## How It Works
 
-**How it works:**
-- `mix-blend-mode: difference` inverts colors based on background
-- Text over gold → appears dark
-- Text over dark background → appears light
-- Works at the **pixel level**, no calculations needed
+Using `clip-path: inset()` to reveal only the portion of each text layer that sits on its matching background:
+
+| Layer | Text Color | Clip Region | What's Visible |
+|-------|------------|-------------|----------------|
+| 1 | White/Cream | `inset(0 ${100-progress}% 0 0)` | Left side (on dark BG) |
+| 2 | Black/Dark | `inset(0 0 0 ${progress}%)` | Right side (on light BG) |
+
+When progress = 70%:
+- Layer 1 (white text): Shows 0% to 70% 
+- Layer 2 (dark text): Shows 70% to 100%
+
+**Result**: A number at the 70% mark will be split - left portion white, right portion dark!
+
+## Visual Example
+
+```text
+Progress at 65% (cutting through "32"):
+
+┌────────────────────────────────────────────────────────────────────┐
+│ SEE YOU IN │   40   11   32   56                                   │
+│ Goa        │  DAYS  HOURS  MIN  SEC                                │
+│            │ [WHT] [WHT] [SPLIT] [DRK]                              │
+└────────────────────────────────────────────────────────────────────┘
+████████████████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░
+                                           ↑
+                                    65% split point
+                               
+The "3" in 32 = WHITE (on dark)
+The "2" in 32 = DARK (on light)
+```
 
 ## Technical Changes
 
 ### File: `src/components/home/CompactCountdownTimer.tsx`
 
-**Complete restructure:**
+**Complete restructure using clip-path masking:**
 
-1. **Remove all threshold calculations** (lines 83-106)
-2. **Add a text layer with `mix-blend-mode: difference`**
-3. **Use white text** that inverts to dark on gold, stays light on dark
+1. **Create a reusable `SplitText` component** that renders text twice with opposing clip masks
+2. **Remove mix-blend-mode** (not reliable for this effect)
+3. **Use absolute positioning** for the two text layers to overlap perfectly
 
-### New Structure
-
-```
-Container (relative, overflow-hidden)
-├── Gold Fill Layer (absolute, z-1)
-│   └── Linear gradient 0% to progressPercent%
-├── Content Layer (relative, z-2)
-│   └── City | Days : Hours : Min : Sec
-│       └── All text uses mix-blend-mode: difference
-│       └── Base color: white → inverts to black on gold
-```
-
-### Simplified Code
+### New Component Structure
 
 ```typescript
-// TimeUnit - now uses mix-blend-mode for automatic contrast
-const TimeUnit = ({ value, label }: { value: number; label: string }) => (
-  <div className="flex flex-col items-center relative z-10">
-    <span className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums text-white mix-blend-difference">
-      {value.toString().padStart(2, '0')}
+// SplitText component - renders text with split coloring
+const SplitText = ({ 
+  children, 
+  progressPercent,
+  className 
+}: { 
+  children: React.ReactNode; 
+  progressPercent: number;
+  className?: string;
+}) => (
+  <div className={cn("relative", className)}>
+    {/* Dark text layer - visible on light/gold portion (right side) */}
+    <span 
+      className="text-black"
+      style={{ 
+        clipPath: `inset(0 0 0 ${progressPercent}%)` 
+      }}
+    >
+      {children}
     </span>
-    <span className="text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest mt-0.5 text-white/80 mix-blend-difference">
-      {label}
+    {/* Light text layer - visible on dark portion (left side) */}
+    <span 
+      className="absolute inset-0 text-white"
+      style={{ 
+        clipPath: `inset(0 ${100 - progressPercent}% 0 0)` 
+      }}
+    >
+      {children}
     </span>
   </div>
 );
+```
 
-// Separator - also uses mix-blend-mode
-const Separator = () => (
-  <span className="text-xl sm:text-2xl font-light text-white/50 mix-blend-difference">:</span>
+### TimeUnit Refactor
+
+```typescript
+const TimeUnit = ({ 
+  value, 
+  label, 
+  progressPercent 
+}: { 
+  value: number; 
+  label: string;
+  progressPercent: number;
+}) => (
+  <div className="flex flex-col items-center">
+    <SplitText progressPercent={progressPercent} className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums">
+      {value.toString().padStart(2, '0')}
+    </SplitText>
+    <SplitText progressPercent={progressPercent} className="text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest mt-0.5">
+      {label}
+    </SplitText>
+  </div>
 );
 ```
 
-**Remove:**
-- All `isPassed` props from TimeUnit and Separator
-- All position threshold calculations
-- All threshold-based color classes
+### Color Scheme (Matching Reference)
 
-## Why This Works
-
-| Background | White Text + Difference | Result |
-|------------|------------------------|--------|
-| Gold (light) | Inverts | Dark text |
-| Dark BG | Stays | Light text |
-
-The blend mode operates at the **pixel level** - exactly where the gold fill ends, that's where the text color changes. No calculations, no guessing, no threshold tuning.
-
-## Visual Result
-
-```
-┌────────────────────────────────────────────────────────────────────┐
-│ See you in │   09   :   11   :   45   :   18                       │
-│ Goa        │  Days     Hours    Min      Sec                       │
-└────────────────────────────────────────────────────────────────────┘
-████████████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-         ↑ pixel-perfect transition ↑
-   Dark text here    │    Light text here
-```
+| Element | Dark Portion | Light Portion |
+|---------|--------------|---------------|
+| Numbers | White (`text-white`) | Black (`text-black`) |
+| Labels | White/80 (`text-white/80`) | Black/80 (`text-black/80`) |
+| Background | Dark gray/charcoal | Gold (forge-gold) |
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/home/CompactCountdownTimer.tsx` | Replace threshold-based color logic with `mix-blend-mode: difference` |
+| `src/components/home/CompactCountdownTimer.tsx` | Complete rewrite with dual-layer clip-path approach |
 
 ## Benefits
 
-- **Pixel-perfect** - Text color changes exactly where gold fill ends
-- **Responsive** - Works on all screen sizes automatically
-- **No calculations** - Removes complex threshold logic
-- **Smooth transitions** - CSS handles the visual blending
-- **Maintainable** - No magic numbers to tune
+- **Pixel-perfect split**: Characters split exactly where progress ends
+- **No calculations needed**: CSS handles the visual masking automatically
+- **Responsive**: Works on all screen sizes
+- **Smooth**: Progress updates create smooth visual transitions
+- **Matches reference**: Exactly like the image you shared
 
