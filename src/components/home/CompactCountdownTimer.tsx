@@ -18,83 +18,79 @@ interface CompactCountdownTimerProps {
   } | null;
 }
 
-// SplitText component - renders text twice with opposing clip masks for pixel-perfect split coloring
-const SplitText = ({ 
-  children, 
-  progressPercent,
-  className,
-  lightOpacity = 1,
-  darkOpacity = 1
-}: { 
-  children: React.ReactNode; 
-  progressPercent: number;
-  className?: string;
-  lightOpacity?: number;
-  darkOpacity?: number;
-}) => (
-  <div className={cn("relative", className)}>
-    {/* Dark text layer - visible on light/gold portion (right side) */}
-    <span 
-      className="text-black"
-      style={{ 
-        clipPath: `inset(0 0 0 ${progressPercent}%)`,
-        opacity: darkOpacity
-      }}
-    >
-      {children}
-    </span>
-    {/* Light text layer - visible on dark portion (left side) */}
-    <span 
-      className="absolute inset-0 text-white"
-      style={{ 
-        clipPath: `inset(0 ${100 - progressPercent}% 0 0)`,
-        opacity: lightOpacity
-      }}
-    >
-      {children}
-    </span>
-  </div>
-);
-
-// TimeUnit with split coloring
+// Simple TimeUnit - no split logic, just renders value + label
 const TimeUnit = ({ 
   value, 
-  label, 
-  progressPercent 
+  label,
+  textClass,
+  labelClass
 }: { 
   value: number; 
   label: string;
-  progressPercent: number;
+  textClass: string;
+  labelClass: string;
 }) => (
-  <div className="flex flex-col items-center relative z-10">
-    <SplitText 
-      progressPercent={progressPercent} 
-      className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums"
-    >
+  <div className="flex flex-col items-center">
+    <span className={cn("text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums", textClass)}>
       {value.toString().padStart(2, '0')}
-    </SplitText>
-    <SplitText 
-      progressPercent={progressPercent} 
-      className="text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest mt-0.5"
-      lightOpacity={0.8}
-      darkOpacity={0.8}
-    >
+    </span>
+    <span className={cn("text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest mt-0.5", labelClass)}>
       {label}
-    </SplitText>
+    </span>
   </div>
 );
 
-// Separator with split coloring
-const Separator = ({ progressPercent }: { progressPercent: number }) => (
-  <SplitText 
-    progressPercent={progressPercent} 
-    className="text-xl sm:text-2xl font-light"
-    lightOpacity={0.5}
-    darkOpacity={0.5}
-  >
-    :
-  </SplitText>
+// Separator - simple colon
+const Separator = ({ textClass }: { textClass: string }) => (
+  <span className={cn("text-xl sm:text-2xl font-light opacity-50", textClass)}>:</span>
 );
+
+// CountdownContent - renders the full layout with a specific tone
+// Used twice: once for filled (white text), once for remaining (dark text)
+const CountdownContent = ({ 
+  timeLeft, 
+  city,
+  tone,
+  showBorder
+}: { 
+  timeLeft: TimeLeft;
+  city: string;
+  tone: 'fill' | 'base';
+  showBorder: boolean;
+}) => {
+  const textClass = tone === 'fill' ? 'text-white' : 'text-black';
+  const labelClass = tone === 'fill' ? 'text-white/70' : 'text-black/70';
+  const borderClass = showBorder ? 'border-r border-white/10' : '';
+
+  return (
+    <div className="flex flex-col sm:flex-row w-full">
+      {/* Left: Message section with city */}
+      <div className={cn(
+        "flex-shrink-0 sm:w-32 md:w-36 flex flex-col justify-center px-4 py-3 sm:py-4",
+        "border-b sm:border-b-0",
+        showBorder ? "sm:border-r border-white/10" : ""
+      )}>
+        <span className={cn("text-[10px] sm:text-xs uppercase tracking-widest", labelClass)}>
+          See you in
+        </span>
+        <span className={cn("text-base sm:text-lg md:text-xl font-bold mt-0.5", textClass)}>
+          {city || 'The Forge'}
+        </span>
+      </div>
+      
+      {/* Right: Timer section */}
+      <div className="flex-1 flex items-center justify-center gap-3 sm:gap-4 md:gap-5 py-3 sm:py-4 px-4">
+        <TimeUnit value={timeLeft.days} label="Days" textClass={textClass} labelClass={labelClass} />
+        <Separator textClass={textClass} />
+        <TimeUnit value={timeLeft.hours} label="Hours" textClass={textClass} labelClass={labelClass} />
+        <Separator textClass={textClass} />
+        <TimeUnit value={timeLeft.minutes} label="Min" textClass={textClass} labelClass={labelClass} />
+        <Separator textClass={textClass} />
+        <TimeUnit value={timeLeft.seconds} label="Sec" textClass={textClass} labelClass={labelClass} />
+      </div>
+    </div>
+  );
+};
 
 export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ edition }) => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -146,53 +142,50 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
   }, [edition?.forge_start_date]);
 
   return (
-    <div className="relative overflow-hidden rounded-xl border-2 border-forge-gold/60 
-                shadow-[0_0_15px_rgba(255,188,59,0.4),0_0_30px_rgba(255,188,59,0.3),0_0_45px_rgba(211,143,12,0.2),inset_0_0_15px_rgba(255,188,59,0.1)]">
-      {/* Solid color progress fill */}
+    <div 
+      className="relative overflow-hidden rounded-xl border-2 border-forge-gold/60 
+                 shadow-[0_0_15px_rgba(255,188,59,0.4),0_0_30px_rgba(255,188,59,0.3),0_0_45px_rgba(211,143,12,0.2),inset_0_0_15px_rgba(255,188,59,0.1)]"
+      style={{ '--p': `${progressPercent}%` } as React.CSSProperties}
+    >
+      {/* Base background (cream/light - visible on remaining side) */}
+      <div className="absolute inset-0 bg-forge-cream" />
+      
+      {/* Filled background (charcoal/dark - visible on filled side) */}
       <div 
-        className="absolute inset-0 z-[1] pointer-events-none transition-all duration-500"
-        style={{
-          background: `linear-gradient(
-            90deg,
-            hsl(var(--forge-gold)) 0%,
-            hsl(var(--forge-gold)) ${progressPercent}%,
-            transparent ${progressPercent}%,
-            transparent 100%
-          )`,
-        }}
+        className="absolute inset-0 bg-forge-charcoal transition-all duration-500"
+        style={{ width: 'var(--p)' }}
       />
       
-      {/* Main container with split layout */}
-      <div className="relative z-[2] flex flex-col sm:flex-row">
-        {/* Left: Message section with city */}
-        <div className="flex-shrink-0 sm:w-32 md:w-36 flex flex-col justify-center px-4 py-3 sm:py-4 border-b sm:border-b-0 sm:border-r border-white/10">
-          <SplitText 
-            progressPercent={progressPercent} 
-            className="text-[10px] sm:text-xs uppercase tracking-widest"
-            lightOpacity={0.6}
-            darkOpacity={0.6}
-          >
-            See you in
-          </SplitText>
-          <SplitText 
-            progressPercent={progressPercent} 
-            className="text-base sm:text-lg md:text-xl font-bold mt-0.5"
-          >
-            {edition?.city || 'The Forge'}
-          </SplitText>
-        </div>
-        
-        {/* Right: Timer section */}
-        <div className="flex-1 flex items-center justify-center gap-3 sm:gap-4 md:gap-5 
-                        py-3 sm:py-4 px-4">
-          <TimeUnit value={timeLeft.days} label="Days" progressPercent={progressPercent} />
-          <Separator progressPercent={progressPercent} />
-          <TimeUnit value={timeLeft.hours} label="Hours" progressPercent={progressPercent} />
-          <Separator progressPercent={progressPercent} />
-          <TimeUnit value={timeLeft.minutes} label="Min" progressPercent={progressPercent} />
-          <Separator progressPercent={progressPercent} />
-          <TimeUnit value={timeLeft.seconds} label="Sec" progressPercent={progressPercent} />
-        </div>
+      {/* Progress edge line (crisp vertical divider) */}
+      <div 
+        className="absolute top-0 bottom-0 w-px bg-white/30 z-10 transition-all duration-500"
+        style={{ left: 'var(--p)' }}
+      />
+      
+      {/* Layer 1: Dark text (remaining side) - clipped to show only right portion */}
+      <div 
+        className="relative z-[2]"
+        style={{ clipPath: 'inset(0 0 0 var(--p))' }}
+      >
+        <CountdownContent 
+          timeLeft={timeLeft} 
+          city={edition?.city || ''} 
+          tone="base"
+          showBorder={true}
+        />
+      </div>
+      
+      {/* Layer 2: White text (filled side) - clipped to show only left portion, overlaid on top */}
+      <div 
+        className="absolute inset-0 z-[3] pointer-events-none"
+        style={{ clipPath: 'inset(0 calc(100% - var(--p)) 0 0)' }}
+      >
+        <CountdownContent 
+          timeLeft={timeLeft} 
+          city={edition?.city || ''} 
+          tone="fill"
+          showBorder={false}
+        />
       </div>
     </div>
   );
