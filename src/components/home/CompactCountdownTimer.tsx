@@ -57,20 +57,28 @@ const Separator = ({ isPassed }: { isPassed?: boolean }) => (
 export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ edition }) => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
-  // Calculate progress percentage based on time remaining
+  // Calculate progress based on days remaining (30-day visual scale)
+  // This ensures smooth color transitions that align with element positions
   const progressPercent = useMemo(() => {
     if (!edition?.forge_start_date) return 0;
     
     const now = new Date().getTime();
     const end = new Date(edition.forge_start_date).getTime();
-    
-    // Use 90 days as reference duration
-    const totalDuration = 90 * 24 * 60 * 60 * 1000;
     const remaining = end - now;
-    const elapsed = totalDuration - remaining;
     
-    return Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
-  }, [edition?.forge_start_date, timeLeft.seconds]);
+    if (remaining <= 0) return 100; // Event has started
+    
+    // Calculate days remaining
+    const daysRemaining = remaining / (1000 * 60 * 60 * 24);
+    
+    // Use 30-day scale for meaningful visual progress
+    // 30+ days = 0%, 0 days = 100%
+    const maxDays = 30;
+    const effectiveDays = Math.min(daysRemaining, maxDays);
+    const progress = ((maxDays - effectiveDays) / maxDays) * 100;
+    
+    return Math.max(0, Math.min(100, progress));
+  }, [edition?.forge_start_date, timeLeft.days]);
 
   // Visual position estimates for each element (as % of container width)
   // The timer section starts at ~20% (after the "See you in" section)
