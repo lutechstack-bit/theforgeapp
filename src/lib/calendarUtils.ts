@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 
-interface CalendarEvent {
+export interface CalendarEvent {
   title: string;
   description?: string;
   location?: string;

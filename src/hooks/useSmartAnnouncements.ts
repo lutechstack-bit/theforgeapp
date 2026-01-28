@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStudentJourney } from '@/hooks/useStudentJourney';
 import { useStreak } from '@/hooks/useStreak';
+import { useSessionNotifications } from '@/hooks/useSessionNotifications';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { differenceInDays, differenceInHours } from 'date-fns';
@@ -30,9 +31,10 @@ interface AnnouncementTrigger {
 }
 
 export const useSmartAnnouncements = () => {
-  const { user, profile, edition } = useAuth();
+  const { user, profile, edition, forgeMode } = useAuth();
   const { currentStage, currentStageKey } = useStudentJourney();
   const { streak } = useStreak();
+  const { urgentNotification, todaysSessions } = useSessionNotifications();
 
   // Fetch trigger configurations
   const { data: triggers } = useQuery({
@@ -149,13 +151,54 @@ export const useSmartAnnouncements = () => {
           }
           break;
         }
+
+        case 'session_starting_soon': {
+          // Check if there's an urgent session starting soon
+          if (urgentNotification && urgentNotification.status === 'starting_soon' && forgeMode === 'DURING_FORGE') {
+            const minutesConfig = trigger.config?.minutes_before || [30, 15, 5];
+            const matchingMinutes = minutesConfig.find((m: number) => 
+              urgentNotification.minutesUntilStart <= m && urgentNotification.minutesUntilStart > (m - 5)
+            );
+            
+            if (matchingMinutes) {
+              announcements.push({
+                id: `smart_session_${urgentNotification.id}_${matchingMinutes}`,
+                type: trigger.trigger_type,
+                title: trigger.title_template.replace('{minutes}', String(urgentNotification.minutesUntilStart)),
+                message: trigger.message_template?.replace('{session_title}', urgentNotification.title) || undefined,
+                deepLink: urgentNotification.meetingUrl,
+                icon: trigger.icon_emoji,
+                priority: trigger.priority,
+                isManual: false,
+              });
+            }
+          }
+          break;
+        }
+
+        case 'session_live_now': {
+          // Check if there's a live session
+          if (urgentNotification && urgentNotification.status === 'live' && forgeMode === 'DURING_FORGE') {
+            announcements.push({
+              id: `smart_session_live_${urgentNotification.id}`,
+              type: trigger.trigger_type,
+              title: trigger.title_template,
+              message: trigger.message_template?.replace('{session_title}', urgentNotification.title) || undefined,
+              deepLink: urgentNotification.meetingUrl,
+              icon: trigger.icon_emoji,
+              priority: trigger.priority,
+              isManual: false,
+            });
+          }
+          break;
+        }
         
         // Add more trigger types as needed
       }
     });
 
     return announcements;
-  }, [triggers, profile, edition, streak, currentStageKey]);
+  }, [triggers, profile, edition, streak, currentStageKey, urgentNotification, forgeMode, todaysSessions]);
 
   // Combine manual and smart announcements, sorted by priority
   const allAnnouncements = useMemo(() => {
