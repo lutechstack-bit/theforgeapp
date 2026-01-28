@@ -1,172 +1,204 @@
 
+# Premium Countdown Timer Redesign
 
-# Comprehensive UI Audit Report
-
-Based on my thorough analysis of your app, here are all the bugs, glitches, and issues I've identified, organized by category and priority.
-
----
-
-## Critical Issues (Errors & Console Warnings)
-
-### Issue 1: React forwardRef Warning in RoadmapHighlightsModal
-**Location:** `src/components/home/RoadmapHighlightsModal.tsx`
-**Problem:** The component is being passed a ref but isn't wrapped in `React.forwardRef()`, causing repeated console warnings.
-**Fix:** Wrap the component with `React.forwardRef()` or ensure the parent (`RoadmapBentoBox`) doesn't pass refs.
-
-### Issue 2: Broken Admin Dashboard Navigation
-**Location:** `src/pages/admin/AdminDashboard.tsx` (line 102-105)
-**Problem:** The "Push Notification" quick action button navigates to `/admin/notifications`, but this route no longer exists (was removed in sidebar cleanup).
-**Fix:** Either remove the button or restore the notifications admin page.
+## Design Inspiration
+Create a Stripe Sessions-style countdown with the Forge brand's gold/amber color palette. The timer will feature:
+- Large, bold flip-clock numbers
+- Elegant glass-card container with gold accents
+- Smooth "tick" animation when seconds/minutes change
+- Split background aesthetic (dark left, lighter right)
 
 ---
 
-## Dead Code & Unused Features
+## Visual Design
 
-### Issue 3: Duplicate KYF Form Implementation
-**Location:** `src/pages/KYF.tsx`
-**Problem:** There's an old manual KYF form that overlaps with the newer dynamic forms (`KYFForm.tsx`, `KYCForm.tsx`, `KYWForm.tsx`). This causes confusion and potential maintenance issues.
-**Fix:** Delete `src/pages/KYF.tsx` if the dynamic forms are the source of truth.
+```text
+┌──────────────────────────────────────────────────────────────────────────┐
+│ ┌─────────────────────────────────────┬───────────────────────────────┐  │
+│ │                                     │                               │  │
+│ │  🔥  Goa starts in                  │   ╔═══╗ ╔═══╗ ╔═══╗ ╔═══╗    │  │
+│ │                                     │   ║ 09║ ║ 16║ ║ 54║ ║ 47║    │  │
+│ │      (Dark gradient section)        │   ╚═══╝ ╚═══╝ ╚═══╝ ╚═══╝    │  │
+│ │                                     │   DAYS   HRS   MIN   SEC     │  │
+│ │                                     │   (Gold flip-clock blocks)   │  │
+│ └─────────────────────────────────────┴───────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────────────┘
+```
 
-### Issue 4: Duplicate Route Definition
-**Location:** `src/App.tsx` (lines 200-213)
-**Problem:** The `/kyw-form` route is defined twice, which is redundant.
+---
+
+## Key Features
+
+### 1. Split Background Design
+- Left section: Dark gradient with the "starts in" message and flame icon
+- Right section: Slightly lighter with the countdown blocks
+- Diagonal split line for visual interest
+
+### 2. Premium Flip-Clock Blocks
+- Gold/amber gradient background matching brand colors
+- Rounded corners with subtle border
+- Center horizontal line (flip-card illusion)
+- Drop shadow for depth
+- Large, bold numbers (tabular-nums for alignment)
+
+### 3. Tick Animation
+- Subtle scale + fade animation when a number changes
+- Quick 200ms transition for responsive feel
+- Optional flip animation for premium effect
+
+### 4. Mobile Responsiveness
+- Compact layout on mobile (stacks vertically if needed)
+- Slightly smaller blocks but still readable
+- Touch-friendly sizing
+
+---
+
+## Implementation Plan
+
+### File: `src/components/home/CompactCountdownTimer.tsx`
+
+Complete redesign with the following structure:
+
 ```typescript
-<Route path="/kyw-form" element={...} />
-<Route path="/kyw-form" element={...} /> // DUPLICATE
+// New TimeBlock with flip-clock aesthetic
+const TimeBlock = ({ value, label, prevValue }) => {
+  const hasChanged = value !== prevValue;
+  
+  return (
+    <div className="flex flex-col items-center">
+      {/* Flip-clock block */}
+      <div className={cn(
+        "relative w-14 h-16 sm:w-16 sm:h-20 rounded-lg overflow-hidden",
+        "bg-gradient-to-b from-forge-gold to-forge-orange",
+        "border border-forge-yellow/40",
+        "shadow-lg shadow-forge-gold/30"
+      )}>
+        {/* Top half shine */}
+        <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent" />
+        
+        {/* Center divider line */}
+        <div className="absolute inset-x-0 top-1/2 h-px bg-black/30 z-10" />
+        
+        {/* Number */}
+        <div className={cn(
+          "absolute inset-0 flex items-center justify-center",
+          hasChanged && "animate-tick"
+        )}>
+          <span className="text-2xl sm:text-3xl font-black text-black tabular-nums">
+            {value.toString().padStart(2, '0')}
+          </span>
+        </div>
+        
+        {/* Bottom shadow */}
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/20 to-transparent" />
+      </div>
+      
+      {/* Label */}
+      <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mt-1.5 font-semibold">
+        {label}
+      </span>
+    </div>
+  );
+};
 ```
-**Fix:** Remove the duplicate route definition.
 
-### Issue 5: Orphaned Admin Page
-**Location:** `src/pages/admin/AdminHeroBanners.tsx`
-**Problem:** This page exists but is no longer linked in `AdminLayout` navigation (removed during cleanup), making it inaccessible.
-**Fix:** Either delete the file or add it back to navigation if needed.
+### Main Container Layout
 
-### Issue 6: Debug Console.log in Production Code
-**Locations:**
-- `src/components/learn/SecureVideoPlayer.tsx` (line 233) - Logs every 10 seconds
-- `src/pages/NotFound.tsx` (line 8) - Logs every 404
-**Fix:** Remove or gate behind `process.env.NODE_ENV !== 'production'`.
-
----
-
-## Admin Dashboard Issues
-
-### Issue 7: Admin Sidebar Has No Scroll Container
-**Location:** `src/components/admin/AdminLayout.tsx`
-**Problem:** The sidebar navigation `<nav>` doesn't have overflow handling. With 17 navigation items, they can overflow on smaller screens.
-**Current:** `<nav className="flex-1 p-4 space-y-1">` - No `overflow-y-auto`
-**Fix:** Add `overflow-y-auto` to the nav container.
-
-### Issue 8: Admin Layout Missing Scroll for Main Content
-**Location:** `src/components/admin/AdminLayout.tsx`
-**Problem:** The main content area should have proper overflow handling for long forms.
-**Current:** `<main className="flex-1 overflow-auto">` - Correct, but parent might constrain
-**Fix:** Ensure parent uses `h-screen` and `flex` properly.
-
----
-
-## Mobile/Responsive Issues
-
-### Issue 9: Roadmap Navigation Hidden Buttons (Already Fixed)
-**Status:** Recently addressed with FloatingHighlightsButton implementation.
-
-### Issue 10: Community Page Height Calculation
-**Location:** `src/pages/Community.tsx` (line 151)
-**Problem:** Uses `h-[calc(100dvh-7rem)]` for mobile but this might not account for the floating highlights button or varying header heights.
-**Fix:** Verify the calculation accounts for all fixed elements.
-
-### Issue 11: Bottom Padding Not Consistent
-**Locations:** Multiple pages
-- `src/pages/Profile.tsx` - Uses `pb-24`
-- `src/pages/Events.tsx` - Uses `pb-24`
-- `src/pages/Learn.tsx` - Uses `pb-24`
-**Problem:** Some pages might still have content hidden behind the bottom navigation bar.
-**Fix:** Audit all pages to ensure consistent `pb-24` or `pb-safe` on mobile.
-
----
-
-## UI Polish & Styling Issues
-
-### Issue 12: Updates Page Uses Mock Data
-**Location:** `src/pages/Updates.tsx` (lines 17-58)
-**Problem:** The entire page uses hardcoded mock notifications instead of fetching from a database. The "About Forge" link in the sidebar leads here, but it's essentially a placeholder.
-**Fix:** Either implement real notifications from the database or clearly label this as a placeholder/coming soon feature.
-
-### Issue 13: SideNav Roadmap Active State Detection
-**Location:** `src/components/layout/SideNav.tsx` (line 136)
-**Problem:** Uses exact path matching (`location.pathname === to`) for checking if Roadmap is active. This means sub-routes like `/roadmap/prep`, `/roadmap/equipment` won't show the nav item as active.
-**Fix:** Use `location.pathname.startsWith(to)` for the Roadmap item.
-
-### Issue 14: Index.html Contains TODO Comments
-**Location:** `index.html` (lines 15-20)
-**Problem:** Contains placeholder TODO comments for title and og:title that should be cleaned up.
-```html
-<!-- TODO: Set the document title to the name of your application -->
-<!-- TODO: Update og:title to match your application name -->
+```typescript
+return (
+  <div className="relative overflow-hidden rounded-xl">
+    {/* Split background container */}
+    <div className="flex">
+      {/* Left: Dark section with message */}
+      <div className="flex-1 bg-gradient-to-br from-card via-card to-muted/50 px-4 py-4 flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-forge-gold/20">
+          <Flame className="w-5 h-5 text-forge-yellow" />
+        </div>
+        <p className="text-sm sm:text-base font-medium text-foreground">
+          {edition?.city ? `${edition.city}` : 'Forge'} starts in
+        </p>
+      </div>
+      
+      {/* Right: Lighter section with timer */}
+      <div className="flex items-center gap-2 sm:gap-3 px-4 py-3 bg-gradient-to-br from-muted/30 to-card/50">
+        <TimeBlock value={timeLeft.days} label="DAYS" prevValue={prevTimeLeft.days} />
+        <span className="text-forge-gold/50 text-xl font-light">:</span>
+        <TimeBlock value={timeLeft.hours} label="HRS" prevValue={prevTimeLeft.hours} />
+        <span className="text-forge-gold/50 text-xl font-light">:</span>
+        <TimeBlock value={timeLeft.minutes} label="MIN" prevValue={prevTimeLeft.minutes} />
+        <span className="text-forge-gold/50 text-xl font-light">:</span>
+        <TimeBlock value={timeLeft.seconds} label="SEC" prevValue={prevTimeLeft.seconds} />
+      </div>
+    </div>
+    
+    {/* Diagonal accent line */}
+    <div className="absolute top-0 bottom-0 left-[40%] w-px bg-gradient-to-b from-transparent via-forge-gold/30 to-transparent transform -skew-x-12" />
+  </div>
+);
 ```
-**Fix:** Remove the TODO comments since the title is already set.
 
 ---
 
-## Code Quality Issues
+## New Animation
 
-### Issue 15: TypeScript Strict Mode Disabled
-**Location:** `tsconfig.app.json` (lines 18-21)
-**Problem:** Several strict TypeScript checks are disabled:
-```json
-"strict": false,
-"noUnusedLocals": false,
-"noUnusedParameters": false,
-"noImplicitAny": false
+Add a "tick" animation to `tailwind.config.ts`:
+
+```typescript
+keyframes: {
+  "tick": {
+    "0%": { transform: "scaleY(1)" },
+    "50%": { transform: "scaleY(0.95)" },
+    "100%": { transform: "scaleY(1)" }
+  },
+}
+
+animation: {
+  "tick": "tick 0.2s ease-out",
+}
 ```
-**Impact:** Allows unused imports and potential type errors to slip through.
-**Fix:** Consider enabling these for better code quality (may require some refactoring).
-
-### Issue 16: App.css Has Unused Boilerplate
-**Location:** `src/App.css`
-**Problem:** Contains Vite boilerplate styles (logo animations, etc.) that aren't used anywhere.
-**Fix:** Delete the file or remove unused styles.
 
 ---
 
-## Summary Table
+## Color Mapping
 
-| Priority | Issue | Location | Type |
-|----------|-------|----------|------|
-| Critical | forwardRef warning | RoadmapHighlightsModal | Console Error |
-| Critical | Broken navigation button | AdminDashboard | Dead Link |
-| High | Duplicate route | App.tsx | Code Quality |
-| High | Debug console.logs | SecureVideoPlayer, NotFound | Production Cleanup |
-| High | Admin sidebar scroll | AdminLayout | UX Bug |
-| Medium | Dead KYF.tsx file | pages/KYF.tsx | Dead Code |
-| Medium | Orphaned AdminHeroBanners | pages/admin/ | Dead Code |
-| Medium | Mock notifications data | Updates.tsx | Incomplete Feature |
-| Medium | Roadmap nav active state | SideNav.tsx | UX Polish |
-| Low | TODO comments in HTML | index.html | Cleanup |
-| Low | Unused App.css styles | App.css | Cleanup |
-| Low | TypeScript strict mode | tsconfig.app.json | Code Quality |
+| Element | Color |
+|---------|-------|
+| Block background | `from-forge-gold to-forge-orange` gradient |
+| Block border | `border-forge-yellow/40` |
+| Block shadow | `shadow-forge-gold/30` |
+| Number text | `text-black` (for contrast) |
+| Labels | `text-muted-foreground` |
+| Separators (`:`) | `text-forge-gold/50` |
+| Icon | `text-forge-yellow` |
+| Icon background | `bg-forge-gold/20` |
 
 ---
 
-## Implementation Order
+## Mobile Layout
 
-**Phase 1: Critical Fixes (Should fix immediately)**
-1. Fix RoadmapHighlightsModal forwardRef warning
-2. Remove/fix broken "Push Notification" button in Admin Dashboard
-3. Remove duplicate `/kyw-form` route
+On smaller screens (xs-sm):
+- Container stays horizontal but more compact
+- Blocks: `w-11 h-13` instead of `w-16 h-20`
+- Font size: `text-xl` instead of `text-3xl`
+- Labels: `text-[9px]` for compact fit
 
-**Phase 2: Dead Code Cleanup**
-4. Delete unused `src/pages/KYF.tsx`
-5. Delete orphaned `src/pages/admin/AdminHeroBanners.tsx`
-6. Remove debug console.logs from production code
+---
 
-**Phase 3: Admin UX Fixes**
-7. Add scroll to admin sidebar navigation
-8. Ensure admin layout has proper height constraints
+## Files to Modify
 
-**Phase 4: Polish & Cleanup**
-9. Fix SideNav Roadmap active state detection
-10. Remove TODO comments from index.html
-11. Clean up unused App.css boilerplate
-12. Either implement real Updates notifications or mark as coming soon
+| File | Action |
+|------|--------|
+| `src/components/home/CompactCountdownTimer.tsx` | Complete redesign with split-panel layout and flip-clock blocks |
+| `tailwind.config.ts` | Add "tick" keyframe animation |
+| `src/index.css` | Optional: Add glass effect variant for countdown |
 
+---
+
+## Expected Result
+
+A premium, Stripe Sessions-inspired countdown timer that:
+1. Has a dramatic split-panel background
+2. Features gold flip-clock style number blocks
+3. Displays smooth tick animations on number changes
+4. Maintains the Forge brand identity with the 5-color palette
+5. Works beautifully on both mobile and desktop
