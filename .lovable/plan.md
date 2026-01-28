@@ -1,26 +1,27 @@
 
 
-# Immersive Progress Countdown Timer
+# Solid Color Progress Timer Redesign
 
-## Design Concept
-Based on the reference image, the timer should have a **flowing gradient that sweeps across the entire component** as the countdown progresses. The numbers appear with a glass/transparent effect where the animated gradient passes behind them.
+## Design Analysis (from Reference Images)
 
----
-
-## Visual Design
+The user wants a **split-fill progress effect** where:
+- The progress fills from left-to-right as a **solid color** (not a gradient wave)
+- Numbers that are "passed" by the progress have inverted colors (dark text on light/gold background)
+- Numbers that haven't been "passed" remain light text on dark background
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ ┌─────────────────┬─────────────────────────────────────────────────────┐   │
-│ │                 │                                                     │   │
-│ │  SEE YOU IN     │     40      11    ║║ 32      56                    │   │
-│ │  GOA            │    DAYS   HOURS   ║║ MIN    SEC                    │   │
-│ │                 │                   ║║                                │   │
-│ │  (dark section) │  (dark)           ║║  (flowing gradient wave)      │   │
-│ └─────────────────┴─────────────────────────────────────────────────────┘   │
+│ ┌─────────────────────────────────────────────────────────────────────────┐ │
+│ │                                                                         │ │
+│ │  SEE YOU IN   09    16  ║  34    11                                    │ │
+│ │  Goa         DAYS  HRS  ║  MIN   SEC                                   │ │
+│ │                         ║                                               │ │
+│ │  ███████████████████████║                                               │ │
+│ │  (SOLID GOLD FILL)      ║  (DARK BACKGROUND)                           │ │
+│ └─────────────────────────────────────────────────────────────────────────┘ │
 │                                                                             │
-│   ← The gradient sweeps left-to-right across the entire timer →            │
-│   ← Numbers get a "glass" effect when the gradient passes over them →      │
+│   ← Solid color fills left-to-right based on countdown progress →          │
+│   ← Text: BLACK on gold section, CREAM on dark section →                   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -28,173 +29,137 @@ Based on the reference image, the timer should have a **flowing gradient that sw
 
 ## Key Changes
 
-### 1. Replace "See you in" + underline → "See you in {City}"
-Show the cohort city (Goa, Hyderabad, etc.) prominently
+### 1. Replace Gradient Wave → Solid Color Fill
+- Remove the gradient with multiple color stops
+- Use a simple solid gold/amber color that fills from 0% to `progressPercent`%
 
-### 2. Remove Bottom Progress Bar
-Delete the separate `h-0.5` progress bar at the bottom
+### 2. Update Text Color Logic
+- Numbers **inside** the solid fill area → Black/dark text
+- Numbers **outside** the solid fill area → Cream/light text (foreground)
+- The transition should be based on each element's position in the layout
 
-### 3. Add Sweeping Gradient Background
-The progress gradient animates across the **entire timer container** as a background layer
-
-### 4. Glass Text Effect
-When the gradient passes behind a number, the number appears with a frosted/glass effect (achieved via CSS mix-blend-mode or backdrop effects)
+### 3. Smooth Transition Effect
+- Use `transition-colors duration-300` for smooth color changes
+- Sharp edge on the fill (no gradient blur)
 
 ---
 
-## Implementation
+## Implementation Details
 
 ### File: `src/components/home/CompactCountdownTimer.tsx`
 
+**New Progress Background:**
+
 ```typescript
-// TimeUnit with glass effect based on progress position
+{/* Solid color progress fill */}
+<div 
+  className="absolute inset-0 z-[1] pointer-events-none"
+  style={{
+    background: `linear-gradient(
+      90deg,
+      hsl(var(--forge-gold)) 0%,
+      hsl(var(--forge-gold)) ${progressPercent}%,
+      transparent ${progressPercent}%,
+      transparent 100%
+    )`,
+  }}
+/>
+```
+
+**Updated TimeUnit Logic:**
+
+The `isInProgress` prop needs to be renamed to `isPassed` to indicate whether the progress has passed that element:
+
+```typescript
 const TimeUnit = ({ 
   value, 
   label,
-  isInProgress 
+  isPassed  // True if the solid color is behind this element
 }: { 
   value: number; 
   label: string;
-  isInProgress?: boolean;
+  isPassed?: boolean;
 }) => (
   <div className="flex flex-col items-center relative z-10">
     <span className={cn(
       "text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums transition-colors duration-300",
-      isInProgress 
-        ? "text-black/80" // Dark text when gradient is behind
+      isPassed 
+        ? "text-black" // Dark text on gold background
         : "text-foreground" // Light text on dark background
     )}>
       {value.toString().padStart(2, '0')}
     </span>
     <span className={cn(
-      "text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest mt-0.5",
-      isInProgress ? "text-black/60" : "text-muted-foreground"
+      "text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest mt-0.5 transition-colors duration-300",
+      isPassed ? "text-black/70" : "text-muted-foreground"
     )}>
       {label}
     </span>
   </div>
 );
-
-export const CompactCountdownTimer = ({ edition }) => {
-  // ... existing time state and effect ...
-
-  // Calculate which "section" the progress is in
-  // 0 = dark section, 1 = days, 2 = hours, 3 = min, 4 = sec
-  const progressPosition = useMemo(() => {
-    // Map 0-100% to positions across the timer
-    // Left section is ~25%, each time unit is ~18.75%
-    const normalized = progressPercent / 100;
-    return normalized; // 0 to 1 representing left-to-right position
-  }, [progressPercent]);
-
-  return (
-    <div className="relative overflow-hidden rounded-xl">
-      {/* Sweeping gradient background */}
-      <div 
-        className="absolute inset-0 z-0 transition-transform duration-1000 ease-linear"
-        style={{
-          background: `linear-gradient(
-            90deg,
-            transparent 0%,
-            transparent ${progressPercent - 5}%,
-            hsl(var(--forge-gold)) ${progressPercent}%,
-            hsl(var(--forge-yellow)) ${progressPercent + 10}%,
-            hsl(var(--forge-orange)) ${progressPercent + 20}%,
-            transparent ${progressPercent + 30}%,
-            transparent 100%
-          )`,
-        }}
-      />
-      
-      {/* Base dark background */}
-      <div className="relative z-0 flex flex-col sm:flex-row">
-        {/* Left: Message section */}
-        <div className="flex-shrink-0 sm:w-36 bg-gradient-to-br from-forge-charcoal to-card/90 
-                        flex flex-col justify-center px-4 py-4">
-          <span className="text-xs uppercase tracking-widest text-muted-foreground">
-            See you in
-          </span>
-          <span className="text-lg sm:text-xl font-bold text-foreground">
-            {edition?.city || 'The Forge'}
-          </span>
-        </div>
-        
-        {/* Right: Timer section with glass effect */}
-        <div className="flex-1 flex items-center justify-center gap-4 sm:gap-6 
-                        py-4 px-4 bg-card/60 relative">
-          <TimeUnit 
-            value={timeLeft.days} 
-            label="Days" 
-            isInProgress={progressPosition > 0.25 && progressPosition < 0.45}
-          />
-          <TimeUnit 
-            value={timeLeft.hours} 
-            label="Hours" 
-            isInProgress={progressPosition > 0.40 && progressPosition < 0.60}
-          />
-          <TimeUnit 
-            value={timeLeft.minutes} 
-            label="Min" 
-            isInProgress={progressPosition > 0.55 && progressPosition < 0.75}
-          />
-          <TimeUnit 
-            value={timeLeft.seconds} 
-            label="Sec" 
-            isInProgress={progressPosition > 0.70 && progressPosition < 0.90}
-          />
-        </div>
-      </div>
-      
-      {/* NO bottom progress bar */}
-    </div>
-  );
-};
 ```
 
----
+**Position-based "Passed" Detection:**
 
-## CSS Animation Enhancement
+Map each element to a percentage position in the layout:
+- "See you in / City" section: 0% - 25%
+- Days: 25% - 40%
+- Hours: 40% - 55%
+- Minutes: 55% - 70%
+- Seconds: 70% - 85%
 
-Add to `src/index.css`:
-
-```css
-/* Sweeping wave animation for countdown */
-.countdown-wave {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    hsl(var(--forge-gold) / 0.3) 45%,
-    hsl(var(--forge-yellow) / 0.6) 50%,
-    hsl(var(--forge-orange) / 0.3) 55%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
-  animation: wave-sweep 3s ease-in-out infinite;
-}
-
-@keyframes wave-sweep {
-  0% { background-position: -100% 0; }
-  100% { background-position: 200% 0; }
-}
+```typescript
+// Determine if each section is "passed" by the progress
+const cityPassed = progressPercent > 10;
+const daysPassed = progressPercent > 30;
+const hoursPassed = progressPercent > 45;
+const minutesPassed = progressPercent > 60;
+const secondsPassed = progressPercent > 75;
 ```
 
 ---
 
 ## Visual Effect Breakdown
 
-| State | Background | Text Color |
-|-------|------------|------------|
-| Before gradient reaches | Dark (card/charcoal) | Light (foreground) |
-| Gradient passing through | Gold/Yellow wave | Dark (black/80) |
-| After gradient passes | Dark again | Light again |
+| Progress % | City Text | Days | Hours | Min | Sec |
+|------------|-----------|------|-------|-----|-----|
+| 0-10%      | Light     | Light| Light | Light | Light |
+| 10-30%     | **Dark**  | Light| Light | Light | Light |
+| 30-45%     | **Dark**  | **Dark** | Light | Light | Light |
+| 45-60%     | **Dark**  | **Dark** | **Dark** | Light | Light |
+| 60-75%     | **Dark**  | **Dark** | **Dark** | **Dark** | Light |
+| 75-100%    | **Dark**  | **Dark** | **Dark** | **Dark** | **Dark** |
 
 ---
 
-## Mobile Responsiveness
+## Color Values
 
-- Vertical stack on mobile with same sweeping effect
-- City name shows below "See you in" on all sizes
-- Gradient animation respects reduced-motion preference
+| State | Background | Number Text | Label Text |
+|-------|------------|-------------|------------|
+| Not passed | Dark (card/background) | `text-foreground` (cream) | `text-muted-foreground` |
+| Passed | Solid `--forge-gold` | `text-black` | `text-black/70` |
+
+---
+
+## Separator Updates
+
+The colon separators also need color switching:
+
+```typescript
+const Separator = ({ isPassed }: { isPassed?: boolean }) => (
+  <span className={cn(
+    "text-xl sm:text-2xl font-light transition-colors duration-300",
+    isPassed ? "text-black/40" : "text-muted-foreground/40"
+  )}>:</span>
+);
+```
+
+---
+
+## Cleanup
+
+- Remove the `countdown-wave` CSS class from index.css if no longer needed
+- Remove any shimmer/wave animations that were for the gradient effect
 
 ---
 
@@ -202,17 +167,17 @@ Add to `src/index.css`:
 
 | File | Change |
 |------|--------|
-| `src/components/home/CompactCountdownTimer.tsx` | Add city display, sweeping gradient, remove bottom bar |
-| `src/index.css` | Add wave-sweep animation keyframes |
+| `src/components/home/CompactCountdownTimer.tsx` | Replace gradient with solid fill, update text color logic to `isPassed` |
+| `src/index.css` | Clean up unused `countdown-wave` and `wave-sweep` animations (optional) |
 
 ---
 
 ## Expected Result
 
-A premium countdown timer where:
-1. "See you in **Goa**" (or cohort city) replaces the generic line
-2. No separate progress bar - the gradient IS the timer background
-3. A beautiful gold/yellow wave sweeps across the entire timer
-4. Numbers get a "glass" contrast effect when the wave passes over them
-5. Smooth, continuous animation creates a premium, dynamic feel
+A clean countdown timer where:
+1. A solid gold color fills from left to right based on progress
+2. Numbers that are "passed" by the fill show BLACK text on gold
+3. Numbers not yet "passed" show CREAM text on dark background
+4. Sharp, clean edge between the two sections (no gradient blur)
+5. Smooth color transitions as each section gets "passed"
 
