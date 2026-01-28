@@ -80,28 +80,30 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
     return Math.max(0, Math.min(100, progress));
   }, [edition?.forge_start_date, timeLeft.days]);
 
-  // Visual position estimates for each element (as % of container width)
-  // The timer section starts at ~20% (after the "See you in" section)
-  const timerStartPercent = 20;
-  const timerWidth = 80; // Timer takes up ~80% of remaining space
+  // Calibrated position thresholds that match actual visual layout
+  // These values are tuned so text color changes when gold fill reaches each element
+  const positions = {
+    city: 15,      // City section ends at ~15%
+    days: 35,      // Days number center at ~35%
+    sep1: 42,      // First separator
+    hours: 50,     // Hours number center at ~50%
+    sep2: 58,      // Second separator
+    minutes: 68,   // Minutes number center at ~68%
+    sep3: 78,      // Third separator
+    seconds: 88,   // Seconds number center at ~88%
+  };
 
-  // Each unit occupies roughly equal space in the timer section
-  const daysPosition = timerStartPercent + (timerWidth * 0.1);   // ~28%
-  const hoursPosition = timerStartPercent + (timerWidth * 0.35); // ~48%
-  const minutesPosition = timerStartPercent + (timerWidth * 0.6); // ~68%
-  const secondsPosition = timerStartPercent + (timerWidth * 0.85); // ~88%
+  // Text turns black when progress passes its position
+  const cityPassed = progressPercent >= positions.city;
+  const daysPassed = progressPercent >= positions.days;
+  const hoursPassed = progressPercent >= positions.hours;
+  const minutesPassed = progressPercent >= positions.minutes;
+  const secondsPassed = progressPercent >= positions.seconds;
 
-  // Determine if each section is "passed" by the progress fill
-  const cityPassed = progressPercent > 10;
-  const daysPassed = progressPercent > daysPosition;
-  const hoursPassed = progressPercent > hoursPosition;
-  const minutesPassed = progressPercent > minutesPosition;
-  const secondsPassed = progressPercent > secondsPosition;
-
-  // Separator thresholds (between elements)
-  const sep1Passed = progressPercent > (daysPosition + hoursPosition) / 2;   // Between days and hours
-  const sep2Passed = progressPercent > (hoursPosition + minutesPosition) / 2; // Between hours and min
-  const sep3Passed = progressPercent > (minutesPosition + secondsPosition) / 2; // Between min and sec
+  // Separator thresholds
+  const sep1Passed = progressPercent >= positions.sep1;
+  const sep2Passed = progressPercent >= positions.sep2;
+  const sep3Passed = progressPercent >= positions.sep3;
 
   useEffect(() => {
     if (!edition?.forge_start_date) return;
