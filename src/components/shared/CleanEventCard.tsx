@@ -42,7 +42,8 @@ export const CleanEventCard: React.FC<CleanEventCardProps> = ({
       className={cn(
         "group relative overflow-hidden rounded-2xl cursor-pointer transition-all duration-300",
         "bg-card/60 backdrop-blur-sm border border-border/50 hover:border-primary/30",
-        "hover:shadow-[0_8px_30px_hsl(var(--primary)/0.1)]",
+        "hover:shadow-[0_12px_40px_hsl(var(--primary)/0.15)] hover:-translate-y-1",
+        "active:scale-[0.98] tap-feedback card-premium",
         className
       )}
     >
