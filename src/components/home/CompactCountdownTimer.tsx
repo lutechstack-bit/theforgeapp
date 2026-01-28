@@ -109,7 +109,8 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
   }, [edition?.forge_start_date]);
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-border/30">
+    <div className="relative overflow-hidden rounded-xl border-2 border-forge-gold/60 
+                shadow-[0_0_15px_rgba(255,188,59,0.4),0_0_30px_rgba(255,188,59,0.3),0_0_45px_rgba(211,143,12,0.2),inset_0_0_15px_rgba(255,188,59,0.1)]">
       {/* Solid color progress fill */}
       <div 
         className="absolute inset-0 z-[1] pointer-events-none transition-all duration-500"
