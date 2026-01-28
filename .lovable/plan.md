@@ -1,105 +1,108 @@
 
-# Complete Rewrite: Pixel-Perfect Dynamic Text Contrast
 
-## The Real Problem
+# Robust Fix: CSS Mix-Blend-Mode for Automatic Text Contrast
 
-The current approach has TWO misaligned systems:
-1. **Gold fill width**: Uses `progressPercent` (currently 70% with 9 days)
-2. **Text color thresholds**: Uses fixed position estimates (28%, 48%, 68%, 88%)
+## Why Current Approach Fails
 
-These don't match because:
-- The "City" section width varies by screen size (`sm:w-32 md:w-36`)
-- The timer elements use flexbox with gaps, not fixed percentages
-- The position estimates were guesses, not actual measurements
+The current approach uses fixed percentage thresholds (35%, 50%, 68%, 88%) to determine when text should be black or cream. This fails because:
 
-## New Approach: Tie Text Color Directly to Fill Position
+1. **Flexbox layout** - Elements are positioned by content and gaps, not fixed percentages
+2. **Fixed-width city section** - Uses pixels (`sm:w-32`), not percentages
+3. **Responsive gaps** - `gap-3 sm:gap-4 md:gap-5` changes element spacing
+4. **Screen size variations** - A 70% fill covers different elements on different screens
 
-Instead of calculating separate thresholds, we'll use a **single source of truth** - the `progressPercent` - and adjust the element positions to match what we actually want.
+No amount of threshold tuning will work across all scenarios.
 
-### Solution: Use Days Remaining to Control Both Fill AND Thresholds
+## The Correct Solution: CSS Mix-Blend-Mode
 
-Map the countdown directly to element positions:
-- **30+ days**: 0% fill → All cream text
-- **At each element's position**: That element turns black
+Instead of calculating thresholds, use CSS to **automatically** contrast text against its background:
 
-The key insight: **Make the position thresholds match the visual fill based on days remaining.**
-
-### New Calculation Logic
-
-```typescript
-// Calculate progress as percentage of 30-day window
-// 30 days = 0%, 0 days = 100%
-const daysRemaining = remaining / (1000 * 60 * 60 * 24);
-const maxDays = 30;
-const progress = ((maxDays - Math.min(daysRemaining, maxDays)) / maxDays) * 100;
-
-// Define element positions to match visual layout
-// These are calibrated so text changes color when fill reaches it
-const positions = {
-  city: 15,      // City section ends at ~15%
-  days: 35,      // Days number center at ~35%
-  sep1: 42,      // First separator
-  hours: 50,     // Hours number center at ~50%
-  sep2: 58,      // Second separator
-  minutes: 68,   // Minutes number center at ~68%
-  sep3: 78,      // Third separator
-  seconds: 88,   // Seconds number center at ~88%
-};
-
-// Text turns black when progress passes its position
-const daysPassed = progress >= positions.days;
-const hoursPassed = progress >= positions.hours;
-const minutesPassed = progress >= positions.minutes;
-const secondsPassed = progress >= positions.seconds;
-```
-
-### Mapping Days to Visual Elements
-
-| Days Remaining | Progress | Fill Ends At | Elements Covered |
-|----------------|----------|--------------|------------------|
-| 30+ | 0% | Nothing | None (all cream) |
-| 20 | 33% | Before Days | City only black |
-| 15 | 50% | At Hours | City, Days black |
-| 10 | 67% | At Minutes | City, Days, Hours black |
-| 9 | 70% | Past Minutes | City, Days, Hours, Min black |
-| 5 | 83% | At Seconds | All except Sec black |
-| 0 | 100% | End | All black |
-
-### For Your Current State (9 days remaining)
-
-```text
-Progress = (30 - 9) / 30 × 100 = 70%
-
-New Thresholds:
-- City: 15% → PASSED (70 > 15) → BLACK
-- Days: 35% → PASSED (70 > 35) → BLACK
-- Hours: 50% → PASSED (70 > 50) → BLACK
-- Minutes: 68% → PASSED (70 > 68) → BLACK
-- Seconds: 88% → NOT PASSED (70 < 88) → CREAM ✓
-```
+**How it works:**
+- `mix-blend-mode: difference` inverts colors based on background
+- Text over gold → appears dark
+- Text over dark background → appears light
+- Works at the **pixel level**, no calculations needed
 
 ## Technical Changes
 
 ### File: `src/components/home/CompactCountdownTimer.tsx`
 
-1. **Update position thresholds** (lines 85-92) to better match the actual visual layout
-2. **Recalibrate the City section threshold** to account for its fixed width
-3. **Adjust timer element positions** based on flexbox distribution
+**Complete restructure:**
 
-**Key Changes:**
-- Change `timerStartPercent` from 20 to 15 (City section is narrower)
-- Recalculate element positions within the timer section
-- Use more accurate position values that match the flex layout
+1. **Remove all threshold calculations** (lines 83-106)
+2. **Add a text layer with `mix-blend-mode: difference`**
+3. **Use white text** that inverts to dark on gold, stays light on dark
+
+### New Structure
+
+```
+Container (relative, overflow-hidden)
+├── Gold Fill Layer (absolute, z-1)
+│   └── Linear gradient 0% to progressPercent%
+├── Content Layer (relative, z-2)
+│   └── City | Days : Hours : Min : Sec
+│       └── All text uses mix-blend-mode: difference
+│       └── Base color: white → inverts to black on gold
+```
+
+### Simplified Code
+
+```typescript
+// TimeUnit - now uses mix-blend-mode for automatic contrast
+const TimeUnit = ({ value, label }: { value: number; label: string }) => (
+  <div className="flex flex-col items-center relative z-10">
+    <span className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums text-white mix-blend-difference">
+      {value.toString().padStart(2, '0')}
+    </span>
+    <span className="text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest mt-0.5 text-white/80 mix-blend-difference">
+      {label}
+    </span>
+  </div>
+);
+
+// Separator - also uses mix-blend-mode
+const Separator = () => (
+  <span className="text-xl sm:text-2xl font-light text-white/50 mix-blend-difference">:</span>
+);
+```
+
+**Remove:**
+- All `isPassed` props from TimeUnit and Separator
+- All position threshold calculations
+- All threshold-based color classes
+
+## Why This Works
+
+| Background | White Text + Difference | Result |
+|------------|------------------------|--------|
+| Gold (light) | Inverts | Dark text |
+| Dark BG | Stays | Light text |
+
+The blend mode operates at the **pixel level** - exactly where the gold fill ends, that's where the text color changes. No calculations, no guessing, no threshold tuning.
+
+## Visual Result
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│ See you in │   09   :   11   :   45   :   18                       │
+│ Goa        │  Days     Hours    Min      Sec                       │
+└────────────────────────────────────────────────────────────────────┘
+████████████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+         ↑ pixel-perfect transition ↑
+   Dark text here    │    Light text here
+```
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/home/CompactCountdownTimer.tsx` | Lines 83-104: Update position thresholds to match actual visual layout |
+| `src/components/home/CompactCountdownTimer.tsx` | Replace threshold-based color logic with `mix-blend-mode: difference` |
 
-## Expected Result
+## Benefits
 
-With recalibrated thresholds:
-- Gold fill at 70% will cover elements up to ~68% position (Minutes)
-- Seconds at 88% will remain on dark background with cream text
-- The visual transition will match exactly where the gold fill ends
+- **Pixel-perfect** - Text color changes exactly where gold fill ends
+- **Responsive** - Works on all screen sizes automatically
+- **No calculations** - Removes complex threshold logic
+- **Smooth transitions** - CSS handles the visual blending
+- **Maintainable** - No magic numbers to tune
+
