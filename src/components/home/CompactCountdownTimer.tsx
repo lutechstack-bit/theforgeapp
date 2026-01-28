@@ -72,17 +72,28 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
     return Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
   }, [edition?.forge_start_date, timeLeft.seconds]);
 
-  // Determine if each section is "passed" by the progress
+  // Visual position estimates for each element (as % of container width)
+  // The timer section starts at ~20% (after the "See you in" section)
+  const timerStartPercent = 20;
+  const timerWidth = 80; // Timer takes up ~80% of remaining space
+
+  // Each unit occupies roughly equal space in the timer section
+  const daysPosition = timerStartPercent + (timerWidth * 0.1);   // ~28%
+  const hoursPosition = timerStartPercent + (timerWidth * 0.35); // ~48%
+  const minutesPosition = timerStartPercent + (timerWidth * 0.6); // ~68%
+  const secondsPosition = timerStartPercent + (timerWidth * 0.85); // ~88%
+
+  // Determine if each section is "passed" by the progress fill
   const cityPassed = progressPercent > 10;
-  const daysPassed = progressPercent > 30;
-  const hoursPassed = progressPercent > 45;
-  const minutesPassed = progressPercent > 60;
-  const secondsPassed = progressPercent > 75;
+  const daysPassed = progressPercent > daysPosition;
+  const hoursPassed = progressPercent > hoursPosition;
+  const minutesPassed = progressPercent > minutesPosition;
+  const secondsPassed = progressPercent > secondsPosition;
 
   // Separator thresholds (between elements)
-  const sep1Passed = progressPercent > 37; // Between days and hours
-  const sep2Passed = progressPercent > 52; // Between hours and min
-  const sep3Passed = progressPercent > 67; // Between min and sec
+  const sep1Passed = progressPercent > (daysPosition + hoursPosition) / 2;   // Between days and hours
+  const sep2Passed = progressPercent > (hoursPosition + minutesPosition) / 2; // Between hours and min
+  const sep3Passed = progressPercent > (minutesPosition + secondsPosition) / 2; // Between min and sec
 
   useEffect(() => {
     if (!edition?.forge_start_date) return;
