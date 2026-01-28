@@ -1,151 +1,109 @@
 
+## Goal (match your reference exactly)
+Make the countdown bar behave like the reference image:
 
-# Pixel-Perfect Split-Number Progress Bar
+- The bar has **two background colors** (filled vs remaining).
+- **Only the number that the progress edge crosses** becomes split-color.
+- Numbers fully on one side stay **one solid color** (no “every digit is half/half”).
 
-## What You Want
+## What’s wrong with the current implementation
+Right now `SplitText` applies `clip-path` **inside each number’s own box**:
 
-In the reference image, when the progress fill cuts through a number:
-- The portion ON the dark/colored background = **white text**
-- The portion ON the light background = **dark text**
-- The split can happen **mid-character** for that dramatic half-number effect
+- `clipPath: inset(... ${progressPercent}%)` uses percentages relative to *that text element’s width*.
+- So every number is split at the same “% of itself”, which is why all numbers look half/half.
 
-## Technical Approach: Dual-Layer Text with Clip Masking
+That’s not how the reference works. The split must be based on the **global progress edge position across the whole bar**.
 
-Render the text **twice** with different colors, each clipped to its respective background:
+## Correct approach (global clip, not per-number clip)
+Render the countdown content **twice**, perfectly overlapping:
 
+1) **Layer A (Fill side)**  
+   - Text color for filled side (e.g., white)
+   - Clip to show only the filled region: **0% → progress%**
+
+2) **Layer B (Remaining side)**  
+   - Text color for remaining side (e.g., dark)
+   - Clip to show only the remaining region: **progress% → 100%**
+
+Because both layers are clipped using the **full bar width**, only the text that crosses the progress edge will appear split.
+
+### Visual logic (global)
 ```text
-Layer Structure:
-┌─────────────────────────────────────────────────────────────────────┐
-│ Container (relative, overflow-hidden)                               │
-│ ├── Layer 1: Dark Background (left portion)                        │
-│ │   └── White text, clipped to 0% → progressPercent%               │
-│ ├── Layer 2: Light/Gold Background (right portion)                 │
-│ │   └── Dark text, clipped to progressPercent% → 100%              │
-│ └── Gold fill overlay (for visual styling)                         │
-└─────────────────────────────────────────────────────────────────────┘
+Full bar width (100%)
+|<------ filled (progress%) ------>|<------ remaining ------>|
+| white text layer visible         | hidden                  |
+| hidden                           | dark text layer visible |
 ```
 
-## How It Works
+## Implementation details (what I will change)
 
-Using `clip-path: inset()` to reveal only the portion of each text layer that sits on its matching background:
+### File to update
+- `src/components/home/CompactCountdownTimer.tsx`
 
-| Layer | Text Color | Clip Region | What's Visible |
-|-------|------------|-------------|----------------|
-| 1 | White/Cream | `inset(0 ${100-progress}% 0 0)` | Left side (on dark BG) |
-| 2 | Black/Dark | `inset(0 0 0 ${progress}%)` | Right side (on light BG) |
+### 1) Remove per-element SplitText
+- Delete `SplitText`, and remove `progressPercent` props from `TimeUnit` + `Separator`.
+- `TimeUnit` becomes a simple “value + label” renderer with normal text classes.
 
-When progress = 70%:
-- Layer 1 (white text): Shows 0% to 70% 
-- Layer 2 (dark text): Shows 70% to 100%
+### 2) Introduce a single “content renderer” used by both layers
+Create a small internal component (same file), e.g.:
 
-**Result**: A number at the 70% mark will be split - left portion white, right portion dark!
+- `CountdownContent({ tone, showBorders })`
+  - `tone="fill"` → text classes for filled side (e.g., `text-white`, labels `text-white/70`)
+  - `tone="base"` → text classes for remaining side (e.g., `text-black`, labels `text-black/70`)
+  - `showBorders` to prevent doubled borders (only one layer draws borders)
 
-## Visual Example
+This ensures both layers have identical layout so they align pixel-perfectly.
 
-```text
-Progress at 65% (cutting through "32"):
+### 3) Make the bar backgrounds match the reference (using Forge palette)
+To match the reference behavior (dark filled area + light remaining area):
 
-┌────────────────────────────────────────────────────────────────────┐
-│ SEE YOU IN │   40   11   32   56                                   │
-│ Goa        │  DAYS  HOURS  MIN  SEC                                │
-│            │ [WHT] [WHT] [SPLIT] [DRK]                              │
-└────────────────────────────────────────────────────────────────────┘
-████████████████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░
-                                           ↑
-                                    65% split point
-                               
-The "3" in 32 = WHITE (on dark)
-The "2" in 32 = DARK (on light)
-```
+- Base background: `bg-forge-cream` (light)
+- Filled background overlay: `bg-forge-charcoal` (dark) with width = progress%
 
-## Technical Changes
+(We keep your gold border/glow so it still feels like Forge.)
 
-### File: `src/components/home/CompactCountdownTimer.tsx`
+### 4) Clip the TWO content layers globally using the same progress value
+Use one source of truth for progress via a CSS variable so the fill width and both clip-paths never drift:
 
-**Complete restructure using clip-path masking:**
+- On the outer wrapper set: `style={{ ['--p' as any]: `${progressPercent}%` }}`
 
-1. **Create a reusable `SplitText` component** that renders text twice with opposing clip masks
-2. **Remove mix-blend-mode** (not reliable for this effect)
-3. **Use absolute positioning** for the two text layers to overlap perfectly
+Then:
 
-### New Component Structure
+- Filled text layer clip:
+  - `clip-path: inset(0 calc(100% - var(--p)) 0 0)`
+- Remaining text layer clip:
+  - `clip-path: inset(0 0 0 var(--p))`
 
-```typescript
-// SplitText component - renders text with split coloring
-const SplitText = ({ 
-  children, 
-  progressPercent,
-  className 
-}: { 
-  children: React.ReactNode; 
-  progressPercent: number;
-  className?: string;
-}) => (
-  <div className={cn("relative", className)}>
-    {/* Dark text layer - visible on light/gold portion (right side) */}
-    <span 
-      className="text-black"
-      style={{ 
-        clipPath: `inset(0 0 0 ${progressPercent}%)` 
-      }}
-    >
-      {children}
-    </span>
-    {/* Light text layer - visible on dark portion (left side) */}
-    <span 
-      className="absolute inset-0 text-white"
-      style={{ 
-        clipPath: `inset(0 ${100 - progressPercent}% 0 0)` 
-      }}
-    >
-      {children}
-    </span>
-  </div>
-);
-```
+### 5) Layer order (important)
+- Background base (cream)
+- Filled background (charcoal) with width `var(--p)`
+- Remaining text layer (dark text) clipped to remaining region
+- Filled text layer (white text) clipped to filled region (overlay)
 
-### TimeUnit Refactor
+Only the overlay (filled) layer gets `pointer-events-none`. The “base” layer remains the main DOM copy.
 
-```typescript
-const TimeUnit = ({ 
-  value, 
-  label, 
-  progressPercent 
-}: { 
-  value: number; 
-  label: string;
-  progressPercent: number;
-}) => (
-  <div className="flex flex-col items-center">
-    <SplitText progressPercent={progressPercent} className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums">
-      {value.toString().padStart(2, '0')}
-    </SplitText>
-    <SplitText progressPercent={progressPercent} className="text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest mt-0.5">
-      {label}
-    </SplitText>
-  </div>
-);
-```
+### 6) Optional: crisp progress edge line (like the screenshot)
+Add a 1px vertical divider on top at the progress edge:
+- `left: var(--p)` with a subtle translucent line
 
-### Color Scheme (Matching Reference)
+This makes the split edge feel intentional and “exactly like” the reference.
 
-| Element | Dark Portion | Light Portion |
-|---------|--------------|---------------|
-| Numbers | White (`text-white`) | Black (`text-black`) |
-| Labels | White/80 (`text-white/80`) | Black/80 (`text-black/80`) |
-| Background | Dark gray/charcoal | Gold (forge-gold) |
+## Why this will finally match the reference
+- The split is now computed against the **whole bar**, not each number.
+- Therefore:
+  - Numbers fully inside filled area are 100% white.
+  - Numbers fully inside remaining area are 100% dark.
+  - Only the number intersected by the progress edge shows a split mid-digit.
 
-## Files to Modify
+## Testing checklist (what you should verify after I implement)
+1) Resize desktop ↔ mobile: only one number (near the edge) should split.
+2) Try a few progress values:
+   - 10%: split happens near the left, most numbers dark
+   - 50%: split near the middle
+   - 90%: split near the right, most numbers white
+3) Confirm no “double border” (if you see thicker borders, we’ll ensure only one layer draws borders).
 
-| File | Change |
-|------|--------|
-| `src/components/home/CompactCountdownTimer.tsx` | Complete rewrite with dual-layer clip-path approach |
-
-## Benefits
-
-- **Pixel-perfect split**: Characters split exactly where progress ends
-- **No calculations needed**: CSS handles the visual masking automatically
-- **Responsive**: Works on all screen sizes
-- **Smooth**: Progress updates create smooth visual transitions
-- **Matches reference**: Exactly like the image you shared
+## Notes / safety
+- This approach is stable with flex layouts and responsive gaps, because it doesn’t rely on guessed positions.
+- It’s also deterministic: clip is tied to the same progress value used by the fill.
 
