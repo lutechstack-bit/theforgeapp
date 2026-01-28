@@ -1,76 +1,124 @@
 
-# Fix Countdown Timer Text Color Contrast
+
+# Smooth Dynamic Text Color Transition for Countdown Timer
 
 ## Problem
-The countdown timer numbers are all showing in black text even when the right portion of the timer (seconds area) should show light/cream text on the dark background. This happens because:
+Currently with 9 days remaining:
+- Progress = (90 - 9) / 90 × 100 = **90%**
+- All position thresholds (28%, 48%, 68%, 88%) are exceeded by 90%
+- Result: All numbers show black text instead of transitioning dynamically
 
-1. The progress percentage calculation is based on a fixed 90-day duration, making it ~90% complete when 9 days remain
-2. All threshold checks (`daysPassed`, `hoursPassed`, etc.) return `true` since 90% > all thresholds (30%, 45%, 60%, 75%)
-3. Result: All numbers show `text-black` instead of transitioning based on the visual gold fill position
+## Goal
+Create a **smooth, dynamic transition** where:
+- As the gold fill moves across each number, that number changes to black
+- Numbers still on the dark background stay cream/light
+- The transition should be visually accurate to where the fill actually is
 
-## Reference Behavior (from your 3rd screenshot)
-- Numbers on the **gold-filled area** (left) = dark/black text
-- Numbers on the **dark unfilled area** (right) = white/cream text
-- The transition follows the visual progress fill position
+## Solution: Use 30-Day Visual Scale
 
-## Solution
-Change the color logic to match the visual progress fill position rather than fixed percentage thresholds. The text color should be determined by whether the gold fill has visually reached each number's position.
+Change the reference duration from 90 days to **30 days**. This creates a meaningful visual progress that properly aligns with the position thresholds:
+
+### Visual Mapping
+
+| Days Remaining | Progress % | What Shows Black | What Shows Cream |
+|----------------|------------|------------------|------------------|
+| 30+ days | 0% | Nothing | All numbers |
+| 24 days | 20% | City | Days, Hours, Min, Sec |
+| 18 days | 40% | City, Days | Hours, Min, Sec |
+| 12 days | 60% | City, Days, Hours | Min, Sec |
+| 9 days | **70%** | City, Days, Hours, Min | **Sec only** |
+| 6 days | 80% | City, Days, Hours, Min | Sec (barely) |
+| 0 days | 100% | Everything | Nothing |
+
+### With 9 Days Remaining (Your Current State)
+
+```text
+Progress = (30 - 9) / 30 × 100 = 70%
+
+Position thresholds:
+- City:    10% → Passed (70 > 10) → BLACK
+- Days:    28% → Passed (70 > 28) → BLACK  
+- Hours:   48% → Passed (70 > 48) → BLACK
+- Minutes: 68% → Passed (70 > 68) → BLACK
+- Seconds: 88% → NOT Passed (70 < 88) → CREAM ✓
+
+Visual:
+┌─────────────────────────────────────────────────────────────────┐
+│ See you in │   09   :   23   :   45   :   12                    │
+│ Hyderabad  │  Days     Hours    Min      Sec                    │
+│  [BLACK]   │ [BLACK]  [BLACK] [BLACK]  [CREAM]                  │
+└─────────────────────────────────────────────────────────────────┘
+████████████████████████████████████████████████░░░░░░░░░░░░░░░░░░
+                                               ↑
+                                           70% mark
+```
 
 ## Technical Changes
 
 ### File: `src/components/home/CompactCountdownTimer.tsx`
 
-**Current Logic (broken):**
+**Update lines 60-73** - Replace the progress calculation:
+
+**Current (90-day scale):**
 ```typescript
-const daysPassed = progressPercent > 30;  // Fixed threshold
-const hoursPassed = progressPercent > 45;
-const minutesPassed = progressPercent > 60;
-const secondsPassed = progressPercent > 75;
+const totalDuration = 90 * 24 * 60 * 60 * 1000;
+const remaining = end - now;
+const elapsed = totalDuration - remaining;
+return Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
 ```
 
-**Fixed Logic:**
-Calculate the visual position of each element and compare against the progress fill width.
-
-**Implementation approach:**
-1. Remove the fixed percentage thresholds
-2. Calculate approximate visual positions for each timer element within the container:
-   - City section: 0-20% of container width
-   - Days: ~25-35%
-   - Hours: ~40-55%
-   - Minutes: ~60-75%
-   - Seconds: ~80-95%
-
-3. Update `isPassed` for each element based on whether `progressPercent` has reached that element's position
-
-**New calculation:**
+**New (30-day scale for smooth visual alignment):**
 ```typescript
-// Visual position estimates for each element (as % of container width)
-// The timer section starts at ~20% (after the "See you in" section)
-const timerStartPercent = 20;
-const timerWidth = 80; // Timer takes up ~80% of remaining space
-
-// Each unit occupies roughly equal space in the timer section
-const daysPosition = timerStartPercent + (timerWidth * 0.1);   // ~28%
-const hoursPosition = timerStartPercent + (timerWidth * 0.35); // ~48%
-const minutesPosition = timerStartPercent + (timerWidth * 0.6); // ~68%
-const secondsPosition = timerStartPercent + (timerWidth * 0.85); // ~88%
-
-const cityPassed = progressPercent > 10;
-const daysPassed = progressPercent > daysPosition;
-const hoursPassed = progressPercent > hoursPosition;
-const minutesPassed = progressPercent > minutesPosition;
-const secondsPassed = progressPercent > secondsPosition;
+const progressPercent = useMemo(() => {
+  if (!edition?.forge_start_date) return 0;
+  
+  const now = new Date().getTime();
+  const end = new Date(edition.forge_start_date).getTime();
+  const remaining = end - now;
+  
+  if (remaining <= 0) return 100; // Event has started
+  
+  // Calculate days remaining
+  const daysRemaining = remaining / (1000 * 60 * 60 * 24);
+  
+  // Use 30-day scale for meaningful visual progress
+  // This ensures smooth color transitions that align with element positions
+  const maxDays = 30;
+  const effectiveDays = Math.min(daysRemaining, maxDays);
+  const progress = ((maxDays - effectiveDays) / maxDays) * 100;
+  
+  return Math.max(0, Math.min(100, progress));
+}, [edition?.forge_start_date, timeLeft.days]);
 ```
 
-4. Ensure the progress gradient fill width matches the visual layout
+## Why This Works
 
-## Expected Result
-- When progress is at ~90%, the gold fill covers most of the timer
-- Seconds area (at ~88% position) may still be on dark background with cream text
-- As the Forge date approaches (higher progress %), more sections show black text on gold
-- When looking at the timer, text color matches what's visually behind it
+The position thresholds are already correct:
+- Days: ~28%
+- Hours: ~48%  
+- Minutes: ~68%
+- Seconds: ~88%
+
+The problem is that 90% progress (from 90-day window) exceeds ALL of them.
+
+By using a 30-day window:
+- 9 days remaining = 70% progress
+- 70% is between Minutes (68%) and Seconds (88%)
+- Minutes and everything before it = BLACK
+- Seconds = CREAM
+
+As days decrease, the gold fill smoothly advances and each number changes color when the fill reaches it.
 
 ## Files to Modify
+
 | File | Change |
 |------|--------|
-| `src/components/home/CompactCountdownTimer.tsx` | Update threshold calculations to match visual element positions |
+| `src/components/home/CompactCountdownTimer.tsx` | Lines 60-73: Update progress calculation to use 30-day scale |
+
+## Expected Behavior
+
+The gold fill will now align properly with the position thresholds, creating a smooth visual transition where:
+- Numbers covered by the gold fill → black text
+- Numbers on dark background → cream text
+- As days decrease, more numbers turn black one by one
+
