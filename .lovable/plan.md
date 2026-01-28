@@ -1,109 +1,94 @@
 
-## Goal (match your reference exactly)
-Make the countdown bar behave like the reference image:
 
-- The bar has **two background colors** (filled vs remaining).
-- **Only the number that the progress edge crosses** becomes split-color.
-- Numbers fully on one side stay **one solid color** (no “every digit is half/half”).
+# Use Gold Gradient for Filled Portion
 
-## What’s wrong with the current implementation
-Right now `SplitText` applies `clip-path` **inside each number’s own box**:
+## Current State
+The countdown timer uses `bg-forge-charcoal` (dark) for the filled portion and `bg-forge-cream` (light) for the remaining portion.
 
-- `clipPath: inset(... ${progressPercent}%)` uses percentages relative to *that text element’s width*.
-- So every number is split at the same “% of itself”, which is why all numbers look half/half.
+## What You Want
+Replace the dark charcoal fill with the Forge gold gradient to match the brand identity.
 
-That’s not how the reference works. The split must be based on the **global progress edge position across the whole bar**.
+## Technical Changes
 
-## Correct approach (global clip, not per-number clip)
-Render the countdown content **twice**, perfectly overlapping:
+### File: `src/components/home/CompactCountdownTimer.tsx`
 
-1) **Layer A (Fill side)**  
-   - Text color for filled side (e.g., white)
-   - Clip to show only the filled region: **0% → progress%**
+#### 1. Change Filled Background (Line 154-157)
 
-2) **Layer B (Remaining side)**  
-   - Text color for remaining side (e.g., dark)
-   - Clip to show only the remaining region: **progress% → 100%**
-
-Because both layers are clipped using the **full bar width**, only the text that crosses the progress edge will appear split.
-
-### Visual logic (global)
-```text
-Full bar width (100%)
-|<------ filled (progress%) ------>|<------ remaining ------>|
-| white text layer visible         | hidden                  |
-| hidden                           | dark text layer visible |
+**Current:**
+```tsx
+<div 
+  className="absolute inset-0 bg-forge-charcoal transition-all duration-500"
+  style={{ width: 'var(--p)' }}
+/>
 ```
 
-## Implementation details (what I will change)
+**New:**
+```tsx
+<div 
+  className="absolute inset-0 bg-gradient-to-r from-forge-orange via-forge-gold to-forge-yellow transition-all duration-500"
+  style={{ width: 'var(--p)' }}
+/>
+```
 
-### File to update
-- `src/components/home/CompactCountdownTimer.tsx`
+This uses your 3-color brand gradient: Orange (#DD6F16) → Gold (#D38F0C) → Yellow (#FFBC3B)
 
-### 1) Remove per-element SplitText
-- Delete `SplitText`, and remove `progressPercent` props from `TimeUnit` + `Separator`.
-- `TimeUnit` becomes a simple “value + label” renderer with normal text classes.
+#### 2. Update Text Colors for Gold Background
 
-### 2) Introduce a single “content renderer” used by both layers
-Create a small internal component (same file), e.g.:
+Since gold is a light color, the text on the filled portion needs to be **dark** (black) for contrast, not white.
 
-- `CountdownContent({ tone, showBorders })`
-  - `tone="fill"` → text classes for filled side (e.g., `text-white`, labels `text-white/70`)
-  - `tone="base"` → text classes for remaining side (e.g., `text-black`, labels `text-black/70`)
-  - `showBorders` to prevent doubled borders (only one layer draws borders)
+**Update CountdownContent tone logic (Lines 61-62):**
 
-This ensures both layers have identical layout so they align pixel-perfectly.
+**Current:**
+```tsx
+const textClass = tone === 'fill' ? 'text-white' : 'text-black';
+const labelClass = tone === 'fill' ? 'text-white/70' : 'text-black/70';
+```
 
-### 3) Make the bar backgrounds match the reference (using Forge palette)
-To match the reference behavior (dark filled area + light remaining area):
+**New:**
+```tsx
+const textClass = tone === 'fill' ? 'text-black' : 'text-black';
+const labelClass = tone === 'fill' ? 'text-black/70' : 'text-black/70';
+```
 
-- Base background: `bg-forge-cream` (light)
-- Filled background overlay: `bg-forge-charcoal` (dark) with width = progress%
+Both sides now use dark text since:
+- Filled side = Gold gradient (light) → needs dark text
+- Remaining side = Cream (light) → needs dark text
 
-(We keep your gold border/glow so it still feels like Forge.)
+#### 3. Update Progress Edge Line (Line 160-163)
 
-### 4) Clip the TWO content layers globally using the same progress value
-Use one source of truth for progress via a CSS variable so the fill width and both clip-paths never drift:
+Change from white to dark for better visibility on gold:
 
-- On the outer wrapper set: `style={{ ['--p' as any]: `${progressPercent}%` }}`
+**Current:**
+```tsx
+<div 
+  className="absolute top-0 bottom-0 w-px bg-white/30 z-10 transition-all duration-500"
+  style={{ left: 'var(--p)' }}
+/>
+```
 
-Then:
+**New:**
+```tsx
+<div 
+  className="absolute top-0 bottom-0 w-px bg-black/20 z-10 transition-all duration-500"
+  style={{ left: 'var(--p)' }}
+/>
+```
 
-- Filled text layer clip:
-  - `clip-path: inset(0 calc(100% - var(--p)) 0 0)`
-- Remaining text layer clip:
-  - `clip-path: inset(0 0 0 var(--p))`
+## Visual Result
 
-### 5) Layer order (important)
-- Background base (cream)
-- Filled background (charcoal) with width `var(--p)`
-- Remaining text layer (dark text) clipped to remaining region
-- Filled text layer (white text) clipped to filled region (overlay)
+```text
+┌────────────────────────────────────────────────────────────────────┐
+│ SEE YOU IN │   09   :   11   :   45   :   18                       │
+│ Goa        │  DAYS     HOURS    MIN      SEC                       │
+└────────────────────────────────────────────────────────────────────┘
+🟠🟠🟠🟠🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+Orange → Gold → Yellow gradient    │    Cream (remaining)
+      Black text throughout
+```
 
-Only the overlay (filled) layer gets `pointer-events-none`. The “base” layer remains the main DOM copy.
+## Files to Modify
 
-### 6) Optional: crisp progress edge line (like the screenshot)
-Add a 1px vertical divider on top at the progress edge:
-- `left: var(--p)` with a subtle translucent line
-
-This makes the split edge feel intentional and “exactly like” the reference.
-
-## Why this will finally match the reference
-- The split is now computed against the **whole bar**, not each number.
-- Therefore:
-  - Numbers fully inside filled area are 100% white.
-  - Numbers fully inside remaining area are 100% dark.
-  - Only the number intersected by the progress edge shows a split mid-digit.
-
-## Testing checklist (what you should verify after I implement)
-1) Resize desktop ↔ mobile: only one number (near the edge) should split.
-2) Try a few progress values:
-   - 10%: split happens near the left, most numbers dark
-   - 50%: split near the middle
-   - 90%: split near the right, most numbers white
-3) Confirm no “double border” (if you see thicker borders, we’ll ensure only one layer draws borders).
-
-## Notes / safety
-- This approach is stable with flex layouts and responsive gaps, because it doesn’t rely on guessed positions.
-- It’s also deterministic: clip is tied to the same progress value used by the fill.
+| File | Change |
+|------|--------|
+| `src/components/home/CompactCountdownTimer.tsx` | Replace charcoal fill with gold gradient, update text to black |
 
