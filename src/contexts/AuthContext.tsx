@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { calculateForgeMode } from '@/lib/forgeUtils';
+import { calculateForgeMode, ForgeMode } from '@/lib/forgeUtils';
+import { useAdminTestingSafe } from '@/contexts/AdminTestingContext';
 
 interface Profile {
   id: string;
@@ -181,9 +182,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
+  // Get admin testing state (safe hook returns defaults if outside provider)
+  const { isTestingMode, simulatedForgeMode } = useAdminTestingSafe();
+
   const isFullAccess = profile?.unlock_level === 'FULL';
   const isBalancePaid = profile?.payment_status === 'BALANCE_PAID';
-  const forgeMode = calculateForgeMode(edition?.forge_start_date, edition?.forge_end_date);
+  
+  // Calculate forge mode with optional admin simulation
+  const forgeMode: ForgeMode = calculateForgeMode(
+    edition?.forge_start_date, 
+    edition?.forge_end_date,
+    isTestingMode ? { simulatedMode: simulatedForgeMode } : undefined
+  );
   const isDuringForge = forgeMode === 'DURING_FORGE';
 
   return (
