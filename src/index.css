@@ -468,6 +468,26 @@
   animation: shimmer-flow 2s ease-in-out infinite;
 }
 
+/* Countdown wave - sweeping gradient animation */
+@keyframes wave-sweep {
+  0% {
+    opacity: 0.7;
+    filter: blur(0px);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 0.7;
+    filter: blur(0px);
+  }
+}
+
+.countdown-wave {
+  animation: wave-sweep 2s ease-in-out infinite;
+}
+
 /* Timeline hover animation for dotted lines */
 @keyframes timeline-dot-flow {
   0% {
