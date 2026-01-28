@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAdminCheck } from '@/hooks/useAdminCheck';
+import { supabase } from '@/integrations/supabase/client';
+import { User } from '@supabase/supabase-js';
 
 // Declare global Marker type
 declare global {
@@ -15,9 +15,41 @@ declare global {
 }
 
 export const MarkerProvider = () => {
-  const { user, profile, edition } = useAuth();
-  const { isAdmin, loading } = useAdminCheck();
+  const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [markerReady, setMarkerReady] = useState(false);
+
+  // Get auth state directly from supabase to avoid context dependency
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+        
+        if (user) {
+          // Check if user has admin role
+          const { data: hasAdminRole } = await supabase.rpc('has_role', { _role: 'admin', _user_id: user.id });
+          setIsAdmin(hasAdminRole === true);
+        }
+      } catch (error) {
+        console.error('MarkerProvider auth check error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      if (!session?.user) {
+        setIsAdmin(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Poll for Marker.io to be ready
   useEffect(() => {
@@ -47,27 +79,23 @@ export const MarkerProvider = () => {
   useEffect(() => {
     if (loading || !markerReady || !window.Marker) return;
 
-    if (isAdmin) {
+    if (isAdmin && user) {
       window.Marker.show();
 
-      if (user && profile) {
-        window.Marker.setReporter({
-          email: user.email || '',
-          fullName: profile.full_name || 'Admin User',
-        });
-      }
+      window.Marker.setReporter({
+        email: user.email || '',
+        fullName: 'Admin User',
+      });
 
       window.Marker.setCustomData({
         environment: import.meta.env.MODE,
         app: 'the-forge',
-        userId: user?.id,
-        editionId: edition?.id || 'Unknown',
-        cohortType: edition?.cohort_type || 'Unknown',
+        userId: user.id,
       });
     } else {
       window.Marker.hide();
     }
-  }, [isAdmin, loading, markerReady, user, profile, edition]);
+  }, [isAdmin, loading, markerReady, user]);
 
   return null;
 };
