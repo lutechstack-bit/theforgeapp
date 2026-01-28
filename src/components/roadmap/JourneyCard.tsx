@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { MapPin, Clock, CheckCircle2, Trophy } from 'lucide-react';
+import { MapPin, Clock, CheckCircle2, Trophy, Video, Globe } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import DayDetailModal from './DayDetailModal';
 import type { CohortType } from '@/lib/roadmapIcons';
 
@@ -25,6 +26,13 @@ export interface JourneyCardDay {
   schedule?: { time: string; activity: string; icon?: string }[];
   location_image_url?: string | null;
   milestone_type?: string | null;
+  // Virtual meeting fields
+  is_virtual?: boolean;
+  meeting_url?: string | null;
+  meeting_id?: string | null;
+  meeting_passcode?: string | null;
+  session_start_time?: string | null;
+  session_duration_hours?: number | null;
 }
 
 interface JourneyCardProps {
@@ -130,45 +138,62 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
 
           {/* Content - Right side */}
           <div className="flex-1 min-w-0">
-            {/* Top row: Badge + Call Time */}
+            {/* Top row: Badge + Virtual/Location indicator + Call Time */}
             <div className="flex items-center justify-between gap-2 mb-1.5">
-              <span className={`
-                text-[10px] font-semibold px-2 py-0.5 rounded-md
-                ${forgeMode === 'PRE_FORGE'
-                  ? 'bg-muted/50 text-muted-foreground'
-                  : forgeMode === 'POST_FORGE'
-                  ? 'bg-primary/20 text-primary'
-                  : status === 'current' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : status === 'completed'
-                  ? 'bg-primary/20 text-primary'
-                  : 'bg-secondary text-muted-foreground'
-                }
-              `}>
-                {day.day_number === 0 ? 'Pre-Forge' : `Day ${day.day_number}`}
-              </span>
-              
-              {day.call_time && (
-                <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {day.call_time}
+              <div className="flex items-center gap-2">
+                <span className={`
+                  text-[10px] font-semibold px-2 py-0.5 rounded-md
+                  ${forgeMode === 'PRE_FORGE'
+                    ? 'bg-muted/50 text-muted-foreground'
+                    : forgeMode === 'POST_FORGE'
+                    ? 'bg-primary/20 text-primary'
+                    : status === 'current' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : status === 'completed'
+                    ? 'bg-primary/20 text-primary'
+                    : 'bg-secondary text-muted-foreground'
+                  }
+                `}>
+                  {day.day_number === 0 ? 'Pre-Forge' : `Day ${day.day_number}`}
                 </span>
-              )}
+                
+                {/* Virtual/Physical indicator */}
+                {day.is_virtual ? (
+                  <span className="text-[10px] text-blue-400 flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/10">
+                    <Globe className="w-2.5 h-2.5" />
+                    Online
+                  </span>
+                ) : day.location ? (
+                  <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <MapPin className="w-2.5 h-2.5" />
+                    In-Person
+                  </span>
+                ) : null}
+              </div>
               
-              {status === 'current' && forgeMode === 'DURING_FORGE' && (
-                <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                  <span className="text-[10px] text-primary font-semibold">NOW</span>
-                </span>
-              )}
-              
-              {forgeMode === 'POST_FORGE' && (
-                <Trophy className="w-4 h-4 text-primary/60" />
-              )}
-              
-              {status === 'completed' && forgeMode === 'DURING_FORGE' && (
-                <CheckCircle2 className="w-4 h-4 text-primary" />
-              )}
+              <div className="flex items-center gap-2">
+                {day.call_time && (
+                  <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {day.call_time}
+                  </span>
+                )}
+                
+                {status === 'current' && forgeMode === 'DURING_FORGE' && (
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                    <span className="text-[10px] text-primary font-semibold">NOW</span>
+                  </span>
+                )}
+                
+                {forgeMode === 'POST_FORGE' && (
+                  <Trophy className="w-4 h-4 text-primary/60" />
+                )}
+                
+                {status === 'completed' && forgeMode === 'DURING_FORGE' && (
+                  <CheckCircle2 className="w-4 h-4 text-primary" />
+                )}
+              </div>
             </div>
 
             {/* Theme name (movie/session name) */}
@@ -184,7 +209,7 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
             </h3>
 
             {/* Location and duration row */}
-            {(day.location || day.duration_hours) && (
+            {(day.location || day.duration_hours) && !day.is_virtual && (
               <div className="flex flex-wrap items-center gap-3 mt-2 text-[10px] text-muted-foreground">
                 {day.location && (
                   <span className="flex items-center gap-1">
@@ -199,6 +224,21 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
                   </span>
                 )}
               </div>
+            )}
+
+            {/* Join Meeting Button for current virtual sessions */}
+            {day.is_virtual && day.meeting_url && status === 'current' && forgeMode === 'DURING_FORGE' && (
+              <Button
+                size="sm"
+                className="mt-3 gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg h-8 text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(day.meeting_url!, '_blank', 'noopener,noreferrer');
+                }}
+              >
+                <Video className="w-3 h-3" />
+                Join Now
+              </Button>
             )}
           </div>
         </div>

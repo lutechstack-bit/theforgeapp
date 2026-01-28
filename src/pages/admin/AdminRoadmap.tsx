@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Edit, Trash2, Loader2, Clock, MapPin, GripVertical } from 'lucide-react';
+import { Plus, Edit, Trash2, Loader2, Clock, MapPin, GripVertical, Video, Globe, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -128,7 +129,15 @@ export default function AdminRoadmap() {
                     </span>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground">{day.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-foreground">{day.title}</h3>
+                      {day.is_virtual && (
+                        <Badge variant="outline" className="text-blue-400 border-blue-400/30 bg-blue-500/10 text-xs">
+                          <Globe className="w-3 h-3 mr-1" />
+                          Virtual
+                        </Badge>
+                      )}
+                    </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                       {day.call_time && (
                         <span className="flex items-center gap-1">
@@ -136,10 +145,16 @@ export default function AdminRoadmap() {
                           {day.call_time}
                         </span>
                       )}
-                      {day.location && (
+                      {day.location && !day.is_virtual && (
                         <span className="flex items-center gap-1">
                           <MapPin className="w-3 h-3" />
                           {day.location}
+                        </span>
+                      )}
+                      {day.is_virtual && day.meeting_url && (
+                        <span className="flex items-center gap-1 text-blue-400">
+                          <Video className="w-3 h-3" />
+                          Zoom configured
                         </span>
                       )}
                     </div>
@@ -226,9 +241,17 @@ function RoadmapDayDialog({
     call_time: '',
     location: '',
     is_active: false,
-    checklist: [] as string[]
+    checklist: [] as string[],
+    // Virtual meeting fields
+    is_virtual: false,
+    meeting_url: '',
+    meeting_id: '',
+    meeting_passcode: '',
+    session_start_time: '',
+    session_duration_hours: 2,
   });
   const [checklistInput, setChecklistInput] = useState('');
+  const [showPasscode, setShowPasscode] = useState(false);
 
   React.useEffect(() => {
     if (day) {
@@ -239,7 +262,13 @@ function RoadmapDayDialog({
         call_time: day.call_time || '',
         location: day.location || '',
         is_active: day.is_active,
-        checklist: (day.checklist as string[]) || []
+        checklist: (day.checklist as string[]) || [],
+        is_virtual: day.is_virtual || false,
+        meeting_url: day.meeting_url || '',
+        meeting_id: day.meeting_id || '',
+        meeting_passcode: day.meeting_passcode || '',
+        session_start_time: day.session_start_time || '',
+        session_duration_hours: Number(day.session_duration_hours) || 2,
       });
     } else {
       setFormData({
@@ -249,7 +278,13 @@ function RoadmapDayDialog({
         call_time: '',
         location: '',
         is_active: false,
-        checklist: []
+        checklist: [],
+        is_virtual: false,
+        meeting_url: '',
+        meeting_id: '',
+        meeting_passcode: '',
+        session_start_time: '',
+        session_duration_hours: 2,
       });
     }
   }, [day, open]);
@@ -282,7 +317,13 @@ function RoadmapDayDialog({
       call_time: formData.call_time || null,
       location: formData.location || null,
       is_active: formData.is_active,
-      checklist: formData.checklist.length > 0 ? formData.checklist : null
+      checklist: formData.checklist.length > 0 ? formData.checklist : null,
+      is_virtual: formData.is_virtual,
+      meeting_url: formData.is_virtual ? (formData.meeting_url || null) : null,
+      meeting_id: formData.is_virtual ? (formData.meeting_id || null) : null,
+      meeting_passcode: formData.is_virtual ? (formData.meeting_passcode || null) : null,
+      session_start_time: formData.is_virtual ? (formData.session_start_time || null) : null,
+      session_duration_hours: formData.is_virtual ? formData.session_duration_hours : null,
     });
   };
 
@@ -345,7 +386,92 @@ function RoadmapDayDialog({
               placeholder="e.g., Mumbai Hub"
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              disabled={formData.is_virtual}
             />
+            {formData.is_virtual && (
+              <p className="text-xs text-muted-foreground">Location not needed for virtual sessions</p>
+            )}
+          </div>
+
+          {/* Virtual Meeting Section */}
+          <div className="p-4 rounded-lg border border-blue-500/20 bg-blue-500/5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Video className="w-4 h-4 text-blue-400" />
+                <Label className="text-blue-400 font-semibold">Virtual Session</Label>
+              </div>
+              <Switch
+                checked={formData.is_virtual}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_virtual: checked })}
+              />
+            </div>
+
+            {formData.is_virtual && (
+              <div className="space-y-4 pt-2">
+                <div className="space-y-2">
+                  <Label>Meeting URL *</Label>
+                  <Input
+                    placeholder="https://zoom.us/j/123456789"
+                    value={formData.meeting_url}
+                    onChange={(e) => setFormData({ ...formData, meeting_url: e.target.value })}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Meeting ID</Label>
+                    <Input
+                      placeholder="123 456 7890"
+                      value={formData.meeting_id}
+                      onChange={(e) => setFormData({ ...formData, meeting_id: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Passcode</Label>
+                    <div className="relative">
+                      <Input
+                        type={showPasscode ? 'text' : 'password'}
+                        placeholder="Enter passcode"
+                        value={formData.meeting_passcode}
+                        onChange={(e) => setFormData({ ...formData, meeting_passcode: e.target.value })}
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                        onClick={() => setShowPasscode(!showPasscode)}
+                      >
+                        {showPasscode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Session Start Time</Label>
+                    <Input
+                      type="time"
+                      value={formData.session_start_time}
+                      onChange={(e) => setFormData({ ...formData, session_start_time: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Duration (hours)</Label>
+                    <Input
+                      type="number"
+                      min={0.5}
+                      max={12}
+                      step={0.5}
+                      value={formData.session_duration_hours}
+                      onChange={(e) => setFormData({ ...formData, session_duration_hours: parseFloat(e.target.value) })}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           <div className="space-y-2">
             <Label>Checklist Items</Label>

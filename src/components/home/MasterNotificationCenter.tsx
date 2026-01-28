@@ -3,15 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useSessionNotifications, type SessionNotification } from '@/hooks/useSessionNotifications';
 import { 
   Bell, ArrowRight, Users, BookOpen, Calendar, Map, Settings,
-  CheckCircle2, Sparkles, TrendingUp, Clock
+  CheckCircle2, Sparkles, TrendingUp, Clock, Video, ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow, addDays, format, isToday, isTomorrow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { generateGoogleCalendarUrl, downloadICSFile } from '@/lib/calendarUtils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Notification {
   id: string;
@@ -211,6 +219,125 @@ const EventReminderCard: React.FC<{
   );
 };
 
+// Session Notification Card Component
+const SessionNotificationCard: React.FC<{
+  session: SessionNotification;
+  onClick: () => void;
+}> = ({ session, onClick }) => {
+  const isLive = session.status === 'live';
+  const isStartingSoon = session.status === 'starting_soon';
+
+  const handleJoinMeeting = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    window.open(session.meetingUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const getCalendarEvent = () => ({
+    title: session.title,
+    description: `Join Zoom Meeting: ${session.meetingUrl}`,
+    location: session.meetingUrl,
+    startDate: session.sessionDate,
+    endDate: new Date(session.sessionDate.getTime() + (session.sessionDurationHours || 2) * 60 * 60 * 1000),
+    isVirtual: true,
+  });
+
+  const handleGoogleCalendar = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = generateGoogleCalendarUrl(getCalendarEvent());
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleAppleCalendar = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    downloadICSFile(getCalendarEvent());
+  };
+
+  return (
+    <div
+      onClick={onClick}
+      className={cn(
+        "flex-shrink-0 w-[280px] sm:w-[300px] p-4 rounded-2xl cursor-pointer",
+        "border transition-all duration-300",
+        "hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20",
+        isLive 
+          ? "bg-gradient-to-br from-red-500/20 to-red-600/10 border-red-500/30"
+          : isStartingSoon
+          ? "bg-gradient-to-br from-amber-500/20 to-amber-600/10 border-amber-500/30"
+          : "bg-gradient-to-br from-blue-500/20 to-blue-600/10 border-blue-500/30"
+      )}
+    >
+      {/* Top row: Icon + Status badge */}
+      <div className="flex items-start justify-between mb-3">
+        <div className={cn(
+          "w-10 h-10 rounded-xl flex items-center justify-center",
+          isLive ? "bg-red-500" : isStartingSoon ? "bg-amber-500" : "bg-blue-500"
+        )}>
+          <Video className="w-5 h-5 text-white" />
+        </div>
+        <Badge 
+          variant="outline" 
+          className={cn(
+            "text-[10px] px-2 py-0.5 bg-background/50",
+            isLive 
+              ? "text-red-400 border-red-400/30 animate-pulse" 
+              : isStartingSoon 
+              ? "text-amber-400 border-amber-400/30" 
+              : "text-blue-400 border-blue-400/30"
+          )}
+        >
+          {isLive ? '🔴 LIVE NOW' : isStartingSoon ? `⏰ ${session.minutesUntilStart}m` : format(session.sessionDate, 'h:mm a')}
+        </Badge>
+      </div>
+
+      {/* Title */}
+      <h4 className="text-sm font-semibold text-foreground line-clamp-2 mb-1">
+        Day {session.dayNumber}: {session.title}
+      </h4>
+
+      {/* Subtitle */}
+      <p className="text-xs text-muted-foreground mb-3">
+        {isLive 
+          ? "Your session is live! Join now."
+          : isStartingSoon 
+          ? `Starting in ${session.minutesUntilStart} minutes`
+          : `Scheduled for ${format(session.sessionDate, 'h:mm a')}`
+        }
+      </p>
+
+      {/* Action buttons */}
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          className={cn(
+            "gap-1 flex-1 h-8 text-xs text-white",
+            isLive ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"
+          )}
+          onClick={handleJoinMeeting}
+        >
+          <Video className="w-3 h-3" />
+          {isLive ? 'Join Now' : 'Join Zoom'}
+          <ExternalLink className="w-3 h-3" />
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 px-2" onClick={(e) => e.stopPropagation()}>
+              <Calendar className="w-3 h-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleGoogleCalendar}>
+              📅 Google Calendar
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleAppleCalendar}>
+              🍎 Apple Calendar
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  );
+};
+
 // Stats Card Component
 const StatsCard: React.FC<{
   value: string;
@@ -233,7 +360,8 @@ const StatsCard: React.FC<{
 
 export const MasterNotificationCenter: React.FC = () => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, forgeMode } = useAuth();
+  const { todaysSessions, urgentNotification } = useSessionNotifications();
 
   const firstName = profile?.full_name?.split(' ')[0] || 'Creator';
 
@@ -290,7 +418,11 @@ export const MasterNotificationCenter: React.FC = () => {
     navigate('/events');
   };
 
-  const totalItems = notifications.length + upcomingEvents.length;
+  const handleSessionClick = () => {
+    navigate('/roadmap/journey');
+  };
+
+  const totalItems = notifications.length + upcomingEvents.length + todaysSessions.length;
 
   return (
     <div className="space-y-5 reveal-section" style={{ animationDelay: '0.1s' }}>
@@ -331,6 +463,14 @@ export const MasterNotificationCenter: React.FC = () => {
 
       {/* Quick Stats Row */}
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+        {todaysSessions.length > 0 && (
+          <StatsCard 
+            value={`${todaysSessions.length}`} 
+            label="Live Sessions Today" 
+            color="bg-gradient-to-br from-red-500/15 to-red-600/5"
+            icon={Video}
+          />
+        )}
         <StatsCard 
           value={`${notifications.length}`} 
           label="New Updates" 
@@ -350,6 +490,37 @@ export const MasterNotificationCenter: React.FC = () => {
           icon={TrendingUp}
         />
       </div>
+
+      {/* Live Sessions Section - Show prominently during DURING_FORGE */}
+      {todaysSessions.length > 0 && forgeMode === 'DURING_FORGE' && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Video className="w-4 h-4 text-red-400" />
+              {urgentNotification?.status === 'live' ? '🔴 Live Session' : 'Today\'s Sessions'}
+            </h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate('/roadmap/journey')}
+              className="text-xs text-muted-foreground hover:text-foreground h-7 px-2"
+            >
+              View Roadmap
+              <ArrowRight className="w-3 h-3 ml-1" />
+            </Button>
+          </div>
+          
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+            {todaysSessions.map((session) => (
+              <SessionNotificationCard
+                key={session.id}
+                session={session}
+                onClick={handleSessionClick}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Updates Section */}
       {displayNotifications.length > 0 && (

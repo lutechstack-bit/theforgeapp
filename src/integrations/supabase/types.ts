@@ -1831,15 +1831,21 @@ export type Database = {
           id: string
           intensity_level: string | null
           is_active: boolean
+          is_virtual: boolean | null
           key_learnings: string[] | null
           location: string | null
           location_image_url: string | null
+          meeting_id: string | null
+          meeting_passcode: string | null
+          meeting_url: string | null
           mentors: string[] | null
           milestone_type: string | null
           objective: string | null
           pro_tips: string[] | null
           reveal_days_before: number | null
           schedule: Json | null
+          session_duration_hours: number | null
+          session_start_time: string | null
           teaser_text: string | null
           theme_name: string | null
           title: string
@@ -1861,15 +1867,21 @@ export type Database = {
           id?: string
           intensity_level?: string | null
           is_active?: boolean
+          is_virtual?: boolean | null
           key_learnings?: string[] | null
           location?: string | null
           location_image_url?: string | null
+          meeting_id?: string | null
+          meeting_passcode?: string | null
+          meeting_url?: string | null
           mentors?: string[] | null
           milestone_type?: string | null
           objective?: string | null
           pro_tips?: string[] | null
           reveal_days_before?: number | null
           schedule?: Json | null
+          session_duration_hours?: number | null
+          session_start_time?: string | null
           teaser_text?: string | null
           theme_name?: string | null
           title: string
@@ -1891,15 +1903,21 @@ export type Database = {
           id?: string
           intensity_level?: string | null
           is_active?: boolean
+          is_virtual?: boolean | null
           key_learnings?: string[] | null
           location?: string | null
           location_image_url?: string | null
+          meeting_id?: string | null
+          meeting_passcode?: string | null
+          meeting_url?: string | null
           mentors?: string[] | null
           milestone_type?: string | null
           objective?: string | null
           pro_tips?: string[] | null
           reveal_days_before?: number | null
           schedule?: Json | null
+          session_duration_hours?: number | null
+          session_start_time?: string | null
           teaser_text?: string | null
           theme_name?: string | null
           title?: string

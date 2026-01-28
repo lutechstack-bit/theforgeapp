@@ -10,9 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Clock, MapPin, Users, Lightbulb, Calendar,
-  CheckCircle2, Target, ChevronRight, Backpack, Trophy, Sparkles
+  CheckCircle2, Target, ChevronRight, Backpack, Trophy, Sparkles, Globe
 } from 'lucide-react';
 import { getDayIcon, getScheduleIcon } from '@/lib/roadmapIcons';
+import SessionMeetingCard from './SessionMeetingCard';
 import type { CohortType } from '@/lib/roadmapIcons';
 
 interface ScheduleItem {
@@ -45,6 +46,13 @@ interface DayDetailModalProps {
     gear_materials?: string[] | null;
     expected_outcomes?: string[] | null;
     pro_tips?: string[] | null;
+    // Virtual meeting fields
+    is_virtual?: boolean;
+    meeting_url?: string | null;
+    meeting_id?: string | null;
+    meeting_passcode?: string | null;
+    session_start_time?: string | null;
+    session_duration_hours?: number | null;
   };
   status: 'completed' | 'current' | 'upcoming' | 'locked';
   cohortType: CohortType;
@@ -127,12 +135,17 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({
                 {day.call_time}
               </span>
             )}
-            {day.location && (
+            {day.is_virtual ? (
+              <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-500/10 text-blue-400">
+                <Globe className="w-3.5 h-3.5" />
+                Online Session
+              </span>
+            ) : day.location ? (
               <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-secondary/50">
                 <MapPin className="w-3.5 h-3.5" />
                 {day.location}
               </span>
-            )}
+            ) : null}
             {day.duration_hours && (
               <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-secondary/50">
                 <Clock className="w-3.5 h-3.5" />
@@ -145,6 +158,29 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({
         {/* Scrollable content */}
         <ScrollArea className="max-h-[50vh]">
           <div className="p-6 space-y-6">
+            {/* Virtual Meeting Card - Show prominently for virtual sessions during DURING_FORGE */}
+            {day.is_virtual && day.meeting_url && forgeMode === 'DURING_FORGE' && (
+              <SessionMeetingCard
+                meetingUrl={day.meeting_url}
+                meetingId={day.meeting_id}
+                meetingPasscode={day.meeting_passcode}
+                sessionTitle={day.title}
+                sessionDate={day.date ? new Date(day.date) : null}
+                sessionStartTime={day.session_start_time}
+                sessionDurationHours={day.session_duration_hours}
+                isLive={status === 'current'}
+              />
+            )}
+
+            {/* Virtual Meeting Info Hidden Message for PRE_FORGE */}
+            {day.is_virtual && forgeMode === 'PRE_FORGE' && (
+              <div className="p-4 rounded-xl bg-muted/30 border border-border/50 text-center">
+                <Globe className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
+                <p className="text-sm text-muted-foreground">
+                  Meeting details will be available when Forge begins
+                </p>
+              </div>
+            )}
             {/* Description */}
             {day.description && (
               <div>
