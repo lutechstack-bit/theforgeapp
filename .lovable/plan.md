@@ -1,347 +1,233 @@
 
+# Admin Roadmap Testing Mode
 
-# PWA Setup & Mobile-Friendly UI Improvements
-
-Based on my comprehensive audit, this plan will transform the Forge app into a proper Progressive Web App (PWA) with enhanced mobile-first UI improvements across all pages.
+## Overview
+Create a dedicated admin testing feature that allows admins to simulate different forge modes (PRE_FORGE, DURING_FORGE, POST_FORGE) and test the roadmap experience without waiting for actual cohort dates.
 
 ---
 
-## Part 1: PWA Configuration
+## Problem Statement
 
-### 1.1 Install vite-plugin-pwa
+Currently, the forge mode is calculated automatically based on:
+- `edition.forge_start_date`
+- `edition.forge_end_date`
+- Current date via `calculateForgeMode()` in `src/lib/forgeUtils.ts`
 
-Add the PWA plugin to enable service worker generation, caching, and installability:
+This means admins cannot test:
+1. **PRE_FORGE state** - How the roadmap looks before the cohort starts
+2. **DURING_FORGE state** - How online sessions (Days 1-3) and physical sessions work
+3. **POST_FORGE state** - The completed journey archive view
+4. **Different day statuses** - Completed, current, upcoming, locked
 
-```bash
-npm install vite-plugin-pwa -D
+---
+
+## Solution Architecture
+
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│                     ADMIN TESTING PANEL                              │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐   │
+│  │   PRE_FORGE      │  │   DURING_FORGE   │  │   POST_FORGE     │   │
+│  │   ○ Selected     │  │   ○              │  │   ○              │   │
+│  └──────────────────┘  └──────────────────┘  └──────────────────┘   │
+│                                                                      │
+│  ┌────────────────────────────────────────────────────────────────┐ │
+│  │  Simulate Date: [ 2025-02-15 ]  Simulate Day: [ Day 5 ]        │ │
+│  └────────────────────────────────────────────────────────────────┘ │
+│                                                                      │
+│  [ Apply Simulation ]  [ Reset to Real Time ]                        │
+│                                                                      │
+│  ⚠️ Testing mode active - Other users see real data                  │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-### 1.2 Configure Vite for PWA
+---
+
+## Implementation Steps
+
+### Part 1: Fix PWA Build Error
 
 **File: `vite.config.ts`**
 
-```typescript
-import { VitePWA } from 'vite-plugin-pwa';
+The build is failing because large assets can't be precached. We need to:
+1. Disable the strict error by using `disableDevLogs` and `skipWaiting`
+2. Or switch to `injectManifest` mode with better control
 
-plugins: [
-  react(),
-  VitePWA({
-    registerType: 'autoUpdate',
-    includeAssets: ['favicon.ico', 'fonts/*.woff2', 'images/**/*'],
-    manifest: {
-      name: 'the Forge',
-      short_name: 'Forge',
-      description: 'Premium filmmaking cohort app',
-      theme_color: '#000000',
-      background_color: '#000000',
-      display: 'standalone',
-      orientation: 'portrait',
-      start_url: '/',
-      icons: [
-        { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-        { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-        { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
-      ]
+```typescript
+workbox: {
+  globPatterns: ["**/*.{js,css,html,ico,svg,woff2}"],
+  globIgnores: ["**/images/mentors/**", "**/assets/*.js"],
+  maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+  // Add this to prevent build failure on large files
+  navigateFallback: null,
+  runtimeCaching: [
+    // Existing config...
+    // Add JS bundle caching as runtime instead of precache
+    {
+      urlPattern: /\.js$/i,
+      handler: "StaleWhileRevalidate",
+      options: {
+        cacheName: "js-cache",
+        expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 7 },
+      },
     },
-    workbox: {
-      globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-      runtimeCaching: [
-        {
-          urlPattern: /^https:\/\/.*supabase\.co\/.*/i,
-          handler: 'NetworkFirst',
-          options: {
-            cacheName: 'supabase-cache',
-            expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 }
-          }
-        }
-      ]
-    }
-  })
-]
+  ],
+},
 ```
 
-### 1.3 Update index.html for PWA
+### Part 2: Create Admin Testing Context
 
-**File: `index.html`**
-
-Add PWA meta tags:
-
-```html
-<!-- PWA Meta Tags -->
-<meta name="theme-color" content="#000000" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="the Forge" />
-<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-<link rel="manifest" href="/manifest.webmanifest" />
-```
-
-### 1.4 Create PWA Icons
-
-Create icons in public folder:
-- `/public/pwa-192x192.png`
-- `/public/pwa-512x512.png`
-- `/public/apple-touch-icon.png` (180x180)
-
----
-
-## Part 2: Mobile-First UI Improvements
-
-### 2.1 Enhanced Bottom Navigation
-
-**File: `src/components/layout/BottomNav.tsx`**
-
-```text
-Changes:
-- Increase tap target size to 48x48px (Apple HIG standard)
-- Add filled icons for active state (currently outline only)
-- Add subtle scale animation on tap
-- Enhance glow effect on active item
-- Add safe-area padding for devices with home indicator
-```
+**New File: `src/contexts/AdminTestingContext.tsx`**
 
 ```typescript
-// Key changes:
-<NavLink className={cn(
-  "flex flex-col items-center justify-center min-h-[52px] px-4 py-2 rounded-2xl",
-  "active:scale-95 transition-all duration-200",
-  isActive && "shadow-[0_0_25px_hsl(var(--primary)/0.4)]"
-)} />
-```
-
-### 2.2 Premium Loading States
-
-**File: `src/index.css`**
-
-Add gradient shimmer skeleton:
-
-```css
-/* Premium shimmer loading state */
-@keyframes premium-shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+interface AdminTestingState {
+  isTestingMode: boolean;
+  simulatedForgeMode: 'PRE_FORGE' | 'DURING_FORGE' | 'POST_FORGE' | null;
+  simulatedDate: Date | null;
+  simulatedDayNumber: number | null;
 }
 
-.skeleton-premium {
-  background: linear-gradient(
-    90deg,
-    hsl(var(--muted)) 0%,
-    hsl(var(--muted) / 0.5) 50%,
-    hsl(var(--muted)) 100%
+// Context that stores admin simulation settings
+// Only applies to the current admin's session
+// Uses sessionStorage to persist across page refreshes
+```
+
+### Part 3: Create Admin Testing Panel Component
+
+**New File: `src/components/admin/AdminTestingPanel.tsx`**
+
+A floating/dismissible panel that appears on the roadmap page for admins:
+- Toggle test mode on/off
+- Select forge mode (PRE_FORGE, DURING_FORGE, POST_FORGE)
+- Set simulated date picker
+- Set current day number slider
+- Quick presets: "Day 1 Online", "Day 3 Transition", "Day 7 Physical", "Post-Forge"
+- Visual indicator when testing mode is active
+
+### Part 4: Update ForgeMode Calculation
+
+**File: `src/lib/forgeUtils.ts`**
+
+```typescript
+export function calculateForgeMode(
+  forgeStartDate: string | null | undefined,
+  forgeEndDate: string | null | undefined,
+  simulatedMode?: 'PRE_FORGE' | 'DURING_FORGE' | 'POST_FORGE' | null,
+  simulatedDate?: Date | null
+): ForgeMode {
+  // If admin has simulation active, use that
+  if (simulatedMode) {
+    return simulatedMode;
+  }
+  
+  // Use simulated date if provided, otherwise use real time
+  const now = simulatedDate || new Date();
+  // ... rest of existing logic
+}
+```
+
+### Part 5: Update AuthContext to Support Testing
+
+**File: `src/contexts/AuthContext.tsx`**
+
+Integrate the admin testing context so `forgeMode` can be overridden:
+
+```typescript
+const { simulatedForgeMode, simulatedDate, isTestingMode } = useAdminTesting();
+
+const forgeMode = isTestingMode && isAdmin
+  ? calculateForgeMode(edition?.forge_start_date, edition?.forge_end_date, simulatedForgeMode, simulatedDate)
+  : calculateForgeMode(edition?.forge_start_date, edition?.forge_end_date);
+```
+
+### Part 6: Update useRoadmapData Hook
+
+**File: `src/hooks/useRoadmapData.ts`**
+
+```typescript
+const getDayStatus = (day: RoadmapDay): Status => {
+  // If admin has simulated day number, calculate status based on that
+  if (isTestingMode && simulatedDayNumber !== null) {
+    if (day.day_number < simulatedDayNumber) return 'completed';
+    if (day.day_number === simulatedDayNumber) return 'current';
+    return 'upcoming';
+  }
+  // ... existing logic
+};
+```
+
+### Part 7: Add Admin Testing to Roadmap Layout
+
+**File: `src/components/roadmap/RoadmapLayout.tsx`**
+
+```typescript
+import { useAdminCheck } from '@/hooks/useAdminCheck';
+import AdminTestingPanel from '@/components/admin/AdminTestingPanel';
+
+const RoadmapLayout: React.FC = () => {
+  const { isAdmin } = useAdminCheck();
+  
+  return (
+    <div>
+      {/* Floating admin panel - only visible to admins */}
+      {isAdmin && <AdminTestingPanel />}
+      
+      {/* Rest of layout... */}
+    </div>
   );
-  background-size: 200% 100%;
-  animation: premium-shimmer 1.5s ease-in-out infinite;
-}
-```
-
-### 2.3 Enhanced Card Interactions
-
-**File: `src/components/shared/CleanEventCard.tsx`**
-
-```text
-Improvements:
-- Add "shine" sweep effect on hover
-- Improve touch feedback with scale animation
-- Add subtle border glow animation
-- Improve badge contrast and positioning
-```
-
-```typescript
-// Add card-shine class and tap-scale
-<div className={cn(
-  "card-shine tap-scale",
-  "hover:shadow-[0_12px_40px_hsl(var(--primary)/0.15)]"
-)} />
-```
-
-### 2.4 Standardized Typography
-
-**File: `src/index.css`**
-
-Add premium typography utilities:
-
-```css
-/* Premium typography classes */
-.heading-premium {
-  @apply font-bold tracking-tight;
-  text-shadow: 0 1px 2px hsl(0 0% 0% / 0.2);
-}
-
-.label-premium {
-  @apply text-[10px] uppercase tracking-wider font-semibold text-muted-foreground;
-}
-
-.section-title {
-  @apply text-lg font-bold text-foreground border-l-2 border-primary pl-3;
-}
+};
 ```
 
 ---
 
-## Part 3: Page-Specific Improvements
-
-### 3.1 Events Page
-
-**File: `src/pages/Events.tsx`**
+## Testing Panel UI Design
 
 ```text
-Improvements:
-- Add subtle gradient hero strip
-- Style section headers with gold accent border
-- Improve search input with focus animation
-- Add opacity to past events section
-- Increase grid gaps on mobile (gap-5)
-```
-
-```typescript
-// Section header enhancement
-<h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4 
-               pl-3 border-l-2 border-primary">
-  Upcoming
-</h2>
-```
-
-### 3.2 Learn Page
-
-**File: `src/pages/Learn.tsx`**
-
-```text
-Improvements:
-- Style "View All" as animated pill button
-- Add distinct background to Continue Watching
-- Upgrade skeleton loading to gradient shimmer
-- Add progress indicator on started courses
-```
-
-### 3.3 Home Page
-
-**File: `src/pages/Home.tsx`**
-
-```text
-Improvements:
-- Add staggered fade-in animations to sections
-- Add subtle dividers between sections
-- Enhance empty state with animated icon
-```
-
-### 3.4 Profile Page
-
-**File: `src/pages/Profile.tsx`**
-
-```text
-Improvements:
-- Move Sign Out to bottom sheet or reduce prominence
-- Add progress ring for incomplete profile
-- Enhance share portfolio URL as copyable badge
-```
-
-### 3.5 Community Page
-
-**File: `src/pages/Community.tsx`**
-
-```text
-Improvements:
-- Add frosted glass effect to message input
-- Enhance typing indicator animation
-- Add member avatar strip to header
+┌────────────────────────────────────────────────────────┐
+│ 🔧 Admin Testing Mode                            [×]   │
+├────────────────────────────────────────────────────────┤
+│                                                        │
+│ Forge Mode:                                           │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐               │
+│ │ PRE      │ │ DURING   │ │ POST     │               │
+│ └──────────┘ └──────────┘ └──────────┘               │
+│                                                        │
+│ Current Day: Day 5 of 14                              │
+│ [━━━━━━━●━━━━━━━━━━━━━━━━━━━━━] 5                     │
+│                                                        │
+│ Quick Presets:                                        │
+│ [Online Day 1] [Online Day 3] [Physical Day 5]       │
+│ [Physical Day 10] [Last Day] [Post-Forge]            │
+│                                                        │
+│ ┌──────────────────────────────────────────────────┐  │
+│ │ 🟢 Testing mode active                           │  │
+│ │ Only YOU see simulated data                      │  │
+│ └──────────────────────────────────────────────────┘  │
+│                                                        │
+│ [Reset to Real Time]                                  │
+└────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Part 4: Global Animation Enhancements
+## Session-Based Storage (Not Database)
 
-**File: `src/index.css`**
+The testing state uses `sessionStorage` instead of database:
+- **Pros**: No database changes, instant switching, session-isolated
+- **Cons**: Resets on browser close (which is actually a safety feature)
 
-Add new premium animations:
-
-```css
-/* Scale-in with spring physics */
-@keyframes scale-in-spring {
-  0% { transform: scale(0.9); opacity: 0; }
-  50% { transform: scale(1.02); }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-/* Slide up with fade */
-@keyframes slide-up-fade {
-  0% { transform: translateY(16px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
-}
-
-/* Staggered section entrance */
-.animate-section-enter {
-  animation: slide-up-fade 0.5s ease-out forwards;
-  opacity: 0;
-}
-
-/* Reduced motion preference */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+```typescript
+// Stored in sessionStorage
+{
+  "adminTestingMode": {
+    "isActive": true,
+    "forgeMode": "DURING_FORGE",
+    "currentDay": 5,
+    "simulatedDate": "2025-02-10T00:00:00Z"
   }
 }
-```
-
-**File: `tailwind.config.ts`**
-
-Add new keyframes:
-
-```typescript
-keyframes: {
-  "scale-in-spring": {
-    "0%": { transform: "scale(0.9)", opacity: "0" },
-    "50%": { transform: "scale(1.02)" },
-    "100%": { transform: "scale(1)", opacity: "1" }
-  },
-  "slide-up-fade": {
-    "0%": { transform: "translateY(16px)", opacity: "0" },
-    "100%": { transform: "translateY(0)", opacity: "1" }
-  }
-}
-```
-
----
-
-## Part 5: Button & Input Enhancements
-
-**File: `src/components/ui/button.tsx`**
-
-```text
-Enhancements:
-- Add gradient angle shift on hover for primary buttons
-- Add subtle background pulse on ghost buttons
-- Add btn-press class for tactile feedback
-```
-
-**File: `src/components/ui/input.tsx`**
-
-```text
-Enhancements:
-- Add gold glow ring on focus
-- Add subtle border transition
-```
-
-```css
-/* Input focus enhancement */
-.input-premium:focus {
-  @apply ring-2 ring-primary/40 border-primary/50;
-  box-shadow: 0 0 20px hsl(var(--primary) / 0.15);
-}
-```
-
----
-
-## Part 6: Install Prompt Page (Optional)
-
-**File: `src/pages/Install.tsx`**
-
-Create dedicated install prompt page:
-
-```typescript
-// BeforeInstallPromptEvent handling
-// Beautiful install UI with app preview
-// Platform-specific instructions (iOS Share → Add to Home Screen)
 ```
 
 ---
@@ -350,40 +236,33 @@ Create dedicated install prompt page:
 
 | File | Action | Description |
 |------|--------|-------------|
-| `vite.config.ts` | Modify | Add VitePWA plugin configuration |
-| `index.html` | Modify | Add PWA meta tags and manifest link |
-| `public/pwa-192x192.png` | Create | PWA icon 192x192 |
-| `public/pwa-512x512.png` | Create | PWA icon 512x512 |
-| `public/apple-touch-icon.png` | Create | Apple touch icon 180x180 |
-| `src/index.css` | Modify | Add premium animations and utilities |
-| `tailwind.config.ts` | Modify | Add new keyframes |
-| `src/components/layout/BottomNav.tsx` | Modify | Enhance tap targets and animations |
-| `src/pages/Events.tsx` | Modify | Add section styling and gaps |
-| `src/components/shared/CleanEventCard.tsx` | Modify | Add shine effect and touch feedback |
-| `src/pages/Learn.tsx` | Modify | Enhance loading states and view all button |
-| `src/pages/Home.tsx` | Modify | Add section animations |
-| `src/pages/Profile.tsx` | Modify | Improve layout and reduce sign out prominence |
-| `src/pages/Community.tsx` | Modify | Add glass effects to input |
-| `src/components/ui/button.tsx` | Modify | Add hover enhancements |
-| `src/components/ui/input.tsx` | Modify | Add focus glow |
+| `vite.config.ts` | Modify | Fix PWA build error with large assets |
+| `src/contexts/AdminTestingContext.tsx` | Create | Context for admin testing state |
+| `src/components/admin/AdminTestingPanel.tsx` | Create | Floating testing panel UI |
+| `src/lib/forgeUtils.ts` | Modify | Accept simulated mode/date parameters |
+| `src/contexts/AuthContext.tsx` | Modify | Integrate admin testing context |
+| `src/hooks/useRoadmapData.ts` | Modify | Support simulated day numbers |
+| `src/components/roadmap/RoadmapLayout.tsx` | Modify | Add admin testing panel |
+| `src/App.tsx` | Modify | Wrap app with AdminTestingProvider |
 
 ---
 
-## Expected Results
+## Expected Testing Scenarios
 
-After implementation:
+After implementation, admins can test:
 
-1. **PWA Ready**: App installable to home screen on iOS/Android with offline support
-2. **Premium Feel**: Smooth animations, glass effects, and tactile feedback throughout
-3. **Mobile Optimized**: 48px touch targets, safe-area support, responsive grids
-4. **Brand Consistent**: Gold accents, section borders, and premium typography
-5. **Accessible**: Reduced motion support, proper focus states, contrast ratios
+1. **PRE_FORGE View**: See how students experience the countdown and muted UI
+2. **Online Sessions (Days 1-3)**: Test the online_forge stage UI
+3. **Physical Sessions (Days 4+)**: Test the physical_forge stage UI  
+4. **Day Transitions**: Test moving between completed/current/upcoming states
+5. **POST_FORGE Archive**: Test the completed journey view
 
 ---
 
-## Priority Implementation Order
+## Safety Features
 
-1. **Phase 1** (High Impact): PWA setup + Bottom nav enhancements
-2. **Phase 2** (Medium Impact): Card interactions + Loading states
-3. **Phase 3** (Polish): Page-specific improvements + Typography
-
+- Testing mode only affects the admin's own view
+- Visual indicator always shows when testing mode is active
+- "Reset to Real Time" button instantly returns to live data
+- Session-based storage ensures no database pollution
+- Other users always see real data
