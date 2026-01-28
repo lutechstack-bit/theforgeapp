@@ -1,265 +1,172 @@
 
-# Fix: Smooth Mobile Sticky Notes & Task Interactions
 
-## Problems Identified
+# Comprehensive UI Audit Report
 
-### Problem 1: SwipeableTaskItem Gesture Lag
-The swipe-to-complete gesture on task items feels laggy because:
-- Touch handlers aren't memoized with `useCallback`
-- No `requestAnimationFrame` for smooth 60fps animation during swipe
-- Transition classes conflict during active swiping
-- Missing proper touch action CSS to prevent browser scroll interference
-
-### Problem 2: StickyNoteCardStack Jank
-The card stack swiping has similar issues:
-- Native touch handler dependency array causes re-registration on every render
-- Missing velocity-based momentum for natural swipe feel
-- Card transform updates aren't optimized
-
-### Problem 3: Task Toggle Delay
-When tapping the checkbox to complete/uncomplete a task:
-- No optimistic UI update (waits for server response)
-- No visual feedback during mutation
-- Makes the interaction feel "laggy"
+Based on my thorough analysis of your app, here are all the bugs, glitches, and issues I've identified, organized by category and priority.
 
 ---
 
-## Solution: Performance-Optimized Touch Interactions
+## Critical Issues (Errors & Console Warnings)
 
-### Part 1: Fix SwipeableTaskItem
+### Issue 1: React forwardRef Warning in RoadmapHighlightsModal
+**Location:** `src/components/home/RoadmapHighlightsModal.tsx`
+**Problem:** The component is being passed a ref but isn't wrapped in `React.forwardRef()`, causing repeated console warnings.
+**Fix:** Wrap the component with `React.forwardRef()` or ensure the parent (`RoadmapBentoBox`) doesn't pass refs.
 
-**File:** `src/components/journey/SwipeableTaskItem.tsx`
-
-Changes:
-1. **Use `useCallback`** for all touch handlers to prevent re-creation
-2. **Add `requestAnimationFrame`** for smooth transform updates
-3. **Improve CSS** with proper `touch-action`, `will-change`, and transform hints
-4. **Add velocity tracking** for momentum-based swipe completion
-5. **Visual feedback** with scale animation during swipe
-6. **Debounce rapid toggles** to prevent double-tapping bugs
-
-```typescript
-// Key improvements
-const handleTouchMove = useCallback((e: React.TouchEvent) => {
-  if (!isSwiping) return;
-  
-  requestAnimationFrame(() => {
-    const deltaX = e.touches[0].clientX - startX.current;
-    // Apply resistance for natural feel
-    const resistance = deltaX > 0 ? 0.4 : 0.4;
-    const dampedDelta = deltaX * resistance;
-    setOffsetX(dampedDelta);
-  });
-}, [isSwiping]);
-
-// CSS improvements
-style={{
-  touchAction: 'pan-y',
-  willChange: isSwiping ? 'transform' : 'auto',
-  transform: `translateX(${offsetX}px) scale(${isSwiping ? 0.98 : 1})`,
-}}
-```
-
-### Part 2: Fix StickyNoteCardStack
-
-**File:** `src/components/journey/StickyNoteCardStack.tsx`
-
-Changes:
-1. **Fix effect dependencies** to prevent handler re-registration
-2. **Add velocity tracking** for natural momentum
-3. **Use `requestAnimationFrame`** for smooth card movement
-4. **Improve transform performance** with GPU acceleration hints
-5. **Add haptic feedback** on successful swipe
-
-```typescript
-// Velocity-based swipe detection
-const velocityRef = useRef(0);
-const lastTimeRef = useRef(Date.now());
-
-const handleTouchMove = useCallback((e: React.TouchEvent) => {
-  const currentX = e.touches[0].clientX;
-  const currentTime = Date.now();
-  const timeDelta = currentTime - lastTimeRef.current;
-  
-  if (timeDelta > 0) {
-    velocityRef.current = (currentX - lastXRef.current) / timeDelta;
-  }
-  
-  lastXRef.current = currentX;
-  lastTimeRef.current = currentTime;
-  
-  requestAnimationFrame(() => {
-    const diff = currentX - startXRef.current;
-    setDragOffset(diff);
-  });
-}, []);
-```
-
-### Part 3: Add Optimistic Updates to Task Toggle
-
-**File:** `src/hooks/useStudentJourney.ts`
-
-Changes:
-1. **Add optimistic update** to immediately reflect state change
-2. **Rollback on error** if server request fails
-3. **Debounce rapid toggles** to prevent race conditions
-
-```typescript
-const toggleTask = useMutation({
-  mutationFn: async ({ taskId, completed }) => {
-    // ... existing logic
-  },
-  // Optimistic update for instant feedback
-  onMutate: async ({ taskId, completed }) => {
-    await queryClient.cancelQueries({ queryKey: ['user_journey_progress'] });
-    
-    const previousProgress = queryClient.getQueryData(['user_journey_progress', user?.id]);
-    
-    // Optimistically update the cache
-    queryClient.setQueryData(['user_journey_progress', user?.id], (old: any) => {
-      if (completed) {
-        return [...(old || []), { task_id: taskId, status: 'completed' }];
-      } else {
-        return (old || []).filter((p: any) => p.task_id !== taskId);
-      }
-    });
-    
-    return { previousProgress };
-  },
-  onError: (err, variables, context) => {
-    // Rollback on error
-    queryClient.setQueryData(['user_journey_progress', user?.id], context?.previousProgress);
-  },
-  onSettled: () => {
-    queryClient.invalidateQueries({ queryKey: ['user_journey_progress'] });
-    queryClient.invalidateQueries({ queryKey: ['user-prep-progress'] });
-  },
-});
-```
-
-### Part 4: Add Visual Feedback & Haptics
-
-**File:** `src/components/journey/SwipeableTaskItem.tsx`
-
-Add vibration feedback on successful swipe:
-
-```typescript
-const handleTouchEnd = useCallback(() => {
-  setIsSwiping(false);
-  
-  const didComplete = offsetX >= SWIPE_THRESHOLD && !isCompleted;
-  const didUncomplete = offsetX <= -SWIPE_THRESHOLD && isCompleted;
-  
-  if (didComplete || didUncomplete) {
-    // Haptic feedback
-    if ('vibrate' in navigator) {
-      navigator.vibrate(10);
-    }
-    onToggle();
-  }
-  
-  setOffsetX(0);
-}, [offsetX, isCompleted, onToggle]);
-```
+### Issue 2: Broken Admin Dashboard Navigation
+**Location:** `src/pages/admin/AdminDashboard.tsx` (line 102-105)
+**Problem:** The "Push Notification" quick action button navigates to `/admin/notifications`, but this route no longer exists (was removed in sidebar cleanup).
+**Fix:** Either remove the button or restore the notifications admin page.
 
 ---
 
-## Files to Modify
+## Dead Code & Unused Features
 
-| File | Action |
-|------|--------|
-| `src/components/journey/SwipeableTaskItem.tsx` | Optimize touch handlers, add RAF, improve CSS |
-| `src/components/journey/StickyNoteCardStack.tsx` | Fix effect dependencies, add velocity tracking |
-| `src/hooks/useStudentJourney.ts` | Add optimistic updates to toggleTask mutation |
+### Issue 3: Duplicate KYF Form Implementation
+**Location:** `src/pages/KYF.tsx`
+**Problem:** There's an old manual KYF form that overlaps with the newer dynamic forms (`KYFForm.tsx`, `KYCForm.tsx`, `KYWForm.tsx`). This causes confusion and potential maintenance issues.
+**Fix:** Delete `src/pages/KYF.tsx` if the dynamic forms are the source of truth.
+
+### Issue 4: Duplicate Route Definition
+**Location:** `src/App.tsx` (lines 200-213)
+**Problem:** The `/kyw-form` route is defined twice, which is redundant.
+```typescript
+<Route path="/kyw-form" element={...} />
+<Route path="/kyw-form" element={...} /> // DUPLICATE
+```
+**Fix:** Remove the duplicate route definition.
+
+### Issue 5: Orphaned Admin Page
+**Location:** `src/pages/admin/AdminHeroBanners.tsx`
+**Problem:** This page exists but is no longer linked in `AdminLayout` navigation (removed during cleanup), making it inaccessible.
+**Fix:** Either delete the file or add it back to navigation if needed.
+
+### Issue 6: Debug Console.log in Production Code
+**Locations:**
+- `src/components/learn/SecureVideoPlayer.tsx` (line 233) - Logs every 10 seconds
+- `src/pages/NotFound.tsx` (line 8) - Logs every 404
+**Fix:** Remove or gate behind `process.env.NODE_ENV !== 'production'`.
 
 ---
 
-## Technical Details
+## Admin Dashboard Issues
 
-### SwipeableTaskItem Improvements
+### Issue 7: Admin Sidebar Has No Scroll Container
+**Location:** `src/components/admin/AdminLayout.tsx`
+**Problem:** The sidebar navigation `<nav>` doesn't have overflow handling. With 17 navigation items, they can overflow on smaller screens.
+**Current:** `<nav className="flex-1 p-4 space-y-1">` - No `overflow-y-auto`
+**Fix:** Add `overflow-y-auto` to the nav container.
 
-```typescript
-// Before (causes lag)
-const handleTouchMove = (e: React.TouchEvent) => {
-  if (!isSwiping) return;
-  const deltaX = e.touches[0].clientX - startX.current;
-  setOffsetX(boundedDelta); // Direct state update
-};
-
-// After (smooth 60fps)
-const handleTouchMove = useCallback((e: React.TouchEvent) => {
-  if (!isSwiping) return;
-  
-  // Use RAF for smooth animation
-  requestAnimationFrame(() => {
-    const deltaX = e.touches[0].clientX - startX.current;
-    
-    // Elastic resistance for natural feel
-    let boundedDelta = deltaX;
-    if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
-      const excess = Math.abs(deltaX) - SWIPE_THRESHOLD;
-      boundedDelta = (deltaX > 0 ? 1 : -1) * (SWIPE_THRESHOLD + excess * 0.2);
-    }
-    
-    setOffsetX(boundedDelta);
-  });
-}, [isSwiping]);
-```
-
-### CSS Performance Hints
-
-```typescript
-// Add these to the swiping container
-style={{
-  touchAction: 'pan-y',
-  WebkitOverflowScrolling: 'touch',
-  willChange: isSwiping ? 'transform' : 'auto',
-  transform: `translateX(${offsetX}px)`,
-  transition: isSwiping ? 'none' : 'transform 200ms ease-out',
-}}
-```
-
-### Optimistic Update Pattern
-
-```typescript
-// Immediately show completion state
-onMutate: async ({ taskId, completed }) => {
-  // Cancel any in-flight queries
-  await queryClient.cancelQueries({ queryKey: ['user_journey_progress'] });
-  
-  // Snapshot previous value
-  const previous = queryClient.getQueryData(['user_journey_progress', user?.id]);
-  
-  // Optimistically update
-  queryClient.setQueryData(['user_journey_progress', user?.id], (old) => {
-    // Update logic
-  });
-  
-  return { previous };
-},
-// Rollback if mutation fails
-onError: (err, vars, context) => {
-  queryClient.setQueryData(['user_journey_progress', user?.id], context.previous);
-}
-```
+### Issue 8: Admin Layout Missing Scroll for Main Content
+**Location:** `src/components/admin/AdminLayout.tsx`
+**Problem:** The main content area should have proper overflow handling for long forms.
+**Current:** `<main className="flex-1 overflow-auto">` - Correct, but parent might constrain
+**Fix:** Ensure parent uses `h-screen` and `flex` properly.
 
 ---
 
-## Expected Results
+## Mobile/Responsive Issues
 
-1. **Smooth Swiping** - 60fps swipe animations using requestAnimationFrame
-2. **Instant Feedback** - Optimistic updates show completion immediately
-3. **Natural Feel** - Velocity-based momentum and elastic resistance
-4. **Haptic Response** - Subtle vibration on successful swipe
-5. **No Double-Toggle** - Debounced handlers prevent rapid-fire bugs
-6. **GPU Acceleration** - Proper CSS hints for transform animations
+### Issue 9: Roadmap Navigation Hidden Buttons (Already Fixed)
+**Status:** Recently addressed with FloatingHighlightsButton implementation.
+
+### Issue 10: Community Page Height Calculation
+**Location:** `src/pages/Community.tsx` (line 151)
+**Problem:** Uses `h-[calc(100dvh-7rem)]` for mobile but this might not account for the floating highlights button or varying header heights.
+**Fix:** Verify the calculation accounts for all fixed elements.
+
+### Issue 11: Bottom Padding Not Consistent
+**Locations:** Multiple pages
+- `src/pages/Profile.tsx` - Uses `pb-24`
+- `src/pages/Events.tsx` - Uses `pb-24`
+- `src/pages/Learn.tsx` - Uses `pb-24`
+**Problem:** Some pages might still have content hidden behind the bottom navigation bar.
+**Fix:** Audit all pages to ensure consistent `pb-24` or `pb-safe` on mobile.
 
 ---
 
-## Mobile UX Improvements
+## UI Polish & Styling Issues
 
-- Swipe gesture feels responsive and native
-- Checkbox tap immediately shows state change
-- Card stack swiping has momentum like iOS
-- Pull-to-refresh continues working smoothly
-- No conflict between horizontal swipe and vertical scroll
+### Issue 12: Updates Page Uses Mock Data
+**Location:** `src/pages/Updates.tsx` (lines 17-58)
+**Problem:** The entire page uses hardcoded mock notifications instead of fetching from a database. The "About Forge" link in the sidebar leads here, but it's essentially a placeholder.
+**Fix:** Either implement real notifications from the database or clearly label this as a placeholder/coming soon feature.
+
+### Issue 13: SideNav Roadmap Active State Detection
+**Location:** `src/components/layout/SideNav.tsx` (line 136)
+**Problem:** Uses exact path matching (`location.pathname === to`) for checking if Roadmap is active. This means sub-routes like `/roadmap/prep`, `/roadmap/equipment` won't show the nav item as active.
+**Fix:** Use `location.pathname.startsWith(to)` for the Roadmap item.
+
+### Issue 14: Index.html Contains TODO Comments
+**Location:** `index.html` (lines 15-20)
+**Problem:** Contains placeholder TODO comments for title and og:title that should be cleaned up.
+```html
+<!-- TODO: Set the document title to the name of your application -->
+<!-- TODO: Update og:title to match your application name -->
+```
+**Fix:** Remove the TODO comments since the title is already set.
+
+---
+
+## Code Quality Issues
+
+### Issue 15: TypeScript Strict Mode Disabled
+**Location:** `tsconfig.app.json` (lines 18-21)
+**Problem:** Several strict TypeScript checks are disabled:
+```json
+"strict": false,
+"noUnusedLocals": false,
+"noUnusedParameters": false,
+"noImplicitAny": false
+```
+**Impact:** Allows unused imports and potential type errors to slip through.
+**Fix:** Consider enabling these for better code quality (may require some refactoring).
+
+### Issue 16: App.css Has Unused Boilerplate
+**Location:** `src/App.css`
+**Problem:** Contains Vite boilerplate styles (logo animations, etc.) that aren't used anywhere.
+**Fix:** Delete the file or remove unused styles.
+
+---
+
+## Summary Table
+
+| Priority | Issue | Location | Type |
+|----------|-------|----------|------|
+| Critical | forwardRef warning | RoadmapHighlightsModal | Console Error |
+| Critical | Broken navigation button | AdminDashboard | Dead Link |
+| High | Duplicate route | App.tsx | Code Quality |
+| High | Debug console.logs | SecureVideoPlayer, NotFound | Production Cleanup |
+| High | Admin sidebar scroll | AdminLayout | UX Bug |
+| Medium | Dead KYF.tsx file | pages/KYF.tsx | Dead Code |
+| Medium | Orphaned AdminHeroBanners | pages/admin/ | Dead Code |
+| Medium | Mock notifications data | Updates.tsx | Incomplete Feature |
+| Medium | Roadmap nav active state | SideNav.tsx | UX Polish |
+| Low | TODO comments in HTML | index.html | Cleanup |
+| Low | Unused App.css styles | App.css | Cleanup |
+| Low | TypeScript strict mode | tsconfig.app.json | Code Quality |
+
+---
+
+## Implementation Order
+
+**Phase 1: Critical Fixes (Should fix immediately)**
+1. Fix RoadmapHighlightsModal forwardRef warning
+2. Remove/fix broken "Push Notification" button in Admin Dashboard
+3. Remove duplicate `/kyw-form` route
+
+**Phase 2: Dead Code Cleanup**
+4. Delete unused `src/pages/KYF.tsx`
+5. Delete orphaned `src/pages/admin/AdminHeroBanners.tsx`
+6. Remove debug console.logs from production code
+
+**Phase 3: Admin UX Fixes**
+7. Add scroll to admin sidebar navigation
+8. Ensure admin layout has proper height constraints
+
+**Phase 4: Polish & Cleanup**
+9. Fix SideNav Roadmap active state detection
+10. Remove TODO comments from index.html
+11. Clean up unused App.css boilerplate
+12. Either implement real Updates notifications or mark as coming soon
+
