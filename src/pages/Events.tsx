@@ -92,12 +92,12 @@ const Events: React.FC = () => {
 
         {/* Events Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="space-y-3">
-                <Skeleton className="aspect-[4/3] rounded-2xl" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-9 w-full rounded-lg" />
+              <div key={i} className="space-y-3 animate-slide-up-fade" style={{ animationDelay: `${i * 0.05}s` }}>
+                <div className="aspect-[4/3] rounded-2xl skeleton-premium" />
+                <div className="h-4 w-3/4 rounded skeleton-premium" />
+                <div className="h-9 w-full rounded-lg skeleton-premium" />
               </div>
             ))}
           </div>
@@ -117,11 +117,11 @@ const Events: React.FC = () => {
           <div className="space-y-8">
             {/* Upcoming Events */}
             {upcomingEvents.length > 0 && (
-              <section>
-                <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
+              <section className="animate-slide-up-fade">
+                <h2 className="section-title mb-4">
                   Upcoming
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                   {upcomingEvents.map((event) => (
                     <CleanEventCard
                       key={event.id}
@@ -145,11 +145,11 @@ const Events: React.FC = () => {
 
             {/* Past Events */}
             {pastEvents.length > 0 && (
-              <section>
-                <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
+              <section className="animate-slide-up-fade opacity-80">
+                <h2 className="section-title mb-4 opacity-70">
                   Past Events
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                   {pastEvents.map((event) => (
                     <CleanEventCard
                       key={event.id}

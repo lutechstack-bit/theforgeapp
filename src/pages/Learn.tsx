@@ -135,9 +135,9 @@ const Learn: React.FC = () => {
           {items.length > 3 && (
             <button 
               onClick={() => navigate(`/learn/all${sectionType ? `?section=${sectionType}` : ''}`)}
-              className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors"
+              className="flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 transition-all duration-200 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/15 active:scale-95 tap-feedback"
             >
-              View All <ChevronRight className="h-4 w-4" />
+              View All <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </button>
           )}
         </div>
@@ -205,9 +205,13 @@ const Learn: React.FC = () => {
 
         {/* Loading State */}
         {isLoading ? (
-          <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="aspect-[3/4] rounded-2xl bg-card animate-pulse" />
+              <div 
+                key={i} 
+                className="aspect-[3/4] rounded-2xl skeleton-premium animate-slide-up-fade" 
+                style={{ animationDelay: `${i * 0.05}s` }}
+              />
             ))}
           </div>
         ) : courses.length === 0 ? (
