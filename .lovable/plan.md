@@ -1,233 +1,196 @@
 
-# Admin Roadmap Testing Mode
+# Online Forge Sessions: Zoom Links, Notifications & Calendar Integration
 
 ## Overview
-Create a dedicated admin testing feature that allows admins to simulate different forge modes (PRE_FORGE, DURING_FORGE, POST_FORGE) and test the roadmap experience without waiting for actual cohort dates.
+This plan implements a complete system for managing and displaying Zoom meeting links during online Forge sessions (Days 1-3), with automatic notifications in the Home notification center and seamless calendar integration.
 
 ---
 
-## Problem Statement
+## Current State Analysis
 
-Currently, the forge mode is calculated automatically based on:
-- `edition.forge_start_date`
-- `edition.forge_end_date`
-- Current date via `calculateForgeMode()` in `src/lib/forgeUtils.ts`
+Based on my exploration:
 
-This means admins cannot test:
-1. **PRE_FORGE state** - How the roadmap looks before the cohort starts
-2. **DURING_FORGE state** - How online sessions (Days 1-3) and physical sessions work
-3. **POST_FORGE state** - The completed journey archive view
-4. **Different day statuses** - Completed, current, upcoming, locked
+1. **Roadmap Days Table**: Has columns for session details but **no Zoom link field** currently
+2. **JourneyCard & DayDetailModal**: Display session info but don't show meeting links
+3. **MasterNotificationCenter**: Shows general updates and events but not session-specific notifications
+4. **Calendar Utils**: Already has helper functions (`generateGoogleCalendarUrl`, `downloadICSFile`) that we can reuse
+5. **Admin Roadmap**: Manages day content but lacks fields for virtual meeting details
 
 ---
 
 ## Solution Architecture
 
 ```text
-┌─────────────────────────────────────────────────────────────────────┐
-│                     ADMIN TESTING PANEL                              │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐   │
-│  │   PRE_FORGE      │  │   DURING_FORGE   │  │   POST_FORGE     │   │
-│  │   ○ Selected     │  │   ○              │  │   ○              │   │
-│  └──────────────────┘  └──────────────────┘  └──────────────────┘   │
-│                                                                      │
-│  ┌────────────────────────────────────────────────────────────────┐ │
-│  │  Simulate Date: [ 2025-02-15 ]  Simulate Day: [ Day 5 ]        │ │
-│  └────────────────────────────────────────────────────────────────┘ │
-│                                                                      │
-│  [ Apply Simulation ]  [ Reset to Real Time ]                        │
-│                                                                      │
-│  ⚠️ Testing mode active - Other users see real data                  │
-└─────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        ADMIN: Roadmap Day Editor                         │
+│  ┌────────────────────────────────────────────────────────────────────┐ │
+│  │  Day 1: Online Orientation                                         │ │
+│  │  ┌─────────────────────────────────────────────────────────────┐  │ │
+│  │  │ 📹 Virtual Meeting                                           │  │ │
+│  │  │ Meeting URL: [https://zoom.us/j/...]                        │  │ │
+│  │  │ Meeting ID:  [123 456 7890]                                 │  │ │
+│  │  │ Passcode:    [****]                                         │  │ │
+│  │  │ Start Time:  [10:00 AM]   Duration: [3] hours              │  │ │
+│  │  └─────────────────────────────────────────────────────────────┘  │ │
+│  └────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    STUDENT: Journey Card (Online Day)                    │
+│  ┌────────────────────────────────────────────────────────────────────┐ │
+│  │  Day 1  │ Online Orientation                        [🟢 NOW]      │ │
+│  │         │ 📍 Virtual (Zoom)  ⏰ 10:00 AM                           │ │
+│  │         │                                                         │ │
+│  │         │  ┌─────────────────────────────────────────────────┐   │ │
+│  │         │  │ 🎥 Join Zoom Meeting                             │   │ │
+│  │         │  │ 📅 Add to Calendar  📋 Copy Link                │   │ │
+│  │         │  └─────────────────────────────────────────────────┘   │ │
+│  └────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│               HOME: Master Notification Center                           │
+│  ┌────────────────────────────────────────────────────────────────────┐ │
+│  │  🎬 Session Starting Soon                                          │ │
+│  │  "Online Orientation" starts in 30 minutes                        │ │
+│  │  [Join Zoom] [Add to Calendar]                            →       │ │
+│  └────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Database Changes
+
+### Add Virtual Meeting Columns to `roadmap_days`
+
+```sql
+ALTER TABLE public.roadmap_days
+ADD COLUMN IF NOT EXISTS is_virtual BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS meeting_url TEXT,
+ADD COLUMN IF NOT EXISTS meeting_id TEXT,
+ADD COLUMN IF NOT EXISTS meeting_passcode TEXT,
+ADD COLUMN IF NOT EXISTS session_start_time TIME,
+ADD COLUMN IF NOT EXISTS session_duration_hours NUMERIC(3,1);
+```
+
+| Column | Type | Purpose |
+|--------|------|---------|
+| `is_virtual` | boolean | Flag to indicate online session |
+| `meeting_url` | text | Full Zoom/Meet link (clickable) |
+| `meeting_id` | text | Meeting ID for manual entry |
+| `meeting_passcode` | text | Passcode (displayed during session) |
+| `session_start_time` | time | Exact session start time (for calendar) |
+| `session_duration_hours` | numeric | Duration in hours (for calendar end time) |
 
 ---
 
 ## Implementation Steps
 
-### Part 1: Fix PWA Build Error
+### Part 1: Database Migration
 
-**File: `vite.config.ts`**
+Add the new virtual meeting columns to the `roadmap_days` table.
 
-The build is failing because large assets can't be precached. We need to:
-1. Disable the strict error by using `disableDevLogs` and `skipWaiting`
-2. Or switch to `injectManifest` mode with better control
+### Part 2: Update Admin Roadmap Editor
 
-```typescript
-workbox: {
-  globPatterns: ["**/*.{js,css,html,ico,svg,woff2}"],
-  globIgnores: ["**/images/mentors/**", "**/assets/*.js"],
-  maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-  // Add this to prevent build failure on large files
-  navigateFallback: null,
-  runtimeCaching: [
-    // Existing config...
-    // Add JS bundle caching as runtime instead of precache
-    {
-      urlPattern: /\.js$/i,
-      handler: "StaleWhileRevalidate",
-      options: {
-        cacheName: "js-cache",
-        expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 7 },
-      },
-    },
-  ],
-},
+**File: `src/pages/admin/AdminRoadmap.tsx`**
+
+Add virtual meeting section to the day editor form:
+- Toggle: "Is Virtual Session"
+- Conditional fields when virtual:
+  - Meeting URL input
+  - Meeting ID input  
+  - Passcode input (with show/hide toggle)
+  - Session start time picker
+  - Duration hours input
+
+### Part 3: Create Session Meeting Card Component
+
+**New File: `src/components/roadmap/SessionMeetingCard.tsx`**
+
+A reusable card that shows:
+- Platform badge (Zoom, Google Meet, etc.)
+- "Join Meeting" primary CTA button
+- Meeting ID + copy button
+- Passcode + copy button (with reveal toggle)
+- "Add to Calendar" dropdown (Google Calendar, Apple/ICS)
+- Only visible when `is_virtual` is true and during DURING_FORGE mode
+
+### Part 4: Update JourneyCard
+
+**File: `src/components/roadmap/JourneyCard.tsx`**
+
+Changes:
+- Show virtual indicator badge ("🌐 Online" vs "📍 Physical")
+- When current day + virtual: show "Join Now" prominent button
+
+### Part 5: Update DayDetailModal
+
+**File: `src/components/roadmap/DayDetailModal.tsx`**
+
+Add new section for virtual sessions:
+- Full meeting details in a prominent card
+- Join button (opens Zoom link in new tab)
+- Copy link to clipboard
+- Meeting ID & Passcode (with copy actions)
+- Add to Calendar buttons (Google + Apple)
+- Show only when `day.is_virtual` is true
+
+### Part 6: Create Session Notification System
+
+**New File: `src/hooks/useSessionNotifications.ts`**
+
+Hook that:
+- Checks if user is in DURING_FORGE mode
+- Finds current or next session from roadmap data
+- Calculates time until session (30min, 15min, 5min, now)
+- Returns formatted notification data
+
+**Update: `src/components/home/MasterNotificationCenter.tsx`**
+
+Add new "Live Sessions" section:
+- Fetches current/upcoming virtual sessions
+- Shows notification card for sessions starting within 1 hour
+- "Join Zoom" button directly in notification
+- "Add to Calendar" button
+
+### Part 7: Add Announcement Trigger for Sessions
+
+**Database Insert: `announcement_triggers`**
+
+Add new trigger type for session reminders:
+
+```sql
+INSERT INTO announcement_triggers (trigger_type, title_template, message_template, deep_link, icon_emoji, priority, config, is_active)
+VALUES 
+  ('session_starting_soon', 'Session starting in {minutes} minutes', 'Join "{session_title}" now!', '/roadmap/journey', '🎬', 85, '{"minutes_before": [30, 15, 5]}', true),
+  ('session_live_now', 'Your session is LIVE!', 'Join "{session_title}" now', '/roadmap/journey', '🔴', 95, '{}', true);
 ```
 
-### Part 2: Create Admin Testing Context
+### Part 8: Update Smart Announcements Hook
 
-**New File: `src/contexts/AdminTestingContext.tsx`**
+**File: `src/hooks/useSmartAnnouncements.ts`**
 
-```typescript
-interface AdminTestingState {
-  isTestingMode: boolean;
-  simulatedForgeMode: 'PRE_FORGE' | 'DURING_FORGE' | 'POST_FORGE' | null;
-  simulatedDate: Date | null;
-  simulatedDayNumber: number | null;
-}
+Add session-based triggers:
+- `session_starting_soon`: Triggers 30/15/5 min before
+- `session_live_now`: Triggers when session is in progress
+- Include direct join link in announcement
 
-// Context that stores admin simulation settings
-// Only applies to the current admin's session
-// Uses sessionStorage to persist across page refreshes
-```
+### Part 9: Calendar Integration for Sessions
 
-### Part 3: Create Admin Testing Panel Component
+**File: `src/lib/calendarUtils.ts`**
 
-**New File: `src/components/admin/AdminTestingPanel.tsx`**
-
-A floating/dismissible panel that appears on the roadmap page for admins:
-- Toggle test mode on/off
-- Select forge mode (PRE_FORGE, DURING_FORGE, POST_FORGE)
-- Set simulated date picker
-- Set current day number slider
-- Quick presets: "Day 1 Online", "Day 3 Transition", "Day 7 Physical", "Post-Forge"
-- Visual indicator when testing mode is active
-
-### Part 4: Update ForgeMode Calculation
-
-**File: `src/lib/forgeUtils.ts`**
+Add new utility specifically for Forge sessions:
 
 ```typescript
-export function calculateForgeMode(
-  forgeStartDate: string | null | undefined,
-  forgeEndDate: string | null | undefined,
-  simulatedMode?: 'PRE_FORGE' | 'DURING_FORGE' | 'POST_FORGE' | null,
-  simulatedDate?: Date | null
-): ForgeMode {
-  // If admin has simulation active, use that
-  if (simulatedMode) {
-    return simulatedMode;
-  }
-  
-  // Use simulated date if provided, otherwise use real time
-  const now = simulatedDate || new Date();
-  // ... rest of existing logic
-}
-```
-
-### Part 5: Update AuthContext to Support Testing
-
-**File: `src/contexts/AuthContext.tsx`**
-
-Integrate the admin testing context so `forgeMode` can be overridden:
-
-```typescript
-const { simulatedForgeMode, simulatedDate, isTestingMode } = useAdminTesting();
-
-const forgeMode = isTestingMode && isAdmin
-  ? calculateForgeMode(edition?.forge_start_date, edition?.forge_end_date, simulatedForgeMode, simulatedDate)
-  : calculateForgeMode(edition?.forge_start_date, edition?.forge_end_date);
-```
-
-### Part 6: Update useRoadmapData Hook
-
-**File: `src/hooks/useRoadmapData.ts`**
-
-```typescript
-const getDayStatus = (day: RoadmapDay): Status => {
-  // If admin has simulated day number, calculate status based on that
-  if (isTestingMode && simulatedDayNumber !== null) {
-    if (day.day_number < simulatedDayNumber) return 'completed';
-    if (day.day_number === simulatedDayNumber) return 'current';
-    return 'upcoming';
-  }
-  // ... existing logic
+export const generateForgeSessionCalendarEvent = (day: RoadmapDay): CalendarEvent => {
+  // Calculate exact start datetime from day.date + session_start_time
+  // Calculate end datetime from start + session_duration_hours
+  // Include Zoom link in description
+  // Return formatted event
 };
-```
-
-### Part 7: Add Admin Testing to Roadmap Layout
-
-**File: `src/components/roadmap/RoadmapLayout.tsx`**
-
-```typescript
-import { useAdminCheck } from '@/hooks/useAdminCheck';
-import AdminTestingPanel from '@/components/admin/AdminTestingPanel';
-
-const RoadmapLayout: React.FC = () => {
-  const { isAdmin } = useAdminCheck();
-  
-  return (
-    <div>
-      {/* Floating admin panel - only visible to admins */}
-      {isAdmin && <AdminTestingPanel />}
-      
-      {/* Rest of layout... */}
-    </div>
-  );
-};
-```
-
----
-
-## Testing Panel UI Design
-
-```text
-┌────────────────────────────────────────────────────────┐
-│ 🔧 Admin Testing Mode                            [×]   │
-├────────────────────────────────────────────────────────┤
-│                                                        │
-│ Forge Mode:                                           │
-│ ┌──────────┐ ┌──────────┐ ┌──────────┐               │
-│ │ PRE      │ │ DURING   │ │ POST     │               │
-│ └──────────┘ └──────────┘ └──────────┘               │
-│                                                        │
-│ Current Day: Day 5 of 14                              │
-│ [━━━━━━━●━━━━━━━━━━━━━━━━━━━━━] 5                     │
-│                                                        │
-│ Quick Presets:                                        │
-│ [Online Day 1] [Online Day 3] [Physical Day 5]       │
-│ [Physical Day 10] [Last Day] [Post-Forge]            │
-│                                                        │
-│ ┌──────────────────────────────────────────────────┐  │
-│ │ 🟢 Testing mode active                           │  │
-│ │ Only YOU see simulated data                      │  │
-│ └──────────────────────────────────────────────────┘  │
-│                                                        │
-│ [Reset to Real Time]                                  │
-└────────────────────────────────────────────────────────┘
-```
-
----
-
-## Session-Based Storage (Not Database)
-
-The testing state uses `sessionStorage` instead of database:
-- **Pros**: No database changes, instant switching, session-isolated
-- **Cons**: Resets on browser close (which is actually a safety feature)
-
-```typescript
-// Stored in sessionStorage
-{
-  "adminTestingMode": {
-    "isActive": true,
-    "forgeMode": "DURING_FORGE",
-    "currentDay": 5,
-    "simulatedDate": "2025-02-10T00:00:00Z"
-  }
-}
 ```
 
 ---
@@ -236,33 +199,116 @@ The testing state uses `sessionStorage` instead of database:
 
 | File | Action | Description |
 |------|--------|-------------|
-| `vite.config.ts` | Modify | Fix PWA build error with large assets |
-| `src/contexts/AdminTestingContext.tsx` | Create | Context for admin testing state |
-| `src/components/admin/AdminTestingPanel.tsx` | Create | Floating testing panel UI |
-| `src/lib/forgeUtils.ts` | Modify | Accept simulated mode/date parameters |
-| `src/contexts/AuthContext.tsx` | Modify | Integrate admin testing context |
-| `src/hooks/useRoadmapData.ts` | Modify | Support simulated day numbers |
-| `src/components/roadmap/RoadmapLayout.tsx` | Modify | Add admin testing panel |
-| `src/App.tsx` | Modify | Wrap app with AdminTestingProvider |
+| Migration SQL | Create | Add virtual meeting columns to roadmap_days |
+| `src/pages/admin/AdminRoadmap.tsx` | Modify | Add virtual meeting fields to editor |
+| `src/components/roadmap/SessionMeetingCard.tsx` | Create | Reusable meeting info/join component |
+| `src/components/roadmap/JourneyCard.tsx` | Modify | Add virtual badge and join button |
+| `src/components/roadmap/DayDetailModal.tsx` | Modify | Add meeting section with actions |
+| `src/hooks/useSessionNotifications.ts` | Create | Hook for session notification logic |
+| `src/hooks/useSmartAnnouncements.ts` | Modify | Add session triggers |
+| `src/components/home/MasterNotificationCenter.tsx` | Modify | Add live sessions section |
+| `src/lib/calendarUtils.ts` | Modify | Add session calendar helper |
+| `src/hooks/useRoadmapData.ts` | Modify | Include new virtual fields |
 
 ---
 
-## Expected Testing Scenarios
+## Component Details
 
-After implementation, admins can test:
+### SessionMeetingCard Component
 
-1. **PRE_FORGE View**: See how students experience the countdown and muted UI
-2. **Online Sessions (Days 1-3)**: Test the online_forge stage UI
-3. **Physical Sessions (Days 4+)**: Test the physical_forge stage UI  
-4. **Day Transitions**: Test moving between completed/current/upcoming states
-5. **POST_FORGE Archive**: Test the completed journey view
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  🎥 Zoom Meeting                                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │           [ 🚀 Join Zoom Meeting ]                      │ │
+│  │                                                         │ │
+│  │   Opens: zoom.us/j/123456789                           │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                                                              │
+│  Meeting ID: 123 456 7890                          [📋]     │
+│  Passcode:   ******* [👁️]                         [📋]     │
+│                                                              │
+│  ┌──────────────┐  ┌───────────────┐                        │
+│  │ 📅 Google    │  │ 🍎 Apple      │                        │
+│  │  Calendar    │  │  Calendar     │                        │
+│  └──────────────┘  └───────────────┘                        │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Home Notification Card
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  🔴 Live Session                               Starting Now │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Day 1: Online Orientation                                  │
+│  Your session is live! Click to join.                       │
+│                                                              │
+│  ┌────────────────┐  ┌───────────────┐                      │
+│  │ 🚀 Join Zoom   │  │ 📅 Calendar   │          →          │
+│  └────────────────┘  └───────────────┘                      │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Safety Features
+## User Experience Flow
 
-- Testing mode only affects the admin's own view
-- Visual indicator always shows when testing mode is active
-- "Reset to Real Time" button instantly returns to live data
-- Session-based storage ensures no database pollution
-- Other users always see real data
+### During Online Session Days (1-3)
+
+1. **Home Page**:
+   - Notification card shows "Session starting in X minutes" or "Session is LIVE"
+   - One-click "Join Zoom" button
+   - "Add to Calendar" option
+
+2. **Roadmap Journey**:
+   - JourneyCard shows 🌐 Online badge
+   - Current session has prominent "Join Now" button
+   - Click card → opens DayDetailModal with full meeting details
+
+3. **DayDetailModal**:
+   - Full meeting section with all details
+   - Large "Join Zoom" primary button
+   - Copy buttons for meeting ID and passcode
+   - Calendar sync buttons
+
+### Admin Experience
+
+1. **Roadmap Editor**:
+   - Toggle "Is Virtual Session" 
+   - Enter Zoom link, Meeting ID, Passcode
+   - Set session start time and duration
+   - Save → Students see meeting info during DURING_FORGE
+
+---
+
+## Security Considerations
+
+1. **Meeting links only visible during DURING_FORGE mode**
+   - PRE_FORGE: Meeting info hidden/redacted
+   - DURING_FORGE: Full details visible
+   - POST_FORGE: Links become inactive/archived
+
+2. **Passcode hidden by default**
+   - Reveal button to show passcode
+   - Copy button works without revealing
+
+3. **Admin Testing Mode Integration**
+   - Virtual meeting details visible when simulating DURING_FORGE
+
+---
+
+## Expected Results
+
+After implementation:
+
+1. **Admins** can add Zoom meeting details to any roadmap day
+2. **Students** see prominent "Join Zoom" buttons for virtual sessions
+3. **Notifications** alert students 30/15/5 minutes before sessions
+4. **Calendar** integration allows one-click adds to Google/Apple calendars
+5. **Testing** works via Admin Testing Mode without waiting for real dates
