@@ -446,6 +446,28 @@
   }
 }
 
+@keyframes shimmer-flow {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+}
+
+/* Progress bar with flowing color animation */
+.progress-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--forge-gold)) 0%,
+    hsl(var(--forge-yellow)) 40%,
+    hsl(var(--forge-orange)) 60%,
+    hsl(var(--forge-gold)) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-flow 2s ease-in-out infinite;
+}
+
 /* Timeline hover animation for dotted lines */
 @keyframes timeline-dot-flow {
   0% {
