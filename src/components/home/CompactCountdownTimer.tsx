@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { cn } from '@/lib/utils';
 
 interface TimeLeft {
   days: number;
@@ -18,47 +17,27 @@ interface CompactCountdownTimerProps {
   } | null;
 }
 
-// TimeUnit with color inversion based on whether progress has passed
-const TimeUnit = ({ 
-  value, 
-  label,
-  isPassed 
-}: { 
-  value: number; 
-  label: string;
-  isPassed?: boolean;
-}) => (
+// TimeUnit with mix-blend-mode for automatic contrast
+const TimeUnit = ({ value, label }: { value: number; label: string }) => (
   <div className="flex flex-col items-center relative z-10">
-    <span className={cn(
-      "text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums transition-colors duration-300",
-      isPassed 
-        ? "text-black" // Dark text on gold background
-        : "text-foreground" // Light text on dark background
-    )}>
+    <span className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums text-white mix-blend-difference">
       {value.toString().padStart(2, '0')}
     </span>
-    <span className={cn(
-      "text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest mt-0.5 transition-colors duration-300",
-      isPassed ? "text-black/70" : "text-muted-foreground"
-    )}>
+    <span className="text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest mt-0.5 text-white/80 mix-blend-difference">
       {label}
     </span>
   </div>
 );
 
-// Separator with color inversion
-const Separator = ({ isPassed }: { isPassed?: boolean }) => (
-  <span className={cn(
-    "text-xl sm:text-2xl font-light transition-colors duration-300",
-    isPassed ? "text-black/40" : "text-muted-foreground/40"
-  )}>:</span>
+// Separator with mix-blend-mode
+const Separator = () => (
+  <span className="text-xl sm:text-2xl font-light text-white/50 mix-blend-difference">:</span>
 );
 
 export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ edition }) => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   // Calculate progress based on days remaining (30-day visual scale)
-  // This ensures smooth color transitions that align with element positions
   const progressPercent = useMemo(() => {
     if (!edition?.forge_start_date) return 0;
     
@@ -79,31 +58,6 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
     
     return Math.max(0, Math.min(100, progress));
   }, [edition?.forge_start_date, timeLeft.days]);
-
-  // Calibrated position thresholds that match actual visual layout
-  // These values are tuned so text color changes when gold fill reaches each element
-  const positions = {
-    city: 15,      // City section ends at ~15%
-    days: 35,      // Days number center at ~35%
-    sep1: 42,      // First separator
-    hours: 50,     // Hours number center at ~50%
-    sep2: 58,      // Second separator
-    minutes: 68,   // Minutes number center at ~68%
-    sep3: 78,      // Third separator
-    seconds: 88,   // Seconds number center at ~88%
-  };
-
-  // Text turns black when progress passes its position
-  const cityPassed = progressPercent >= positions.city;
-  const daysPassed = progressPercent >= positions.days;
-  const hoursPassed = progressPercent >= positions.hours;
-  const minutesPassed = progressPercent >= positions.minutes;
-  const secondsPassed = progressPercent >= positions.seconds;
-
-  // Separator thresholds
-  const sep1Passed = progressPercent >= positions.sep1;
-  const sep2Passed = progressPercent >= positions.sep2;
-  const sep3Passed = progressPercent >= positions.sep3;
 
   useEffect(() => {
     if (!edition?.forge_start_date) return;
@@ -149,20 +103,11 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
       {/* Main container with split layout */}
       <div className="relative z-[2] flex flex-col sm:flex-row">
         {/* Left: Message section with city */}
-        <div className={cn(
-          "flex-shrink-0 sm:w-32 md:w-36 flex flex-col justify-center px-4 py-3 sm:py-4 border-b sm:border-b-0 sm:border-r border-border/20 transition-colors duration-300",
-          cityPassed ? "border-black/10" : "border-border/20"
-        )}>
-          <span className={cn(
-            "text-[10px] sm:text-xs uppercase tracking-widest transition-colors duration-300",
-            cityPassed ? "text-black/60" : "text-muted-foreground"
-          )}>
+        <div className="flex-shrink-0 sm:w-32 md:w-36 flex flex-col justify-center px-4 py-3 sm:py-4 border-b sm:border-b-0 sm:border-r border-white/10">
+          <span className="text-[10px] sm:text-xs uppercase tracking-widest text-white/60 mix-blend-difference">
             See you in
           </span>
-          <span className={cn(
-            "text-base sm:text-lg md:text-xl font-bold mt-0.5 transition-colors duration-300",
-            cityPassed ? "text-black" : "text-foreground"
-          )}>
+          <span className="text-base sm:text-lg md:text-xl font-bold mt-0.5 text-white mix-blend-difference">
             {edition?.city || 'The Forge'}
           </span>
         </div>
@@ -170,29 +115,13 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
         {/* Right: Timer section */}
         <div className="flex-1 flex items-center justify-center gap-3 sm:gap-4 md:gap-5 
                         py-3 sm:py-4 px-4">
-          <TimeUnit 
-            value={timeLeft.days} 
-            label="Days" 
-            isPassed={daysPassed}
-          />
-          <Separator isPassed={sep1Passed} />
-          <TimeUnit 
-            value={timeLeft.hours} 
-            label="Hours" 
-            isPassed={hoursPassed}
-          />
-          <Separator isPassed={sep2Passed} />
-          <TimeUnit 
-            value={timeLeft.minutes} 
-            label="Min" 
-            isPassed={minutesPassed}
-          />
-          <Separator isPassed={sep3Passed} />
-          <TimeUnit 
-            value={timeLeft.seconds} 
-            label="Sec" 
-            isPassed={secondsPassed}
-          />
+          <TimeUnit value={timeLeft.days} label="Days" />
+          <Separator />
+          <TimeUnit value={timeLeft.hours} label="Hours" />
+          <Separator />
+          <TimeUnit value={timeLeft.minutes} label="Min" />
+          <Separator />
+          <TimeUnit value={timeLeft.seconds} label="Sec" />
         </div>
       </div>
     </div>
