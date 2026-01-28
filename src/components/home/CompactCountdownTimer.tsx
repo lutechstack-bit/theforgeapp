@@ -18,39 +18,39 @@ interface CompactCountdownTimerProps {
   } | null;
 }
 
-// TimeUnit with glass effect based on progress position
+// TimeUnit with color inversion based on whether progress has passed
 const TimeUnit = ({ 
   value, 
   label,
-  isInProgress 
+  isPassed 
 }: { 
   value: number; 
   label: string;
-  isInProgress?: boolean;
+  isPassed?: boolean;
 }) => (
   <div className="flex flex-col items-center relative z-10">
     <span className={cn(
       "text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums transition-colors duration-300",
-      isInProgress 
-        ? "text-black/90" // Dark text when gradient is behind
+      isPassed 
+        ? "text-black" // Dark text on gold background
         : "text-foreground" // Light text on dark background
     )}>
       {value.toString().padStart(2, '0')}
     </span>
     <span className={cn(
       "text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest mt-0.5 transition-colors duration-300",
-      isInProgress ? "text-black/70" : "text-muted-foreground"
+      isPassed ? "text-black/70" : "text-muted-foreground"
     )}>
       {label}
     </span>
   </div>
 );
 
-// Separator with glass effect
-const Separator = ({ isInProgress }: { isInProgress?: boolean }) => (
+// Separator with color inversion
+const Separator = ({ isPassed }: { isPassed?: boolean }) => (
   <span className={cn(
     "text-xl sm:text-2xl font-light transition-colors duration-300",
-    isInProgress ? "text-black/40" : "text-muted-foreground/40"
+    isPassed ? "text-black/40" : "text-muted-foreground/40"
   )}>:</span>
 );
 
@@ -72,10 +72,17 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
     return Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
   }, [edition?.forge_start_date, timeLeft.seconds]);
 
-  // Normalized position (0 to 1) for determining which elements are "in progress"
-  const progressPosition = useMemo(() => {
-    return progressPercent / 100;
-  }, [progressPercent]);
+  // Determine if each section is "passed" by the progress
+  const cityPassed = progressPercent > 10;
+  const daysPassed = progressPercent > 30;
+  const hoursPassed = progressPercent > 45;
+  const minutesPassed = progressPercent > 60;
+  const secondsPassed = progressPercent > 75;
+
+  // Separator thresholds (between elements)
+  const sep1Passed = progressPercent > 37; // Between days and hours
+  const sep2Passed = progressPercent > 52; // Between hours and min
+  const sep3Passed = progressPercent > 67; // Between min and sec
 
   useEffect(() => {
     if (!edition?.forge_start_date) return;
@@ -103,19 +110,15 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-border/30">
-      {/* Sweeping gradient background - the "running" progress effect */}
+      {/* Solid color progress fill */}
       <div 
-        className="absolute inset-0 z-[1] pointer-events-none countdown-wave"
+        className="absolute inset-0 z-[1] pointer-events-none transition-all duration-500"
         style={{
           background: `linear-gradient(
             90deg,
-            transparent 0%,
-            transparent ${Math.max(0, progressPercent - 15)}%,
-            hsl(var(--forge-gold) / 0.6) ${progressPercent - 5}%,
-            hsl(var(--forge-yellow) / 0.9) ${progressPercent}%,
-            hsl(var(--forge-orange) / 0.7) ${progressPercent + 8}%,
-            hsl(var(--forge-gold) / 0.4) ${progressPercent + 15}%,
-            transparent ${progressPercent + 25}%,
+            hsl(var(--forge-gold)) 0%,
+            hsl(var(--forge-gold)) ${progressPercent}%,
+            transparent ${progressPercent}%,
             transparent 100%
           )`,
         }}
@@ -124,42 +127,49 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
       {/* Main container with split layout */}
       <div className="relative z-[2] flex flex-col sm:flex-row">
         {/* Left: Message section with city */}
-        <div className="flex-shrink-0 sm:w-32 md:w-36 bg-gradient-to-br from-background to-card/80 
-                        flex flex-col justify-center px-4 py-3 sm:py-4 border-b sm:border-b-0 sm:border-r border-border/20">
-          <span className="text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground">
+        <div className={cn(
+          "flex-shrink-0 sm:w-32 md:w-36 flex flex-col justify-center px-4 py-3 sm:py-4 border-b sm:border-b-0 sm:border-r border-border/20 transition-colors duration-300",
+          cityPassed ? "border-black/10" : "border-border/20"
+        )}>
+          <span className={cn(
+            "text-[10px] sm:text-xs uppercase tracking-widest transition-colors duration-300",
+            cityPassed ? "text-black/60" : "text-muted-foreground"
+          )}>
             See you in
           </span>
-          <span className="text-base sm:text-lg md:text-xl font-bold text-foreground mt-0.5">
+          <span className={cn(
+            "text-base sm:text-lg md:text-xl font-bold mt-0.5 transition-colors duration-300",
+            cityPassed ? "text-black" : "text-foreground"
+          )}>
             {edition?.city || 'The Forge'}
           </span>
         </div>
         
-        {/* Right: Timer section with glass effect on numbers */}
+        {/* Right: Timer section */}
         <div className="flex-1 flex items-center justify-center gap-3 sm:gap-4 md:gap-5 
-                        py-3 sm:py-4 px-4
-                        bg-gradient-to-br from-card/40 to-muted/20">
+                        py-3 sm:py-4 px-4">
           <TimeUnit 
             value={timeLeft.days} 
             label="Days" 
-            isInProgress={progressPosition > 0.20 && progressPosition < 0.40}
+            isPassed={daysPassed}
           />
-          <Separator isInProgress={progressPosition > 0.35 && progressPosition < 0.45} />
+          <Separator isPassed={sep1Passed} />
           <TimeUnit 
             value={timeLeft.hours} 
             label="Hours" 
-            isInProgress={progressPosition > 0.35 && progressPosition < 0.55}
+            isPassed={hoursPassed}
           />
-          <Separator isInProgress={progressPosition > 0.50 && progressPosition < 0.60} />
+          <Separator isPassed={sep2Passed} />
           <TimeUnit 
             value={timeLeft.minutes} 
             label="Min" 
-            isInProgress={progressPosition > 0.50 && progressPosition < 0.70}
+            isPassed={minutesPassed}
           />
-          <Separator isInProgress={progressPosition > 0.65 && progressPosition < 0.75} />
+          <Separator isPassed={sep3Passed} />
           <TimeUnit 
             value={timeLeft.seconds} 
             label="Sec" 
-            isInProgress={progressPosition > 0.65 && progressPosition < 0.85}
+            isPassed={secondsPassed}
           />
         </div>
       </div>
