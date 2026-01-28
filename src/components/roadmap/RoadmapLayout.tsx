@@ -2,12 +2,15 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Loader2, Anchor, Sparkles } from 'lucide-react';
 import { useRoadmapData } from '@/hooks/useRoadmapData';
+import { useAdminCheck } from '@/hooks/useAdminCheck';
 import RoadmapHero from '@/components/roadmap/RoadmapHero';
 import QuickActionsBar from '@/components/roadmap/QuickActionsBar';
 import RoadmapSidebar from '@/components/roadmap/RoadmapSidebar';
 import FloatingHighlightsButton from '@/components/roadmap/FloatingHighlightsButton';
+import AdminTestingPanel from '@/components/admin/AdminTestingPanel';
 
 const RoadmapLayout: React.FC = () => {
+  const { isAdmin } = useAdminCheck();
   const {
     profile,
     cohortName,
@@ -95,6 +98,9 @@ const RoadmapLayout: React.FC = () => {
 
       {/* Floating Highlights Button - Mobile/Tablet only */}
       <FloatingHighlightsButton editionId={profile.edition_id} />
+      
+      {/* Admin Testing Panel - Admin only */}
+      {isAdmin && <AdminTestingPanel />}
     </div>
   );
 };

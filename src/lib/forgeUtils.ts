@@ -1,14 +1,26 @@
-type ForgeMode = 'PRE_FORGE' | 'DURING_FORGE' | 'POST_FORGE';
+export type ForgeMode = 'PRE_FORGE' | 'DURING_FORGE' | 'POST_FORGE';
+
+interface ForgeModeOptions {
+  simulatedMode?: ForgeMode | null;
+  simulatedDate?: Date | null;
+}
 
 export function calculateForgeMode(
   forgeStartDate: string | null | undefined,
-  forgeEndDate: string | null | undefined
+  forgeEndDate: string | null | undefined,
+  options?: ForgeModeOptions
 ): ForgeMode {
+  // If admin has simulation active, use that mode directly
+  if (options?.simulatedMode) {
+    return options.simulatedMode;
+  }
+
   if (!forgeStartDate) {
     return 'PRE_FORGE';
   }
 
-  const now = new Date();
+  // Use simulated date if provided, otherwise use real time
+  const now = options?.simulatedDate || new Date();
   const startDate = new Date(forgeStartDate);
   
   // Set start date to beginning of day for comparison

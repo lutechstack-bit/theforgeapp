@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminTestingSafe } from '@/contexts/AdminTestingContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useMemo } from 'react';
 import type { Database } from '@/integrations/supabase/types';
@@ -15,6 +16,7 @@ export const cohortDisplayNames: Record<CohortType, string> = {
 
 export const useRoadmapData = () => {
   const { profile, edition, forgeMode, user } = useAuth();
+  const { isTestingMode, simulatedDayNumber, simulatedForgeMode } = useAdminTestingSafe();
   const queryClient = useQueryClient();
   const userCohortType = (edition?.cohort_type as CohortType) || 'FORGE';
   const cohortName = cohortDisplayNames[userCohortType];
@@ -141,6 +143,25 @@ export const useRoadmapData = () => {
 
   const getDayStatus = (day: RoadmapDay): 'completed' | 'current' | 'upcoming' | 'locked' => {
     if (!day.is_active) return 'locked';
+    
+    // Admin testing mode: use simulated day number for status calculation
+    if (isTestingMode && simulatedDayNumber !== null && simulatedForgeMode === 'DURING_FORGE') {
+      if (day.day_number < simulatedDayNumber) return 'completed';
+      if (day.day_number === simulatedDayNumber) return 'current';
+      return 'upcoming';
+    }
+    
+    // Admin testing: PRE_FORGE means all days are upcoming
+    if (isTestingMode && simulatedForgeMode === 'PRE_FORGE') {
+      return 'upcoming';
+    }
+    
+    // Admin testing: POST_FORGE means all days are completed
+    if (isTestingMode && simulatedForgeMode === 'POST_FORGE') {
+      return 'completed';
+    }
+    
+    // Normal calculation based on dates
     if (!day.date) {
       const activeDays = roadmapDays?.filter(d => d.is_active) || [];
       if (activeDays[0]?.id === day.id) return 'current';
