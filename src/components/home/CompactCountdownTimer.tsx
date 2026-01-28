@@ -58,8 +58,8 @@ const CountdownContent = ({
   tone: 'fill' | 'base';
   showBorder: boolean;
 }) => {
-  const textClass = tone === 'fill' ? 'text-white' : 'text-black';
-  const labelClass = tone === 'fill' ? 'text-white/70' : 'text-black/70';
+  const textClass = 'text-black';
+  const labelClass = 'text-black/70';
   const borderClass = showBorder ? 'border-r border-white/10' : '';
 
   return (
@@ -150,15 +150,15 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
       {/* Base background (cream/light - visible on remaining side) */}
       <div className="absolute inset-0 bg-forge-cream" />
       
-      {/* Filled background (charcoal/dark - visible on filled side) */}
+      {/* Filled background (gold gradient - visible on filled side) */}
       <div 
-        className="absolute inset-0 bg-forge-charcoal transition-all duration-500"
+        className="absolute inset-0 bg-gradient-to-r from-forge-orange via-forge-gold to-forge-yellow transition-all duration-500"
         style={{ width: 'var(--p)' }}
       />
       
       {/* Progress edge line (crisp vertical divider) */}
       <div 
-        className="absolute top-0 bottom-0 w-px bg-white/30 z-10 transition-all duration-500"
+        className="absolute top-0 bottom-0 w-px bg-black/20 z-10 transition-all duration-500"
         style={{ left: 'var(--p)' }}
       />
       
