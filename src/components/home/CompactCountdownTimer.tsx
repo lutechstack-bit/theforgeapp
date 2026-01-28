@@ -49,43 +49,41 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
     return () => clearInterval(timer);
   }, [edition?.forge_start_date]);
 
-  // Ultra compact time block
+  // Premium flip-clock time block
   const TimeBlock = ({ value, label, prevValue }: { value: number; label: string; prevValue: number }) => {
     const hasChanged = value !== prevValue;
     
     return (
       <div className="flex flex-col items-center">
-        <div 
-          className={cn(
-            "relative w-9 h-10 sm:w-10 sm:h-11 rounded-md overflow-hidden",
-            "bg-gradient-to-b from-primary to-accent",
-            "shadow-md shadow-primary/25",
-            "border border-primary/30"
-          )}
-        >
-          {/* Top shine */}
-          <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent" />
+        {/* Flip-clock block */}
+        <div className={cn(
+          "relative w-11 h-14 xs:w-12 xs:h-15 sm:w-14 sm:h-18 md:w-16 md:h-20 rounded-lg overflow-hidden",
+          "bg-gradient-to-b from-forge-gold to-forge-orange",
+          "border border-forge-yellow/40",
+          "shadow-lg shadow-forge-gold/30"
+        )}>
+          {/* Top half shine */}
+          <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent" />
           
           {/* Center divider line */}
-          <div className="absolute inset-x-0 top-1/2 h-px bg-black/25" />
+          <div className="absolute inset-x-0 top-1/2 h-px bg-black/30 z-10" />
           
           {/* Number */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span 
-              className={cn(
-                "text-base sm:text-lg font-bold text-primary-foreground tabular-nums drop-shadow-md",
-                "transition-transform duration-200",
-                hasChanged && "scale-105"
-              )}
-            >
+          <div className={cn(
+            "absolute inset-0 flex items-center justify-center",
+            hasChanged && "animate-tick"
+          )}>
+            <span className="text-xl xs:text-2xl sm:text-2xl md:text-3xl font-black text-black tabular-nums drop-shadow-sm">
               {value.toString().padStart(2, '0')}
             </span>
           </div>
           
           {/* Bottom shadow */}
-          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/15 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/20 to-transparent" />
         </div>
-        <span className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wider mt-1 font-medium">
+        
+        {/* Label */}
+        <span className="text-[9px] xs:text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mt-1.5 font-semibold">
           {label}
         </span>
       </div>
@@ -93,37 +91,33 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
   };
 
   return (
-    <div className="relative overflow-hidden rounded-lg glass-card reveal-section">
-      {/* Subtle background glow */}
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-accent/10" />
-      
-      <div className="relative px-3 py-2 sm:px-4 sm:py-2.5">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-3">
-          {/* Left: Title with icon */}
-          <div className="flex items-center gap-2 animate-fade-in">
-            <div className="p-1 sm:p-1.5 rounded-md bg-primary/20 shrink-0">
-              <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
-            </div>
-            <div className="text-center sm:text-left">
-              <p className="text-[10px] sm:text-xs font-medium text-muted-foreground">
-                {edition?.city ? `${edition.city}` : 'Forge'} starts in
-              </p>
-            </div>
+    <div className="relative overflow-hidden rounded-xl border border-border/50">
+      {/* Split background container */}
+      <div className="flex flex-col sm:flex-row">
+        {/* Left: Dark section with message */}
+        <div className="flex-shrink-0 bg-gradient-to-br from-card via-card to-muted/50 px-4 py-3 sm:py-4 flex items-center justify-center sm:justify-start gap-3">
+          <div className="p-2 rounded-lg bg-forge-gold/20">
+            <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-forge-yellow" />
           </div>
-
-          {/* Center: Timer blocks */}
-          <div className="flex items-center gap-1 sm:gap-1.5">
-            <TimeBlock value={timeLeft.days} label="Days" prevValue={prevTimeLeft.days} />
-            <span className="text-muted-foreground/50 text-sm font-light pb-3">:</span>
-            <TimeBlock value={timeLeft.hours} label="Hrs" prevValue={prevTimeLeft.hours} />
-            <span className="text-muted-foreground/50 text-sm font-light pb-3">:</span>
-            <TimeBlock value={timeLeft.minutes} label="Min" prevValue={prevTimeLeft.minutes} />
-            <span className="text-muted-foreground/50 text-sm font-light pb-3">:</span>
-            <TimeBlock value={timeLeft.seconds} label="Sec" prevValue={prevTimeLeft.seconds} />
-          </div>
-
+          <p className="text-sm sm:text-base font-medium text-foreground">
+            {edition?.city ? `${edition.city}` : 'Forge'} starts in
+          </p>
+        </div>
+        
+        {/* Right: Timer section */}
+        <div className="flex-1 flex items-center justify-center gap-1.5 xs:gap-2 sm:gap-3 px-3 sm:px-4 py-3 sm:py-4 bg-gradient-to-br from-muted/30 to-card/50">
+          <TimeBlock value={timeLeft.days} label="DAYS" prevValue={prevTimeLeft.days} />
+          <span className="text-forge-gold/50 text-lg sm:text-xl font-light pb-5">:</span>
+          <TimeBlock value={timeLeft.hours} label="HRS" prevValue={prevTimeLeft.hours} />
+          <span className="text-forge-gold/50 text-lg sm:text-xl font-light pb-5">:</span>
+          <TimeBlock value={timeLeft.minutes} label="MIN" prevValue={prevTimeLeft.minutes} />
+          <span className="text-forge-gold/50 text-lg sm:text-xl font-light pb-5">:</span>
+          <TimeBlock value={timeLeft.seconds} label="SEC" prevValue={prevTimeLeft.seconds} />
         </div>
       </div>
+      
+      {/* Diagonal accent line (visible on sm+) */}
+      <div className="hidden sm:block absolute top-0 bottom-0 left-[35%] w-px bg-gradient-to-b from-transparent via-forge-gold/30 to-transparent transform -skew-x-12" />
     </div>
   );
 };

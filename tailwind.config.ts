@@ -135,6 +135,11 @@ export default {
           "0%": { transform: "translateY(-100vh) rotate(0deg)", opacity: "1" },
           "100%": { transform: "translateY(100vh) rotate(720deg)", opacity: "0" },
         },
+        "tick": {
+          "0%": { transform: "scaleY(1)" },
+          "50%": { transform: "scaleY(0.95)" },
+          "100%": { transform: "scaleY(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -147,6 +152,7 @@ export default {
         "stack-backward-out": "stack-backward-out 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards",
         "stack-backward-in": "stack-backward-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards",
         "confetti-fall": "confetti-fall 3s linear forwards",
+        "tick": "tick 0.2s ease-out",
       },
     },
   },
