@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfileData } from '@/hooks/useProfileData';
 import { useUserWorks, UserWork, CreateWorkInput } from '@/hooks/useUserWorks';
@@ -29,10 +29,24 @@ const Profile: React.FC = () => {
   const { works, createWork, updateWork, deleteWork } = useUserWorks();
   const { portfolio, isPublic, getPortfolioUrl, createOrUpdatePortfolio } = usePublicPortfolio();
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [addWorkOpen, setAddWorkOpen] = useState(false);
   const [editingWork, setEditingWork] = useState<UserWork | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
+
+  const sectionParam = searchParams.get('section');
+
+  // Auto-open edit sheet if action=edit is in URL
+  useEffect(() => {
+    const actionParam = searchParams.get('action');
+    if (actionParam === 'edit') {
+      setEditSheetOpen(true);
+      // Clear the params to prevent re-triggering on refresh
+      searchParams.delete('action');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const isVerified = profile?.ky_form_completed && profile?.payment_status === 'BALANCE_PAID';
 
@@ -153,6 +167,7 @@ const Profile: React.FC = () => {
         onOpenChange={setEditSheetOpen}
         profile={profile}
         onSaved={handleProfileSaved}
+        scrollToSection={sectionParam}
       />
 
       <AddWorkModal
