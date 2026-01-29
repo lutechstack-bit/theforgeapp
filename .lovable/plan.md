@@ -1,217 +1,112 @@
 
 
-# Mobile Navigation & Perks Access — User-Friendly Redesign
+# Fix: Hide Virtual Sessions for FORGE_WRITING Cohort
 
-## Analysis & Recommendation
+## The Issue
 
-After reviewing your app structure, here's the most **friction-free** approach:
+The Online Forge Zoom integration feature is fully implemented, but it currently doesn't account for cohort-specific behavior:
 
-| Page | Desktop | Mobile (Current) | Mobile (Proposed) |
-|------|---------|------------------|-------------------|
-| Home | ✅ | ✅ | ✅ |
-| Roadmap | ✅ SideNav | ❌ | ✅ Add to BottomNav |
-| Perks | ✅ SideNav | ❌ | ✅ Access via Profile |
-| Learn | ✅ | ✅ | ✅ |
-| Events | ✅ | ✅ | ✅ |
-| Community | ✅ | ✅ BottomNav | Move to Home/Secondary |
-| Profile | ✅ | ✅ | ✅ |
+| Cohort | Online Sessions (Days 1-3) | Physical Sessions |
+|--------|---------------------------|-------------------|
+| **FORGE** (Filmmaking) | ✅ Yes - Days 1-3 virtual | Days 4+ physical |
+| **FORGE_CREATORS** | ✅ Yes - Days 1-3 virtual | Days 4+ physical |
+| **FORGE_WRITING** | ❌ No - Skip online stage | All days physical |
 
-### Why This Approach?
+**Current Behavior**: If virtual sessions are configured for Days 1-3, ALL cohorts (including Writers) would see "Join Now" buttons and online session indicators.
 
-1. **Roadmap in BottomNav** — High-frequency action for enrolled students; needs quick access
-2. **Perks inside Profile** — Logically connected to "your" acceptance, bag, and membership status
-3. **Community → Secondary** — Can be accessed via Home page or SideNav; less frequent action
-4. **5 items = Optimal UX** — More than 5 cramped icons reduces tap accuracy and looks cluttered
+**Expected Behavior**: FORGE_WRITING students should never see virtual session UI elements (no "Online" badge, no "Join Now" button, no meeting details).
 
 ---
 
-## 1. Mobile Bottom Navigation Update
+## Solution: UI-Level Cohort Filtering
 
-### New Navigation Order (5 items)
-| Position | Icon | Label | Route |
-|----------|------|-------|-------|
-| 1 | Home | Home | `/` |
-| 2 | Map | Roadmap | `/roadmap` |
-| 3 | BookOpen | Learn | `/learn` |
-| 4 | Calendar | Events | `/events` |
-| 5 | User | Profile | `/profile` |
+Since the roadmap uses a shared template (no `cohort_type` field on `roadmap_days`), we'll add cohort-based filtering at the UI component level.
 
-**Change**: Replace Community with Roadmap
-
-### File: `src/components/layout/BottomNav.tsx`
+### Logic
 ```tsx
-import { Home, Map, BookOpen, Calendar, User } from 'lucide-react';
-
-const navItems = [
-  { to: '/', icon: Home, label: 'Home' },
-  { to: '/roadmap', icon: Map, label: 'Roadmap' },
-  { to: '/learn', icon: BookOpen, label: 'Learn' },
-  { to: '/events', icon: Calendar, label: 'Events' },
-  { to: '/profile', icon: User, label: 'Profile' },
-];
+// Virtual sessions only apply to FORGE and FORGE_CREATORS
+const showVirtualFeatures = day.is_virtual && cohortType !== 'FORGE_WRITING';
 ```
 
 ---
 
-## 2. Perks Access from Profile Page
+## Files to Update
 
-Add a **premium "My Perks" card** at the top of the Profile page that links to `/perks`.
-
-### Visual Design
-```text
-┌─────────────────────────────────────────┐
-│  🎁  My Perks & Acceptance Letter       │
-│      View your Forge Bag & benefits  →  │
-└─────────────────────────────────────────┘
+### 1. `src/components/roadmap/JourneyCard.tsx`
+**Current (Line 161):**
+```tsx
+{day.is_virtual ? (
+  <span className="...">Online</span>
+) : ...}
 ```
 
-### Implementation
-Create a new component and add it to Profile page:
+**Updated:**
+```tsx
+{day.is_virtual && cohortType !== 'FORGE_WRITING' ? (
+  <span className="...">Online</span>
+) : ...}
+```
+
+**Current (Line 230):**
+```tsx
+{day.is_virtual && day.meeting_url && status === 'current' && forgeMode === 'DURING_FORGE' && (
+  <Button>Join Now</Button>
+)}
+```
+
+**Updated:**
+```tsx
+{day.is_virtual && day.meeting_url && status === 'current' && forgeMode === 'DURING_FORGE' && cohortType !== 'FORGE_WRITING' && (
+  <Button>Join Now</Button>
+)}
+```
+
+### 2. `src/components/roadmap/DayDetailModal.tsx`
+Add cohort check before rendering `SessionMeetingCard`:
 
 ```tsx
-// New: PerksQuickAccess component
-<Link to="/perks">
-  <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 hover:border-primary/40 transition-all group">
-    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-      <Gift className="h-5 w-5 text-primary" />
-    </div>
-    <div className="flex-1">
-      <h3 className="font-semibold text-foreground text-sm">My Perks & Acceptance</h3>
-      <p className="text-xs text-muted-foreground">View your Forge Bag & benefits</p>
-    </div>
-    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-  </div>
-</Link>
+{day.is_virtual && day.meeting_url && cohortType !== 'FORGE_WRITING' && (
+  <SessionMeetingCard ... />
+)}
 ```
 
-### Placement in Profile Page
-Add immediately after ProfileHero (top of content area) for maximum visibility.
-
----
-
-## 3. Community Access Points (Secondary)
-
-Since Community is being removed from BottomNav, ensure it's accessible via:
-
-### A. WhatYouCanDoHere Component (Already exists)
-The existing component already has Community as a feature card — new users will discover it here.
-
-### B. Add to Home Page Header (Optional)
-A small "Community" quick-access button in the home page for returning users.
-
----
-
-## 4. Shareable Acceptance Letter
-
-### Current Issue
-Share button only shares text — no visual image.
-
-### Solution
-Create a **shareable acceptance card** using `html2canvas`:
-
-1. **Generate branded PNG image** of the acceptance letter
-2. **Use Web Share API** to share image directly to social media
-3. **Download fallback** for desktop browsers
-
-### New Component: `AcceptanceShareCard.tsx`
+### 3. `src/hooks/useSessionNotifications.ts`
+Add cohort check so Writers don't receive "session starting soon" notifications:
 
 ```tsx
-import html2canvas from 'html2canvas';
-
-const AcceptanceShareCard = ({ userName, cohortType, onClose }) => {
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const handleDownload = async () => {
-    if (!cardRef.current) return;
-    const canvas = await html2canvas(cardRef.current, {
-      backgroundColor: '#0a0a0a',
-      scale: 2,
-    });
-    const link = document.createElement('a');
-    link.download = 'forge-acceptance.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  };
-
-  const handleShare = async () => {
-    if (!cardRef.current) return;
-    const canvas = await html2canvas(cardRef.current, { scale: 2 });
-    const blob = await new Promise<Blob>((resolve) => 
-      canvas.toBlob((b) => resolve(b!), 'image/png')
-    );
-    const file = new File([blob], 'forge-acceptance.png', { type: 'image/png' });
-    
-    if (navigator.canShare?.({ files: [file] })) {
-      await navigator.share({
-        text: 'I got accepted into Forge! 🎬 #ForgeAccepted',
-        files: [file],
-      });
-    } else {
-      handleDownload();
-    }
-  };
-
-  return (
-    <Dialog>
-      {/* Shareable card design */}
-      <div ref={cardRef} className="p-8 bg-gradient-to-br from-card to-background">
-        <h1>FORGE</h1>
-        <p>Letter of Acceptance</p>
-        <p>Congratulations, {userName}!</p>
-        <p>Forge {cohortType} Cohort 2026</p>
-        <p>#ForgeAccepted</p>
-      </div>
-      
-      <div className="flex gap-3">
-        <Button onClick={handleDownload}>Download PNG</Button>
-        <Button onClick={handleShare}>Share</Button>
-      </div>
-    </Dialog>
-  );
-};
+// Only track virtual sessions for FORGE and FORGE_CREATORS
+if (cohortType === 'FORGE_WRITING') {
+  return { sessionStatus: 'none', currentSession: null };
+}
 ```
+
+### 4. `src/components/home/MasterNotificationCenter.tsx`
+Ensure session alerts are hidden for Writing cohort.
 
 ---
 
-## File Changes Summary
+## Summary of Changes
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/components/layout/BottomNav.tsx` | UPDATE | Replace Community with Roadmap |
-| `src/pages/Profile.tsx` | UPDATE | Add Perks quick-access card |
-| `src/components/profile/PerksQuickAccess.tsx` | CREATE | New component for Perks link |
-| `src/pages/Perks.tsx` | UPDATE | Add functional share with image |
-| `src/components/perks/AcceptanceShareCard.tsx` | CREATE | Shareable acceptance image modal |
-
----
-
-## Visual Summary
-
-### Mobile Bottom Nav (After)
-```text
-┌─────────────────────────────────────────┐
-│  🏠     🗺️      📚      📅      👤      │
-│ Home  Roadmap  Learn  Events  Profile   │
-└─────────────────────────────────────────┘
-```
-
-### Profile Page (New Perks Card)
-```text
-┌─────────────────────────────────────────┐
-│ [Profile Hero]                          │
-├─────────────────────────────────────────┤
-│ 🎁 My Perks & Acceptance Letter      →  │
-│    View your Forge Bag & benefits       │
-├─────────────────────────────────────────┤
-│ [About Section]                         │
-│ [Works Section]                         │
-│ ...                                     │
-└─────────────────────────────────────────┘
-```
+| Component | Change |
+|-----------|--------|
+| `JourneyCard.tsx` | Hide "Online" badge and "Join Now" button for FORGE_WRITING |
+| `DayDetailModal.tsx` | Hide meeting details card for FORGE_WRITING |
+| `useSessionNotifications.ts` | Skip session tracking for FORGE_WRITING |
+| `MasterNotificationCenter.tsx` | Hide session alerts for FORGE_WRITING |
 
 ---
 
-## Dependency Note
+## Result
 
-For image generation, we'll use `html2canvas` which is included with the existing `html2pdf.js` package. No additional dependencies needed.
+After this fix:
+
+| Feature | FORGE | FORGE_CREATORS | FORGE_WRITING |
+|---------|-------|----------------|---------------|
+| "Online" badge on Days 1-3 | ✅ | ✅ | ❌ Hidden |
+| "Join Now" button | ✅ | ✅ | ❌ Hidden |
+| Meeting details in modal | ✅ | ✅ | ❌ Hidden |
+| Session notifications | ✅ | ✅ | ❌ Disabled |
+| Calendar sync for sessions | ✅ | ✅ | ❌ Hidden |
+
+Writers will see the same roadmap days but treated as physical/in-person sessions only.
 
