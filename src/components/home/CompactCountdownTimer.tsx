@@ -31,10 +31,10 @@ const TimeUnit = ({
   labelClass: string;
 }) => (
   <div className="flex flex-col items-center">
-    <span className={cn("text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums", textClass)}>
+    <span className={cn("text-lg sm:text-2xl md:text-3xl font-bold tabular-nums", textClass)}>
       {value.toString().padStart(2, '0')}
     </span>
-    <span className={cn("text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest mt-0.5", labelClass)}>
+    <span className={cn("text-[7px] sm:text-[9px] md:text-xs uppercase tracking-widest mt-0.5", labelClass)}>
       {label}
     </span>
   </div>
@@ -42,7 +42,7 @@ const TimeUnit = ({
 
 // Separator - simple colon
 const Separator = ({ textClass }: { textClass: string }) => (
-  <span className={cn("text-xl sm:text-2xl font-light opacity-50", textClass)}>:</span>
+  <span className={cn("text-sm sm:text-lg font-light opacity-50", textClass)}>:</span>
 );
 
 // CountdownContent - renders the full layout with a specific tone
@@ -63,26 +63,25 @@ const CountdownContent = ({
   const borderClass = showBorder ? 'border-r border-white/10' : '';
 
   return (
-    <div className="flex flex-col sm:flex-row w-full">
-      {/* Left: Message section with city */}
+    <div className="flex flex-row w-full items-center">
+      {/* Left: City section - compact inline */}
       <div className={cn(
-        "flex-shrink-0 sm:w-32 md:w-36 flex flex-col justify-center px-4 py-3 sm:py-4",
-        "border-b sm:border-b-0",
-        showBorder ? "sm:border-r border-white/10" : ""
+        "flex-shrink-0 w-16 sm:w-28 md:w-32 flex flex-col justify-center px-2 sm:px-3 py-2 sm:py-3",
+        showBorder ? "border-r border-white/10" : ""
       )}>
-        <span className={cn("text-[10px] sm:text-xs uppercase tracking-widest", labelClass)}>
+        <span className={cn("text-[7px] sm:text-[9px] uppercase tracking-widest hidden sm:block", labelClass)}>
           See you in
         </span>
-        <span className={cn("text-base sm:text-lg md:text-xl font-bold mt-0.5", textClass)}>
+        <span className={cn("text-xs sm:text-base md:text-lg font-bold", textClass)}>
           {city || 'The Forge'}
         </span>
       </div>
       
-      {/* Right: Timer section */}
-      <div className="flex-1 flex items-center justify-center gap-3 sm:gap-4 md:gap-5 py-3 sm:py-4 px-4">
+      {/* Right: Timer section - tighter gaps */}
+      <div className="flex-1 flex items-center justify-center gap-1.5 sm:gap-3 md:gap-4 py-2 sm:py-3 px-2 sm:px-3">
         <TimeUnit value={timeLeft.days} label="Days" textClass={textClass} labelClass={labelClass} />
         <Separator textClass={textClass} />
-        <TimeUnit value={timeLeft.hours} label="Hours" textClass={textClass} labelClass={labelClass} />
+        <TimeUnit value={timeLeft.hours} label="Hrs" textClass={textClass} labelClass={labelClass} />
         <Separator textClass={textClass} />
         <TimeUnit value={timeLeft.minutes} label="Min" textClass={textClass} labelClass={labelClass} />
         <Separator textClass={textClass} />
