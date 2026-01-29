@@ -19,6 +19,7 @@ import {
   ProfileEditSheet,
   PrintableProfile,
 } from '@/components/profile';
+import { PerksQuickAccess } from '@/components/profile/PerksQuickAccess';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
@@ -91,6 +92,9 @@ const Profile: React.FC = () => {
         isOwner={true}
         onEdit={() => setEditSheetOpen(true)}
       />
+
+      {/* Perks Quick Access */}
+      <PerksQuickAccess />
 
       {/* About Section */}
       <AboutSection
