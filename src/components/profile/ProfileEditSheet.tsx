@@ -22,6 +22,7 @@ interface ProfileEditSheetProps {
   onOpenChange: (open: boolean) => void;
   profile: any;
   onSaved: () => void;
+  scrollToSection?: string | null;
 }
 
 export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
@@ -29,10 +30,13 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
   onOpenChange,
   profile,
   onSaved,
+  scrollToSection,
 }) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoSectionRef = useRef<HTMLDivElement>(null);
+  const instagramSectionRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '');
@@ -40,6 +44,25 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
   // Cropper state
   const [cropperOpen, setCropperOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string>('');
+
+  // Scroll to section when sheet opens with scrollToSection param
+  React.useEffect(() => {
+    if (open && scrollToSection) {
+      const timer = setTimeout(() => {
+        const refMap: Record<string, React.RefObject<HTMLDivElement>> = {
+          photo: photoSectionRef,
+          instagram: instagramSectionRef,
+        };
+        const targetRef = refMap[scrollToSection];
+        if (targetRef?.current) {
+          targetRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          targetRef.current.classList.add('highlight-pulse');
+          setTimeout(() => targetRef.current?.classList.remove('highlight-pulse'), 2000);
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [open, scrollToSection]);
   
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
@@ -200,7 +223,7 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
 
           <div className="space-y-6 py-6">
             {/* Avatar Upload Section */}
-            <div className="flex flex-col items-center gap-4">
+            <div ref={photoSectionRef} className="flex flex-col items-center gap-4 transition-all duration-500 rounded-lg p-2 -m-2">
               <div className="relative group">
                 <Avatar className="h-24 w-24 border-2 border-primary/30">
                   <AvatarImage src={avatarUrl} alt={formData.full_name} />
@@ -325,7 +348,7 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                 />
               </div>
 
-              <div className="space-y-2">
+              <div ref={instagramSectionRef} className="space-y-2 transition-all duration-500 rounded-lg p-2 -m-2">
                 <Label htmlFor="instagram">Instagram Handle</Label>
                 <Input
                   id="instagram"
