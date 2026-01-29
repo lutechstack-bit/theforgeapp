@@ -19,15 +19,21 @@ export interface SessionNotification {
 }
 
 export const useSessionNotifications = () => {
-  const { forgeMode } = useAuth();
+  const { forgeMode, edition } = useAuth();
   const { isTestingMode, simulatedForgeMode, simulatedDayNumber } = useAdminTestingSafe();
   const { roadmapDays, getDayStatus } = useRoadmapData();
 
   const effectiveForgeMode = isTestingMode && simulatedForgeMode ? simulatedForgeMode : forgeMode;
+  const cohortType = edition?.cohort_type;
 
   const sessionNotifications = useMemo(() => {
     // Only show notifications during DURING_FORGE mode
     if (effectiveForgeMode !== 'DURING_FORGE') {
+      return [];
+    }
+
+    // FORGE_WRITING cohort has no online sessions - skip virtual session tracking
+    if (cohortType === 'FORGE_WRITING') {
       return [];
     }
 
@@ -107,7 +113,7 @@ export const useSessionNotifications = () => {
 
     // Sort by session start time
     return notifications.sort((a, b) => a.sessionDate.getTime() - b.sessionDate.getTime());
-  }, [roadmapDays, effectiveForgeMode, getDayStatus]);
+  }, [roadmapDays, effectiveForgeMode, getDayStatus, cohortType]);
 
   // Get the most urgent notification (live or starting soon)
   const urgentNotification = useMemo(() => {

@@ -135,7 +135,7 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({
                 {day.call_time}
               </span>
             )}
-            {day.is_virtual ? (
+            {day.is_virtual && cohortType !== 'FORGE_WRITING' ? (
               <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-500/10 text-blue-400">
                 <Globe className="w-3.5 h-3.5" />
                 Online Session
@@ -158,8 +158,8 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({
         {/* Scrollable content */}
         <ScrollArea className="max-h-[50vh]">
           <div className="p-6 space-y-6">
-            {/* Virtual Meeting Card - Show prominently for virtual sessions during DURING_FORGE */}
-            {day.is_virtual && day.meeting_url && forgeMode === 'DURING_FORGE' && (
+            {/* Virtual Meeting Card - Show prominently for virtual sessions during DURING_FORGE (not for FORGE_WRITING) */}
+            {day.is_virtual && day.meeting_url && forgeMode === 'DURING_FORGE' && cohortType !== 'FORGE_WRITING' && (
               <SessionMeetingCard
                 meetingUrl={day.meeting_url}
                 meetingId={day.meeting_id}
@@ -172,8 +172,8 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({
               />
             )}
 
-            {/* Virtual Meeting Info Hidden Message for PRE_FORGE */}
-            {day.is_virtual && forgeMode === 'PRE_FORGE' && (
+            {/* Virtual Meeting Info Hidden Message for PRE_FORGE (not for FORGE_WRITING) */}
+            {day.is_virtual && forgeMode === 'PRE_FORGE' && cohortType !== 'FORGE_WRITING' && (
               <div className="p-4 rounded-xl bg-muted/30 border border-border/50 text-center">
                 <Globe className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
                 <p className="text-sm text-muted-foreground">
