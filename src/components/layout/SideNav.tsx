@@ -10,14 +10,15 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 const navItems = [
   { to: '/', icon: Home, label: 'Home' },
-  { to: '/events', icon: Calendar, label: 'Events' },
+  { to: '/roadmap', icon: Map, label: 'Roadmap' },
   { to: '/perks', icon: Gift, label: 'Perks' },
   { to: '/learn', icon: BookOpen, label: 'Learn' },
-  { to: '/roadmap', icon: Map, label: 'Roadmap' },
+  { to: '/events', icon: Calendar, label: 'Events' },
+  { to: '/community', icon: Users, label: 'Community' },
+  { to: '/profile', icon: Settings, label: 'Profile' },
 ];
 
 const bottomItems = [
-  { to: '/community', icon: Users, label: 'Community' },
   { to: '/updates', icon: Info, label: 'About Forge' },
 ];
 
@@ -149,13 +150,6 @@ export const SideNav: React.FC = () => {
             />
           ))}
 
-          {/* Settings */}
-          <NavItem 
-            to="/profile" 
-            icon={Settings} 
-            label="Settings" 
-            isActive={location.pathname === '/profile'} 
-          />
 
           {/* User Profile */}
           <div className={cn(
