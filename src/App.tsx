@@ -55,6 +55,7 @@ import AdminDocs from "./pages/admin/AdminDocs";
 import AdminJourneyStages from "./pages/admin/AdminJourneyStages";
 import AdminJourneyTasks from "./pages/admin/AdminJourneyTasks";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
+import AdminChangelog from "./pages/admin/AdminChangelog";
 import DynamicKYForm from "./pages/DynamicKYForm";
 import EventDetail from "./pages/EventDetail";
 
@@ -261,6 +262,7 @@ const AppRoutes = () => {
         <Route path="mentors" element={<AdminMentors />} />
         <Route path="alumni-testimonials" element={<AdminAlumniTestimonials />} />
         <Route path="docs" element={<AdminDocs />} />
+        <Route path="changelog" element={<AdminChangelog />} />
       </Route>
       
       {/* Catch-all */}

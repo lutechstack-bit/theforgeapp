@@ -98,6 +98,42 @@ export type Database = {
         }
         Relationships: []
       }
+      app_changelog: {
+        Row: {
+          added_by: string | null
+          category: string
+          created_at: string | null
+          date_added: string
+          description: string
+          id: string
+          status: string
+          title: string
+          version: string
+        }
+        Insert: {
+          added_by?: string | null
+          category?: string
+          created_at?: string | null
+          date_added?: string
+          description: string
+          id?: string
+          status?: string
+          title: string
+          version: string
+        }
+        Update: {
+          added_by?: string | null
+          category?: string
+          created_at?: string | null
+          date_added?: string
+          description?: string
+          id?: string
+          status?: string
+          title?: string
+          version?: string
+        }
+        Relationships: []
+      }
       app_doc_versions: {
         Row: {
           changelog: string | null

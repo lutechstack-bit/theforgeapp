@@ -19,7 +19,8 @@ import {
   BookOpen,
   Route,
   ListTodo,
-  Megaphone
+  Megaphone,
+  History
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -42,6 +43,7 @@ const adminNavItems = [
   { to: '/admin/community-highlights', icon: Star, label: 'Community Highlights' },
   { to: '/admin/auto-updates', icon: Sparkles, label: 'Auto Updates' },
   { to: '/admin/docs', icon: BookOpen, label: 'Documentation' },
+  { to: '/admin/changelog', icon: History, label: 'Changelog' },
 ];
 
 export const AdminLayout: React.FC = () => {
