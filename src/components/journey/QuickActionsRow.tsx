@@ -21,13 +21,13 @@ const quickActions: QuickAction[] = [
     icon: MessageCircle,
     label: 'Open Community',
     path: '/community',
-    description: 'Connect with peers',
+    description: 'Join the community',
   },
   {
     icon: BookOpen,
     label: 'Watch Classes',
     path: '/learn',
-    description: 'Continue learning',
+    description: 'Forge fundamentals',
   },
 ];
 
