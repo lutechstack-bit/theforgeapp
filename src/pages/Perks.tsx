@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { CohortType } from '@/contexts/ThemeContext';
 import { toast } from 'sonner';
+import { AcceptanceShareCard } from '@/components/perks/AcceptanceShareCard';
 
 interface BagItem {
   id: string;
@@ -92,32 +93,18 @@ const cohortTitles: Record<CohortType, string> = {
 const Perks: React.FC = () => {
   const { profile, edition } = useAuth();
   const [isShareHovered, setIsShareHovered] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   
   const cohortType: CohortType = edition?.cohort_type || 'FORGE';
   const bagItems = cohortBagItemsMap[cohortType];
   const userName = profile?.full_name || 'Forger';
 
-  const handleShare = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: 'I got accepted into Forge!',
-          text: `I've been accepted into Forge - India's most elite filmmaking cohort. Excited to start this journey! 🎬`,
-          url: window.location.origin,
-        });
-      } else {
-        await navigator.clipboard.writeText(
-          `I've been accepted into Forge - India's most elite filmmaking cohort. Excited to start this journey! 🎬 ${window.location.origin}`
-        );
-        toast.success('Copied to clipboard! Share your achievement.');
-      }
-    } catch (error) {
-      console.error('Error sharing:', error);
-    }
+  const handleShare = () => {
+    setShareModalOpen(true);
   };
 
   const handleDownloadLetter = () => {
-    toast.success('Your acceptance letter will be available for download soon!');
+    setShareModalOpen(true);
   };
 
   return (
@@ -308,6 +295,15 @@ const Perks: React.FC = () => {
           Digital perks are unlocked immediately upon enrollment completion.
         </p>
       </div>
+
+      {/* Share Modal */}
+      <AcceptanceShareCard
+        open={shareModalOpen}
+        onOpenChange={setShareModalOpen}
+        userName={userName}
+        cohortType={cohortType}
+        cohortTitle={cohortTitles[cohortType]}
+      />
     </div>
   );
 };
