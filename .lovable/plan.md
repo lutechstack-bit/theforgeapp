@@ -1,112 +1,102 @@
 
 
-# Fix: Hide Virtual Sessions for FORGE_WRITING Cohort
+# Fix: Add Virtual Session Data for Testing
 
-## The Issue
+## The Problem
 
-The Online Forge Zoom integration feature is fully implemented, but it currently doesn't account for cohort-specific behavior:
+The Zoom link feature is hidden because the database has no virtual session data:
 
-| Cohort | Online Sessions (Days 1-3) | Physical Sessions |
-|--------|---------------------------|-------------------|
-| **FORGE** (Filmmaking) | ✅ Yes - Days 1-3 virtual | Days 4+ physical |
-| **FORGE_CREATORS** | ✅ Yes - Days 1-3 virtual | Days 4+ physical |
-| **FORGE_WRITING** | ❌ No - Skip online stage | All days physical |
+| Day | is_virtual | meeting_url | meeting_id | meeting_passcode |
+|-----|------------|-------------|------------|------------------|
+| 1 | ❌ false | null | null | null |
+| 2 | ❌ false | null | null | null |
+| 3 | ❌ false | null | null | null |
 
-**Current Behavior**: If virtual sessions are configured for Days 1-3, ALL cohorts (including Writers) would see "Join Now" buttons and online session indicators.
-
-**Expected Behavior**: FORGE_WRITING students should never see virtual session UI elements (no "Online" badge, no "Join Now" button, no meeting details).
-
----
-
-## Solution: UI-Level Cohort Filtering
-
-Since the roadmap uses a shared template (no `cohort_type` field on `roadmap_days`), we'll add cohort-based filtering at the UI component level.
-
-### Logic
-```tsx
-// Virtual sessions only apply to FORGE and FORGE_CREATORS
-const showVirtualFeatures = day.is_virtual && cohortType !== 'FORGE_WRITING';
-```
+The feature requires these conditions to be met:
+1. `is_virtual = true`
+2. `meeting_url` must exist
+3. `forgeMode = 'DURING_FORGE'` (Admin Testing Panel can simulate this)
+4. `status = 'current'` (simulated day matches the day number)
 
 ---
 
-## Files to Update
+## Solution: Database Migration
 
-### 1. `src/components/roadmap/JourneyCard.tsx`
-**Current (Line 161):**
-```tsx
-{day.is_virtual ? (
-  <span className="...">Online</span>
-) : ...}
+Add placeholder virtual session data to Days 1-3 so you can test the feature:
+
+```sql
+UPDATE roadmap_days 
+SET 
+  is_virtual = true,
+  meeting_url = 'https://zoom.us/j/1234567890',
+  meeting_id = '123 456 7890',
+  meeting_passcode = 'forge2026',
+  session_start_time = '10:00',
+  session_duration_hours = 3
+WHERE edition_id IS NULL 
+AND day_number IN (1, 2, 3);
 ```
-
-**Updated:**
-```tsx
-{day.is_virtual && cohortType !== 'FORGE_WRITING' ? (
-  <span className="...">Online</span>
-) : ...}
-```
-
-**Current (Line 230):**
-```tsx
-{day.is_virtual && day.meeting_url && status === 'current' && forgeMode === 'DURING_FORGE' && (
-  <Button>Join Now</Button>
-)}
-```
-
-**Updated:**
-```tsx
-{day.is_virtual && day.meeting_url && status === 'current' && forgeMode === 'DURING_FORGE' && cohortType !== 'FORGE_WRITING' && (
-  <Button>Join Now</Button>
-)}
-```
-
-### 2. `src/components/roadmap/DayDetailModal.tsx`
-Add cohort check before rendering `SessionMeetingCard`:
-
-```tsx
-{day.is_virtual && day.meeting_url && cohortType !== 'FORGE_WRITING' && (
-  <SessionMeetingCard ... />
-)}
-```
-
-### 3. `src/hooks/useSessionNotifications.ts`
-Add cohort check so Writers don't receive "session starting soon" notifications:
-
-```tsx
-// Only track virtual sessions for FORGE and FORGE_CREATORS
-if (cohortType === 'FORGE_WRITING') {
-  return { sessionStatus: 'none', currentSession: null };
-}
-```
-
-### 4. `src/components/home/MasterNotificationCenter.tsx`
-Ensure session alerts are hidden for Writing cohort.
 
 ---
 
-## Summary of Changes
+## After Migration: How to Test
 
-| Component | Change |
-|-----------|--------|
-| `JourneyCard.tsx` | Hide "Online" badge and "Join Now" button for FORGE_WRITING |
-| `DayDetailModal.tsx` | Hide meeting details card for FORGE_WRITING |
-| `useSessionNotifications.ts` | Skip session tracking for FORGE_WRITING |
-| `MasterNotificationCenter.tsx` | Hide session alerts for FORGE_WRITING |
+1. **Go to Roadmap page** (`/roadmap`)
+2. **Open Admin Testing Panel** (floating gear icon bottom-right)
+3. **Set mode** to `DURING_FORGE`
+4. **Set simulated day** to `1`, `2`, or `3`
+5. **You should see:**
+   - "Online" badge on Day 1-3 cards
+   - "Join Now" button on the current day's card
+   - Meeting details when you click to open Day Detail Modal
 
 ---
 
-## Result
+## Visual Preview
 
-After this fix:
+### Journey Card (Day 1 - Current)
+```
+┌────────────────────────────────────────┐
+│ Tue  │ Day 1  🌐 Online      ● NOW     │
+│  04  │                                  │
+│ Feb  │ Orientation & Visual Storytelling│
+│      │                                  │
+│      │ [🎥 Join Now]                    │
+└────────────────────────────────────────┘
+```
 
-| Feature | FORGE | FORGE_CREATORS | FORGE_WRITING |
-|---------|-------|----------------|---------------|
-| "Online" badge on Days 1-3 | ✅ | ✅ | ❌ Hidden |
-| "Join Now" button | ✅ | ✅ | ❌ Hidden |
-| Meeting details in modal | ✅ | ✅ | ❌ Hidden |
-| Session notifications | ✅ | ✅ | ❌ Disabled |
-| Calendar sync for sessions | ✅ | ✅ | ❌ Hidden |
+### Day Detail Modal
+```
+┌────────────────────────────────────────┐
+│ Day 1: Orientation                      │
+│ 🌐 Online Session                       │
+├────────────────────────────────────────┤
+│ ┌────────────────────────────────────┐ │
+│ │ 🎥 Join Virtual Session             │ │
+│ │                                     │ │
+│ │ Meeting ID: 123 456 7890            │ │
+│ │ Passcode: forge2026                 │ │
+│ │                                     │ │
+│ │ [📋 Copy]  [📅 Add to Calendar]     │ │
+│ │                                     │ │
+│ │    [🎥 Join Meeting]                │ │
+│ └────────────────────────────────────┘ │
+└────────────────────────────────────────┘
+```
 
-Writers will see the same roadmap days but treated as physical/in-person sessions only.
+---
+
+## File Changes
+
+| File | Action | Purpose |
+|------|--------|---------|
+| Database Migration | CREATE | Add virtual session data to Days 1-3 |
+
+No code changes needed — the UI is already built. We just need the data!
+
+---
+
+## Note
+
+You can update the placeholder Zoom URL (`https://zoom.us/j/1234567890`) to your real meeting link later via **Admin Panel → Roadmap → Edit Day 1/2/3**.
 
