@@ -197,7 +197,7 @@ const Home: React.FC = () => {
 
       {/* Learn Section */}
       {displayLearnContent.length > 0 && (
-        <ContentCarousel title="Learn" onSeeAll={() => navigate('/learn')}>
+        <ContentCarousel title="Fundamental learning for forge and beyond" onSeeAll={() => navigate('/learn')}>
           {displayLearnContent.map((content: any) => (
             <LearnCourseCard
               key={content.id}
@@ -213,7 +213,7 @@ const Home: React.FC = () => {
 
       {/* Events Section - Moved to end */}
       {displayEvents.length > 0 && (
-        <ContentCarousel title={isPastEvents ? "Past Events" : "Featured Events"} onSeeAll={() => navigate('/events')}>
+        <ContentCarousel title="More from LevelUp" onSeeAll={() => navigate('/events')}>
           {displayEvents.map((event: any) => (
             <SimpleEventCard
               key={event.id}

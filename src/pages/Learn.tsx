@@ -230,15 +230,15 @@ const Learn: React.FC = () => {
             {renderCourseCarousel(
               forgeOnlineSessions,
               'Pre Forge Sessions',
-              'Exclusive sessions to prepare you for the Forge',
+              'Filmmaking fundamentals: For forge and Beyond',
               'bfp_sessions'
             )}
 
-            {/* Community Sessions */}
+            {/* More from LevelUp */}
             {renderCourseCarousel(
               communitySessions,
-              'Community Sessions',
-              'Workshops and masterclasses from industry leaders',
+              'More from LevelUp',
+              'Online sessions exclusive with LevelUp',
               'community_sessions'
             )}
           </div>

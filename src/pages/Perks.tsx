@@ -235,6 +235,7 @@ const Perks: React.FC = () => {
               <Crown className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
             </div>
             <p className="text-xs md:text-sm text-muted-foreground">Lifetime access to our exclusive community of creators, mentors & industry professionals</p>
+            <a href="/community" className="text-xs text-primary hover:underline mt-1 inline-block">→ Join Community to be linked here</a>
           </div>
           <CheckCircle2 className="h-5 w-5 md:h-6 md:w-6 text-primary shrink-0" />
         </div>
@@ -292,7 +293,7 @@ const Perks: React.FC = () => {
         <h3 className="font-semibold text-foreground mb-1.5 md:mb-2 text-sm md:text-base">Your Forge Bag Awaits</h3>
         <p className="text-xs md:text-sm text-muted-foreground max-w-md mx-auto">
           All physical items will be handed to you on Day 1 of your Forge experience. 
-          Digital perks are unlocked immediately upon enrollment completion.
+          Digital perks can be requested by emailing LevelUp.
         </p>
       </div>
 

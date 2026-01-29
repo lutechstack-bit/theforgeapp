@@ -76,8 +76,8 @@ export const RoadmapBentoBox: React.FC = () => {
     </div>
   );
 
-  // Don't render if no content
-  const hasContent = momentsItems.length > 0 || studentWorkItems.length > 0 || stayItems.length > 0;
+  // Don't render if no content - removed stayItems from condition
+  const hasContent = momentsItems.length > 0 || studentWorkItems.length > 0;
   
   if (!hasContent) {
     return null;
@@ -127,24 +127,6 @@ export const RoadmapBentoBox: React.FC = () => {
             </BentoCard>
           )}
 
-          {/* Stay Location - Opens Modal */}
-          {stayItems.length > 0 && (
-            <BentoCard 
-              className="col-span-2"
-              onClick={() => setActiveModal('stayLocation')}
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                  <MapPin className="h-4 w-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground">Where You'll Stay</p>
-                  <p className="text-xs text-muted-foreground">{stayItems.length} locations • Tap to explore</p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-              </div>
-            </BentoCard>
-          )}
 
         </div>
       </div>
