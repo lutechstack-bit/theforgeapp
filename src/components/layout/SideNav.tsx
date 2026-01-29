@@ -68,7 +68,9 @@ export const SideNav: React.FC = () => {
     if (collapsed) {
       return (
         <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>{content}</TooltipTrigger>
+          <TooltipTrigger asChild>
+            <span className="block w-full">{content}</span>
+          </TooltipTrigger>
           <TooltipContent side="right" sideOffset={12} className="bg-popover/95 backdrop-blur-sm text-popover-foreground border-border/50 shadow-xl">
             {label}
           </TooltipContent>
@@ -151,7 +153,7 @@ export const SideNav: React.FC = () => {
           ))}
 
 
-          {/* User Profile */}
+          {/* User Display - Non-navigable */}
           <div className={cn(
             "flex items-center gap-3 pt-3 border-t border-sidebar-border mt-3",
             collapsed ? "justify-center" : "px-2"
@@ -159,7 +161,7 @@ export const SideNav: React.FC = () => {
             {collapsed ? (
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
-                  <NavLink to="/profile" className="block">
+                  <span className="block">
                     <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold text-primary overflow-hidden">
                       {profile?.avatar_url ? (
                         <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
@@ -167,17 +169,14 @@ export const SideNav: React.FC = () => {
                         profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'
                       )}
                     </div>
-                  </NavLink>
+                  </span>
                 </TooltipTrigger>
                 <TooltipContent side="right" className="bg-popover text-popover-foreground">
-                  {profile?.full_name || 'Profile'}
+                  {profile?.full_name || 'User'}
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <NavLink 
-                to="/profile" 
-                className="flex items-center gap-3 py-2 w-full hover:opacity-80 transition-opacity"
-              >
+              <div className="flex items-center gap-3 py-2 w-full">
                 <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold text-primary shrink-0 overflow-hidden">
                   {profile?.avatar_url ? (
                     <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
@@ -186,9 +185,9 @@ export const SideNav: React.FC = () => {
                   )}
                 </div>
                 <span className="text-sm font-medium text-sidebar-foreground truncate">
-                  {profile?.full_name || 'Profile'}
+                  {profile?.full_name || 'User'}
                 </span>
-              </NavLink>
+              </div>
             )}
           </div>
         </div>
