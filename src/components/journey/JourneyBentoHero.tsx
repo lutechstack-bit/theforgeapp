@@ -479,13 +479,16 @@ export const JourneyBentoHero: React.FC = () => {
             }}
           </StickyNoteCardStack>
           
-          {/* Personal Note - Mobile placement */}
-          <PersonalNoteCard compact className="mt-4" />
+          {/* Quick Actions - Directly after cards for better space usage */}
+          <QuickActionsRow className="mt-3" />
+          
+          {/* Personal Note - Mobile placement with tighter spacing */}
+          <PersonalNoteCard compact className="mt-3" />
         </>
       )}
 
-      {/* Quick Actions Row */}
-      <QuickActionsRow className="mt-4" />
+      {/* Desktop Quick Actions */}
+      {!isMobile && <QuickActionsRow className="mt-4" />}
 
 
       {/* Bottom Sheet for Mobile, Dialog for Desktop */}

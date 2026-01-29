@@ -165,7 +165,7 @@ export const StickyNoteCardStack: React.FC<StickyNoteCardStackProps> = ({
       {/* Card Stack Container - with overflow hidden to clip background cards */}
       <div 
         ref={containerRef}
-        className="relative min-h-[320px] overflow-hidden"
+        className="relative min-h-[280px] overflow-hidden"
         style={{ touchAction: 'pan-y pinch-zoom' }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
