@@ -1,106 +1,129 @@
 
 
-# Admin Changelog Page
+# Mobile Countdown Timer — Compact & Clean Redesign
 
-## Goal
-Create a dedicated **Changelog** tab in the admin dashboard to track app changes in a structured table format (matching your reference image), with CSV export functionality.
+## Problem
+The current countdown timer takes up too much vertical space on mobile devices. The large font sizes, padding, and stacked layout make it feel overwhelming rather than "neat and clear."
 
-## What We'll Build
+## Solution
+Make the mobile countdown timer significantly more compact by:
+1. Reducing font sizes on mobile
+2. Using a single-row layout on mobile (instead of stacking city + timer)
+3. Tightening padding and gaps
+4. Creating a cleaner, more minimal appearance
 
-### 1. New Database Table: `app_changelog`
-Store changelog entries with these fields:
+## Visual Comparison
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| version | TEXT | Version number (e.g., "1.2.0") |
-| title | TEXT | Short feature name |
-| description | TEXT | Detailed description |
-| category | TEXT | Feature category (e.g., "UI", "Backend", "Bug Fix") |
-| status | TEXT | Status (e.g., "Completed", "In Progress") |
-| date_added | TIMESTAMP | When the change was made |
-| added_by | TEXT | Team member who made the change |
-| created_at | TIMESTAMP | Record creation time |
-
-### 2. New Admin Page: `AdminChangelog.tsx`
-Features:
-- **Table View** matching your reference image format
-- **Add Entry Form** with fields for version, title, description, category, status, date, added_by
-- **Edit/Delete** capabilities for existing entries
-- **CSV Export Button** to download all changelog entries
-
-### 3. Navigation Integration
-Add "Changelog" to the admin sidebar with a `History` icon
-
-## File Changes
-
-| File | Action | Purpose |
-|------|--------|---------|
-| Database Migration | CREATE | New `app_changelog` table with RLS |
-| `src/pages/admin/AdminChangelog.tsx` | CREATE | New changelog management page |
-| `src/components/admin/AdminLayout.tsx` | UPDATE | Add nav item for Changelog |
-| `src/App.tsx` | UPDATE | Add route for `/admin/changelog` |
-
-## Technical Implementation
-
-### Database Table
-```sql
-CREATE TABLE app_changelog (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  version TEXT NOT NULL,
-  title TEXT NOT NULL,
-  description TEXT NOT NULL,
-  category TEXT NOT NULL DEFAULT 'Feature',
-  status TEXT NOT NULL DEFAULT 'Completed',
-  date_added DATE NOT NULL DEFAULT CURRENT_DATE,
-  added_by TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- RLS: Admin only
-ALTER TABLE app_changelog ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Admins can manage changelog"
-  ON app_changelog FOR ALL
-  USING (public.has_role(auth.uid(), 'admin'))
-  WITH CHECK (public.has_role(auth.uid(), 'admin'));
-```
-
-### CSV Export Function
-```typescript
-const exportToCSV = () => {
-  const headers = ['Version', 'Title', 'Description', 'Category', 'Status', 'Date', 'Added By'];
-  const rows = changelog.map(entry => [
-    entry.version,
-    entry.title,
-    entry.description,
-    entry.category,
-    entry.status,
-    format(new Date(entry.date_added), 'MMM d, yyyy'),
-    entry.added_by || ''
-  ]);
-  
-  const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-  // Download as file
-};
-```
-
-### UI Layout (matching reference)
+**Current (Mobile):**
 ```text
-+--------------------------------------------------------------+
-| Changelog                                    [+ Add] [Export] |
-+--------------------------------------------------------------+
-| Version | Title           | Description | Category | Status  |
-|---------|-----------------|-------------|----------|---------|
-| 1.2.0   | Countdown Timer | Split-number| UI       |Completed|
-| 1.1.0   | Sticky Notes    | Journey...  | Feature  |Completed|
-+--------------------------------------------------------------+
+┌─────────────────────────────────────┐
+│ SEE YOU IN                          │
+│ Goa                                 │
+├─────────────────────────────────────┤
+│   08  :  18  :  31  :  44           │
+│  DAYS   HOURS  MIN    SEC           │
+└─────────────────────────────────────┘
+Height: ~120px  |  Font: 24px numbers
 ```
 
-## Pre-populated Sample Data
-We'll seed the table with the 4 changes you listed:
-1. Compact Countdown Timer
-2. Sticky Notes + Announcements + Note Taker
-3. Mobile Floating Button
-4. UI Alignment Fixes
+**Proposed (Mobile):**
+```text
+┌─────────────────────────────────────┐
+│ Goa     08 : 18 : 31 : 44           │
+│         Days Hrs  Min  Sec          │
+└─────────────────────────────────────┘
+Height: ~56px  |  Font: 18px numbers
+```
+
+## Technical Changes
+
+### File: `src/components/home/CompactCountdownTimer.tsx`
+
+| Change | Current | New |
+|--------|---------|-----|
+| Number size (mobile) | `text-2xl` (24px) | `text-lg` (18px) |
+| Label size (mobile) | `text-[9px]` | `text-[8px]` |
+| Separator size | `text-xl` | `text-base` |
+| Container padding | `py-3 px-4` | `py-2 px-3` |
+| Timer gaps | `gap-3` | `gap-2` |
+| Layout | Stacked on mobile | Single row always |
+| City section width | `sm:w-32` | Inline, smaller |
+
+### Specific Code Updates
+
+**1. TimeUnit Component — Smaller on Mobile**
+```tsx
+// Current
+<span className="text-2xl sm:text-3xl md:text-4xl font-bold">
+
+// New
+<span className="text-lg sm:text-2xl md:text-3xl font-bold">
+```
+
+**2. Labels — Tighter**
+```tsx
+// Current
+<span className="text-[9px] sm:text-[10px] md:text-xs">
+
+// New  
+<span className="text-[7px] sm:text-[9px] md:text-xs">
+```
+
+**3. Separator — Smaller**
+```tsx
+// Current
+<span className="text-xl sm:text-2xl">:</span>
+
+// New
+<span className="text-sm sm:text-lg">:</span>
+```
+
+**4. Layout — Always Horizontal**
+```tsx
+// Current (stacks on mobile)
+<div className="flex flex-col sm:flex-row w-full">
+
+// New (always row)
+<div className="flex flex-row w-full">
+```
+
+**5. Container Padding — Tighter**
+```tsx
+// Current
+"px-4 py-3 sm:py-4"
+
+// New
+"px-3 py-2 sm:py-3"
+```
+
+**6. Timer Gaps — Tighter**
+```tsx
+// Current
+"gap-3 sm:gap-4 md:gap-5"
+
+// New
+"gap-1.5 sm:gap-3 md:gap-4"
+```
+
+**7. City Section — Smaller, No Stacking Border**
+```tsx
+// Current
+"border-b sm:border-b-0"
+
+// New (remove bottom border, always inline)
+Remove the border-b entirely
+```
+
+## Result
+
+- **Height reduction**: ~120px → ~56px (50% smaller)
+- **Font reduction**: 24px → 18px numbers
+- **Cleaner look**: Single row, tighter spacing
+- **Better readability**: Maintains all information in less space
+
+## Files to Modify
+
+| File | Change |
+|------|--------|
+| `src/components/home/CompactCountdownTimer.tsx` | Reduce sizes, tighten layout |
 
