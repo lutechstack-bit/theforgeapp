@@ -5,15 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Pencil, Trash2, MapPin, Phone, X, ImagePlus, Upload, Link } from 'lucide-react';
+import { Plus, Pencil, Trash2, MapPin, X, ImagePlus, Upload, Link, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FileUpload } from '@/components/admin/FileUpload';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 
 interface Contact {
   name: string;
@@ -27,7 +29,6 @@ interface GalleryImage {
 
 interface StayLocation {
   id: string;
-  edition_id: string | null;
   name: string;
   full_address: string | null;
   google_maps_url: string | null;
@@ -38,6 +39,7 @@ interface StayLocation {
   order_index: number;
   is_active: boolean;
   created_at: string;
+  edition_ids: string[]; // From junction table
 }
 
 interface Edition {
@@ -46,8 +48,20 @@ interface Edition {
   city: string;
 }
 
-const emptyLocation: Omit<StayLocation, 'id' | 'created_at'> = {
-  edition_id: null,
+interface FormData {
+  name: string;
+  full_address: string;
+  google_maps_url: string;
+  contacts: Contact[];
+  notes: string[];
+  gallery_images: GalleryImage[];
+  featured_image_url: string;
+  order_index: number;
+  is_active: boolean;
+  edition_ids: string[];
+}
+
+const emptyFormData: FormData = {
   name: '',
   full_address: '',
   google_maps_url: '',
@@ -57,13 +71,14 @@ const emptyLocation: Omit<StayLocation, 'id' | 'created_at'> = {
   featured_image_url: '',
   order_index: 0,
   is_active: true,
+  edition_ids: [],
 };
 
 const AdminStayLocations: React.FC = () => {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<StayLocation | null>(null);
-  const [formData, setFormData] = useState<Omit<StayLocation, 'id' | 'created_at'>>(emptyLocation);
+  const [formData, setFormData] = useState<FormData>(emptyFormData);
 
   // Fetch editions for dropdown
   const { data: editions = [] } = useQuery({
@@ -79,9 +94,21 @@ const AdminStayLocations: React.FC = () => {
     }
   });
 
+  // Fetch edition mappings for all locations
+  const { data: editionMappings = [] } = useQuery({
+    queryKey: ['stay-location-editions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stay_location_editions')
+        .select('stay_location_id, edition_id');
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
   // Fetch stay locations
   const { data: locations = [], isLoading } = useQuery({
-    queryKey: ['stay-locations-admin'],
+    queryKey: ['stay-locations-admin', editionMappings],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('stay_locations')
@@ -93,23 +120,46 @@ const AdminStayLocations: React.FC = () => {
         contacts: (loc.contacts as unknown as Contact[]) || [],
         notes: (loc.notes as unknown as string[]) || [],
         gallery_images: (loc.gallery_images as unknown as GalleryImage[]) || [],
+        edition_ids: editionMappings
+          .filter(m => m.stay_location_id === loc.id)
+          .map(m => m.edition_id),
       })) as StayLocation[];
-    }
+    },
+    enabled: editionMappings !== undefined
   });
 
   // Create mutation
   const createMutation = useMutation({
-    mutationFn: async (data: Omit<StayLocation, 'id' | 'created_at'>) => {
-      const { error } = await supabase.from('stay_locations').insert([{
-        ...data,
-        contacts: data.contacts as unknown as any,
-        notes: data.notes as unknown as any,
-        gallery_images: data.gallery_images as unknown as any,
-      }]);
+    mutationFn: async (data: FormData) => {
+      const { edition_ids, ...locationData } = data;
+      
+      // Insert location
+      const { data: newLocation, error } = await supabase
+        .from('stay_locations')
+        .insert([{
+          ...locationData,
+          contacts: locationData.contacts as unknown as any,
+          notes: locationData.notes as unknown as any,
+          gallery_images: locationData.gallery_images as unknown as any,
+        }])
+        .select('id')
+        .single();
       if (error) throw error;
+
+      // Insert edition mappings
+      if (edition_ids.length > 0) {
+        const { error: mappingError } = await supabase
+          .from('stay_location_editions')
+          .insert(edition_ids.map(edition_id => ({
+            stay_location_id: newLocation.id,
+            edition_id,
+          })));
+        if (mappingError) throw mappingError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stay-locations-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['stay-location-editions'] });
       toast.success('Stay location created');
       handleCloseDialog();
     },
@@ -118,17 +168,41 @@ const AdminStayLocations: React.FC = () => {
 
   // Update mutation
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Omit<StayLocation, 'id' | 'created_at'> }) => {
-      const { error } = await supabase.from('stay_locations').update({
-        ...data,
-        contacts: data.contacts as unknown as any,
-        notes: data.notes as unknown as any,
-        gallery_images: data.gallery_images as unknown as any,
-      }).eq('id', id);
+    mutationFn: async ({ id, data }: { id: string; data: FormData }) => {
+      const { edition_ids, ...locationData } = data;
+      
+      // Update location
+      const { error } = await supabase
+        .from('stay_locations')
+        .update({
+          ...locationData,
+          contacts: locationData.contacts as unknown as any,
+          notes: locationData.notes as unknown as any,
+          gallery_images: locationData.gallery_images as unknown as any,
+        })
+        .eq('id', id);
       if (error) throw error;
+
+      // Delete old mappings and insert new ones
+      const { error: deleteError } = await supabase
+        .from('stay_location_editions')
+        .delete()
+        .eq('stay_location_id', id);
+      if (deleteError) throw deleteError;
+
+      if (edition_ids.length > 0) {
+        const { error: mappingError } = await supabase
+          .from('stay_location_editions')
+          .insert(edition_ids.map(edition_id => ({
+            stay_location_id: id,
+            edition_id,
+          })));
+        if (mappingError) throw mappingError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stay-locations-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['stay-location-editions'] });
       toast.success('Stay location updated');
       handleCloseDialog();
     },
@@ -138,11 +212,13 @@ const AdminStayLocations: React.FC = () => {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Junction table entries deleted automatically via CASCADE
       const { error } = await supabase.from('stay_locations').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stay-locations-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['stay-location-editions'] });
       toast.success('Stay location deleted');
     },
     onError: (error) => toast.error(`Error: ${error.message}`)
@@ -150,14 +226,13 @@ const AdminStayLocations: React.FC = () => {
 
   const handleOpenCreate = () => {
     setEditingLocation(null);
-    setFormData(emptyLocation);
+    setFormData(emptyFormData);
     setIsDialogOpen(true);
   };
 
   const handleOpenEdit = (location: StayLocation) => {
     setEditingLocation(location);
     setFormData({
-      edition_id: location.edition_id,
       name: location.name,
       full_address: location.full_address || '',
       google_maps_url: location.google_maps_url || '',
@@ -167,6 +242,7 @@ const AdminStayLocations: React.FC = () => {
       featured_image_url: location.featured_image_url || '',
       order_index: location.order_index,
       is_active: location.is_active,
+      edition_ids: location.edition_ids,
     });
     setIsDialogOpen(true);
   };
@@ -174,7 +250,16 @@ const AdminStayLocations: React.FC = () => {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingLocation(null);
-    setFormData(emptyLocation);
+    setFormData(emptyFormData);
+  };
+
+  const handleEditionToggle = (editionId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      edition_ids: prev.edition_ids.includes(editionId)
+        ? prev.edition_ids.filter(id => id !== editionId)
+        : [...prev.edition_ids, editionId]
+    }));
   };
 
   const handleSubmit = () => {
@@ -260,10 +345,13 @@ const AdminStayLocations: React.FC = () => {
     }));
   };
 
-  const getEditionName = (editionId: string | null) => {
-    if (!editionId) return 'Global';
-    const edition = editions.find(e => e.id === editionId);
-    return edition ? `${edition.name} (${edition.city})` : 'Unknown';
+  const getEditionDisplay = (editionIds: string[]) => {
+    if (editionIds.length === 0) return 'All Editions';
+    if (editionIds.length === 1) {
+      const edition = editions.find(e => e.id === editionIds[0]);
+      return edition ? edition.name : '1 edition';
+    }
+    return `${editionIds.length} editions`;
   };
 
   return (
@@ -343,7 +431,7 @@ const AdminStayLocations: React.FC = () => {
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs">
                   <span className="px-2 py-1 rounded-full bg-primary/10 text-primary">
-                    {getEditionName(location.edition_id)}
+                    {getEditionDisplay(location.edition_ids)}
                   </span>
                   {location.contacts.length > 0 && (
                     <span className="px-2 py-1 rounded-full bg-secondary text-muted-foreground">
@@ -384,24 +472,53 @@ const AdminStayLocations: React.FC = () => {
                 />
               </div>
               
-              <div className="md:col-span-2">
-                <Label htmlFor="edition">Edition</Label>
-                <Select
-                  value={formData.edition_id || 'global'}
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, edition_id: v === 'global' ? null : v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select edition" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="global">Global (All Editions)</SelectItem>
-                    {editions.map((edition) => (
-                      <SelectItem key={edition.id} value={edition.id}>
-                        {edition.name} ({edition.city})
-                      </SelectItem>
+              {/* Multi-Edition Selection */}
+              <div className="md:col-span-2 space-y-2">
+                <Label>Editions</Label>
+                <p className="text-xs text-muted-foreground">
+                  Select editions where this location should appear. Leave empty for all editions.
+                </p>
+                <Card className="p-0 overflow-hidden">
+                  <ScrollArea className="h-[140px]">
+                    {editions.map(edition => (
+                      <label
+                        key={edition.id}
+                        className="flex items-center gap-2 px-3 py-2 hover:bg-muted cursor-pointer border-b last:border-b-0"
+                      >
+                        <Checkbox
+                          checked={formData.edition_ids.includes(edition.id)}
+                          onCheckedChange={() => handleEditionToggle(edition.id)}
+                        />
+                        <span className="text-sm">{edition.name} ({edition.city})</span>
+                      </label>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </ScrollArea>
+                </Card>
+                
+                {/* Selected editions as badges */}
+                {formData.edition_ids.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {formData.edition_ids.map(id => {
+                      const edition = editions.find(e => e.id === id);
+                      return edition ? (
+                        <Badge key={id} variant="secondary" className="gap-1 text-xs">
+                          {edition.name}
+                          <X 
+                            className="w-3 h-3 cursor-pointer" 
+                            onClick={() => handleEditionToggle(id)} 
+                          />
+                        </Badge>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+                
+                {formData.edition_ids.length === 0 && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Check className="w-3 h-3 text-green-500" />
+                    Will show for all editions
+                  </p>
+                )}
               </div>
 
               <div className="md:col-span-2">
