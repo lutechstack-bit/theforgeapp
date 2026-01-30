@@ -1,147 +1,88 @@
 
-# Comprehensive Layout Restructure: KY Form Completion + Home Page Widget Layout
+
+# Add KY Forms Button to Profile + Completed View Page
 
 ## Summary
 
-This plan addresses three main areas:
-1. **KY Form Completion Page** - Add a dedicated completion state/page for all KY forms (already exists as `KYFormCompletion` component)
-2. **Home Page Widget Consolidation** - Move the announcement banner + KY form reminder into a compact top-right widget, eliminating unused side space
-3. **Clean Layout Architecture** - Fix padding/spacing issues for a clean, mobile-first experience
+Add a **"My KY Form"** quick access button on the Profile page (above Perks), and create a new **KY Form Summary page** that shows:
+- Completed form data in a read-only view
+- Edit button to re-open the form for modifications
+- Works for all three cohort types (KYF, KYW, KYC)
 
 ---
 
-## Current State Analysis
+## Current State
 
-| Component | Current Location | Issue |
-|-----------|-----------------|-------|
-| `AnnouncementBanner` | Inside `JourneyBentoHero`, below greeting | Takes full width, creates visual clutter above sticky notes |
-| `KYFormReminderCard` | Not used on Home page | Exists but not integrated with Home layout |
-| `KYFormReminderBanner` | Separate component | Not visible in current Home page |
-| `CompactCountdownTimer` | Top of Home page | Good position, keep as-is |
-| Desktop Layout | `grid-cols-[1fr_320px]` | Side panel has gaps, can be better utilized |
-
----
-
-## Solution Architecture
-
-### 1. KY Form Completion (Already Exists)
-
-The `KYFormCompletion` component already exists at `src/components/kyform/KYFormCompletion.tsx` and is properly integrated into all three forms:
-- `KYFForm.tsx` - Shows completion screen on submit
-- `KYCForm.tsx` - Shows completion screen on submit  
-- `KYWForm.tsx` - Shows completion screen on submit
-
-**No changes needed** - completion flow is already implemented.
+| Item | Status |
+|------|--------|
+| Profile page | Has PerksQuickAccess component at top |
+| KY form data | Already fetched via `useProfileData` hook (`kyfResponse`, `kywResponse`) |
+| VerifiedInfoCard | Shows partial KY data on Profile, but limited |
+| Edit KY form | Users can navigate to form pages, but no "view completed" experience |
 
 ---
 
-### 2. Home Page Widget Consolidation
+## Proposed Solution
 
-Create a new **Status Widget Card** for the desktop side panel that combines:
-- KY Form reminder (if incomplete)
-- Smart announcements (rotating)
-- Quick stats/info
+### 1. New Quick Access Button: "My KY Form"
 
-**Desktop Layout Restructure:**
+Add a new component similar to `PerksQuickAccess` that appears **above** the Perks button on the Profile page:
+
+**Design:**
 ```
 +------------------------------------------+
-|  Compact Countdown Timer (full width)    |
+| [ClipboardCheck]  My KY Form             |
+|   View your submitted form details    >  |
 +------------------------------------------+
-|                                          |
-|  +----------------------------+  +-----+ |
-|  | Current Stage Card        |  |Status| |
-|  | (Tasks, filters, etc)     |  |Widget| |
-|  |                           |  |-----||
-|  +----------------------------+  |KYF  || |
-|                                  |Annc.|| |
-|  +----------------------------+  |-----||
-|  | Personal Note Card        |  |Note || |
-|  +----------------------------+  +-----+ |
-|                                          |
-|  +----------------------------+  +-----+ |
-|  | Completed Stage           |  |Upcom|| |
-|  +----------------------------+  +-----+ |
-|                                          |
+| [Gift]  My Perks & Acceptance            |
+|   View your Forge Bag & benefits      >  |
 +------------------------------------------+
 ```
 
-**Mobile Layout:**
-```
-+----------------------------------+
-| Compact Countdown Timer          |
-+----------------------------------+
-| Greeting + Streak Badge          |
-+----------------------------------+
-| Stage Navigation Strip           |
-+----------------------------------+
-| Status Widget (Compact)          |
-| [KYF Reminder] [Announcements]   |
-+----------------------------------+
-| Stacked Card UI (stages)         |
-+----------------------------------+
-| Quick Actions Row                |
-+----------------------------------+
-| Personal Note Card               |
-+----------------------------------+
-```
+**Behavior:**
+- Always visible (regardless of completion status)
+- If completed: Shows "View Details" → navigates to `/my-kyform`
+- If not completed: Shows "Complete Now" → navigates to appropriate form page (`/kyf-form`, `/kyw-form`, `/kyc-form`)
 
 ---
 
-### 3. New Component: StatusWidget
+### 2. New Page: My KY Form Summary (`/my-kyform`)
 
-Create a compact status widget that consolidates multiple notification types:
+A dedicated page to view completed KY form data with an edit option.
 
-```tsx
-// src/components/home/StatusWidget.tsx
-
-interface StatusWidgetProps {
-  variant: 'desktop' | 'mobile';
-}
-
-export const StatusWidget: React.FC<StatusWidgetProps> = ({ variant }) => {
-  // Shows in order of priority:
-  // 1. KYF Reminder (if incomplete) - prominent
-  // 2. Smart Announcements (cycling)
-  
-  return (
-    <div className={cn(
-      "glass-card rounded-xl overflow-hidden",
-      variant === 'desktop' ? "space-y-2" : "flex gap-2"
-    )}>
-      {/* KY Form Reminder - if incomplete */}
-      {showKYFormReminder && (
-        <button onClick={navigateToKYForm} className="...">
-          <ClipboardList />
-          <span>Complete KY Form</span>
-          <span className="animate-ping" /> {/* pulsing badge */}
-        </button>
-      )}
-      
-      {/* Announcements - compact version */}
-      {announcements.length > 0 && (
-        <div className="...">
-          <span>{currentAnnouncement.icon}</span>
-          <span>{currentAnnouncement.title}</span>
-        </div>
-      )}
-    </div>
-  );
-};
+**Layout:**
+```
++------------------------------------------+
+|  [←] My KY Form                  [Edit]  |
++------------------------------------------+
+|                                          |
+|  ✓ Form Submitted Successfully           |
+|  Submitted on: Jan 15, 2026              |
+|                                          |
++------------------------------------------+
+|  General Details                         |
+|  • Certificate Name: John Doe            |
+|  • Occupation: Film Student              |
+|  • Instagram: @johndoe                   |
++------------------------------------------+
+|  Personal Details                        |
+|  • Age: 24                               |
+|  • DOB: March 15, 2001                   |
+|  • Address: Line 1, Line 2, State PIN   |
++------------------------------------------+
+|  ... more sections ...                   |
++------------------------------------------+
+|                                          |
+|  [Edit My Responses]                     |
+|                                          |
++------------------------------------------+
 ```
 
----
-
-### 4. JourneyBentoHero Layout Changes
-
-**Desktop Changes:**
-- Move `AnnouncementBanner` from main flow to side panel
-- Add `StatusWidget` to side panel (top position)
-- Adjust grid: Keep `grid-cols-[1fr_320px]` but reorganize content
-
-**Mobile Changes:**
-- Add compact `StatusWidget` after stage navigation strip
-- Remove full-width `AnnouncementBanner` from flow
-- Tighter spacing between elements
+**Features:**
+- Read-only display of all submitted form fields
+- Organized by sections matching the form steps
+- Edit button navigates to the form page (which will load existing data)
+- Shows completion status badge
 
 ---
 
@@ -151,107 +92,226 @@ export const StatusWidget: React.FC<StatusWidgetProps> = ({ variant }) => {
 
 | File | Purpose |
 |------|---------|
-| `src/components/home/StatusWidget.tsx` | Combined notification/status widget |
+| `src/components/profile/KYFormQuickAccess.tsx` | New quick access button for Profile page |
+| `src/pages/MyKYForm.tsx` | New page to view completed KY form data |
 
 ### Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/journey/JourneyBentoHero.tsx` | Integrate StatusWidget, remove inline AnnouncementBanner, adjust layout |
-| `src/pages/Home.tsx` | No changes needed (JourneyBentoHero handles it) |
+| `src/pages/Profile.tsx` | Add KYFormQuickAccess component above PerksQuickAccess |
+| `src/App.tsx` | Add route for `/my-kyform` |
 
 ---
 
-## StatusWidget Component Design
+## Component: KYFormQuickAccess
 
 ```tsx
-// Key features:
-// 1. Conditional KY Form reminder (if profile.ky_form_completed === false)
-// 2. Smart announcements from useSmartAnnouncements hook
-// 3. Compact, single-row design for mobile, stacked for desktop side panel
+// src/components/profile/KYFormQuickAccess.tsx
 
-const StatusWidget: React.FC<{ variant: 'desktop' | 'mobile' }> = ({ variant }) => {
-  const { profile, edition } = useAuth();
+interface Props {
+  isCompleted: boolean;
+  cohortType: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS' | null;
+}
+
+export const KYFormQuickAccess: React.FC<Props> = ({ isCompleted, cohortType }) => {
   const navigate = useNavigate();
-  const { announcements } = useSmartAnnouncements();
   
-  const showKYForm = profile?.profile_setup_completed && !profile?.ky_form_completed;
-  
-  const getKYFormRoute = () => {
-    switch (edition?.cohort_type) {
-      case 'FORGE': return '/kyf-form';
-      case 'FORGE_CREATORS': return '/kyc-form';
+  const getFormRoute = () => {
+    switch (cohortType) {
       case 'FORGE_WRITING': return '/kyw-form';
+      case 'FORGE_CREATORS': return '/kyc-form';
       default: return '/kyf-form';
     }
   };
   
-  const getKYFormLabel = () => {
-    switch (edition?.cohort_type) {
-      case 'FORGE': return 'Know Your Filmmaker';
-      case 'FORGE_CREATORS': return 'Know Your Creator';
+  const getFormLabel = () => {
+    switch (cohortType) {
       case 'FORGE_WRITING': return 'Know Your Writer';
-      default: return 'Complete Form';
+      case 'FORGE_CREATORS': return 'Know Your Creator';
+      default: return 'Know Your Filmmaker';
     }
   };
   
-  // Desktop: Stacked card design
-  if (variant === 'desktop') {
-    return (
-      <div className="space-y-3">
-        {/* KY Form Card */}
-        {showKYForm && (
-          <button
-            onClick={() => navigate(getKYFormRoute())}
-            className="w-full glass-card rounded-xl p-4 flex items-center gap-3 
-                       border border-primary/30 bg-primary/10 
-                       hover:bg-primary/20 transition-all group"
-          >
-            <div className="p-2 bg-primary/20 rounded-lg">
-              <ClipboardList className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="font-medium text-foreground text-sm">{getKYFormLabel()}</p>
-              <p className="text-xs text-muted-foreground">Required for full access</p>
-            </div>
-            <div className="relative">
-              <span className="w-2 h-2 bg-primary rounded-full animate-ping absolute" />
-              <span className="w-2 h-2 bg-primary rounded-full" />
-            </div>
-          </button>
+  const handleClick = () => {
+    if (isCompleted) {
+      navigate('/my-kyform');
+    } else {
+      navigate(getFormRoute());
+    }
+  };
+  
+  return (
+    <button onClick={handleClick} className="w-full">
+      <div className="relative flex items-center gap-3 p-4 rounded-xl 
+                      bg-gradient-to-r from-primary/10 via-primary/5 to-transparent 
+                      border border-primary/20 hover:border-primary/40 
+                      transition-all group">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 
+                        flex items-center justify-center border border-primary/20">
+          {isCompleted ? (
+            <ClipboardCheck className="h-5 w-5 text-primary" />
+          ) : (
+            <ClipboardList className="h-5 w-5 text-primary" />
+          )}
+        </div>
+        <div className="flex-1 min-w-0 text-left">
+          <h3 className="font-semibold text-foreground text-sm">
+            {getFormLabel()}
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            {isCompleted ? 'View your submitted details' : 'Complete your form to unlock access'}
+          </p>
+        </div>
+        {!isCompleted && (
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute h-full w-full rounded-full bg-primary opacity-75" />
+            <span className="rounded-full h-2 w-2 bg-primary" />
+          </span>
         )}
-        
-        {/* Compact Announcements */}
-        {announcements.length > 0 && (
-          <CompactAnnouncementSlot announcements={announcements} />
-        )}
+        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-all" />
       </div>
-    );
+    </button>
+  );
+};
+```
+
+---
+
+## Page: MyKYForm Summary
+
+```tsx
+// src/pages/MyKYForm.tsx
+
+const MyKYForm: React.FC = () => {
+  const navigate = useNavigate();
+  const { profile, edition } = useAuth();
+  const { data: profileData, isLoading } = useProfileData();
+  
+  const cohortType = edition?.cohort_type;
+  const kyData = profileData?.kyfResponse || profileData?.kywResponse;
+  const isFilmmaking = cohortType === 'FORGE' || cohortType === 'FORGE_CREATORS';
+  
+  const getFormRoute = () => {
+    switch (cohortType) {
+      case 'FORGE_WRITING': return '/kyw-form';
+      case 'FORGE_CREATORS': return '/kyc-form';
+      default: return '/kyf-form';
+    }
+  };
+  
+  // Redirect if form not completed
+  if (!profile?.ky_form_completed) {
+    return <Navigate to={getFormRoute()} replace />;
   }
   
-  // Mobile: Horizontal compact design
   return (
-    <div className="flex gap-2">
-      {showKYForm && (
-        <button
-          onClick={() => navigate(getKYFormRoute())}
-          className="flex-1 glass-card rounded-xl px-3 py-2.5 flex items-center gap-2 
-                     border border-primary/30 bg-primary/10"
-        >
-          <ClipboardList className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium text-foreground truncate">
-            Complete KY Form
-          </span>
-          <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-        </button>
-      )}
+    <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/profile')}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-xl font-bold">My KY Form</h1>
+        </div>
+        <Button variant="outline" onClick={() => navigate(getFormRoute())}>
+          <Edit className="h-4 w-4 mr-2" />
+          Edit
+        </Button>
+      </div>
       
-      {announcements.length > 0 && (
-        <button className="flex-1 glass-card rounded-xl px-3 py-2.5 flex items-center gap-2">
-          <span className="text-sm">{announcements[0].icon}</span>
-          <span className="text-sm truncate">{announcements[0].title}</span>
-        </button>
-      )}
+      {/* Completion Status */}
+      <div className="glass-card rounded-xl p-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
+          <CheckCircle2 className="h-5 w-5 text-green-500" />
+        </div>
+        <div>
+          <p className="font-medium text-foreground">Form Submitted Successfully</p>
+          <p className="text-xs text-muted-foreground">
+            {kyData?.terms_accepted_at 
+              ? `Submitted on ${format(new Date(kyData.terms_accepted_at), 'MMM d, yyyy')}`
+              : 'Your responses are saved'}
+          </p>
+        </div>
+      </div>
+      
+      {/* Form Data Sections */}
+      <div className="space-y-4">
+        {/* General Details */}
+        <SummarySection title="General Details">
+          <SummaryRow label="Certificate Name" value={kyData?.certificate_name} />
+          <SummaryRow label="Current Occupation" value={kyData?.current_occupation} />
+          <SummaryRow label="Instagram" value={kyData?.instagram_id} />
+        </SummarySection>
+        
+        {/* Personal Details */}
+        <SummarySection title="Personal Details">
+          <SummaryRow label="Age" value={kyData?.age} />
+          <SummaryRow label="Date of Birth" value={kyData?.date_of_birth} />
+          <SummaryRow label="Address" value={`${kyData?.address_line_1}, ${kyData?.state} ${kyData?.pincode}`} />
+          <SummaryRow label="Gender" value={kyData?.gender} />
+          <SummaryRow label="T-Shirt Size" value={kyData?.tshirt_size} />
+        </SummarySection>
+        
+        {/* Emergency Contact */}
+        <SummarySection title="Emergency Contact">
+          <SummaryRow label="Name" value={kyData?.emergency_contact_name} />
+          <SummaryRow label="Phone" value={kyData?.emergency_contact_number} />
+        </SummarySection>
+        
+        {/* Skills (for filmmakers) */}
+        {isFilmmaking && (
+          <SummarySection title="Skills & Proficiency">
+            <SummaryRow label="Screenwriting" value={kyData?.proficiency_screenwriting} />
+            <SummaryRow label="Direction" value={kyData?.proficiency_direction} />
+            <SummaryRow label="Cinematography" value={kyData?.proficiency_cinematography} />
+            <SummaryRow label="Editing" value={kyData?.proficiency_editing} />
+          </SummarySection>
+        )}
+        
+        {/* Preferences */}
+        <SummarySection title="Preferences">
+          <SummaryRow label="Chronotype" value={kyData?.chronotype} />
+          <SummaryRow label="Meal Preference" value={kyData?.meal_preference} />
+          <SummaryRow label="Food Allergies" value={kyData?.food_allergies} />
+          <SummaryRow label="Languages" value={kyData?.languages_known?.join(', ')} />
+        </SummarySection>
+        
+        {/* Understanding You */}
+        <SummarySection title="About You">
+          <SummaryRow label="MBTI Type" value={kyData?.mbti_type} />
+          <SummaryRow label="Why Forge?" value={kyData?.forge_intent} />
+          <SummaryRow label="Top 3 Movies" value={kyData?.top_3_movies?.join(', ')} />
+        </SummarySection>
+      </div>
+      
+      {/* Edit Button */}
+      <Button 
+        className="w-full gradient-primary text-primary-foreground"
+        onClick={() => navigate(getFormRoute())}
+      >
+        <Edit className="h-4 w-4 mr-2" />
+        Edit My Responses
+      </Button>
+    </div>
+  );
+};
+
+// Helper Components
+const SummarySection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+  <div className="glass-card rounded-xl p-4">
+    <h3 className="text-sm font-semibold text-foreground mb-3">{title}</h3>
+    <div className="space-y-2">{children}</div>
+  </div>
+);
+
+const SummaryRow: React.FC<{ label: string; value: any }> = ({ label, value }) => {
+  if (!value) return null;
+  return (
+    <div className="flex justify-between items-start gap-4">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium text-foreground text-right">{value}</span>
     </div>
   );
 };
@@ -259,79 +319,35 @@ const StatusWidget: React.FC<{ variant: 'desktop' | 'mobile' }> = ({ variant }) 
 
 ---
 
-## JourneyBentoHero Changes
+## Profile.tsx Changes
 
-### Desktop Grid Restructure
-
-**Before:**
 ```tsx
-<div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
-  {/* Main: Current Stage */}
-  {/* Side: PersonalNote, Completed, Upcoming */}
-</div>
-```
+// Before PerksQuickAccess, add:
 
-**After:**
-```tsx
-<div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
-  {/* Main Column */}
-  <div className="space-y-4">
-    {/* Current Stage Card (expanded) */}
-  </div>
-  
-  {/* Side Panel - Better organized */}
-  <div className="space-y-3">
-    {/* Status Widget (KYF + Announcements) */}
-    <StatusWidget variant="desktop" />
-    
-    {/* Personal Note */}
-    <PersonalNoteCard />
-    
-    {/* Completed Stage (collapsed) */}
-    {/* Upcoming Stage (collapsed) */}
-  </div>
-</div>
-```
+import { KYFormQuickAccess } from '@/components/profile/KYFormQuickAccess';
 
-### Mobile Layout Restructure
+// In the return JSX, add above PerksQuickAccess:
 
-**Before:**
-```tsx
-{/* Greeting */}
-{/* AnnouncementBanner - FULL WIDTH */}
-{/* Stage Navigation */}
-{/* Card Stack */}
-{/* Quick Actions */}
-{/* Personal Note */}
-```
+{/* KY Form Quick Access */}
+<KYFormQuickAccess 
+  isCompleted={profile?.ky_form_completed || false}
+  cohortType={profileData?.cohortType || null}
+/>
 
-**After:**
-```tsx
-{/* Greeting */}
-{/* Stage Navigation */}
-{/* Status Widget - COMPACT HORIZONTAL */}
-{/* Card Stack */}
-{/* Quick Actions */}
-{/* Personal Note */}
+{/* Perks Quick Access */}
+<PerksQuickAccess />
 ```
 
 ---
 
-## Spacing & Padding Fixes
-
-### Global Fixes in JourneyBentoHero:
-
-1. **Reduce gap between elements**: `space-y-4` → `space-y-3`
-2. **Tighter mobile card stack**: `min-h-[280px]` → `min-h-[260px]`
-3. **Remove extra margins**: Clean up `mt-2`, `mb-4` scattered margins
-
-### Remove Announcement Banner from Current Position:
+## App.tsx Changes
 
 ```tsx
-// REMOVE this line:
-<AnnouncementBanner className="mt-2" />
+// Add import
+import MyKYForm from "./pages/MyKYForm";
 
-// The StatusWidget now handles announcements
+// Add route inside the AppLayout routes
+<Route path="/my-kyform" element={<MyKYForm />} />
 ```
 
 ---
@@ -340,31 +356,36 @@ const StatusWidget: React.FC<{ variant: 'desktop' | 'mobile' }> = ({ variant }) 
 
 | File | Action | Description |
 |------|--------|-------------|
-| `src/components/home/StatusWidget.tsx` | **Create** | New combined status/notification widget |
-| `src/components/journey/JourneyBentoHero.tsx` | **Modify** | Integrate StatusWidget, remove AnnouncementBanner, adjust grid layout |
+| `src/components/profile/KYFormQuickAccess.tsx` | **Create** | Quick access button for Profile page |
+| `src/pages/MyKYForm.tsx` | **Create** | Read-only summary page with edit option |
+| `src/pages/Profile.tsx` | **Modify** | Add KYFormQuickAccess above PerksQuickAccess |
+| `src/App.tsx` | **Modify** | Add `/my-kyform` route |
 
 ---
 
-## Visual Result
+## User Flow
 
-### Desktop
-- Side panel now has Status Widget at top (KYF reminder + announcements)
-- Personal note below status widget
-- Completed/upcoming stages at bottom
-- Main area focuses on current stage tasks
+### If KY Form is Completed:
+1. User visits Profile
+2. Sees "Know Your Filmmaker" button with checkmark icon
+3. Clicks → navigates to `/my-kyform`
+4. Views all submitted data in organized sections
+5. Clicks "Edit" → navigates to form page with data pre-loaded
 
-### Mobile
-- Compact horizontal status bar after navigation strip
-- Quick access to KY form (if incomplete) and announcements
-- No wasted space, clean flow from top to bottom
-- Tighter spacing for better content density
+### If KY Form is NOT Completed:
+1. User visits Profile
+2. Sees "Know Your Filmmaker" button with pulsing badge
+3. Clicks → navigates directly to form page (`/kyf-form`, etc.)
+4. Completes form → sees completion celebration
+5. Returns to Profile → now shows completed state
 
 ---
 
 ## Benefits
 
-1. **Consolidated Notifications** - One widget for all status items
-2. **Better Space Utilization** - Side panel fully used on desktop
-3. **Cleaner Mobile Experience** - Compact status bar, no full-width banners
-4. **Priority Visibility** - KY form reminder prominently displayed when needed
-5. **No Layout Shifts** - Consistent spacing with no padding/sizing issues
+1. **Always Accessible** - Users can view their form data anytime from Profile
+2. **Edit Capability** - Easy path to update responses if needed
+3. **Clean Summary** - Organized, readable view of all submitted information
+4. **Cohort-Aware** - Adapts labels and routing based on user's cohort type
+5. **Consistent Design** - Matches existing quick access button styling
+
