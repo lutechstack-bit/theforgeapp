@@ -1,37 +1,16 @@
 
 
-# Four-Pill Single Row Layout for Mobile
+# Remove Sticky Behavior from Navigation Pills
 
-## Summary
+## Problem
 
-Redesign the navigation tabs to display exactly 4 items in a single horizontal row on mobile, matching the clean style from the reference image (Trending/Following/Events/Insights layout).
-
----
-
-## Current State vs Target
-
-| Aspect | Current | Target |
-|--------|---------|--------|
-| Layout | 3-column grid (wraps to 2 rows) | Single row with 4 equal items |
-| Icons | Has icons | Text-only (no icons on mobile) |
-| Style | Filled primary for active | Bordered pills, bold/filled for active |
-| Spacing | Tight gaps | Even spacing across full width |
+The navigation pills (Journey, Prep, Equipment, Rules) currently have `sticky top-16` styling, which makes them float and stay fixed at the top of the viewport while scrolling. You want them to scroll normally with the page content on both mobile and web.
 
 ---
 
-## Design Changes
+## Solution
 
-**Mobile Layout (single row, 4 items):**
-```
-[Journey] [Prep] [Equipment] [Rules]
-```
-
-**Key Style Updates:**
-- Remove icons on mobile for cleaner look (keep on desktop)
-- Use `flex` with equal spacing instead of grid
-- Larger tap targets with more horizontal padding
-- Border-style pills with subtle active state
-- Active tab: filled background OR bold text with subtle fill
+Remove the `sticky` positioning class from the QuickActionsBar component so the navigation scrolls naturally with the rest of the content.
 
 ---
 
@@ -39,61 +18,31 @@ Redesign the navigation tabs to display exactly 4 items in a single horizontal r
 
 ### File: `src/components/roadmap/QuickActionsBar.tsx`
 
-**1. Change to 4-column flex layout on mobile:**
+**Change line 39 from:**
 ```tsx
-<div className={cn(
-  "flex items-center justify-between gap-2",
-  "sm:justify-start sm:gap-2"
-)}>
+<div className="sticky top-16 z-30 -mx-3 sm:-mx-4 px-3 sm:px-4 py-2.5 sm:py-3 mb-4 sm:mb-6 glass-nav">
 ```
 
-**2. Hide icons on mobile, show on tablet+:**
+**To:**
 ```tsx
-<Icon className="hidden sm:block h-4 w-4" />
+<div className="-mx-3 sm:-mx-4 px-3 sm:px-4 py-2.5 sm:py-3 mb-4 sm:mb-6">
 ```
 
-**3. Adjust button sizing for single-row fit:**
-```tsx
-<button
-  className={cn(
-    "flex-1 sm:flex-none flex items-center justify-center gap-1.5",
-    "px-3 py-2.5 rounded-full text-xs sm:text-sm font-medium",
-    "border transition-all duration-200",
-    active
-      ? "bg-primary text-primary-foreground border-primary shadow-sm"
-      : "bg-transparent text-foreground border-border hover:bg-secondary/50"
-  )}
->
-```
-
-**4. Core navigation stays as 4 items (Journey, Prep, Equipment, Rules)**
-
-The conditional tabs (Gallery, Films) will show when available but the base 4 are always visible.
+**Classes removed:**
+- `sticky` - removes fixed positioning behavior
+- `top-16` - no longer needed without sticky
+- `z-30` - no longer needed without sticky
+- `glass-nav` - no longer needed since it won't overlap content
 
 ---
 
-## Visual Comparison
+## Behavior After Fix
 
-**Before (2 rows):**
-```
-[🗺 Journey] [📄 Prep] [📦 Equipment]
-[📖 Rules]
-```
-
-**After (1 row, no icons on mobile):**
-```
-[Journey] [Prep] [Equipment] [Rules]
-```
-
----
-
-## Styling Details
-
-- **Active state**: Primary background with primary-foreground text
-- **Inactive state**: Transparent with visible border, standard text color
-- **Hover**: Subtle secondary background fill
-- **Touch target**: Larger vertical padding (`py-2.5`) for comfortable tapping
-- **Width**: Each button takes equal space (`flex-1`) on mobile
+| Before | After |
+|--------|-------|
+| Pills stick to top while scrolling | Pills scroll with page content |
+| Overlays content below when scrolling | Stays in its natural position |
+| Has glass/blur background effect | Clean, no overlay effect needed |
 
 ---
 
@@ -101,15 +50,5 @@ The conditional tabs (Gallery, Films) will show when available but the base 4 ar
 
 | File | Change |
 |------|--------|
-| `src/components/roadmap/QuickActionsBar.tsx` | Single-row flex layout, hide icons on mobile, adjust sizing |
-
----
-
-## Result
-
-A clean, single-row navigation that:
-- Shows all 4 core tabs without scrolling or wrapping
-- Matches the reference design aesthetic
-- Has comfortable tap targets
-- Looks polished and professional on mobile
+| `src/components/roadmap/QuickActionsBar.tsx` | Remove `sticky top-16 z-30 glass-nav` classes |
 
