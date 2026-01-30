@@ -1,12 +1,13 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Users, BookOpen, Map, Calendar, Gift, Settings, Info, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { Home, Users, BookOpen, Map, Calendar, Gift, Settings, Info, PanelLeftClose, PanelLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebar } from '@/contexts/SidebarContext';
 import forgeLogo from '@/assets/forge-logo.png';
 import forgeIcon from '@/assets/forge-icon.png';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
 
 const navItems = [
   { to: '/', icon: Home, label: 'Home' },
@@ -25,7 +26,7 @@ const bottomItems = [
 export const SideNav: React.FC = () => {
   const { collapsed, toggle } = useSidebar();
   const location = useLocation();
-  const { profile } = useAuth();
+  const { profile, edition } = useAuth();
 
   const NavItem = ({ to, icon: Icon, label, isActive }: { to: string; icon: React.ElementType; label: string; isActive: boolean }) => {
     const content = (
@@ -33,10 +34,10 @@ export const SideNav: React.FC = () => {
         to={to}
         className={cn(
           "group relative flex items-center gap-3.5 rounded-xl transition-all duration-300 ease-out text-[15px] font-medium",
-          collapsed ? "justify-center p-3" : "px-4 py-3",
+          collapsed ? "justify-center p-3" : "px-4 py-3 justify-between",
           isActive
             ? "bg-gradient-to-r from-primary/20 to-primary/10 text-primary shadow-[0_0_20px_-5px_hsl(var(--primary)/0.4)]"
-            : "text-sidebar-foreground/50 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+            : "text-sidebar-foreground/60 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
         )}
       >
         {/* Active indicator bar */}
@@ -44,23 +45,33 @@ export const SideNav: React.FC = () => {
           <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-primary shadow-[0_0_8px_2px_hsl(var(--primary)/0.5)]" />
         )}
         
-        {/* Icon container with premium glow effect */}
-        <span className={cn(
-          "relative shrink-0 flex items-center justify-center transition-all duration-300",
-          isActive && "drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]"
-        )}>
-          <Icon className={cn(
-            "h-[22px] w-[22px] transition-transform duration-300 ease-out",
-            "group-hover:scale-110",
-            isActive && "text-primary"
-          )} strokeWidth={isActive ? 2.2 : 1.8} />
-        </span>
-        
-        {!collapsed && (
+        <span className="flex items-center gap-3.5">
+          {/* Icon container with premium glow effect */}
           <span className={cn(
-            "transition-all duration-300",
-            isActive && "font-semibold"
-          )}>{label}</span>
+            "relative shrink-0 flex items-center justify-center transition-all duration-300",
+            isActive && "drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]"
+          )}>
+            <Icon className={cn(
+              "h-[22px] w-[22px] transition-transform duration-300 ease-out",
+              "group-hover:scale-110",
+              isActive && "text-primary"
+            )} strokeWidth={isActive ? 2.2 : 1.8} />
+          </span>
+          
+          {!collapsed && (
+            <span className={cn(
+              "transition-all duration-300",
+              isActive && "font-semibold"
+            )}>{label}</span>
+          )}
+        </span>
+
+        {/* Chevron for expanded mode */}
+        {!collapsed && (
+          <ChevronRight className={cn(
+            "h-4 w-4 transition-all duration-300",
+            isActive ? "text-primary" : "text-sidebar-foreground/30 group-hover:text-sidebar-foreground/60"
+          )} />
         )}
       </NavLink>
     );
@@ -157,8 +168,8 @@ export const SideNav: React.FC = () => {
           <NavLink
             to="/profile"
             className={cn(
-              "flex items-center gap-3 pt-3 border-t border-sidebar-border mt-3 rounded-lg transition-all duration-200 cursor-pointer hover:bg-sidebar-accent/60",
-              collapsed ? "justify-center" : "px-2",
+              "group flex items-center gap-3 pt-4 pb-2 border-t border-sidebar-border mt-3 rounded-xl transition-all duration-200 cursor-pointer hover:bg-sidebar-accent/60",
+              collapsed ? "justify-center px-2" : "px-3",
               location.pathname === '/profile' && "bg-primary/10"
             )}
           >
@@ -166,7 +177,7 @@ export const SideNav: React.FC = () => {
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
                   <span className="block">
-                    <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold text-primary overflow-hidden">
+                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold text-primary overflow-hidden ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
                       {profile?.avatar_url ? (
                         <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -180,17 +191,27 @@ export const SideNav: React.FC = () => {
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <div className="flex items-center gap-3 py-2 w-full">
-                <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold text-primary shrink-0 overflow-hidden">
-                  {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'
-                  )}
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold text-primary shrink-0 overflow-hidden ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
+                    {profile?.avatar_url ? (
+                      <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'
+                    )}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-sidebar-foreground truncate max-w-[120px]">
+                      {profile?.full_name || 'User'}
+                    </span>
+                    {edition?.cohort_type && (
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 mt-0.5 w-fit">
+                        {edition.cohort_type}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-                <span className="text-sm font-medium text-sidebar-foreground truncate">
-                  {profile?.full_name || 'User'}
-                </span>
+                <ChevronRight className="h-4 w-4 text-sidebar-foreground/30 group-hover:text-sidebar-foreground/60 transition-colors" />
               </div>
             )}
           </NavLink>
