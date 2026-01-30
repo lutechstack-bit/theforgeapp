@@ -1,15 +1,36 @@
 
-# Fix Hidden Journey Tab - Auto-Scroll to Active Tab
+# No-Scroll Tabs: Two-Row Grid Layout on Mobile
 
 ## Problem
 
-When navigating to the Rules page (or any tab beyond the visible area), the ScrollArea stays at that scroll position. When you return to the Roadmap page, the "Journey" tab is cut off on the left because the scroll position was preserved.
+The current pill tabs require horizontal scrolling on mobile devices. You want all tabs visible without any scrolling.
 
 ---
 
-## Solution
+## Solution: Two-Row Grid Layout
 
-Add auto-scroll behavior that scrolls the active tab into view whenever the route changes. This ensures the currently selected tab is always visible.
+Transform the navigation into a **2-row grid on mobile** that shows all tabs at once, switching to a single horizontal row on larger screens (tablets/desktop).
+
+**Mobile Layout (2 rows × 3 columns):**
+```
+[Journey] [Prep]   [Equipment]
+[Rules]   [Gallery] [Films]
+```
+
+**Tablet/Desktop Layout (single row):**
+```
+[Journey] [Prep] [Equipment] [Rules] [Gallery] [Films]
+```
+
+---
+
+## Design Details
+
+- **Mobile (< 640px)**: 3-column grid with 2 rows
+- **Tablet+ (≥ 640px)**: Flexbox single row (current behavior)
+- Compact padding on mobile (`px-3 py-1.5`) for tighter fit
+- Full-width buttons in grid cells for easy tapping
+- Same pill styling with primary highlight for active state
 
 ---
 
@@ -17,50 +38,52 @@ Add auto-scroll behavior that scrolls the active tab into view whenever the rout
 
 ### File: `src/components/roadmap/QuickActionsBar.tsx`
 
-**1. Add useRef and useEffect hooks**
-```tsx
-import React, { useRef, useEffect } from 'react';
-```
+**1. Remove ScrollArea** (no longer needed)
 
-**2. Create a ref for each button and scroll active into view**
-
-Add a ref to track button elements and scroll the active one into view on route change:
+**2. Use responsive grid/flex layout:**
 
 ```tsx
-const activeButtonRef = useRef<HTMLButtonElement>(null);
-
-useEffect(() => {
-  // Scroll the active tab into view when route changes
-  if (activeButtonRef.current) {
-    activeButtonRef.current.scrollIntoView({
-      behavior: 'smooth',
-      block: 'nearest',
-      inline: 'center'
-    });
-  }
-}, [location.pathname]);
+<div className={cn(
+  "grid grid-cols-3 gap-1.5",           // Mobile: 3-column grid
+  "sm:flex sm:flex-wrap sm:gap-2"        // Tablet+: flex row
+)}>
+  {sections.map((section) => (
+    <button
+      className={cn(
+        // Base styles
+        "flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-xs sm:text-sm font-medium",
+        // Active/inactive states
+        active ? "bg-primary text-primary-foreground" : "bg-card/60 text-muted-foreground border border-border/50"
+      )}
+    >
+      <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+      {section.label}
+    </button>
+  ))}
+</div>
 ```
 
-**3. Attach ref to active button**
-```tsx
-<button
-  ref={active ? activeButtonRef : null}
-  key={section.id}
-  onClick={() => navigate(section.path)}
-  ...
->
-```
+**3. Adjust container padding** for grid layout
 
 ---
 
-## Behavior After Fix
+## Visual Comparison
 
-| Scenario | Before | After |
-|----------|--------|-------|
-| Load Journey page | Journey visible | Journey visible |
-| Navigate to Rules | Rules visible, Journey cut off | Rules visible, Journey cut off |
-| Navigate back to Journey | Journey still cut off! | **Journey scrolls into view** |
-| Page reload on Rules | Journey cut off | **Rules centered, Journey accessible** |
+| Screen Size | Before | After |
+|-------------|--------|-------|
+| Mobile | Scrollable row (tabs cut off) | 2×3 grid (all visible) |
+| Tablet | Single row | Single row (unchanged) |
+| Desktop | Single row | Single row (unchanged) |
+
+---
+
+## Benefits
+
+- All tabs visible without scrolling on any device
+- Easy tap targets (full grid cell width)
+- Clean, organized appearance
+- Labels remain readable
+- Responsive - adapts to screen size
 
 ---
 
@@ -68,10 +91,4 @@ useEffect(() => {
 
 | File | Change |
 |------|--------|
-| `src/components/roadmap/QuickActionsBar.tsx` | Add useEffect to auto-scroll active tab into view |
-
----
-
-## Result
-
-The active tab will always be visible and centered in the scroll area, making it clear which section the user is currently viewing.
+| `src/components/roadmap/QuickActionsBar.tsx` | Replace ScrollArea with responsive grid layout |
