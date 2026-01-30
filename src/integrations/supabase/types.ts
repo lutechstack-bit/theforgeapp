@@ -2100,11 +2100,40 @@ export type Database = {
           },
         ]
       }
+      stay_location_editions: {
+        Row: {
+          edition_id: string
+          stay_location_id: string
+        }
+        Insert: {
+          edition_id: string
+          stay_location_id: string
+        }
+        Update: {
+          edition_id?: string
+          stay_location_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stay_location_editions_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stay_location_editions_stay_location_id_fkey"
+            columns: ["stay_location_id"]
+            isOneToOne: false
+            referencedRelation: "stay_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stay_locations: {
         Row: {
           contacts: Json | null
           created_at: string | null
-          edition_id: string | null
           featured_image_url: string | null
           full_address: string | null
           gallery_images: Json | null
@@ -2118,7 +2147,6 @@ export type Database = {
         Insert: {
           contacts?: Json | null
           created_at?: string | null
-          edition_id?: string | null
           featured_image_url?: string | null
           full_address?: string | null
           gallery_images?: Json | null
@@ -2132,7 +2160,6 @@ export type Database = {
         Update: {
           contacts?: Json | null
           created_at?: string | null
-          edition_id?: string | null
           featured_image_url?: string | null
           full_address?: string | null
           gallery_images?: Json | null
@@ -2143,15 +2170,7 @@ export type Database = {
           notes?: Json | null
           order_index?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "stay_locations_edition_id_fkey"
-            columns: ["edition_id"]
-            isOneToOne: false
-            referencedRelation: "editions"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       student_films: {
         Row: {

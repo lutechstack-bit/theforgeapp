@@ -116,29 +116,66 @@ const RoadmapSidebar: React.FC<RoadmapSidebarProps> = ({ editionId }) => {
     enabled: allMappedContentIds !== undefined
   });
 
+  // Fetch stay location edition mappings for current edition
+  const { data: stayLocationEditionIds } = useQuery({
+    queryKey: ['stay-location-editions', editionId],
+    queryFn: async () => {
+      if (!editionId) return null;
+      
+      const { data, error } = await supabase
+        .from('stay_location_editions')
+        .select('stay_location_id')
+        .eq('edition_id', editionId);
+      
+      if (error) throw error;
+      return data.map(d => d.stay_location_id);
+    },
+    enabled: !!editionId
+  });
+
+  // Fetch all stay location IDs that have ANY edition mapping (to identify global ones)
+  const { data: allMappedStayLocationIds } = useQuery({
+    queryKey: ['all-mapped-stay-location-ids'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stay_location_editions')
+        .select('stay_location_id');
+      
+      if (error) throw error;
+      return [...new Set(data.map(d => d.stay_location_id))];
+    }
+  });
+
   // Fetch stay locations from new table
   const { data: stayLocations = [] } = useQuery({
-    queryKey: ['stay-locations', editionId],
+    queryKey: ['stay-locations', editionId, stayLocationEditionIds, allMappedStayLocationIds],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from('stay_locations')
         .select('*')
         .eq('is_active', true)
         .order('order_index');
 
-      const { data, error } = await query;
       if (error) throw error;
 
-      // Filter by edition - show global (no edition) + edition-specific
-      return (data || [])
-        .filter(loc => !loc.edition_id || loc.edition_id === editionId)
-        .map(loc => ({
-          ...loc,
-          contacts: (loc.contacts as unknown as Contact[]) || [],
-          notes: (loc.notes as unknown as string[]) || [],
-          gallery_images: (loc.gallery_images as unknown as GalleryImage[]) || [],
-        })) as StayLocation[];
-    }
+      // Filter by edition - show edition-specific + global (no mappings)
+      const filteredData = (data || []).filter(loc => {
+        if (!editionId) return true;
+        
+        const hasMappings = allMappedStayLocationIds?.includes(loc.id);
+        if (!hasMappings) return true; // Global - no mappings
+        
+        return stayLocationEditionIds?.includes(loc.id);
+      });
+
+      return filteredData.map(loc => ({
+        ...loc,
+        contacts: (loc.contacts as unknown as Contact[]) || [],
+        notes: (loc.notes as unknown as string[]) || [],
+        gallery_images: (loc.gallery_images as unknown as GalleryImage[]) || [],
+      })) as StayLocation[];
+    },
+    enabled: allMappedStayLocationIds !== undefined
   });
 
   // Group content by block type
