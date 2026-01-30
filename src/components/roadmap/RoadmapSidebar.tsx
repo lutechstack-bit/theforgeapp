@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import SidebarMomentsCarousel from './SidebarMomentsCarousel';
 import SidebarStudentWorkCarousel from './SidebarStudentWorkCarousel';
 import SidebarStayCarousel from './SidebarStayCarousel';
+import StayLocationDetailModal from './StayLocationDetailModal';
 import { RoadmapHighlightsModal } from '@/components/home/RoadmapHighlightsModal';
 
 interface RoadmapSidebarProps {
@@ -20,10 +21,36 @@ interface SidebarItem {
   order_index: number;
 }
 
-type ModalType = 'moments' | 'studentWork' | 'stayLocation' | null;
+interface Contact {
+  name: string;
+  phone: string;
+}
+
+interface GalleryImage {
+  url: string;
+  caption?: string;
+}
+
+interface StayLocation {
+  id: string;
+  name: string;
+  address_line1?: string;
+  address_line2?: string;
+  city?: string;
+  postcode?: string;
+  google_maps_url?: string;
+  contacts?: Contact[];
+  notes?: string[];
+  gallery_images?: GalleryImage[];
+  featured_image_url?: string;
+}
+
+type ModalType = 'moments' | 'studentWork' | null;
 
 const RoadmapSidebar: React.FC<RoadmapSidebarProps> = ({ editionId }) => {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
+  const [selectedStayLocation, setSelectedStayLocation] = useState<StayLocation | null>(null);
+  const [isStayModalOpen, setIsStayModalOpen] = useState(false);
 
   // First, fetch content IDs linked to this edition via junction table
   const { data: linkedContentIds } = useQuery({
@@ -89,6 +116,31 @@ const RoadmapSidebar: React.FC<RoadmapSidebarProps> = ({ editionId }) => {
     enabled: allMappedContentIds !== undefined
   });
 
+  // Fetch stay locations from new table
+  const { data: stayLocations = [] } = useQuery({
+    queryKey: ['stay-locations', editionId],
+    queryFn: async () => {
+      let query = supabase
+        .from('stay_locations')
+        .select('*')
+        .eq('is_active', true)
+        .order('order_index');
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // Filter by edition - show global (no edition) + edition-specific
+      return (data || [])
+        .filter(loc => !loc.edition_id || loc.edition_id === editionId)
+        .map(loc => ({
+          ...loc,
+          contacts: (loc.contacts as unknown as Contact[]) || [],
+          notes: (loc.notes as unknown as string[]) || [],
+          gallery_images: (loc.gallery_images as unknown as GalleryImage[]) || [],
+        })) as StayLocation[];
+    }
+  });
+
   // Group content by block type
   const momentsItems = (sidebarContent || [])
     .filter(item => item.block_type === 'past_moments')
@@ -109,14 +161,20 @@ const RoadmapSidebar: React.FC<RoadmapSidebarProps> = ({ editionId }) => {
       caption: item.caption || undefined
     }));
 
-  const stayItems = (sidebarContent || [])
-    .filter(item => item.block_type === 'stay_locations')
-    .map(item => ({
-      id: item.id,
-      media_url: item.media_url,
-      title: item.title || undefined,
-      caption: item.caption || undefined
-    }));
+  // Convert stay locations to carousel items
+  const stayItems = stayLocations.map(loc => ({
+    id: loc.id,
+    media_url: loc.featured_image_url || '',
+    title: loc.name,
+    caption: loc.city || undefined
+  }));
+
+  const handleStayViewAll = () => {
+    if (stayLocations.length > 0) {
+      setSelectedStayLocation(stayLocations[0]);
+      setIsStayModalOpen(true);
+    }
+  };
 
   // Don't render if no content
   const hasContent = momentsItems.length > 0 || studentWorkItems.length > 0 || stayItems.length > 0;
@@ -144,11 +202,11 @@ const RoadmapSidebar: React.FC<RoadmapSidebarProps> = ({ editionId }) => {
           />
         )}
 
-        {/* Block 3: Stay Locations */}
+        {/* Block 3: Stay Locations (from new table) */}
         {stayItems.length > 0 && (
           <SidebarStayCarousel 
             items={stayItems}
-            onViewAll={() => setActiveModal('stayLocation')}
+            onViewAll={handleStayViewAll}
           />
         )}
       </div>
@@ -179,16 +237,11 @@ const RoadmapSidebar: React.FC<RoadmapSidebarProps> = ({ editionId }) => {
         }))}
       />
       
-      <RoadmapHighlightsModal
-        open={activeModal === 'stayLocation'}
-        onOpenChange={(open) => !open && setActiveModal(null)}
-        type="stayLocation"
-        items={stayItems.map(item => ({
-          id: item.id,
-          media_url: item.media_url,
-          title: item.title,
-          caption: item.caption,
-        }))}
+      {/* Stay Location Detail Modal */}
+      <StayLocationDetailModal
+        open={isStayModalOpen}
+        onOpenChange={setIsStayModalOpen}
+        location={selectedStayLocation}
       />
     </>
   );

@@ -2100,6 +2100,68 @@ export type Database = {
           },
         ]
       }
+      stay_locations: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          contacts: Json | null
+          created_at: string | null
+          edition_id: string | null
+          featured_image_url: string | null
+          gallery_images: Json | null
+          google_maps_url: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          notes: Json | null
+          order_index: number | null
+          postcode: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          contacts?: Json | null
+          created_at?: string | null
+          edition_id?: string | null
+          featured_image_url?: string | null
+          gallery_images?: Json | null
+          google_maps_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notes?: Json | null
+          order_index?: number | null
+          postcode?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          contacts?: Json | null
+          created_at?: string | null
+          edition_id?: string | null
+          featured_image_url?: string | null
+          gallery_images?: Json | null
+          google_maps_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notes?: Json | null
+          order_index?: number | null
+          postcode?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stay_locations_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_films: {
         Row: {
           award_tags: Json | null

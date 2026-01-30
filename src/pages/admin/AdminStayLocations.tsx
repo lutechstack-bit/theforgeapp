@@ -1,0 +1,609 @@
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Plus, Pencil, Trash2, MapPin, Phone, X, ImagePlus, GripVertical } from 'lucide-react';
+import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
+
+interface Contact {
+  name: string;
+  phone: string;
+}
+
+interface GalleryImage {
+  url: string;
+  caption?: string;
+}
+
+interface StayLocation {
+  id: string;
+  edition_id: string | null;
+  name: string;
+  address_line1: string | null;
+  address_line2: string | null;
+  city: string | null;
+  postcode: string | null;
+  google_maps_url: string | null;
+  contacts: Contact[];
+  notes: string[];
+  gallery_images: GalleryImage[];
+  featured_image_url: string | null;
+  order_index: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+interface Edition {
+  id: string;
+  name: string;
+  city: string;
+}
+
+const emptyLocation: Omit<StayLocation, 'id' | 'created_at'> = {
+  edition_id: null,
+  name: '',
+  address_line1: '',
+  address_line2: '',
+  city: '',
+  postcode: '',
+  google_maps_url: '',
+  contacts: [],
+  notes: [],
+  gallery_images: [],
+  featured_image_url: '',
+  order_index: 0,
+  is_active: true,
+};
+
+const AdminStayLocations: React.FC = () => {
+  const queryClient = useQueryClient();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingLocation, setEditingLocation] = useState<StayLocation | null>(null);
+  const [formData, setFormData] = useState<Omit<StayLocation, 'id' | 'created_at'>>(emptyLocation);
+
+  // Fetch editions for dropdown
+  const { data: editions = [] } = useQuery({
+    queryKey: ['editions-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('editions')
+        .select('id, name, city')
+        .eq('is_archived', false)
+        .order('name');
+      if (error) throw error;
+      return data as Edition[];
+    }
+  });
+
+  // Fetch stay locations
+  const { data: locations = [], isLoading } = useQuery({
+    queryKey: ['stay-locations-admin'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stay_locations')
+        .select('*')
+        .order('order_index');
+      if (error) throw error;
+      return (data || []).map(loc => ({
+        ...loc,
+        contacts: (loc.contacts as unknown as Contact[]) || [],
+        notes: (loc.notes as unknown as string[]) || [],
+        gallery_images: (loc.gallery_images as unknown as GalleryImage[]) || [],
+      })) as StayLocation[];
+    }
+  });
+
+  // Create mutation
+  const createMutation = useMutation({
+    mutationFn: async (data: Omit<StayLocation, 'id' | 'created_at'>) => {
+      const { error } = await supabase.from('stay_locations').insert([{
+        ...data,
+        contacts: data.contacts as unknown as any,
+        notes: data.notes as unknown as any,
+        gallery_images: data.gallery_images as unknown as any,
+      }]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stay-locations-admin'] });
+      toast.success('Stay location created');
+      handleCloseDialog();
+    },
+    onError: (error) => toast.error(`Error: ${error.message}`)
+  });
+
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Omit<StayLocation, 'id' | 'created_at'> }) => {
+      const { error } = await supabase.from('stay_locations').update({
+        ...data,
+        contacts: data.contacts as unknown as any,
+        notes: data.notes as unknown as any,
+        gallery_images: data.gallery_images as unknown as any,
+      }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stay-locations-admin'] });
+      toast.success('Stay location updated');
+      handleCloseDialog();
+    },
+    onError: (error) => toast.error(`Error: ${error.message}`)
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('stay_locations').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stay-locations-admin'] });
+      toast.success('Stay location deleted');
+    },
+    onError: (error) => toast.error(`Error: ${error.message}`)
+  });
+
+  const handleOpenCreate = () => {
+    setEditingLocation(null);
+    setFormData(emptyLocation);
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenEdit = (location: StayLocation) => {
+    setEditingLocation(location);
+    setFormData({
+      edition_id: location.edition_id,
+      name: location.name,
+      address_line1: location.address_line1 || '',
+      address_line2: location.address_line2 || '',
+      city: location.city || '',
+      postcode: location.postcode || '',
+      google_maps_url: location.google_maps_url || '',
+      contacts: location.contacts,
+      notes: location.notes,
+      gallery_images: location.gallery_images,
+      featured_image_url: location.featured_image_url || '',
+      order_index: location.order_index,
+      is_active: location.is_active,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingLocation(null);
+    setFormData(emptyLocation);
+  };
+
+  const handleSubmit = () => {
+    if (!formData.name.trim()) {
+      toast.error('Name is required');
+      return;
+    }
+
+    if (editingLocation) {
+      updateMutation.mutate({ id: editingLocation.id, data: formData });
+    } else {
+      createMutation.mutate(formData);
+    }
+  };
+
+  // Contact management
+  const addContact = () => {
+    setFormData(prev => ({
+      ...prev,
+      contacts: [...prev.contacts, { name: '', phone: '' }]
+    }));
+  };
+
+  const updateContact = (index: number, field: 'name' | 'phone', value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      contacts: prev.contacts.map((c, i) => 
+        i === index ? { ...c, [field]: value } : c
+      )
+    }));
+  };
+
+  const removeContact = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      contacts: prev.contacts.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Notes management
+  const addNote = () => {
+    setFormData(prev => ({
+      ...prev,
+      notes: [...prev.notes, '']
+    }));
+  };
+
+  const updateNote = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      notes: prev.notes.map((n, i) => i === index ? value : n)
+    }));
+  };
+
+  const removeNote = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      notes: prev.notes.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Gallery management
+  const addGalleryImage = () => {
+    setFormData(prev => ({
+      ...prev,
+      gallery_images: [...prev.gallery_images, { url: '', caption: '' }]
+    }));
+  };
+
+  const updateGalleryImage = (index: number, field: 'url' | 'caption', value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      gallery_images: prev.gallery_images.map((img, i) => 
+        i === index ? { ...img, [field]: value } : img
+      )
+    }));
+  };
+
+  const removeGalleryImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      gallery_images: prev.gallery_images.filter((_, i) => i !== index)
+    }));
+  };
+
+  const getEditionName = (editionId: string | null) => {
+    if (!editionId) return 'Global';
+    const edition = editions.find(e => e.id === editionId);
+    return edition ? `${edition.name} (${edition.city})` : 'Unknown';
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Stay Locations</h1>
+          <p className="text-muted-foreground">Manage accommodation details for each edition</p>
+        </div>
+        <Button onClick={handleOpenCreate}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Location
+        </Button>
+      </div>
+
+      {/* Location Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="overflow-hidden">
+              <Skeleton className="h-40 w-full" />
+              <CardContent className="p-4 space-y-2">
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardContent>
+            </Card>
+          ))
+        ) : locations.length === 0 ? (
+          <Card className="col-span-full">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <MapPin className="w-12 h-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium">No stay locations yet</h3>
+              <p className="text-muted-foreground text-sm mb-4">Create your first stay location</p>
+              <Button onClick={handleOpenCreate}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Location
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          locations.map((location) => (
+            <Card key={location.id} className={`overflow-hidden ${!location.is_active ? 'opacity-60' : ''}`}>
+              {location.featured_image_url ? (
+                <div className="h-40 bg-secondary/50">
+                  <img 
+                    src={location.featured_image_url} 
+                    alt={location.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="h-40 bg-secondary/50 flex items-center justify-center">
+                  <MapPin className="w-12 h-12 text-muted-foreground" />
+                </div>
+              )}
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <h3 className="font-semibold text-foreground">{location.name}</h3>
+                    <p className="text-sm text-muted-foreground">{location.city || 'No city'}</p>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(location)}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => deleteMutation.mutate(location.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <span className="px-2 py-1 rounded-full bg-primary/10 text-primary">
+                    {getEditionName(location.edition_id)}
+                  </span>
+                  {location.contacts.length > 0 && (
+                    <span className="px-2 py-1 rounded-full bg-secondary text-muted-foreground">
+                      {location.contacts.length} contacts
+                    </span>
+                  )}
+                  {location.notes.length > 0 && (
+                    <span className="px-2 py-1 rounded-full bg-secondary text-muted-foreground">
+                      {location.notes.length} notes
+                    </span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Create/Edit Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingLocation ? 'Edit Stay Location' : 'Add Stay Location'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {/* Basic Info */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <Label htmlFor="name">Hotel/Location Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Taj Hotel & Convention Centre"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <Label htmlFor="edition">Edition</Label>
+                <Select
+                  value={formData.edition_id || 'global'}
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, edition_id: v === 'global' ? null : v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select edition" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="global">Global (All Editions)</SelectItem>
+                    {editions.map((edition) => (
+                      <SelectItem key={edition.id} value={edition.id}>
+                        {edition.name} ({edition.city})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="address_line1">Address Line 1</Label>
+                <Input
+                  id="address_line1"
+                  value={formData.address_line1 || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, address_line1: e.target.value }))}
+                  placeholder="123 Main Street"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="address_line2">Address Line 2</Label>
+                <Input
+                  id="address_line2"
+                  value={formData.address_line2 || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, address_line2: e.target.value }))}
+                  placeholder="Near City Center"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  value={formData.city || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                  placeholder="Hyderabad"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="postcode">Postcode</Label>
+                <Input
+                  id="postcode"
+                  value={formData.postcode || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, postcode: e.target.value }))}
+                  placeholder="500001"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <Label htmlFor="google_maps_url">Google Maps URL</Label>
+                <Input
+                  id="google_maps_url"
+                  value={formData.google_maps_url || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, google_maps_url: e.target.value }))}
+                  placeholder="https://maps.google.com/..."
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <Label htmlFor="featured_image_url">Featured Image URL</Label>
+                <Input
+                  id="featured_image_url"
+                  value={formData.featured_image_url || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, featured_image_url: e.target.value }))}
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+            </div>
+
+            {/* Contacts Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-medium">Contacts</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addContact}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Contact
+                </Button>
+              </div>
+              {formData.contacts.map((contact, index) => (
+                <div key={index} className="flex gap-2 items-start">
+                  <div className="flex-1">
+                    <Input
+                      value={contact.name}
+                      onChange={(e) => updateContact(index, 'name', e.target.value)}
+                      placeholder="Contact name"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                      value={contact.phone}
+                      onChange={(e) => updateContact(index, 'phone', e.target.value)}
+                      placeholder="Phone number"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeContact(index)}
+                    className="text-destructive"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            {/* Notes Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-medium">Things to Keep in Mind</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addNote}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Note
+                </Button>
+              </div>
+              {formData.notes.map((note, index) => (
+                <div key={index} className="flex gap-2 items-start">
+                  <span className="text-muted-foreground text-sm pt-2">{index + 1}.</span>
+                  <Textarea
+                    value={note}
+                    onChange={(e) => updateNote(index, e.target.value)}
+                    placeholder="Enter a note or tip..."
+                    className="flex-1 min-h-[60px]"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeNote(index)}
+                    className="text-destructive"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            {/* Gallery Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-medium">Gallery Images</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addGalleryImage}>
+                  <ImagePlus className="w-4 h-4 mr-1" />
+                  Add Image
+                </Button>
+              </div>
+              {formData.gallery_images.map((img, index) => (
+                <div key={index} className="flex gap-2 items-start">
+                  <div className="flex-1">
+                    <Input
+                      value={img.url}
+                      onChange={(e) => updateGalleryImage(index, 'url', e.target.value)}
+                      placeholder="Image URL"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                      value={img.caption || ''}
+                      onChange={(e) => updateGalleryImage(index, 'caption', e.target.value)}
+                      placeholder="Caption (optional)"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeGalleryImage(index)}
+                    className="text-destructive"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            {/* Status */}
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="is_active">Active</Label>
+                <p className="text-sm text-muted-foreground">Show this location to users</p>
+              </div>
+              <Switch
+                id="is_active"
+                checked={formData.is_active}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseDialog}>Cancel</Button>
+            <Button 
+              onClick={handleSubmit}
+              disabled={createMutation.isPending || updateMutation.isPending}
+            >
+              {editingLocation ? 'Save Changes' : 'Create Location'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default AdminStayLocations;

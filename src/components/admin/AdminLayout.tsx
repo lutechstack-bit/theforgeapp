@@ -20,7 +20,8 @@ import {
   Route,
   ListTodo,
   Megaphone,
-  History
+  History,
+  Building2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +35,7 @@ const adminNavItems = [
   { to: '/admin/announcements', icon: Megaphone, label: 'Announcements' },
   { to: '/admin/roadmap', icon: Map, label: 'Roadmap' },
   { to: '/admin/roadmap-sidebar', icon: PanelRight, label: 'Roadmap Sidebar' },
+  { to: '/admin/stay-locations', icon: Building2, label: 'Stay Locations' },
   { to: '/admin/equipment', icon: Package, label: 'Equipment' },
   { to: '/admin/nightly-rituals', icon: Moon, label: 'Nightly Rituals' },
   { to: '/admin/events', icon: Calendar, label: 'Events' },
