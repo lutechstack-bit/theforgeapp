@@ -1,95 +1,109 @@
 
-# Fix Fullscreen Button for Mobile (iOS/In-App Browsers)
+
+# Fix Overflowing Tabs on Mobile - Simple & Clean Approach
 
 ## Summary
-The fullscreen button is visible on mobile but doesn't work when tapped. This fix adds proper iOS Safari and WebView (WhatsApp, Instagram, etc.) support for the fullscreen functionality.
+
+Replace the current button-style tabs with a clean **pill-style scrollable tabs** design that matches the existing patterns in Events and Learn sections. This provides a polished, consistent look with visual scroll cues.
 
 ---
 
-## Root Causes Identified
+## Current Problem
 
-| Issue | Impact |
-|-------|--------|
-| **Missing legacy iframe attributes** | iOS Safari/WebViews require `webkitallowfullscreen` and `mozallowfullscreen` on Vimeo iframes |
-| **Using `document.querySelector`** | Unreliable; should use React refs instead |
-| **No iOS fullscreen fallbacks** | `element.requestFullscreen()` often fails on iOS; need `webkitRequestFullscreen()` and `webkitEnterFullscreen()` |
-| **No user feedback** | When fullscreen fails, user gets no indication |
+The Roadmap tabs (Journey, Prep, Equipment, Rules, etc.) overflow on mobile screens, cutting off content without any visual indicator that more tabs exist.
 
 ---
 
-## Solution
+## Solution: Smooth Pill Tabs with ScrollArea
 
-### 1. Add iOS-compatible iframe attributes
-```tsx
-<iframe
-  ref={vimeoIframeRef}
-  src={embedUrl}
-  allowFullScreen
-  webkitallowfullscreen="true"  // iOS Safari
-  mozallowfullscreen="true"     // Legacy Firefox
-  ...
-/>
+Transform the navigation into elegant rounded pill tabs (matching `EventTypeTabs` and `ProgramTabs`) with proper horizontal scrolling and visual consistency.
+
+**Visual Preview (mobile):**
+```
+[●Journey] [Prep] [Equipment] [Rules] [Gallery→ (scroll hint)
 ```
 
-### 2. Use proper React refs
-Replace `document.querySelector('.vimeo-container')` with:
-- `vimeoContainerRef` for the container div
-- `vimeoIframeRef` for the iframe element
-
-### 3. Multi-stage fullscreen with iOS fallbacks
-```tsx
-const handleVimeoFullscreen = async () => {
-  try {
-    // 1. Try iframe.requestFullscreen()
-    // 2. Fallback: iframe.webkitRequestFullscreen()
-    // 3. Fallback: container.requestFullscreen()
-    // 4. Fallback: container.webkitRequestFullscreen()
-  } catch (err) {
-    toast.error("Fullscreen isn't available. Try opening in Safari/Chrome.");
-  }
-};
-```
-
-### 4. Add user feedback via toast
-When fullscreen isn't supported (common in WhatsApp/Instagram in-app browsers), show a helpful message.
+**Benefits:**
+- Consistent with Events and Learn tab patterns already in the app
+- Clean pill design with subtle borders
+- Active state has primary color fill with shadow glow
+- Horizontal scroll is smooth and intuitive
+- Works well on all screen sizes
 
 ---
 
 ## Technical Changes
 
-### File: `src/components/learn/SecureVideoPlayer.tsx`
+### File: `src/components/roadmap/QuickActionsBar.tsx`
 
-**1. Add sonner import (line 1-10)**
+**1. Import ScrollArea component**
 ```tsx
-import { toast } from 'sonner';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 ```
 
-**2. Add new refs (after line 76)**
+**2. Replace button-based layout with pill tabs**
+
+Transform from `Button` components to styled `button` elements matching the pill pattern:
+
 ```tsx
-const vimeoContainerRef = useRef<HTMLDivElement>(null);
-const vimeoIframeRef = useRef<HTMLIFrameElement>(null);
+<ScrollArea className="w-full">
+  <div className="flex items-center gap-2 pb-2">
+    {sections.map((section) => {
+      const Icon = section.icon;
+      const active = isActive(section.path);
+      
+      return (
+        <button
+          key={section.id}
+          onClick={() => navigate(section.path)}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300",
+            active
+              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+              : "bg-card/60 text-muted-foreground hover:bg-card hover:text-foreground border border-border/50"
+          )}
+        >
+          <Icon className="h-4 w-4" />
+          {section.label}
+        </button>
+      );
+    })}
+  </div>
+  <ScrollBar orientation="horizontal" className="opacity-0" />
+</ScrollArea>
 ```
 
-**3. Update `toggleFullscreen` for native videos (lines 363-371)**
-Add iOS fallbacks using `webkitRequestFullscreen()` and `webkitEnterFullscreen()`.
+**3. Simplify container styling**
 
-**4. Replace entire Vimeo section (lines 478-508)**
-- Use refs instead of `document.querySelector`
-- Add `webkitallowfullscreen` and `mozallowfullscreen` to iframe
-- Implement multi-stage fullscreen with try/catch and toast feedback
+Remove the `overflow-x-auto scrollbar-hide` from the inner div since `ScrollArea` handles scrolling.
 
 ---
 
-## Expected Behavior After Fix
+## Design Comparison
 
-| Platform | Behavior |
-|----------|----------|
-| **iPhone Safari** | Fullscreen works reliably |
-| **iPhone in-app browser (WhatsApp)** | Either works or shows helpful toast message |
-| **Android Chrome** | Works as before |
-| **Desktop** | Works as before (hover-to-reveal) |
+| Aspect | Before | After |
+|--------|--------|-------|
+| Style | Square buttons | Rounded pill tabs |
+| Scroll | Hidden overflow | Smooth ScrollArea |
+| Active state | Solid primary | Primary + shadow glow |
+| Inactive | Ghost button | Card with subtle border |
+| Consistency | Unique style | Matches Events/Learn tabs |
 
 ---
 
-## Important Note
-After the fix is implemented, you'll need to **Publish** the changes for them to appear on your phone (since you're testing the Published site).
+## Files to Modify
+
+| File | Change |
+|------|--------|
+| `src/components/roadmap/QuickActionsBar.tsx` | Convert to pill-style tabs with ScrollArea |
+
+---
+
+## Result
+
+A clean, scrollable tab bar that:
+- Fits naturally with the rest of the app's design language
+- Works smoothly on all mobile devices
+- Shows all tabs are accessible via horizontal swipe
+- Looks polished and professional
+
