@@ -69,7 +69,7 @@ export const AdminLayout: React.FC = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {adminNavItems.map((item) => (
             <NavLink
               key={item.to}
