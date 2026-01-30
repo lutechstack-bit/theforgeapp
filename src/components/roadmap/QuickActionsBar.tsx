@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Map, FileText, Package, Film, Image, BookOpen
@@ -19,6 +19,7 @@ const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const activeButtonRef = useRef<HTMLButtonElement>(null);
 
   const sections = [
     { id: 'journey', path: '/roadmap', label: 'Journey', icon: Map },
@@ -36,6 +37,17 @@ const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
     return location.pathname === path;
   };
 
+  // Auto-scroll active tab into view when route changes
+  useEffect(() => {
+    if (activeButtonRef.current) {
+      activeButtonRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+    }
+  }, [location.pathname]);
+
   return (
     <div className="sticky top-16 z-30 -mx-3 sm:-mx-4 px-3 sm:px-4 py-2.5 sm:py-3 mb-4 sm:mb-6 glass-nav">
       <ScrollArea className="w-full">
@@ -46,6 +58,7 @@ const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
             
             return (
               <button
+                ref={active ? activeButtonRef : null}
                 key={section.id}
                 onClick={() => navigate(section.path)}
                 className={cn(
