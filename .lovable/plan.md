@@ -1,115 +1,115 @@
 
-# Add Collapsible Sidebar to Admin Panel
+
+# Simplify Stay Locations: Image Upload + Single Address Field
 
 ## Overview
 
-Add a collapse/expand toggle button to the admin sidebar, similar to the main app's `SideNav` component. This will allow admins to minimize the sidebar to icon-only view for more screen space.
+Streamline the Stay Locations admin by:
+1. **Adding direct image upload** from device (like Roadmap Sidebar)
+2. **Replacing 4 address fields with 1** - a single "Full Address" textarea that you copy from Google Maps
 
 ---
 
-## Current State
+## Current vs. Proposed
 
-The `AdminLayout.tsx` has a fixed 256px (`w-64`) sidebar with no collapse functionality, while the main app's `SideNav.tsx` already implements a collapsible pattern with:
-- Toggle button using `PanelLeft`/`PanelLeftClose` icons
-- Collapsed width of 72px, expanded width of 256px
-- Tooltips on icons when collapsed
-- Smooth transitions
+| Current (Complex) | Proposed (Simple) |
+|-------------------|-------------------|
+| Address Line 1 | **Full Address** (single textarea) |
+| Address Line 2 | *(removed)* |
+| City | *(removed)* |
+| Postcode | *(removed)* |
+| Google Maps URL | Google Maps URL (kept) |
+| URL input for images | **Upload from device OR paste URL** |
 
 ---
 
-## Solution
+## How It Will Work
 
-Add local state-based collapse functionality to `AdminLayout.tsx` (no need for context since admin is isolated).
+**Admin Form Flow:**
+1. Paste Google Maps link
+2. Copy the full address from Google Maps into "Full Address" field
+3. Upload images directly from device (or paste URL)
 
 ---
 
 ## Technical Changes
 
-### File: `src/components/admin/AdminLayout.tsx`
+### 1. Database Migration
 
-**1. Add imports:**
-- `useState` from React
-- `PanelLeft`, `PanelLeftClose` icons from lucide-react
-- `Tooltip` components from UI library
+Consolidate address fields into a single `full_address` column:
 
-**2. Add collapse state:**
-```tsx
-const [collapsed, setCollapsed] = useState(false);
-```
+```sql
+-- Add new single address field
+ALTER TABLE stay_locations ADD COLUMN full_address TEXT;
 
-**3. Update sidebar styles:**
-```tsx
-// Dynamic width based on collapsed state
-<aside className={cn(
-  "border-r border-border/50 bg-card/30 backdrop-blur-sm flex flex-col transition-all duration-300",
-  collapsed ? "w-[72px]" : "w-64"
-)}>
-```
+-- Migrate existing data (combine all address parts)
+UPDATE stay_locations 
+SET full_address = CONCAT_WS(', ', 
+  NULLIF(address_line1, ''),
+  NULLIF(address_line2, ''),
+  NULLIF(city, ''),
+  NULLIF(postcode, '')
+)
+WHERE address_line1 IS NOT NULL OR city IS NOT NULL;
 
-**4. Add toggle button in header:**
-```tsx
-<button
-  onClick={() => setCollapsed(!collapsed)}
-  className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 hover:bg-primary/20 text-muted-foreground hover:text-foreground transition-all"
->
-  {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-</button>
-```
-
-**5. Update nav items for collapsed state:**
-- Center icons when collapsed
-- Hide text labels when collapsed
-- Add tooltips showing label on hover when collapsed
-
-**6. Update "Back to App" button:**
-- Show only icon when collapsed
-- Add tooltip when collapsed
-
----
-
-## Visual Preview
-
-### Expanded State (256px)
-```
-┌─────────────────────────────┐
-│ 🛡 Admin Panel        [◀]  │
-│    LevelUp Management       │
-├─────────────────────────────┤
-│ 📊 Dashboard               │
-│ 👥 Users                    │
-│ 📅 Editions                 │
-│ 📋 KY Forms                 │
-│ ...                         │
-├─────────────────────────────┤
-│ ← Back to App               │
-└─────────────────────────────┘
-```
-
-### Collapsed State (72px)
-```
-┌─────────┐
-│ 🛡 [▶] │
-├─────────┤
-│   📊   │ ← tooltip: "Dashboard"
-│   👥   │ ← tooltip: "Users"
-│   📅   │ ← tooltip: "Editions"
-│   ...  │
-├─────────┤
-│   ←    │ ← tooltip: "Back to App"
-└─────────┘
+-- Drop old columns
+ALTER TABLE stay_locations DROP COLUMN address_line1;
+ALTER TABLE stay_locations DROP COLUMN address_line2;
+ALTER TABLE stay_locations DROP COLUMN city;
+ALTER TABLE stay_locations DROP COLUMN postcode;
 ```
 
 ---
 
-## Key Features
+### 2. Admin Form Update (`AdminStayLocations.tsx`)
 
-| Feature | Description |
-|---------|-------------|
-| Toggle button | In header, switches between `PanelLeft`/`PanelLeftClose` icons |
-| Smooth animation | 300ms transition on width change |
-| Tooltips | Show nav item labels on hover when collapsed |
-| Icon-only mode | 72px width with centered icons |
-| Persistent scroll | Navigation remains scrollable in both states |
+**Remove:** 4 address input fields (lines 412-450)
+
+**Add:** Single textarea + Image upload tabs
+
+```text
+New Form Layout:
+┌─────────────────────────────────────────────┐
+│ Hotel/Stay Name*         │ Edition          │
+├─────────────────────────────────────────────┤
+│ Google Maps URL (paste full link)           │
+├─────────────────────────────────────────────┤
+│ Full Address                                │
+│ ┌─────────────────────────────────────────┐ │
+│ │ Copy the address from Google Maps here  │ │
+│ │ (can be multiple lines)                 │ │
+│ └─────────────────────────────────────────┘ │
+├─────────────────────────────────────────────┤
+│ Featured Image                              │
+│ ┌───────────────────────────────────────┐   │
+│ │ [ Upload ]  [ URL ]  ← Tabs           │   │
+│ ├───────────────────────────────────────┤   │
+│ │ Click to upload or drag & drop        │   │
+│ │ Max 10MB                              │   │
+│ └───────────────────────────────────────┘   │
+├─────────────────────────────────────────────┤
+│ Gallery Images                              │
+│ Each with Upload/URL tabs + caption         │
+└─────────────────────────────────────────────┘
+```
+
+---
+
+### 3. Modal Display Update (`StayLocationDetailModal.tsx`)
+
+**Remove:** `formatAddress()` function that combines 4 fields
+
+**Replace:** Simply display `full_address` with proper line breaks:
+
+```tsx
+// Before: formatAddress() combining 4 fields
+// After: Single field with line break support
+{location.full_address && (
+  <p className="text-sm text-muted-foreground whitespace-pre-line">
+    {location.full_address}
+  </p>
+)}
+```
 
 ---
 
@@ -117,10 +117,48 @@ const [collapsed, setCollapsed] = useState(false);
 
 | File | Change |
 |------|--------|
-| `src/components/admin/AdminLayout.tsx` | Add collapse state, toggle button, responsive nav items, tooltips |
+| **Database** | Add `full_address` column, migrate data, drop old 4 columns |
+| `src/pages/admin/AdminStayLocations.tsx` | Replace 4 inputs with 1 textarea; add FileUpload tabs for images |
+| `src/components/roadmap/StayLocationDetailModal.tsx` | Update to use `full_address` instead of combining 4 fields |
+| `src/integrations/supabase/types.ts` | Auto-updated after migration |
+
+---
+
+## UI Preview
+
+**Admin Form (After):**
+```text
+┌──────────────────────────────────────────────────┐
+│ Hotel/Stay Name*                                 │
+│ [The Grand Hyderabad________________]            │
+├──────────────────────────────────────────────────┤
+│ Google Maps URL                                  │
+│ [https://maps.google.com/...________]            │
+├──────────────────────────────────────────────────┤
+│ Full Address (copy from Google Maps)             │
+│ ┌──────────────────────────────────────────────┐ │
+│ │ Road No. 1, Banjara Hills,                   │ │
+│ │ Hyderabad, Telangana 500034                  │ │
+│ └──────────────────────────────────────────────┘ │
+├──────────────────────────────────────────────────┤
+│ Featured Image                                   │
+│  [ Upload ]  [ URL ]                             │
+│ ┌──────────────────────────────────────────────┐ │
+│ │  📤 Click to upload or drag image here       │ │
+│ │     JPG, PNG, WebP • Max 10MB                │ │
+│ └──────────────────────────────────────────────┘ │
+│ [Preview thumbnail after upload]                 │
+└──────────────────────────────────────────────────┘
+```
 
 ---
 
 ## Summary
 
-This adds a professional collapse toggle to the admin sidebar matching the existing pattern in the main app's `SideNav`, giving admins more screen real estate when needed while keeping quick access to all navigation items via icon tooltips.
+This simplifies Stay Location management from 6 fields to 3:
+- **Hotel Name** (required)
+- **Google Maps URL** (paste the link)
+- **Full Address** (paste from Maps)
+
+Plus adds proper **device image upload** matching the Roadmap Sidebar pattern.
+
