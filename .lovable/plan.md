@@ -1,317 +1,295 @@
 
-
-# Add KY Forms Button to Profile + Completed View Page
+# Premium KY Form Summary Page Redesign
 
 ## Summary
 
-Add a **"My KY Form"** quick access button on the Profile page (above Perks), and create a new **KY Form Summary page** that shows:
-- Completed form data in a read-only view
-- Edit button to re-open the form for modifications
-- Works for all three cohort types (KYF, KYW, KYC)
+Transform the current basic `MyKYForm.tsx` page into a visually stunning, premium experience that matches the elite Forge brand aesthetic. The redesign will feature:
+- Cinematic hero header with gradient and glow effects
+- Interactive accordion sections with icons and animations
+- Visual proficiency bars instead of plain text
+- Premium card styling with glass effects
+- Floating edit button with glow
+- Cohort-specific theming and badges
 
 ---
 
-## Current State
+## Current Issues
 
-| Item | Status |
-|------|--------|
-| Profile page | Has PerksQuickAccess component at top |
-| KY form data | Already fetched via `useProfileData` hook (`kyfResponse`, `kywResponse`) |
-| VerifiedInfoCard | Shows partial KY data on Profile, but limited |
-| Edit KY form | Users can navigate to form pages, but no "view completed" experience |
-
----
-
-## Proposed Solution
-
-### 1. New Quick Access Button: "My KY Form"
-
-Add a new component similar to `PerksQuickAccess` that appears **above** the Perks button on the Profile page:
-
-**Design:**
-```
-+------------------------------------------+
-| [ClipboardCheck]  My KY Form             |
-|   View your submitted form details    >  |
-+------------------------------------------+
-| [Gift]  My Perks & Acceptance            |
-|   View your Forge Bag & benefits      >  |
-+------------------------------------------+
-```
-
-**Behavior:**
-- Always visible (regardless of completion status)
-- If completed: Shows "View Details" → navigates to `/my-kyform`
-- If not completed: Shows "Complete Now" → navigates to appropriate form page (`/kyf-form`, `/kyw-form`, `/kyc-form`)
+| Problem | Impact |
+|---------|--------|
+| Plain, flat design | Doesn't match premium Forge aesthetic |
+| Basic text lists | No visual hierarchy or interest |
+| Generic completion badge | Missing celebratory feel |
+| Simple section cards | No depth or premium glass effects |
+| No visual representation of skills | Proficiency levels shown as plain text |
 
 ---
 
-### 2. New Page: My KY Form Summary (`/my-kyform`)
+## Proposed Premium Design
 
-A dedicated page to view completed KY form data with an edit option.
+### 1. Hero Header Section
 
-**Layout:**
 ```
-+------------------------------------------+
-|  [←] My KY Form                  [Edit]  |
-+------------------------------------------+
-|                                          |
-|  ✓ Form Submitted Successfully           |
-|  Submitted on: Jan 15, 2026              |
-|                                          |
-+------------------------------------------+
-|  General Details                         |
-|  • Certificate Name: John Doe            |
-|  • Occupation: Film Student              |
-|  • Instagram: @johndoe                   |
-+------------------------------------------+
-|  Personal Details                        |
-|  • Age: 24                               |
-|  • DOB: March 15, 2001                   |
-|  • Address: Line 1, Line 2, State PIN   |
-+------------------------------------------+
-|  ... more sections ...                   |
-+------------------------------------------+
-|                                          |
-|  [Edit My Responses]                     |
-|                                          |
-+------------------------------------------+
++--------------------------------------------------+
+|  ← Back                                          |
++--------------------------------------------------+
+|                                                  |
+|         [COHORT BADGE]                           |
+|                                                  |
+|      ✓ Know Your Filmmaker                       |
+|        Submitted Jan 15, 2026                    |
+|                                                  |
+|   +------------------------------------------+   |
+|   |  [Avatar]  Certificate Name              |   |
+|   |            @instagram_handle             |   |
+|   +------------------------------------------+   |
+|                                                  |
++--------------------------------------------------+
 ```
 
 **Features:**
-- Read-only display of all submitted form fields
-- Organized by sections matching the form steps
-- Edit button navigates to the form page (which will load existing data)
-- Shows completion status badge
+- Gradient background with primary/gold glow orbs
+- Large checkmark icon with animated ring
+- User's certificate name prominently displayed
+- Cohort type badge (Filmmaker/Writer/Creator)
+
+---
+
+### 2. Visual Proficiency Section (For Filmmakers)
+
+Replace plain text with visual skill bars:
+
+```
++--------------------------------------------------+
+|  🎯 Skills & Proficiency                         |
+|                                                  |
+|  Screenwriting                                   |
+|  [██████████████░░░░░░░░░░░░]  Intermediate     |
+|                                                  |
+|  Direction                                       |
+|  [█████████████████████████░]  Advanced         |
+|                                                  |
+|  Cinematography                                  |
+|  [███████░░░░░░░░░░░░░░░░░░░]  Beginner         |
+|                                                  |
+|  Editing                                         |
+|  [██████████████░░░░░░░░░░░░]  Intermediate     |
++--------------------------------------------------+
+```
+
+**Implementation:**
+- Progress bars with gradient fills
+- Color-coded by level (blue=beginner, gold=intermediate, green=advanced)
+- Smooth animation on mount
+
+---
+
+### 3. Collapsible Accordion Sections
+
+Use premium accordions for each data category:
+
+```
++--------------------------------------------------+
+|  📋 General Details                          ▼   |
++--------------------------------------------------+
+|  | Certificate Name     |     John Doe        | |
+|  | Current Occupation   |     Film Student    | |
+|  | Instagram           |     @johndoe         | |
+|  | WhatsApp            |     +91 9876543210   | |
++--------------------------------------------------+
+
++--------------------------------------------------+
+|  👤 Personal Details                         ▼   |
++--------------------------------------------------+
+|  (collapsed)                                     |
++--------------------------------------------------+
+```
+
+**Features:**
+- Icon prefix for each section
+- Animated expand/collapse
+- Premium glass styling per section
+- All sections expandable by default
+
+---
+
+### 4. Featured Data Cards
+
+For important info like Top 3 Movies, MBTI, etc:
+
+```
++--------------------------------------------------+
+|  🎬 Your Favorites                               |
+|                                                  |
+|  +------+  +------+  +------+                   |
+|  | Movie |  | Movie |  | Movie |                |
+|  |   1   |  |   2   |  |   3   |                |
+|  +------+  +------+  +------+                   |
+|                                                  |
+|  +------------+  +----------------+              |
+|  | 🧠 INTJ    |  | 🌙 Night Owl   |             |
+|  +------------+  +----------------+              |
++--------------------------------------------------+
+```
+
+**Implementation:**
+- Pill/chip badges for movies, books, languages
+- MBTI and chronotype as highlighted mini-cards
+- Gradient borders on hover
+
+---
+
+### 5. Floating Edit Button
+
+Premium floating action button at bottom:
+
+```
++--------------------------------------------------+
+|                                                  |
+|        [====== Edit My Responses ======]         |
+|                    ↑                             |
+|           Gold glow, gradient fill               |
++--------------------------------------------------+
+```
 
 ---
 
 ## Technical Implementation
 
-### Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/components/profile/KYFormQuickAccess.tsx` | New quick access button for Profile page |
-| `src/pages/MyKYForm.tsx` | New page to view completed KY form data |
-
 ### Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/pages/Profile.tsx` | Add KYFormQuickAccess component above PerksQuickAccess |
-| `src/App.tsx` | Add route for `/my-kyform` |
+| `src/pages/MyKYForm.tsx` | Complete redesign with premium components |
 
----
-
-## Component: KYFormQuickAccess
+### New Component Structure
 
 ```tsx
-// src/components/profile/KYFormQuickAccess.tsx
-
-interface Props {
-  isCompleted: boolean;
-  cohortType: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS' | null;
-}
-
-export const KYFormQuickAccess: React.FC<Props> = ({ isCompleted, cohortType }) => {
-  const navigate = useNavigate();
+// Main page structure
+<div className="min-h-screen">
+  {/* Hero Header with gradient background */}
+  <HeroSection />
   
-  const getFormRoute = () => {
-    switch (cohortType) {
-      case 'FORGE_WRITING': return '/kyw-form';
-      case 'FORGE_CREATORS': return '/kyc-form';
-      default: return '/kyf-form';
-    }
-  };
-  
-  const getFormLabel = () => {
-    switch (cohortType) {
-      case 'FORGE_WRITING': return 'Know Your Writer';
-      case 'FORGE_CREATORS': return 'Know Your Creator';
-      default: return 'Know Your Filmmaker';
-    }
-  };
-  
-  const handleClick = () => {
-    if (isCompleted) {
-      navigate('/my-kyform');
-    } else {
-      navigate(getFormRoute());
-    }
-  };
-  
-  return (
-    <button onClick={handleClick} className="w-full">
-      <div className="relative flex items-center gap-3 p-4 rounded-xl 
-                      bg-gradient-to-r from-primary/10 via-primary/5 to-transparent 
-                      border border-primary/20 hover:border-primary/40 
-                      transition-all group">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 
-                        flex items-center justify-center border border-primary/20">
-          {isCompleted ? (
-            <ClipboardCheck className="h-5 w-5 text-primary" />
-          ) : (
-            <ClipboardList className="h-5 w-5 text-primary" />
-          )}
-        </div>
-        <div className="flex-1 min-w-0 text-left">
-          <h3 className="font-semibold text-foreground text-sm">
-            {getFormLabel()}
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            {isCompleted ? 'View your submitted details' : 'Complete your form to unlock access'}
-          </p>
-        </div>
-        {!isCompleted && (
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute h-full w-full rounded-full bg-primary opacity-75" />
-            <span className="rounded-full h-2 w-2 bg-primary" />
-          </span>
-        )}
-        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-all" />
-      </div>
-    </button>
-  );
-};
-```
-
----
-
-## Page: MyKYForm Summary
-
-```tsx
-// src/pages/MyKYForm.tsx
-
-const MyKYForm: React.FC = () => {
-  const navigate = useNavigate();
-  const { profile, edition } = useAuth();
-  const { data: profileData, isLoading } = useProfileData();
-  
-  const cohortType = edition?.cohort_type;
-  const kyData = profileData?.kyfResponse || profileData?.kywResponse;
-  const isFilmmaking = cohortType === 'FORGE' || cohortType === 'FORGE_CREATORS';
-  
-  const getFormRoute = () => {
-    switch (cohortType) {
-      case 'FORGE_WRITING': return '/kyw-form';
-      case 'FORGE_CREATORS': return '/kyc-form';
-      default: return '/kyf-form';
-    }
-  };
-  
-  // Redirect if form not completed
-  if (!profile?.ky_form_completed) {
-    return <Navigate to={getFormRoute()} replace />;
-  }
-  
-  return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/profile')}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-xl font-bold">My KY Form</h1>
-        </div>
-        <Button variant="outline" onClick={() => navigate(getFormRoute())}>
-          <Edit className="h-4 w-4 mr-2" />
-          Edit
-        </Button>
-      </div>
-      
-      {/* Completion Status */}
-      <div className="glass-card rounded-xl p-4 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
-          <CheckCircle2 className="h-5 w-5 text-green-500" />
-        </div>
-        <div>
-          <p className="font-medium text-foreground">Form Submitted Successfully</p>
-          <p className="text-xs text-muted-foreground">
-            {kyData?.terms_accepted_at 
-              ? `Submitted on ${format(new Date(kyData.terms_accepted_at), 'MMM d, yyyy')}`
-              : 'Your responses are saved'}
-          </p>
-        </div>
-      </div>
-      
-      {/* Form Data Sections */}
-      <div className="space-y-4">
-        {/* General Details */}
-        <SummarySection title="General Details">
-          <SummaryRow label="Certificate Name" value={kyData?.certificate_name} />
-          <SummaryRow label="Current Occupation" value={kyData?.current_occupation} />
-          <SummaryRow label="Instagram" value={kyData?.instagram_id} />
-        </SummarySection>
-        
-        {/* Personal Details */}
-        <SummarySection title="Personal Details">
-          <SummaryRow label="Age" value={kyData?.age} />
-          <SummaryRow label="Date of Birth" value={kyData?.date_of_birth} />
-          <SummaryRow label="Address" value={`${kyData?.address_line_1}, ${kyData?.state} ${kyData?.pincode}`} />
-          <SummaryRow label="Gender" value={kyData?.gender} />
-          <SummaryRow label="T-Shirt Size" value={kyData?.tshirt_size} />
-        </SummarySection>
-        
-        {/* Emergency Contact */}
-        <SummarySection title="Emergency Contact">
-          <SummaryRow label="Name" value={kyData?.emergency_contact_name} />
-          <SummaryRow label="Phone" value={kyData?.emergency_contact_number} />
-        </SummarySection>
-        
-        {/* Skills (for filmmakers) */}
-        {isFilmmaking && (
-          <SummarySection title="Skills & Proficiency">
-            <SummaryRow label="Screenwriting" value={kyData?.proficiency_screenwriting} />
-            <SummaryRow label="Direction" value={kyData?.proficiency_direction} />
-            <SummaryRow label="Cinematography" value={kyData?.proficiency_cinematography} />
-            <SummaryRow label="Editing" value={kyData?.proficiency_editing} />
-          </SummarySection>
-        )}
-        
-        {/* Preferences */}
-        <SummarySection title="Preferences">
-          <SummaryRow label="Chronotype" value={kyData?.chronotype} />
-          <SummaryRow label="Meal Preference" value={kyData?.meal_preference} />
-          <SummaryRow label="Food Allergies" value={kyData?.food_allergies} />
-          <SummaryRow label="Languages" value={kyData?.languages_known?.join(', ')} />
-        </SummarySection>
-        
-        {/* Understanding You */}
-        <SummarySection title="About You">
-          <SummaryRow label="MBTI Type" value={kyData?.mbti_type} />
-          <SummaryRow label="Why Forge?" value={kyData?.forge_intent} />
-          <SummaryRow label="Top 3 Movies" value={kyData?.top_3_movies?.join(', ')} />
-        </SummarySection>
-      </div>
-      
-      {/* Edit Button */}
-      <Button 
-        className="w-full gradient-primary text-primary-foreground"
-        onClick={() => navigate(getFormRoute())}
-      >
-        <Edit className="h-4 w-4 mr-2" />
-        Edit My Responses
-      </Button>
-    </div>
-  );
-};
-
-// Helper Components
-const SummarySection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <div className="glass-card rounded-xl p-4">
-    <h3 className="text-sm font-semibold text-foreground mb-3">{title}</h3>
-    <div className="space-y-2">{children}</div>
+  {/* Main Content */}
+  <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+    
+    {/* Skills Section - Visual bars */}
+    <SkillsSection />
+    
+    {/* Accordion Sections */}
+    <Accordion type="multiple" defaultValue={['general', 'personal', ...]}>
+      <AccordionItem value="general">
+        <AccordionTrigger>📋 General Details</AccordionTrigger>
+        <AccordionContent>
+          <DataRows ... />
+        </AccordionContent>
+      </AccordionItem>
+      ...
+    </Accordion>
+    
+    {/* Featured Cards */}
+    <FeaturedSection />
+    
+    {/* Edit Button */}
+    <FloatingEditButton />
   </div>
-);
+</div>
+```
 
-const SummaryRow: React.FC<{ label: string; value: any }> = ({ label, value }) => {
-  if (!value) return null;
+---
+
+### Hero Section Design
+
+```tsx
+{/* Hero with gradient background */}
+<div className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background pt-6 pb-8">
+  {/* Glow orbs */}
+  <div className="absolute top-0 left-1/4 w-64 h-64 bg-primary/20 rounded-full blur-3xl" />
+  <div className="absolute top-10 right-1/4 w-48 h-48 bg-accent/15 rounded-full blur-2xl" />
+  
+  {/* Back button */}
+  <Button variant="ghost" onClick={() => navigate('/profile')}>
+    <ArrowLeft /> Back to Profile
+  </Button>
+  
+  {/* Cohort Badge */}
+  <div className="text-center">
+    <Badge className="bg-primary/20 text-primary border-primary/30 mb-4">
+      {cohortType === 'FORGE' ? '🎬 Filmmaker' : cohortType === 'FORGE_WRITING' ? '✍️ Writer' : '🎨 Creator'}
+    </Badge>
+    
+    {/* Success Icon with animated ring */}
+    <div className="relative mx-auto w-20 h-20 mb-4">
+      <div className="absolute inset-0 rounded-full bg-green-500/20 animate-ping" />
+      <div className="relative w-20 h-20 rounded-full bg-green-500/10 border-2 border-green-500/30 flex items-center justify-center">
+        <CheckCircle2 className="w-10 h-10 text-green-500" />
+      </div>
+    </div>
+    
+    {/* Title */}
+    <h1 className="text-2xl font-bold gradient-text">{getFormTitle()}</h1>
+    <p className="text-sm text-muted-foreground">
+      Submitted on {format(kyData.terms_accepted_at, 'MMMM d, yyyy')}
+    </p>
+  </div>
+  
+  {/* User Card */}
+  <div className="glass-premium rounded-2xl p-4 mx-4 mt-6 flex items-center gap-4">
+    <Avatar className="w-14 h-14 border-2 border-primary/30">
+      <AvatarImage src={profile?.avatar_url} />
+      <AvatarFallback>{initials}</AvatarFallback>
+    </Avatar>
+    <div>
+      <h2 className="font-bold text-lg">{kyData.certificate_name}</h2>
+      {kyData.instagram_id && (
+        <p className="text-sm text-primary">@{kyData.instagram_id}</p>
+      )}
+    </div>
+    <Button variant="outline" size="sm" className="ml-auto" onClick={() => navigate(getFormRoute())}>
+      <Edit className="w-4 h-4 mr-1" /> Edit
+    </Button>
+  </div>
+</div>
+```
+
+---
+
+### Proficiency Bars Component
+
+```tsx
+const ProficiencyBar: React.FC<{ skill: string; level: string | null }> = ({ skill, level }) => {
+  if (!level) return null;
+  
+  const getPercentage = () => {
+    switch (level.toLowerCase()) {
+      case 'beginner': return 33;
+      case 'intermediate': return 66;
+      case 'advanced': return 100;
+      default: return 0;
+    }
+  };
+  
+  const getColorClass = () => {
+    switch (level.toLowerCase()) {
+      case 'beginner': return 'from-blue-500 to-blue-400';
+      case 'intermediate': return 'from-primary to-accent';
+      case 'advanced': return 'from-emerald-500 to-emerald-400';
+      default: return 'from-muted to-muted-foreground';
+    }
+  };
+  
   return (
-    <div className="flex justify-between items-start gap-4">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium text-foreground text-right">{value}</span>
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <span className="text-sm font-medium text-foreground">{skill}</span>
+        <Badge variant="outline" className="text-xs">{level}</Badge>
+      </div>
+      <div className="h-2 rounded-full bg-secondary/50 overflow-hidden">
+        <div 
+          className={`h-full rounded-full bg-gradient-to-r ${getColorClass()} transition-all duration-1000 ease-out`}
+          style={{ width: `${getPercentage()}%` }}
+        />
+      </div>
     </div>
   );
 };
@@ -319,73 +297,125 @@ const SummaryRow: React.FC<{ label: string; value: any }> = ({ label, value }) =
 
 ---
 
-## Profile.tsx Changes
+### Accordion Section Design
 
 ```tsx
-// Before PerksQuickAccess, add:
-
-import { KYFormQuickAccess } from '@/components/profile/KYFormQuickAccess';
-
-// In the return JSX, add above PerksQuickAccess:
-
-{/* KY Form Quick Access */}
-<KYFormQuickAccess 
-  isCompleted={profile?.ky_form_completed || false}
-  cohortType={profileData?.cohortType || null}
-/>
-
-{/* Perks Quick Access */}
-<PerksQuickAccess />
+<Accordion type="multiple" defaultValue={['general', 'personal', 'emergency', 'skills', 'preferences', 'about']} className="space-y-3">
+  <AccordionItem value="general" className="glass-card rounded-xl border-border/50 overflow-hidden">
+    <AccordionTrigger className="px-4 py-4 hover:no-underline hover:bg-white/5">
+      <span className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+          <User className="w-4 h-4 text-primary" />
+        </div>
+        <span className="font-semibold text-foreground">General Details</span>
+      </span>
+    </AccordionTrigger>
+    <AccordionContent className="px-4 pb-4">
+      <div className="space-y-3 pt-2">
+        <DataRow label="Certificate Name" value={kyData.certificate_name} />
+        <DataRow label="Current Occupation" value={kyData.current_occupation} />
+        ...
+      </div>
+    </AccordionContent>
+  </AccordionItem>
+  ...
+</Accordion>
 ```
 
 ---
 
-## App.tsx Changes
+### Featured Cards Section
 
 ```tsx
-// Add import
-import MyKYForm from "./pages/MyKYForm";
+{/* Top 3 Movies/Books */}
+{(kyData.top_3_movies || kyData.top_3_writers_books) && (
+  <div className="glass-card rounded-xl p-4">
+    <div className="flex items-center gap-2 mb-4">
+      <Film className="w-4 h-4 text-primary" />
+      <h3 className="font-semibold text-sm">Your Top 3 {isFilmmaking ? 'Movies' : 'Writers/Books'}</h3>
+    </div>
+    <div className="flex flex-wrap gap-2">
+      {(kyData.top_3_movies || kyData.top_3_writers_books).map((item, idx) => (
+        <Badge 
+          key={idx} 
+          className="bg-primary/10 text-primary border-primary/30 px-3 py-1.5 text-sm font-medium"
+        >
+          {idx + 1}. {item}
+        </Badge>
+      ))}
+    </div>
+  </div>
+)}
 
-// Add route inside the AppLayout routes
-<Route path="/my-kyform" element={<MyKYForm />} />
+{/* MBTI + Chronotype Mini Cards */}
+<div className="grid grid-cols-2 gap-3">
+  {kyData.mbti_type && (
+    <div className="glass-card rounded-xl p-4 text-center">
+      <Brain className="w-6 h-6 text-primary mx-auto mb-2" />
+      <p className="text-xs text-muted-foreground mb-1">MBTI Type</p>
+      <p className="font-bold text-lg gradient-text">{kyData.mbti_type}</p>
+    </div>
+  )}
+  {kyData.chronotype && (
+    <div className="glass-card rounded-xl p-4 text-center">
+      <Clock className="w-6 h-6 text-primary mx-auto mb-2" />
+      <p className="text-xs text-muted-foreground mb-1">Chronotype</p>
+      <p className="font-bold text-lg gradient-text">{kyData.chronotype}</p>
+    </div>
+  )}
+</div>
 ```
 
 ---
 
-## Files Summary
+### Floating Edit Button
 
-| File | Action | Description |
-|------|--------|-------------|
-| `src/components/profile/KYFormQuickAccess.tsx` | **Create** | Quick access button for Profile page |
-| `src/pages/MyKYForm.tsx` | **Create** | Read-only summary page with edit option |
-| `src/pages/Profile.tsx` | **Modify** | Add KYFormQuickAccess above PerksQuickAccess |
-| `src/App.tsx` | **Modify** | Add `/my-kyform` route |
+```tsx
+<div className="sticky bottom-20 md:bottom-4 pt-4 pb-safe">
+  <Button 
+    className="w-full h-14 text-base font-semibold bg-gradient-to-r from-primary to-accent 
+               text-primary-foreground shadow-[0_0_30px_rgba(255,188,59,0.3)] 
+               hover:shadow-[0_0_40px_rgba(255,188,59,0.5)] transition-all duration-300
+               rounded-xl border border-primary/30"
+    onClick={() => navigate(getFormRoute())}
+  >
+    <Edit className="w-5 h-5 mr-2" />
+    Edit My Responses
+  </Button>
+</div>
+```
 
 ---
 
-## User Flow
+## Section Icons Mapping
 
-### If KY Form is Completed:
-1. User visits Profile
-2. Sees "Know Your Filmmaker" button with checkmark icon
-3. Clicks → navigates to `/my-kyform`
-4. Views all submitted data in organized sections
-5. Clicks "Edit" → navigates to form page with data pre-loaded
+| Section | Icon | Color |
+|---------|------|-------|
+| General Details | User | Primary |
+| Personal Details | UserCircle | Primary |
+| Emergency Contact | Phone | Red/Orange |
+| Skills & Proficiency | Target | Primary |
+| Preferences | Settings | Primary |
+| About You | Heart | Primary |
 
-### If KY Form is NOT Completed:
-1. User visits Profile
-2. Sees "Know Your Filmmaker" button with pulsing badge
-3. Clicks → navigates directly to form page (`/kyf-form`, etc.)
-4. Completes form → sees completion celebration
-5. Returns to Profile → now shows completed state
+---
+
+## Visual Enhancements Summary
+
+1. **Hero Header** - Gradient bg, glow orbs, animated checkmark, user card
+2. **Proficiency Bars** - Visual progress bars with color-coded levels
+3. **Accordion Sections** - Icon-prefixed, glass-styled, animated
+4. **Featured Cards** - Top 3 items as badges, MBTI/chronotype mini-cards
+5. **Floating Button** - Gold glow, gradient fill, sticky positioning
 
 ---
 
 ## Benefits
 
-1. **Always Accessible** - Users can view their form data anytime from Profile
-2. **Edit Capability** - Easy path to update responses if needed
-3. **Clean Summary** - Organized, readable view of all submitted information
-4. **Cohort-Aware** - Adapts labels and routing based on user's cohort type
-5. **Consistent Design** - Matches existing quick access button styling
+1. **Premium Feel** - Matches elite Forge brand aesthetic throughout
+2. **Better Readability** - Visual hierarchy makes data scannable
+3. **Celebration** - Hero section celebrates completion achievement
+4. **Interactive** - Accordion allows focused viewing of sections
+5. **Cohort-Aware** - Adapts styling and content per cohort type
+6. **Mobile-First** - Sticky edit button, proper safe-area padding
 
