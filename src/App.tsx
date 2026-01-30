@@ -32,6 +32,7 @@ import { RoadmapJourney, RoadmapPrep, RoadmapEquipment, RoadmapRules, RoadmapGal
 import Perks from "./pages/Perks";
 import Updates from "./pages/Updates";
 import Profile from "./pages/Profile";
+import MyKYForm from "./pages/MyKYForm";
 import PublicPortfolio from "./pages/PublicPortfolio";
 import NotFound from "./pages/NotFound";
 
@@ -241,6 +242,7 @@ const AppRoutes = () => {
         <Route path="/perks" element={<Perks />} />
         <Route path="/updates" element={<Updates />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/my-kyform" element={<MyKYForm />} />
       </Route>
       
       {/* Admin routes */}

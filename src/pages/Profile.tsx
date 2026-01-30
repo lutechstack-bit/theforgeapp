@@ -20,6 +20,7 @@ import {
   PrintableProfile,
 } from '@/components/profile';
 import { PerksQuickAccess } from '@/components/profile/PerksQuickAccess';
+import { KYFormQuickAccess } from '@/components/profile/KYFormQuickAccess';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
@@ -105,6 +106,12 @@ const Profile: React.FC = () => {
         edition={edition}
         isOwner={true}
         onEdit={() => setEditSheetOpen(true)}
+      />
+
+      {/* KY Form Quick Access */}
+      <KYFormQuickAccess 
+        isCompleted={profile?.ky_form_completed || false}
+        cohortType={profileData?.cohortType || null}
       />
 
       {/* Perks Quick Access */}
