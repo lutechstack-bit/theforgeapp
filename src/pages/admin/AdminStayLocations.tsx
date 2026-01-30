@@ -9,9 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Pencil, Trash2, MapPin, Phone, X, ImagePlus, GripVertical } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Pencil, Trash2, MapPin, Phone, X, ImagePlus, Upload, Link } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
+import { FileUpload } from '@/components/admin/FileUpload';
 
 interface Contact {
   name: string;
@@ -27,10 +29,7 @@ interface StayLocation {
   id: string;
   edition_id: string | null;
   name: string;
-  address_line1: string | null;
-  address_line2: string | null;
-  city: string | null;
-  postcode: string | null;
+  full_address: string | null;
   google_maps_url: string | null;
   contacts: Contact[];
   notes: string[];
@@ -50,10 +49,7 @@ interface Edition {
 const emptyLocation: Omit<StayLocation, 'id' | 'created_at'> = {
   edition_id: null,
   name: '',
-  address_line1: '',
-  address_line2: '',
-  city: '',
-  postcode: '',
+  full_address: '',
   google_maps_url: '',
   contacts: [],
   notes: [],
@@ -163,10 +159,7 @@ const AdminStayLocations: React.FC = () => {
     setFormData({
       edition_id: location.edition_id,
       name: location.name,
-      address_line1: location.address_line1 || '',
-      address_line2: location.address_line2 || '',
-      city: location.city || '',
-      postcode: location.postcode || '',
+      full_address: location.full_address || '',
       google_maps_url: location.google_maps_url || '',
       contacts: location.contacts,
       notes: location.notes,
@@ -330,7 +323,9 @@ const AdminStayLocations: React.FC = () => {
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <h3 className="font-semibold text-foreground">{location.name}</h3>
-                    <p className="text-sm text-muted-foreground">{location.city || 'No city'}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-1">
+                      {location.full_address || 'No address'}
+                    </p>
                   </div>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(location)}>
@@ -409,46 +404,6 @@ const AdminStayLocations: React.FC = () => {
                 </Select>
               </div>
 
-              <div>
-                <Label htmlFor="address_line1">Address Line 1</Label>
-                <Input
-                  id="address_line1"
-                  value={formData.address_line1 || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, address_line1: e.target.value }))}
-                  placeholder="123 Main Street"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="address_line2">Address Line 2</Label>
-                <Input
-                  id="address_line2"
-                  value={formData.address_line2 || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, address_line2: e.target.value }))}
-                  placeholder="Near City Center"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="city">City</Label>
-                <Input
-                  id="city"
-                  value={formData.city || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                  placeholder="Hyderabad"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="postcode">Postcode</Label>
-                <Input
-                  id="postcode"
-                  value={formData.postcode || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, postcode: e.target.value }))}
-                  placeholder="500001"
-                />
-              </div>
-
               <div className="md:col-span-2">
                 <Label htmlFor="google_maps_url">Google Maps URL</Label>
                 <Input
@@ -460,13 +415,54 @@ const AdminStayLocations: React.FC = () => {
               </div>
 
               <div className="md:col-span-2">
-                <Label htmlFor="featured_image_url">Featured Image URL</Label>
-                <Input
-                  id="featured_image_url"
-                  value={formData.featured_image_url || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, featured_image_url: e.target.value }))}
-                  placeholder="https://example.com/image.jpg"
+                <Label htmlFor="full_address">Full Address</Label>
+                <Textarea
+                  id="full_address"
+                  value={formData.full_address || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, full_address: e.target.value }))}
+                  placeholder="Copy the full address from Google Maps here"
+                  className="min-h-[80px]"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Paste the complete address from Google Maps
+                </p>
+              </div>
+
+              {/* Featured Image with Upload/URL tabs */}
+              <div className="md:col-span-2">
+                <Label>Featured Image</Label>
+                <Tabs defaultValue={formData.featured_image_url ? 'url' : 'upload'} className="mt-2">
+                  <TabsList className="grid w-full grid-cols-2 h-9">
+                    <TabsTrigger value="upload" className="text-xs gap-1">
+                      <Upload className="w-3 h-3" /> Upload
+                    </TabsTrigger>
+                    <TabsTrigger value="url" className="text-xs gap-1">
+                      <Link className="w-3 h-3" /> URL
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="upload" className="mt-2">
+                    <FileUpload
+                      bucket="roadmap-assets"
+                      accept="image/*"
+                      maxSizeMB={10}
+                      currentUrl={formData.featured_image_url || undefined}
+                      onUploadComplete={(url) => setFormData(prev => ({ ...prev, featured_image_url: url }))}
+                      label=""
+                    />
+                  </TabsContent>
+                  <TabsContent value="url" className="mt-2 space-y-2">
+                    <Input
+                      value={formData.featured_image_url || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, featured_image_url: e.target.value }))}
+                      placeholder="https://example.com/image.jpg"
+                    />
+                    {formData.featured_image_url && (
+                      <div className="relative w-full h-32 rounded-lg overflow-hidden border">
+                        <img src={formData.featured_image_url} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
               </div>
             </div>
 
@@ -539,7 +535,7 @@ const AdminStayLocations: React.FC = () => {
               ))}
             </div>
 
-            {/* Gallery Section */}
+            {/* Gallery Section with Upload/URL tabs per image */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label className="text-base font-medium">Gallery Images</Label>
@@ -549,30 +545,53 @@ const AdminStayLocations: React.FC = () => {
                 </Button>
               </div>
               {formData.gallery_images.map((img, index) => (
-                <div key={index} className="flex gap-2 items-start">
-                  <div className="flex-1">
-                    <Input
-                      value={img.url}
-                      onChange={(e) => updateGalleryImage(index, 'url', e.target.value)}
-                      placeholder="Image URL"
-                    />
+                <div key={index} className="space-y-2 p-3 border rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Image {index + 1}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeGalleryImage(index)}
+                      className="text-destructive h-8 w-8"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
                   </div>
-                  <div className="flex-1">
-                    <Input
-                      value={img.caption || ''}
-                      onChange={(e) => updateGalleryImage(index, 'caption', e.target.value)}
-                      placeholder="Caption (optional)"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeGalleryImage(index)}
-                    className="text-destructive"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
+                  
+                  <Tabs defaultValue={img.url ? 'url' : 'upload'} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 h-8">
+                      <TabsTrigger value="upload" className="text-xs">Upload</TabsTrigger>
+                      <TabsTrigger value="url" className="text-xs">URL</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="upload" className="mt-2">
+                      <FileUpload
+                        bucket="roadmap-assets"
+                        accept="image/*"
+                        maxSizeMB={10}
+                        currentUrl={img.url || undefined}
+                        onUploadComplete={(url) => updateGalleryImage(index, 'url', url)}
+                        label=""
+                      />
+                    </TabsContent>
+                    <TabsContent value="url" className="mt-2">
+                      <Input
+                        value={img.url}
+                        onChange={(e) => updateGalleryImage(index, 'url', e.target.value)}
+                        placeholder="Image URL"
+                      />
+                    </TabsContent>
+                  </Tabs>
+                  
+                  <Input
+                    value={img.caption || ''}
+                    onChange={(e) => updateGalleryImage(index, 'caption', e.target.value)}
+                    placeholder="Caption (optional)"
+                  />
+                  
+                  {img.url && (
+                    <img src={img.url} alt="" className="w-full h-24 object-cover rounded" />
+                  )}
                 </div>
               ))}
             </div>
