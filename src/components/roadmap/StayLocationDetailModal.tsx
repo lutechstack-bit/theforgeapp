@@ -18,10 +18,7 @@ interface GalleryImage {
 interface StayLocation {
   id: string;
   name: string;
-  address_line1?: string;
-  address_line2?: string;
-  city?: string;
-  postcode?: string;
+  full_address?: string;
   google_maps_url?: string;
   contacts?: Contact[];
   notes?: string[];
@@ -62,26 +59,16 @@ const StayLocationDetailModal: React.FC<StayLocationDetailModalProps> = ({
     setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
   };
 
-  const formatAddress = () => {
-    const parts = [
-      location.address_line1,
-      location.address_line2,
-      location.city,
-      location.postcode
-    ].filter(Boolean);
-    return parts;
-  };
-
   const Content = () => (
     <div className="space-y-5 pb-4">
       {/* Hotel Name & Address */}
       <div className="space-y-2">
         <h2 className="text-xl font-bold text-foreground">{location.name}</h2>
-        <div className="space-y-1">
-          {formatAddress().map((line, idx) => (
-            <p key={idx} className="text-sm text-muted-foreground">{line}</p>
-          ))}
-        </div>
+        {location.full_address && (
+          <p className="text-sm text-muted-foreground whitespace-pre-line">
+            {location.full_address}
+          </p>
+        )}
         
         {location.google_maps_url && (
           <Button 
