@@ -1,36 +1,37 @@
 
-# No-Scroll Tabs: Two-Row Grid Layout on Mobile
 
-## Problem
+# Four-Pill Single Row Layout for Mobile
 
-The current pill tabs require horizontal scrolling on mobile devices. You want all tabs visible without any scrolling.
+## Summary
 
----
-
-## Solution: Two-Row Grid Layout
-
-Transform the navigation into a **2-row grid on mobile** that shows all tabs at once, switching to a single horizontal row on larger screens (tablets/desktop).
-
-**Mobile Layout (2 rows × 3 columns):**
-```
-[Journey] [Prep]   [Equipment]
-[Rules]   [Gallery] [Films]
-```
-
-**Tablet/Desktop Layout (single row):**
-```
-[Journey] [Prep] [Equipment] [Rules] [Gallery] [Films]
-```
+Redesign the navigation tabs to display exactly 4 items in a single horizontal row on mobile, matching the clean style from the reference image (Trending/Following/Events/Insights layout).
 
 ---
 
-## Design Details
+## Current State vs Target
 
-- **Mobile (< 640px)**: 3-column grid with 2 rows
-- **Tablet+ (≥ 640px)**: Flexbox single row (current behavior)
-- Compact padding on mobile (`px-3 py-1.5`) for tighter fit
-- Full-width buttons in grid cells for easy tapping
-- Same pill styling with primary highlight for active state
+| Aspect | Current | Target |
+|--------|---------|--------|
+| Layout | 3-column grid (wraps to 2 rows) | Single row with 4 equal items |
+| Icons | Has icons | Text-only (no icons on mobile) |
+| Style | Filled primary for active | Bordered pills, bold/filled for active |
+| Spacing | Tight gaps | Even spacing across full width |
+
+---
+
+## Design Changes
+
+**Mobile Layout (single row, 4 items):**
+```
+[Journey] [Prep] [Equipment] [Rules]
+```
+
+**Key Style Updates:**
+- Remove icons on mobile for cleaner look (keep on desktop)
+- Use `flex` with equal spacing instead of grid
+- Larger tap targets with more horizontal padding
+- Border-style pills with subtle active state
+- Active tab: filled background OR bold text with subtle fill
 
 ---
 
@@ -38,52 +39,61 @@ Transform the navigation into a **2-row grid on mobile** that shows all tabs at 
 
 ### File: `src/components/roadmap/QuickActionsBar.tsx`
 
-**1. Remove ScrollArea** (no longer needed)
-
-**2. Use responsive grid/flex layout:**
-
+**1. Change to 4-column flex layout on mobile:**
 ```tsx
 <div className={cn(
-  "grid grid-cols-3 gap-1.5",           // Mobile: 3-column grid
-  "sm:flex sm:flex-wrap sm:gap-2"        // Tablet+: flex row
+  "flex items-center justify-between gap-2",
+  "sm:justify-start sm:gap-2"
 )}>
-  {sections.map((section) => (
-    <button
-      className={cn(
-        // Base styles
-        "flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-xs sm:text-sm font-medium",
-        // Active/inactive states
-        active ? "bg-primary text-primary-foreground" : "bg-card/60 text-muted-foreground border border-border/50"
-      )}
-    >
-      <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-      {section.label}
-    </button>
-  ))}
-</div>
 ```
 
-**3. Adjust container padding** for grid layout
+**2. Hide icons on mobile, show on tablet+:**
+```tsx
+<Icon className="hidden sm:block h-4 w-4" />
+```
+
+**3. Adjust button sizing for single-row fit:**
+```tsx
+<button
+  className={cn(
+    "flex-1 sm:flex-none flex items-center justify-center gap-1.5",
+    "px-3 py-2.5 rounded-full text-xs sm:text-sm font-medium",
+    "border transition-all duration-200",
+    active
+      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+      : "bg-transparent text-foreground border-border hover:bg-secondary/50"
+  )}
+>
+```
+
+**4. Core navigation stays as 4 items (Journey, Prep, Equipment, Rules)**
+
+The conditional tabs (Gallery, Films) will show when available but the base 4 are always visible.
 
 ---
 
 ## Visual Comparison
 
-| Screen Size | Before | After |
-|-------------|--------|-------|
-| Mobile | Scrollable row (tabs cut off) | 2×3 grid (all visible) |
-| Tablet | Single row | Single row (unchanged) |
-| Desktop | Single row | Single row (unchanged) |
+**Before (2 rows):**
+```
+[🗺 Journey] [📄 Prep] [📦 Equipment]
+[📖 Rules]
+```
+
+**After (1 row, no icons on mobile):**
+```
+[Journey] [Prep] [Equipment] [Rules]
+```
 
 ---
 
-## Benefits
+## Styling Details
 
-- All tabs visible without scrolling on any device
-- Easy tap targets (full grid cell width)
-- Clean, organized appearance
-- Labels remain readable
-- Responsive - adapts to screen size
+- **Active state**: Primary background with primary-foreground text
+- **Inactive state**: Transparent with visible border, standard text color
+- **Hover**: Subtle secondary background fill
+- **Touch target**: Larger vertical padding (`py-2.5`) for comfortable tapping
+- **Width**: Each button takes equal space (`flex-1`) on mobile
 
 ---
 
@@ -91,4 +101,15 @@ Transform the navigation into a **2-row grid on mobile** that shows all tabs at 
 
 | File | Change |
 |------|--------|
-| `src/components/roadmap/QuickActionsBar.tsx` | Replace ScrollArea with responsive grid layout |
+| `src/components/roadmap/QuickActionsBar.tsx` | Single-row flex layout, hide icons on mobile, adjust sizing |
+
+---
+
+## Result
+
+A clean, single-row navigation that:
+- Shows all 4 core tabs without scrolling or wrapping
+- Matches the reference design aesthetic
+- Has comfortable tap targets
+- Looks polished and professional on mobile
+
