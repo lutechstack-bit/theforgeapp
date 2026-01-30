@@ -153,11 +153,15 @@ export const SideNav: React.FC = () => {
           ))}
 
 
-          {/* User Display - Non-navigable */}
-          <div className={cn(
-            "flex items-center gap-3 pt-3 border-t border-sidebar-border mt-3",
-            collapsed ? "justify-center" : "px-2"
-          )}>
+          {/* User Display - Navigates to Profile */}
+          <NavLink
+            to="/profile"
+            className={cn(
+              "flex items-center gap-3 pt-3 border-t border-sidebar-border mt-3 rounded-lg transition-all duration-200 cursor-pointer hover:bg-sidebar-accent/60",
+              collapsed ? "justify-center" : "px-2",
+              location.pathname === '/profile' && "bg-primary/10"
+            )}
+          >
             {collapsed ? (
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
@@ -172,7 +176,7 @@ export const SideNav: React.FC = () => {
                   </span>
                 </TooltipTrigger>
                 <TooltipContent side="right" className="bg-popover text-popover-foreground">
-                  {profile?.full_name || 'User'}
+                  Go to Profile
                 </TooltipContent>
               </Tooltip>
             ) : (
@@ -189,7 +193,7 @@ export const SideNav: React.FC = () => {
                 </span>
               </div>
             )}
-          </div>
+          </NavLink>
         </div>
       </aside>
     </TooltipProvider>
