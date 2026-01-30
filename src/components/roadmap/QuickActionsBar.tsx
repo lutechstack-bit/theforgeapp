@@ -38,8 +38,8 @@ const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
   return (
     <div className="sticky top-16 z-30 -mx-3 sm:-mx-4 px-3 sm:px-4 py-2.5 sm:py-3 mb-4 sm:mb-6 glass-nav">
       <div className={cn(
-        "grid grid-cols-3 gap-1.5",
-        "sm:flex sm:flex-wrap sm:gap-2"
+        "flex items-center justify-between gap-2",
+        "sm:justify-start sm:gap-2"
       )}>
         {sections.map((section) => {
           const Icon = section.icon;
@@ -50,13 +50,15 @@ const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
               key={section.id}
               onClick={() => navigate(section.path)}
               className={cn(
-                "flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300",
+                "flex-1 sm:flex-none flex items-center justify-center gap-1.5",
+                "px-3 py-2.5 rounded-full text-xs sm:text-sm font-medium",
+                "border transition-all duration-200",
                 active
-                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
-                  : "bg-card/60 text-muted-foreground hover:bg-card hover:text-foreground border border-border/50"
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-transparent text-foreground border-border hover:bg-secondary/50"
               )}
             >
-              <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <Icon className="hidden sm:block h-4 w-4" />
               {section.label}
             </button>
           );
