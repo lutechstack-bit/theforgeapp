@@ -498,7 +498,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
         />
         <button
           onClick={handleVimeoFullscreen}
-          className="absolute bottom-4 right-4 p-2 bg-black/60 hover:bg-black/80 rounded-lg text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+          className="absolute bottom-4 right-4 p-2.5 md:p-2 bg-black/50 md:bg-black/60 hover:bg-black/80 rounded-lg text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10"
           title="Toggle Fullscreen"
         >
           <Maximize className="w-5 h-5" />
