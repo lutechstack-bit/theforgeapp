@@ -14,8 +14,8 @@ import { QuickActionsRow } from './QuickActionsRow';
 import { ConfettiCelebration } from './ConfettiCelebration';
 import { StreakBadge } from './StreakBadge';
 
-import { AnnouncementBanner } from './AnnouncementBanner';
 import { PersonalNoteCard } from './PersonalNoteCard';
+import { StatusWidget } from '@/components/home/StatusWidget';
 
 import { PullToRefreshWrapper } from './PullToRefreshWrapper';
 import { differenceInDays } from 'date-fns';
@@ -245,8 +245,7 @@ export const JourneyBentoHero: React.FC = () => {
         )}
       </div>
 
-      {/* Announcement Banner - Smart triggers + manual announcements */}
-      <AnnouncementBanner className="mt-2" />
+      {/* Stage Navigation Strip with Progress Rings */}
 
       {/* Stage Navigation Strip with Progress Rings */}
       <div className="glass-card rounded-xl p-2 overflow-hidden">
@@ -308,8 +307,11 @@ export const JourneyBentoHero: React.FC = () => {
             </div>
           )}
 
-          {/* Side Panel - Personal Note + Completed & Upcoming Stages */}
+          {/* Side Panel - Status Widget + Personal Note + Completed & Upcoming Stages */}
           <div className="flex flex-col gap-3">
+            {/* Status Widget (KYF + Announcements) */}
+            <StatusWidget variant="desktop" />
+
             {/* Personal User Sticky Note */}
             <PersonalNoteCard />
 
@@ -388,6 +390,9 @@ export const JourneyBentoHero: React.FC = () => {
       {/* Mobile: Stacked Card UI */}
       {isMobile && (
         <>
+          {/* Status Widget - Compact horizontal before cards */}
+          <StatusWidget variant="mobile" className="mb-3" />
+          
           <StickyNoteCardStack
             stages={allOrderedStages}
             currentIndex={effectiveMobileIndex}
