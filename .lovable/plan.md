@@ -1,271 +1,370 @@
 
-# Reconstruct Side Navigation for Mobile & Web
+# Comprehensive Layout Restructure: KY Form Completion + Home Page Widget Layout
 
 ## Summary
 
-Create a modern, user-friendly navigation experience inspired by the reference UI design featuring:
-- **Mobile**: A slide-out drawer menu (sheet) triggered from the bottom nav, with personal greeting, profile card, and menu items with chevrons
-- **Web**: Enhanced sidebar with cleaner design, better visual hierarchy, and improved user profile section
+This plan addresses three main areas:
+1. **KY Form Completion Page** - Add a dedicated completion state/page for all KY forms (already exists as `KYFormCompletion` component)
+2. **Home Page Widget Consolidation** - Move the announcement banner + KY form reminder into a compact top-right widget, eliminating unused side space
+3. **Clean Layout Architecture** - Fix padding/spacing issues for a clean, mobile-first experience
 
 ---
 
 ## Current State Analysis
 
-| Component | Current Behavior |
-|-----------|-----------------|
-| `SideNav` | Desktop-only fixed sidebar with collapsible toggle, hidden on mobile (`hidden md:flex`) |
-| `BottomNav` | 5-icon mobile navigation bar (Home, Roadmap, Learn, Events, Profile) |
-| No mobile menu drawer | Users must use bottom nav to navigate on mobile |
+| Component | Current Location | Issue |
+|-----------|-----------------|-------|
+| `AnnouncementBanner` | Inside `JourneyBentoHero`, below greeting | Takes full width, creates visual clutter above sticky notes |
+| `KYFormReminderCard` | Not used on Home page | Exists but not integrated with Home layout |
+| `KYFormReminderBanner` | Separate component | Not visible in current Home page |
+| `CompactCountdownTimer` | Top of Home page | Good position, keep as-is |
+| Desktop Layout | `grid-cols-[1fr_320px]` | Side panel has gaps, can be better utilized |
 
 ---
 
-## Reference Design Features to Incorporate
+## Solution Architecture
 
-From the uploaded reference image:
-1. **Personal Greeting Header** - "Hi, [Name]! 👋" with close button
-2. **User Profile Card** - Large avatar with username and link
-3. **Menu Items** - Icon + label + chevron arrows (full-width clickable rows)
-4. **Hierarchical menu design** - Primary actions with visual distinction
-5. **Clean spacing and typography**
-6. **Slide-out drawer from right side**
+### 1. KY Form Completion (Already Exists)
+
+The `KYFormCompletion` component already exists at `src/components/kyform/KYFormCompletion.tsx` and is properly integrated into all three forms:
+- `KYFForm.tsx` - Shows completion screen on submit
+- `KYCForm.tsx` - Shows completion screen on submit  
+- `KYWForm.tsx` - Shows completion screen on submit
+
+**No changes needed** - completion flow is already implemented.
 
 ---
 
-## Proposed Design
+### 2. Home Page Widget Consolidation
 
-### Mobile: Profile Menu Drawer
+Create a new **Status Widget Card** for the desktop side panel that combines:
+- KY Form reminder (if incomplete)
+- Smart announcements (rotating)
+- Quick stats/info
 
-Replace the Profile icon in bottom nav with a trigger that opens a slide-out menu sheet:
+**Desktop Layout Restructure:**
+```
++------------------------------------------+
+|  Compact Countdown Timer (full width)    |
++------------------------------------------+
+|                                          |
+|  +----------------------------+  +-----+ |
+|  | Current Stage Card        |  |Status| |
+|  | (Tasks, filters, etc)     |  |Widget| |
+|  |                           |  |-----||
+|  +----------------------------+  |KYF  || |
+|                                  |Annc.|| |
+|  +----------------------------+  |-----||
+|  | Personal Note Card        |  |Note || |
+|  +----------------------------+  +-----+ |
+|                                          |
+|  +----------------------------+  +-----+ |
+|  | Completed Stage           |  |Upcom|| |
+|  +----------------------------+  +-----+ |
+|                                          |
++------------------------------------------+
+```
 
+**Mobile Layout:**
 ```
 +----------------------------------+
-|  Hi, [User Name]! 👋         X  |
+| Compact Countdown Timer          |
 +----------------------------------+
-|                                  |
-|  [====AVATAR====]  @username     |
-|  [   BADGE    ]    theforgeapp   |
-|                                  |
+| Greeting + Streak Badge          |
 +----------------------------------+
-|  🎁  Perks                    >  |
-|  📍  Roadmap                  >  |
-|  📚  Learn                    >  |
-|  📅  Events                   >  |
-|  👥  Community                >  |
-|  ℹ️  About Forge              >  |
+| Stage Navigation Strip           |
 +----------------------------------+
-|  ⚙️  Settings                 >  |
-|  🚪  Sign Out                 >  |
+| Status Widget (Compact)          |
+| [KYF Reminder] [Announcements]   |
 +----------------------------------+
-|        FORGE LOGO                |
+| Stacked Card UI (stages)         |
++----------------------------------+
+| Quick Actions Row                |
++----------------------------------+
+| Personal Note Card               |
 +----------------------------------+
 ```
 
-### Web: Enhanced Sidebar
+---
 
-Keep the collapsible sidebar but improve the design:
-- Cleaner nav items with subtle hover states
-- Better visual separation between sections
-- Improved user profile section at bottom
-- Consistent with mobile drawer styling
+### 3. New Component: StatusWidget
+
+Create a compact status widget that consolidates multiple notification types:
+
+```tsx
+// src/components/home/StatusWidget.tsx
+
+interface StatusWidgetProps {
+  variant: 'desktop' | 'mobile';
+}
+
+export const StatusWidget: React.FC<StatusWidgetProps> = ({ variant }) => {
+  // Shows in order of priority:
+  // 1. KYF Reminder (if incomplete) - prominent
+  // 2. Smart Announcements (cycling)
+  
+  return (
+    <div className={cn(
+      "glass-card rounded-xl overflow-hidden",
+      variant === 'desktop' ? "space-y-2" : "flex gap-2"
+    )}>
+      {/* KY Form Reminder - if incomplete */}
+      {showKYFormReminder && (
+        <button onClick={navigateToKYForm} className="...">
+          <ClipboardList />
+          <span>Complete KY Form</span>
+          <span className="animate-ping" /> {/* pulsing badge */}
+        </button>
+      )}
+      
+      {/* Announcements - compact version */}
+      {announcements.length > 0 && (
+        <div className="...">
+          <span>{currentAnnouncement.icon}</span>
+          <span>{currentAnnouncement.title}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+```
+
+---
+
+### 4. JourneyBentoHero Layout Changes
+
+**Desktop Changes:**
+- Move `AnnouncementBanner` from main flow to side panel
+- Add `StatusWidget` to side panel (top position)
+- Adjust grid: Keep `grid-cols-[1fr_320px]` but reorganize content
+
+**Mobile Changes:**
+- Add compact `StatusWidget` after stage navigation strip
+- Remove full-width `AnnouncementBanner` from flow
+- Tighter spacing between elements
 
 ---
 
 ## Technical Implementation
 
-### New File: `src/components/layout/MobileMenuSheet.tsx`
+### Files to Create
 
-A new component for the mobile slide-out menu:
-- Uses the existing `Sheet` component from UI library
-- Triggered by clicking Profile icon in bottom nav
-- Contains personalized greeting, profile card, and navigation links
-- Includes sign out action at bottom
+| File | Purpose |
+|------|---------|
+| `src/components/home/StatusWidget.tsx` | Combined notification/status widget |
 
-### Modify: `src/components/layout/BottomNav.tsx`
+### Files to Modify
 
-- Change Profile icon behavior from navigation to sheet trigger
-- Add state management for sheet open/close
-- Import and render the `MobileMenuSheet` component
-
-### Modify: `src/components/layout/SideNav.tsx`
-
-- Update nav item styling for cleaner look
-- Add chevron arrows to nav items (desktop expanded mode)
-- Improve spacing and visual hierarchy
-- Enhance user profile section styling
+| File | Changes |
+|------|---------|
+| `src/components/journey/JourneyBentoHero.tsx` | Integrate StatusWidget, remove inline AnnouncementBanner, adjust layout |
+| `src/pages/Home.tsx` | No changes needed (JourneyBentoHero handles it) |
 
 ---
 
-## Mobile Menu Sheet Structure
+## StatusWidget Component Design
 
 ```tsx
-<Sheet>
-  <SheetTrigger> {/* Profile icon in BottomNav */} </SheetTrigger>
-  <SheetContent side="right">
-    {/* Header with greeting */}
-    <div className="flex items-center justify-between">
-      <h2>Hi, {firstName}! 👋</h2>
-      <SheetClose />
-    </div>
-    
-    {/* Profile Card */}
-    <NavLink to="/profile" className="...">
-      <Avatar size="lg" />
-      <div>
-        <span className="font-semibold">{fullName}</span>
-        <span className="text-muted">theforgeapp.com/{slug}</span>
+// Key features:
+// 1. Conditional KY Form reminder (if profile.ky_form_completed === false)
+// 2. Smart announcements from useSmartAnnouncements hook
+// 3. Compact, single-row design for mobile, stacked for desktop side panel
+
+const StatusWidget: React.FC<{ variant: 'desktop' | 'mobile' }> = ({ variant }) => {
+  const { profile, edition } = useAuth();
+  const navigate = useNavigate();
+  const { announcements } = useSmartAnnouncements();
+  
+  const showKYForm = profile?.profile_setup_completed && !profile?.ky_form_completed;
+  
+  const getKYFormRoute = () => {
+    switch (edition?.cohort_type) {
+      case 'FORGE': return '/kyf-form';
+      case 'FORGE_CREATORS': return '/kyc-form';
+      case 'FORGE_WRITING': return '/kyw-form';
+      default: return '/kyf-form';
+    }
+  };
+  
+  const getKYFormLabel = () => {
+    switch (edition?.cohort_type) {
+      case 'FORGE': return 'Know Your Filmmaker';
+      case 'FORGE_CREATORS': return 'Know Your Creator';
+      case 'FORGE_WRITING': return 'Know Your Writer';
+      default: return 'Complete Form';
+    }
+  };
+  
+  // Desktop: Stacked card design
+  if (variant === 'desktop') {
+    return (
+      <div className="space-y-3">
+        {/* KY Form Card */}
+        {showKYForm && (
+          <button
+            onClick={() => navigate(getKYFormRoute())}
+            className="w-full glass-card rounded-xl p-4 flex items-center gap-3 
+                       border border-primary/30 bg-primary/10 
+                       hover:bg-primary/20 transition-all group"
+          >
+            <div className="p-2 bg-primary/20 rounded-lg">
+              <ClipboardList className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="font-medium text-foreground text-sm">{getKYFormLabel()}</p>
+              <p className="text-xs text-muted-foreground">Required for full access</p>
+            </div>
+            <div className="relative">
+              <span className="w-2 h-2 bg-primary rounded-full animate-ping absolute" />
+              <span className="w-2 h-2 bg-primary rounded-full" />
+            </div>
+          </button>
+        )}
+        
+        {/* Compact Announcements */}
+        {announcements.length > 0 && (
+          <CompactAnnouncementSlot announcements={announcements} />
+        )}
       </div>
-    </NavLink>
-    
-    {/* Navigation Links */}
-    <nav className="space-y-1">
-      {menuItems.map(item => (
-        <NavLink className="flex items-center justify-between py-3">
-          <span className="flex items-center gap-3">
-            <Icon />
-            {label}
+    );
+  }
+  
+  // Mobile: Horizontal compact design
+  return (
+    <div className="flex gap-2">
+      {showKYForm && (
+        <button
+          onClick={() => navigate(getKYFormRoute())}
+          className="flex-1 glass-card rounded-xl px-3 py-2.5 flex items-center gap-2 
+                     border border-primary/30 bg-primary/10"
+        >
+          <ClipboardList className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium text-foreground truncate">
+            Complete KY Form
           </span>
-          <ChevronRight />
-        </NavLink>
-      ))}
-    </nav>
-    
-    {/* Footer Actions */}
-    <div className="mt-auto">
-      <Button onClick={signOut}>Sign Out</Button>
+          <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+        </button>
+      )}
+      
+      {announcements.length > 0 && (
+        <button className="flex-1 glass-card rounded-xl px-3 py-2.5 flex items-center gap-2">
+          <span className="text-sm">{announcements[0].icon}</span>
+          <span className="text-sm truncate">{announcements[0].title}</span>
+        </button>
+      )}
     </div>
+  );
+};
+```
+
+---
+
+## JourneyBentoHero Changes
+
+### Desktop Grid Restructure
+
+**Before:**
+```tsx
+<div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+  {/* Main: Current Stage */}
+  {/* Side: PersonalNote, Completed, Upcoming */}
+</div>
+```
+
+**After:**
+```tsx
+<div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+  {/* Main Column */}
+  <div className="space-y-4">
+    {/* Current Stage Card (expanded) */}
+  </div>
+  
+  {/* Side Panel - Better organized */}
+  <div className="space-y-3">
+    {/* Status Widget (KYF + Announcements) */}
+    <StatusWidget variant="desktop" />
     
-    {/* Brand Footer */}
-    <img src={forgeLogo} />
-  </SheetContent>
-</Sheet>
+    {/* Personal Note */}
+    <PersonalNoteCard />
+    
+    {/* Completed Stage (collapsed) */}
+    {/* Upcoming Stage (collapsed) */}
+  </div>
+</div>
+```
+
+### Mobile Layout Restructure
+
+**Before:**
+```tsx
+{/* Greeting */}
+{/* AnnouncementBanner - FULL WIDTH */}
+{/* Stage Navigation */}
+{/* Card Stack */}
+{/* Quick Actions */}
+{/* Personal Note */}
+```
+
+**After:**
+```tsx
+{/* Greeting */}
+{/* Stage Navigation */}
+{/* Status Widget - COMPACT HORIZONTAL */}
+{/* Card Stack */}
+{/* Quick Actions */}
+{/* Personal Note */}
 ```
 
 ---
 
-## Menu Items for Mobile Drawer
+## Spacing & Padding Fixes
 
-**Primary Navigation:**
-1. Perks (Gift icon)
-2. Roadmap (Map icon)
-3. Learn (BookOpen icon)
-4. Events (Calendar icon)
-5. Community (Users icon)
-6. About Forge (Info icon)
+### Global Fixes in JourneyBentoHero:
 
-**Secondary Actions:**
-- Settings → navigates to `/profile?action=edit`
-- Sign Out → calls signOut function
+1. **Reduce gap between elements**: `space-y-4` → `space-y-3`
+2. **Tighter mobile card stack**: `min-h-[280px]` → `min-h-[260px]`
+3. **Remove extra margins**: Clean up `mt-2`, `mb-4` scattered margins
 
----
-
-## Web Sidebar Enhancements
-
-**Changes to `SideNav.tsx`:**
-1. Add `ChevronRight` icon to nav items in expanded mode
-2. Improve hover/active state styling
-3. Better visual separation for sections
-4. Enhanced user profile card with cohort badge
-
----
-
-## Files to Create/Modify
-
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/components/layout/MobileMenuSheet.tsx` | Create | New mobile drawer menu component |
-| `src/components/layout/BottomNav.tsx` | Modify | Replace Profile nav with sheet trigger |
-| `src/components/layout/SideNav.tsx` | Modify | Add chevrons, enhance styling |
-
----
-
-## Visual Improvements
-
-### Nav Item Row Design (Both Mobile & Web)
-
-```
-+----------------------------------------+
-| [Icon]   Label Text          [>]       |
-+----------------------------------------+
-```
-
-- Full-width clickable area
-- Icon on left (20-24px)
-- Label text in medium weight
-- Chevron arrow on right (mobile drawer and desktop expanded)
-- Subtle divider or spacing between items
-
-### Active State
-- Primary color highlight
-- Slightly elevated/glowing effect
-- Bold text weight
-
-### Hover State
-- Subtle background fill
-- Smooth 200ms transition
-
----
-
-## Technical Details
-
-### MobileMenuSheet Component
+### Remove Announcement Banner from Current Position:
 
 ```tsx
-// Key imports
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+// REMOVE this line:
+<AnnouncementBanner className="mt-2" />
 
-// Menu configuration
-const menuItems = [
-  { to: '/perks', icon: Gift, label: 'Perks' },
-  { to: '/roadmap', icon: Map, label: 'Roadmap' },
-  { to: '/learn', icon: BookOpen, label: 'Learn' },
-  { to: '/events', icon: Calendar, label: 'Events' },
-  { to: '/community', icon: Users, label: 'Community' },
-  { to: '/updates', icon: Info, label: 'About Forge' },
-];
-
-// Sheet opens from right side
-<SheetContent side="right" className="w-[85%] sm:max-w-md">
+// The StatusWidget now handles announcements
 ```
 
-### BottomNav Changes
+---
 
-```tsx
-// Before: NavLink to /profile
-// After: Sheet trigger that opens MobileMenuSheet
+## Files Summary
 
-const [menuOpen, setMenuOpen] = useState(false);
+| File | Action | Description |
+|------|--------|-------------|
+| `src/components/home/StatusWidget.tsx` | **Create** | New combined status/notification widget |
+| `src/components/journey/JourneyBentoHero.tsx` | **Modify** | Integrate StatusWidget, remove AnnouncementBanner, adjust grid layout |
 
-// Profile item becomes trigger
-<Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-  <SheetTrigger asChild>
-    <button className="...">
-      <Avatar /> or <User icon />
-    </button>
-  </SheetTrigger>
-  <MobileMenuSheet onClose={() => setMenuOpen(false)} />
-</Sheet>
-```
+---
+
+## Visual Result
+
+### Desktop
+- Side panel now has Status Widget at top (KYF reminder + announcements)
+- Personal note below status widget
+- Completed/upcoming stages at bottom
+- Main area focuses on current stage tasks
+
+### Mobile
+- Compact horizontal status bar after navigation strip
+- Quick access to KY form (if incomplete) and announcements
+- No wasted space, clean flow from top to bottom
+- Tighter spacing for better content density
 
 ---
 
 ## Benefits
 
-1. **Better Mobile UX** - Full menu access without leaving current page context
-2. **Personalized Experience** - Greeting with user's name creates warmth
-3. **Clear Navigation** - All pages visible at a glance with chevrons indicating action
-4. **Consistent Branding** - Logo in footer reinforces brand identity
-5. **Quick Actions** - Sign out and settings easily accessible
-6. **Smooth Animations** - Slide-in/out transitions feel premium
-
----
-
-## Responsive Behavior
-
-| Screen Size | Navigation |
-|-------------|------------|
-| Mobile (< 768px) | Bottom nav + Profile triggers slide-out drawer |
-| Tablet (768px+) | Desktop sidebar (collapsible) |
-| Desktop | Full sidebar with all features |
-
+1. **Consolidated Notifications** - One widget for all status items
+2. **Better Space Utilization** - Side panel fully used on desktop
+3. **Cleaner Mobile Experience** - Compact status bar, no full-width banners
+4. **Priority Visibility** - KY form reminder prominently displayed when needed
+5. **No Layout Shifts** - Consistent spacing with no padding/sizing issues
