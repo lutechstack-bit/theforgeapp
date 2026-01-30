@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import { 
   Play, Pause, Volume2, VolumeX, Maximize, Minimize, 
   SkipBack, SkipForward, Settings, Loader2, AlertCircle
@@ -77,6 +78,10 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
   const accessLogIdRef = useRef<string | null>(null);
   const watchTimeRef = useRef<number>(0);
+  
+  // Refs for Vimeo embed fullscreen (iOS compatibility)
+  const vimeoContainerRef = useRef<HTMLDivElement>(null);
+  const vimeoIframeRef = useRef<HTMLIFrameElement>(null);
   
   // Refs for stable progress saving (prevents interval from resetting)
   const currentTimeRef = useRef<number>(0);
@@ -360,13 +365,30 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     }
   }, [isMuted]);
 
-  const toggleFullscreen = useCallback(() => {
-    if (containerRef.current) {
-      if (!document.fullscreenElement) {
-        containerRef.current.requestFullscreen();
-      } else {
-        document.exitFullscreen();
+  const toggleFullscreen = useCallback(async () => {
+    if (!containerRef.current) return;
+    
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return;
       }
+      
+      // Try standard fullscreen API first
+      if (containerRef.current.requestFullscreen) {
+        await containerRef.current.requestFullscreen();
+      } 
+      // iOS Safari fallback for container
+      else if ((containerRef.current as any).webkitRequestFullscreen) {
+        (containerRef.current as any).webkitRequestFullscreen();
+      }
+      // iOS native video fullscreen fallback
+      else if (videoRef.current && (videoRef.current as any).webkitEnterFullscreen) {
+        (videoRef.current as any).webkitEnterFullscreen();
+      }
+    } catch (err) {
+      console.warn('[SecureVideoPlayer] Fullscreen failed:', err);
+      toast.error("Fullscreen isn't available in this browser. Try opening in Safari or Chrome.");
     }
   }, []);
 
@@ -475,25 +497,66 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
       embedUrl += `&h=${vimeoData.hash}`;
     }
 
-    const handleVimeoFullscreen = () => {
-      const container = document.querySelector('.vimeo-container');
-      if (container) {
+    const handleVimeoFullscreen = async () => {
+      try {
+        // If already in fullscreen, exit
         if (document.fullscreenElement) {
-          document.exitFullscreen();
-        } else {
-          container.requestFullscreen();
+          await document.exitFullscreen();
+          return;
         }
+        
+        const iframe = vimeoIframeRef.current;
+        const container = vimeoContainerRef.current;
+        
+        // Try iframe fullscreen first (preferred for Vimeo)
+        if (iframe) {
+          if (iframe.requestFullscreen) {
+            await iframe.requestFullscreen();
+            return;
+          }
+          // iOS Safari / WebView fallback
+          if ((iframe as any).webkitRequestFullscreen) {
+            (iframe as any).webkitRequestFullscreen();
+            return;
+          }
+        }
+        
+        // Fallback to container fullscreen
+        if (container) {
+          if (container.requestFullscreen) {
+            await container.requestFullscreen();
+            return;
+          }
+          // iOS Safari / WebView fallback for container
+          if ((container as any).webkitRequestFullscreen) {
+            (container as any).webkitRequestFullscreen();
+            return;
+          }
+        }
+        
+        // If we get here, no fullscreen method worked
+        toast.error("Fullscreen isn't available. Try opening in Safari or Chrome.");
+      } catch (err) {
+        console.warn('[SecureVideoPlayer] Vimeo fullscreen failed:', err);
+        toast.error("Fullscreen isn't available in this browser. Try opening in Safari or Chrome.");
       }
     };
 
     return (
-      <div className={cn("vimeo-container relative bg-black rounded-2xl overflow-hidden aspect-video group", className)}>
+      <div 
+        ref={vimeoContainerRef}
+        className={cn("vimeo-container relative bg-black rounded-2xl overflow-hidden aspect-video group", className)}
+      >
         <iframe
+          ref={vimeoIframeRef}
           src={embedUrl}
           className="absolute inset-0 w-full h-full"
           frameBorder="0"
           allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
           allowFullScreen
+          // @ts-ignore - Legacy attributes for iOS Safari and WebViews
+          webkitallowfullscreen="true"
+          mozallowfullscreen="true"
           title={title}
         />
         <button
