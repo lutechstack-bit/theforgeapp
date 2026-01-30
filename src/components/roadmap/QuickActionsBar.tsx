@@ -36,7 +36,7 @@ const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
   };
 
   return (
-    <div className="sticky top-16 z-30 -mx-3 sm:-mx-4 px-3 sm:px-4 py-2.5 sm:py-3 mb-4 sm:mb-6 glass-nav">
+    <div className="-mx-3 sm:-mx-4 px-3 sm:px-4 py-2.5 sm:py-3 mb-4 sm:mb-6">
       <div className={cn(
         "flex items-center justify-between gap-2",
         "sm:justify-start sm:gap-2"
