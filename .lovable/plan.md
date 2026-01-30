@@ -1,34 +1,15 @@
 
+# Fix Hidden Journey Tab - Auto-Scroll to Active Tab
 
-# Fix Overflowing Tabs on Mobile - Simple & Clean Approach
+## Problem
 
-## Summary
-
-Replace the current button-style tabs with a clean **pill-style scrollable tabs** design that matches the existing patterns in Events and Learn sections. This provides a polished, consistent look with visual scroll cues.
-
----
-
-## Current Problem
-
-The Roadmap tabs (Journey, Prep, Equipment, Rules, etc.) overflow on mobile screens, cutting off content without any visual indicator that more tabs exist.
+When navigating to the Rules page (or any tab beyond the visible area), the ScrollArea stays at that scroll position. When you return to the Roadmap page, the "Journey" tab is cut off on the left because the scroll position was preserved.
 
 ---
 
-## Solution: Smooth Pill Tabs with ScrollArea
+## Solution
 
-Transform the navigation into elegant rounded pill tabs (matching `EventTypeTabs` and `ProgramTabs`) with proper horizontal scrolling and visual consistency.
-
-**Visual Preview (mobile):**
-```
-[●Journey] [Prep] [Equipment] [Rules] [Gallery→ (scroll hint)
-```
-
-**Benefits:**
-- Consistent with Events and Learn tab patterns already in the app
-- Clean pill design with subtle borders
-- Active state has primary color fill with shadow glow
-- Horizontal scroll is smooth and intuitive
-- Works well on all screen sizes
+Add auto-scroll behavior that scrolls the active tab into view whenever the route changes. This ensures the currently selected tab is always visible.
 
 ---
 
@@ -36,58 +17,50 @@ Transform the navigation into elegant rounded pill tabs (matching `EventTypeTabs
 
 ### File: `src/components/roadmap/QuickActionsBar.tsx`
 
-**1. Import ScrollArea component**
+**1. Add useRef and useEffect hooks**
 ```tsx
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import React, { useRef, useEffect } from 'react';
 ```
 
-**2. Replace button-based layout with pill tabs**
+**2. Create a ref for each button and scroll active into view**
 
-Transform from `Button` components to styled `button` elements matching the pill pattern:
+Add a ref to track button elements and scroll the active one into view on route change:
 
 ```tsx
-<ScrollArea className="w-full">
-  <div className="flex items-center gap-2 pb-2">
-    {sections.map((section) => {
-      const Icon = section.icon;
-      const active = isActive(section.path);
-      
-      return (
-        <button
-          key={section.id}
-          onClick={() => navigate(section.path)}
-          className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300",
-            active
-              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-              : "bg-card/60 text-muted-foreground hover:bg-card hover:text-foreground border border-border/50"
-          )}
-        >
-          <Icon className="h-4 w-4" />
-          {section.label}
-        </button>
-      );
-    })}
-  </div>
-  <ScrollBar orientation="horizontal" className="opacity-0" />
-</ScrollArea>
+const activeButtonRef = useRef<HTMLButtonElement>(null);
+
+useEffect(() => {
+  // Scroll the active tab into view when route changes
+  if (activeButtonRef.current) {
+    activeButtonRef.current.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center'
+    });
+  }
+}, [location.pathname]);
 ```
 
-**3. Simplify container styling**
-
-Remove the `overflow-x-auto scrollbar-hide` from the inner div since `ScrollArea` handles scrolling.
+**3. Attach ref to active button**
+```tsx
+<button
+  ref={active ? activeButtonRef : null}
+  key={section.id}
+  onClick={() => navigate(section.path)}
+  ...
+>
+```
 
 ---
 
-## Design Comparison
+## Behavior After Fix
 
-| Aspect | Before | After |
-|--------|--------|-------|
-| Style | Square buttons | Rounded pill tabs |
-| Scroll | Hidden overflow | Smooth ScrollArea |
-| Active state | Solid primary | Primary + shadow glow |
-| Inactive | Ghost button | Card with subtle border |
-| Consistency | Unique style | Matches Events/Learn tabs |
+| Scenario | Before | After |
+|----------|--------|-------|
+| Load Journey page | Journey visible | Journey visible |
+| Navigate to Rules | Rules visible, Journey cut off | Rules visible, Journey cut off |
+| Navigate back to Journey | Journey still cut off! | **Journey scrolls into view** |
+| Page reload on Rules | Journey cut off | **Rules centered, Journey accessible** |
 
 ---
 
@@ -95,15 +68,10 @@ Remove the `overflow-x-auto scrollbar-hide` from the inner div since `ScrollArea
 
 | File | Change |
 |------|--------|
-| `src/components/roadmap/QuickActionsBar.tsx` | Convert to pill-style tabs with ScrollArea |
+| `src/components/roadmap/QuickActionsBar.tsx` | Add useEffect to auto-scroll active tab into view |
 
 ---
 
 ## Result
 
-A clean, scrollable tab bar that:
-- Fits naturally with the rest of the app's design language
-- Works smoothly on all mobile devices
-- Shows all tabs are accessible via horizontal swipe
-- Looks polished and professional
-
+The active tab will always be visible and centered in the scroll area, making it clear which section the user is currently viewing.
