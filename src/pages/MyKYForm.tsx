@@ -7,11 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { 
-  ArrowLeft, Edit, CheckCircle2, User, UserCircle, Phone, 
+  ArrowLeft, Edit, User, UserCircle, Phone, 
   Target, Settings, Heart, Film, Brain, Clock, MapPin, 
   Instagram, Mail, Calendar, Ruler, Shirt, Utensils, Languages
 } from 'lucide-react';
 import { format } from 'date-fns';
+import forgeIcon from '@/assets/forge-icon.png';
 
 const MyKYForm: React.FC = () => {
   const navigate = useNavigate();
@@ -19,9 +20,10 @@ const MyKYForm: React.FC = () => {
   const { data: profileData, isLoading } = useProfileData();
   
   const cohortType = edition?.cohort_type;
-  const kyData = profileData?.kyfResponse || profileData?.kywResponse;
-  const isFilmmaking = cohortType === 'FORGE' || cohortType === 'FORGE_CREATORS';
+  const kyData = profileData?.kyfResponse || profileData?.kywResponse || profileData?.kycResponse;
+  const isFilmmaking = cohortType === 'FORGE';
   const isWriting = cohortType === 'FORGE_WRITING';
+  const isCreator = cohortType === 'FORGE_CREATORS';
   
   const getFormRoute = () => {
     switch (cohortType) {
@@ -39,11 +41,11 @@ const MyKYForm: React.FC = () => {
     }
   };
 
-  const getCohortBadge = () => {
+  const getCohortLabel = () => {
     switch (cohortType) {
-      case 'FORGE_WRITING': return { emoji: '✍️', label: 'Writer' };
-      case 'FORGE_CREATORS': return { emoji: '🎨', label: 'Creator' };
-      default: return { emoji: '🎬', label: 'Filmmaker' };
+      case 'FORGE_WRITING': return 'Writer';
+      case 'FORGE_CREATORS': return 'Creator';
+      default: return 'Filmmaker';
     }
   };
 
@@ -66,8 +68,6 @@ const MyKYForm: React.FC = () => {
     return <Navigate to={getFormRoute()} replace />;
   }
 
-  const cohortBadge = getCohortBadge();
-  
   return (
     <div className="min-h-screen pb-32 md:pb-24">
       {/* Hero Header */}
@@ -84,17 +84,16 @@ const MyKYForm: React.FC = () => {
           </Button>
         </div>
         
-        {/* Cohort Badge & Success Icon */}
+        {/* Forge Logo & Title */}
         <div className="relative z-10 text-center px-4">
-          <Badge className="bg-primary/20 text-primary border-primary/30 mb-4 text-sm">
-            {cohortBadge.emoji} {cohortBadge.label}
-          </Badge>
-          
-          {/* Animated Success Icon */}
+          {/* Forge Logo with Subtle Glow */}
           <div className="relative mx-auto w-20 h-20 mb-4">
-            <div className="absolute inset-0 rounded-full bg-green-500/20 animate-ping opacity-75" style={{ animationDuration: '2s' }} />
-            <div className="relative w-20 h-20 rounded-full bg-green-500/10 border-2 border-green-500/30 flex items-center justify-center">
-              <CheckCircle2 className="w-10 h-10 text-green-500" />
+            <div 
+              className="absolute inset-0 rounded-full bg-primary/30 blur-xl animate-pulse" 
+              style={{ animationDuration: '3s' }} 
+            />
+            <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 flex items-center justify-center">
+              <img src={forgeIcon} alt="Forge" className="w-10 h-10 object-contain" />
             </div>
           </div>
           
@@ -102,7 +101,13 @@ const MyKYForm: React.FC = () => {
           <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent mb-1">
             {getFormTitle()}
           </h1>
-          <p className="text-sm text-muted-foreground">
+          
+          {/* Cohort Badge - No Emoji */}
+          <Badge className="bg-primary/20 text-primary border-primary/30 text-sm mt-2">
+            {getCohortLabel()}
+          </Badge>
+          
+          <p className="text-sm text-muted-foreground mt-2">
             {kyData?.terms_accepted_at 
               ? `Submitted on ${format(new Date(kyData.terms_accepted_at), 'MMMM d, yyyy')}`
               : 'Your responses are saved'}
@@ -203,6 +208,29 @@ const MyKYForm: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Skills Section - Visual Bars (for creators) */}
+        {isCreator && (
+          <div className="glass-card rounded-xl p-4 border border-border/50">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Target className="w-4 h-4 text-primary" />
+              </div>
+              <h3 className="font-semibold text-foreground">Skills & Proficiency</h3>
+            </div>
+            <div className="space-y-4">
+              <ProficiencyBar skill="Content Creation" level={kyData?.proficiency_content_creation} />
+              <ProficiencyBar skill="Storytelling" level={kyData?.proficiency_storytelling} />
+              <ProficiencyBar skill="Video Production" level={kyData?.proficiency_video_production} />
+              {kyData?.primary_platform && (
+                <div className="flex items-center justify-between pt-2 border-t border-border/30">
+                  <span className="text-sm text-muted-foreground">Primary Platform</span>
+                  <Badge variant="outline" className="text-xs">{kyData.primary_platform}</Badge>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         
         {/* Accordion Sections */}
         <Accordion 
@@ -260,6 +288,9 @@ const MyKYForm: React.FC = () => {
                     <DataRow icon={<MapPin className="w-4 h-4" />} label="Pincode" value={kyData?.pincode} />
                   </>
                 )}
+                {isCreator && kyData?.country && (
+                  <DataRow icon={<MapPin className="w-4 h-4" />} label="Country" value={kyData?.country} />
+                )}
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -295,9 +326,11 @@ const MyKYForm: React.FC = () => {
             <AccordionContent className="px-4 pb-4">
               <div className="space-y-3 pt-2">
                 <DataRow icon={<Clock className="w-4 h-4" />} label="Chronotype" value={kyData?.chronotype} />
+                {(isFilmmaking || isCreator) && (
+                  <DataRow icon={<Utensils className="w-4 h-4" />} label="Meal Preference" value={kyData?.meal_preference} />
+                )}
                 {isFilmmaking && (
                   <>
-                    <DataRow icon={<Utensils className="w-4 h-4" />} label="Meal Preference" value={kyData?.meal_preference} />
                     <DataRow icon={<Utensils className="w-4 h-4" />} label="Food Allergies" value={kyData?.food_allergies} />
                     <DataRow icon={<Heart className="w-4 h-4" />} label="Medication Support" value={kyData?.medication_support} />
                     {kyData?.languages_known && kyData.languages_known.length > 0 && (
@@ -346,17 +379,17 @@ const MyKYForm: React.FC = () => {
           </div>
         )}
 
-        {/* Top 3 Movies/Books */}
-        {(kyData?.top_3_movies || kyData?.top_3_writers_books) && (
+        {/* Top 3 Movies/Books/Creators */}
+        {(kyData?.top_3_movies || kyData?.top_3_writers_books || kyData?.top_3_creators) && (
           <div className="glass-card rounded-xl p-4 border border-border/50">
             <div className="flex items-center gap-2 mb-4">
               <Film className="w-5 h-5 text-primary" />
               <h3 className="font-semibold text-foreground">
-                Your Top 3 {isFilmmaking ? 'Movies' : 'Writers/Books'}
+                Your Top 3 {isFilmmaking ? 'Movies' : isWriting ? 'Writers/Books' : 'Creators'}
               </h3>
             </div>
             <div className="flex flex-wrap gap-2">
-              {(kyData?.top_3_movies || kyData?.top_3_writers_books)?.map((item: string, idx: number) => (
+              {(kyData?.top_3_movies || kyData?.top_3_writers_books || kyData?.top_3_creators)?.map((item: string, idx: number) => (
                 <Badge 
                   key={idx} 
                   className="bg-primary/10 text-primary border-primary/30 px-3 py-1.5 text-sm font-medium hover:bg-primary/20 transition-colors"

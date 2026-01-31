@@ -6,6 +6,7 @@ export interface ProfileData {
   profile: any;
   kyfResponse: any | null;
   kywResponse: any | null;
+  kycResponse: any | null;
   cohortType: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS' | null;
   messageCount: number;
   worksCount: number;
@@ -39,15 +40,26 @@ export const useProfileData = (userId?: string) => {
 
       const cohortType = editionData?.cohort_type || null;
 
-      // Fetch KYF response if FORGE cohort
+      // Fetch KYF response if FORGE (Filmmakers) cohort
       let kyfResponse = null;
-      if (cohortType === 'FORGE' || cohortType === 'FORGE_CREATORS') {
+      if (cohortType === 'FORGE') {
         const { data } = await supabase
           .from('kyf_responses')
           .select('*')
           .eq('user_id', targetUserId)
           .maybeSingle();
         kyfResponse = data;
+      }
+
+      // Fetch KYC response if FORGE_CREATORS cohort
+      let kycResponse = null;
+      if (cohortType === 'FORGE_CREATORS') {
+        const { data } = await supabase
+          .from('kyc_responses')
+          .select('*')
+          .eq('user_id', targetUserId)
+          .maybeSingle();
+        kycResponse = data;
       }
 
       // Fetch KYW response if WRITING cohort
@@ -77,6 +89,7 @@ export const useProfileData = (userId?: string) => {
         profile: profileData,
         kyfResponse,
         kywResponse,
+        kycResponse,
         cohortType,
         messageCount: messageCount || 0,
         worksCount: worksCount || 0,
