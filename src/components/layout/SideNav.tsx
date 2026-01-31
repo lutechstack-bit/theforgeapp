@@ -107,7 +107,7 @@ export const SideNav: React.FC = () => {
           "flex py-5 transition-all duration-300",
           collapsed ? "flex-col items-center gap-4 px-3" : "flex-row items-center justify-between px-5"
         )}>
-          <Link to="/" className="flex items-center justify-center overflow-hidden">
+          <Link to="/" className="flex items-center justify-center overflow-hidden" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <img 
               src={collapsed ? forgeIcon : forgeLogo} 
               alt="Forge" 
