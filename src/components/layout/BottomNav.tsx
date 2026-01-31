@@ -91,7 +91,7 @@ export const BottomNav: React.FC = () => {
                 <span className={cn(
                   "text-[10px] font-medium tracking-wide",
                   menuOpen && "font-semibold"
-                )}>Menu</span>
+                )}>Profile</span>
               </button>
             </SheetTrigger>
             <MobileMenuSheet onClose={() => setMenuOpen(false)} />
