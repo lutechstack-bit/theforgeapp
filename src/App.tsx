@@ -126,6 +126,26 @@ const ProfileSetupCheck: React.FC<{ children: React.ReactNode }> = ({ children }
   return <>{children}</>;
 };
 
+// KY Form Check wrapper - ensures KY form is completed before accessing main app
+const KYFormCheck: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { profile, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-primary">Loading...</div>
+      </div>
+    );
+  }
+  
+  // If profile setup is done but KY form is NOT complete, redirect to form
+  if (profile?.profile_setup_completed && !profile?.ky_form_completed) {
+    return <Navigate to="/kyf" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 // Redirect away from profile setup if already completed
 const ProfileSetupRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { profile, loading } = useAuth();
@@ -220,7 +240,9 @@ const AppRoutes = () => {
       <Route element={
         <ProtectedRoute>
           <ProfileSetupCheck>
-            <AppLayout />
+            <KYFormCheck>
+              <AppLayout />
+            </KYFormCheck>
           </ProfileSetupCheck>
         </ProtectedRoute>
       }>
