@@ -174,73 +174,6 @@ const Perks: React.FC = () => {
         </div>
       </div>
 
-      {/* Forge Bag Section */}
-      <div className="mb-6 md:mb-8">
-        <div className="flex items-center gap-3 mb-4 md:mb-5">
-          <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/20">
-            <Package className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-lg md:text-xl font-bold text-foreground">Your Forge Bag</h2>
-            <p className="text-xs md:text-sm text-muted-foreground">{bagItems.length} items included</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 md:gap-3">
-          {bagItems.map((item, index) => (
-            <div
-              key={item.id}
-              className="group relative p-3 md:p-4 rounded-xl md:rounded-2xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-gold-glow transition-all duration-300 hover:scale-[1.02] animate-fade-in"
-              style={{ animationDelay: `${index * 0.05}s` }}
-            >
-              <div className="flex flex-col gap-2.5">
-                <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center text-primary group-hover:bg-gradient-to-br group-hover:from-primary group-hover:to-deep-gold group-hover:text-primary-foreground transition-all duration-300 border border-primary/10 group-hover:border-transparent">
-                  {item.icon}
-                </div>
-                <div className="min-w-0">
-                  <h3 className="font-semibold text-foreground text-xs md:text-sm leading-tight mb-0.5">
-                    {item.title}
-                  </h3>
-                  <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-2">
-                    {item.description}
-                  </p>
-                </div>
-              </div>
-              <CheckCircle2 className="absolute top-2.5 right-2.5 md:top-3 md:right-3 h-3.5 w-3.5 md:h-4 md:w-4 text-primary/40 group-hover:text-primary transition-colors" />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Perks Unlocked Section - Only Alumni Network */}
-      <div className="mb-6 md:mb-8">
-        <div className="flex items-center gap-3 mb-4 md:mb-5">
-          <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/20">
-            <Gift className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-lg md:text-xl font-bold text-foreground">Perks Unlocked</h2>
-            <p className="text-xs md:text-sm text-muted-foreground">Exclusive benefits for Forge alumni</p>
-          </div>
-        </div>
-
-        {/* Alumni Network Perk */}
-        <div className="group flex items-center gap-3 md:gap-4 p-4 md:p-5 rounded-xl md:rounded-2xl bg-gradient-to-br from-card via-card to-secondary/20 border border-primary/20 hover:border-primary/40 hover:shadow-gold-glow transition-all duration-300 hover:scale-[1.01] animate-fade-in">
-          <div className="w-11 h-11 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary group-hover:bg-gradient-to-br group-hover:from-primary group-hover:to-deep-gold group-hover:text-primary-foreground transition-all duration-300 border border-primary/10 group-hover:border-transparent shrink-0">
-            <Users className="h-5 w-5 md:h-6 md:w-6" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-bold text-foreground text-sm md:text-base">Forge Alumni Network</h3>
-              <Crown className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
-            </div>
-            <p className="text-xs md:text-sm text-muted-foreground">Lifetime access to our exclusive community of creators, mentors & industry professionals</p>
-            <a href="/community" className="text-xs text-primary hover:underline mt-1 inline-block">→ Join Community to be linked here</a>
-          </div>
-          <CheckCircle2 className="h-5 w-5 md:h-6 md:w-6 text-primary shrink-0" />
-        </div>
-      </div>
-
       {/* Equipment Discounts Section - Sony & Digitek */}
       <div className="mb-6 md:mb-8">
         <div className="flex items-center gap-3 mb-4 md:mb-5">
@@ -280,6 +213,73 @@ const Perks: React.FC = () => {
               
               {/* Checkmark indicator */}
               <CheckCircle2 className="absolute top-3 right-3 md:top-4 md:right-4 h-4 w-4 md:h-5 md:w-5 text-primary/40 group-hover:text-primary transition-colors" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Perks Unlocked Section - Only Alumni Network */}
+      <div className="mb-6 md:mb-8">
+        <div className="flex items-center gap-3 mb-4 md:mb-5">
+          <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/20">
+            <Gift className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg md:text-xl font-bold text-foreground">Perks Unlocked</h2>
+            <p className="text-xs md:text-sm text-muted-foreground">Exclusive benefits for Forge alumni</p>
+          </div>
+        </div>
+
+        {/* Alumni Network Perk */}
+        <div className="group flex items-center gap-3 md:gap-4 p-4 md:p-5 rounded-xl md:rounded-2xl bg-gradient-to-br from-card via-card to-secondary/20 border border-primary/20 hover:border-primary/40 hover:shadow-gold-glow transition-all duration-300 hover:scale-[1.01] animate-fade-in">
+          <div className="w-11 h-11 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary group-hover:bg-gradient-to-br group-hover:from-primary group-hover:to-deep-gold group-hover:text-primary-foreground transition-all duration-300 border border-primary/10 group-hover:border-transparent shrink-0">
+            <Users className="h-5 w-5 md:h-6 md:w-6" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-bold text-foreground text-sm md:text-base">Forge Alumni Network</h3>
+              <Crown className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
+            </div>
+            <p className="text-xs md:text-sm text-muted-foreground">Lifetime access to our exclusive community of creators, mentors & industry professionals</p>
+            <a href="/community" className="text-xs text-primary hover:underline mt-1 inline-block">→ Join Community to be linked here</a>
+          </div>
+          <CheckCircle2 className="h-5 w-5 md:h-6 md:w-6 text-primary shrink-0" />
+        </div>
+      </div>
+
+      {/* Forge Bag Section */}
+      <div className="mb-6 md:mb-8">
+        <div className="flex items-center gap-3 mb-4 md:mb-5">
+          <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/20">
+            <Package className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg md:text-xl font-bold text-foreground">Your Forge Bag</h2>
+            <p className="text-xs md:text-sm text-muted-foreground">{bagItems.length} items included</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 md:gap-3">
+          {bagItems.map((item, index) => (
+            <div
+              key={item.id}
+              className="group relative p-3 md:p-4 rounded-xl md:rounded-2xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-gold-glow transition-all duration-300 hover:scale-[1.02] animate-fade-in"
+              style={{ animationDelay: `${index * 0.05}s` }}
+            >
+              <div className="flex flex-col gap-2.5">
+                <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center text-primary group-hover:bg-gradient-to-br group-hover:from-primary group-hover:to-deep-gold group-hover:text-primary-foreground transition-all duration-300 border border-primary/10 group-hover:border-transparent">
+                  {item.icon}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-foreground text-xs md:text-sm leading-tight mb-0.5">
+                    {item.title}
+                  </h3>
+                  <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-2">
+                    {item.description}
+                  </p>
+                </div>
+              </div>
+              <CheckCircle2 className="absolute top-2.5 right-2.5 md:top-3 md:right-3 h-3.5 w-3.5 md:h-4 md:w-4 text-primary/40 group-hover:text-primary transition-colors" />
             </div>
           ))}
         </div>
