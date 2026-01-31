@@ -1,76 +1,59 @@
 
 
-# Reorder Perks Page Sections
+# Fix Event Card Images - Uniform Size + No Cropping
 
-## Current Order
+## Problem
 
-1. **Hero Section - Acceptance Card** (lines 112-175)
-2. **Your Forge Bag** (lines 177-213)
-3. **Perks Unlocked** (lines 215-242)
-4. **Equipment Discounts** (lines 244-286)
-5. **Footer Note** (lines 288-298)
+The current `SimpleEventCard` uses:
+- Fixed `aspect-[3/4]` ratio (uniform size ✓)
+- `object-cover` which **crops** images to fill the container (cropping ✗)
 
-## New Order (as requested)
+## Solution
 
-1. **Hero Section - Acceptance Card** ✓ (keep at top)
-2. **Equipment Discounts** ↑ (move up)
-3. **Perks Unlocked** ↔ (stays in middle)
-4. **Your Forge Bag** ↓ (move down)
-5. **Footer Note** ✓ (keep at bottom)
+Use `object-contain` instead of `object-cover` to display the **full poster** within uniform card dimensions. Add a subtle background so the poster looks premium against the dark theme.
 
 ---
 
-## Implementation
+## File: `src/components/shared/SimpleEventCard.tsx`
 
-### File: `src/pages/Perks.tsx`
+### Changes
 
-Simply rearrange the JSX sections within the return statement. No logic changes needed — just cut and paste the sections in the new order.
+| Property | Before | After |
+|----------|--------|-------|
+| Image fit | `object-cover` (crops) | `object-contain` (full image) |
+| Background | `bg-muted` | `bg-black/40` (subtle dark fill behind image) |
 
-**Section blocks to move:**
-
-| Section | Current Lines | New Position |
-|---------|---------------|--------------|
-| Equipment Discounts | 244-286 | After Acceptance Card |
-| Perks Unlocked | 215-242 | After Equipment Discounts |
-| Your Forge Bag | 177-213 | After Perks Unlocked |
-
----
-
-## Visual Preview
+### Visual Result
 
 ```text
-┌─────────────────────────────────────┐
-│  🏆 ACCEPTANCE CARD                 │  ← Stays at top
-│  Welcome, [Name]!                   │
-│  [Share Your Acceptance]            │
-└─────────────────────────────────────┘
+Before (cropped):          After (full poster):
+┌──────────────┐           ┌──────────────┐
+│ ████████████ │           │   ┌──────┐   │
+│ ████CROP████ │    →      │   │ FULL │   │
+│ ████████████ │           │   │POSTER│   │
+│ ████████████ │           │   └──────┘   │
+└──────────────┘           └──────────────┘
+  (text cut off)             (all visible)
+```
 
-┌─────────────────────────────────────┐
-│  📷 EQUIPMENT DISCOUNTS             │  ← Moved UP (was 4th)
-│  Sony - Up to 25% off               │
-│  Digitek - Up to 30% off            │
-└─────────────────────────────────────┘
+### Code Change
 
-┌─────────────────────────────────────┐
-│  🎁 PERKS UNLOCKED                  │  ← Now 3rd (was 3rd)
-│  Forge Alumni Network               │
-└─────────────────────────────────────┘
+**Line 34:** Change `object-cover` to `object-contain`
 
-┌─────────────────────────────────────┐
-│  📦 YOUR FORGE BAG                  │  ← Moved DOWN (was 2nd)
-│  7 items included                   │
-│  [Grid of bag items]                │
-└─────────────────────────────────────┘
-
-┌─────────────────────────────────────┐
-│  📦 Your Forge Bag Awaits           │  ← Stays at bottom
-│  Footer note                        │
-└─────────────────────────────────────┘
+```tsx
+<img
+  src={imageUrl}
+  alt={title}
+  className="w-full h-full object-contain"
+/>
 ```
 
 ---
 
 ## Summary
 
-This is a simple reorder of existing sections — no functionality changes, just moving the JSX blocks into the new sequence.
+A single CSS change from `object-cover` → `object-contain` ensures:
+- ✅ Uniform card sizes (fixed 3:4 aspect ratio)
+- ✅ Full poster visible (no cropping)
+- ✅ Premium look with dark background fill
 
