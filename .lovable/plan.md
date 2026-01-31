@@ -1,153 +1,234 @@
 
+# Major UI Restructure: Homepage → Journey Timeline + New Tasks Tab
 
-# Comprehensive Fix: Cohort-Specific Content + Online Sessions for Filmmaking & Creators
+## Overview
 
-## Summary of Issues Found
-
-Based on my analysis of the codebase, database, and the 4 PDFs you provided, here are the confirmed issues:
-
-### Issue 1: Race Condition Causes Wrong Cohort Content (ROOT CAUSE)
-**Location:** `src/hooks/useRoadmapData.ts` (Line 21)
-
-```typescript
-const userCohortType = (edition?.cohort_type as CohortType) || 'FORGE';
-```
-
-When a user loads the Roadmap page:
-1. `profile.edition_id` loads first → query is enabled
-2. But `edition?.cohort_type` is still `undefined` → defaults to `'FORGE'`
-3. Roadmap query runs with `userCohortType = 'FORGE'` 
-4. **Writing/Creators users see Filmmaking content!**
-
-Even though the 3-tier fallback logic was added, this race condition means the wrong cohort type is used from the start.
+This plan restructures the app by:
+1. **Replacing the sticky notes/journey bento hero on Homepage** with the Roadmap Journey timeline (day-by-day schedule)
+2. **Creating a new "Tasks" sub-page under Roadmap** with a clean, modern checklist card design
+3. **Preserving all existing features** (stage tracking, task completion, auto-complete, streak, etc.)
 
 ---
 
-### Issue 2: Online Sessions Exist But Aren't in Database (Data Gap)
+## Current State → New State
 
-**From Creators Bali PDF - 6 Online Sessions:**
-| Session | Date | Time | Title |
-|---------|------|------|-------|
-| 1 | Jan 22 | 7-8:30 PM | Orientation |
-| 2 | Jan 23 | 6:30-8:30 PM | Niche Discovery + Competitor Analysis |
-| 3 | Jan 24 | 6:30-8 PM | Storytelling for Social Media |
-| 4 | Jan 25 | 11 AM-1 PM | Videography Theory |
-| 5 | Jan 27 | 6:30-8:30 PM | Assignment Review & Feedback |
-| 6 | Jan 28 | 6:30-8:30 PM | Video Editing Theory |
+```text
+CURRENT HOMEPAGE:
+├── CompactCountdownTimer
+├── JourneyBentoHero (sticky notes + stages) ← REMOVE
+├── Meet Your Mentors
+├── RoadmapBentoBox (highlights)
+├── Alumni Spotlight
+├── Learn Section
+└── Events Section
 
-**Current Database State:**
-- Creators editions have `is_virtual = false` for all days
-- No `meeting_url` data for any Creators roadmap days
-- Only the shared template (Filmmaking) has virtual session data
+NEW HOMEPAGE:
+├── CompactCountdownTimer
+├── JourneyTimeline (from Roadmap) ← NEW: Embedded timeline
+├── Meet Your Mentors
+├── RoadmapBentoBox
+├── Alumni Spotlight
+├── Learn Section
+└── Events Section
 
----
-
-### Issue 3: Zoom Credentials Only Visible in DURING_FORGE Mode
-
-Current logic in `DayDetailModal.tsx` (Line 162):
-```typescript
-{day.is_virtual && day.meeting_url && forgeMode === 'DURING_FORGE' && cohortType !== 'FORGE_WRITING' && (
-  <SessionMeetingCard ... />
-)}
-```
-
-This means:
-- Users can't preview meeting credentials before Forge starts
-- They only see "Meeting details will be available when Forge begins"
-
-**Better UX:** Show credentials 24-48 hours before session starts.
-
----
-
-## Online Sessions Structure (From PDFs)
-
-### FORGE (Filmmaking) - Online Sessions
-- **3 Online Days** before physical sessions
-- Days 1-3 are virtual, Days 4+ are in-person
-- Has Zoom meeting infrastructure
-
-### FORGE_CREATORS - Online Sessions (From Bali PDF)
-- **6 Online Sessions** before physical sessions
-- Sessions numbered separately from physical days
-- Then Day 1-7 are in-person
-
-### FORGE_WRITING - NO Online Sessions
-- Direct to physical (Day 1-6)
-- No virtual component at all
-
----
-
-## Solution Architecture
-
-### Fix 1: Wait for Cohort Type Before Fetching
-
-**File:** `src/hooks/useRoadmapData.ts`
-
-```typescript
-// OLD (causes race condition)
-const userCohortType = (edition?.cohort_type as CohortType) || 'FORGE';
-
-// NEW (wait for cohort to be known)
-const userCohortType = edition?.cohort_type as CohortType | undefined;
-
-// Query enabled only when BOTH profile and edition are loaded
-enabled: !!profile?.edition_id && !!userCohortType
-```
-
-This prevents the query from running with an incorrect default.
-
----
-
-### Fix 2: Add Online Sessions as Day Numbers -5 to 0
-
-For cohorts with online sessions (Filmmaking, Creators), use negative day numbers:
-
-| Day Number | Type | Filmmaking | Creators |
-|------------|------|------------|----------|
-| -5 | Online | - | Session 1: Orientation |
-| -4 | Online | - | Session 2: Niche Discovery |
-| -3 | Online | Session 1: Orientation | Session 3: Storytelling |
-| -2 | Online | Session 2: Cinematography | Session 4: Videography |
-| -1 | Online | Session 3: Direction | Session 5: Assignment Review |
-| 0 | Pre-Forge | Prep Day | Session 6 + Prep |
-| 1+ | Physical | In-Person Days | In-Person Days |
-
-This keeps the timeline sequential and the existing UI works.
-
----
-
-### Fix 3: Early Access to Meeting Credentials
-
-**File:** `src/components/roadmap/DayDetailModal.tsx`
-
-Change visibility logic from:
-```typescript
-forgeMode === 'DURING_FORGE'
-```
-
-To:
-```typescript
-// Show meeting card if:
-// 1. During Forge, OR
-// 2. Session is within 48 hours
-
-const sessionDate = day.date ? new Date(day.date) : null;
-const hoursUntilSession = sessionDate 
-  ? (sessionDate.getTime() - Date.now()) / (1000 * 60 * 60) 
-  : Infinity;
-const showMeetingCard = forgeMode === 'DURING_FORGE' || hoursUntilSession <= 48;
+NEW ROADMAP NAVIGATION:
+[Journey] [Tasks] [Prep] [Equipment*] [Rules]
+                   ↑
+               NEW TAB
 ```
 
 ---
 
-### Fix 4: Mobile-Friendly Improvements
+## Phase 1: Create New Tasks Page (`/roadmap/tasks`)
 
-The current `SessionMeetingCard` already has good mobile support, but we'll enhance:
+### New File: `src/pages/roadmap/RoadmapTasks.tsx`
 
-1. **Touch-friendly buttons** - Ensure 44px minimum touch targets
-2. **Copy feedback** - Haptic feedback on mobile (if supported)
-3. **Calendar sync** - Works on both platforms already
-4. **Compact mode** - Use in JourneyCard for quick access
+A clean, modern checklist UI organized by journey stages:
+
+**Design Approach - Modern Checklist Cards:**
+- Collapsible stage cards with progress bars
+- Clean task rows with checkboxes, descriptions, and due dates
+- Visual status indicators (completed = green checkmark, auto-completed = badge)
+- Filter chips (All, Required, Optional, Done)
+- Stage progress rings inline with headers
+
+**UI Structure:**
+```text
+┌─────────────────────────────────────────────────┐
+│ Your Tasks                    [Streak Badge]    │
+│ 12/18 tasks completed         [Filter Chips]    │
+├─────────────────────────────────────────────────┤
+│ ┌─────────────────────────────────────────────┐ │
+│ │ ▼ Stage 1: Pre-Registration     ●●●●○ 4/5   │ │
+│ │   ☑ Complete your profile       [Auto]      │ │
+│ │   ☑ Submit KY Form                          │ │
+│ │   ☐ Connect on Instagram                    │ │
+│ │   ☑ Introduce yourself          [Auto]      │ │
+│ │   ☑ Review the roadmap                      │ │
+│ └─────────────────────────────────────────────┘ │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ ▶ Stage 2: Pre-Travel (Coming)   ○○○○○ 0/3 │ │
+│ └─────────────────────────────────────────────┘ │
+│ ...                                             │
+└─────────────────────────────────────────────────┘
+```
+
+**Features Preserved:**
+- All 6 stages (5 for Writers)
+- Task completion toggle with optimistic updates
+- Auto-completion detection from profile data
+- Linked prep category sync (bidirectional)
+- Deep linking to specific tasks/sections
+- Pull-to-refresh on mobile
+- Confetti celebration on stage completion
+- Streak badge display
+
+---
+
+## Phase 2: Embed Journey Timeline on Homepage
+
+### Modified File: `src/pages/Home.tsx`
+
+**Changes:**
+1. Remove `JourneyBentoHero` import and usage
+2. Add inline Journey Timeline component (adapted from `RoadmapJourney`)
+3. Keep compact countdown at top
+
+**New Homepage Structure:**
+
+```tsx
+<div className="space-y-5 sm:space-y-6">
+  {/* Countdown Timer */}
+  <CompactCountdownTimer edition={edition} />
+
+  {/* Journey Timeline - Embedded from Roadmap */}
+  <HomeJourneySection /> {/* NEW component */}
+
+  {/* Meet Your Mentors */}
+  <ContentCarousel title="Meet Your Mentors">...</ContentCarousel>
+  
+  {/* ... rest unchanged */}
+</div>
+```
+
+### New Component: `src/components/home/HomeJourneySection.tsx`
+
+A streamlined version of `RoadmapJourney` for the homepage:
+- Shows first 3-4 upcoming days with "View Full Journey" link
+- Compact JourneyStats bar
+- Timeline nodes with hover effects
+- Links to `/roadmap` for full view
+
+---
+
+## Phase 3: Update Navigation
+
+### Modified File: `src/components/roadmap/QuickActionsBar.tsx`
+
+Add Tasks tab to the navigation:
+
+```tsx
+const sections = [
+  { id: 'journey', path: '/roadmap', label: 'Journey', icon: Map },
+  { id: 'tasks', path: '/roadmap/tasks', label: 'Tasks', icon: CheckSquare }, // NEW
+  { id: 'prep', path: '/roadmap/prep', label: 'Prep', icon: FileText },
+  // ... rest
+];
+```
+
+### Modified File: `src/App.tsx`
+
+Add route for Tasks:
+
+```tsx
+<Route path="/roadmap" element={<RoadmapLayout />}>
+  <Route index element={<RoadmapJourney />} />
+  <Route path="tasks" element={<RoadmapTasks />} /> {/* NEW */}
+  <Route path="prep" element={<RoadmapPrep />} />
+  {/* ... rest */}
+</Route>
+```
+
+### Modified File: `src/pages/roadmap/index.ts`
+
+Export the new component:
+
+```tsx
+export { default as RoadmapTasks } from './RoadmapTasks';
+```
+
+---
+
+## Phase 4: Create Task Card Components
+
+### New File: `src/components/tasks/TaskStageCard.tsx`
+
+Collapsible card for each stage:
+
+```tsx
+interface TaskStageCardProps {
+  stage: JourneyStage;
+  tasks: JourneyTask[];
+  isExpanded: boolean;
+  onToggle: () => void;
+  // ... task completion props
+}
+```
+
+**Features:**
+- Collapsible with smooth animation
+- Progress bar in header (completed/total)
+- Stage icon and color theming
+- Current stage highlighted with accent border
+- Completed stages show green checkmark
+
+### New File: `src/components/tasks/TaskRow.tsx`
+
+Individual task item:
+
+```tsx
+interface TaskRowProps {
+  task: JourneyTask;
+  isCompleted: boolean;
+  isAutoCompleted: boolean;
+  onToggle: () => void;
+  forgeStartDate?: string;
+}
+```
+
+**Features:**
+- Checkbox with tap animation
+- Title + optional description
+- "Auto" badge for auto-completed tasks
+- Due date badge (if applicable)
+- Deep link arrow (if task has navigation)
+- Swipe-to-complete on mobile (optional)
+
+### New File: `src/components/tasks/TasksHeader.tsx`
+
+Page header with stats and filters:
+
+```tsx
+interface TasksHeaderProps {
+  completedCount: number;
+  totalCount: number;
+  activeFilter: TaskFilterType;
+  onFilterChange: (filter: TaskFilterType) => void;
+}
+```
+
+---
+
+## Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/pages/roadmap/RoadmapTasks.tsx` | Main Tasks page with stage cards |
+| `src/components/tasks/TaskStageCard.tsx` | Collapsible stage card |
+| `src/components/tasks/TaskRow.tsx` | Individual task item |
+| `src/components/tasks/TasksHeader.tsx` | Page header with filters |
+| `src/components/tasks/index.ts` | Barrel export |
+| `src/components/home/HomeJourneySection.tsx` | Embedded timeline for homepage |
 
 ---
 
@@ -155,118 +236,68 @@ The current `SessionMeetingCard` already has good mobile support, but we'll enha
 
 | File | Changes |
 |------|---------|
-| `src/hooks/useRoadmapData.ts` | Fix race condition by requiring cohortType before fetching |
-| `src/components/roadmap/JourneyCard.tsx` | Pass virtual meeting fields to modal, add compact meeting card |
-| `src/components/roadmap/DayDetailModal.tsx` | Show meeting card 48h before session; improve mobile UX |
-| `src/components/roadmap/SessionMeetingCard.tsx` | Minor mobile UX tweaks (touch targets, feedback) |
+| `src/pages/Home.tsx` | Replace JourneyBentoHero with HomeJourneySection |
+| `src/components/roadmap/QuickActionsBar.tsx` | Add Tasks tab |
+| `src/App.tsx` | Add `/roadmap/tasks` route |
+| `src/pages/roadmap/index.ts` | Export RoadmapTasks |
 
 ---
 
-## Database Updates Required (via Admin Panel)
+## Features Preservation Checklist
 
-After the code fix, you'll need to add the online session data for:
+All existing functionality will be preserved:
 
-### Creators Edition (Bali)
-Add roadmap_days entries with:
-- `day_number`: -5, -4, -3, -2, -1, 0
-- `is_virtual`: true
-- `meeting_url`: Zoom link
-- `meeting_id`: Zoom meeting ID
-- `meeting_passcode`: Zoom passcode
-- `session_start_time`: Time from PDF
-- Titles from PDF (Orientation, Niche Discovery, etc.)
-
-### Filmmaking Edition (if needed)
-Add/update roadmap_days with:
-- `day_number`: -2, -1, 0 (for online sessions)
-- Virtual meeting fields populated
-
----
-
-## Expected Behavior After Fix
-
-| Cohort | Online Sessions | Physical Days | Zoom UI |
-|--------|-----------------|---------------|---------|
-| **Filmmaking** | Days -2 to 0 (3 sessions) | Days 1-6 | ✓ Visible |
-| **Creators** | Days -5 to 0 (6 sessions) | Days 1-7 | ✓ Visible |
-| **Writing** | None | Days 1-6 | ✗ Hidden |
+| Feature | Current Location | New Location |
+|---------|------------------|--------------|
+| Stage progress tracking | JourneyBentoHero | RoadmapTasks |
+| Task completion toggle | StickyNoteCard | TaskRow |
+| Auto-complete detection | useStudentJourney | useStudentJourney (unchanged) |
+| Prep category sync | JourneyTaskItem | TaskRow |
+| Streak badge | JourneyBentoHero header | TasksHeader |
+| Confetti celebration | JourneyBentoHero | RoadmapTasks |
+| Deep linking | JourneyTaskItem | TaskRow |
+| Pull-to-refresh | JourneyBentoHero | RoadmapTasks |
+| Stage navigation strip | StageNavigationStrip | TaskStageCard headers |
+| Personal note | PersonalNoteCard | Sidebar/bottom on Tasks page |
+| Status widget | StatusWidget | Preserved in Tasks page |
+| Task filters | TaskFilters | TasksHeader |
 
 ---
 
-## User Experience Flow
+## Mobile Considerations
 
-```text
-User logs in (Creators cohort)
-    ↓
-AuthContext loads profile → then edition
-    ↓
-useRoadmapData waits for edition.cohort_type
-    ↓
-Query runs with correct cohort: FORGE_CREATORS
-    ↓
-Journey shows:
-├── Session 1: Orientation (Online) - Jan 22
-├── Session 2: Niche Discovery (Online) - Jan 23
-├── ... (6 online sessions total)
-├── Day 1: Orientation & Mindset Reset (In-Person) - Jan 31
-├── Day 2: Art of the Hook (In-Person) - Feb 1
-└── ... (7 physical days)
-    ↓
-Tapping online session shows:
-├── SessionMeetingCard with Join Now button
-├── Meeting ID + Passcode (copy buttons)
-├── Add to Calendar (Google/Apple)
-└── All mobile-optimized with 44px+ touch targets
-```
+1. **Tasks page** - Full-height scrollable with sticky header containing filters
+2. **Stage cards** - Only current stage expanded by default to save space
+3. **Touch targets** - 44px minimum for checkboxes and buttons
+4. **Swipe gestures** - Optional swipe-to-complete for tasks
+5. **Homepage timeline** - Show 3 days max with "View all" link
 
 ---
 
-## Implementation Order
+## Desktop Considerations
 
-1. **Phase 1** (Code - Critical)
-   - Fix race condition in `useRoadmapData.ts`
-   - Update query `enabled` condition
-
-2. **Phase 2** (Code - UX)
-   - Update `DayDetailModal.tsx` for 48h early access
-   - Ensure virtual fields are passed through `JourneyCard.tsx`
-
-3. **Phase 3** (Data - Admin Panel)
-   - Add online session entries for Creators
-   - Add online session entries for Filmmaking
-   - Populate meeting URLs, IDs, passcodes
-
-4. **Phase 4** (Testing)
-   - Test as Writing user → No virtual UI
-   - Test as Filmmaking user → Virtual sessions visible
-   - Test as Creators user → 6 online sessions visible
-   - Test mobile view for all cohorts
+1. **Tasks page** - Two-column layout possible (stages left, detail right)
+2. **All stages visible** - Show all stages expanded or with quick expand/collapse
+3. **Hover states** - Progress rings, task rows have hover effects
+4. **Keyboard navigation** - Tab through tasks, space to toggle
 
 ---
 
-## Data Entry Template (for Admin Panel)
+## Visual Design
 
-For each online session, you'll add a roadmap_day with:
+The new Tasks UI follows the brand guidelines:
 
-```json
-{
-  "edition_id": "<creators-edition-id>",
-  "day_number": -5,  // Negative for online sessions
-  "title": "Orientation",
-  "is_virtual": true,
-  "is_active": true,
-  "meeting_url": "https://zoom.us/j/...",
-  "meeting_id": "123 456 7890",
-  "meeting_passcode": "FORGE",
-  "session_start_time": "19:00",
-  "session_duration_hours": 1.5,
-  "call_time": "7:00 PM IST",
-  "what_youll_learn": ["Course overview", "Team introductions", "Platform walkthrough"],
-  "schedule": [
-    {"time": "7:00 PM", "activity": "Welcome & Intros"},
-    {"time": "7:30 PM", "activity": "Platform Walkthrough"},
-    {"time": "8:00 PM", "activity": "Q&A"}
-  ]
-}
-```
+- **Colors**: Primary yellow (#FFBC3B), Deep gold (#D38F0C), stage-specific accents
+- **Cards**: Dark glass-morphism background (`bg-card` or `bg-black/60`)
+- **Progress**: Gold progress bars and rings
+- **Typography**: Clean hierarchy with `font-semibold` headers
+- **Spacing**: Consistent 4px grid system
 
+---
+
+## Risk Mitigation
+
+1. **No breaking changes to hooks** - `useStudentJourney` remains unchanged
+2. **Gradual removal** - JourneyBentoHero components stay in codebase until fully migrated
+3. **Preserved imports** - Index files updated to export new components
+4. **Testing path** - Can test new Tasks page at `/roadmap/tasks` before homepage change
