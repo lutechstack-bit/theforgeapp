@@ -11,7 +11,8 @@ import { MentorDetailModal } from '@/components/shared/MentorDetailModal';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
 import HomeJourneySection from '@/components/home/HomeJourneySection';
-import { RoadmapBentoBox } from '@/components/home/RoadmapBentoBox';
+import RoadmapSidebar from '@/components/roadmap/RoadmapSidebar';
+import FloatingHighlightsButton from '@/components/roadmap/FloatingHighlightsButton';
 import { Users } from 'lucide-react';
 import { Mentor } from '@/data/mentorsData';
 
@@ -138,104 +139,118 @@ const Home: React.FC = () => {
   const isPastEvents = events?.isPastEvents ?? false;
 
   return (
-    <div className="min-h-screen px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-6 space-y-5 sm:space-y-6">
-      {/* Compact Countdown Timer - Gold themed strip at top */}
-      <CompactCountdownTimer edition={edition} />
+    <div className="min-h-screen">
+      {/* Desktop Layout with Sidebar */}
+      <div className="flex gap-6 px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-6">
+        
+        {/* Main Content Column */}
+        <div className="flex-1 space-y-5 sm:space-y-6 min-w-0">
+          {/* Compact Countdown Timer - Gold themed strip at top */}
+          <CompactCountdownTimer edition={edition} />
 
-      {/* Journey Timeline - Embedded from Roadmap */}
-      <HomeJourneySection />
+          {/* Journey Timeline - Embedded from Roadmap */}
+          <HomeJourneySection />
 
-      {/* Meet Your Mentors - Moved up after hero */}
-      {mentors && mentors.length > 0 && (
-        <ContentCarousel title="Meet Your Mentors">
-          {mentors.map((mentor) => {
-            // Transform DB mentor to Mentor type for FlipMentorCard
-            const mentorData: Mentor = {
-              id: mentor.id,
-              name: mentor.name,
-              title: mentor.title,
-              roles: (mentor.roles as string[]) || [],
-              imageUrl: mentor.image_url || '',
-              modalImageUrl: mentor.modal_image_url || undefined,
-              bio: (mentor.bio as string[]) || [],
-              brands: (mentor.brands as any[]) || [],
-            };
-            return (
-              <FlipMentorCard
-                key={mentor.id}
-                mentor={mentorData}
-                onClick={() => handleMentorClick(mentorData)}
-              />
-            );
-          })}
-        </ContentCarousel>
-      )}
+          {/* Meet Your Mentors - Moved up after hero */}
+          {mentors && mentors.length > 0 && (
+            <ContentCarousel title="Meet Your Mentors">
+              {mentors.map((mentor) => {
+                // Transform DB mentor to Mentor type for FlipMentorCard
+                const mentorData: Mentor = {
+                  id: mentor.id,
+                  name: mentor.name,
+                  title: mentor.title,
+                  roles: (mentor.roles as string[]) || [],
+                  imageUrl: mentor.image_url || '',
+                  modalImageUrl: mentor.modal_image_url || undefined,
+                  bio: (mentor.bio as string[]) || [],
+                  brands: (mentor.brands as any[]) || [],
+                };
+                return (
+                  <FlipMentorCard
+                    key={mentor.id}
+                    mentor={mentorData}
+                    onClick={() => handleMentorClick(mentorData)}
+                  />
+                );
+              })}
+            </ContentCarousel>
+          )}
 
-      {/* Mentor Detail Modal */}
-      <MentorDetailModal
-        mentor={selectedMentor}
-        isOpen={isMentorModalOpen}
-        onClose={() => setIsMentorModalOpen(false)}
-      />
+          {/* Mentor Detail Modal */}
+          <MentorDetailModal
+            mentor={selectedMentor}
+            isOpen={isMentorModalOpen}
+            onClose={() => setIsMentorModalOpen(false)}
+          />
 
-      {/* Roadmap Bento Box - New premium layout */}
-      <RoadmapBentoBox />
+          {/* Alumni Testimonials */}
+          {alumniTestimonials && alumniTestimonials.length > 0 && (
+            <ContentCarousel title="Alumni Spotlight">
+              {alumniTestimonials.map((alumni) => (
+                <TestimonialVideoCard
+                  key={alumni.id}
+                  name={alumni.name}
+                  role={alumni.role || undefined}
+                  videoUrl={alumni.video_url}
+                />
+              ))}
+            </ContentCarousel>
+          )}
 
-      {/* Alumni Testimonials */}
-      {alumniTestimonials && alumniTestimonials.length > 0 && (
-        <ContentCarousel title="Alumni Spotlight">
-          {alumniTestimonials.map((alumni) => (
-            <TestimonialVideoCard
-              key={alumni.id}
-              name={alumni.name}
-              role={alumni.role || undefined}
-              videoUrl={alumni.video_url}
-            />
-          ))}
-        </ContentCarousel>
-      )}
+          {/* Learn Section */}
+          {displayLearnContent.length > 0 && (
+            <ContentCarousel title="Fundamental learning for forge and beyond" onSeeAll={() => navigate('/learn')}>
+              {displayLearnContent.map((content: any) => (
+                <LearnCourseCard
+                  key={content.id}
+                  id={content.id}
+                  title={content.title}
+                  thumbnailUrl={content.thumbnail_url || undefined}
+                  durationMinutes={content.duration_minutes}
+                  isLocked={content.is_premium && !isFullAccess}
+                />
+              ))}
+            </ContentCarousel>
+          )}
 
-      {/* Learn Section */}
-      {displayLearnContent.length > 0 && (
-        <ContentCarousel title="Fundamental learning for forge and beyond" onSeeAll={() => navigate('/learn')}>
-          {displayLearnContent.map((content: any) => (
-            <LearnCourseCard
-              key={content.id}
-              id={content.id}
-              title={content.title}
-              thumbnailUrl={content.thumbnail_url || undefined}
-              durationMinutes={content.duration_minutes}
-              isLocked={content.is_premium && !isFullAccess}
-            />
-          ))}
-        </ContentCarousel>
-      )}
+          {/* Events Section - Moved to end */}
+          {displayEvents.length > 0 && (
+            <ContentCarousel title="More from LevelUp" onSeeAll={() => navigate('/events')}>
+              {displayEvents.map((event: any) => (
+                <SimpleEventCard
+                  key={event.id}
+                  id={event.id}
+                  title={event.title}
+                  imageUrl={event.image_url || undefined}
+                  onClick={() => navigate('/events')}
+                />
+              ))}
+            </ContentCarousel>
+          )}
 
-      {/* Events Section - Moved to end */}
-      {displayEvents.length > 0 && (
-        <ContentCarousel title="More from LevelUp" onSeeAll={() => navigate('/events')}>
-          {displayEvents.map((event: any) => (
-            <SimpleEventCard
-              key={event.id}
-              id={event.id}
-              title={event.title}
-              imageUrl={event.image_url || undefined}
-              onClick={() => navigate('/events')}
-            />
-          ))}
-        </ContentCarousel>
-      )}
-
-      {/* Empty State */}
-      {(!alumniTestimonials?.length && !mentors?.length && !learnContent?.length && !displayEvents?.length) && (
-        <div className="glass-premium rounded-2xl p-8 text-center">
-          <Users className="h-12 w-12 text-primary/50 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">Content Coming Soon</h3>
-          <p className="text-muted-foreground">
-            Check back soon for alumni stories, mentors, courses, and events!
-          </p>
+          {/* Empty State */}
+          {(!alumniTestimonials?.length && !mentors?.length && !learnContent?.length && !displayEvents?.length) && (
+            <div className="glass-premium rounded-2xl p-8 text-center">
+              <Users className="h-12 w-12 text-primary/50 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">Content Coming Soon</h3>
+              <p className="text-muted-foreground">
+                Check back soon for alumni stories, mentors, courses, and events!
+              </p>
+            </div>
+          )}
         </div>
-      )}
+        
+        {/* Desktop Sidebar - Hidden on mobile/tablet */}
+        <div className="hidden lg:block w-64 xl:w-72 flex-shrink-0">
+          <div className="sticky top-24">
+            <RoadmapSidebar editionId={profile?.edition_id} />
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Floating Button - Hidden on desktop */}
+      <FloatingHighlightsButton editionId={profile?.edition_id} />
     </div>
   );
 };
