@@ -1,133 +1,222 @@
 
 
-# Fix Stay Locations Display + Admin Integration
+# Complete KY Forms Enhancement Plan
 
-## Problems Identified
+## Overview
 
-### Issue 1: Stay Location Not Showing in Sidebar/FAB
-The Stay Location "Bambolim Beach Resort" is currently mapped only to Writing editions (4 & 5), NOT Filmmaking Edition 14 where the test user is enrolled. The filtering logic is working correctly - the location simply needs to be assigned to more editions in the admin panel.
+This plan consolidates all improvements into a single implementation:
 
-### Issue 2: Missing Thumbnail Image  
-The Stay Location has no `featured_image_url` set but has 4 gallery images. The code uses `featured_image_url || ''` which results in an empty image URL. Need to fall back to the first gallery image.
-
-### Issue 3: Interface Mismatch
-`RoadmapSidebar.tsx` uses outdated field names (`city`, `address_line1`) that don't exist in the database. The database uses `full_address` (single textarea field).
-
-### Issue 4: Admin Consolidation
-Move the full Stay Locations admin functionality INTO the Roadmap Sidebar admin as a third tab.
+1. **Completion Screen Branding** - Replace Sparkles icon with Forge logo, remove status card
+2. **Country/State Dropdowns** - Cascading selects for location fields
+3. **Phone Input with Country Code** - Validated phone number entry with digit limits
+4. **Tag Input for Lists** - Replace comma-separated text for movies/creators/books
+5. **Terms "Read More" Button** - Replace dropdown with modal overlay
 
 ---
 
-## Part 1: Fix StayLocation Interface and Fallback Image
+## Part 1: Update KYFormCompletion Component
 
-**File:** `src/components/roadmap/RoadmapSidebar.tsx`
+**File:** `src/components/kyform/KYFormCompletion.tsx`
 
-**Changes:**
-1. Update `StayLocation` interface to match database schema:
-   - Replace `address_line1`, `address_line2`, `city`, `postcode` with `full_address`
-2. Update carousel item mapping to use fallback image:
-   ```typescript
-   // Use featured_image_url OR first gallery image
-   const stayItems = stayLocations.map(loc => ({
-     id: loc.id,
-     media_url: loc.featured_image_url || loc.gallery_images?.[0]?.url || '',
-     title: loc.name,
-     caption: loc.full_address?.split('\n')[0] || undefined // First line of address
-   }));
-   ```
+### Change 1: Replace Sparkles with Forge Logo
+
+**Current (lines 127-130):**
+```tsx
+<div className="mx-auto w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-6 animate-bounce-subtle">
+  <Sparkles className="h-10 w-10 text-primary" />
+</div>
+```
+
+**New:**
+```tsx
+<div className="relative mx-auto w-20 h-20 mb-6">
+  <div className="absolute inset-0 bg-primary/30 rounded-2xl blur-xl" />
+  <img 
+    src={forgeLogo} 
+    alt="The Forge" 
+    className="relative w-full h-full object-contain drop-shadow-lg"
+  />
+</div>
+```
+
+### Change 2: Remove Status Card
+
+**Delete lines 147-154:**
+```tsx
+{/* Quick stats card - TO BE REMOVED */}
+<div className="glass-card rounded-2xl p-4 mb-8">
+  <p className="text-sm text-muted-foreground mb-2">Your profile is now complete</p>
+  <div className="flex items-center justify-center gap-2">
+    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+    <span className="text-sm font-medium text-foreground">Form Submitted Successfully</span>
+  </div>
+</div>
+```
+
+### Import Changes
+- Remove: `Sparkles` from lucide-react imports
+- Add: `import forgeLogo from '@/assets/forge-logo.png';`
+
+### Visual Before/After
+
+**Before:**
+```
+[Sparkles Icon in circle]
+"Welcome to The Forge!"
+---card---
+"Your profile is now complete"
+[green dot] Form Submitted Successfully
+---/card---
+[View Profile] [Explore Dashboard]
+```
+
+**After:**
+```
+[Forge Logo with premium glow]
+"Welcome to The Forge!"
+"We're excited to have you, [Name]!"
+[View Profile] [Explore Dashboard]
+```
 
 ---
 
-## Part 2: Merge Stay Locations into Roadmap Sidebar Admin
+## Part 2: New Utility Files
 
-**File:** `src/pages/admin/AdminRoadmapSidebar.tsx`
+### File 1: `src/lib/countryStateData.ts` (NEW)
 
-**Changes:**
-1. Add a top-level tabbed interface with three tabs:
-   - **Content** - Existing Past Moments & Student Work management
-   - **Stay Locations** - Full Stay Locations admin (moved from separate page)
-
-2. Import all Stay Locations functionality:
-   - Queries for stay locations and edition mappings
-   - CRUD mutations
-   - Form state for contacts, notes, gallery images
-   - Full form dialog with all fields (name, address, Google Maps, contacts, notes, gallery)
-
-3. Remove `stay_locations` from `blockTypeConfig` (it uses a separate table, not `roadmap_sidebar_content`)
+Contains country and state data for cascading dropdowns.
 
 **Structure:**
-```text
-AdminRoadmapSidebar
-├── Header: "Roadmap Sidebar Content"
-├── Tabs
-│   ├── Tab: "Content" (Past Moments & Student Work)
-│   │   ├── Filters (block type, edition)
-│   │   └── Grid of media cards
-│   └── Tab: "Stay Locations"
-│       ├── "Add Location" button
-│       ├── Grid of location cards
-│       └── Full form dialog (name, editions, address, contacts, notes, gallery)
+- `COUNTRIES` array with 50+ countries (India prioritized first)
+- `STATES_BY_COUNTRY` mapping:
+  - India: 36 states/UTs
+  - United States: 51 entries
+  - Canada: 13 provinces
+  - And more...
+- Helper functions: `getCountryList()`, `getStatesForCountry()`
+
+---
+
+### File 2: `src/lib/phoneCountryCodes.ts` (NEW)
+
+Contains phone country codes with digit validation rules.
+
+| Country | Dial Code | Digits |
+|---------|-----------|--------|
+| India | +91 | 10 |
+| United States | +1 | 10 |
+| United Kingdom | +44 | 10-11 |
+| Australia | +61 | 9 |
+| UAE | +971 | 9 |
+| Singapore | +65 | 8 |
+
+---
+
+## Part 3: New Reusable Components
+
+### Component 1: `src/components/onboarding/CountryStateSelector.tsx` (NEW)
+
+Cascading country/state dropdowns where state list updates based on selected country.
+
+```
+┌──────────────────────────────────────┐
+│ ┌───────────────┐ ┌────────────────┐ │
+│ │ Country *   ▼ │ │ State *      ▼ │ │
+│ │ India         │ │ Karnataka      │ │
+│ └───────────────┘ └────────────────┘ │
+└──────────────────────────────────────┘
 ```
 
 ---
 
-## Part 3: Remove Separate Stay Locations Admin Page
+### Component 2: `src/components/onboarding/PhoneInput.tsx` (NEW)
 
-**File:** `src/App.tsx`
-- Remove route: `<Route path="stay-locations" element={<AdminStayLocations />} />`
-- Remove import
+Phone input with country code dropdown and real-time digit validation.
 
-**File:** `src/components/admin/AdminLayout.tsx`
-- Remove nav item: `{ to: '/admin/stay-locations', icon: Building2, label: 'Stay Locations' }`
-
-**File:** `src/pages/admin/AdminStayLocations.tsx`
-- Delete this file (functionality merged)
-
----
-
-## Part 4: Filter Stay Locations with Empty Images
-
-**File:** `src/components/roadmap/SidebarStayCarousel.tsx`
-
-**Changes:**
-- Filter out items with empty `media_url` before rendering
-- This prevents showing broken image placeholders
-
-```typescript
-const validItems = items.filter(item => item.media_url);
-if (!validItems || validItems.length === 0) {
-  // Show "Coming soon" placeholder
-}
+```
+┌───────────────────────────────────────────────┐
+│ Emergency contact number *                    │
+│ ┌────────────┬───────────────────────────────┐│
+│ │ 🇮🇳 +91  ▼ │ 9876543210                    ││
+│ └────────────┴───────────────────────────────┘│
+└───────────────────────────────────────────────┘
 ```
 
 ---
 
-## Files to Modify
+### Component 3: `src/components/onboarding/TagInput.tsx` (NEW)
 
-| File | Action | Changes |
-|------|--------|---------|
-| `src/components/roadmap/RoadmapSidebar.tsx` | Edit | Fix interface, add fallback image logic |
-| `src/components/roadmap/SidebarStayCarousel.tsx` | Edit | Filter out empty media_url items |
-| `src/pages/admin/AdminRoadmapSidebar.tsx` | Major Edit | Add Stay Locations tab with full CRUD |
-| `src/components/admin/AdminLayout.tsx` | Edit | Remove Stay Locations nav item |
-| `src/App.tsx` | Edit | Remove stay-locations route |
-| `src/pages/admin/AdminStayLocations.tsx` | Delete | Functionality merged |
+Tag/pill input for structured list entry (replaces comma-separated text).
+
+```
+┌───────────────────────────────────────────────┐
+│ Your top 3 movies? *                    2/3   │
+│ ┌───────────────────────────────────────────┐ │
+│ │ ┌─────────────┐ ┌─────────────────┐       │ │
+│ │ │ Inception ✕ │ │ The Dark Knight ✕│      │ │
+│ │ └─────────────┘ └─────────────────┘       │ │
+│ │ Type a movie and press Enter...           │ │
+│ └───────────────────────────────────────────┘ │
+└───────────────────────────────────────────────┘
+```
 
 ---
 
-## Expected Result
+## Part 4: Update KY Forms
 
-### Sidebar Display
-- Stay Location will show with first gallery image as thumbnail when no featured image
-- Caption will show first line of full address instead of missing `city` field
-- Properly filters by user's edition
+### KYFForm.tsx Changes:
+- Step 2: Use CountryStateSelector (replaces State text input)
+- Step 3: Use PhoneInput (replaces emergency contact Input)
+- Step 5: Use TagInput for top_3_movies (replaces Textarea)
+- Step 9: Use TermsModal with "Read terms" button (replaces Collapsible dropdown)
 
-### Admin Experience
-- Single "Roadmap Sidebar" admin page with tabbed interface
-- "Content" tab for Past Moments & Student Work (simple media)
-- "Stay Locations" tab for rich location management (contacts, notes, gallery)
-- Cleaner navigation without separate Stay Locations entry
+### KYCForm.tsx Changes:
+- Step 2: Use CountryStateSelector
+- Step 3: Use PhoneInput
+- Step 5: Use TagInput for top_3_creators
+- Step 8: Use TermsModal with "Read terms" button
 
-### Data Requirements
-- Admin needs to assign Stay Location to Filmmaking Edition 14 for it to appear for that cohort
+### KYWForm.tsx Changes:
+- Step 3: Use PhoneInput
+- Step 5: Use TagInput for top_3_writers_books
+- Step 8: Use TermsModal with "Read terms" button
+
+### ProfileSetup.tsx Changes:
+- Use PhoneInput for WhatsApp number field
+
+---
+
+## Part 5: Terms "Read More" UI
+
+Replace inline Collapsible dropdown with a clean modal approach.
+
+**Before (dropdown):**
+```
+○ I agree to the [terms and conditions ∨]
+  (expands large text block inline)
+```
+
+**After (modal):**
+```
+○ I agree to the terms and conditions of the Forge program.
+  [Read terms →]
+  (opens TermsModal overlay when clicked)
+```
+
+---
+
+## Files Summary
+
+| File | Action | Description |
+|------|--------|-------------|
+| `src/components/kyform/KYFormCompletion.tsx` | Edit | Forge logo, remove status card |
+| `src/lib/countryStateData.ts` | Create | Country/state data utility |
+| `src/lib/phoneCountryCodes.ts` | Create | Phone codes with validation |
+| `src/components/onboarding/CountryStateSelector.tsx` | Create | Cascading dropdowns |
+| `src/components/onboarding/PhoneInput.tsx` | Create | Phone input with country code |
+| `src/components/onboarding/TagInput.tsx` | Create | Tag/pill input for lists |
+| `src/pages/KYFForm.tsx` | Edit | Integrate all new components |
+| `src/pages/KYCForm.tsx` | Edit | Integrate all new components |
+| `src/pages/KYWForm.tsx` | Edit | PhoneInput, TagInput, TermsModal |
+| `src/pages/ProfileSetup.tsx` | Edit | PhoneInput for WhatsApp |
 
