@@ -17,15 +17,18 @@ interface SidebarStayCarouselProps {
 const SidebarStayCarousel: React.FC<SidebarStayCarouselProps> = ({ items, onViewAll }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Filter out items with empty media_url
+  const validItems = items.filter(item => item.media_url);
+
   const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % items.length);
+    setCurrentIndex((prev) => (prev + 1) % validItems.length);
   };
 
   const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
+    setCurrentIndex((prev) => (prev - 1 + validItems.length) % validItems.length);
   };
 
-  if (!items || items.length === 0) {
+  if (!validItems || validItems.length === 0) {
     return (
       <div className="glass-card rounded-xl p-4">
         <div className="flex items-center gap-2 mb-3">
@@ -39,7 +42,7 @@ const SidebarStayCarousel: React.FC<SidebarStayCarouselProps> = ({ items, onView
     );
   }
 
-  const currentItem = items[currentIndex];
+  const currentItem = validItems[currentIndex];
 
   return (
     <div className="glass-card rounded-xl p-3 overflow-hidden">
@@ -49,7 +52,7 @@ const SidebarStayCarousel: React.FC<SidebarStayCarouselProps> = ({ items, onView
           <h3 className="text-sm font-semibold text-foreground">Stay Location</h3>
         </div>
         <div className="flex items-center gap-1">
-          {items.length > 1 && (
+          {validItems.length > 1 && (
             <>
               <Button
                 variant="ghost"
@@ -59,7 +62,7 @@ const SidebarStayCarousel: React.FC<SidebarStayCarouselProps> = ({ items, onView
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <span className="text-xs text-muted-foreground">{currentIndex + 1}/{items.length}</span>
+              <span className="text-xs text-muted-foreground">{currentIndex + 1}/{validItems.length}</span>
               <Button
                 variant="ghost"
                 size="icon"

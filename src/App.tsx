@@ -57,7 +57,7 @@ import AdminJourneyStages from "./pages/admin/AdminJourneyStages";
 import AdminJourneyTasks from "./pages/admin/AdminJourneyTasks";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
 import AdminChangelog from "./pages/admin/AdminChangelog";
-import AdminStayLocations from "./pages/admin/AdminStayLocations";
+
 import DynamicKYForm from "./pages/DynamicKYForm";
 import EventDetail from "./pages/EventDetail";
 
@@ -278,7 +278,7 @@ const AppRoutes = () => {
         <Route path="auto-updates" element={<AdminAutoUpdates />} />
         <Route path="roadmap" element={<AdminRoadmap />} />
         <Route path="roadmap-sidebar" element={<AdminRoadmapSidebar />} />
-        <Route path="stay-locations" element={<AdminStayLocations />} />
+        
         <Route path="equipment" element={<AdminEquipment />} />
         <Route path="ky-forms" element={<AdminKYForms />} />
         <Route path="journey-stages" element={<AdminJourneyStages />} />

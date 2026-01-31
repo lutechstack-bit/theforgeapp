@@ -34,15 +34,12 @@ interface GalleryImage {
 interface StayLocation {
   id: string;
   name: string;
-  address_line1?: string;
-  address_line2?: string;
-  city?: string;
-  postcode?: string;
-  google_maps_url?: string;
+  full_address?: string | null;
+  google_maps_url?: string | null;
   contacts?: Contact[];
   notes?: string[];
   gallery_images?: GalleryImage[];
-  featured_image_url?: string;
+  featured_image_url?: string | null;
 }
 
 type ModalType = 'moments' | 'studentWork' | null;
@@ -198,12 +195,12 @@ const RoadmapSidebar: React.FC<RoadmapSidebarProps> = ({ editionId }) => {
       caption: item.caption || undefined
     }));
 
-  // Convert stay locations to carousel items
+  // Convert stay locations to carousel items - use first gallery image as fallback
   const stayItems = stayLocations.map(loc => ({
     id: loc.id,
-    media_url: loc.featured_image_url || '',
+    media_url: loc.featured_image_url || loc.gallery_images?.[0]?.url || '',
     title: loc.name,
-    caption: loc.city || undefined
+    caption: loc.full_address?.split('\n')[0] || undefined
   }));
 
   const handleStayViewAll = () => {
