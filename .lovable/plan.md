@@ -1,103 +1,84 @@
 
 
-# Auto-Trim Empty Borders from Event Posters
+# Remove Pre-Forge Session Lock for 15K Paid Users
 
-## Problem Analysis
+## Problem
 
-Looking at your screenshots, I now understand the issue:
+Currently, Pre-Forge online session meeting details (Zoom links, meeting IDs, passcodes) are hidden until 48 hours before the session start time. This affects all users including those who have paid ₹15K and are confirmed participants.
 
-| What's Working | What's Broken |
-|----------------|---------------|
-| The blurred background fill technique IS applied | The poster images themselves have **built-in padding/borders** baked into the file |
-| Card sizes are uniform (3:4 aspect ratio) | This internal whitespace shows up as "dead space" even with the blur fill |
+**Current behavior:**
+- PRE_FORGE mode + session >48 hours away → Shows "Meeting details will be available 48 hours before the session"
+- PRE_FORGE mode + session ≤48 hours away → Shows full meeting card with Zoom details
+- DURING_FORGE mode → Always shows full meeting card
 
-The "Learn Cinematography" poster in the first image has significant padding within the image file itself. The blur layer fills the container, but the sharp foreground poster still shows its own internal borders.
+**Requested behavior:**
+- All enrolled users (₹15K paid) should see meeting credentials immediately for pre-forge sessions without waiting for the 48-hour window
 
-## Solution: Smart Poster Cropping
+---
 
-We'll add CSS techniques to **crop inward** on the foreground poster, effectively trimming the empty borders while keeping the blurred background filling the entire card.
+## Solution
 
-### Approach: Scale + Clip the Foreground
+Update the `DayDetailModal` component to always show meeting credentials for authenticated users (who have paid ₹15K). Since only enrolled users can access the Roadmap page, we can safely remove the 48-hour time restriction for Pre-Forge sessions.
 
-Instead of showing the poster at 100% size with `object-contain`, we'll:
-1. **Slightly scale up** the foreground poster to eliminate edge padding
-2. **Clip the overflow** so borders are cut off
-3. **Keep the blurred background** as the seamless fill behind it
+---
 
-```text
-Current:                        After (auto-trim):
-┌───────────────────┐          ┌───────────────────┐
-│ ░░░░░░░░░░░░░░░░░ │          │ ░░░░░░░░░░░░░░░░░ │ 
-│ ░░┌───────────┐░░ │          │ ░░░┌─────────┐░░░ │
-│ ░░│  border   │░░ │   →      │ ░░░│  MAIN   │░░░ │ ← Cropped/scaled
-│ ░░│   MAIN    │░░ │          │ ░░░│ CONTENT │░░░ │    to remove borders
-│ ░░│  border   │░░ │          │ ░░░└─────────┘░░░ │
-│ ░░└───────────┘░░ │          │ ░░░░░░░░░░░░░░░░░ │
-└───────────────────┘          └───────────────────┘
-  Poster internal padding        Borders trimmed away
+## File to Change
+
+### `src/components/roadmap/DayDetailModal.tsx`
+
+**Current logic (lines 72-82):**
+```tsx
+// Calculate if we should show meeting credentials (48 hours before session or during forge)
+const sessionDate = day.date ? new Date(day.date) : null;
+const hoursUntilSession = sessionDate 
+  ? (sessionDate.getTime() - Date.now()) / (1000 * 60 * 60) 
+  : Infinity;
+
+// Show meeting card if: During Forge OR session is within 48 hours
+const showMeetingCard = forgeMode === 'DURING_FORGE' || (hoursUntilSession <= 48 && hoursUntilSession > -24);
+
+// Show "coming soon" message if: Pre-Forge AND session is more than 48 hours away
+const showMeetingComingSoon = forgeMode === 'PRE_FORGE' && hoursUntilSession > 48;
+```
+
+**New logic:**
+```tsx
+// Always show meeting card for enrolled users (they've paid 15K, they should have access)
+// Only hide if session is more than 24 hours in the past
+const sessionDate = day.date ? new Date(day.date) : null;
+const hoursUntilSession = sessionDate 
+  ? (sessionDate.getTime() - Date.now()) / (1000 * 60 * 60) 
+  : Infinity;
+
+// Show meeting card: Always show for valid sessions (not more than 24h in the past)
+const showMeetingCard = hoursUntilSession > -24;
+
+// Never show "coming soon" - users always have access to meeting details
+const showMeetingComingSoon = false;
 ```
 
 ---
 
-## Files to Change
+## What Changes
 
-### File: `src/components/shared/SimpleEventCard.tsx`
-
-**Change**: Update the foreground image layer to use `object-cover` with a slight scale, instead of `object-contain`. This crops the poster edges while the blurred background seamlessly fills any remaining space.
-
-**Before:**
-```tsx
-{/* Layer 3: Sharp poster (full image visible) */}
-<img
-  src={imageUrl}
-  alt={title}
-  className="relative w-full h-full object-contain z-10"
-/>
-```
-
-**After:**
-```tsx
-{/* Layer 3: Sharp poster with auto-trim (edges cropped) */}
-<img
-  src={imageUrl}
-  alt={title}
-  className="relative w-full h-full object-cover z-10"
-/>
-```
-
-### Why This Works
-
-| Layer | Purpose | Fit Mode |
-|-------|---------|----------|
-| Background (blurred) | Fill entire card, no dead space | `object-cover` |
-| Overlay | Subtle darkening | - |
-| Foreground (sharp) | Show poster content, trim borders | `object-cover` (crops edges) |
-
-- **Uniform cards**: Still maintains 3:4 aspect ratio
-- **No dead space**: Blurred background fills gaps
-- **No visible internal borders**: Poster edges get cropped away
-- **Smart cropping**: `object-cover` centers on the main content while trimming edges
+| Before | After |
+|--------|-------|
+| Meeting details hidden until 48h before session | Meeting details always visible |
+| Shows "Coming soon" message in Pre-Forge | No more "coming soon" message |
+| Time-gated access to Zoom credentials | Immediate access for enrolled users |
 
 ---
 
-## Alternative: Controlled Crop Percentage
+## Why This Is Safe
 
-If `object-cover` crops too aggressively for some posters, we can use a hybrid approach with a scale transform:
-
-```tsx
-{/* Layer 3: Sharp poster with 5% inward crop */}
-<img
-  src={imageUrl}
-  alt={title}
-  className="absolute inset-0 w-full h-full object-contain scale-110 z-10"
-/>
-```
-
-This scales the image up by 10%, cropping approximately 5% from each edge while still prioritizing `contain` behavior (full image mostly visible).
+1. **Only enrolled users can access Roadmap** - The roadmap is behind authentication
+2. **All users on the platform have paid ₹15K** - They're confirmed participants
+3. **Virtual sessions are cohort-specific** - Users only see sessions for their edition
+4. **No security risk** - The meeting credentials aren't being exposed to unauthenticated users
 
 ---
 
 ## Summary
 
-Switch the foreground poster from `object-contain` to `object-cover` so that empty borders baked into the poster images are automatically cropped away. The blurred background layer ensures no dead space appears, while the sharp foreground shows the main poster content without distracting edges.
+Remove the 48-hour time restriction from `DayDetailModal.tsx` so that Pre-Forge session meeting credentials (Zoom links, IDs, passcodes) are immediately visible to all enrolled users who have paid ₹15K.
 
