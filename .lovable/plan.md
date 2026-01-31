@@ -1,100 +1,59 @@
 
+# Add Homepage Navigation to Desktop Sidebar Logo
 
-# Simplify Homepage Journey Header with Personalized Welcome
+## Current State
 
-## What We're Changing
-
-Based on the screenshot, you want to replace the busy stats bar that shows:
-- "Starts in" badge with countdown timer
-- "Forge Writing · Writers" label
-- "14d 11:21:09" countdown
-- "6/7" progress indicator
-
-With a clean, personalized welcome:
-- "Hi [First Name]"
-- "Your Writing Journey Starts Here" (or Filmmaking/Creating based on cohort)
+| Component | Logo Clickable? | Status |
+|-----------|-----------------|--------|
+| **TopBar.tsx** (Mobile) | ✅ Yes - wrapped in `<Link to="/">` | Already works |
+| **SideNav.tsx** (Desktop) | ❌ No - just an `<img>` tag | Needs fix |
 
 ---
 
-## Visual Before → After
+## The Fix
 
-```text
-BEFORE (current JourneyStats):
-┌────────────────────────────────────────────────────────────────┐
-│ [Starts in] Forge Writing · Writers  ⏱ 14d 11:21:09  📅 6/7 ━━ │
-└────────────────────────────────────────────────────────────────┘
+### File: `src/components/layout/SideNav.tsx`
 
-AFTER (clean welcome):
-┌────────────────────────────────────────────────────────────────┐
-│ Hi Keshav                                                      │
-│ Your Writing Journey Starts Here                               │
-└────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Implementation
-
-### File: `src/components/home/HomeJourneySection.tsx`
-
-**Changes:**
-1. Replace the `JourneyStats` component with a new inline welcome section
-2. Get user's first name from `profile.full_name`
-3. Display cohort-specific journey label
-
-**New Welcome UI:**
-
+**Current code (lines 110-118):**
 ```tsx
-// Get user's first name
-const firstName = profile?.full_name?.split(' ')[0] || 'there';
-
-// Get cohort-specific journey type
-const getJourneyType = () => {
-  switch (userCohortType) {
-    case 'FORGE':
-      return 'Filmmaking';
-    case 'FORGE_CREATORS':
-      return 'Creating';
-    case 'FORGE_WRITING':
-      return 'Writing';
-    default:
-      return 'Forge';
-  }
-};
-
-// Replace JourneyStats with:
-<div className="mb-6">
-  <h1 className="text-2xl font-bold text-foreground">
-    Hi {firstName}
-  </h1>
-  <p className="text-muted-foreground">
-    Your {getJourneyType()} Journey Starts Here
-  </p>
+<div className="flex items-center justify-center overflow-hidden">
+  <img 
+    src={collapsed ? forgeIcon : forgeLogo} 
+    alt="Forge" 
+    className={cn(
+      "shrink-0 transition-all duration-300 object-contain",
+      collapsed ? "h-8 w-8" : "h-10 max-w-[180px]"
+    )}
+  />
 </div>
 ```
 
----
-
-## Design Details
-
-- **Typography**: Clean hierarchy with bold name greeting
-- **Spacing**: Compact 1-2 lines, no extra padding
-- **Mobile-friendly**: Works on all screen sizes
-- **Cohort-aware**: Shows "Filmmaking" / "Creating" / "Writing" based on user's cohort
-
----
-
-## Files to Modify
-
-| File | Change |
-|------|--------|
-| `src/components/home/HomeJourneySection.tsx` | Replace `JourneyStats` with personalized welcome greeting |
+**Updated code:**
+```tsx
+<Link to="/" className="flex items-center justify-center overflow-hidden">
+  <img 
+    src={collapsed ? forgeIcon : forgeLogo} 
+    alt="Forge" 
+    className={cn(
+      "shrink-0 transition-all duration-300 object-contain cursor-pointer",
+      collapsed ? "h-8 w-8" : "h-10 max-w-[180px]"
+    )}
+  />
+</Link>
+```
 
 ---
 
-## What's Preserved
+## Changes Summary
 
-- The `JourneyStats` component itself remains unchanged (used on full Roadmap page)
-- Only the Homepage version gets the simplified welcome
-- All other Homepage sections (mentors, alumni, learn, events) remain exactly as-is
+1. Import `Link` from `react-router-dom` (already imported as it's used for `NavLink`)
+2. Replace the `<div>` wrapper around the logo with `<Link to="/">`
+3. Add `cursor-pointer` class for better UX indication
 
+---
+
+## Behavior After Fix
+
+- **Desktop (sidebar visible)**: Clicking the Forge logo navigates to `/` (homepage)
+- **Mobile (TopBar visible)**: Already works - clicking logo navigates to `/`
+- Both collapsed and expanded sidebar states will work correctly
