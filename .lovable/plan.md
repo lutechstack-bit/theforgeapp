@@ -1,16 +1,35 @@
 
 
-# Fix Event Card Images - Uniform Size + No Cropping
+# Seamless Event Cards - Blurred Background Fill
 
-## Problem
+## The Problem
 
-The current `SimpleEventCard` uses:
-- Fixed `aspect-[3/4]` ratio (uniform size ✓)
-- `object-cover` which **crops** images to fill the container (cropping ✗)
+Looking at the screenshot, the issue is clear:
+- **Card 1** (horizontal poster): Has empty black space at top and bottom
+- **Card 2** (square poster "DECODED"): Has significant empty space
+- **Card 3** (vertical poster): Fills nicely
 
-## Solution
+Using `object-contain` preserves the full poster but creates **dead space** when the poster aspect ratio doesn't match the 3:4 card ratio.
 
-Use `object-contain` instead of `object-cover` to display the **full poster** within uniform card dimensions. Add a subtle background so the poster looks premium against the dark theme.
+## The Solution: Blurred Background Fill
+
+Use a **dual-layer image technique**:
+1. **Background layer**: Same image, blurred and scaled to cover the entire card (fills dead space)
+2. **Foreground layer**: Same image, sharp and contained (shows full poster)
+
+This is how Netflix, Spotify, and Apple Music display album art and posters with varying aspect ratios.
+
+```text
+Before:                          After (with blur fill):
+┌───────────────────┐            ┌───────────────────┐
+│                   │            │ ░░░░░░░░░░░░░░░░░ │ ← Blurred image (scaled to cover)
+│   ┌───────────┐   │            │ ░░┌───────────┐░░ │
+│   │   POSTER  │   │     →      │ ░░│   POSTER  │░░ │ ← Sharp image (contained)
+│   └───────────┘   │            │ ░░└───────────┘░░ │
+│                   │            │ ░░░░░░░░░░░░░░░░░ │
+└───────────────────┘            └───────────────────┘
+  Empty black space               Seamless premium look
+```
 
 ---
 
@@ -18,42 +37,56 @@ Use `object-contain` instead of `object-cover` to display the **full poster** wi
 
 ### Changes
 
-| Property | Before | After |
-|----------|--------|-------|
-| Image fit | `object-cover` (crops) | `object-contain` (full image) |
-| Background | `bg-muted` | `bg-black/40` (subtle dark fill behind image) |
+| Layer | CSS | Purpose |
+|-------|-----|---------|
+| Background | `object-cover` + `blur-xl` + `scale-110` | Fills entire card, cropped but blurred |
+| Foreground | `object-contain` | Full poster visible, sharp |
+| Overlay | `bg-black/30` | Subtle darkening between layers |
 
-### Visual Result
-
-```text
-Before (cropped):          After (full poster):
-┌──────────────┐           ┌──────────────┐
-│ ████████████ │           │   ┌──────┐   │
-│ ████CROP████ │    →      │   │ FULL │   │
-│ ████████████ │           │   │POSTER│   │
-│ ████████████ │           │   └──────┘   │
-└──────────────┘           └──────────────┘
-  (text cut off)             (all visible)
-```
-
-### Code Change
-
-**Line 34:** Change `object-cover` to `object-contain`
+### New Structure
 
 ```tsx
-<img
-  src={imageUrl}
-  alt={title}
-  className="w-full h-full object-contain"
-/>
+<div className="card-container aspect-[3/4] ...">
+  {/* Layer 1: Blurred background (fills dead space) */}
+  <img 
+    src={imageUrl} 
+    className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-60" 
+  />
+  
+  {/* Layer 2: Subtle dark overlay */}
+  <div className="absolute inset-0 bg-black/30" />
+  
+  {/* Layer 3: Sharp poster (full image visible) */}
+  <img 
+    src={imageUrl} 
+    className="relative w-full h-full object-contain z-10" 
+  />
+</div>
 ```
+
+---
+
+## Visual Result
+
+| Poster Type | Before | After |
+|-------------|--------|-------|
+| Horizontal (16:9) | Empty black bands top/bottom | Blurred fill behind, full poster visible |
+| Square (1:1) | Large empty areas | Blurred extension fills gaps seamlessly |
+| Vertical (3:4) | Perfect fit | Same perfect fit |
+
+---
+
+## Benefits
+
+- ✅ **Uniform card sizes**: All cards maintain fixed 3:4 aspect ratio
+- ✅ **No cropping**: Full poster is always visible in the foreground
+- ✅ **No dead space**: Blurred background fills empty areas
+- ✅ **Premium aesthetic**: Matches industry-standard streaming app design
+- ✅ **Performance**: Same image cached, no extra network requests
 
 ---
 
 ## Summary
 
-A single CSS change from `object-cover` → `object-contain` ensures:
-- ✅ Uniform card sizes (fixed 3:4 aspect ratio)
-- ✅ Full poster visible (no cropping)
-- ✅ Premium look with dark background fill
+A dual-layer image approach (blurred background + sharp foreground) eliminates the dead space problem while keeping uniform card sizes and showing the complete poster - all three requirements met.
 
