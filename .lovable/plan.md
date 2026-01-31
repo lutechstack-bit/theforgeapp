@@ -1,71 +1,96 @@
 
-# Remove Lock Feature from Pre Forge Sessions
+
+# Fix Carousel Cards Overflowing Into Section Headers
+
+## Problem
+On the Learn page (both mobile and web), carousel cards visually overflow/overlap into the section headers above them. This affects:
+- "Pre Forge Sessions" section
+- "More from LevelUp" section  
+- "Continue Watching" section
+
+## Root Cause
+The base `CarouselContent` component already includes built-in classes:
+- `py-4 -my-4` (for hover glow effect overflow)
+- `-ml-4` (for horizontal offset)
+
+But the consuming files add these same classes AGAIN, doubling the negative margins and causing excessive upward overflow.
+
+## Solution
+Remove the duplicate `-ml-4 py-4 -my-4` classes from all consuming files since the base component already handles this.
+
+---
+
+## Files to Modify
+
+### 1. `src/pages/Learn.tsx` (line 146)
+```tsx
+// Current (duplicate classes)
+<CarouselContent className="-ml-4 py-4 -my-4">
+
+// Fixed (no duplicate)
+<CarouselContent>
+```
+
+### 2. `src/components/learn/ContinueWatchingCarousel.tsx` (line 53)
+```tsx
+// Current
+<CarouselContent className="-ml-4 py-4 -my-4">
+
+// Fixed
+<CarouselContent>
+```
+
+### 3. `src/components/learn/LearnCarousel.tsx` (line 59)
+```tsx
+// Current
+<CarouselContent className="-ml-4 py-4 -my-4">
+
+// Fixed
+<CarouselContent>
+```
+
+### 4. `src/components/learn/PremiumVideoCarousel.tsx` (line 63)
+```tsx
+// Current
+<CarouselContent className="-ml-4 py-4 -my-4">
+
+// Fixed
+<CarouselContent>
+```
+
+---
+
+## Visual Result
+
+**Before (Mobile & Web):**
+```text
+┌─────────────────────────────────────────┐
+│ Pre Forge Sessions          [View All] │
+│ Filmmaking fundamentals...              │
+│ ┌─────────────┬─────────────┐           │  ← Cards overlapping text
+│ │   CARD 1    │   CARD 2    │           │
+```
+
+**After (Mobile & Web):**
+```text
+┌─────────────────────────────────────────┐
+│ Pre Forge Sessions          [View All] │
+│ Filmmaking fundamentals...              │
+│                                         │  ← Proper spacing
+│ ┌─────────────┬─────────────┐           │
+│ │   CARD 1    │   CARD 2    │           │
+```
+
+---
 
 ## Summary
-Remove all lock/premium gating from the Learn page so all Pre Forge Sessions are accessible to any logged-in user.
 
----
+| File | Change |
+|------|--------|
+| `src/pages/Learn.tsx` | Remove `-ml-4 py-4 -my-4` from CarouselContent |
+| `src/components/learn/ContinueWatchingCarousel.tsx` | Remove `-ml-4 py-4 -my-4` from CarouselContent |
+| `src/components/learn/LearnCarousel.tsx` | Remove `-ml-4 py-4 -my-4` from CarouselContent |
+| `src/components/learn/PremiumVideoCarousel.tsx` | Remove `-ml-4 py-4 -my-4` from CarouselContent |
 
-## Changes Required
+This fix applies to both mobile and web views since the base carousel component handles all viewport sizes consistently.
 
-### 1. `src/pages/Learn.tsx`
-
-**Change A: Remove lock prop from LearnCourseCard**
-
-At line 163, change:
-```tsx
-isLocked={item.is_premium && !isFullAccess}
-```
-To:
-```tsx
-isLocked={false}
-```
-
-**Change B: Remove premium check from card click handler**
-
-At lines 94-100, change:
-```tsx
-const handleCardClick = (content: LearnContent) => {
-  if (content.is_premium && !isFullAccess) {
-    setShowUnlockModal(true);
-    return;
-  }
-  navigate(`/learn/${content.id}`);
-};
-```
-To:
-```tsx
-const handleCardClick = (content: LearnContent) => {
-  navigate(`/learn/${content.id}`);
-};
-```
-
-**Change C: Clean up unused imports and state**
-
-Remove these since they're no longer needed:
-- Line 48: `const [showUnlockModal, setShowUnlockModal] = useState(false);`
-- Line 49: Remove `isFullAccess` from destructure (keep `user`)
-- Lines 249-256: Remove the `UnlockModal` component
-- Line 6: Remove `UnlockModal` import
-- Line 19: Remove the `PAYMENT_LINK` constant
-
----
-
-### 2. `src/components/learn/LearnCourseCard.tsx`
-
-**Optional Cleanup:** Since `isLocked` will always be `false`, we could remove the lock-related code entirely:
-- Line 3: Remove `Lock` from imports
-- Lines 64-71: Remove the lock overlay JSX
-- Line 74: Change condition from `duration && !isLocked` to just `duration`
-
----
-
-## Files Summary
-
-| File | Changes |
-|------|---------|
-| `src/pages/Learn.tsx` | Remove premium gating logic, unlock modal, and related state |
-| `src/components/learn/LearnCourseCard.tsx` | Remove lock overlay code (cleanup) |
-
-## Result
-All Pre Forge Sessions will be immediately accessible to any logged-in user without lock icons or payment prompts.
