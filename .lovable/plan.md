@@ -1,169 +1,190 @@
 
-# Lock Cohort Selection for Admin-Assigned Users
+# Admin Cohort Switcher - Floating Button
 
 ## Summary
-Prevent users who were added by admins (with a pre-assigned cohort/edition) from being able to select a different cohort during Profile Setup. The edition picker will be hidden for these users, showing only their assigned cohort in a read-only state.
+Add a floating cohort switcher button for admins that allows them to preview the app from the perspective of different cohorts (Filmmakers, Writers, Creators). This button will be positioned **above** the existing "View" (FloatingHighlightsButton) and AdminTestingPanel buttons, creating a vertical stack of admin tools.
 
 ---
 
-## Current Problem
+## Current Layout (Bottom-Right Corner)
 
-1. Admin creates user via edge function with specific `edition_id` (e.g., FORGE Filmmaking Batch 5)
-2. User's profile is created with `edition_id` set, but `profile_setup_completed = false`
-3. When user logs in for the first time, they're directed to ProfileSetup
-4. ProfileSetup shows ALL available editions - user can select any cohort
-5. User could accidentally (or intentionally) switch to a different cohort than what admin assigned
-
----
-
-## Solution
-
-In `ProfileSetup.tsx`, check if the user already has an `edition_id` in their profile. If yes:
-- **Pre-select** that edition and **lock** it (no ability to change)
-- Show a read-only view of their assigned cohort with a "locked" indicator
-- Hide the full edition selection grid
-
----
-
-## Implementation Details
-
-### File: `src/pages/ProfileSetup.tsx`
-
-**1. Detect if user has a pre-assigned edition** (around line 73-83)
-
-```tsx
-// Pre-fill name and email from auth/profile data
-useEffect(() => {
-  if (user) {
-    setFormData(prev => ({
-      ...prev,
-      full_name: user.user_metadata?.full_name || profile?.full_name || prev.full_name,
-      email: user.email || prev.email,
-      avatar_url: profile?.avatar_url || prev.avatar_url,
-      // Pre-fill edition_id if already assigned by admin
-      edition_id: profile?.edition_id || prev.edition_id,
-    }));
-  }
-}, [user, profile]);
+```text
+┌─────────────────────────────┐
+│                             │
+│            App              │
+│                             │
+│                             │
+│                             │
+│             ┌───────────┐   │
+│             │  Testing  │ ← bottom-24 (AdminTestingPanel, admin only)
+│             └───────────┘   │
+│             ┌───────────┐   │
+│             │   View    │ ← bottom-24 (FloatingHighlightsButton, mobile only)
+│             └───────────┘   │
+│  ─────────────────────────  │ ← BottomNav at bottom-0
+└─────────────────────────────┘
 ```
 
-**2. Determine if edition is pre-assigned and locked** (new logic around line 121)
+## New Layout (With Cohort Switcher)
 
-```tsx
-const selectedEdition = editions?.find(e => e.id === formData.edition_id);
-// Check if user already had an edition assigned (by admin)
-const hasPreAssignedEdition = !!profile?.edition_id;
-const preAssignedEdition = editions?.find(e => e.id === profile?.edition_id);
+```text
+┌─────────────────────────────┐
+│                             │
+│            App              │
+│                             │
+│                             │
+│             ┌───────────┐   │
+│             │  Cohort   │ ← bottom-40 (NEW - Admin only)
+│             └───────────┘   │
+│             ┌───────────┐   │
+│             │  Testing  │ ← bottom-24 (AdminTestingPanel)
+│             └───────────┘   │
+│             ┌───────────┐   │
+│             │   View    │ ← bottom-24 (Mobile users only)
+│             └───────────┘   │
+│  ─────────────────────────  │ ← BottomNav
+└─────────────────────────────┘
 ```
 
-**3. Conditionally render edition picker** (around lines 285-365)
+---
 
-If user has a pre-assigned edition:
-- Show a locked card displaying their assigned cohort
-- Include a small lock icon and "Assigned by admin" message
-- Don't allow clicking/changing
+## Implementation Approach
 
-If no pre-assigned edition:
-- Show the full grid of available editions (current behavior)
+### Option 1: Extend AdminTestingContext (Recommended)
+
+Add `simulatedCohortType` to the existing AdminTestingContext so the cohort simulation works alongside the existing forge mode and day simulations.
+
+### Files to Create/Modify
+
+| File | Action | Description |
+|------|--------|-------------|
+| `src/contexts/AdminTestingContext.tsx` | Modify | Add `simulatedCohortType` state and setter |
+| `src/components/admin/AdminCohortSwitcher.tsx` | Create | New floating button component |
+| `src/hooks/useRoadmapData.ts` | Modify | Use simulated cohort when in testing mode |
+| `src/pages/Home.tsx` | Modify | Import and render AdminCohortSwitcher |
+| `src/components/roadmap/RoadmapLayout.tsx` | Modify | Import and render AdminCohortSwitcher |
+
+---
+
+## Component Design: AdminCohortSwitcher
+
+A floating button positioned at `bottom-40 right-4` (16 units above the testing panel) that:
+1. Shows a compact button with the current cohort's icon/logo
+2. On click, expands to show all 3 cohort options in a radial/vertical menu
+3. Selecting a cohort updates `simulatedCohortType` in context
+4. Shows a visual indicator when viewing a different cohort than the user's actual cohort
+
+### Visual Design
+
+**Collapsed State:**
+```text
+┌─────────────┐
+│ 🎬 FORGE    │  ← Shows current/simulated cohort logo + short name
+└─────────────┘
+```
+
+**Expanded State:**
+```text
+┌──────────────────────┐
+│ View as Cohort       │
+├──────────────────────┤
+│ ✓ 🎬 Filmmaking      │ ← Active cohort has checkmark
+│   ✍️ Writing         │
+│   📱 Creators        │
+├──────────────────────┤
+│ ↻ Reset to My Cohort │
+└──────────────────────┘
+```
+
+---
+
+## Technical Details
+
+### 1. Extend AdminTestingContext
 
 ```tsx
-{/* Edition Selection */}
-<div className="space-y-4">
-  <div className="space-y-1">
-    <Label className="text-lg font-semibold">Your Forge Edition</Label>
-    {hasPreAssignedEdition ? (
-      <p className="text-sm text-muted-foreground">
-        You've been enrolled in this program
-      </p>
-    ) : (
-      <p className="text-sm text-muted-foreground">
-        Select the program and batch you want to join
-      </p>
-    )}
-  </div>
+// Add to state
+simulatedCohortType: CohortType | null;
+
+// Add setter
+setSimulatedCohortType: (cohort: CohortType | null) => void;
+
+// Add to resetToRealTime
+simulatedCohortType: null
+```
+
+### 2. AdminCohortSwitcher Component
+
+```tsx
+// src/components/admin/AdminCohortSwitcher.tsx
+
+import React, { useState } from 'react';
+import { Film, PenTool, Users, X, RotateCcw } from 'lucide-react';
+import { useAdminTesting } from '@/contexts/AdminTestingContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { CohortType } from '@/contexts/ThemeContext';
+import { cn } from '@/lib/utils';
+import forgeLogoImg from '@/assets/forge-logo.png';
+import forgeWritingLogoImg from '@/assets/forge-writing-logo.png';
+import forgeCreatorsLogoImg from '@/assets/forge-creators-logo.png';
+
+const cohortOptions: { type: CohortType; label: string; logo: string; icon: typeof Film }[] = [
+  { type: 'FORGE', label: 'Filmmaking', logo: forgeLogoImg, icon: Film },
+  { type: 'FORGE_WRITING', label: 'Writing', logo: forgeWritingLogoImg, icon: PenTool },
+  { type: 'FORGE_CREATORS', label: 'Creators', logo: forgeCreatorsLogoImg, icon: Users },
+];
+
+const AdminCohortSwitcher: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const { simulatedCohortType, setSimulatedCohortType, isTestingMode } = useAdminTesting();
+  const { edition } = useAuth();
   
-  {editionsLoading ? (
-    <LoadingSpinner />
-  ) : hasPreAssignedEdition && preAssignedEdition ? (
-    {/* Locked edition card - read only */}
-    <div className="relative p-5 rounded-2xl border-2 border-primary bg-gradient-to-br from-primary/15 to-primary/5">
-      <div className="absolute top-3 right-3 flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary/80 px-2 py-1 rounded-full">
-        <Lock className="h-3 w-3" />
-        <span>Enrolled</span>
-      </div>
-      <div className="flex items-center gap-4">
-        <div className="w-14 h-14 rounded-xl bg-primary text-primary-foreground flex items-center justify-center">
-          <Icon className="h-7 w-7" />
-        </div>
-        <div>
-          <h3 className="font-bold text-lg">{preAssignedEdition.name}</h3>
-          <div className="flex items-center gap-4 mt-1.5">
-            <span className="text-sm text-muted-foreground">{preAssignedEdition.city}</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-secondary">{cohortLabel}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  ) : (
-    {/* Full edition grid - selectable (current behavior) */}
-    <EditionGrid ... />
-  )}
-</div>
+  const actualCohort = edition?.cohort_type as CohortType | undefined;
+  const displayedCohort = simulatedCohortType || actualCohort || 'FORGE';
+  const isSimulating = simulatedCohortType && simulatedCohortType !== actualCohort;
+  
+  // ... component rendering
+};
 ```
 
----
+### 3. Update useRoadmapData Hook
 
-## Visual Comparison
+```tsx
+// In useRoadmapData.ts
+const { simulatedCohortType } = useAdminTestingSafe();
 
-**Before (Admin-Added User):**
-```text
-Choose Your Forge Edition *
-Select the program and batch you want to join
-
-[Filmmaking Batch 4 - Chennai]    ← Can click
-[Filmmaking Batch 5 - Bangalore]  ← Can click  
-[Writing Batch 2 - Mumbai]        ← Can click
-[Creators Batch 1 - Hyderabad]    ← Can click
+// Use simulated cohort if admin is testing
+const userCohortType = isTestingMode && simulatedCohortType 
+  ? simulatedCohortType 
+  : edition?.cohort_type as CohortType | undefined;
 ```
 
-**After (Admin-Added User):**
-```text
-Your Forge Edition
-You've been enrolled in this program
+### 4. Integration Points
 
-┌─────────────────────────────────────┐
-│  🔒 Enrolled                        │
-│                                      │
-│  [🎬] Filmmaking Batch 5 - Bangalore│
-│       Filmmaking · Mar 15-22, 2025  │
-│                                      │
-└─────────────────────────────────────┘
-```
+- **Home.tsx**: Add AdminCohortSwitcher alongside FloatingHighlightsButton
+- **RoadmapLayout.tsx**: Add AdminCohortSwitcher below the AdminTestingPanel import
 
 ---
 
-## Files to Modify
+## Behavior
 
-| File | Changes |
-|------|---------|
-| `src/pages/ProfileSetup.tsx` | Add pre-assigned detection, conditional locked edition display, Lock icon import |
-
----
-
-## User Flow Matrix
-
-| User Type | Has `edition_id`? | Profile Setup Experience |
-|-----------|-------------------|--------------------------|
-| Self-signup | No | Full edition picker (choose any) |
-| Admin-added | Yes | Locked edition card (no choice) |
-| Admin-added (no edition) | No | Full edition picker |
+| User State | Cohort Display | Data Fetched |
+|------------|----------------|--------------|
+| Regular user | Their cohort | Their cohort's content |
+| Admin (no simulation) | Their cohort | Their cohort's content |
+| Admin (simulating FORGE_WRITING) | Writing indicator | Writing cohort's content |
 
 ---
 
-## Technical Notes
+## Session Persistence
 
-- Uses existing `profile?.edition_id` from AuthContext
-- Lock icon imported from lucide-react
-- No database changes required
-- Validation still requires `edition_id` - it just comes pre-filled for admin-added users
-- Users can still update other fields (name, phone, city, avatar)
+The simulated cohort will be stored in `sessionStorage` alongside other admin testing state, so it persists across page navigations but clears on browser close.
+
+---
+
+## Safety Features
+
+1. Only visible to users with admin role (uses `useAdminCheck`)
+2. Clear visual indicator when viewing simulated cohort (colored ring/badge)
+3. Quick "Reset to My Cohort" action
+4. No actual data changes - simulation is read-only
