@@ -417,7 +417,7 @@ const MyKYForm: React.FC = () => {
       </div>
       
       {/* Floating Edit Button */}
-      <div className="fixed bottom-20 md:bottom-6 left-0 right-0 px-4 z-50">
+      <div className="fixed bottom-20 md:bottom-6 left-0 md:left-64 right-0 px-4 z-30 transition-all duration-300">
         <div className="max-w-2xl mx-auto">
           <Button 
             className="w-full h-14 text-base font-semibold bg-gradient-to-r from-primary to-accent 
