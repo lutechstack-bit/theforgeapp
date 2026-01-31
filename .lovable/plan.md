@@ -1,218 +1,116 @@
 
-# Fix: Add KYC Response Support for Creators Cohort
+# Fix: Edit My Responses Button Overlapping Sidebar
 
-## Understanding the Cohort-Based Architecture
+## Problem
 
-The entire Forge app experience is **cohort-based**. Each user belongs to one of three cohorts determined by their edition's `cohort_type`:
+The "Edit My Responses" floating button on the `/my-kyform` page overlaps with the sidebar navigation on desktop when scrolling. This happens because:
 
-| Cohort Type | Name | KY Form | Database Table | Content |
-|-------------|------|---------|----------------|---------|
-| `FORGE` | Filmmakers | Know Your Filmmaker | `kyf_responses` | Filmmaking mentors, equipment, roadmap content |
-| `FORGE_WRITING` | Writers | Know Your Writer | `kyw_responses` | Writing mentors, no equipment section |
-| `FORGE_CREATORS` | Creators | Know Your Creator | `kyc_responses` | Creator mentors, creator-specific equipment |
+1. The button container uses `left-0 right-0` - spanning full viewport width
+2. The button has `z-50` which is higher than the sidebar's `z-40`
+3. On desktop, the main content is offset by the sidebar width, but the fixed button ignores this offset
 
-## Problem Identified
+## Current Code (Lines 419-433)
 
-Currently, the `useProfileData` hook and `MyKYForm.tsx` page are **broken for Creators**:
-
-**In `src/hooks/useProfileData.ts` (Line 44):**
 ```tsx
-// ❌ BUG: Creators are fetching from kyf_responses instead of kyc_responses
-if (cohortType === 'FORGE' || cohortType === 'FORGE_CREATORS') {
-  const { data } = await supabase.from('kyf_responses')...
-```
-
-**In `src/pages/MyKYForm.tsx` (Line 22):**
-```tsx
-// ❌ BUG: Missing kycResponse in the data chain
-const kyData = profileData?.kyfResponse || profileData?.kywResponse;
-```
-
-**Result:** Creators see an empty "My KY Form" summary page because their data is in `kyc_responses`, but the hook fetches from the wrong table.
-
----
-
-## Solution
-
-### 1. Update `src/hooks/useProfileData.ts`
-
-**Add `kycResponse` to the interface:**
-```tsx
-export interface ProfileData {
-  profile: any;
-  kyfResponse: any | null;
-  kywResponse: any | null;
-  kycResponse: any | null;  // ← ADD THIS
-  cohortType: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS' | null;
-  messageCount: number;
-  worksCount: number;
-}
-```
-
-**Fix the fetch logic to separate FORGE and FORGE_CREATORS:**
-```tsx
-// Fetch KYF response if FORGE (Filmmakers) only
-let kyfResponse = null;
-if (cohortType === 'FORGE') {  // ← Remove FORGE_CREATORS
-  const { data } = await supabase
-    .from('kyf_responses')
-    .select('*')
-    .eq('user_id', targetUserId)
-    .maybeSingle();
-  kyfResponse = data;
-}
-
-// ADD: Fetch KYC response if FORGE_CREATORS
-let kycResponse = null;
-if (cohortType === 'FORGE_CREATORS') {
-  const { data } = await supabase
-    .from('kyc_responses')
-    .select('*')
-    .eq('user_id', targetUserId)
-    .maybeSingle();
-  kycResponse = data;
-}
-
-// ... existing KYW fetch stays the same ...
-
-return {
-  profile: profileData,
-  kyfResponse,
-  kywResponse,
-  kycResponse,  // ← ADD THIS
-  cohortType,
-  messageCount: messageCount || 0,
-  worksCount: worksCount || 0,
-};
-```
-
----
-
-### 2. Update `src/pages/MyKYForm.tsx`
-
-**Add kycResponse to the data chain (Line 22):**
-```tsx
-const kyData = profileData?.kyfResponse || profileData?.kywResponse || profileData?.kycResponse;
-```
-
-**Add Creator-specific cohort check (Line 23):**
-```tsx
-const isFilmmaking = cohortType === 'FORGE';  // Only Filmmakers
-const isWriting = cohortType === 'FORGE_WRITING';
-const isCreator = cohortType === 'FORGE_CREATORS';  // ADD THIS
-```
-
-**Add Creator-specific skills section:**
-```tsx
-{/* Skills Section - Visual Bars (for creators) */}
-{isCreator && (
-  <div className="glass-card rounded-xl p-4 border border-border/50">
-    <div className="flex items-center gap-3 mb-4">
-      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-        <Target className="w-4 h-4 text-primary" />
-      </div>
-      <h3 className="font-semibold text-foreground">Skills & Proficiency</h3>
-    </div>
-    <div className="space-y-4">
-      <ProficiencyBar skill="Content Creation" level={kyData?.proficiency_content_creation} />
-      <ProficiencyBar skill="Storytelling" level={kyData?.proficiency_storytelling} />
-      <ProficiencyBar skill="Video Production" level={kyData?.proficiency_video_production} />
-      {kyData?.primary_platform && (
-        <div className="flex items-center justify-between pt-2 border-t border-border/30">
-          <span className="text-sm text-muted-foreground">Primary Platform</span>
-          <Badge variant="outline" className="text-xs">{kyData.primary_platform}</Badge>
-        </div>
-      )}
-    </div>
-  </div>
-)}
-```
-
-**Update Featured Cards for Creators:**
-```tsx
-{/* Top 3 Movies/Books/Creators */}
-{(kyData?.top_3_movies || kyData?.top_3_writers_books || kyData?.top_3_creators) && (
-  <div className="glass-card rounded-xl p-4 border border-border/50">
-    <div className="flex items-center gap-2 mb-4">
-      <Film className="w-5 h-5 text-primary" />
-      <h3 className="font-semibold text-foreground">
-        Your Top 3 {isFilmmaking ? 'Movies' : isWriting ? 'Writers/Books' : 'Creators'}
-      </h3>
-    </div>
-    <div className="flex flex-wrap gap-2">
-      {(kyData?.top_3_movies || kyData?.top_3_writers_books || kyData?.top_3_creators)?.map((item: string, idx: number) => (
-        <Badge key={idx} className="bg-primary/10 text-primary border-primary/30 px-3 py-1.5 text-sm font-medium">
-          {idx + 1}. {item}
-        </Badge>
-      ))}
-    </div>
-  </div>
-)}
-```
-
----
-
-### 3. Also Update Hero Section: Replace Checkmark with Forge Logo
-
-**Add import:**
-```tsx
-import forgeIcon from '@/assets/forge-icon.png';
-```
-
-**Remove `CheckCircle2` from imports**
-
-**Replace the animated success icon (Lines 93-99) with:**
-```tsx
-{/* Forge Logo with Subtle Glow */}
-<div className="relative mx-auto w-20 h-20 mb-4">
-  <div 
-    className="absolute inset-0 rounded-full bg-primary/30 blur-xl animate-pulse" 
-    style={{ animationDuration: '3s' }} 
-  />
-  <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 flex items-center justify-center">
-    <img src={forgeIcon} alt="Forge" className="w-10 h-10 object-contain" />
+{/* Floating Edit Button */}
+<div className="fixed bottom-20 md:bottom-6 left-0 right-0 px-4 z-50">
+  <div className="max-w-2xl mx-auto">
+    <Button ...>
+      Edit My Responses
+    </Button>
   </div>
 </div>
 ```
 
-**Simplify cohort badge to remove emojis (Lines 42-48):**
+## Solution
+
+Adjust the button's positioning to respect the sidebar width on desktop:
+
+1. **Change `left-0` to account for sidebar width on desktop** - use `md:left-[72px]` (collapsed) or consider the sidebar context
+2. **Lower the z-index** to `z-30` so it stays below the sidebar (`z-40`)
+3. **Better approach**: Use the same offset pattern as the main content layout
+
+The cleanest fix is to:
+- Keep `left-0` for mobile (no sidebar)
+- Add `md:left-64` or use CSS variable for the sidebar offset
+- This ensures the button stays within the content area, not under the sidebar
+
+Since the layout uses `md:ml-64` (or `md:ml-[72px]` when collapsed) for the main content, the fixed button should match this pattern.
+
+## Proposed Fix
+
 ```tsx
-const getCohortLabel = () => {
-  switch (cohortType) {
-    case 'FORGE_WRITING': return 'Writer';
-    case 'FORGE_CREATORS': return 'Creator';
-    default: return 'Filmmaker';
-  }
-};
+{/* Floating Edit Button */}
+<div className="fixed bottom-20 md:bottom-6 left-0 md:left-64 right-0 px-4 z-30">
+  <div className="max-w-2xl mx-auto">
+    <Button 
+      className="w-full h-14 text-base font-semibold bg-gradient-to-r from-primary to-accent 
+                 text-primary-foreground shadow-[0_0_30px_rgba(255,188,59,0.3)] 
+                 hover:shadow-[0_0_40px_rgba(255,188,59,0.5)] transition-all duration-300
+                 rounded-xl border border-primary/30"
+      onClick={() => navigate(getFormRoute())}
+    >
+      <Edit className="w-5 h-5 mr-2" />
+      Edit My Responses
+    </Button>
+  </div>
+</div>
 ```
 
----
+## Key Changes
 
-## Corrected Data Flow
+| Property | Before | After |
+|----------|--------|-------|
+| `left` | `left-0` | `left-0 md:left-64` |
+| `z-index` | `z-50` | `z-30` |
 
-After the fix:
+## Why This Works
 
-| Cohort | Form Route | Database Table | Response Key | Skills Shown |
-|--------|------------|----------------|--------------|--------------|
-| FORGE | `/kyf-form` | `kyf_responses` | `kyfResponse` | Screenwriting, Direction, Cinematography, Editing |
-| FORGE_WRITING | `/kyw-form` | `kyw_responses` | `kywResponse` | Writing, Story & Voice |
-| FORGE_CREATORS | `/kyc-form` | `kyc_responses` | `kycResponse` | Content Creation, Storytelling, Video Production |
+- **Mobile (`left-0`)**: No sidebar, button spans full width - works correctly
+- **Desktop (`md:left-64`)**: Button container starts after the 256px sidebar, matching the main content offset
+- **Lower z-index (`z-30`)**: Button stays below sidebar (z-40), preventing visual overlap
 
----
+## Alternative: Use Sidebar Context
+
+For a more robust solution that handles collapsed/expanded states, we could use the `useSidebar` hook:
+
+```tsx
+const { collapsed } = useSidebar();
+
+<div className={cn(
+  "fixed bottom-20 md:bottom-6 left-0 right-0 px-4 z-30 transition-all duration-300",
+  collapsed ? "md:left-[72px]" : "md:left-64"
+)}>
+```
+
+This would dynamically adjust based on sidebar state, but requires importing the context.
+
+## Visual Result
+
+```text
+Before (broken):
+┌──────────────────────────────────────────┐
+│ Sidebar │ Content                        │
+│         │                                │
+│   ┌─────┴────────────────────────────────┤
+│   │   [Edit My Responses Button]   ←Overlaps!
+└───┴──────────────────────────────────────┘
+
+After (fixed):
+┌──────────────────────────────────────────┐
+│ Sidebar │ Content                        │
+│         │                                │
+│         │   [Edit My Responses Button]   │
+│         └────────────────────────────────┤
+└──────────────────────────────────────────┘
+```
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/hooks/useProfileData.ts` | Add `kycResponse` interface field, separate FORGE/FORGE_CREATORS fetch logic |
-| `src/pages/MyKYForm.tsx` | Add `kycResponse` to data chain, add creator skills section, replace checkmark with Forge logo, remove emojis |
+| `src/pages/MyKYForm.tsx` | Update floating button container positioning (line 420) |
 
----
+## Recommendation
 
-## Summary of Changes
-
-1. **Fix data fetching** - Each cohort now correctly fetches from their respective table
-2. **Add Creator skills section** - Displays Content Creation, Storytelling, Video Production proficiencies
-3. **Support Top 3 Creators** - Featured cards now show creators' favorite creators
-4. **Replace checkmark with Forge logo** - Brand-consistent hero animation
-5. **Remove emojis** - Clean, professional text-only badges
+Use the simpler static fix (`md:left-64`) since the sidebar is rarely collapsed on this page, and it's a cleaner solution without additional context dependencies. The button will be properly positioned within the content area on desktop.
