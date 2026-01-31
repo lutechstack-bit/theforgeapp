@@ -22,18 +22,34 @@ export const useRoadmapData = () => {
   const cohortName = cohortDisplayNames[userCohortType];
   const forgeStartDate = edition?.forge_start_date ? new Date(edition.forge_start_date) : null;
 
-  // Fetch shared template roadmap days (edition_id IS NULL)
+  // Fetch roadmap days - prioritize edition-specific, fallback to shared template
   const { data: templateDays, isLoading: isLoadingDays } = useQuery({
-    queryKey: ['roadmap-days-template'],
+    queryKey: ['roadmap-days', profile?.edition_id],
     queryFn: async () => {
+      // First, try to get edition-specific days
+      if (profile?.edition_id) {
+        const { data: editionDays, error: editionError } = await supabase
+          .from('roadmap_days')
+          .select('*')
+          .eq('edition_id', profile.edition_id)
+          .order('day_number', { ascending: true });
+        
+        if (!editionError && editionDays && editionDays.length > 0) {
+          return editionDays as RoadmapDay[];
+        }
+      }
+      
+      // Fallback to shared template if no edition-specific days
       const { data, error } = await supabase
         .from('roadmap_days')
         .select('*')
         .is('edition_id', null)
         .order('day_number', { ascending: true });
+      
       if (error) throw error;
       return data as RoadmapDay[];
-    }
+    },
+    enabled: !!profile?.edition_id
   });
 
   // Calculate dates dynamically based on forge_start_date + day_number
