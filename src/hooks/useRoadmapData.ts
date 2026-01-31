@@ -22,11 +22,11 @@ export const useRoadmapData = () => {
   const cohortName = cohortDisplayNames[userCohortType];
   const forgeStartDate = edition?.forge_start_date ? new Date(edition.forge_start_date) : null;
 
-  // Fetch roadmap days - prioritize edition-specific, fallback to shared template
+  // Fetch roadmap days - prioritize edition-specific, then cohort-specific, then shared template
   const { data: templateDays, isLoading: isLoadingDays } = useQuery({
-    queryKey: ['roadmap-days', profile?.edition_id],
+    queryKey: ['roadmap-days', profile?.edition_id, userCohortType],
     queryFn: async () => {
-      // First, try to get edition-specific days
+      // Step 1: Try user's exact edition
       if (profile?.edition_id) {
         const { data: editionDays, error: editionError } = await supabase
           .from('roadmap_days')
@@ -39,7 +39,29 @@ export const useRoadmapData = () => {
         }
       }
       
-      // Fallback to shared template if no edition-specific days
+      // Step 2: Find another edition of SAME cohort type with roadmap days
+      if (userCohortType) {
+        const { data: sameTypeEditions } = await supabase
+          .from('editions')
+          .select('id')
+          .eq('cohort_type', userCohortType);
+        
+        if (sameTypeEditions && sameTypeEditions.length > 0) {
+          const editionIds = sameTypeEditions.map(e => e.id);
+          
+          const { data: cohortDays } = await supabase
+            .from('roadmap_days')
+            .select('*')
+            .in('edition_id', editionIds)
+            .order('day_number', { ascending: true });
+          
+          if (cohortDays && cohortDays.length > 0) {
+            return cohortDays as RoadmapDay[];
+          }
+        }
+      }
+      
+      // Step 3: Last resort - shared template
       const { data, error } = await supabase
         .from('roadmap_days')
         .select('*')
