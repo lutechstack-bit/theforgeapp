@@ -40,11 +40,11 @@ export const SimpleEventCard: React.FC<SimpleEventCardProps> = ({
           {/* Layer 2: Subtle dark overlay */}
           <div className="absolute inset-0 bg-black/30" />
           
-          {/* Layer 3: Sharp poster (full image visible) */}
+          {/* Layer 3: Sharp poster with auto-trim (edges cropped) */}
           <img
             src={imageUrl}
             alt={title}
-            className="relative w-full h-full object-contain z-10"
+            className="relative w-full h-full object-cover z-10"
           />
         </>
       ) : (
