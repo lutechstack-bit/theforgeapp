@@ -2,13 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { UnlockModal } from '@/components/shared/UnlockModal';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const PAYMENT_LINK = "https://razorpay.com/payment-link/your-link-here";
 
 interface LearnContent {
   id: string;
@@ -33,8 +29,6 @@ const AllCourses: React.FC = () => {
   const [searchParams] = useSearchParams();
   const initialSection = searchParams.get('section') || 'all';
   const [activeFilter, setActiveFilter] = useState(initialSection);
-  const [showUnlockModal, setShowUnlockModal] = useState(false);
-  const { isFullAccess } = useAuth();
 
   // Fetch all courses
   const { data: courses = [], isLoading } = useQuery({
@@ -55,10 +49,6 @@ const AllCourses: React.FC = () => {
     : courses.filter(c => c.section_type === activeFilter);
 
   const handleCardClick = (content: LearnContent) => {
-    if (content.is_premium && !isFullAccess) {
-      setShowUnlockModal(true);
-      return;
-    }
     navigate(`/learn/${content.id}`);
   };
 
@@ -126,7 +116,6 @@ const AllCourses: React.FC = () => {
                 title={course.title}
                 thumbnailUrl={course.thumbnail_url}
                 durationMinutes={course.duration_minutes}
-                isLocked={course.is_premium && !isFullAccess}
                 onClick={() => handleCardClick(course)}
               />
             ))}
@@ -134,14 +123,6 @@ const AllCourses: React.FC = () => {
         )}
       </div>
 
-      {/* Unlock Modal */}
-      <UnlockModal
-        open={showUnlockModal}
-        onOpenChange={setShowUnlockModal}
-        title="Unlock Premium Content"
-        description="Complete your payment to access exclusive masterclasses and workshops."
-        paymentLink={PAYMENT_LINK}
-      />
     </div>
   );
 };

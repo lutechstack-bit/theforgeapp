@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { UnlockModal } from '@/components/shared/UnlockModal';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { ContinueWatchingCarousel } from '@/components/learn/ContinueWatchingCarousel';
 import { Film, Sparkles, ChevronRight } from 'lucide-react';
@@ -16,7 +15,7 @@ import {
 } from '@/components/ui/carousel';
 
 
-const PAYMENT_LINK = "https://razorpay.com/payment-link/your-link-here";
+
 
 interface LearnContent {
   id: string;
@@ -45,8 +44,7 @@ interface WatchProgress {
 
 const Learn: React.FC = () => {
   const navigate = useNavigate();
-  const [showUnlockModal, setShowUnlockModal] = useState(false);
-  const { user, isFullAccess } = useAuth();
+  const { user } = useAuth();
 
   // Fetch learn content
   const { data: courses = [], isLoading } = useQuery({
@@ -92,10 +90,6 @@ const Learn: React.FC = () => {
   };
 
   const handleCardClick = (content: LearnContent) => {
-    if (content.is_premium && !isFullAccess) {
-      setShowUnlockModal(true);
-      return;
-    }
     navigate(`/learn/${content.id}`);
   };
 
@@ -160,7 +154,6 @@ const Learn: React.FC = () => {
                   title={item.title}
                   thumbnailUrl={item.thumbnail_url}
                   durationMinutes={item.duration_minutes}
-                  isLocked={item.is_premium && !isFullAccess}
                   onClick={() => handleCardClick(item)}
                 />
               </CarouselItem>
@@ -246,14 +239,6 @@ const Learn: React.FC = () => {
       </div>
 
 
-      {/* Unlock Modal */}
-      <UnlockModal
-        open={showUnlockModal}
-        onOpenChange={setShowUnlockModal}
-        title="Unlock Premium Content"
-        description="Complete your payment to access exclusive masterclasses and workshops."
-        paymentLink={PAYMENT_LINK}
-      />
     </div>
   );
 };
