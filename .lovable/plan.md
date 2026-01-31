@@ -1,154 +1,75 @@
 
 
-# Optimize Loading for Mentor Photos & Alumni Testimonial Videos
+# Auto-Set Profile Avatar from KY Form Headshot Photo
 
 ## Summary
-Reduce cognitive load and improve perceived performance on page load by implementing lazy loading, skeleton states, and optimized video preloading for the Mentors and Alumni Spotlight carousels on both mobile and web.
+Automatically use the front-facing headshot photo uploaded during the KY Form (KYF) as the user's profile avatar. This eliminates the need for users to upload a separate profile photo if they've already provided their headshot in the form.
 
 ---
 
-## Current Issues
+## Current Flow
 
-1. **Mentor photos** load immediately without `loading="lazy"`, blocking initial render
-2. **Testimonial videos** start downloading immediately via `<video src={...}>` without `preload="none"`
-3. **No skeleton/loading state** - users see empty space or layout shift while images load
-4. **All carousel items load at once** - even off-screen items
+1. User signs up and completes Profile Setup (may or may not upload avatar)
+2. User fills out KYF Form and uploads front headshot (`headshot_front_url`)
+3. Profile avatar and KYF headshot remain separate - user has to manually sync them
+
+## New Flow
+
+1. User signs up and completes Profile Setup
+2. User fills out KYF Form and uploads front headshot
+3. On KYF Form submission, the front headshot automatically becomes the profile avatar (if no avatar already exists, or always sync it)
 
 ---
 
-## Optimization Strategy
+## Implementation Details
 
-### 1. Lazy Load Mentor Images (`FlipMentorCard.tsx`)
+### File: `src/pages/KYFForm.tsx`
 
-Add native lazy loading and a shimmer skeleton placeholder:
+**Location:** `handleSubmit` function (around line 314-375)
+
+**Change:** After saving KYF responses, also update the profile's `avatar_url` with the `headshot_front_url`:
 
 ```tsx
-// Before: Image loads immediately
-<img src={mentor.imageUrl} alt={mentor.name} className="..." />
-
-// After: Lazy load with skeleton fallback
-<img
-  src={mentor.imageUrl}
-  alt={mentor.name}
-  loading="lazy"
-  className="..."
-  onLoad={(e) => e.currentTarget.classList.remove('opacity-0')}
-  style={{ transition: 'opacity 0.3s ease-in' }}
-/>
+// Inside handleSubmit, after upserting kyf_responses
+const { error: profileError } = await supabase
+  .from('profiles')
+  .update({ 
+    ky_form_completed: true, 
+    kyf_completed: true,
+    // Auto-set avatar from headshot if headshot exists
+    ...(formData.headshot_front_url && { avatar_url: formData.headshot_front_url })
+  })
+  .eq('id', user.id);
 ```
 
-### 2. Optimize Video Preloading (`TestimonialVideoCard.tsx`)
-
-Prevent videos from downloading until user interaction:
-
-```tsx
-// Before: Video downloads immediately
-<video src={videoUrl} poster={thumbnailUrl} ... />
-
-// After: No preload, uses poster as placeholder
-<video
-  src={videoUrl}
-  poster={thumbnailUrl}
-  preload="none"  // ← Prevents immediate download
-  ...
-/>
-```
-
-### 3. Add Image Loading State with Skeleton
-
-Wrap images in a loading container that shows a premium shimmer skeleton:
-
-```tsx
-const [imageLoaded, setImageLoaded] = useState(false);
-
-return (
-  <div className="relative">
-    {/* Skeleton shown while loading */}
-    {!imageLoaded && (
-      <div className="absolute inset-0 skeleton-premium rounded-2xl" />
-    )}
-    <img
-      src={mentor.imageUrl}
-      alt={mentor.name}
-      loading="lazy"
-      onLoad={() => setImageLoaded(true)}
-      className={cn(
-        "transition-opacity duration-300",
-        imageLoaded ? "opacity-100" : "opacity-0"
-      )}
-    />
-  </div>
-);
-```
-
-### 4. Add Loading State to MentorVideoCard (if used elsewhere)
-
-Apply the same pattern to `MentorVideoCard.tsx` for consistency.
+This will:
+- Set the avatar to the front headshot if one was uploaded
+- Only update avatar if `headshot_front_url` exists (won't overwrite with null)
 
 ---
 
-## Files to Modify
+## Summary of Changes
 
-| File | Changes |
-|------|---------|
-| `src/components/shared/FlipMentorCard.tsx` | Add `loading="lazy"`, skeleton state, fade-in on load |
-| `src/components/shared/TestimonialVideoCard.tsx` | Add `preload="none"`, skeleton for poster, fade-in |
-| `src/components/shared/MentorVideoCard.tsx` | Add `loading="lazy"`, skeleton state, fade-in on load |
+| File | Change |
+|------|--------|
+| `src/pages/KYFForm.tsx` | In `handleSubmit`, add `avatar_url: formData.headshot_front_url` to the profile update |
 
 ---
 
-## Technical Details
+## Behavior
 
-### FlipMentorCard Changes (lines 59-71)
-- Add `useState` for `imageLoaded`
-- Add skeleton overlay using `skeleton-premium` class (already in CSS)
-- Add `loading="lazy"` and `onLoad` handler
-- Add opacity transition for smooth fade-in
-
-### TestimonialVideoCard Changes (lines 72-82)
-- Add `preload="none"` to prevent auto-download
-- Add skeleton state for poster image
-- Optionally generate poster from first frame if no thumbnail provided
-
-### MentorVideoCard Changes (lines 37-46)
-- Same pattern as FlipMentorCard
+| Scenario | Result |
+|----------|--------|
+| User uploads headshot in KYF | Avatar auto-set to headshot |
+| User already had avatar from Profile Setup | Avatar overwritten with headshot (newer photo) |
+| User later updates avatar in Profile | Works as before, no interference |
+| KYW/KYC forms (no photos) | No change - avatar remains as-is |
 
 ---
 
-## Visual Result
+## Technical Notes
 
-**Before (Page Load):**
-```text
-[Page Opens]
-   ↓
-[Empty cards / layout shift]
-   ↓
-[Images pop in suddenly]
-   ↓
-[Videos start downloading in background]
-```
-
-**After (Page Load):**
-```text
-[Page Opens]
-   ↓
-[Elegant shimmer skeletons visible]
-   ↓
-[Images fade in smoothly as they load]
-   ↓
-[Videos only download when user taps play]
-```
-
----
-
-## Performance Benefits
-
-| Metric | Before | After |
-|--------|--------|-------|
-| Initial bandwidth | High (all images + videos) | Low (only visible images) |
-| Time to Interactive | Slower | Faster |
-| Perceived load time | Jarring | Smooth |
-| Mobile data usage | Wasteful | Optimized |
-
-This applies to both mobile and web views consistently.
+- Only applies to FORGE cohort (Filmmakers) since they're the only ones with photo uploads in their form
+- KYW (Writers) and KYC (Creators) forms don't collect photos, so no changes needed there
+- The headshot is already being uploaded to storage via `PhotoUploadField`, so we're just reusing the URL
 
