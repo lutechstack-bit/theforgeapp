@@ -1,96 +1,57 @@
 
+Goal
+- Stop carousel cards from visually “bleeding” into the section subtitle/header area (and into the next section) on both mobile and desktop.
 
-# Fix Carousel Cards Overflowing Into Section Headers
+What’s happening (root cause)
+- The shared carousel implementation (`src/components/ui/carousel.tsx`) applies `py-4 -my-4` on the inner flex container.
+- The negative vertical margin (`-my-4`) effectively pulls the carousel content upward and downward by 16px each, which can:
+  - Remove the intended gap between the section subtitle and the cards (so the cards look like they overlap/overflow into the text).
+  - Reduce spacing between stacked sections (so the next section header can sit too close to the previous carousel).
+- We already removed “duplicate” classes in the Learn page components, but the base component still has `-my-4`, so the issue can still remain.
 
-## Problem
-On the Learn page (both mobile and web), carousel cards visually overflow/overlap into the section headers above them. This affects:
-- "Pre Forge Sessions" section
-- "More from LevelUp" section  
-- "Continue Watching" section
+Fix approach (safe + consistent for mobile + web)
+- Update the base CarouselContent styling to remove negative vertical margins entirely.
+- Keep overflow visible (so the gold glow is not clipped), but stop using negative margins that cause layout overlap.
 
-## Root Cause
-The base `CarouselContent` component already includes built-in classes:
-- `py-4 -my-4` (for hover glow effect overflow)
-- `-ml-4` (for horizontal offset)
+Implementation steps
+1) Update the shared carousel component
+   - File: `src/components/ui/carousel.tsx`
+   - Change CarouselContent’s inner container classes:
+     - From:
+       - `className={cn("flex py-4 -my-4", ...)}`
+     - To:
+       - `className={cn("flex py-4", ...)}`
+   - Also remove the vertical-orientation negative margin for consistency:
+     - From:
+       - `orientation === "horizontal" ? "-ml-4" : "-mt-4 flex-col"`
+     - To:
+       - `orientation === "horizontal" ? "-ml-4" : "flex-col"`
+   - Keep:
+     - `overflow-x-auto overflow-y-visible scrollbar-hide` so hover glows remain visible.
 
-But the consuming files add these same classes AGAIN, doubling the negative margins and causing excessive upward overflow.
+2) Verify the Learn page layout (mobile + desktop)
+   - Route: Learn page (where “Pre Forge Sessions” and “More from LevelUp” sections are)
+   - Confirm:
+     - The subtitle text above each carousel no longer gets visually collided with by the cards.
+     - The gap between the first carousel and the “More from LevelUp” header looks clean.
+     - Continue Watching section (if present) also has correct spacing.
 
-## Solution
-Remove the duplicate `-ml-4 py-4 -my-4` classes from all consuming files since the base component already handles this.
+3) Regression check (hover + arrows)
+   - Hover on cards (desktop) to confirm:
+     - Gold glow still shows without being clipped.
+     - Glow does not overlap the subtitle text anymore (because we now keep real vertical spacing).
+   - On mobile:
+     - Swipe scroll still works smoothly.
+     - Arrow buttons (when shown) remain centered and not floating into headers.
 
----
+Why this fixes both mobile and web
+- The overlap is caused by a layout calculation (negative margins), not a breakpoint-specific CSS issue.
+- Removing the negative margins makes spacing consistent across all viewport sizes.
 
-## Files to Modify
+Files touched
+- `src/components/ui/carousel.tsx` (primary fix)
 
-### 1. `src/pages/Learn.tsx` (line 146)
-```tsx
-// Current (duplicate classes)
-<CarouselContent className="-ml-4 py-4 -my-4">
-
-// Fixed (no duplicate)
-<CarouselContent>
-```
-
-### 2. `src/components/learn/ContinueWatchingCarousel.tsx` (line 53)
-```tsx
-// Current
-<CarouselContent className="-ml-4 py-4 -my-4">
-
-// Fixed
-<CarouselContent>
-```
-
-### 3. `src/components/learn/LearnCarousel.tsx` (line 59)
-```tsx
-// Current
-<CarouselContent className="-ml-4 py-4 -my-4">
-
-// Fixed
-<CarouselContent>
-```
-
-### 4. `src/components/learn/PremiumVideoCarousel.tsx` (line 63)
-```tsx
-// Current
-<CarouselContent className="-ml-4 py-4 -my-4">
-
-// Fixed
-<CarouselContent>
-```
-
----
-
-## Visual Result
-
-**Before (Mobile & Web):**
-```text
-┌─────────────────────────────────────────┐
-│ Pre Forge Sessions          [View All] │
-│ Filmmaking fundamentals...              │
-│ ┌─────────────┬─────────────┐           │  ← Cards overlapping text
-│ │   CARD 1    │   CARD 2    │           │
-```
-
-**After (Mobile & Web):**
-```text
-┌─────────────────────────────────────────┐
-│ Pre Forge Sessions          [View All] │
-│ Filmmaking fundamentals...              │
-│                                         │  ← Proper spacing
-│ ┌─────────────┬─────────────┐           │
-│ │   CARD 1    │   CARD 2    │           │
-```
-
----
-
-## Summary
-
-| File | Change |
-|------|--------|
-| `src/pages/Learn.tsx` | Remove `-ml-4 py-4 -my-4` from CarouselContent |
-| `src/components/learn/ContinueWatchingCarousel.tsx` | Remove `-ml-4 py-4 -my-4` from CarouselContent |
-| `src/components/learn/LearnCarousel.tsx` | Remove `-ml-4 py-4 -my-4` from CarouselContent |
-| `src/components/learn/PremiumVideoCarousel.tsx` | Remove `-ml-4 py-4 -my-4` from CarouselContent |
-
-This fix applies to both mobile and web views since the base carousel component handles all viewport sizes consistently.
-
+Acceptance criteria
+- No carousel cards overlap/cover the section subtitle/header on Learn.
+- No carousel area crowds into the next section header.
+- Hover glow remains visible and premium-looking.
