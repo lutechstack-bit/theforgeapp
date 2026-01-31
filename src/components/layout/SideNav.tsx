@@ -216,11 +216,6 @@ export const SideNav: React.FC = () => {
                     <span className="text-sm font-medium text-sidebar-foreground truncate max-w-[120px]">
                       {profile?.full_name || 'User'}
                     </span>
-                    {edition?.cohort_type && (
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 mt-0.5 w-fit">
-                        {edition.cohort_type}
-                      </Badge>
-                    )}
                   </div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-sidebar-foreground/30 group-hover:text-sidebar-foreground/60 transition-colors" />
