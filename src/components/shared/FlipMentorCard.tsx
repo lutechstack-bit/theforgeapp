@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Mentor } from '@/data/mentorsData';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface FlipMentorCardProps {
   mentor: Mentor;
@@ -15,6 +16,7 @@ export const FlipMentorCard: React.FC<FlipMentorCardProps> = ({
 }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
@@ -61,12 +63,20 @@ export const FlipMentorCard: React.FC<FlipMentorCardProps> = ({
           className="absolute inset-0 rounded-2xl overflow-hidden backface-hidden"
           style={{ backfaceVisibility: 'hidden' }}
         >
-          {/* Background Image */}
+          {/* Background Image with Skeleton */}
           <div className="absolute inset-0">
+            {!imageLoaded && (
+              <Skeleton className="absolute inset-0 w-full h-full rounded-none" />
+            )}
             <img
               src={mentor.imageUrl}
               alt={mentor.name}
-              className="w-full h-full object-cover object-top"
+              loading="lazy"
+              onLoad={() => setImageLoaded(true)}
+              className={cn(
+                "w-full h-full object-cover object-top transition-opacity duration-300",
+                imageLoaded ? "opacity-100" : "opacity-0"
+              )}
             />
           </div>
 

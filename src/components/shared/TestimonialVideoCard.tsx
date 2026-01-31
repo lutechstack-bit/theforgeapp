@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface TestimonialVideoCardProps {
   name: string;
@@ -25,6 +26,7 @@ export const TestimonialVideoCard: React.FC<TestimonialVideoCardProps> = ({
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const [posterLoaded, setPosterLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handlePlayPause = () => {
@@ -69,7 +71,26 @@ export const TestimonialVideoCard: React.FC<TestimonialVideoCardProps> = ({
       )}
       style={{ scrollSnapAlign: 'start' }}
     >
-      {/* Video Element */}
+      {/* Skeleton shown while poster loads */}
+      {!posterLoaded && !isPlaying && (
+        <Skeleton className="absolute inset-0 w-full h-full rounded-none" />
+      )}
+
+      {/* Poster Image for lazy loading */}
+      {thumbnailUrl && !isPlaying && (
+        <img
+          src={thumbnailUrl}
+          alt={`${name} testimonial`}
+          loading="lazy"
+          onLoad={() => setPosterLoaded(true)}
+          className={cn(
+            "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
+            posterLoaded ? "opacity-100" : "opacity-0"
+          )}
+        />
+      )}
+
+      {/* Video Element - preload none to prevent bandwidth usage */}
       <video
         ref={videoRef}
         src={videoUrl}
@@ -77,8 +98,12 @@ export const TestimonialVideoCard: React.FC<TestimonialVideoCardProps> = ({
         muted={isMuted}
         playsInline
         loop={false}
+        preload="none"
         onEnded={handleVideoEnded}
-        className="absolute inset-0 w-full h-full object-cover"
+        className={cn(
+          "absolute inset-0 w-full h-full object-cover",
+          isPlaying ? "opacity-100" : "opacity-0"
+        )}
       />
 
       {/* Gradient Overlay - stronger when not playing */}

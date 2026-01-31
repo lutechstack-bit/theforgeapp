@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface MentorCardProps {
   name: string;
@@ -22,6 +23,8 @@ export const MentorVideoCard: React.FC<MentorCardProps> = ({
   onClick,
   className,
 }) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
   return (
     <div
       onClick={onClick}
@@ -33,13 +36,21 @@ export const MentorVideoCard: React.FC<MentorCardProps> = ({
       )}
       style={{ scrollSnapAlign: 'start' }}
     >
-      {/* Background Image */}
+      {/* Background Image with Skeleton */}
       <div className="absolute inset-0">
+        {!imageLoaded && imageUrl && (
+          <Skeleton className="absolute inset-0 w-full h-full rounded-none" />
+        )}
         {imageUrl ? (
           <img
             src={imageUrl}
             alt={name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+            onLoad={() => setImageLoaded(true)}
+            className={cn(
+              "w-full h-full object-cover transition-all duration-500 group-hover:scale-105",
+              imageLoaded ? "opacity-100" : "opacity-0"
+            )}
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-muted to-card" />
