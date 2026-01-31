@@ -1,8 +1,10 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Loader2, Anchor, Sparkles } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useRoadmapData } from '@/hooks/useRoadmapData';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
+import { supabase } from '@/integrations/supabase/client';
 import RoadmapHero from '@/components/roadmap/RoadmapHero';
 import QuickActionsBar from '@/components/roadmap/QuickActionsBar';
 import RoadmapSidebar from '@/components/roadmap/RoadmapSidebar';
@@ -26,8 +28,22 @@ const RoadmapLayout: React.FC = () => {
     userCohortType,
   } = useRoadmapData();
 
-  // Hide equipment for Writers cohort
-  const showEquipment = userCohortType !== 'FORGE_WRITING';
+  // Data-driven equipment visibility - only show if equipment exists for this cohort
+  const { data: equipmentCount } = useQuery({
+    queryKey: ['equipment-count', userCohortType],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('forge_equipment')
+        .select('*', { count: 'exact', head: true })
+        .eq('cohort_type', userCohortType)
+        .eq('is_active', true);
+      if (error) return 0;
+      return count || 0;
+    },
+    enabled: !!userCohortType
+  });
+
+  const showEquipment = (equipmentCount || 0) > 0;
 
   if (isLoadingDays) {
     return (
