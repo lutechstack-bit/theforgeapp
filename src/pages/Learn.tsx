@@ -123,7 +123,7 @@ const Learn: React.FC = () => {
           <div>
             <h2 className="text-xl font-bold text-foreground">{title}</h2>
             {subtitle && (
-              <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+              <p className="text-sm font-medium text-muted-foreground mt-0.5">{subtitle}</p>
             )}
           </div>
           {items.length > 3 && (
@@ -223,7 +223,7 @@ const Learn: React.FC = () => {
             {renderCourseCarousel(
               forgeOnlineSessions,
               'Pre Forge Sessions',
-              'Filmmaking fundamentals: For forge and Beyond',
+              'Filmmaking fundamentals: For Forge and Beyond',
               'bfp_sessions'
             )}
 

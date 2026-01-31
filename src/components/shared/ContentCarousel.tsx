@@ -50,7 +50,7 @@ export const ContentCarousel: React.FC<ContentCarouselProps> = ({
   return (
     <div className={cn("space-y-4 reveal-section", className)}>
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+        <h3 className="text-lg font-bold text-foreground">{title}</h3>
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
