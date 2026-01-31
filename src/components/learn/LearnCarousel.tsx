@@ -56,7 +56,7 @@ export const LearnCarousel: React.FC<LearnCarouselProps> = ({
         }}
         className="w-full"
       >
-        <CarouselContent className="-ml-4 py-4 -my-4">
+        <CarouselContent>
           {items.map((item) => (
             <CarouselItem
               key={item.id}
