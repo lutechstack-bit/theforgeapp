@@ -1,210 +1,133 @@
 
-# Add Floating Highlights Button to Home + Reorganize Admin Navigation
 
-## Overview
+# Fix Stay Locations Display + Admin Integration
 
-This plan addresses three requests:
-1. **Keep Stay Locations admin inside Roadmap Sidebar** - Move it from separate nav to be grouped under Roadmap Sidebar
-2. **Add floating highlights button to Home screen (mobile)** - Same FAB that exists on Roadmap
-3. **Add Roadmap Sidebar (highlights) to Home screen (desktop/web view)** - Show the full sidebar panel
-4. **Remove "Forge Highlights" heading from RoadmapBentoBox** - This bento box is being replaced with the actual sidebar
+## Problems Identified
 
----
+### Issue 1: Stay Location Not Showing in Sidebar/FAB
+The Stay Location "Bambolim Beach Resort" is currently mapped only to Writing editions (4 & 5), NOT Filmmaking Edition 14 where the test user is enrolled. The filtering logic is working correctly - the location simply needs to be assigned to more editions in the admin panel.
 
-## Part 1: Home Screen - Mobile Floating Button
+### Issue 2: Missing Thumbnail Image  
+The Stay Location has no `featured_image_url` set but has 4 gallery images. The code uses `featured_image_url || ''` which results in an empty image URL. Need to fall back to the first gallery image.
 
-Add the same `FloatingHighlightsButton` component that exists on the Roadmap page to the Home page.
+### Issue 3: Interface Mismatch
+`RoadmapSidebar.tsx` uses outdated field names (`city`, `address_line1`) that don't exist in the database. The database uses `full_address` (single textarea field).
 
-**File:** `src/pages/Home.tsx`
-
-**Changes:**
-- Import `FloatingHighlightsButton` from roadmap components
-- Get `profile` from `useAuth()` to access `edition_id`
-- Add `FloatingHighlightsButton` at the end of the component with `editionId` prop
-- The button is already set to `lg:hidden` so it only shows on mobile/tablet
-
-```tsx
-import FloatingHighlightsButton from '@/components/roadmap/FloatingHighlightsButton';
-
-// Inside the component:
-<FloatingHighlightsButton editionId={profile?.edition_id} />
-```
+### Issue 4: Admin Consolidation
+Move the full Stay Locations admin functionality INTO the Roadmap Sidebar admin as a third tab.
 
 ---
 
-## Part 2: Home Screen - Desktop Sidebar Panel
+## Part 1: Fix StayLocation Interface and Fallback Image
 
-Add the `RoadmapSidebar` to the home page for desktop users (lg: breakpoint and above).
-
-**File:** `src/pages/Home.tsx`
+**File:** `src/components/roadmap/RoadmapSidebar.tsx`
 
 **Changes:**
-- Import `RoadmapSidebar` from roadmap components
-- Restructure the layout to a grid with main content + sidebar panel on desktop
-- Desktop layout: `grid-cols-[1fr_280px]` for main content + sidebar
-- Mobile layout: single column (sidebar hidden, FAB accessible)
+1. Update `StayLocation` interface to match database schema:
+   - Replace `address_line1`, `address_line2`, `city`, `postcode` with `full_address`
+2. Update carousel item mapping to use fallback image:
+   ```typescript
+   // Use featured_image_url OR first gallery image
+   const stayItems = stayLocations.map(loc => ({
+     id: loc.id,
+     media_url: loc.featured_image_url || loc.gallery_images?.[0]?.url || '',
+     title: loc.name,
+     caption: loc.full_address?.split('\n')[0] || undefined // First line of address
+   }));
+   ```
 
-**New Layout Structure:**
+---
+
+## Part 2: Merge Stay Locations into Roadmap Sidebar Admin
+
+**File:** `src/pages/admin/AdminRoadmapSidebar.tsx`
+
+**Changes:**
+1. Add a top-level tabbed interface with three tabs:
+   - **Content** - Existing Past Moments & Student Work management
+   - **Stay Locations** - Full Stay Locations admin (moved from separate page)
+
+2. Import all Stay Locations functionality:
+   - Queries for stay locations and edition mappings
+   - CRUD mutations
+   - Form state for contacts, notes, gallery images
+   - Full form dialog with all fields (name, address, Google Maps, contacts, notes, gallery)
+
+3. Remove `stay_locations` from `blockTypeConfig` (it uses a separate table, not `roadmap_sidebar_content`)
+
+**Structure:**
 ```text
-Desktop (lg:):
-┌─────────────────────────────────────┬──────────────┐
-│  Main Content                       │  Sidebar     │
-│  - Countdown                        │  - Moments   │
-│  - Journey Timeline                 │  - Student   │
-│  - Mentors                          │    Work      │
-│  - (Remove old bento)               │  - Stay      │
-│  - Alumni                           │    Location  │
-│  - Learn                            │              │
-│  - Events                           │              │
-└─────────────────────────────────────┴──────────────┘
-
-Mobile:
-┌─────────────────────────────────────┐
-│  Main Content (full width)          │
-│  - Countdown                        │
-│  - Journey Timeline                 │
-│  - Mentors                          │
-│  - (No bento box)                   │
-│  - Alumni                           │
-│  - Learn                            │
-│  - Events                           │
-│                                     │
-│  [FAB for Highlights at bottom-24]  │
-└─────────────────────────────────────┘
+AdminRoadmapSidebar
+├── Header: "Roadmap Sidebar Content"
+├── Tabs
+│   ├── Tab: "Content" (Past Moments & Student Work)
+│   │   ├── Filters (block type, edition)
+│   │   └── Grid of media cards
+│   └── Tab: "Stay Locations"
+│       ├── "Add Location" button
+│       ├── Grid of location cards
+│       └── Full form dialog (name, editions, address, contacts, notes, gallery)
 ```
 
 ---
 
-## Part 3: Remove RoadmapBentoBox from Home
+## Part 3: Remove Separate Stay Locations Admin Page
 
-Since the sidebar provides the same content (Past Moments, Student Work) with autoplay carousels, the simplified bento box is redundant.
-
-**File:** `src/pages/Home.tsx`
-
-**Changes:**
-- Remove the `import { RoadmapBentoBox }` line
-- Remove the `<RoadmapBentoBox />` component from the JSX
-
----
-
-## Part 4: Admin - Move Stay Locations Under Roadmap Sidebar
-
-The user wants Stay Locations to be grouped with Roadmap Sidebar in the admin navigation instead of being a separate nav item.
-
-**Option A:** Create a Roadmap group in admin nav with sub-items
-**Option B:** Simply reorder the nav items to group Roadmap-related items together
-
-Since the admin layout currently uses a flat list, Option B is cleaner.
+**File:** `src/App.tsx`
+- Remove route: `<Route path="stay-locations" element={<AdminStayLocations />} />`
+- Remove import
 
 **File:** `src/components/admin/AdminLayout.tsx`
+- Remove nav item: `{ to: '/admin/stay-locations', icon: Building2, label: 'Stay Locations' }`
 
-**Changes:**
-- Move `Stay Locations` nav item to be directly after `Roadmap Sidebar`
-- The current order is already:
-  - Roadmap
-  - Roadmap Sidebar
-  - Stay Locations (already grouped!)
-  - Equipment
-  
-The current grouping is already correct! No changes needed to the admin navigation structure.
+**File:** `src/pages/admin/AdminStayLocations.tsx`
+- Delete this file (functionality merged)
 
 ---
 
-## Files to Change
+## Part 4: Filter Stay Locations with Empty Images
 
-### 1. `src/pages/Home.tsx`
+**File:** `src/components/roadmap/SidebarStayCarousel.tsx`
 
 **Changes:**
-- Import `FloatingHighlightsButton` and `RoadmapSidebar`
-- Restructure layout to include sidebar panel on desktop
-- Remove `RoadmapBentoBox` import and usage
-- Add `FloatingHighlightsButton` for mobile
+- Filter out items with empty `media_url` before rendering
+- This prevents showing broken image placeholders
 
-### 2. No changes needed to `src/components/admin/AdminLayout.tsx`
-
-The Stay Locations is already placed right after Roadmap Sidebar in the nav structure.
-
----
-
-## Technical Implementation
-
-### Updated Home.tsx Structure
-
-```tsx
-import FloatingHighlightsButton from '@/components/roadmap/FloatingHighlightsButton';
-import RoadmapSidebar from '@/components/roadmap/RoadmapSidebar';
-// Remove: import { RoadmapBentoBox } from '@/components/home/RoadmapBentoBox';
-
-return (
-  <div className="min-h-screen">
-    {/* Desktop Layout with Sidebar */}
-    <div className="flex gap-6 px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-6">
-      
-      {/* Main Content Column */}
-      <div className="flex-1 space-y-5 sm:space-y-6">
-        <CompactCountdownTimer edition={edition} />
-        <HomeJourneySection />
-        
-        {/* Mentors */}
-        {mentors && mentors.length > 0 && (
-          <ContentCarousel title="Meet Your Mentors">...</ContentCarousel>
-        )}
-
-        {/* No more RoadmapBentoBox here */}
-
-        {/* Alumni Testimonials */}
-        {alumniTestimonials && ...}
-        
-        {/* Learn Section */}
-        {displayLearnContent.length > 0 && ...}
-        
-        {/* Events Section */}
-        {displayEvents.length > 0 && ...}
-      </div>
-      
-      {/* Desktop Sidebar - Hidden on mobile/tablet */}
-      <div className="hidden lg:block w-64 xl:w-72 flex-shrink-0">
-        <div className="sticky top-24">
-          <RoadmapSidebar editionId={profile?.edition_id} />
-        </div>
-      </div>
-    </div>
-
-    {/* Mobile Floating Button - Hidden on desktop */}
-    <FloatingHighlightsButton editionId={profile?.edition_id} />
-  </div>
-);
+```typescript
+const validItems = items.filter(item => item.media_url);
+if (!validItems || validItems.length === 0) {
+  // Show "Coming soon" placeholder
+}
 ```
 
 ---
 
-## Summary
+## Files to Modify
 
-| Change | File | Purpose |
-|--------|------|---------|
-| Add FloatingHighlightsButton | Home.tsx | Mobile access to highlights |
-| Add RoadmapSidebar | Home.tsx | Desktop sidebar panel with highlights |
-| Remove RoadmapBentoBox | Home.tsx | Replaced by actual sidebar |
-| Keep Stay Locations grouped | AdminLayout.tsx | Already correct - no change needed |
+| File | Action | Changes |
+|------|--------|---------|
+| `src/components/roadmap/RoadmapSidebar.tsx` | Edit | Fix interface, add fallback image logic |
+| `src/components/roadmap/SidebarStayCarousel.tsx` | Edit | Filter out empty media_url items |
+| `src/pages/admin/AdminRoadmapSidebar.tsx` | Major Edit | Add Stay Locations tab with full CRUD |
+| `src/components/admin/AdminLayout.tsx` | Edit | Remove Stay Locations nav item |
+| `src/App.tsx` | Edit | Remove stay-locations route |
+| `src/pages/admin/AdminStayLocations.tsx` | Delete | Functionality merged |
 
 ---
 
 ## Expected Result
 
-### Mobile View
-- Home page shows main content with Floating Highlights FAB at bottom-right
-- Tapping FAB opens the same bottom sheet as Roadmap page
-- Shows Past Moments, Student Work, and Stay Location carousels
+### Sidebar Display
+- Stay Location will show with first gallery image as thumbnail when no featured image
+- Caption will show first line of full address instead of missing `city` field
+- Properly filters by user's edition
 
-### Desktop View  
-- Home page has a 2-column layout
-- Main content on the left (~75% width)
-- Sidebar panel on the right (~25% width) with:
-  - Past Moments carousel (autoplay)
-  - Student Work carousel (autoplay)
-  - Stay Location carousel (autoplay)
-- Sidebar is sticky and scrolls with content
+### Admin Experience
+- Single "Roadmap Sidebar" admin page with tabbed interface
+- "Content" tab for Past Moments & Student Work (simple media)
+- "Stay Locations" tab for rich location management (contacts, notes, gallery)
+- Cleaner navigation without separate Stay Locations entry
 
-### Admin Panel
-- Navigation already has Stay Locations grouped with Roadmap items
-- No changes needed
+### Data Requirements
+- Admin needs to assign Stay Location to Filmmaking Edition 14 for it to appear for that cohort
+
