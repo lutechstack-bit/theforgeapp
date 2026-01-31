@@ -5,18 +5,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { KYFormCard } from '@/components/kyform/KYFormCard';
 import { KYFormCardStack } from '@/components/kyform/KYFormCardStack';
 import { KYFormCompletion } from '@/components/kyform/KYFormCompletion';
 import { RadioSelectField } from '@/components/onboarding/RadioSelectField';
 import { MultiSelectField } from '@/components/onboarding/MultiSelectField';
 import { ProficiencyField } from '@/components/onboarding/ProficiencyField';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { ChevronLeft, ChevronRight, Loader2, ExternalLink, Clock, ChevronDown } from 'lucide-react';
+import { PhoneInput } from '@/components/onboarding/PhoneInput';
+import { TagInput } from '@/components/onboarding/TagInput';
+import { TermsModal } from '@/components/onboarding/TermsModal';
+import { ChevronLeft, ChevronRight, Loader2, ExternalLink, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   AlertDialog,
@@ -60,7 +60,7 @@ const KYWForm: React.FC = () => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
-  const [termsExpanded, setTermsExpanded] = useState(false);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
   const [formData, setFormData] = useState({
     certificate_name: '', 
@@ -72,7 +72,7 @@ const KYWForm: React.FC = () => {
     emergency_contact_number: '',
     proficiency_writing: '', 
     proficiency_story_voice: '',
-    top_3_writers_books: '', 
+    top_3_writers_books: [] as string[], 
     chronotype: '',
     mbti_type: '', 
     forge_intent: '', 
@@ -99,7 +99,7 @@ const KYWForm: React.FC = () => {
           emergency_contact_number: data.emergency_contact_number || '',
           proficiency_writing: data.proficiency_writing || '',
           proficiency_story_voice: data.proficiency_story_voice || '',
-          top_3_writers_books: data.top_3_writers_books?.join(', ') || '',
+          top_3_writers_books: data.top_3_writers_books || [],
           chronotype: data.chronotype || '',
           mbti_type: data.mbti_type || '',
           forge_intent: data.forge_intent || '',
@@ -128,7 +128,7 @@ const KYWForm: React.FC = () => {
         emergency_contact_number: formData.emergency_contact_number || null,
         proficiency_writing: formData.proficiency_writing || null,
         proficiency_story_voice: formData.proficiency_story_voice || null,
-        top_3_writers_books: formData.top_3_writers_books ? formData.top_3_writers_books.split(',').map(c => c.trim()) : null,
+        top_3_writers_books: formData.top_3_writers_books.length > 0 ? formData.top_3_writers_books : null,
         chronotype: formData.chronotype || null,
         mbti_type: formData.mbti_type || null,
         forge_intent: formData.forge_intent || null,
@@ -171,7 +171,7 @@ const KYWForm: React.FC = () => {
         emergency_contact_number: formData.emergency_contact_number,
         proficiency_writing: formData.proficiency_writing,
         proficiency_story_voice: formData.proficiency_story_voice,
-        top_3_writers_books: formData.top_3_writers_books.split(',').map(c => c.trim()),
+        top_3_writers_books: formData.top_3_writers_books,
         chronotype: formData.chronotype,
         mbti_type: formData.mbti_type,
         forge_intent: formData.forge_intent,
@@ -196,7 +196,7 @@ const KYWForm: React.FC = () => {
       case 2: return !!(formData.date_of_birth && formData.primary_language);
       case 3: return formData.writing_types.length > 0 && !!(formData.emergency_contact_name && formData.emergency_contact_number);
       case 4: return !!(formData.proficiency_writing && formData.proficiency_story_voice);
-      case 5: return !!(formData.top_3_writers_books && formData.chronotype);
+      case 5: return !!(formData.top_3_writers_books.length > 0 && formData.chronotype);
       case 6: return !!formData.mbti_type;
       case 7: return !!(formData.forge_intent && (formData.forge_intent !== 'other' || formData.forge_intent_other));
       case 8: return formData.terms_accepted;
@@ -284,10 +284,12 @@ const KYWForm: React.FC = () => {
                 <Label>Emergency contact name *</Label>
                 <Input value={formData.emergency_contact_name} onChange={e => updateField('emergency_contact_name', e.target.value)} placeholder="e.g. Parent or Guardian name" className="h-11 bg-secondary/50" />
               </div>
-              <div className="space-y-2">
-                <Label>Emergency contact number *</Label>
-                <Input value={formData.emergency_contact_number} onChange={e => updateField('emergency_contact_number', e.target.value)} placeholder="e.g. +91 9876543210" className="h-11 bg-secondary/50" />
-              </div>
+              <PhoneInput
+                label="Emergency contact number"
+                value={formData.emergency_contact_number}
+                onChange={(value) => updateField('emergency_contact_number', value)}
+                required
+              />
             </div>
           </KYFormCard>
         );
@@ -306,10 +308,14 @@ const KYWForm: React.FC = () => {
         return (
           <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={5} stepTitle="Personality & Preferences">
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Your top 3 writers or books that inspire you? *</Label>
-                <Textarea value={formData.top_3_writers_books} onChange={e => updateField('top_3_writers_books', e.target.value)} placeholder="Separate with commas" className="bg-secondary/50" />
-              </div>
+              <TagInput
+                label="Your top 3 writers or books that inspire you?"
+                value={formData.top_3_writers_books}
+                onChange={(items) => updateField('top_3_writers_books', items)}
+                maxItems={3}
+                placeholder="Type a writer or book and press Enter..."
+                required
+              />
               <RadioSelectField label="You are" required options={[{value:'early_bird',label:'🌅 An Early bird'},{value:'night_owl',label:'🦉 A Night Owl'}]} value={formData.chronotype} onChange={v => updateField('chronotype', v)} columns={2} />
             </div>
           </KYFormCard>
@@ -362,87 +368,26 @@ const KYWForm: React.FC = () => {
         return (
           <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={8} stepTitle="Terms and Conditions">
             <div className="space-y-4">
-              <Collapsible open={termsExpanded} onOpenChange={setTermsExpanded}>
-                <div className="p-4 rounded-xl border border-border bg-secondary/30">
-                  <div className="flex items-start gap-3">
-                    <Checkbox id="terms" checked={formData.terms_accepted} onCheckedChange={(c) => updateField('terms_accepted', c === true)} className="mt-0.5" />
-                    <div className="flex-1">
-                      <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                        I agree to the{' '}
-                        <CollapsibleTrigger asChild>
-                          <button type="button" className="text-forge-gold underline hover:text-forge-yellow transition-colors inline-flex items-center gap-1">
-                            terms and conditions
-                            <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", termsExpanded && "rotate-180")} />
-                          </button>
-                        </CollapsibleTrigger>
-                        {' '}of the Forge program.
-                      </label>
-                    </div>
+              <div className="p-4 rounded-xl border border-border bg-secondary/30">
+                <div className="flex items-start gap-3">
+                  <Checkbox id="terms" checked={formData.terms_accepted} onCheckedChange={(c) => updateField('terms_accepted', c === true)} className="mt-0.5" />
+                  <div className="flex-1 space-y-2">
+                    <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                      I agree to the terms and conditions of the Forge program.
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setTermsModalOpen(true)}
+                      className="text-forge-gold underline hover:text-forge-yellow transition-colors text-sm inline-flex items-center gap-1"
+                    >
+                      Read terms
+                      <ExternalLink className="h-3 w-3" />
+                    </button>
                   </div>
                 </div>
-                
-                <CollapsibleContent className="mt-3">
-                  <ScrollArea className="h-[40vh] rounded-xl border border-border bg-secondary/20 p-4">
-                    <div className="space-y-4 text-sm text-muted-foreground pr-4">
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">1. Program Overview</h3>
-                        <p>The Forge is an immersive filmmaking/creator/writing program designed to provide participants with hands-on experience in their chosen discipline. By participating, you agree to abide by all program guidelines, schedules, and instructions provided by mentors and organizers.</p>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">2. Participant Responsibilities</h3>
-                        <ul className="list-disc pl-4 space-y-1">
-                          <li>Attend all scheduled sessions and activities punctually</li>
-                          <li>Treat fellow participants, mentors, and staff with respect</li>
-                          <li>Follow all safety guidelines and instructions</li>
-                          <li>Take responsibility for personal belongings</li>
-                          <li>Maintain professional conduct throughout the program</li>
-                        </ul>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">3. Content & Media Rights</h3>
-                        <p>By participating in the Forge, you grant us permission to use photographs, videos, and other media featuring your participation for promotional and educational purposes. All content created during the program may be used by The Forge for showcasing purposes.</p>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">4. Health & Safety</h3>
-                        <p>Participants must disclose any relevant health conditions or dietary requirements. The Forge team will make reasonable accommodations but cannot guarantee all special requirements can be met. Participants are responsible for any personal medication.</p>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">5. Cancellation & Refund Policy</h3>
-                        <p>Cancellation requests must be submitted in writing. Refunds are subject to the specific policy communicated at the time of registration. The Forge reserves the right to cancel or reschedule programs due to unforeseen circumstances.</p>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">6. Code of Conduct</h3>
-                        <p>Any behavior deemed inappropriate, disruptive, or harmful to other participants or the program may result in immediate dismissal without refund. This includes but is not limited to harassment, discrimination, or violation of safety protocols.</p>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">7. Liability</h3>
-                        <p>Participation in The Forge is at your own risk. The organizers are not liable for any personal injury, loss, or damage to property during the program. Participants are encouraged to obtain personal insurance coverage.</p>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">8. Privacy</h3>
-                        <p>Your personal information will be handled in accordance with our privacy policy. We collect information necessary for program administration and may share relevant details with mentors and partners for program delivery.</p>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">9. Changes to Terms</h3>
-                        <p>The Forge reserves the right to modify these terms at any time. Participants will be notified of significant changes. Continued participation constitutes acceptance of modified terms.</p>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">10. Agreement</h3>
-                        <p>By checking the acceptance box, you confirm that you have read, understood, and agree to all terms and conditions outlined above. You also confirm that all information provided in this form is accurate and complete.</p>
-                      </section>
-                    </div>
-                  </ScrollArea>
-                </CollapsibleContent>
-              </Collapsible>
+              </div>
+              
+              <TermsModal open={termsModalOpen} onOpenChange={setTermsModalOpen} />
             </div>
           </KYFormCard>
         );

@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, Loader2, Camera, Upload, Film, Pen, Users, CheckCircle2, MapPin, Calendar } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
+import { PhoneInput } from '@/components/onboarding/PhoneInput';
 import type { Database } from '@/integrations/supabase/types';
 
 type Edition = Database['public']['Tables']['editions']['Row'];
@@ -261,14 +262,11 @@ const ProfileSetup: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Your WhatsApp Number *</Label>
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="+91 12345 67890"
+            <PhoneInput
+              label="Your WhatsApp Number"
               value={formData.phone}
-              onChange={(e) => updateFormData('phone', e.target.value)}
-              className="h-12 bg-secondary/50"
+              onChange={(value) => updateFormData('phone', value)}
+              required
             />
           </div>
 

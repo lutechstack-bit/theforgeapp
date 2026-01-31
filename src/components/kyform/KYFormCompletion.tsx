@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Sparkles, User, Home, ArrowRight } from 'lucide-react';
+import { User, Home, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import forgeLogo from '@/assets/forge-logo.png';
 
 interface KYFormCompletionProps {
   cohortType?: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS';
@@ -124,9 +125,14 @@ export const KYFormCompletion: React.FC<KYFormCompletionProps> = ({
           showContent ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
         )}
       >
-        {/* Celebration icon */}
-        <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-6 animate-bounce-subtle">
-          <Sparkles className="h-10 w-10 text-primary" />
+        {/* Forge Logo */}
+        <div className="relative mx-auto w-20 h-20 mb-6">
+          <div className="absolute inset-0 bg-primary/30 rounded-2xl blur-xl animate-pulse" />
+          <img 
+            src={forgeLogo} 
+            alt="The Forge" 
+            className="relative w-full h-full object-contain drop-shadow-lg"
+          />
         </div>
 
         {/* Welcome message */}
@@ -143,15 +149,6 @@ export const KYFormCompletion: React.FC<KYFormCompletionProps> = ({
             We're excited to have you, <span className="text-foreground font-medium">{profile.full_name}</span>!
           </p>
         )}
-
-        {/* Quick stats card */}
-        <div className="glass-card rounded-2xl p-4 mb-8">
-          <p className="text-sm text-muted-foreground mb-2">Your profile is now complete</p>
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-sm font-medium text-foreground">Form Submitted Successfully</span>
-          </div>
-        </div>
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-3">
