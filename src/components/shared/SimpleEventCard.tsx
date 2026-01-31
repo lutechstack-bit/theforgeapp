@@ -22,7 +22,7 @@ export const SimpleEventCard: React.FC<SimpleEventCardProps> = ({
         'relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer',
         'min-w-[180px] sm:min-w-[200px] md:min-w-[220px]',
         'hover-gold-glow tap-scale transition-transform duration-300',
-        'bg-muted',
+        'bg-black/40',
         className
       )}
       onClick={onClick}
@@ -31,7 +31,7 @@ export const SimpleEventCard: React.FC<SimpleEventCardProps> = ({
         <img
           src={imageUrl}
           alt={title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
         />
       ) : (
         <div className="w-full h-full bg-gradient-to-br from-muted to-muted-foreground/20 flex items-center justify-center">
