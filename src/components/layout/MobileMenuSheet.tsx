@@ -10,10 +10,12 @@ import {
   Settings, 
   LogOut,
   ChevronRight,
-  X
+  X,
+  Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { SheetContent, SheetClose, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +37,7 @@ interface MobileMenuSheetProps {
 export const MobileMenuSheet: React.FC<MobileMenuSheetProps> = ({ onClose }) => {
   const { profile, edition, signOut } = useAuth();
   const navigate = useNavigate();
+  const { isAdmin } = useAdminCheck();
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there';
   const initials = profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U';
@@ -136,6 +139,39 @@ export const MobileMenuSheet: React.FC<MobileMenuSheetProps> = ({ onClose }) => 
               )}
             </NavLink>
           ))}
+
+          {/* Admin Link - Only visible to admins */}
+          {isAdmin && (
+            <NavLink
+              to="/admin"
+              onClick={onClose}
+              className={({ isActive }) => cn(
+                "flex items-center justify-between w-full px-4 py-3.5 rounded-xl transition-all duration-200",
+                isActive 
+                  ? "bg-primary/10 text-primary" 
+                  : "text-foreground hover:bg-muted/50"
+              )}
+            >
+              {({ isActive }) => (
+                <>
+                  <span className="flex items-center gap-3.5">
+                    <Shield className={cn(
+                      "h-5 w-5",
+                      isActive ? "text-primary" : "text-muted-foreground"
+                    )} />
+                    <span className={cn(
+                      "text-[15px]",
+                      isActive && "font-medium"
+                    )}>Admin Panel</span>
+                  </span>
+                  <ChevronRight className={cn(
+                    "h-4 w-4",
+                    isActive ? "text-primary" : "text-muted-foreground/50"
+                  )} />
+                </>
+              )}
+            </NavLink>
+          )}
         </div>
       </nav>
 
