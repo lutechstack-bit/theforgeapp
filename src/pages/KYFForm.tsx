@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { KYFormProgressBar } from '@/components/kyform/KYFormProgressBar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { KYFormCard } from '@/components/kyform/KYFormCard';
 import { KYFormCardStack } from '@/components/kyform/KYFormCardStack';
 import { KYFormCompletion } from '@/components/kyform/KYFormCompletion';
@@ -16,8 +16,9 @@ import { RadioSelectField } from '@/components/onboarding/RadioSelectField';
 import { MultiSelectField } from '@/components/onboarding/MultiSelectField';
 import { ProficiencyField } from '@/components/onboarding/ProficiencyField';
 import { PhotoUploadField } from '@/components/onboarding/PhotoUploadField';
-import { TermsModal } from '@/components/onboarding/TermsModal';
-import { ChevronLeft, ChevronRight, Loader2, ExternalLink } from 'lucide-react';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { ChevronLeft, ChevronRight, Loader2, ExternalLink, Clock, ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +31,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const STEP_TITLES = [
+  'Introduction',
   'General Details',
   'Personal Details', 
   'Preferences & Emergency',
@@ -99,11 +101,23 @@ const INTENT_OPTIONS = [
 
 const LANGUAGES = ['English', 'Hindi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada'];
 
+// Calculate age from date of birth
+const calculateAge = (dateOfBirth: string): number | null => {
+  if (!dateOfBirth) return null;
+  const today = new Date();
+  const birthDate = new Date(dateOfBirth);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
+
 interface FormData {
   certificate_name: string;
   current_occupation: string;
   instagram_id: string;
-  age: string;
   date_of_birth: string;
   address_line_1: string;
   address_line_2: string;
@@ -140,13 +154,12 @@ const KYFForm: React.FC = () => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
-  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsExpanded, setTermsExpanded] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     certificate_name: '',
     current_occupation: '',
     instagram_id: '',
-    age: '',
     date_of_birth: '',
     address_line_1: '',
     address_line_2: '',
@@ -199,7 +212,6 @@ const KYFForm: React.FC = () => {
           certificate_name: data.certificate_name || '',
           current_occupation: data.current_occupation || '',
           instagram_id: data.instagram_id || '',
-          age: data.age?.toString() || '',
           date_of_birth: data.date_of_birth || '',
           address_line_1: data.address_line_1 || '',
           address_line_2: data.address_line_2 || '',
@@ -240,6 +252,7 @@ const KYFForm: React.FC = () => {
   // Save progress function
   const saveProgress = async () => {
     if (!user) return;
+    const calculatedAge = calculateAge(formData.date_of_birth);
 
     try {
       await supabase.from('kyf_responses').upsert({
@@ -247,7 +260,7 @@ const KYFForm: React.FC = () => {
         certificate_name: formData.certificate_name || null,
         current_occupation: formData.current_occupation || null,
         instagram_id: formData.instagram_id || null,
-        age: formData.age ? parseInt(formData.age) : null,
+        age: calculatedAge,
         date_of_birth: formData.date_of_birth || null,
         address_line_1: formData.address_line_1 || null,
         address_line_2: formData.address_line_2 || null,
@@ -297,6 +310,7 @@ const KYFForm: React.FC = () => {
   const handleSubmit = async () => {
     if (!user) return;
     setLoading(true);
+    const calculatedAge = calculateAge(formData.date_of_birth);
 
     try {
       const { error: kyfError } = await supabase.from('kyf_responses').upsert({
@@ -304,7 +318,7 @@ const KYFForm: React.FC = () => {
         certificate_name: formData.certificate_name,
         current_occupation: formData.current_occupation,
         instagram_id: formData.instagram_id,
-        age: formData.age ? parseInt(formData.age) : null,
+        age: calculatedAge,
         date_of_birth: formData.date_of_birth || null,
         address_line_1: formData.address_line_1,
         address_line_2: formData.address_line_2,
@@ -358,15 +372,16 @@ const KYFForm: React.FC = () => {
 
   const canProceed = (): boolean => {
     switch (step) {
-      case 0: return !!(formData.certificate_name && formData.current_occupation && formData.instagram_id);
-      case 1: return !!(formData.age && formData.date_of_birth && formData.address_line_1 && formData.state && formData.pincode);
-      case 2: return !!(formData.gender && formData.tshirt_size && formData.has_editing_laptop && formData.emergency_contact_name && formData.emergency_contact_number);
-      case 3: return true;
-      case 4: return !!(formData.top_3_movies && formData.chronotype && formData.meal_preference && formData.food_allergies && formData.medication_support);
-      case 5: return formData.languages_known.length > 0 && !!formData.height_ft;
-      case 6: return !!(formData.photo_favorite_url && formData.headshot_front_url && formData.full_body_url);
-      case 7: return !!(formData.mbti_type && formData.forge_intent && (formData.forge_intent !== 'other' || formData.forge_intent_other));
-      case 8: return formData.terms_accepted;
+      case 0: return true; // Intro step - always valid
+      case 1: return !!(formData.certificate_name && formData.current_occupation && formData.instagram_id);
+      case 2: return !!(formData.date_of_birth && formData.address_line_1 && formData.state && formData.pincode);
+      case 3: return !!(formData.gender && formData.tshirt_size && formData.has_editing_laptop && formData.emergency_contact_name && formData.emergency_contact_number);
+      case 4: return true; // Proficiency optional
+      case 5: return !!(formData.top_3_movies && formData.chronotype && formData.meal_preference && formData.food_allergies && formData.medication_support);
+      case 6: return formData.languages_known.length > 0 && !!formData.height_ft;
+      case 7: return !!(formData.photo_favorite_url && formData.headshot_front_url && formData.full_body_url);
+      case 8: return !!(formData.mbti_type && formData.forge_intent && (formData.forge_intent !== 'other' || formData.forge_intent_other));
+      case 9: return formData.terms_accepted;
       default: return false;
     }
   };
@@ -380,7 +395,7 @@ const KYFForm: React.FC = () => {
   };
 
   const handleNext = async () => {
-    await saveProgress();
+    if (step > 0) await saveProgress();
     setStep(s => s + 1);
   };
 
@@ -389,16 +404,41 @@ const KYFForm: React.FC = () => {
     return <KYFormCompletion cohortType="FORGE" />;
   }
 
+  const calculatedAge = calculateAge(formData.date_of_birth);
+
   const renderStepContent = (stepIndex: number) => {
     switch (stepIndex) {
       case 0:
+        return (
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} stepTitle="Know Your Filmmaker">
+            <div className="space-y-6">
+              <p className="text-muted-foreground">
+                This provides basic information about yourself that we at Forge 
+                can use to ensure the best experience during Forge.
+              </p>
+              
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>Please ensure that you have about 5-10 mins to fill this form</span>
+              </div>
+              
+              <div className="p-4 rounded-xl bg-forge-orange/10 border border-forge-orange/30">
+                <p className="text-sm text-forge-orange font-medium">
+                  You will need to complete this form to access the Forge app
+                </p>
+              </div>
+            </div>
+          </KYFormCard>
+        );
+
+      case 1:
         return (
           <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={1} stepTitle="General Details">
             <p className="text-sm text-muted-foreground mb-5">Let's start with the basics</p>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Full name (as you want it on your certificate) *</Label>
-                <Input value={formData.certificate_name} onChange={e => updateField('certificate_name', e.target.value)} className="h-11 bg-secondary/50" />
+                <Input value={formData.certificate_name} onChange={e => updateField('certificate_name', e.target.value)} placeholder="e.g. Arjun Sharma" className="h-11 bg-secondary/50" />
               </div>
               <div className="space-y-2">
                 <Label>What are you currently doing? *</Label>
@@ -412,43 +452,45 @@ const KYFForm: React.FC = () => {
           </KYFormCard>
         );
 
-      case 1:
+      case 2:
         return (
           <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={2} stepTitle="Personal Details">
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label>Your Age *</Label>
-                  <Input type="number" value={formData.age} onChange={e => updateField('age', e.target.value)} className="h-11 bg-secondary/50" />
-                </div>
-                <div className="space-y-2">
                   <Label>Date of Birth *</Label>
                   <Input type="date" value={formData.date_of_birth} onChange={e => updateField('date_of_birth', e.target.value)} className="h-11 bg-secondary/50" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Age</Label>
+                  <div className="h-11 px-3 rounded-md border border-input bg-secondary/30 flex items-center text-muted-foreground">
+                    {calculatedAge !== null ? `${calculatedAge} years` : '—'}
+                  </div>
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Address Line 1 *</Label>
-                <Input value={formData.address_line_1} onChange={e => updateField('address_line_1', e.target.value)} className="h-11 bg-secondary/50" />
+                <Input value={formData.address_line_1} onChange={e => updateField('address_line_1', e.target.value)} placeholder="e.g. 123, Main Street" className="h-11 bg-secondary/50" />
               </div>
               <div className="space-y-2">
                 <Label>Address Line 2</Label>
-                <Input value={formData.address_line_2} onChange={e => updateField('address_line_2', e.target.value)} className="h-11 bg-secondary/50" />
+                <Input value={formData.address_line_2} onChange={e => updateField('address_line_2', e.target.value)} placeholder="e.g. Apt 4B, Near Park" className="h-11 bg-secondary/50" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>State *</Label>
-                  <Input value={formData.state} onChange={e => updateField('state', e.target.value)} className="h-11 bg-secondary/50" />
+                  <Input value={formData.state} onChange={e => updateField('state', e.target.value)} placeholder="e.g. Karnataka" className="h-11 bg-secondary/50" />
                 </div>
                 <div className="space-y-2">
                   <Label>Pincode *</Label>
-                  <Input value={formData.pincode} onChange={e => updateField('pincode', e.target.value)} className="h-11 bg-secondary/50" />
+                  <Input value={formData.pincode} onChange={e => updateField('pincode', e.target.value)} placeholder="e.g. 560001" className="h-11 bg-secondary/50" />
                 </div>
               </div>
             </div>
           </KYFormCard>
         );
 
-      case 2:
+      case 3:
         return (
           <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={3} stepTitle="Preferences & Emergency">
             <div className="space-y-4">
@@ -460,17 +502,17 @@ const KYFForm: React.FC = () => {
               <RadioSelectField label="Do you have a laptop that supports video editing?" required options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} value={formData.has_editing_laptop} onChange={v => updateField('has_editing_laptop', v)} columns={2} />
               <div className="space-y-2">
                 <Label>Emergency contact name *</Label>
-                <Input value={formData.emergency_contact_name} onChange={e => updateField('emergency_contact_name', e.target.value)} className="h-11 bg-secondary/50" />
+                <Input value={formData.emergency_contact_name} onChange={e => updateField('emergency_contact_name', e.target.value)} placeholder="e.g. Parent or Guardian name" className="h-11 bg-secondary/50" />
               </div>
               <div className="space-y-2">
                 <Label>Emergency contact number *</Label>
-                <Input value={formData.emergency_contact_number} onChange={e => updateField('emergency_contact_number', e.target.value)} className="h-11 bg-secondary/50" />
+                <Input value={formData.emergency_contact_number} onChange={e => updateField('emergency_contact_number', e.target.value)} placeholder="e.g. +91 9876543210" className="h-11 bg-secondary/50" />
               </div>
             </div>
           </KYFormCard>
         );
 
-      case 3:
+      case 4:
         return (
           <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={4} stepTitle="Proficiency Level">
             <p className="text-sm text-muted-foreground mb-4">Help us understand your experience (optional)</p>
@@ -483,7 +525,7 @@ const KYFForm: React.FC = () => {
           </KYFormCard>
         );
 
-      case 4:
+      case 5:
         return (
           <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={5} stepTitle="Personality & Preferences">
             <div className="space-y-4">
@@ -499,26 +541,41 @@ const KYFForm: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <Label>Do you require any medication support? *</Label>
-                <Textarea value={formData.medication_support} onChange={e => updateField('medication_support', e.target.value)} className="bg-secondary/50" />
-              </div>
-            </div>
-          </KYFormCard>
-        );
-
-      case 5:
-        return (
-          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={6} stepTitle="Casting Call">
-            <div className="space-y-4">
-              <MultiSelectField label="What languages do you know?" required options={LANGUAGES} value={formData.languages_known} onChange={v => updateField('languages_known', v)} />
-              <div className="space-y-2">
-                <Label>Your Height (in ft) *</Label>
-                <Input value={formData.height_ft} onChange={e => updateField('height_ft', e.target.value)} placeholder="e.g. 5'8" className="h-11 bg-secondary/50" />
+                <Textarea value={formData.medication_support} onChange={e => updateField('medication_support', e.target.value)} placeholder="Please let us know" className="bg-secondary/50" />
               </div>
             </div>
           </KYFormCard>
         );
 
       case 6:
+        return (
+          <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={6} stepTitle="Casting Call">
+            <p className="text-sm text-muted-foreground mb-4">
+              At Forge we will be dividing the cohort into groups to cast all of you as actors in other's short films. 
+              We will need a bit of information to make a casting sheet. Experience how it is on the other side of the camera now.
+            </p>
+            <div className="space-y-4">
+              <MultiSelectField label="What languages do you know?" required options={LANGUAGES} value={formData.languages_known} onChange={v => updateField('languages_known', v)} />
+              <div className="space-y-2">
+                <Label>Your Height (in ft) *</Label>
+                <Input 
+                  value={formData.height_ft} 
+                  onChange={e => {
+                    const value = e.target.value;
+                    if (value === '' || (parseFloat(value) <= 10)) {
+                      updateField('height_ft', value);
+                    }
+                  }} 
+                  placeholder="e.g. 5'8" 
+                  className="h-11 bg-secondary/50" 
+                />
+                <p className="text-xs text-muted-foreground">Maximum: 10 ft</p>
+              </div>
+            </div>
+          </KYFormCard>
+        );
+
+      case 7:
         return (
           <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={7} stepTitle="Your Pictures">
             <div className="grid grid-cols-2 gap-3">
@@ -531,7 +588,7 @@ const KYFForm: React.FC = () => {
           </KYFormCard>
         );
 
-      case 7:
+      case 8:
         return (
           <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={8} stepTitle="Understanding You">
             <p className="text-sm text-muted-foreground mb-4">To assign you to compatible groups</p>
@@ -540,6 +597,15 @@ const KYFForm: React.FC = () => {
                 <ExternalLink className="h-5 w-5 text-forge-gold" />
                 <span className="text-forge-gold font-medium">Take the personality test</span>
               </a>
+              
+              <div className="p-3 rounded-lg bg-secondary/50 border border-border">
+                <p className="text-xs font-medium text-muted-foreground mb-1">What is the personality test?</p>
+                <p className="text-xs text-muted-foreground/80">
+                  This 16 personalities test combines Myers-Briggs Type Indicator (MBTI) concepts 
+                  with Big Five personality traits to classify individuals into 16 distinct types.
+                </p>
+              </div>
+              
               <div className="space-y-2">
                 <Label>Your MBTI Result *</Label>
                 <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
@@ -554,27 +620,98 @@ const KYFForm: React.FC = () => {
               {formData.forge_intent === 'other' && (
                 <div className="space-y-2">
                   <Label>If Other, what?</Label>
-                  <Input value={formData.forge_intent_other} onChange={e => updateField('forge_intent_other', e.target.value)} className="h-11 bg-secondary/50" />
+                  <Input value={formData.forge_intent_other} onChange={e => updateField('forge_intent_other', e.target.value)} placeholder="Please describe your intent" className="h-11 bg-secondary/50" />
                 </div>
               )}
             </div>
           </KYFormCard>
         );
 
-      case 8:
+      case 9:
         return (
           <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={9} stepTitle="Terms and Conditions">
-            <div className="p-4 rounded-xl border border-border bg-secondary/30">
-              <div className="flex items-start gap-3">
-                <Checkbox id="terms" checked={formData.terms_accepted} onCheckedChange={(checked) => updateField('terms_accepted', checked === true)} className="mt-0.5" />
-                <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                  I agree to the{' '}
-                  <button type="button" onClick={() => setShowTermsModal(true)} className="text-forge-gold underline hover:text-forge-yellow transition-colors">
-                    terms and conditions
-                  </button>{' '}
-                  of the Forge program.
-                </label>
-              </div>
+            <div className="space-y-4">
+              <Collapsible open={termsExpanded} onOpenChange={setTermsExpanded}>
+                <div className="p-4 rounded-xl border border-border bg-secondary/30">
+                  <div className="flex items-start gap-3">
+                    <Checkbox id="terms" checked={formData.terms_accepted} onCheckedChange={(checked) => updateField('terms_accepted', checked === true)} className="mt-0.5" />
+                    <div className="flex-1">
+                      <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                        I agree to the{' '}
+                        <CollapsibleTrigger asChild>
+                          <button type="button" className="text-forge-gold underline hover:text-forge-yellow transition-colors inline-flex items-center gap-1">
+                            terms and conditions
+                            <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", termsExpanded && "rotate-180")} />
+                          </button>
+                        </CollapsibleTrigger>
+                        {' '}of the Forge program.
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                
+                <CollapsibleContent className="mt-3">
+                  <ScrollArea className="h-[40vh] rounded-xl border border-border bg-secondary/20 p-4">
+                    <div className="space-y-4 text-sm text-muted-foreground pr-4">
+                      <section>
+                        <h3 className="text-sm font-semibold text-foreground mb-2">1. Program Overview</h3>
+                        <p>The Forge is an immersive filmmaking/creator/writing program designed to provide participants with hands-on experience in their chosen discipline. By participating, you agree to abide by all program guidelines, schedules, and instructions provided by mentors and organizers.</p>
+                      </section>
+                      
+                      <section>
+                        <h3 className="text-sm font-semibold text-foreground mb-2">2. Participant Responsibilities</h3>
+                        <ul className="list-disc pl-4 space-y-1">
+                          <li>Attend all scheduled sessions and activities punctually</li>
+                          <li>Treat fellow participants, mentors, and staff with respect</li>
+                          <li>Follow all safety guidelines and instructions</li>
+                          <li>Take responsibility for personal belongings</li>
+                          <li>Maintain professional conduct throughout the program</li>
+                        </ul>
+                      </section>
+                      
+                      <section>
+                        <h3 className="text-sm font-semibold text-foreground mb-2">3. Content & Media Rights</h3>
+                        <p>By participating in the Forge, you grant us permission to use photographs, videos, and other media featuring your participation for promotional and educational purposes. All content created during the program may be used by The Forge for showcasing purposes.</p>
+                      </section>
+                      
+                      <section>
+                        <h3 className="text-sm font-semibold text-foreground mb-2">4. Health & Safety</h3>
+                        <p>Participants must disclose any relevant health conditions or dietary requirements. The Forge team will make reasonable accommodations but cannot guarantee all special requirements can be met. Participants are responsible for any personal medication.</p>
+                      </section>
+                      
+                      <section>
+                        <h3 className="text-sm font-semibold text-foreground mb-2">5. Cancellation & Refund Policy</h3>
+                        <p>Cancellation requests must be submitted in writing. Refunds are subject to the specific policy communicated at the time of registration. The Forge reserves the right to cancel or reschedule programs due to unforeseen circumstances.</p>
+                      </section>
+                      
+                      <section>
+                        <h3 className="text-sm font-semibold text-foreground mb-2">6. Code of Conduct</h3>
+                        <p>Any behavior deemed inappropriate, disruptive, or harmful to other participants or the program may result in immediate dismissal without refund. This includes but is not limited to harassment, discrimination, or violation of safety protocols.</p>
+                      </section>
+                      
+                      <section>
+                        <h3 className="text-sm font-semibold text-foreground mb-2">7. Liability</h3>
+                        <p>Participation in The Forge is at your own risk. The organizers are not liable for any personal injury, loss, or damage to property during the program. Participants are encouraged to obtain personal insurance coverage.</p>
+                      </section>
+                      
+                      <section>
+                        <h3 className="text-sm font-semibold text-foreground mb-2">8. Privacy</h3>
+                        <p>Your personal information will be handled in accordance with our privacy policy. We collect information necessary for program administration and may share relevant details with mentors and partners for program delivery.</p>
+                      </section>
+                      
+                      <section>
+                        <h3 className="text-sm font-semibold text-foreground mb-2">9. Changes to Terms</h3>
+                        <p>The Forge reserves the right to modify these terms at any time. Participants will be notified of significant changes. Continued participation constitutes acceptance of modified terms.</p>
+                      </section>
+                      
+                      <section>
+                        <h3 className="text-sm font-semibold text-foreground mb-2">10. Agreement</h3>
+                        <p>By checking the acceptance box, you confirm that you have read, understood, and agree to all terms and conditions outlined above. You also confirm that all information provided in this form is accurate and complete.</p>
+                      </section>
+                    </div>
+                  </ScrollArea>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </KYFormCard>
         );
@@ -620,7 +757,7 @@ const KYFForm: React.FC = () => {
               disabled={!canProceed()} 
               className="bg-foreground text-background rounded-full px-8 hover:bg-foreground/90 font-semibold shadow-lg"
             >
-              Next
+              {step === 0 ? 'Get Started' : 'Next'}
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           ) : (
@@ -648,9 +785,6 @@ const KYFForm: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Terms modal */}
-      <TermsModal open={showTermsModal} onOpenChange={setShowTermsModal} />
     </div>
   );
 };
