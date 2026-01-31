@@ -28,7 +28,7 @@ import AllCourses from "./pages/AllCourses";
 import CourseDetail from "./pages/CourseDetail";
 import Events from "./pages/Events";
 import RoadmapLayout from "./components/roadmap/RoadmapLayout";
-import { RoadmapJourney, RoadmapPrep, RoadmapEquipment, RoadmapRules, RoadmapGallery, RoadmapFilms } from "./pages/roadmap";
+import { RoadmapJourney, RoadmapTasks, RoadmapPrep, RoadmapEquipment, RoadmapRules, RoadmapGallery, RoadmapFilms } from "./pages/roadmap";
 import Perks from "./pages/Perks";
 import Updates from "./pages/Updates";
 import Profile from "./pages/Profile";
@@ -233,6 +233,7 @@ const AppRoutes = () => {
         <Route path="/events/:id" element={<EventDetail />} />
         <Route path="/roadmap" element={<RoadmapLayout />}>
           <Route index element={<RoadmapJourney />} />
+          <Route path="tasks" element={<RoadmapTasks />} />
           <Route path="prep" element={<RoadmapPrep />} />
           <Route path="equipment" element={<RoadmapEquipment />} />
           <Route path="rules" element={<RoadmapRules />} />

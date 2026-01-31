@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Map, FileText, Package, Film, Image, BookOpen
+  Map, FileText, Package, Film, Image, BookOpen, CheckSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +21,7 @@ const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
 
   const sections = [
     { id: 'journey', path: '/roadmap', label: 'Journey', icon: Map },
+    { id: 'tasks', path: '/roadmap/tasks', label: 'Tasks', icon: CheckSquare },
     { id: 'prep', path: '/roadmap/prep', label: 'Prep', icon: FileText },
     ...(hasEquipment ? [{ id: 'equipment', path: '/roadmap/equipment', label: 'Equipment', icon: Package }] : []),
     { id: 'rules', path: '/roadmap/rules', label: 'Rules', icon: BookOpen },

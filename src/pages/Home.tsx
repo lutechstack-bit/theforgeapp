@@ -10,7 +10,7 @@ import { FlipMentorCard } from '@/components/shared/FlipMentorCard';
 import { MentorDetailModal } from '@/components/shared/MentorDetailModal';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
-import { JourneyBentoHero } from '@/components/journey';
+import HomeJourneySection from '@/components/home/HomeJourneySection';
 import { RoadmapBentoBox } from '@/components/home/RoadmapBentoBox';
 import { Users } from 'lucide-react';
 import { Mentor } from '@/data/mentorsData';
@@ -142,8 +142,8 @@ const Home: React.FC = () => {
       {/* Compact Countdown Timer - Gold themed strip at top */}
       <CompactCountdownTimer edition={edition} />
 
-      {/* Journey Bento Hero - 6-stage student journey */}
-      <JourneyBentoHero />
+      {/* Journey Timeline - Embedded from Roadmap */}
+      <HomeJourneySection />
 
       {/* Meet Your Mentors - Moved up after hero */}
       {mentors && mentors.length > 0 && (
