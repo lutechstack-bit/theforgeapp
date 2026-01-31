@@ -1,57 +1,110 @@
 
-Goal
-- Stop carousel cards from visually “bleeding” into the section subtitle/header area (and into the next section) on both mobile and desktop.
 
-What’s happening (root cause)
-- The shared carousel implementation (`src/components/ui/carousel.tsx`) applies `py-4 -my-4` on the inner flex container.
-- The negative vertical margin (`-my-4`) effectively pulls the carousel content upward and downward by 16px each, which can:
-  - Remove the intended gap between the section subtitle and the cards (so the cards look like they overlap/overflow into the text).
-  - Reduce spacing between stacked sections (so the next section header can sit too close to the previous carousel).
-- We already removed “duplicate” classes in the Learn page components, but the base component still has `-my-4`, so the issue can still remain.
+# Capitalize "Forge" and Sharpen Section Title Font
 
-Fix approach (safe + consistent for mobile + web)
-- Update the base CarouselContent styling to remove negative vertical margins entirely.
-- Keep overflow visible (so the gold glow is not clipped), but stop using negative margins that cause layout overlap.
+## Summary
+Fix the subtitle text "Fundamental learning for forge and beyond" to properly capitalize "Forge" and use a bolder font weight from the OpenSauceOne family for sharper, more premium typography on both mobile and web.
 
-Implementation steps
-1) Update the shared carousel component
-   - File: `src/components/ui/carousel.tsx`
-   - Change CarouselContent’s inner container classes:
-     - From:
-       - `className={cn("flex py-4 -my-4", ...)}`
-     - To:
-       - `className={cn("flex py-4", ...)}`
-   - Also remove the vertical-orientation negative margin for consistency:
-     - From:
-       - `orientation === "horizontal" ? "-ml-4" : "-mt-4 flex-col"`
-     - To:
-       - `orientation === "horizontal" ? "-ml-4" : "flex-col"`
-   - Keep:
-     - `overflow-x-auto overflow-y-visible scrollbar-hide` so hover glows remain visible.
+---
 
-2) Verify the Learn page layout (mobile + desktop)
-   - Route: Learn page (where “Pre Forge Sessions” and “More from LevelUp” sections are)
-   - Confirm:
-     - The subtitle text above each carousel no longer gets visually collided with by the cards.
-     - The gap between the first carousel and the “More from LevelUp” header looks clean.
-     - Continue Watching section (if present) also has correct spacing.
+## Current State
 
-3) Regression check (hover + arrows)
-   - Hover on cards (desktop) to confirm:
-     - Gold glow still shows without being clipped.
-     - Glow does not overlap the subtitle text anymore (because we now keep real vertical spacing).
-   - On mobile:
-     - Swipe scroll still works smoothly.
-     - Arrow buttons (when shown) remain centered and not floating into headers.
+**Text Issue:**
+- Currently: "Fundamental learning for forge and beyond"
+- Should be: "Fundamental learning for Forge and beyond"
 
-Why this fixes both mobile and web
-- The overlap is caused by a layout calculation (negative margins), not a breakpoint-specific CSS issue.
-- Removing the negative margins makes spacing consistent across all viewport sizes.
+**Font Weight:**
+- The `ContentCarousel` title uses `font-semibold` (weight 600)
+- The Learn page subtitle uses default text (no explicit weight)
+- Available OpenSauceOne weights: Light (300), Regular (400), Medium (500), SemiBold (600), Bold (700), ExtraBold (800), Black (900)
 
-Files touched
-- `src/components/ui/carousel.tsx` (primary fix)
+---
 
-Acceptance criteria
-- No carousel cards overlap/cover the section subtitle/header on Learn.
-- No carousel area crowds into the next section header.
-- Hover glow remains visible and premium-looking.
+## Changes Required
+
+### 1. Fix Capitalization - `src/pages/Home.tsx` (line 203)
+
+```tsx
+// Current
+<ContentCarousel title="Fundamental learning for forge and beyond" ...>
+
+// Fixed
+<ContentCarousel title="Fundamental learning for Forge and beyond" ...>
+```
+
+### 2. Fix Capitalization - `src/pages/Learn.tsx` (line 226)
+
+```tsx
+// Current
+'Filmmaking fundamentals: For forge and Beyond',
+
+// Fixed  
+'Filmmaking fundamentals: For Forge and Beyond',
+```
+
+### 3. Sharpen Section Title Font - `src/components/shared/ContentCarousel.tsx` (line 53)
+
+Change from `font-semibold` to `font-bold` for a sharper look:
+
+```tsx
+// Current
+<h3 className="text-lg font-semibold text-foreground">{title}</h3>
+
+// Updated - bolder weight for sharper text
+<h3 className="text-lg font-bold text-foreground">{title}</h3>
+```
+
+### 4. Sharpen Learn Page Section Titles - `src/pages/Learn.tsx` (line 124)
+
+The section titles in Learn already use `font-bold`, but subtitles could benefit from `font-medium` for better hierarchy:
+
+```tsx
+// Current
+<p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+
+// Updated - medium weight for sharper subtitle
+<p className="text-sm font-medium text-muted-foreground mt-0.5">{subtitle}</p>
+```
+
+---
+
+## Font Weight Reference (OpenSauceOne Family)
+
+| Weight Class | CSS Value | Use Case |
+|--------------|-----------|----------|
+| `font-light` | 300 | Subtle labels |
+| `font-normal` | 400 | Body text |
+| `font-medium` | 500 | Subtitles, secondary headers |
+| `font-semibold` | 600 | Current section titles |
+| `font-bold` | 700 | Primary section titles (recommended) |
+| `font-extrabold` | 800 | Hero headlines |
+| `font-black` | 900 | Maximum impact |
+
+---
+
+## Files to Modify
+
+| File | Change |
+|------|--------|
+| `src/pages/Home.tsx` | Capitalize "Forge" in ContentCarousel title |
+| `src/pages/Learn.tsx` | Capitalize "Forge" in subtitle + add `font-medium` to subtitles |
+| `src/components/shared/ContentCarousel.tsx` | Change title from `font-semibold` to `font-bold` |
+
+---
+
+## Visual Result
+
+**Before:**
+```text
+Fundamental learning for forge and beyond
+(font-semibold, lowercase "forge")
+```
+
+**After:**
+```text
+Fundamental learning for Forge and beyond
+(font-bold, capitalized "Forge" - sharper and more premium)
+```
+
+This applies consistently to both mobile and web views since font weights are responsive by default.
+
