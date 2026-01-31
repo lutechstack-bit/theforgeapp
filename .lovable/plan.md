@@ -1,205 +1,210 @@
 
-# Fix Roadmap Progress Calculation Bug
+# Add Floating Highlights Button to Home + Reorganize Admin Navigation
 
-## Problem Summary
+## Overview
 
-The roadmap is showing **86% (6/7 days) complete** when the Forge starts in 8 days because:
-
-1. **Fallback data has wrong dates**: When the user's edition has no `roadmap_days`, the system finds days from another edition with hardcoded dates from 2025
-2. **Date preservation bug**: The code preserves `day.date` if it exists, even when it's from a different edition
-3. **Wrong status calculation**: Since `2025-02-15 < 2026-01-31` (today), those days show as "completed"
-
-### Database Evidence
-
-**User's Edition:**
-- "Forge Filmmaking - Edition 14" with `forge_start_date: 2026-02-07`
-- Has **zero** roadmap_days entries
-
-**Fallback Edition Used:**
-- "Forge Filmmaking - Goa Feb 2025" with hardcoded dates like `2025-02-15`, `2025-02-16`...
-- These dates are in the past relative to today
+This plan addresses three requests:
+1. **Keep Stay Locations admin inside Roadmap Sidebar** - Move it from separate nav to be grouped under Roadmap Sidebar
+2. **Add floating highlights button to Home screen (mobile)** - Same FAB that exists on Roadmap
+3. **Add Roadmap Sidebar (highlights) to Home screen (desktop/web view)** - Show the full sidebar panel
+4. **Remove "Forge Highlights" heading from RoadmapBentoBox** - This bento box is being replaced with the actual sidebar
 
 ---
 
-## Solution
+## Part 1: Home Screen - Mobile Floating Button
 
-### Part 1: Fix Date Calculation in `useRoadmapData.ts`
+Add the same `FloatingHighlightsButton` component that exists on the Roadmap page to the Home page.
 
-**Current Logic (BROKEN):**
-```typescript
-// Only calculates date if day.date is null
-if (day.date) {
-  return day; // KEEPS wrong 2025 dates from fallback edition!
-}
+**File:** `src/pages/Home.tsx`
+
+**Changes:**
+- Import `FloatingHighlightsButton` from roadmap components
+- Get `profile` from `useAuth()` to access `edition_id`
+- Add `FloatingHighlightsButton` at the end of the component with `editionId` prop
+- The button is already set to `lg:hidden` so it only shows on mobile/tablet
+
+```tsx
+import FloatingHighlightsButton from '@/components/roadmap/FloatingHighlightsButton';
+
+// Inside the component:
+<FloatingHighlightsButton editionId={profile?.edition_id} />
 ```
 
-**New Logic:**
-```typescript
-// Always recalculate dates based on user's forge_start_date for physical days
-// Only keep day.date for online sessions (day_number < 0) from user's OWN edition
-const shouldKeepOriginalDate = 
-  day.date && 
-  day.edition_id === profile?.edition_id && 
-  day.day_number < 0; // Online sessions with fixed meeting times
+---
 
-if (shouldKeepOriginalDate) {
-  return day;
-}
+## Part 2: Home Screen - Desktop Sidebar Panel
 
-// Calculate date for all other days based on user's forge_start_date
+Add the `RoadmapSidebar` to the home page for desktop users (lg: breakpoint and above).
+
+**File:** `src/pages/Home.tsx`
+
+**Changes:**
+- Import `RoadmapSidebar` from roadmap components
+- Restructure the layout to a grid with main content + sidebar panel on desktop
+- Desktop layout: `grid-cols-[1fr_280px]` for main content + sidebar
+- Mobile layout: single column (sidebar hidden, FAB accessible)
+
+**New Layout Structure:**
+```text
+Desktop (lg:):
+┌─────────────────────────────────────┬──────────────┐
+│  Main Content                       │  Sidebar     │
+│  - Countdown                        │  - Moments   │
+│  - Journey Timeline                 │  - Student   │
+│  - Mentors                          │    Work      │
+│  - (Remove old bento)               │  - Stay      │
+│  - Alumni                           │    Location  │
+│  - Learn                            │              │
+│  - Events                           │              │
+└─────────────────────────────────────┴──────────────┘
+
+Mobile:
+┌─────────────────────────────────────┐
+│  Main Content (full width)          │
+│  - Countdown                        │
+│  - Journey Timeline                 │
+│  - Mentors                          │
+│  - (No bento box)                   │
+│  - Alumni                           │
+│  - Learn                            │
+│  - Events                           │
+│                                     │
+│  [FAB for Highlights at bottom-24]  │
+└─────────────────────────────────────┘
 ```
 
-### Part 2: Handle Online Sessions (Negative Day Numbers)
+---
 
-Online sessions (day_number -5 to 0) may have specific dates that should be preserved **only if from user's own edition**.
+## Part 3: Remove RoadmapBentoBox from Home
 
-For fallback templates, online session dates should also be calculated relative to `forge_start_date`.
+Since the sidebar provides the same content (Past Moments, Student Work) with autoplay carousels, the simplified bento box is redundant.
 
-### Part 3: Fix Status Calculation for PRE_FORGE
+**File:** `src/pages/Home.tsx`
 
-In `getDayStatus`, when `forgeMode === 'PRE_FORGE'`, ALL physical days (day_number >= 1) should be "upcoming", regardless of calculated dates.
+**Changes:**
+- Remove the `import { RoadmapBentoBox }` line
+- Remove the `<RoadmapBentoBox />` component from the JSX
 
-**Current issue:** The function compares dates even in PRE_FORGE mode.
+---
 
-**Fix:** Add explicit PRE_FORGE handling to return 'upcoming' for all active days.
+## Part 4: Admin - Move Stay Locations Under Roadmap Sidebar
+
+The user wants Stay Locations to be grouped with Roadmap Sidebar in the admin navigation instead of being a separate nav item.
+
+**Option A:** Create a Roadmap group in admin nav with sub-items
+**Option B:** Simply reorder the nav items to group Roadmap-related items together
+
+Since the admin layout currently uses a flat list, Option B is cleaner.
+
+**File:** `src/components/admin/AdminLayout.tsx`
+
+**Changes:**
+- Move `Stay Locations` nav item to be directly after `Roadmap Sidebar`
+- The current order is already:
+  - Roadmap
+  - Roadmap Sidebar
+  - Stay Locations (already grouped!)
+  - Equipment
+  
+The current grouping is already correct! No changes needed to the admin navigation structure.
 
 ---
 
 ## Files to Change
 
-### 1. `src/hooks/useRoadmapData.ts`
+### 1. `src/pages/Home.tsx`
 
 **Changes:**
-- Update date calculation memo to always recalculate for fallback data
-- Only preserve original dates for user's own edition's online sessions
-- Add `profile.edition_id` to dependency array
-- Fix `getDayStatus` to respect `forgeMode` for all calculations
+- Import `FloatingHighlightsButton` and `RoadmapSidebar`
+- Restructure layout to include sidebar panel on desktop
+- Remove `RoadmapBentoBox` import and usage
+- Add `FloatingHighlightsButton` for mobile
 
-### 2. `src/components/roadmap/JourneyStats.tsx`
+### 2. No changes needed to `src/components/admin/AdminLayout.tsx`
 
-**Validation only** - Ensure it receives correct `completedCount`/`totalCount` (no code change needed)
-
-### 3. `src/components/roadmap/RoadmapHero.tsx`
-
-**Validation only** - Ensure it receives correct progress values (no code change needed)
+The Stay Locations is already placed right after Roadmap Sidebar in the nav structure.
 
 ---
 
 ## Technical Implementation
 
-### Updated Date Calculation Logic
+### Updated Home.tsx Structure
 
-```typescript
-const roadmapDays = useMemo(() => {
-  if (!templateDays) return [];
-  
-  return templateDays.map(day => {
-    // For online sessions (negative day numbers) from user's OWN edition, keep the date
-    const isOwnEditionOnlineSession = 
-      day.edition_id === profile?.edition_id && 
-      day.day_number < 0 && 
-      day.date;
-    
-    if (isOwnEditionOnlineSession) {
-      return day;
-    }
-    
-    // Calculate all other dates based on user's forge_start_date
-    let calculatedDate: string | null = null;
-    
-    if (forgeStartDate) {
-      if (day.day_number > 0) {
-        // Physical days: Day 1 = forge_start_date, Day 2 = forge_start_date + 1, etc.
-        const dayDate = new Date(forgeStartDate);
-        dayDate.setDate(dayDate.getDate() + (day.day_number - 1));
-        calculatedDate = dayDate.toISOString().split('T')[0];
-      } else if (day.day_number < 0) {
-        // Online sessions: negative days before forge_start_date
-        const dayDate = new Date(forgeStartDate);
-        dayDate.setDate(dayDate.getDate() + day.day_number);
-        calculatedDate = dayDate.toISOString().split('T')[0];
-      }
-      // day_number === 0 (Pre-Forge Preparation) has no date
-    }
-    
-    return {
-      ...day,
-      date: calculatedDate
-    };
-  });
-}, [templateDays, forgeStartDate, profile?.edition_id]);
+```tsx
+import FloatingHighlightsButton from '@/components/roadmap/FloatingHighlightsButton';
+import RoadmapSidebar from '@/components/roadmap/RoadmapSidebar';
+// Remove: import { RoadmapBentoBox } from '@/components/home/RoadmapBentoBox';
+
+return (
+  <div className="min-h-screen">
+    {/* Desktop Layout with Sidebar */}
+    <div className="flex gap-6 px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-6">
+      
+      {/* Main Content Column */}
+      <div className="flex-1 space-y-5 sm:space-y-6">
+        <CompactCountdownTimer edition={edition} />
+        <HomeJourneySection />
+        
+        {/* Mentors */}
+        {mentors && mentors.length > 0 && (
+          <ContentCarousel title="Meet Your Mentors">...</ContentCarousel>
+        )}
+
+        {/* No more RoadmapBentoBox here */}
+
+        {/* Alumni Testimonials */}
+        {alumniTestimonials && ...}
+        
+        {/* Learn Section */}
+        {displayLearnContent.length > 0 && ...}
+        
+        {/* Events Section */}
+        {displayEvents.length > 0 && ...}
+      </div>
+      
+      {/* Desktop Sidebar - Hidden on mobile/tablet */}
+      <div className="hidden lg:block w-64 xl:w-72 flex-shrink-0">
+        <div className="sticky top-24">
+          <RoadmapSidebar editionId={profile?.edition_id} />
+        </div>
+      </div>
+    </div>
+
+    {/* Mobile Floating Button - Hidden on desktop */}
+    <FloatingHighlightsButton editionId={profile?.edition_id} />
+  </div>
+);
 ```
-
-### Updated Status Calculation Logic
-
-```typescript
-const getDayStatus = (day: RoadmapDay): 'completed' | 'current' | 'upcoming' | 'locked' => {
-  if (!day.is_active) return 'locked';
-  
-  // Admin testing mode handling (existing code)...
-  
-  // PRE_FORGE: All days are upcoming (none completed yet)
-  if (forgeMode === 'PRE_FORGE') {
-    // Day 0 (Pre-Forge Prep) is "current" before forge starts
-    if (day.day_number === 0) return 'current';
-    return 'upcoming';
-  }
-  
-  // POST_FORGE: All days are completed
-  if (forgeMode === 'POST_FORGE') {
-    return 'completed';
-  }
-  
-  // DURING_FORGE: Use date comparison (existing logic)
-  if (!day.date) {
-    return 'current'; // Day 0 without date during forge
-  }
-  
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const dayDate = new Date(day.date);
-  dayDate.setHours(0, 0, 0, 0);
-  
-  if (dayDate < today) return 'completed';
-  if (dayDate.getTime() === today.getTime()) return 'current';
-  return 'upcoming';
-};
-```
-
----
-
-## Expected Behavior After Fix
-
-### PRE_FORGE (8 days until start)
-| Display | Value |
-|---------|-------|
-| Progress Ring | 0% |
-| Days Complete | 0/7 (or 0/8 with Pre-Forge) |
-| Day 0 Status | Current |
-| Days 1-7 Status | Upcoming |
-
-### DURING_FORGE (Day 3)
-| Display | Value |
-|---------|-------|
-| Progress Ring | 28% |
-| Days Complete | 2/7 |
-| Days 1-2 Status | Completed |
-| Day 3 Status | Current |
-| Days 4-7 Status | Upcoming |
-
-### POST_FORGE
-| Display | Value |
-|---------|-------|
-| Progress Ring | 100% |
-| Days Complete | 7/7 |
-| All Days Status | Completed |
 
 ---
 
 ## Summary
 
-| Issue | Root Cause | Fix |
-|-------|------------|-----|
-| Wrong progress % | Fallback dates from 2025 treated as past | Recalculate all dates based on user's `forge_start_date` |
-| 6/7 completed in PRE_FORGE | Date comparison ignores forgeMode | Add explicit PRE_FORGE/POST_FORGE handling |
-| Online sessions wrong dates | Preserved dates from other editions | Only preserve dates from user's OWN edition |
+| Change | File | Purpose |
+|--------|------|---------|
+| Add FloatingHighlightsButton | Home.tsx | Mobile access to highlights |
+| Add RoadmapSidebar | Home.tsx | Desktop sidebar panel with highlights |
+| Remove RoadmapBentoBox | Home.tsx | Replaced by actual sidebar |
+| Keep Stay Locations grouped | AdminLayout.tsx | Already correct - no change needed |
+
+---
+
+## Expected Result
+
+### Mobile View
+- Home page shows main content with Floating Highlights FAB at bottom-right
+- Tapping FAB opens the same bottom sheet as Roadmap page
+- Shows Past Moments, Student Work, and Stay Location carousels
+
+### Desktop View  
+- Home page has a 2-column layout
+- Main content on the left (~75% width)
+- Sidebar panel on the right (~25% width) with:
+  - Past Moments carousel (autoplay)
+  - Student Work carousel (autoplay)
+  - Stay Location carousel (autoplay)
+- Sidebar is sticky and scrolls with content
+
+### Admin Panel
+- Navigation already has Stay Locations grouped with Roadmap items
+- No changes needed
