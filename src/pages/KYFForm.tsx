@@ -360,7 +360,12 @@ const KYFForm: React.FC = () => {
 
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ ky_form_completed: true, kyf_completed: true })
+        .update({ 
+          ky_form_completed: true, 
+          kyf_completed: true,
+          // Auto-set avatar from headshot if headshot exists
+          ...(formData.headshot_front_url && { avatar_url: formData.headshot_front_url })
+        })
         .eq('id', user.id);
 
       if (profileError) throw profileError;
