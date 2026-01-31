@@ -143,14 +143,11 @@ export const RoadmapHighlightsModal: React.FC<RoadmapHighlightsModalProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
         <DialogHeader className="p-4 pb-2">
-          <DialogTitle className="flex items-center gap-2">
+        <DialogTitle className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-primary/10">
               <Icon className="h-4 w-4 text-primary" />
             </div>
             {config.title}
-            <span className="text-sm text-muted-foreground font-normal ml-auto">
-              {currentIndex + 1} / {items.length}
-            </span>
           </DialogTitle>
         </DialogHeader>
 
