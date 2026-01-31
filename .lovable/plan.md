@@ -1,153 +1,153 @@
 
 
-# Complete Fix: Cohort-Specific Roadmap Content Issues
+# Comprehensive Fix: Cohort-Specific Content + Online Sessions for Filmmaking & Creators
 
-## Issues Identified
+## Summary of Issues Found
 
-### Issue 1: Writing Users See Filmmaking Content (CRITICAL)
-**Root Cause Found:** The current Writing users are assigned to edition `cf2b9fd2-a3da-4d0b-8370-da0937f9d786` (Forge Writing - Edition 5 - Goa), but this edition has **0 roadmap days**.
+Based on my analysis of the codebase, database, and the 4 PDFs you provided, here are the confirmed issues:
 
-**Database Evidence:**
-| Edition | Cohort Type | Roadmap Days |
-|---------|-------------|--------------|
-| Forge Writing - Edition 5 - Goa | FORGE_WRITING | **0** |
-| Forge Writing - Edition 4 - Goa | FORGE_WRITING | **0** |
-| Forge Writing - Goa Jan 2025 | FORGE_WRITING | 7 ✓ |
+### Issue 1: Race Condition Causes Wrong Cohort Content (ROOT CAUSE)
+**Location:** `src/hooks/useRoadmapData.ts` (Line 21)
 
-The code correctly falls back to the shared template when no edition-specific days exist, but the shared template contains **Filmmaking content** ("Orientation & Visual Storytelling", "Cinematography Masterclass", etc.).
-
-**This is a DATA issue, not a code issue.** However, we need a better solution than falling back to filmmaking content.
-
----
-
-### Issue 2: Online/Virtual Sessions Showing for Writers
-**Current Behavior:** The screenshots show "Online" badges and virtual session content for the Writing cohort.
-
-**Expected Behavior:** Per the existing memory:
-> "This feature is restricted at the UI level to Filmmaking and Creators cohorts; all virtual UI elements and session notifications are hidden for the 'FORGE_WRITING' cohort as they skip the online stage."
-
-**Root Cause:** The JourneyCard correctly checks `cohortType !== 'FORGE_WRITING'` for virtual indicators, BUT since the data is falling back to the Filmmaking template (which has `is_virtual: true` for days 1-3), the data itself contains virtual meeting info.
-
----
-
-### Issue 3: Zoom Link Feature Not Working
-**Analysis:** The SessionMeetingCard component is well-implemented with:
-- Join Now button that opens meeting URL
-- Copy meeting ID/passcode functionality  
-- Calendar sync (Google + Apple)
-- Platform detection (Zoom, Meet, Teams)
-
-However, it's only shown when `forgeMode === 'DURING_FORGE'` and `cohortType !== 'FORGE_WRITING'`. 
-
-**Potential Issue:** If users are in PRE_FORGE mode, they only see "Meeting details will be available when Forge begins" - but they need to test/verify access beforehand.
-
----
-
-## Root Cause Summary
-
-```text
-User (Writing cohort) → edition_id: cf2b9fd2-a3da-4d0b-8370-da0937f9d786
-                              ↓
-                    Query: WHERE edition_id = ?
-                              ↓
-                         0 roadmap days found
-                              ↓
-                    Fallback: WHERE edition_id IS NULL
-                              ↓
-                    Shared template (FILMMAKING content!)
-                              ↓
-             "Cinematography Masterclass" shown to Writers!
+```typescript
+const userCohortType = (edition?.cohort_type as CohortType) || 'FORGE';
 ```
 
+When a user loads the Roadmap page:
+1. `profile.edition_id` loads first → query is enabled
+2. But `edition?.cohort_type` is still `undefined` → defaults to `'FORGE'`
+3. Roadmap query runs with `userCohortType = 'FORGE'` 
+4. **Writing/Creators users see Filmmaking content!**
+
+Even though the 3-tier fallback logic was added, this race condition means the wrong cohort type is used from the start.
+
 ---
 
-## Solution: Two-Part Fix
+### Issue 2: Online Sessions Exist But Aren't in Database (Data Gap)
 
-### Part 1: Cohort-Based Fallback (Code Fix)
+**From Creators Bali PDF - 6 Online Sessions:**
+| Session | Date | Time | Title |
+|---------|------|------|-------|
+| 1 | Jan 22 | 7-8:30 PM | Orientation |
+| 2 | Jan 23 | 6:30-8:30 PM | Niche Discovery + Competitor Analysis |
+| 3 | Jan 24 | 6:30-8 PM | Storytelling for Social Media |
+| 4 | Jan 25 | 11 AM-1 PM | Videography Theory |
+| 5 | Jan 27 | 6:30-8:30 PM | Assignment Review & Feedback |
+| 6 | Jan 28 | 6:30-8:30 PM | Video Editing Theory |
 
-Instead of falling back to the shared template (Filmmaking), we should:
-1. First try to get edition-specific days (current behavior)
-2. If none exist, **find another edition of the same cohort type** that has roadmap days
-3. Only fall back to shared template as last resort
+**Current Database State:**
+- Creators editions have `is_virtual = false` for all days
+- No `meeting_url` data for any Creators roadmap days
+- Only the shared template (Filmmaking) has virtual session data
 
-This ensures Writers see Writing content and Creators see Creators content.
+---
+
+### Issue 3: Zoom Credentials Only Visible in DURING_FORGE Mode
+
+Current logic in `DayDetailModal.tsx` (Line 162):
+```typescript
+{day.is_virtual && day.meeting_url && forgeMode === 'DURING_FORGE' && cohortType !== 'FORGE_WRITING' && (
+  <SessionMeetingCard ... />
+)}
+```
+
+This means:
+- Users can't preview meeting credentials before Forge starts
+- They only see "Meeting details will be available when Forge begins"
+
+**Better UX:** Show credentials 24-48 hours before session starts.
+
+---
+
+## Online Sessions Structure (From PDFs)
+
+### FORGE (Filmmaking) - Online Sessions
+- **3 Online Days** before physical sessions
+- Days 1-3 are virtual, Days 4+ are in-person
+- Has Zoom meeting infrastructure
+
+### FORGE_CREATORS - Online Sessions (From Bali PDF)
+- **6 Online Sessions** before physical sessions
+- Sessions numbered separately from physical days
+- Then Day 1-7 are in-person
+
+### FORGE_WRITING - NO Online Sessions
+- Direct to physical (Day 1-6)
+- No virtual component at all
+
+---
+
+## Solution Architecture
+
+### Fix 1: Wait for Cohort Type Before Fetching
 
 **File:** `src/hooks/useRoadmapData.ts`
 
 ```typescript
-// Fetch roadmap days - prioritize edition-specific, then cohort-specific, then shared template
-const { data: templateDays, isLoading: isLoadingDays } = useQuery({
-  queryKey: ['roadmap-days', profile?.edition_id, userCohortType],
-  queryFn: async () => {
-    // Step 1: Try user's exact edition
-    if (profile?.edition_id) {
-      const { data: editionDays } = await supabase
-        .from('roadmap_days')
-        .select('*')
-        .eq('edition_id', profile.edition_id)
-        .order('day_number', { ascending: true });
-      
-      if (editionDays && editionDays.length > 0) {
-        return editionDays as RoadmapDay[];
-      }
-    }
-    
-    // Step 2: Find another edition of SAME cohort type with roadmap days
-    if (userCohortType) {
-      // Get editions of same cohort type
-      const { data: sameTypeEditions } = await supabase
-        .from('editions')
-        .select('id')
-        .eq('cohort_type', userCohortType);
-      
-      if (sameTypeEditions && sameTypeEditions.length > 0) {
-        const editionIds = sameTypeEditions.map(e => e.id);
-        
-        const { data: cohortDays } = await supabase
-          .from('roadmap_days')
-          .select('*')
-          .in('edition_id', editionIds)
-          .order('day_number', { ascending: true });
-        
-        if (cohortDays && cohortDays.length > 0) {
-          return cohortDays as RoadmapDay[];
-        }
-      }
-    }
-    
-    // Step 3: Last resort - shared template
-    const { data } = await supabase
-      .from('roadmap_days')
-      .select('*')
-      .is('edition_id', null)
-      .order('day_number', { ascending: true });
-    
-    return (data || []) as RoadmapDay[];
-  },
-  enabled: !!profile?.edition_id
-});
+// OLD (causes race condition)
+const userCohortType = (edition?.cohort_type as CohortType) || 'FORGE';
+
+// NEW (wait for cohort to be known)
+const userCohortType = edition?.cohort_type as CohortType | undefined;
+
+// Query enabled only when BOTH profile and edition are loaded
+enabled: !!profile?.edition_id && !!userCohortType
+```
+
+This prevents the query from running with an incorrect default.
+
+---
+
+### Fix 2: Add Online Sessions as Day Numbers -5 to 0
+
+For cohorts with online sessions (Filmmaking, Creators), use negative day numbers:
+
+| Day Number | Type | Filmmaking | Creators |
+|------------|------|------------|----------|
+| -5 | Online | - | Session 1: Orientation |
+| -4 | Online | - | Session 2: Niche Discovery |
+| -3 | Online | Session 1: Orientation | Session 3: Storytelling |
+| -2 | Online | Session 2: Cinematography | Session 4: Videography |
+| -1 | Online | Session 3: Direction | Session 5: Assignment Review |
+| 0 | Pre-Forge | Prep Day | Session 6 + Prep |
+| 1+ | Physical | In-Person Days | In-Person Days |
+
+This keeps the timeline sequential and the existing UI works.
+
+---
+
+### Fix 3: Early Access to Meeting Credentials
+
+**File:** `src/components/roadmap/DayDetailModal.tsx`
+
+Change visibility logic from:
+```typescript
+forgeMode === 'DURING_FORGE'
+```
+
+To:
+```typescript
+// Show meeting card if:
+// 1. During Forge, OR
+// 2. Session is within 48 hours
+
+const sessionDate = day.date ? new Date(day.date) : null;
+const hoursUntilSession = sessionDate 
+  ? (sessionDate.getTime() - Date.now()) / (1000 * 60 * 60) 
+  : Infinity;
+const showMeetingCard = forgeMode === 'DURING_FORGE' || hoursUntilSession <= 48;
 ```
 
 ---
 
-### Part 2: Hide Virtual Sessions for Writers (Already Implemented - Verify)
+### Fix 4: Mobile-Friendly Improvements
 
-The code already has these checks in place:
-- `JourneyCard.tsx` line 161: `day.is_virtual && cohortType !== 'FORGE_WRITING'`
-- `JourneyCard.tsx` line 230: Virtual join button hidden for FORGE_WRITING
-- `DayDetailModal.tsx` line 138: Online session badge hidden for FORGE_WRITING
-- `DayDetailModal.tsx` line 162: SessionMeetingCard hidden for FORGE_WRITING
+The current `SessionMeetingCard` already has good mobile support, but we'll enhance:
 
-**These will work correctly once Writers get Writing-specific data** (which has `is_virtual: false`).
-
----
-
-### Part 3: Improve Zoom Link Accessibility (Enhancement)
-
-Add ability to preview meeting credentials even in PRE_FORGE mode (optional enhancement):
-
-**Option A:** Show credentials (obscured) in PRE_FORGE with "Available X days before session"
-**Option B:** Allow access to meeting card 24-48 hours before session start
+1. **Touch-friendly buttons** - Ensure 44px minimum touch targets
+2. **Copy feedback** - Haptic feedback on mobile (if supported)
+3. **Calendar sync** - Works on both platforms already
+4. **Compact mode** - Use in JourneyCard for quick access
 
 ---
 
@@ -155,55 +155,118 @@ Add ability to preview meeting credentials even in PRE_FORGE mode (optional enha
 
 | File | Changes |
 |------|---------|
-| `src/hooks/useRoadmapData.ts` | Update query to use cohort-based fallback instead of shared template |
+| `src/hooks/useRoadmapData.ts` | Fix race condition by requiring cohortType before fetching |
+| `src/components/roadmap/JourneyCard.tsx` | Pass virtual meeting fields to modal, add compact meeting card |
+| `src/components/roadmap/DayDetailModal.tsx` | Show meeting card 48h before session; improve mobile UX |
+| `src/components/roadmap/SessionMeetingCard.tsx` | Minor mobile UX tweaks (touch targets, feedback) |
+
+---
+
+## Database Updates Required (via Admin Panel)
+
+After the code fix, you'll need to add the online session data for:
+
+### Creators Edition (Bali)
+Add roadmap_days entries with:
+- `day_number`: -5, -4, -3, -2, -1, 0
+- `is_virtual`: true
+- `meeting_url`: Zoom link
+- `meeting_id`: Zoom meeting ID
+- `meeting_passcode`: Zoom passcode
+- `session_start_time`: Time from PDF
+- Titles from PDF (Orientation, Niche Discovery, etc.)
+
+### Filmmaking Edition (if needed)
+Add/update roadmap_days with:
+- `day_number`: -2, -1, 0 (for online sessions)
+- Virtual meeting fields populated
 
 ---
 
 ## Expected Behavior After Fix
 
-| User Cohort | Content Shown | Virtual Sessions |
-|-------------|---------------|------------------|
-| **FORGE** (Filmmaking) | "Cinematography Masterclass" | ✓ Days 1-3 Online |
-| **FORGE_WRITING** | "Psychology of Storytelling", "Advanced Writing" | ✗ No virtual UI |
-| **FORGE_CREATORS** | "Mindset Reset", "Shoot Day 1" | ✓ Virtual where applicable |
+| Cohort | Online Sessions | Physical Days | Zoom UI |
+|--------|-----------------|---------------|---------|
+| **Filmmaking** | Days -2 to 0 (3 sessions) | Days 1-6 | ✓ Visible |
+| **Creators** | Days -5 to 0 (6 sessions) | Days 1-7 | ✓ Visible |
+| **Writing** | None | Days 1-6 | ✗ Hidden |
 
 ---
 
-## Data Flow After Fix
+## User Experience Flow
 
 ```text
-User Login (Writing cohort)
+User logs in (Creators cohort)
     ↓
-profile.edition_id = cf2b9fd2... (Edition 5)
+AuthContext loads profile → then edition
     ↓
-Query 1: roadmap_days WHERE edition_id = cf2b9fd2
-         Result: 0 rows
+useRoadmapData waits for edition.cohort_type
     ↓
-Query 2: editions WHERE cohort_type = 'FORGE_WRITING'
-         → Found: [cf2b9fd2, 9a4b17e1, 7f94f1b7]
+Query runs with correct cohort: FORGE_CREATORS
     ↓
-Query 3: roadmap_days WHERE edition_id IN [...]
-         Result: 7 rows from 7f94f1b7 (Jan 2025 Writing)
+Journey shows:
+├── Session 1: Orientation (Online) - Jan 22
+├── Session 2: Niche Discovery (Online) - Jan 23
+├── ... (6 online sessions total)
+├── Day 1: Orientation & Mindset Reset (In-Person) - Jan 31
+├── Day 2: Art of the Hook (In-Person) - Feb 1
+└── ... (7 physical days)
     ↓
-Writers now see: "Psychology of Storytelling" ✓
+Tapping online session shows:
+├── SessionMeetingCard with Join Now button
+├── Meeting ID + Passcode (copy buttons)
+├── Add to Calendar (Google/Apple)
+└── All mobile-optimized with 44px+ touch targets
 ```
 
 ---
 
-## Mobile & Desktop Compatibility
+## Implementation Order
 
-All changes are data-layer only. The existing responsive UI components (JourneyCard, DayDetailModal, SessionMeetingCard) already handle:
-- Touch-friendly tap targets
-- Drawer/Dialog responsive switching
-- Proper spacing and typography for mobile
-- Calendar sync works on both platforms
+1. **Phase 1** (Code - Critical)
+   - Fix race condition in `useRoadmapData.ts`
+   - Update query `enabled` condition
+
+2. **Phase 2** (Code - UX)
+   - Update `DayDetailModal.tsx` for 48h early access
+   - Ensure virtual fields are passed through `JourneyCard.tsx`
+
+3. **Phase 3** (Data - Admin Panel)
+   - Add online session entries for Creators
+   - Add online session entries for Filmmaking
+   - Populate meeting URLs, IDs, passcodes
+
+4. **Phase 4** (Testing)
+   - Test as Writing user → No virtual UI
+   - Test as Filmmaking user → Virtual sessions visible
+   - Test as Creators user → 6 online sessions visible
+   - Test mobile view for all cohorts
 
 ---
 
-## Why This is Better Than Database-Only Fix
+## Data Entry Template (for Admin Panel)
 
-While we could simply copy roadmap days to Edition 5, the code fix ensures:
-1. Future editions automatically inherit content from past editions of same cohort
-2. Admins don't need to duplicate data for every new edition
-3. Self-healing when new cohorts are created
+For each online session, you'll add a roadmap_day with:
+
+```json
+{
+  "edition_id": "<creators-edition-id>",
+  "day_number": -5,  // Negative for online sessions
+  "title": "Orientation",
+  "is_virtual": true,
+  "is_active": true,
+  "meeting_url": "https://zoom.us/j/...",
+  "meeting_id": "123 456 7890",
+  "meeting_passcode": "FORGE",
+  "session_start_time": "19:00",
+  "session_duration_hours": 1.5,
+  "call_time": "7:00 PM IST",
+  "what_youll_learn": ["Course overview", "Team introductions", "Platform walkthrough"],
+  "schedule": [
+    {"time": "7:00 PM", "activity": "Welcome & Intros"},
+    {"time": "7:30 PM", "activity": "Platform Walkthrough"},
+    {"time": "8:00 PM", "activity": "Q&A"}
+  ]
+}
+```
 
