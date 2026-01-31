@@ -18,11 +18,13 @@ export const useRoadmapData = () => {
   const { profile, edition, forgeMode, user } = useAuth();
   const { isTestingMode, simulatedDayNumber, simulatedForgeMode } = useAdminTestingSafe();
   const queryClient = useQueryClient();
-  const userCohortType = (edition?.cohort_type as CohortType) || 'FORGE';
-  const cohortName = cohortDisplayNames[userCohortType];
+  // CRITICAL: Don't default to 'FORGE' - wait for edition to load to prevent race condition
+  const userCohortType = edition?.cohort_type as CohortType | undefined;
+  const cohortName = userCohortType ? cohortDisplayNames[userCohortType] : 'The Forge';
   const forgeStartDate = edition?.forge_start_date ? new Date(edition.forge_start_date) : null;
 
   // Fetch roadmap days - prioritize edition-specific, then cohort-specific, then shared template
+  // IMPORTANT: Query is only enabled when BOTH profile.edition_id AND edition.cohort_type are known
   const { data: templateDays, isLoading: isLoadingDays } = useQuery({
     queryKey: ['roadmap-days', profile?.edition_id, userCohortType],
     queryFn: async () => {
@@ -71,13 +73,21 @@ export const useRoadmapData = () => {
       if (error) throw error;
       return data as RoadmapDay[];
     },
-    enabled: !!profile?.edition_id
+    // Wait for BOTH edition_id and cohort_type to prevent wrong cohort content
+    enabled: !!profile?.edition_id && !!userCohortType
   });
 
   // Calculate dates dynamically based on forge_start_date + day_number
+  // IMPORTANT: Don't overwrite day.date if it already has a value (for online sessions with fixed dates)
   const roadmapDays = useMemo(() => {
     if (!templateDays) return [];
     return templateDays.map(day => {
+      // If the day already has a date (e.g., online sessions), keep it
+      if (day.date) {
+        return day;
+      }
+      
+      // Calculate date for physical days (day_number > 0)
       let calculatedDate: string | null = null;
       if (forgeStartDate && day.day_number > 0) {
         const dayDate = new Date(forgeStartDate);
