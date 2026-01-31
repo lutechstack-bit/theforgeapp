@@ -1,13 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Lock } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 interface LearnCourseCardProps {
   id: string;
   title: string;
   thumbnailUrl?: string;
   durationMinutes?: number;
-  isLocked?: boolean;
   onClick?: () => void;
 }
 
@@ -16,7 +15,6 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
   title,
   thumbnailUrl,
   durationMinutes,
-  isLocked,
   onClick,
 }) => {
   const navigate = useNavigate();
@@ -61,17 +59,8 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
       {/* Subtle hover overlay */}
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
 
-      {/* Lock Overlay for Premium */}
-      {isLocked && (
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] flex items-center justify-center">
-          <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-            <Lock className="h-5 w-5 text-white/80" />
-          </div>
-        </div>
-      )}
-
       {/* Duration Badge - Bottom Right Inside Card */}
-      {duration && !isLocked && (
+      {duration && (
         <div className="absolute bottom-3 right-3 z-10">
           <div className="flex items-center gap-1 bg-black/70 backdrop-blur-sm text-white px-2 py-1 rounded-md">
             <Clock className="w-3 h-3" />

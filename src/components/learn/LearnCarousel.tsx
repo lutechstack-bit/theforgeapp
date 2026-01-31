@@ -24,7 +24,6 @@ interface LearnContent {
 interface LearnCarouselProps {
   title: string;
   items: LearnContent[];
-  isFullAccess: boolean;
   onItemClick: (item: LearnContent) => void;
   emptyMessage?: string;
 }
@@ -32,7 +31,6 @@ interface LearnCarouselProps {
 export const LearnCarousel: React.FC<LearnCarouselProps> = ({
   title,
   items,
-  isFullAccess,
   onItemClick,
   emptyMessage = 'No content available yet',
 }) => {
@@ -69,7 +67,6 @@ export const LearnCarousel: React.FC<LearnCarouselProps> = ({
                 title={item.title}
                 thumbnailUrl={item.thumbnail_url}
                 durationMinutes={item.duration_minutes}
-                isLocked={item.is_premium && !isFullAccess}
                 onClick={() => navigate(`/learn/${item.id}`)}
               />
             </CarouselItem>

@@ -18,7 +18,7 @@ import { Mentor } from '@/data/mentorsData';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { profile, isFullAccess } = useAuth();
+  const { profile } = useAuth();
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [isMentorModalOpen, setIsMentorModalOpen] = useState(false);
 
@@ -208,7 +208,6 @@ const Home: React.FC = () => {
                   title={content.title}
                   thumbnailUrl={content.thumbnail_url || undefined}
                   durationMinutes={content.duration_minutes}
-                  isLocked={content.is_premium && !isFullAccess}
                 />
               ))}
             </ContentCarousel>
