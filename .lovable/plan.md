@@ -1,59 +1,58 @@
 
-# Add Homepage Navigation to Desktop Sidebar Logo
+# Scroll to Top When Logo Clicked on Homepage
 
-## Current State
+## The Issue
 
-| Component | Logo Clickable? | Status |
-|-----------|-----------------|--------|
-| **TopBar.tsx** (Mobile) | ✅ Yes - wrapped in `<Link to="/">` | Already works |
-| **SideNav.tsx** (Desktop) | ❌ No - just an `<img>` tag | Needs fix |
+When you're already on the homepage (`/`) and click the logo:
+- The `<Link to="/">` doesn't trigger navigation (same route)
+- The `ScrollToTop` component only fires on route **changes**
+- Result: Nothing happens
 
----
+## The Solution
 
-## The Fix
-
-### File: `src/components/layout/SideNav.tsx`
-
-**Current code (lines 110-118):**
-```tsx
-<div className="flex items-center justify-center overflow-hidden">
-  <img 
-    src={collapsed ? forgeIcon : forgeLogo} 
-    alt="Forge" 
-    className={cn(
-      "shrink-0 transition-all duration-300 object-contain",
-      collapsed ? "h-8 w-8" : "h-10 max-w-[180px]"
-    )}
-  />
-</div>
-```
-
-**Updated code:**
-```tsx
-<Link to="/" className="flex items-center justify-center overflow-hidden">
-  <img 
-    src={collapsed ? forgeIcon : forgeLogo} 
-    alt="Forge" 
-    className={cn(
-      "shrink-0 transition-all duration-300 object-contain cursor-pointer",
-      collapsed ? "h-8 w-8" : "h-10 max-w-[180px]"
-    )}
-  />
-</Link>
-```
+Add an `onClick` handler to the logo links that scrolls to top when on the homepage.
 
 ---
 
-## Changes Summary
+## Files to Modify
 
-1. Import `Link` from `react-router-dom` (already imported as it's used for `NavLink`)
-2. Replace the `<div>` wrapper around the logo with `<Link to="/">`
-3. Add `cursor-pointer` class for better UX indication
+### 1. `src/components/layout/SideNav.tsx`
+
+**Change:** Add onClick handler to the logo Link
+
+```tsx
+<Link 
+  to="/" 
+  className="flex items-center justify-center overflow-hidden"
+  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+>
+```
+
+### 2. `src/components/layout/TopBar.tsx`
+
+**Change:** Add onClick handler to the mobile logo Link
+
+```tsx
+<Link 
+  to="/" 
+  className="flex items-center gap-2 md:hidden"
+  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+>
+```
 
 ---
 
 ## Behavior After Fix
 
-- **Desktop (sidebar visible)**: Clicking the Forge logo navigates to `/` (homepage)
-- **Mobile (TopBar visible)**: Already works - clicking logo navigates to `/`
-- Both collapsed and expanded sidebar states will work correctly
+| Scenario | Before | After |
+|----------|--------|-------|
+| Click logo on homepage | Nothing happens | Smooth scroll to top |
+| Click logo on other page | Navigates to `/` | Navigates to `/` + scroll to top |
+
+---
+
+## Implementation Details
+
+- Uses `behavior: 'smooth'` for a polished scroll animation
+- Works on both mobile (TopBar) and desktop (SideNav)
+- No additional imports needed - `window.scrollTo` is native
