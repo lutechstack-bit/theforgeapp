@@ -1,214 +1,205 @@
 
-# Mobile Menu UI Overhaul: Seamless Profile Drawer
+# Fix Roadmap Progress Calculation Bug
 
-## Overview
+## Problem Summary
 
-This plan fixes the mobile menu sheet issues including padding problems, alignment issues, and restructures the navigation to be more intuitive with "Profile" instead of "Menu" in the bottom nav.
+The roadmap is showing **86% (6/7 days) complete** when the Forge starts in 8 days because:
 
-## Issues Identified
+1. **Fallback data has wrong dates**: When the user's edition has no `roadmap_days`, the system finds days from another edition with hardcoded dates from 2025
+2. **Date preservation bug**: The code preserves `day.date` if it exists, even when it's from a different edition
+3. **Wrong status calculation**: Since `2025-02-15 < 2026-01-31` (today), those days show as "completed"
 
-1. **Cohort Badge Showing** - Technical identifiers like "FORGE_WRITING" should be hidden for cleaner UI
-2. **Profile Card Alignment** - Avatar and text are not properly aligned/centered
-3. **Padding Issues** - Missing safe area handling in the sheet content causing scroll cutoff
-4. **Duplicate Close Buttons** - SheetContent has default close button AND custom one
-5. **"Menu" Label** - Should be "Profile" to be more intuitive
-6. **Navigation Structure** - Needs cleaner spacing and proper safe area padding
+### Database Evidence
+
+**User's Edition:**
+- "Forge Filmmaking - Edition 14" with `forge_start_date: 2026-02-07`
+- Has **zero** roadmap_days entries
+
+**Fallback Edition Used:**
+- "Forge Filmmaking - Goa Feb 2025" with hardcoded dates like `2025-02-15`, `2025-02-16`...
+- These dates are in the past relative to today
 
 ---
 
-## Part 1: Bottom Navigation Changes
+## Solution
 
-Rename "Menu" to "Profile" in the bottom navigation bar for clearer user understanding.
+### Part 1: Fix Date Calculation in `useRoadmapData.ts`
 
-**File:** `src/components/layout/BottomNav.tsx`
-
-```text
-Current:  "Menu" label
-New:      "Profile" label
+**Current Logic (BROKEN):**
+```typescript
+// Only calculates date if day.date is null
+if (day.date) {
+  return day; // KEEPS wrong 2025 dates from fallback edition!
+}
 ```
 
----
+**New Logic:**
+```typescript
+// Always recalculate dates based on user's forge_start_date for physical days
+// Only keep day.date for online sessions (day_number < 0) from user's OWN edition
+const shouldKeepOriginalDate = 
+  day.date && 
+  day.edition_id === profile?.edition_id && 
+  day.day_number < 0; // Online sessions with fixed meeting times
 
-## Part 2: Sheet Content Fixes
+if (shouldKeepOriginalDate) {
+  return day;
+}
 
-### 2A: Remove Duplicate Close Button
-
-The `sheet.tsx` component has a default close button, but `MobileMenuSheet` adds its own custom one. Need to suppress the default to avoid duplicate buttons.
-
-**File:** `src/components/ui/sheet.tsx`
-
-- Remove the default `SheetPrimitive.Close` from `SheetContent` component
-- Let consumers handle their own close buttons for full control
-
-### 2B: Add Safe Area Handling to Sheet
-
-**File:** `src/components/layout/MobileMenuSheet.tsx`
-
-- Add `safe-area-pt` and `safe-area-pb` classes to the sheet content
-- Ensure proper padding at top and bottom for notched devices
-
----
-
-## Part 3: Profile Card Redesign
-
-Fix alignment issues and remove cohort badge (per brand guidelines).
-
-**File:** `src/components/layout/MobileMenuSheet.tsx`
-
-**Current issues:**
-- Avatar and text not properly centered
-- Cohort badge visible (should be hidden)
-- Profile URL text too small
-
-**Fixes:**
-1. Remove `{edition?.cohort_type && (...)}` block (lines 97-101)
-2. Center the profile card content horizontally
-3. Improve avatar sizing and alignment
-4. Make the chevron properly aligned to the right
-
-**New Profile Card Layout:**
-```text
-┌─────────────────────────────────────────┐
-│     ┌──────┐                            │
-│     │ AV   │  Name                      │
-│     │ ATAR │  theforgeapp.com/u/handle  │
-│     └──────┘                        >   │
-└─────────────────────────────────────────┘
+// Calculate date for all other days based on user's forge_start_date
 ```
 
----
+### Part 2: Handle Online Sessions (Negative Day Numbers)
 
-## Part 4: Navigation Section Padding Fixes
+Online sessions (day_number -5 to 0) may have specific dates that should be preserved **only if from user's own edition**.
 
-Fix the navigation area to have proper spacing that works when scrolling.
+For fallback templates, online session dates should also be calculated relative to `forge_start_date`.
 
-**File:** `src/components/layout/MobileMenuSheet.tsx`
+### Part 3: Fix Status Calculation for PRE_FORGE
 
-**Changes:**
-1. Add consistent padding to nav container
-2. Remove extra border-bottom from profile section
-3. Reduce spacing between navigation items
-4. Add proper safe area padding at bottom for the brand footer
-5. Ensure the footer doesn't get cut off on notched devices
+In `getDayStatus`, when `forgeMode === 'PRE_FORGE'`, ALL physical days (day_number >= 1) should be "upcoming", regardless of calculated dates.
 
----
+**Current issue:** The function compares dates even in PRE_FORGE mode.
 
-## Part 5: Overall Layout Structure
-
-Update the sheet structure for seamless scrolling:
-
-```text
-┌─────────────────────────────────────────┐
-│  safe-area-pt                           │
-├─────────────────────────────────────────┤
-│  Header: "Hi, [Name]! 👋"        [X]   │
-├─────────────────────────────────────────┤
-│  Profile Card (tappable)                │
-│  ┌─────────────────────────────────────┐│
-│  │ Avatar | Name + Handle           > ││
-│  └─────────────────────────────────────┘│
-├─────────────────────────────────────────┤
-│  Navigation (scrollable flex-1)         │
-│  ┌─────────────────────────────────────┐│
-│  │ Perks                            > ││
-│  │ Roadmap                          > ││
-│  │ Learn                            > ││
-│  │ Events                           > ││
-│  │ Community                        > ││
-│  │ About Forge                      > ││
-│  │ Admin Panel (if admin)           > ││
-│  └─────────────────────────────────────┘│
-├─────────────────────────────────────────┤
-│  Secondary Actions                      │
-│  Settings                           >  │
-│  Sign Out                              │
-├─────────────────────────────────────────┤
-│  Brand Footer (Forge logo)             │
-│  safe-area-pb                           │
-└─────────────────────────────────────────┘
-```
+**Fix:** Add explicit PRE_FORGE handling to return 'upcoming' for all active days.
 
 ---
 
 ## Files to Change
 
-### 1. `src/components/ui/sheet.tsx`
+### 1. `src/hooks/useRoadmapData.ts`
 
 **Changes:**
-- Remove the default `SheetPrimitive.Close` button from `SheetContent`
-- This allows consumers full control over close button placement
+- Update date calculation memo to always recalculate for fallback data
+- Only preserve original dates for user's own edition's online sessions
+- Add `profile.edition_id` to dependency array
+- Fix `getDayStatus` to respect `forgeMode` for all calculations
 
-### 2. `src/components/layout/BottomNav.tsx`
+### 2. `src/components/roadmap/JourneyStats.tsx`
 
-**Changes:**
-- Rename "Menu" label to "Profile" (line 94)
+**Validation only** - Ensure it receives correct `completedCount`/`totalCount` (no code change needed)
 
-### 3. `src/components/layout/MobileMenuSheet.tsx`
+### 3. `src/components/roadmap/RoadmapHero.tsx`
 
-**Changes:**
-- Add safe area classes to SheetContent
-- Remove cohort badge from profile card
-- Fix profile card alignment (center avatar/text, proper flex layout)
-- Update padding values for consistent spacing
-- Ensure brand footer has safe area bottom padding
-- Reduce excessive padding in sections
-- Make scrollable area handle all content properly
+**Validation only** - Ensure it receives correct progress values (no code change needed)
 
 ---
 
-## Technical Implementation Details
+## Technical Implementation
 
-### Sheet Content Safe Area
+### Updated Date Calculation Logic
 
-```tsx
-<SheetContent 
-  side="right" 
-  className="w-[85%] sm:max-w-md p-0 flex flex-col bg-background border-l border-border/50 safe-area-pt safe-area-pb"
->
+```typescript
+const roadmapDays = useMemo(() => {
+  if (!templateDays) return [];
+  
+  return templateDays.map(day => {
+    // For online sessions (negative day numbers) from user's OWN edition, keep the date
+    const isOwnEditionOnlineSession = 
+      day.edition_id === profile?.edition_id && 
+      day.day_number < 0 && 
+      day.date;
+    
+    if (isOwnEditionOnlineSession) {
+      return day;
+    }
+    
+    // Calculate all other dates based on user's forge_start_date
+    let calculatedDate: string | null = null;
+    
+    if (forgeStartDate) {
+      if (day.day_number > 0) {
+        // Physical days: Day 1 = forge_start_date, Day 2 = forge_start_date + 1, etc.
+        const dayDate = new Date(forgeStartDate);
+        dayDate.setDate(dayDate.getDate() + (day.day_number - 1));
+        calculatedDate = dayDate.toISOString().split('T')[0];
+      } else if (day.day_number < 0) {
+        // Online sessions: negative days before forge_start_date
+        const dayDate = new Date(forgeStartDate);
+        dayDate.setDate(dayDate.getDate() + day.day_number);
+        calculatedDate = dayDate.toISOString().split('T')[0];
+      }
+      // day_number === 0 (Pre-Forge Preparation) has no date
+    }
+    
+    return {
+      ...day,
+      date: calculatedDate
+    };
+  });
+}, [templateDays, forgeStartDate, profile?.edition_id]);
 ```
 
-### Updated Profile Card (Aligned)
+### Updated Status Calculation Logic
 
-```tsx
-<div className="px-5 py-4">
-  <button
-    onClick={() => handleNavigation('/profile')}
-    className="flex items-center gap-3 w-full p-3 rounded-2xl bg-muted/30 hover:bg-muted/50 transition-all duration-200 group"
-  >
-    <Avatar className="h-12 w-12 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all shrink-0">
-      {/* ... */}
-    </Avatar>
-    <div className="flex-1 text-left min-w-0">
-      <p className="font-semibold text-foreground truncate">
-        {profile?.full_name || 'User'}
-      </p>
-      <p className="text-sm text-muted-foreground truncate">
-        theforgeapp.com/u/{profile?.instagram_handle || 'profile'}
-      </p>
-    </div>
-    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
-  </button>
-</div>
+```typescript
+const getDayStatus = (day: RoadmapDay): 'completed' | 'current' | 'upcoming' | 'locked' => {
+  if (!day.is_active) return 'locked';
+  
+  // Admin testing mode handling (existing code)...
+  
+  // PRE_FORGE: All days are upcoming (none completed yet)
+  if (forgeMode === 'PRE_FORGE') {
+    // Day 0 (Pre-Forge Prep) is "current" before forge starts
+    if (day.day_number === 0) return 'current';
+    return 'upcoming';
+  }
+  
+  // POST_FORGE: All days are completed
+  if (forgeMode === 'POST_FORGE') {
+    return 'completed';
+  }
+  
+  // DURING_FORGE: Use date comparison (existing logic)
+  if (!day.date) {
+    return 'current'; // Day 0 without date during forge
+  }
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dayDate = new Date(day.date);
+  dayDate.setHours(0, 0, 0, 0);
+  
+  if (dayDate < today) return 'completed';
+  if (dayDate.getTime() === today.getTime()) return 'current';
+  return 'upcoming';
+};
 ```
 
-### Bottom Nav Profile Label
+---
 
-```tsx
-<span className={cn(
-  "text-[10px] font-medium tracking-wide",
-  menuOpen && "font-semibold"
-)}>Profile</span>
-```
+## Expected Behavior After Fix
+
+### PRE_FORGE (8 days until start)
+| Display | Value |
+|---------|-------|
+| Progress Ring | 0% |
+| Days Complete | 0/7 (or 0/8 with Pre-Forge) |
+| Day 0 Status | Current |
+| Days 1-7 Status | Upcoming |
+
+### DURING_FORGE (Day 3)
+| Display | Value |
+|---------|-------|
+| Progress Ring | 28% |
+| Days Complete | 2/7 |
+| Days 1-2 Status | Completed |
+| Day 3 Status | Current |
+| Days 4-7 Status | Upcoming |
+
+### POST_FORGE
+| Display | Value |
+|---------|-------|
+| Progress Ring | 100% |
+| Days Complete | 7/7 |
+| All Days Status | Completed |
 
 ---
 
 ## Summary
 
-| Issue | Fix | File |
-|-------|-----|------|
-| Cohort badge showing | Remove badge display | MobileMenuSheet.tsx |
-| Profile alignment | Fix flex layout, add shrink-0 | MobileMenuSheet.tsx |
-| Padding issues scrolling | Add safe-area classes | MobileMenuSheet.tsx |
-| Duplicate close buttons | Remove default from sheet | sheet.tsx |
-| "Menu" label | Rename to "Profile" | BottomNav.tsx |
-| Seamless look | Reduce padding, consistent spacing | MobileMenuSheet.tsx |
+| Issue | Root Cause | Fix |
+|-------|------------|-----|
+| Wrong progress % | Fallback dates from 2025 treated as past | Recalculate all dates based on user's `forge_start_date` |
+| 6/7 completed in PRE_FORGE | Date comparison ignores forgeMode | Add explicit PRE_FORGE/POST_FORGE handling |
+| Online sessions wrong dates | Preserved dates from other editions | Only preserve dates from user's OWN edition |
