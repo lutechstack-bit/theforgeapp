@@ -1,95 +1,153 @@
 
-# Comprehensive Fix: Cohort-Specific Roadmap Content
 
-## Problems Found
+# Complete Fix: Cohort-Specific Roadmap Content Issues
 
-### Problem 1: Roadmap Showing Wrong Content (CRITICAL)
-**Location:** `src/hooks/useRoadmapData.ts` (Lines 25-37)
+## Issues Identified
 
-The code always fetches the shared template (`edition_id IS NULL`) which contains **Filmmaking-specific content**:
-- "Orientation & Visual Storytelling"
-- "Cinematography Masterclass"
-- "Direction & Storytelling"
+### Issue 1: Writing Users See Filmmaking Content (CRITICAL)
+**Root Cause Found:** The current Writing users are assigned to edition `cf2b9fd2-a3da-4d0b-8370-da0937f9d786` (Forge Writing - Edition 5 - Goa), but this edition has **0 roadmap days**.
 
-But the database has **cohort-specific content** stored by edition_id:
+**Database Evidence:**
+| Edition | Cohort Type | Roadmap Days |
+|---------|-------------|--------------|
+| Forge Writing - Edition 5 - Goa | FORGE_WRITING | **0** |
+| Forge Writing - Edition 4 - Goa | FORGE_WRITING | **0** |
+| Forge Writing - Goa Jan 2025 | FORGE_WRITING | 7 ✓ |
 
-| Cohort | Example Days |
-|--------|--------------|
-| **FORGE** (Filmmaking) | Cinematography Masterclass, Direction & Storytelling |
-| **FORGE_WRITING** | Psychology of Storytelling, Advanced Writing & Mentorship |
-| **FORGE_CREATORS** | Mindset Reset, Shoot Day 1, Brand & Monetization |
+The code correctly falls back to the shared template when no edition-specific days exist, but the shared template contains **Filmmaking content** ("Orientation & Visual Storytelling", "Cinematography Masterclass", etc.).
+
+**This is a DATA issue, not a code issue.** However, we need a better solution than falling back to filmmaking content.
 
 ---
 
-### Problem 2: Equipment Tab Shouldn't Appear for Writers/Creators
-**Location:** `src/components/roadmap/RoadmapLayout.tsx`
+### Issue 2: Online/Virtual Sessions Showing for Writers
+**Current Behavior:** The screenshots show "Online" badges and virtual session content for the Writing cohort.
 
-Current logic only hides Equipment for Writers:
-```tsx
-const showEquipment = userCohortType !== 'FORGE_WRITING';
+**Expected Behavior:** Per the existing memory:
+> "This feature is restricted at the UI level to Filmmaking and Creators cohorts; all virtual UI elements and session notifications are hidden for the 'FORGE_WRITING' cohort as they skip the online stage."
+
+**Root Cause:** The JourneyCard correctly checks `cohortType !== 'FORGE_WRITING'` for virtual indicators, BUT since the data is falling back to the Filmmaking template (which has `is_virtual: true` for days 1-3), the data itself contains virtual meeting info.
+
+---
+
+### Issue 3: Zoom Link Feature Not Working
+**Analysis:** The SessionMeetingCard component is well-implemented with:
+- Join Now button that opens meeting URL
+- Copy meeting ID/passcode functionality  
+- Calendar sync (Google + Apple)
+- Platform detection (Zoom, Meet, Teams)
+
+However, it's only shown when `forgeMode === 'DURING_FORGE'` and `cohortType !== 'FORGE_WRITING'`. 
+
+**Potential Issue:** If users are in PRE_FORGE mode, they only see "Meeting details will be available when Forge begins" - but they need to test/verify access beforehand.
+
+---
+
+## Root Cause Summary
+
+```text
+User (Writing cohort) → edition_id: cf2b9fd2-a3da-4d0b-8370-da0937f9d786
+                              ↓
+                    Query: WHERE edition_id = ?
+                              ↓
+                         0 roadmap days found
+                              ↓
+                    Fallback: WHERE edition_id IS NULL
+                              ↓
+                    Shared template (FILMMAKING content!)
+                              ↓
+             "Cinematography Masterclass" shown to Writers!
 ```
 
-But Creators also have **zero equipment** in the database. The Equipment tab should only appear when there's actual data.
-
 ---
 
-### Problem 3: Hardcoded "Filmmaking Arsenal" Label
-**Location:** `src/components/roadmap/EquipmentSection.tsx`
+## Solution: Two-Part Fix
 
-The section displays "Your Filmmaking Arsenal" even when empty or for other cohorts.
+### Part 1: Cohort-Based Fallback (Code Fix)
 
----
+Instead of falling back to the shared template (Filmmaking), we should:
+1. First try to get edition-specific days (current behavior)
+2. If none exist, **find another edition of the same cohort type** that has roadmap days
+3. Only fall back to shared template as last resort
 
-## Solution
-
-### Fix 1: Fetch Edition-Specific Roadmap Days
+This ensures Writers see Writing content and Creators see Creators content.
 
 **File:** `src/hooks/useRoadmapData.ts`
 
-**Current Logic:**
-```tsx
-// Always fetches shared template (Filmmaking content)
-.is('edition_id', null)
-```
-
-**New Logic:**
-1. First, try to fetch days matching user's `edition_id`
-2. If no edition-specific days exist, fall back to shared template
-3. This ensures Writers see "Psychology of Storytelling" and Creators see "Mindset Reset"
-
----
-
-### Fix 2: Data-Driven Equipment Tab Visibility
-
-**File:** `src/components/roadmap/RoadmapLayout.tsx`
-
-Add a query to check if equipment exists for the user's cohort before showing the tab.
-
-```tsx
-// Query equipment count for this cohort
-const { data: equipmentCount } = useQuery({
-  queryKey: ['equipment-count', userCohortType],
+```typescript
+// Fetch roadmap days - prioritize edition-specific, then cohort-specific, then shared template
+const { data: templateDays, isLoading: isLoadingDays } = useQuery({
+  queryKey: ['roadmap-days', profile?.edition_id, userCohortType],
   queryFn: async () => {
-    const { count } = await supabase
-      .from('forge_equipment')
-      .select('*', { count: 'exact', head: true })
-      .eq('cohort_type', userCohortType)
-      .eq('is_active', true);
-    return count || 0;
-  }
+    // Step 1: Try user's exact edition
+    if (profile?.edition_id) {
+      const { data: editionDays } = await supabase
+        .from('roadmap_days')
+        .select('*')
+        .eq('edition_id', profile.edition_id)
+        .order('day_number', { ascending: true });
+      
+      if (editionDays && editionDays.length > 0) {
+        return editionDays as RoadmapDay[];
+      }
+    }
+    
+    // Step 2: Find another edition of SAME cohort type with roadmap days
+    if (userCohortType) {
+      // Get editions of same cohort type
+      const { data: sameTypeEditions } = await supabase
+        .from('editions')
+        .select('id')
+        .eq('cohort_type', userCohortType);
+      
+      if (sameTypeEditions && sameTypeEditions.length > 0) {
+        const editionIds = sameTypeEditions.map(e => e.id);
+        
+        const { data: cohortDays } = await supabase
+          .from('roadmap_days')
+          .select('*')
+          .in('edition_id', editionIds)
+          .order('day_number', { ascending: true });
+        
+        if (cohortDays && cohortDays.length > 0) {
+          return cohortDays as RoadmapDay[];
+        }
+      }
+    }
+    
+    // Step 3: Last resort - shared template
+    const { data } = await supabase
+      .from('roadmap_days')
+      .select('*')
+      .is('edition_id', null)
+      .order('day_number', { ascending: true });
+    
+    return (data || []) as RoadmapDay[];
+  },
+  enabled: !!profile?.edition_id
 });
-
-// Only show equipment tab if there's data
-const showEquipment = (equipmentCount || 0) > 0;
 ```
-
-This is **data-driven** - if you add equipment for Writers later, the tab automatically appears.
 
 ---
 
-### Fix 3: Remove Empty Equipment Section Fallback
+### Part 2: Hide Virtual Sessions for Writers (Already Implemented - Verify)
 
-Since the Equipment tab now only appears when data exists, we can simplify the EquipmentSection component by removing the empty state (the tab won't be accessible anyway).
+The code already has these checks in place:
+- `JourneyCard.tsx` line 161: `day.is_virtual && cohortType !== 'FORGE_WRITING'`
+- `JourneyCard.tsx` line 230: Virtual join button hidden for FORGE_WRITING
+- `DayDetailModal.tsx` line 138: Online session badge hidden for FORGE_WRITING
+- `DayDetailModal.tsx` line 162: SessionMeetingCard hidden for FORGE_WRITING
+
+**These will work correctly once Writers get Writing-specific data** (which has `is_virtual: false`).
+
+---
+
+### Part 3: Improve Zoom Link Accessibility (Enhancement)
+
+Add ability to preview meeting credentials even in PRE_FORGE mode (optional enhancement):
+
+**Option A:** Show credentials (obscured) in PRE_FORGE with "Available X days before session"
+**Option B:** Allow access to meeting card 24-48 hours before session start
 
 ---
 
@@ -97,109 +155,55 @@ Since the Equipment tab now only appears when data exists, we can simplify the E
 
 | File | Changes |
 |------|---------|
-| `src/hooks/useRoadmapData.ts` | Update query to fetch edition-specific days with fallback |
-| `src/components/roadmap/RoadmapLayout.tsx` | Add equipment count query for data-driven tab visibility |
-
----
-
-## Technical Implementation
-
-### 1. useRoadmapData.ts - Edition-Specific Days Query
-
-```tsx
-// Fetch roadmap days - prioritize edition-specific, fallback to template
-const { data: templateDays, isLoading: isLoadingDays } = useQuery({
-  queryKey: ['roadmap-days', profile?.edition_id],
-  queryFn: async () => {
-    // First, try to get edition-specific days
-    if (profile?.edition_id) {
-      const { data: editionDays, error: editionError } = await supabase
-        .from('roadmap_days')
-        .select('*')
-        .eq('edition_id', profile.edition_id)
-        .order('day_number', { ascending: true });
-      
-      if (!editionError && editionDays && editionDays.length > 0) {
-        return editionDays as RoadmapDay[];
-      }
-    }
-    
-    // Fallback to shared template if no edition-specific days
-    const { data, error } = await supabase
-      .from('roadmap_days')
-      .select('*')
-      .is('edition_id', null)
-      .order('day_number', { ascending: true });
-    
-    if (error) throw error;
-    return data as RoadmapDay[];
-  },
-  enabled: !!profile?.edition_id
-});
-```
-
-### 2. RoadmapLayout.tsx - Equipment Count Check
-
-```tsx
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-
-// Inside component:
-const { data: equipmentCount } = useQuery({
-  queryKey: ['equipment-count', userCohortType],
-  queryFn: async () => {
-    const { count, error } = await supabase
-      .from('forge_equipment')
-      .select('*', { count: 'exact', head: true })
-      .eq('cohort_type', userCohortType)
-      .eq('is_active', true);
-    if (error) return 0;
-    return count || 0;
-  },
-  enabled: !!userCohortType
-});
-
-const showEquipment = (equipmentCount || 0) > 0;
-```
+| `src/hooks/useRoadmapData.ts` | Update query to use cohort-based fallback instead of shared template |
 
 ---
 
 ## Expected Behavior After Fix
 
-| User Cohort | Journey Content | Equipment Tab |
-|-------------|-----------------|---------------|
-| **FORGE** (Filmmaking) | "Cinematography Masterclass" | ✅ Visible (13 items) |
-| **FORGE_WRITING** | "Psychology of Storytelling" | ❌ Hidden (0 items) |
-| **FORGE_CREATORS** | "Mindset Reset", "Shoot Day 1" | ❌ Hidden (0 items) |
-
----
-
-## Mobile & Desktop Compatibility
-
-Both fixes are **purely data/logic changes** - no UI modifications needed:
-- The QuickActionsBar already handles responsive layouts with `flex-1 sm:flex-none`
-- Equipment tab will simply not appear in the nav tabs when hidden
-- All existing touch targets and spacing remain unchanged
+| User Cohort | Content Shown | Virtual Sessions |
+|-------------|---------------|------------------|
+| **FORGE** (Filmmaking) | "Cinematography Masterclass" | ✓ Days 1-3 Online |
+| **FORGE_WRITING** | "Psychology of Storytelling", "Advanced Writing" | ✗ No virtual UI |
+| **FORGE_CREATORS** | "Mindset Reset", "Shoot Day 1" | ✓ Virtual where applicable |
 
 ---
 
 ## Data Flow After Fix
 
 ```text
-User Login
+User Login (Writing cohort)
     ↓
-AuthContext loads profile.edition_id + edition.cohort_type
+profile.edition_id = cf2b9fd2... (Edition 5)
     ↓
-useRoadmapData:
-  ├── Query roadmap_days WHERE edition_id = user's edition
-  │   ├── Has data? → Use edition-specific content
-  │   └── No data? → Fallback to shared template
-  └── Query equipment count for cohort_type
+Query 1: roadmap_days WHERE edition_id = cf2b9fd2
+         Result: 0 rows
     ↓
-RoadmapLayout:
-  ├── showEquipment = equipmentCount > 0
-  └── QuickActionsBar receives hasEquipment prop
+Query 2: editions WHERE cohort_type = 'FORGE_WRITING'
+         → Found: [cf2b9fd2, 9a4b17e1, 7f94f1b7]
     ↓
-QuickActionsBar:
-  └── Only shows Equipment tab if hasEquipment is true
+Query 3: roadmap_days WHERE edition_id IN [...]
+         Result: 7 rows from 7f94f1b7 (Jan 2025 Writing)
+    ↓
+Writers now see: "Psychology of Storytelling" ✓
 ```
+
+---
+
+## Mobile & Desktop Compatibility
+
+All changes are data-layer only. The existing responsive UI components (JourneyCard, DayDetailModal, SessionMeetingCard) already handle:
+- Touch-friendly tap targets
+- Drawer/Dialog responsive switching
+- Proper spacing and typography for mobile
+- Calendar sync works on both platforms
+
+---
+
+## Why This is Better Than Database-Only Fix
+
+While we could simply copy roadmap days to Edition 5, the code fix ensures:
+1. Future editions automatically inherit content from past editions of same cohort
+2. Admins don't need to duplicate data for every new edition
+3. Self-healing when new cohorts are created
+
