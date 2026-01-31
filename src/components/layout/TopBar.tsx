@@ -27,7 +27,7 @@ export const TopBar: React.FC = () => {
     <header className="fixed top-[52px] left-0 right-0 md:left-56 z-50 glass-nav border-b border-white/10">
       <div className="container flex items-center justify-between h-16 px-4 md:px-6">
         {/* Mobile Logo */}
-        <Link to="/" className="flex items-center gap-2 md:hidden">
+        <Link to="/" className="flex items-center gap-2 md:hidden" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <img src={forgeLogo} alt="Forge" className="h-8 w-auto" />
         </Link>
 
