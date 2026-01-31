@@ -13,6 +13,7 @@ import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
 import HomeJourneySection from '@/components/home/HomeJourneySection';
 import RoadmapSidebar from '@/components/roadmap/RoadmapSidebar';
 import FloatingHighlightsButton from '@/components/roadmap/FloatingHighlightsButton';
+import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
 import { Users } from 'lucide-react';
 import { Mentor } from '@/data/mentorsData';
 
@@ -250,6 +251,9 @@ const Home: React.FC = () => {
 
       {/* Mobile Floating Button - Hidden on desktop */}
       <FloatingHighlightsButton editionId={profile?.edition_id} />
+      
+      {/* Admin Cohort Switcher - Admin only */}
+      <AdminCohortSwitcher />
     </div>
   );
 };
