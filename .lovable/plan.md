@@ -1,49 +1,71 @@
 
-# Fix Modal Header Counter Overlap
+# Remove Lock Feature from Pre Forge Sessions
 
 ## Summary
-Remove the "2/4" counter from the `RoadmapHighlightsModal` header to eliminate the overlap with the close (X) button.
-
-## Scope
-
-| Modal Type | File | Has Counter Overlap? |
-|------------|------|---------------------|
-| Past Moments | `RoadmapHighlightsModal.tsx` | Yes - needs fix |
-| Student Work | `RoadmapHighlightsModal.tsx` | Yes - needs fix (same component) |
-| Stay Location | `StayLocationDetailModal.tsx` | No - already clean |
-
-**One file change fixes both Past Moments and Student Work** since they share the same modal component.
+Remove all lock/premium gating from the Learn page so all Pre Forge Sessions are accessible to any logged-in user.
 
 ---
 
-## Change Required
+## Changes Required
 
-**File:** `src/components/home/RoadmapHighlightsModal.tsx`
+### 1. `src/pages/Learn.tsx`
 
-**Remove lines 151-153:**
+**Change A: Remove lock prop from LearnCourseCard**
+
+At line 163, change:
 ```tsx
-<span className="text-sm text-muted-foreground font-normal ml-auto">
-  {currentIndex + 1} / {items.length}
-</span>
+isLocked={item.is_premium && !isFullAccess}
+```
+To:
+```tsx
+isLocked={false}
 ```
 
-The dot navigation at the bottom (lines 188-205) already provides position context, making the header counter redundant.
+**Change B: Remove premium check from card click handler**
+
+At lines 94-100, change:
+```tsx
+const handleCardClick = (content: LearnContent) => {
+  if (content.is_premium && !isFullAccess) {
+    setShowUnlockModal(true);
+    return;
+  }
+  navigate(`/learn/${content.id}`);
+};
+```
+To:
+```tsx
+const handleCardClick = (content: LearnContent) => {
+  navigate(`/learn/${content.id}`);
+};
+```
+
+**Change C: Clean up unused imports and state**
+
+Remove these since they're no longer needed:
+- Line 48: `const [showUnlockModal, setShowUnlockModal] = useState(false);`
+- Line 49: Remove `isFullAccess` from destructure (keep `user`)
+- Lines 249-256: Remove the `UnlockModal` component
+- Line 6: Remove `UnlockModal` import
+- Line 19: Remove the `PAYMENT_LINK` constant
 
 ---
 
-## Visual Result
+### 2. `src/components/learn/LearnCourseCard.tsx`
 
-**Before:**
-```
-┌────────────────────────────────────────┐
-│ [📷] Past Moments           2/4   [X] │  ← Overlapping
-└────────────────────────────────────────┘
-```
+**Optional Cleanup:** Since `isLocked` will always be `false`, we could remove the lock-related code entirely:
+- Line 3: Remove `Lock` from imports
+- Lines 64-71: Remove the lock overlay JSX
+- Line 74: Change condition from `duration && !isLocked` to just `duration`
 
-**After:**
-```
-┌────────────────────────────────────────┐
-│ [📷] Past Moments                 [X] │  ← Clean
-│              ● ○ ○ ○                   │  ← Dots show position
-└────────────────────────────────────────┘
-```
+---
+
+## Files Summary
+
+| File | Changes |
+|------|---------|
+| `src/pages/Learn.tsx` | Remove premium gating logic, unlock modal, and related state |
+| `src/components/learn/LearnCourseCard.tsx` | Remove lock overlay code (cleanup) |
+
+## Result
+All Pre Forge Sessions will be immediately accessible to any logged-in user without lock icons or payment prompts.
