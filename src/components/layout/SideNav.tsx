@@ -1,9 +1,10 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Users, BookOpen, Map, Calendar, Gift, Settings, Info, PanelLeftClose, PanelLeft, ChevronRight } from 'lucide-react';
+import { Home, Users, BookOpen, Map, Calendar, Gift, Settings, Info, PanelLeftClose, PanelLeft, ChevronRight, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { useAdminCheck } from '@/hooks/useAdminCheck';
 import forgeLogo from '@/assets/forge-logo.png';
 import forgeIcon from '@/assets/forge-icon.png';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -27,6 +28,7 @@ export const SideNav: React.FC = () => {
   const { collapsed, toggle } = useSidebar();
   const location = useLocation();
   const { profile, edition } = useAuth();
+  const { isAdmin } = useAdminCheck();
 
   const NavItem = ({ to, icon: Icon, label, isActive }: { to: string; icon: React.ElementType; label: string; isActive: boolean }) => {
     const content = (
@@ -162,6 +164,16 @@ export const SideNav: React.FC = () => {
               isActive={location.pathname === to} 
             />
           ))}
+
+          {/* Admin Link - Only visible to admins */}
+          {isAdmin && (
+            <NavItem 
+              to="/admin" 
+              icon={Shield} 
+              label="Admin" 
+              isActive={location.pathname.startsWith('/admin')} 
+            />
+          )}
 
 
           {/* User Display - Navigates to Profile */}
