@@ -69,6 +69,18 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({
 }) => {
   const schedule = day.schedule || [];
 
+  // Calculate if we should show meeting credentials (48 hours before session or during forge)
+  const sessionDate = day.date ? new Date(day.date) : null;
+  const hoursUntilSession = sessionDate 
+    ? (sessionDate.getTime() - Date.now()) / (1000 * 60 * 60) 
+    : Infinity;
+  
+  // Show meeting card if: During Forge OR session is within 48 hours
+  const showMeetingCard = forgeMode === 'DURING_FORGE' || (hoursUntilSession <= 48 && hoursUntilSession > -24);
+  
+  // Show "coming soon" message if: Pre-Forge AND session is more than 48 hours away
+  const showMeetingComingSoon = forgeMode === 'PRE_FORGE' && hoursUntilSession > 48;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[90vh] p-0 overflow-hidden glass-premium border-primary/20">
@@ -158,8 +170,8 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({
         {/* Scrollable content */}
         <ScrollArea className="max-h-[50vh]">
           <div className="p-6 space-y-6">
-            {/* Virtual Meeting Card - Show prominently for virtual sessions during DURING_FORGE (not for FORGE_WRITING) */}
-            {day.is_virtual && day.meeting_url && forgeMode === 'DURING_FORGE' && cohortType !== 'FORGE_WRITING' && (
+            {/* Virtual Meeting Card - Show for virtual sessions (48h before or during forge, not for FORGE_WRITING) */}
+            {day.is_virtual && day.meeting_url && showMeetingCard && cohortType !== 'FORGE_WRITING' && (
               <SessionMeetingCard
                 meetingUrl={day.meeting_url}
                 meetingId={day.meeting_id}
@@ -172,13 +184,18 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({
               />
             )}
 
-            {/* Virtual Meeting Info Hidden Message for PRE_FORGE (not for FORGE_WRITING) */}
-            {day.is_virtual && forgeMode === 'PRE_FORGE' && cohortType !== 'FORGE_WRITING' && (
-              <div className="p-4 rounded-xl bg-muted/30 border border-border/50 text-center">
-                <Globe className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
+            {/* Virtual Meeting Info - Show countdown when session is coming soon (not for FORGE_WRITING) */}
+            {day.is_virtual && showMeetingComingSoon && cohortType !== 'FORGE_WRITING' && (
+              <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-center">
+                <Globe className="w-8 h-8 mx-auto mb-2 text-blue-400/70" />
                 <p className="text-sm text-muted-foreground">
-                  Meeting details will be available when Forge begins
+                  Meeting details will be available 48 hours before the session
                 </p>
+                {sessionDate && (
+                  <p className="text-xs text-blue-400/80 mt-1">
+                    Session starts: {format(sessionDate, 'EEEE, MMMM d')} at {day.session_start_time || day.call_time || 'TBA'}
+                  </p>
+                )}
               </div>
             )}
             {/* Description */}
