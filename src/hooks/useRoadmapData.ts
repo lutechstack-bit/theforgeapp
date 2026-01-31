@@ -78,28 +78,47 @@ export const useRoadmapData = () => {
   });
 
   // Calculate dates dynamically based on forge_start_date + day_number
-  // IMPORTANT: Don't overwrite day.date if it already has a value (for online sessions with fixed dates)
+  // IMPORTANT: Only preserve original dates for user's OWN edition's online sessions
+  // For fallback data, always recalculate dates to prevent wrong 2025 dates showing as completed
   const roadmapDays = useMemo(() => {
     if (!templateDays) return [];
+    
     return templateDays.map(day => {
-      // If the day already has a date (e.g., online sessions), keep it
-      if (day.date) {
+      // For online sessions (negative day numbers) from user's OWN edition, keep the original date
+      // This preserves specific meeting times set for the user's cohort
+      const isOwnEditionOnlineSession = 
+        day.edition_id === profile?.edition_id && 
+        day.day_number < 0 && 
+        day.date;
+      
+      if (isOwnEditionOnlineSession) {
         return day;
       }
       
-      // Calculate date for physical days (day_number > 0)
+      // Calculate all other dates based on user's forge_start_date
       let calculatedDate: string | null = null;
-      if (forgeStartDate && day.day_number > 0) {
-        const dayDate = new Date(forgeStartDate);
-        dayDate.setDate(dayDate.getDate() + (day.day_number - 1));
-        calculatedDate = dayDate.toISOString().split('T')[0];
+      
+      if (forgeStartDate) {
+        if (day.day_number > 0) {
+          // Physical days: Day 1 = forge_start_date, Day 2 = forge_start_date + 1, etc.
+          const dayDate = new Date(forgeStartDate);
+          dayDate.setDate(dayDate.getDate() + (day.day_number - 1));
+          calculatedDate = dayDate.toISOString().split('T')[0];
+        } else if (day.day_number < 0) {
+          // Online sessions from fallback: calculate relative to forge_start_date
+          const dayDate = new Date(forgeStartDate);
+          dayDate.setDate(dayDate.getDate() + day.day_number);
+          calculatedDate = dayDate.toISOString().split('T')[0];
+        }
+        // day_number === 0 (Pre-Forge Preparation) has no date
       }
+      
       return {
         ...day,
         date: calculatedDate
       };
     });
-  }, [templateDays, forgeStartDate]);
+  }, [templateDays, forgeStartDate, profile?.edition_id]);
 
   // Fetch galleries
   const { data: galleries } = useQuery({
@@ -201,6 +220,7 @@ export const useRoadmapData = () => {
     
     // Admin testing: PRE_FORGE means all days are upcoming
     if (isTestingMode && simulatedForgeMode === 'PRE_FORGE') {
+      if (day.day_number === 0) return 'current';
       return 'upcoming';
     }
     
@@ -209,16 +229,30 @@ export const useRoadmapData = () => {
       return 'completed';
     }
     
-    // Normal calculation based on dates
-    if (!day.date) {
-      const activeDays = roadmapDays?.filter(d => d.is_active) || [];
-      if (activeDays[0]?.id === day.id) return 'current';
+    // REAL MODE: PRE_FORGE - All physical days are upcoming (none completed yet)
+    if (forgeMode === 'PRE_FORGE') {
+      // Day 0 (Pre-Forge Prep) is "current" before forge starts
+      if (day.day_number === 0) return 'current';
       return 'upcoming';
     }
+    
+    // REAL MODE: POST_FORGE - All days are completed
+    if (forgeMode === 'POST_FORGE') {
+      return 'completed';
+    }
+    
+    // REAL MODE: DURING_FORGE - Use date comparison
+    if (!day.date) {
+      return 'current'; // Day 0 without date during forge
+    }
+    
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const dayDate = new Date(day.date);
+    dayDate.setHours(0, 0, 0, 0);
+    
     if (dayDate < today) return 'completed';
-    if (dayDate.toDateString() === today.toDateString()) return 'current';
+    if (dayDate.getTime() === today.getTime()) return 'current';
     return 'upcoming';
   };
 
