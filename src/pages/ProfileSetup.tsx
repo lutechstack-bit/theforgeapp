@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Loader2, Camera, Upload, Film, Pen, Users, CheckCircle2, MapPin, Calendar } from 'lucide-react';
+import { ArrowRight, Loader2, Camera, Upload, Film, Pen, Users, CheckCircle2, MapPin, Calendar, Lock } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { PhoneInput } from '@/components/onboarding/PhoneInput';
@@ -78,6 +78,8 @@ const ProfileSetup: React.FC = () => {
         full_name: user.user_metadata?.full_name || profile?.full_name || prev.full_name,
         email: user.email || prev.email,
         avatar_url: profile?.avatar_url || prev.avatar_url,
+        // Pre-fill edition_id if already assigned by admin
+        edition_id: profile?.edition_id || prev.edition_id,
       }));
     }
   }, [user, profile]);
@@ -119,6 +121,9 @@ const ProfileSetup: React.FC = () => {
   };
 
   const selectedEdition = editions?.find(e => e.id === formData.edition_id);
+  // Check if user already had an edition assigned (by admin)
+  const hasPreAssignedEdition = !!profile?.edition_id;
+  const preAssignedEdition = editions?.find(e => e.id === profile?.edition_id);
 
   const handleSubmit = async () => {
     if (!user) return;
@@ -285,14 +290,62 @@ const ProfileSetup: React.FC = () => {
         {/* Edition Selection */}
         <div className="space-y-4">
           <div className="space-y-1">
-            <Label className="text-lg font-semibold">Choose Your Forge Edition *</Label>
-            <p className="text-sm text-muted-foreground">Select the program and batch you want to join</p>
+            <Label className="text-lg font-semibold">
+              {hasPreAssignedEdition ? 'Your Forge Edition' : 'Choose Your Forge Edition *'}
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              {hasPreAssignedEdition 
+                ? "You've been enrolled in this program" 
+                : 'Select the program and batch you want to join'}
+            </p>
           </div>
           
           {editionsLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
+          ) : hasPreAssignedEdition && preAssignedEdition ? (
+            // Locked edition card for admin-assigned users
+            (() => {
+              const Icon = getCohortIcon(preAssignedEdition.cohort_type);
+              return (
+                <div className="relative p-4 sm:p-5 rounded-xl sm:rounded-2xl border-2 border-primary bg-gradient-to-br from-primary/15 to-primary/5 shadow-lg shadow-primary/20">
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary/80 px-2 py-1 rounded-full">
+                    <Lock className="h-3 w-3" />
+                    <span>Enrolled</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+                      <Icon className="h-7 w-7" />
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-foreground text-lg truncate pr-8">
+                        {preAssignedEdition.name}
+                      </h3>
+                      <div className="flex items-center gap-4 mt-1.5 flex-wrap">
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="h-3.5 w-3.5 text-primary" />
+                          <span className="text-sm text-muted-foreground">{preAssignedEdition.city}</span>
+                        </div>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">
+                          {getCohortLabel(preAssignedEdition.cohort_type)}
+                        </span>
+                      </div>
+                      {preAssignedEdition.forge_start_date && preAssignedEdition.forge_end_date && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <Calendar className="h-3.5 w-3.5 text-muted-foreground/60" />
+                          <span className="text-xs text-muted-foreground/80">
+                            {formatDateRange(preAssignedEdition.forge_start_date, preAssignedEdition.forge_end_date)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()
           ) : editions?.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <p>No editions available at the moment.</p>
