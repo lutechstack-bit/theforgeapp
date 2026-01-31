@@ -200,7 +200,7 @@ const Home: React.FC = () => {
 
           {/* Learn Section */}
           {displayLearnContent.length > 0 && (
-            <ContentCarousel title="Fundamental learning for forge and beyond" onSeeAll={() => navigate('/learn')}>
+            <ContentCarousel title="Fundamental learning for Forge and beyond" onSeeAll={() => navigate('/learn')}>
               {displayLearnContent.map((content: any) => (
                 <LearnCourseCard
                   key={content.id}
