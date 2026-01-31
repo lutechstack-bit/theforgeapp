@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, Link } from 'react-router-dom';
 import { Home, Users, BookOpen, Map, Calendar, Gift, Settings, Info, PanelLeftClose, PanelLeft, ChevronRight, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -107,16 +107,16 @@ export const SideNav: React.FC = () => {
           "flex py-5 transition-all duration-300",
           collapsed ? "flex-col items-center gap-4 px-3" : "flex-row items-center justify-between px-5"
         )}>
-          <div className="flex items-center justify-center overflow-hidden">
+          <Link to="/" className="flex items-center justify-center overflow-hidden">
             <img 
               src={collapsed ? forgeIcon : forgeLogo} 
               alt="Forge" 
               className={cn(
-                "shrink-0 transition-all duration-300 object-contain",
+                "shrink-0 transition-all duration-300 object-contain cursor-pointer",
                 collapsed ? "h-8 w-8" : "h-10 max-w-[180px]"
               )}
             />
-          </div>
+          </Link>
           
           {/* Toggle Button */}
           <Tooltip delayDuration={0}>
