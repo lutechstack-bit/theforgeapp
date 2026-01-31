@@ -28,11 +28,25 @@ export const SimpleEventCard: React.FC<SimpleEventCardProps> = ({
       onClick={onClick}
     >
       {imageUrl ? (
-        <img
-          src={imageUrl}
-          alt={title}
-          className="w-full h-full object-contain"
-        />
+        <>
+          {/* Layer 1: Blurred background (fills dead space) */}
+          <img
+            src={imageUrl}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-60"
+          />
+          
+          {/* Layer 2: Subtle dark overlay */}
+          <div className="absolute inset-0 bg-black/30" />
+          
+          {/* Layer 3: Sharp poster (full image visible) */}
+          <img
+            src={imageUrl}
+            alt={title}
+            className="relative w-full h-full object-contain z-10"
+          />
+        </>
       ) : (
         <div className="w-full h-full bg-gradient-to-br from-muted to-muted-foreground/20 flex items-center justify-center">
           <span className="text-muted-foreground text-sm text-center px-4">{title}</span>
