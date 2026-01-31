@@ -10,6 +10,7 @@ import QuickActionsBar from '@/components/roadmap/QuickActionsBar';
 import RoadmapSidebar from '@/components/roadmap/RoadmapSidebar';
 import FloatingHighlightsButton from '@/components/roadmap/FloatingHighlightsButton';
 import AdminTestingPanel from '@/components/admin/AdminTestingPanel';
+import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
 
 const RoadmapLayout: React.FC = () => {
   const { isAdmin } = useAdminCheck();
@@ -114,6 +115,9 @@ const RoadmapLayout: React.FC = () => {
 
       {/* Floating Highlights Button - Mobile/Tablet only */}
       <FloatingHighlightsButton editionId={profile.edition_id} />
+      
+      {/* Admin Cohort Switcher - Admin only */}
+      <AdminCohortSwitcher />
       
       {/* Admin Testing Panel - Admin only */}
       {isAdmin && <AdminTestingPanel />}

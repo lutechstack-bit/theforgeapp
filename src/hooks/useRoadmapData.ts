@@ -16,10 +16,13 @@ export const cohortDisplayNames: Record<CohortType, string> = {
 
 export const useRoadmapData = () => {
   const { profile, edition, forgeMode, user } = useAuth();
-  const { isTestingMode, simulatedDayNumber, simulatedForgeMode } = useAdminTestingSafe();
+  const { isTestingMode, simulatedDayNumber, simulatedForgeMode, simulatedCohortType } = useAdminTestingSafe();
   const queryClient = useQueryClient();
-  // CRITICAL: Don't default to 'FORGE' - wait for edition to load to prevent race condition
-  const userCohortType = edition?.cohort_type as CohortType | undefined;
+  
+  // Use simulated cohort if admin is testing, otherwise use actual edition cohort
+  const actualCohortType = edition?.cohort_type as CohortType | undefined;
+  const userCohortType = (isTestingMode && simulatedCohortType) ? simulatedCohortType : actualCohortType;
+  
   const cohortName = userCohortType ? cohortDisplayNames[userCohortType] : 'The Forge';
   const forgeStartDate = edition?.forge_start_date ? new Date(edition.forge_start_date) : null;
 
