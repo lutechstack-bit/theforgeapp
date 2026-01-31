@@ -2,36 +2,40 @@ import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Map as MapIcon, ChevronRight } from 'lucide-react';
 import { useRoadmapData } from '@/hooks/useRoadmapData';
+import { useAuth } from '@/contexts/AuthContext';
 import JourneyCard, { type JourneyCardDay } from '@/components/roadmap/JourneyCard';
-import JourneyStats from '@/components/roadmap/JourneyStats';
 import { TimelineNode } from '@/components/roadmap/TimelineSpine';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const HomeJourneySection: React.FC = () => {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   
   const {
     roadmapDays,
     getDayStatus,
-    totalCount,
-    completedCount,
-    currentDayNumber,
     forgeMode,
     forgeStartDate,
     userCohortType,
-    cohortName,
-    edition,
   } = useRoadmapData();
 
-  // Get next day date for countdown
-  const nextDayDate = useMemo(() => {
-    if (!roadmapDays) return null;
-    const upcomingDay = roadmapDays.find(d => getDayStatus(d) === 'upcoming');
-    return upcomingDay?.date ? new Date(upcomingDay.date) : null;
-  }, [roadmapDays, getDayStatus]);
+  // Get user's first name
+  const firstName = profile?.full_name?.split(' ')[0] || 'there';
 
-  const forgeEndDate = edition?.forge_end_date ? new Date(edition.forge_end_date) : null;
+  // Get cohort-specific journey type
+  const getJourneyType = () => {
+    switch (userCohortType) {
+      case 'FORGE':
+        return 'Filmmaking';
+      case 'FORGE_CREATORS':
+        return 'Creating';
+      case 'FORGE_WRITING':
+        return 'Writing';
+      default:
+        return 'Forge';
+    }
+  };
 
   // Get first 4 days to show (prioritize current/upcoming)
   const displayDays = useMemo(() => {
@@ -64,18 +68,15 @@ const HomeJourneySection: React.FC = () => {
 
   return (
     <section className="space-y-4">
-      {/* Compact Stats Bar */}
-      <JourneyStats
-        cohortName={cohortName}
-        cohortType={userCohortType}
-        forgeMode={forgeMode}
-        forgeStartDate={forgeStartDate}
-        forgeEndDate={forgeEndDate}
-        completedCount={completedCount}
-        totalCount={totalCount}
-        currentDayNumber={currentDayNumber}
-        nextDayDate={nextDayDate}
-      />
+      {/* Personalized Welcome */}
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-foreground">
+          Hi {firstName}
+        </h1>
+        <p className="text-muted-foreground">
+          Your {getJourneyType()} Journey Starts Here
+        </p>
+      </div>
 
       {/* Section Header */}
       <div className="flex items-center justify-between">
