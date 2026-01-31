@@ -1,58 +1,76 @@
 
-# Scroll to Top When Logo Clicked on Homepage
 
-## The Issue
+# Reorder Perks Page Sections
 
-When you're already on the homepage (`/`) and click the logo:
-- The `<Link to="/">` doesn't trigger navigation (same route)
-- The `ScrollToTop` component only fires on route **changes**
-- Result: Nothing happens
+## Current Order
 
-## The Solution
+1. **Hero Section - Acceptance Card** (lines 112-175)
+2. **Your Forge Bag** (lines 177-213)
+3. **Perks Unlocked** (lines 215-242)
+4. **Equipment Discounts** (lines 244-286)
+5. **Footer Note** (lines 288-298)
 
-Add an `onClick` handler to the logo links that scrolls to top when on the homepage.
+## New Order (as requested)
+
+1. **Hero Section - Acceptance Card** ✓ (keep at top)
+2. **Equipment Discounts** ↑ (move up)
+3. **Perks Unlocked** ↔ (stays in middle)
+4. **Your Forge Bag** ↓ (move down)
+5. **Footer Note** ✓ (keep at bottom)
 
 ---
 
-## Files to Modify
+## Implementation
 
-### 1. `src/components/layout/SideNav.tsx`
+### File: `src/pages/Perks.tsx`
 
-**Change:** Add onClick handler to the logo Link
+Simply rearrange the JSX sections within the return statement. No logic changes needed — just cut and paste the sections in the new order.
 
-```tsx
-<Link 
-  to="/" 
-  className="flex items-center justify-center overflow-hidden"
-  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
->
+**Section blocks to move:**
+
+| Section | Current Lines | New Position |
+|---------|---------------|--------------|
+| Equipment Discounts | 244-286 | After Acceptance Card |
+| Perks Unlocked | 215-242 | After Equipment Discounts |
+| Your Forge Bag | 177-213 | After Perks Unlocked |
+
+---
+
+## Visual Preview
+
+```text
+┌─────────────────────────────────────┐
+│  🏆 ACCEPTANCE CARD                 │  ← Stays at top
+│  Welcome, [Name]!                   │
+│  [Share Your Acceptance]            │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│  📷 EQUIPMENT DISCOUNTS             │  ← Moved UP (was 4th)
+│  Sony - Up to 25% off               │
+│  Digitek - Up to 30% off            │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│  🎁 PERKS UNLOCKED                  │  ← Now 3rd (was 3rd)
+│  Forge Alumni Network               │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│  📦 YOUR FORGE BAG                  │  ← Moved DOWN (was 2nd)
+│  7 items included                   │
+│  [Grid of bag items]                │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│  📦 Your Forge Bag Awaits           │  ← Stays at bottom
+│  Footer note                        │
+└─────────────────────────────────────┘
 ```
 
-### 2. `src/components/layout/TopBar.tsx`
-
-**Change:** Add onClick handler to the mobile logo Link
-
-```tsx
-<Link 
-  to="/" 
-  className="flex items-center gap-2 md:hidden"
-  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
->
-```
-
 ---
 
-## Behavior After Fix
+## Summary
 
-| Scenario | Before | After |
-|----------|--------|-------|
-| Click logo on homepage | Nothing happens | Smooth scroll to top |
-| Click logo on other page | Navigates to `/` | Navigates to `/` + scroll to top |
+This is a simple reorder of existing sections — no functionality changes, just moving the JSX blocks into the new sequence.
 
----
-
-## Implementation Details
-
-- Uses `behavior: 'smooth'` for a polished scroll animation
-- Works on both mobile (TopBar) and desktop (SideNav)
-- No additional imports needed - `window.scrollTo` is native
