@@ -5,10 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { KYFormCard } from '@/components/kyform/KYFormCard';
 import { KYFormCardStack } from '@/components/kyform/KYFormCardStack';
 import { KYFormCompletion } from '@/components/kyform/KYFormCompletion';
@@ -16,8 +14,11 @@ import { RadioSelectField } from '@/components/onboarding/RadioSelectField';
 import { MultiSelectField } from '@/components/onboarding/MultiSelectField';
 import { ProficiencyField } from '@/components/onboarding/ProficiencyField';
 import { PhotoUploadField } from '@/components/onboarding/PhotoUploadField';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { ChevronLeft, ChevronRight, Loader2, ExternalLink, Clock, ChevronDown } from 'lucide-react';
+import { CountryStateSelector } from '@/components/onboarding/CountryStateSelector';
+import { PhoneInput } from '@/components/onboarding/PhoneInput';
+import { TagInput } from '@/components/onboarding/TagInput';
+import { TermsModal } from '@/components/onboarding/TermsModal';
+import { ChevronLeft, ChevronRight, Loader2, ExternalLink, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   AlertDialog,
@@ -121,6 +122,7 @@ interface FormData {
   date_of_birth: string;
   address_line_1: string;
   address_line_2: string;
+  country: string;
   state: string;
   pincode: string;
   gender: string;
@@ -132,7 +134,7 @@ interface FormData {
   proficiency_direction: string;
   proficiency_cinematography: string;
   proficiency_editing: string;
-  top_3_movies: string;
+  top_3_movies: string[];
   chronotype: string;
   meal_preference: string;
   food_allergies: string;
@@ -154,7 +156,7 @@ const KYFForm: React.FC = () => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
-  const [termsExpanded, setTermsExpanded] = useState(false);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     certificate_name: '',
@@ -163,6 +165,7 @@ const KYFForm: React.FC = () => {
     date_of_birth: '',
     address_line_1: '',
     address_line_2: '',
+    country: '',
     state: '',
     pincode: '',
     gender: '',
@@ -174,7 +177,7 @@ const KYFForm: React.FC = () => {
     proficiency_direction: '',
     proficiency_cinematography: '',
     proficiency_editing: '',
-    top_3_movies: '',
+    top_3_movies: [],
     chronotype: '',
     meal_preference: '',
     food_allergies: '',
@@ -215,6 +218,7 @@ const KYFForm: React.FC = () => {
           date_of_birth: data.date_of_birth || '',
           address_line_1: data.address_line_1 || '',
           address_line_2: data.address_line_2 || '',
+          country: 'India', // Default to India for existing data
           state: data.state || '',
           pincode: data.pincode || '',
           gender: data.gender || '',
@@ -226,7 +230,7 @@ const KYFForm: React.FC = () => {
           proficiency_direction: data.proficiency_direction || '',
           proficiency_cinematography: data.proficiency_cinematography || '',
           proficiency_editing: data.proficiency_editing || '',
-          top_3_movies: data.top_3_movies?.join(', ') || '',
+          top_3_movies: data.top_3_movies || [],
           chronotype: data.chronotype || '',
           meal_preference: data.meal_preference || '',
           food_allergies: data.food_allergies || '',
@@ -275,7 +279,7 @@ const KYFForm: React.FC = () => {
         proficiency_direction: formData.proficiency_direction || null,
         proficiency_cinematography: formData.proficiency_cinematography || null,
         proficiency_editing: formData.proficiency_editing || null,
-        top_3_movies: formData.top_3_movies ? formData.top_3_movies.split(',').map(m => m.trim()) : null,
+        top_3_movies: formData.top_3_movies.length > 0 ? formData.top_3_movies : null,
         chronotype: formData.chronotype || null,
         meal_preference: formData.meal_preference || null,
         food_allergies: formData.food_allergies || null,
@@ -333,7 +337,7 @@ const KYFForm: React.FC = () => {
         proficiency_direction: formData.proficiency_direction,
         proficiency_cinematography: formData.proficiency_cinematography,
         proficiency_editing: formData.proficiency_editing,
-        top_3_movies: formData.top_3_movies.split(',').map(m => m.trim()),
+        top_3_movies: formData.top_3_movies,
         chronotype: formData.chronotype,
         meal_preference: formData.meal_preference,
         food_allergies: formData.food_allergies,
@@ -374,10 +378,10 @@ const KYFForm: React.FC = () => {
     switch (step) {
       case 0: return true; // Intro step - always valid
       case 1: return !!(formData.certificate_name && formData.current_occupation && formData.instagram_id);
-      case 2: return !!(formData.date_of_birth && formData.address_line_1 && formData.state && formData.pincode);
+      case 2: return !!(formData.date_of_birth && formData.address_line_1 && formData.country && formData.state && formData.pincode);
       case 3: return !!(formData.gender && formData.tshirt_size && formData.has_editing_laptop && formData.emergency_contact_name && formData.emergency_contact_number);
       case 4: return true; // Proficiency optional
-      case 5: return !!(formData.top_3_movies && formData.chronotype && formData.meal_preference && formData.food_allergies && formData.medication_support);
+      case 5: return !!(formData.top_3_movies.length > 0 && formData.chronotype && formData.meal_preference && formData.food_allergies && formData.medication_support);
       case 6: return formData.languages_known.length > 0 && !!formData.height_ft;
       case 7: return !!(formData.photo_favorite_url && formData.headshot_front_url && formData.full_body_url);
       case 8: return !!(formData.mbti_type && formData.forge_intent && (formData.forge_intent !== 'other' || formData.forge_intent_other));
@@ -434,7 +438,6 @@ const KYFForm: React.FC = () => {
       case 1:
         return (
           <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={1} stepTitle="General Details">
-            <p className="text-sm text-muted-foreground mb-5">Let's start with the basics</p>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Full name (as you want it on your certificate) *</Label>
@@ -470,21 +473,25 @@ const KYFForm: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <Label>Address Line 1 *</Label>
-                <Input value={formData.address_line_1} onChange={e => updateField('address_line_1', e.target.value)} placeholder="e.g. 123, Main Street" className="h-11 bg-secondary/50" />
+                <Input value={formData.address_line_1} onChange={e => updateField('address_line_1', e.target.value)} placeholder="e.g. 123, MG Road" className="h-11 bg-secondary/50" />
               </div>
               <div className="space-y-2">
                 <Label>Address Line 2</Label>
-                <Input value={formData.address_line_2} onChange={e => updateField('address_line_2', e.target.value)} placeholder="e.g. Apt 4B, Near Park" className="h-11 bg-secondary/50" />
+                <Input value={formData.address_line_2} onChange={e => updateField('address_line_2', e.target.value)} placeholder="e.g. Near Central Mall" className="h-11 bg-secondary/50" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>State *</Label>
-                  <Input value={formData.state} onChange={e => updateField('state', e.target.value)} placeholder="e.g. Karnataka" className="h-11 bg-secondary/50" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Pincode *</Label>
-                  <Input value={formData.pincode} onChange={e => updateField('pincode', e.target.value)} placeholder="e.g. 560001" className="h-11 bg-secondary/50" />
-                </div>
+              <CountryStateSelector
+                country={formData.country}
+                state={formData.state}
+                onCountryChange={(c) => {
+                  updateField('country', c);
+                  updateField('state', '');
+                }}
+                onStateChange={(s) => updateField('state', s)}
+                required
+              />
+              <div className="space-y-2">
+                <Label>Pincode *</Label>
+                <Input value={formData.pincode} onChange={e => updateField('pincode', e.target.value)} placeholder="e.g. 560001" className="h-11 bg-secondary/50" />
               </div>
             </div>
           </KYFormCard>
@@ -494,20 +501,19 @@ const KYFForm: React.FC = () => {
         return (
           <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={3} stepTitle="Preferences & Emergency">
             <div className="space-y-4">
-              <RadioSelectField label="Your Gender" required options={[{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }, { value: 'other', label: 'Other' }]} value={formData.gender} onChange={v => updateField('gender', v)} columns={3} />
-              <div className="space-y-2">
-                <Label>Your T-shirt size *</Label>
-                <Input value={formData.tshirt_size} onChange={e => updateField('tshirt_size', e.target.value)} placeholder="S / M / L / XL / XXL" className="h-11 bg-secondary/50" />
-              </div>
-              <RadioSelectField label="Do you have a laptop that supports video editing?" required options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} value={formData.has_editing_laptop} onChange={v => updateField('has_editing_laptop', v)} columns={2} />
+              <RadioSelectField label="Gender" required options={[{value:'male',label:'Male'},{value:'female',label:'Female'},{value:'other',label:'Other'}]} value={formData.gender} onChange={v => updateField('gender', v)} columns={3} />
+              <RadioSelectField label="T-shirt size" required options={[{value:'xs',label:'XS'},{value:'s',label:'S'},{value:'m',label:'M'},{value:'l',label:'L'},{value:'xl',label:'XL'},{value:'xxl',label:'XXL'}]} value={formData.tshirt_size} onChange={v => updateField('tshirt_size', v)} columns={3} />
+              <RadioSelectField label="Do you have a laptop for editing?" required options={[{value:'yes',label:'Yes'},{value:'no',label:'No'}]} value={formData.has_editing_laptop} onChange={v => updateField('has_editing_laptop', v)} columns={2} />
               <div className="space-y-2">
                 <Label>Emergency contact name *</Label>
                 <Input value={formData.emergency_contact_name} onChange={e => updateField('emergency_contact_name', e.target.value)} placeholder="e.g. Parent or Guardian name" className="h-11 bg-secondary/50" />
               </div>
-              <div className="space-y-2">
-                <Label>Emergency contact number *</Label>
-                <Input value={formData.emergency_contact_number} onChange={e => updateField('emergency_contact_number', e.target.value)} placeholder="e.g. +91 9876543210" className="h-11 bg-secondary/50" />
-              </div>
+              <PhoneInput
+                label="Emergency contact number"
+                value={formData.emergency_contact_number}
+                onChange={(value) => updateField('emergency_contact_number', value)}
+                required
+              />
             </div>
           </KYFormCard>
         );
@@ -518,7 +524,7 @@ const KYFForm: React.FC = () => {
             <p className="text-sm text-muted-foreground mb-4">Help us understand your experience (optional)</p>
             <div className="space-y-4">
               <ProficiencyField label="Screenwriting" options={SCREENWRITING_OPTIONS} value={formData.proficiency_screenwriting} onChange={v => updateField('proficiency_screenwriting', v)} />
-              <ProficiencyField label="Film Direction" options={DIRECTION_OPTIONS} value={formData.proficiency_direction} onChange={v => updateField('proficiency_direction', v)} />
+              <ProficiencyField label="Direction" options={DIRECTION_OPTIONS} value={formData.proficiency_direction} onChange={v => updateField('proficiency_direction', v)} />
               <ProficiencyField label="Cinematography" options={CINEMATOGRAPHY_OPTIONS} value={formData.proficiency_cinematography} onChange={v => updateField('proficiency_cinematography', v)} />
               <ProficiencyField label="Editing" options={EDITING_OPTIONS} value={formData.proficiency_editing} onChange={v => updateField('proficiency_editing', v)} />
             </div>
@@ -529,19 +535,23 @@ const KYFForm: React.FC = () => {
         return (
           <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={5} stepTitle="Personality & Preferences">
             <div className="space-y-4">
+              <TagInput
+                label="Your top 3 movies?"
+                value={formData.top_3_movies}
+                onChange={(movies) => updateField('top_3_movies', movies)}
+                maxItems={3}
+                placeholder="Type a movie and press Enter..."
+                required
+              />
+              <RadioSelectField label="You are" required options={[{value:'early_bird',label:'🌅 An Early bird'},{value:'night_owl',label:'🦉 A Night Owl'}]} value={formData.chronotype} onChange={v => updateField('chronotype', v)} columns={2} />
+              <RadioSelectField label="Your Meal preference" required options={[{value:'vegetarian',label:'🌱 Vegetarian'},{value:'non_vegetarian',label:'🟥 Non-Vegetarian'}]} value={formData.meal_preference} onChange={v => updateField('meal_preference', v)} columns={2} />
               <div className="space-y-2">
-                <Label>Your top 3 movies? *</Label>
-                <Textarea value={formData.top_3_movies} onChange={e => updateField('top_3_movies', e.target.value)} placeholder="Separate with commas" className="bg-secondary/50" />
+                <Label>Do you have any food allergies? *</Label>
+                <Input value={formData.food_allergies} onChange={e => updateField('food_allergies', e.target.value)} placeholder="e.g. None, Peanuts, Dairy" className="h-11 bg-secondary/50" />
               </div>
-              <RadioSelectField label="You are" required options={[{ value: 'early_bird', label: '🌅 An Early bird' }, { value: 'night_owl', label: '🦉 A Night Owl' }]} value={formData.chronotype} onChange={v => updateField('chronotype', v)} columns={2} />
-              <RadioSelectField label="Your Meal preference" required options={[{ value: 'vegetarian', label: '🌱 Vegetarian' }, { value: 'non_vegetarian', label: '🟥 Non-Vegetarian' }]} value={formData.meal_preference} onChange={v => updateField('meal_preference', v)} columns={2} />
               <div className="space-y-2">
-                <Label>Are you allergic to any type of food? *</Label>
-                <Textarea value={formData.food_allergies} onChange={e => updateField('food_allergies', e.target.value)} placeholder="Please let us know" className="bg-secondary/50" />
-              </div>
-              <div className="space-y-2">
-                <Label>Do you require any medication support? *</Label>
-                <Textarea value={formData.medication_support} onChange={e => updateField('medication_support', e.target.value)} placeholder="Please let us know" className="bg-secondary/50" />
+                <Label>Do you need any medication support? *</Label>
+                <Input value={formData.medication_support} onChange={e => updateField('medication_support', e.target.value)} placeholder="e.g. None, or describe your needs" className="h-11 bg-secondary/50" />
               </div>
             </div>
           </KYFormCard>
@@ -550,26 +560,17 @@ const KYFForm: React.FC = () => {
       case 6:
         return (
           <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={6} stepTitle="Casting Call">
-            <p className="text-sm text-muted-foreground mb-4">
-              At Forge we will be dividing the cohort into groups to cast all of you as actors in other's short films. 
-              We will need a bit of information to make a casting sheet. Experience how it is on the other side of the camera now.
-            </p>
+            <p className="text-sm text-muted-foreground mb-4">For matching roles in Forge films</p>
             <div className="space-y-4">
-              <MultiSelectField label="What languages do you know?" required options={LANGUAGES} value={formData.languages_known} onChange={v => updateField('languages_known', v)} />
+              <MultiSelectField label="Languages you can speak" required options={LANGUAGES} value={formData.languages_known} onChange={v => updateField('languages_known', v)} />
               <div className="space-y-2">
-                <Label>Your Height (in ft) *</Label>
-                <Input 
-                  value={formData.height_ft} 
-                  onChange={e => {
-                    const value = e.target.value;
-                    if (value === '' || (parseFloat(value) <= 10)) {
-                      updateField('height_ft', value);
-                    }
-                  }} 
-                  placeholder="e.g. 5'8" 
-                  className="h-11 bg-secondary/50" 
-                />
-                <p className="text-xs text-muted-foreground">Maximum: 10 ft</p>
+                <Label>Your height in feet *</Label>
+                <Input type="number" step="0.1" max="10" value={formData.height_ft} onChange={e => {
+                  const val = parseFloat(e.target.value);
+                  if (val <= 10 || e.target.value === '') {
+                    updateField('height_ft', e.target.value);
+                  }
+                }} placeholder="e.g. 5.8" className="h-11 bg-secondary/50" />
               </div>
             </div>
           </KYFormCard>
@@ -578,12 +579,13 @@ const KYFForm: React.FC = () => {
       case 7:
         return (
           <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={7} stepTitle="Your Pictures">
-            <div className="grid grid-cols-2 gap-3">
-              <PhotoUploadField label="A photo you love" description="(your face should be seen)" required value={formData.photo_favorite_url} onChange={v => updateField('photo_favorite_url', v)} folder="favorite" />
-              <PhotoUploadField label="HeadShot Front" required value={formData.headshot_front_url} onChange={v => updateField('headshot_front_url', v)} folder="headshot-front" />
-              <PhotoUploadField label="HeadShot Right" value={formData.headshot_right_url} onChange={v => updateField('headshot_right_url', v)} folder="headshot-right" />
-              <PhotoUploadField label="HeadShot Left" value={formData.headshot_left_url} onChange={v => updateField('headshot_left_url', v)} folder="headshot-left" />
-              <PhotoUploadField label="Full Body Shot" required value={formData.full_body_url} onChange={v => updateField('full_body_url', v)} folder="full-body" />
+            <p className="text-sm text-muted-foreground mb-4">For your profile and casting</p>
+            <div className="space-y-4">
+              <PhotoUploadField label="Your favorite photo" required value={formData.photo_favorite_url} onChange={url => updateField('photo_favorite_url', url)} folder="kyf-photos" />
+              <PhotoUploadField label="Headshot (Front)" required value={formData.headshot_front_url} onChange={url => updateField('headshot_front_url', url)} folder="kyf-photos" />
+              <PhotoUploadField label="Headshot (Right profile)" value={formData.headshot_right_url} onChange={url => updateField('headshot_right_url', url)} folder="kyf-photos" />
+              <PhotoUploadField label="Headshot (Left profile)" value={formData.headshot_left_url} onChange={url => updateField('headshot_left_url', url)} folder="kyf-photos" />
+              <PhotoUploadField label="Full body photo" required value={formData.full_body_url} onChange={url => updateField('full_body_url', url)} folder="kyf-photos" />
             </div>
           </KYFormCard>
         );
@@ -631,87 +633,26 @@ const KYFForm: React.FC = () => {
         return (
           <KYFormCard currentStep={step} totalSteps={STEP_TITLES.length} questionNumber={9} stepTitle="Terms and Conditions">
             <div className="space-y-4">
-              <Collapsible open={termsExpanded} onOpenChange={setTermsExpanded}>
-                <div className="p-4 rounded-xl border border-border bg-secondary/30">
-                  <div className="flex items-start gap-3">
-                    <Checkbox id="terms" checked={formData.terms_accepted} onCheckedChange={(checked) => updateField('terms_accepted', checked === true)} className="mt-0.5" />
-                    <div className="flex-1">
-                      <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                        I agree to the{' '}
-                        <CollapsibleTrigger asChild>
-                          <button type="button" className="text-forge-gold underline hover:text-forge-yellow transition-colors inline-flex items-center gap-1">
-                            terms and conditions
-                            <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", termsExpanded && "rotate-180")} />
-                          </button>
-                        </CollapsibleTrigger>
-                        {' '}of the Forge program.
-                      </label>
-                    </div>
+              <div className="p-4 rounded-xl border border-border bg-secondary/30">
+                <div className="flex items-start gap-3">
+                  <Checkbox id="terms" checked={formData.terms_accepted} onCheckedChange={(checked) => updateField('terms_accepted', checked === true)} className="mt-0.5" />
+                  <div className="flex-1 space-y-2">
+                    <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                      I agree to the terms and conditions of the Forge program.
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setTermsModalOpen(true)}
+                      className="text-forge-gold underline hover:text-forge-yellow transition-colors text-sm inline-flex items-center gap-1"
+                    >
+                      Read terms
+                      <ExternalLink className="h-3 w-3" />
+                    </button>
                   </div>
                 </div>
-                
-                <CollapsibleContent className="mt-3">
-                  <ScrollArea className="h-[40vh] rounded-xl border border-border bg-secondary/20 p-4">
-                    <div className="space-y-4 text-sm text-muted-foreground pr-4">
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">1. Program Overview</h3>
-                        <p>The Forge is an immersive filmmaking/creator/writing program designed to provide participants with hands-on experience in their chosen discipline. By participating, you agree to abide by all program guidelines, schedules, and instructions provided by mentors and organizers.</p>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">2. Participant Responsibilities</h3>
-                        <ul className="list-disc pl-4 space-y-1">
-                          <li>Attend all scheduled sessions and activities punctually</li>
-                          <li>Treat fellow participants, mentors, and staff with respect</li>
-                          <li>Follow all safety guidelines and instructions</li>
-                          <li>Take responsibility for personal belongings</li>
-                          <li>Maintain professional conduct throughout the program</li>
-                        </ul>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">3. Content & Media Rights</h3>
-                        <p>By participating in the Forge, you grant us permission to use photographs, videos, and other media featuring your participation for promotional and educational purposes. All content created during the program may be used by The Forge for showcasing purposes.</p>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">4. Health & Safety</h3>
-                        <p>Participants must disclose any relevant health conditions or dietary requirements. The Forge team will make reasonable accommodations but cannot guarantee all special requirements can be met. Participants are responsible for any personal medication.</p>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">5. Cancellation & Refund Policy</h3>
-                        <p>Cancellation requests must be submitted in writing. Refunds are subject to the specific policy communicated at the time of registration. The Forge reserves the right to cancel or reschedule programs due to unforeseen circumstances.</p>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">6. Code of Conduct</h3>
-                        <p>Any behavior deemed inappropriate, disruptive, or harmful to other participants or the program may result in immediate dismissal without refund. This includes but is not limited to harassment, discrimination, or violation of safety protocols.</p>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">7. Liability</h3>
-                        <p>Participation in The Forge is at your own risk. The organizers are not liable for any personal injury, loss, or damage to property during the program. Participants are encouraged to obtain personal insurance coverage.</p>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">8. Privacy</h3>
-                        <p>Your personal information will be handled in accordance with our privacy policy. We collect information necessary for program administration and may share relevant details with mentors and partners for program delivery.</p>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">9. Changes to Terms</h3>
-                        <p>The Forge reserves the right to modify these terms at any time. Participants will be notified of significant changes. Continued participation constitutes acceptance of modified terms.</p>
-                      </section>
-                      
-                      <section>
-                        <h3 className="text-sm font-semibold text-foreground mb-2">10. Agreement</h3>
-                        <p>By checking the acceptance box, you confirm that you have read, understood, and agree to all terms and conditions outlined above. You also confirm that all information provided in this form is accurate and complete.</p>
-                      </section>
-                    </div>
-                  </ScrollArea>
-                </CollapsibleContent>
-              </Collapsible>
+              </div>
+              
+              <TermsModal open={termsModalOpen} onOpenChange={setTermsModalOpen} />
             </div>
           </KYFormCard>
         );
