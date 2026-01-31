@@ -69,7 +69,7 @@ const MyKYForm: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen pb-32 md:pb-24">
+    <div className="min-h-screen pb-24 md:pb-8">
       {/* Hero Header */}
       <div className="relative overflow-hidden bg-gradient-to-b from-primary/10 via-primary/5 to-background pt-4 pb-8">
         {/* Glow Orbs */}
@@ -416,8 +416,8 @@ const MyKYForm: React.FC = () => {
         )}
       </div>
       
-      {/* Floating Edit Button */}
-      <div className="fixed bottom-20 md:bottom-6 left-0 md:left-64 right-0 px-4 z-30 transition-all duration-300">
+      {/* Edit Button - At Bottom of Content */}
+      <div className="mt-8 px-4">
         <div className="max-w-2xl mx-auto">
           <Button 
             className="w-full h-14 text-base font-semibold bg-gradient-to-r from-primary to-accent 
