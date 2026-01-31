@@ -69,17 +69,18 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({
 }) => {
   const schedule = day.schedule || [];
 
-  // Calculate if we should show meeting credentials (48 hours before session or during forge)
+  // Always show meeting card for enrolled users (they've paid 15K, they should have access)
+  // Only hide if session is more than 24 hours in the past
   const sessionDate = day.date ? new Date(day.date) : null;
   const hoursUntilSession = sessionDate 
     ? (sessionDate.getTime() - Date.now()) / (1000 * 60 * 60) 
     : Infinity;
   
-  // Show meeting card if: During Forge OR session is within 48 hours
-  const showMeetingCard = forgeMode === 'DURING_FORGE' || (hoursUntilSession <= 48 && hoursUntilSession > -24);
+  // Show meeting card: Always show for valid sessions (not more than 24h in the past)
+  const showMeetingCard = hoursUntilSession > -24;
   
-  // Show "coming soon" message if: Pre-Forge AND session is more than 48 hours away
-  const showMeetingComingSoon = forgeMode === 'PRE_FORGE' && hoursUntilSession > 48;
+  // Never show "coming soon" - users always have access to meeting details
+  const showMeetingComingSoon = false;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
