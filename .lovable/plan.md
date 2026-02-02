@@ -1,190 +1,136 @@
 
-# Admin Cohort Switcher - Floating Button
+# Make Marker.io Widget Visible to All Users
 
 ## Summary
-Add a floating cohort switcher button for admins that allows them to preview the app from the perspective of different cohorts (Filmmakers, Writers, Creators). This button will be positioned **above** the existing "View" (FloatingHighlightsButton) and AdminTestingPanel buttons, creating a vertical stack of admin tools.
+Update the `MarkerProvider` component to show the Marker.io feedback widget to **all authenticated users**, not just admins.
 
 ---
 
-## Current Layout (Bottom-Right Corner)
+## Current Behavior
+- Widget only shows for users with `admin` role
+- Regular users see `window.Marker.hide()` called
+- Reporter name is hardcoded as "Admin User"
 
-```text
-┌─────────────────────────────┐
-│                             │
-│            App              │
-│                             │
-│                             │
-│                             │
-│             ┌───────────┐   │
-│             │  Testing  │ ← bottom-24 (AdminTestingPanel, admin only)
-│             └───────────┘   │
-│             ┌───────────┐   │
-│             │   View    │ ← bottom-24 (FloatingHighlightsButton, mobile only)
-│             └───────────┘   │
-│  ─────────────────────────  │ ← BottomNav at bottom-0
-└─────────────────────────────┘
-```
-
-## New Layout (With Cohort Switcher)
-
-```text
-┌─────────────────────────────┐
-│                             │
-│            App              │
-│                             │
-│                             │
-│             ┌───────────┐   │
-│             │  Cohort   │ ← bottom-40 (NEW - Admin only)
-│             └───────────┘   │
-│             ┌───────────┐   │
-│             │  Testing  │ ← bottom-24 (AdminTestingPanel)
-│             └───────────┘   │
-│             ┌───────────┐   │
-│             │   View    │ ← bottom-24 (Mobile users only)
-│             └───────────┘   │
-│  ─────────────────────────  │ ← BottomNav
-└─────────────────────────────┘
-```
+## New Behavior
+- Widget shows for **all authenticated users**
+- Reporter name uses actual user's name from profile
+- Custom data includes user role info for context
 
 ---
 
-## Implementation Approach
+## Changes Required
 
-### Option 1: Extend AdminTestingContext (Recommended)
+### File: `src/components/feedback/MarkerProvider.tsx`
 
-Add `simulatedCohortType` to the existing AdminTestingContext so the cohort simulation works alongside the existing forge mode and day simulations.
+**1. Remove admin check logic** (lines 19, 30-33, 46-47)
+- Remove `isAdmin` state
+- Remove the `has_role` RPC call
+- Simplify the auth check
 
-### Files to Create/Modify
+**2. Update visibility logic** (lines 78-98)
+- Show widget for **any authenticated user**
+- Change condition from `if (isAdmin && user)` to `if (user)`
 
-| File | Action | Description |
-|------|--------|-------------|
-| `src/contexts/AdminTestingContext.tsx` | Modify | Add `simulatedCohortType` state and setter |
-| `src/components/admin/AdminCohortSwitcher.tsx` | Create | New floating button component |
-| `src/hooks/useRoadmapData.ts` | Modify | Use simulated cohort when in testing mode |
-| `src/pages/Home.tsx` | Modify | Import and render AdminCohortSwitcher |
-| `src/components/roadmap/RoadmapLayout.tsx` | Modify | Import and render AdminCohortSwitcher |
-
----
-
-## Component Design: AdminCohortSwitcher
-
-A floating button positioned at `bottom-40 right-4` (16 units above the testing panel) that:
-1. Shows a compact button with the current cohort's icon/logo
-2. On click, expands to show all 3 cohort options in a radial/vertical menu
-3. Selecting a cohort updates `simulatedCohortType` in context
-4. Shows a visual indicator when viewing a different cohort than the user's actual cohort
-
-### Visual Design
-
-**Collapsed State:**
-```text
-┌─────────────┐
-│ 🎬 FORGE    │  ← Shows current/simulated cohort logo + short name
-└─────────────┘
-```
-
-**Expanded State:**
-```text
-┌──────────────────────┐
-│ View as Cohort       │
-├──────────────────────┤
-│ ✓ 🎬 Filmmaking      │ ← Active cohort has checkmark
-│   ✍️ Writing         │
-│   📱 Creators        │
-├──────────────────────┤
-│ ↻ Reset to My Cohort │
-└──────────────────────┘
-```
+**3. Improve reporter information**
+- Fetch user's profile name instead of hardcoding "Admin User"
+- Include whether user is admin in custom data for context
 
 ---
 
-## Technical Details
-
-### 1. Extend AdminTestingContext
+## Updated Code
 
 ```tsx
-// Add to state
-simulatedCohortType: CohortType | null;
+export const MarkerProvider = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [profileName, setProfileName] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [markerReady, setMarkerReady] = useState(false);
 
-// Add setter
-setSimulatedCohortType: (cohort: CohortType | null) => void;
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+        
+        if (user) {
+          // Fetch user's profile name for reporter info
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .single();
+          
+          setProfileName(profile?.full_name || '');
+        }
+      } catch (error) {
+        console.error('MarkerProvider auth check error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-// Add to resetToRealTime
-simulatedCohortType: null
-```
+    checkAuth();
 
-### 2. AdminCohortSwitcher Component
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      if (!session?.user) {
+        setProfileName('');
+      }
+    });
 
-```tsx
-// src/components/admin/AdminCohortSwitcher.tsx
+    return () => subscription.unsubscribe();
+  }, []);
 
-import React, { useState } from 'react';
-import { Film, PenTool, Users, X, RotateCcw } from 'lucide-react';
-import { useAdminTesting } from '@/contexts/AdminTestingContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { CohortType } from '@/contexts/ThemeContext';
-import { cn } from '@/lib/utils';
-import forgeLogoImg from '@/assets/forge-logo.png';
-import forgeWritingLogoImg from '@/assets/forge-writing-logo.png';
-import forgeCreatorsLogoImg from '@/assets/forge-creators-logo.png';
+  // ... marker ready polling stays the same ...
 
-const cohortOptions: { type: CohortType; label: string; logo: string; icon: typeof Film }[] = [
-  { type: 'FORGE', label: 'Filmmaking', logo: forgeLogoImg, icon: Film },
-  { type: 'FORGE_WRITING', label: 'Writing', logo: forgeWritingLogoImg, icon: PenTool },
-  { type: 'FORGE_CREATORS', label: 'Creators', logo: forgeCreatorsLogoImg, icon: Users },
-];
+  // Show widget for all authenticated users
+  useEffect(() => {
+    if (loading || !markerReady || !window.Marker) return;
 
-const AdminCohortSwitcher: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const { simulatedCohortType, setSimulatedCohortType, isTestingMode } = useAdminTesting();
-  const { edition } = useAuth();
-  
-  const actualCohort = edition?.cohort_type as CohortType | undefined;
-  const displayedCohort = simulatedCohortType || actualCohort || 'FORGE';
-  const isSimulating = simulatedCohortType && simulatedCohortType !== actualCohort;
-  
-  // ... component rendering
+    if (user) {
+      window.Marker.show();
+
+      window.Marker.setReporter({
+        email: user.email || '',
+        fullName: profileName || user.email?.split('@')[0] || 'User',
+      });
+
+      window.Marker.setCustomData({
+        environment: import.meta.env.MODE,
+        app: 'the-forge',
+        userId: user.id,
+      });
+    } else {
+      window.Marker.hide();
+    }
+  }, [loading, markerReady, user, profileName]);
+
+  return null;
 };
 ```
 
-### 3. Update useRoadmapData Hook
+---
 
-```tsx
-// In useRoadmapData.ts
-const { simulatedCohortType } = useAdminTestingSafe();
+## Files to Modify
 
-// Use simulated cohort if admin is testing
-const userCohortType = isTestingMode && simulatedCohortType 
-  ? simulatedCohortType 
-  : edition?.cohort_type as CohortType | undefined;
-```
-
-### 4. Integration Points
-
-- **Home.tsx**: Add AdminCohortSwitcher alongside FloatingHighlightsButton
-- **RoadmapLayout.tsx**: Add AdminCohortSwitcher below the AdminTestingPanel import
+| File | Changes |
+|------|---------|
+| `src/components/feedback/MarkerProvider.tsx` | Remove admin-only restriction, show for all authenticated users |
 
 ---
 
-## Behavior
+## Behavior Matrix
 
-| User State | Cohort Display | Data Fetched |
-|------------|----------------|--------------|
-| Regular user | Their cohort | Their cohort's content |
-| Admin (no simulation) | Their cohort | Their cohort's content |
-| Admin (simulating FORGE_WRITING) | Writing indicator | Writing cohort's content |
-
----
-
-## Session Persistence
-
-The simulated cohort will be stored in `sessionStorage` alongside other admin testing state, so it persists across page navigations but clears on browser close.
+| User State | Widget Visible? | Reporter Name |
+|------------|-----------------|---------------|
+| Not logged in | No | N/A |
+| Logged in (regular user) | **Yes** ✓ | User's profile name |
+| Logged in (admin) | **Yes** ✓ | User's profile name |
 
 ---
 
-## Safety Features
-
-1. Only visible to users with admin role (uses `useAdminCheck`)
-2. Clear visual indicator when viewing simulated cohort (colored ring/badge)
-3. Quick "Reset to My Cohort" action
-4. No actual data changes - simulation is read-only
+## Technical Notes
+- No database changes required
+- Uses existing `profiles` table to get user's name
+- Falls back to email username if no profile name set
+- Widget hidden for unauthenticated visitors (public portfolio pages)
