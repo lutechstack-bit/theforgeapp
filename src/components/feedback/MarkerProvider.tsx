@@ -16,11 +16,11 @@ declare global {
 
 export const MarkerProvider = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [profileName, setProfileName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [markerReady, setMarkerReady] = useState(false);
 
-  // Get auth state directly from supabase to avoid context dependency
+  // Get auth state and profile name
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -28,9 +28,14 @@ export const MarkerProvider = () => {
         setUser(user);
         
         if (user) {
-          // Check if user has admin role
-          const { data: hasAdminRole } = await supabase.rpc('has_role', { _role: 'admin', _user_id: user.id });
-          setIsAdmin(hasAdminRole === true);
+          // Fetch user's profile name for reporter info
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .single();
+          
+          setProfileName(profile?.full_name || '');
         }
       } catch (error) {
         console.error('MarkerProvider auth check error:', error);
@@ -44,7 +49,7 @@ export const MarkerProvider = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       if (!session?.user) {
-        setIsAdmin(false);
+        setProfileName('');
       }
     });
 
@@ -75,16 +80,16 @@ export const MarkerProvider = () => {
     };
   }, []);
 
-  // Show/hide widget based on admin status
+  // Show widget for all authenticated users
   useEffect(() => {
     if (loading || !markerReady || !window.Marker) return;
 
-    if (isAdmin && user) {
+    if (user) {
       window.Marker.show();
 
       window.Marker.setReporter({
         email: user.email || '',
-        fullName: 'Admin User',
+        fullName: profileName || user.email?.split('@')[0] || 'User',
       });
 
       window.Marker.setCustomData({
@@ -95,7 +100,7 @@ export const MarkerProvider = () => {
     } else {
       window.Marker.hide();
     }
-  }, [isAdmin, loading, markerReady, user]);
+  }, [loading, markerReady, user, profileName]);
 
   return null;
 };
