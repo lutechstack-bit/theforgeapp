@@ -14,6 +14,7 @@ const HomeJourneySection: React.FC = () => {
   
   const {
     roadmapDays,
+    isLoadingDays,
     getDayStatus,
     forgeMode,
     forgeStartDate,
@@ -52,7 +53,8 @@ const HomeJourneySection: React.FC = () => {
     return roadmapDays.slice(startIndex, startIndex + 4);
   }, [roadmapDays, getDayStatus]);
 
-  if (!roadmapDays) {
+  // Show skeleton only during actual loading
+  if (isLoadingDays) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-16 w-full rounded-xl" />
@@ -62,8 +64,24 @@ const HomeJourneySection: React.FC = () => {
     );
   }
 
-  if (roadmapDays.length === 0) {
-    return null;
+  // Show empty state if no roadmap data (either missing edition or no days configured)
+  if (!roadmapDays || roadmapDays.length === 0) {
+    return (
+      <section className="space-y-4">
+        <div className="mb-2">
+          <h1 className="text-2xl font-bold text-foreground">
+            Hi {firstName}
+          </h1>
+          <p className="text-muted-foreground">Your journey is being prepared</p>
+        </div>
+        <div className="glass-premium rounded-xl p-6 text-center">
+          <MapIcon className="h-8 w-8 text-primary/50 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">
+            Your journey will appear here once your cohort is assigned.
+          </p>
+        </div>
+      </section>
+    );
   }
 
   return (

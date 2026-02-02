@@ -58,7 +58,8 @@ const RoadmapJourney: React.FC = () => {
     return () => observer.disconnect();
   }, [roadmapDays]);
 
-  if (!roadmapDays) return null;
+  // Early return if no data - parent RoadmapLayout handles the empty state message
+  if (!roadmapDays || roadmapDays.length === 0) return null;
 
   // Determine which day is currently highlighted (hover takes priority)
   const getHighlightedId = () => hoveredDayId || scrollActiveDayId;

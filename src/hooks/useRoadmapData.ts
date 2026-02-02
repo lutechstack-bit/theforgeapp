@@ -31,19 +31,21 @@ export const useRoadmapData = () => {
   const { data: templateDays, isLoading: isLoadingDays } = useQuery({
     queryKey: ['roadmap-days', profile?.edition_id, userCohortType],
     queryFn: async () => {
-      // Step 1: Try user's exact edition
-      if (profile?.edition_id) {
-        const { data: editionDays, error: editionError } = await supabase
-          .from('roadmap_days')
-          .select('*')
-          .eq('edition_id', profile.edition_id)
-          .order('day_number', { ascending: true });
-        
-        if (!editionError && editionDays && editionDays.length > 0) {
-          return editionDays as RoadmapDay[];
-        }
+      // Return empty array if no edition assigned - this prevents blocking
+      if (!profile?.edition_id) {
+        return [];
       }
       
+      // Step 1: Try user's exact edition
+      const { data: editionDays, error: editionError } = await supabase
+        .from('roadmap_days')
+        .select('*')
+        .eq('edition_id', profile.edition_id)
+        .order('day_number', { ascending: true });
+      
+      if (!editionError && editionDays && editionDays.length > 0) {
+        return editionDays as RoadmapDay[];
+      }
       // Step 2: Find another edition of SAME cohort type with roadmap days
       if (userCohortType) {
         const { data: sameTypeEditions } = await supabase
@@ -76,8 +78,8 @@ export const useRoadmapData = () => {
       if (error) throw error;
       return data as RoadmapDay[];
     },
-    // Wait for BOTH edition_id and cohort_type to prevent wrong cohort content
-    enabled: !!profile?.edition_id && !!userCohortType
+    // Always enabled - we return [] early in queryFn if no edition
+    enabled: true,
   });
 
   // Calculate dates dynamically based on forge_start_date + day_number
