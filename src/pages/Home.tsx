@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentCarousel } from '@/components/shared/ContentCarousel';
 import { SimpleEventCard } from '@/components/shared/SimpleEventCard';
@@ -10,6 +10,8 @@ import { FlipMentorCard } from '@/components/shared/FlipMentorCard';
 import { MentorDetailModal } from '@/components/shared/MentorDetailModal';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
+import { HomeCarouselSkeleton } from '@/components/home/HomeCarouselSkeleton';
+import { HomeErrorState } from '@/components/home/HomeErrorState';
 import HomeJourneySection from '@/components/home/HomeJourneySection';
 import RoadmapSidebar from '@/components/roadmap/RoadmapSidebar';
 import FloatingHighlightsButton from '@/components/roadmap/FloatingHighlightsButton';
@@ -19,9 +21,13 @@ import { Mentor } from '@/data/mentorsData';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   const { profile } = useAuth();
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [isMentorModalOpen, setIsMentorModalOpen] = useState(false);
+
+  const showDebug = searchParams.get('homeDebug') === '1';
 
   const handleMentorClick = (mentor: Mentor) => {
     setSelectedMentor(mentor);
@@ -48,7 +54,7 @@ const Home: React.FC = () => {
   const userCohortType = edition?.cohort_type;
 
   // Fetch events from database - prioritize homepage featured, then past events fallback
-  const { data: events } = useQuery({
+  const eventsQuery = useQuery({
     queryKey: ['home_events'],
     queryFn: async () => {
       // First try to get events marked for homepage
@@ -80,7 +86,7 @@ const Home: React.FC = () => {
   });
 
   // Fetch learn content from database
-  const { data: learnContent } = useQuery({
+  const learnContentQuery = useQuery({
     queryKey: ['home_learn_content'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -93,51 +99,102 @@ const Home: React.FC = () => {
     },
   });
 
-  // Fetch mentors from database - filtered by user's cohort type
-  const { data: mentors } = useQuery({
-    queryKey: ['home_mentors', userCohortType],
+  // Fetch ALL active mentors (client-side filtering for resilience)
+  const mentorsQuery = useQuery({
+    queryKey: ['home_mentors_all'],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from('mentors')
         .select('*')
         .eq('is_active', true)
         .order('order_index', { ascending: true });
-      
-      // Filter by cohort if user has an edition with cohort_type
-      if (userCohortType) {
-        query = query.contains('cohort_types', [userCohortType]);
-      }
-      
-      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
   });
 
-  // Fetch alumni testimonials from database - filtered by user's cohort type
-  const { data: alumniTestimonials } = useQuery({
-    queryKey: ['home_alumni_testimonials', userCohortType],
+  // Fetch ALL active alumni testimonials (client-side filtering for resilience)
+  const alumniTestimonialsQuery = useQuery({
+    queryKey: ['home_alumni_testimonials_all'],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from('alumni_testimonials')
         .select('*')
         .eq('is_active', true)
         .order('order_index', { ascending: true });
-      
-      // Filter by cohort if user has an edition with cohort_type
-      if (userCohortType) {
-        query = query.contains('cohort_types', [userCohortType]);
-      }
-      
-      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
   });
 
-  const displayLearnContent = learnContent || [];
-  const displayEvents = events?.events || [];
-  const isPastEvents = events?.isPastEvents ?? false;
+  // Client-side filtering with fallback for mentors
+  const displayMentors = useMemo(() => {
+    const allMentors = mentorsQuery.data || [];
+    if (!userCohortType || allMentors.length === 0) {
+      return allMentors;
+    }
+    const filtered = allMentors.filter(
+      (m) => m.cohort_types && m.cohort_types.includes(userCohortType)
+    );
+    // Fallback to all if cohort filtering produces 0 results
+    return filtered.length > 0 ? filtered : allMentors;
+  }, [mentorsQuery.data, userCohortType]);
+
+  // Client-side filtering with fallback for alumni
+  const displayAlumni = useMemo(() => {
+    const allAlumni = alumniTestimonialsQuery.data || [];
+    if (!userCohortType || allAlumni.length === 0) {
+      return allAlumni;
+    }
+    const filtered = allAlumni.filter(
+      (a) => a.cohort_types && a.cohort_types.includes(userCohortType)
+    );
+    // Fallback to all if cohort filtering produces 0 results
+    return filtered.length > 0 ? filtered : allAlumni;
+  }, [alumniTestimonialsQuery.data, userCohortType]);
+
+  const displayLearnContent = learnContentQuery.data || [];
+  const displayEvents = eventsQuery.data?.events || [];
+
+  // Aggregate query states
+  const isAnyLoading = 
+    eventsQuery.isLoading || 
+    learnContentQuery.isLoading || 
+    mentorsQuery.isLoading || 
+    alumniTestimonialsQuery.isLoading;
+
+  const isAnyError = 
+    eventsQuery.isError || 
+    learnContentQuery.isError || 
+    mentorsQuery.isError || 
+    alumniTestimonialsQuery.isError;
+
+  const allFetched = 
+    eventsQuery.isFetched && 
+    learnContentQuery.isFetched && 
+    mentorsQuery.isFetched && 
+    alumniTestimonialsQuery.isFetched;
+
+  const hasAnyContent = 
+    displayMentors.length > 0 || 
+    displayAlumni.length > 0 || 
+    displayLearnContent.length > 0 || 
+    displayEvents.length > 0;
+
+  // Collect failed queries for error display
+  const failedQueries = [
+    eventsQuery.isError && { name: 'Events', error: eventsQuery.error as Error },
+    learnContentQuery.isError && { name: 'Learn', error: learnContentQuery.error as Error },
+    mentorsQuery.isError && { name: 'Mentors', error: mentorsQuery.error as Error },
+    alumniTestimonialsQuery.isError && { name: 'Alumni', error: alumniTestimonialsQuery.error as Error },
+  ].filter(Boolean) as { name: string; error: Error }[];
+
+  const handleRetry = () => {
+    queryClient.invalidateQueries({ queryKey: ['home_events'] });
+    queryClient.invalidateQueries({ queryKey: ['home_learn_content'] });
+    queryClient.invalidateQueries({ queryKey: ['home_mentors_all'] });
+    queryClient.invalidateQueries({ queryKey: ['home_alumni_testimonials_all'] });
+  };
 
   return (
     <div className="min-h-screen">
@@ -152,92 +209,127 @@ const Home: React.FC = () => {
           {/* Journey Timeline - Embedded from Roadmap */}
           <HomeJourneySection />
 
-          {/* Meet Your Mentors - Moved up after hero */}
-          {mentors && mentors.length > 0 && (
-            <ContentCarousel title="Meet Your Mentors">
-              {mentors.map((mentor) => {
-                // Transform DB mentor to Mentor type for FlipMentorCard
-                const mentorData: Mentor = {
-                  id: mentor.id,
-                  name: mentor.name,
-                  title: mentor.title,
-                  roles: (mentor.roles as string[]) || [],
-                  imageUrl: mentor.image_url || '',
-                  modalImageUrl: mentor.modal_image_url || undefined,
-                  bio: (mentor.bio as string[]) || [],
-                  brands: (mentor.brands as any[]) || [],
-                };
-                return (
-                  <FlipMentorCard
-                    key={mentor.id}
-                    mentor={mentorData}
-                    onClick={() => handleMentorClick(mentorData)}
-                  />
-                );
-              })}
-            </ContentCarousel>
-          )}
-
-          {/* Mentor Detail Modal */}
-          <MentorDetailModal
-            mentor={selectedMentor}
-            isOpen={isMentorModalOpen}
-            onClose={() => setIsMentorModalOpen(false)}
-          />
-
-          {/* Alumni Testimonials */}
-          {alumniTestimonials && alumniTestimonials.length > 0 && (
-            <ContentCarousel title="Alumni Spotlight">
-              {alumniTestimonials.map((alumni) => (
-                <TestimonialVideoCard
-                  key={alumni.id}
-                  name={alumni.name}
-                  role={alumni.role || undefined}
-                  videoUrl={alumni.video_url}
-                />
-              ))}
-            </ContentCarousel>
-          )}
-
-          {/* Learn Section */}
-          {displayLearnContent.length > 0 && (
-            <ContentCarousel title="Fundamental learning for Forge and beyond" onSeeAll={() => navigate('/learn')}>
-              {displayLearnContent.map((content: any) => (
-                <LearnCourseCard
-                  key={content.id}
-                  id={content.id}
-                  title={content.title}
-                  thumbnailUrl={content.thumbnail_url || undefined}
-                  durationMinutes={content.duration_minutes}
-                />
-              ))}
-            </ContentCarousel>
-          )}
-
-          {/* Events Section - Moved to end */}
-          {displayEvents.length > 0 && (
-            <ContentCarousel title="More from LevelUp" onSeeAll={() => navigate('/events')}>
-              {displayEvents.map((event: any) => (
-                <SimpleEventCard
-                  key={event.id}
-                  id={event.id}
-                  title={event.title}
-                  imageUrl={event.image_url || undefined}
-                  onClick={() => navigate('/events')}
-                />
-              ))}
-            </ContentCarousel>
-          )}
-
-          {/* Empty State */}
-          {(!alumniTestimonials?.length && !mentors?.length && !learnContent?.length && !displayEvents?.length) && (
-            <div className="glass-premium rounded-2xl p-8 text-center">
-              <Users className="h-12 w-12 text-primary/50 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">Content Coming Soon</h3>
-              <p className="text-muted-foreground">
-                Check back soon for alumni stories, mentors, courses, and events!
-              </p>
+          {/* Debug Panel (only when ?homeDebug=1) */}
+          {showDebug && (
+            <div className="text-xs font-mono bg-muted/50 border border-border rounded-lg p-4 space-y-2">
+              <p className="font-semibold">Home Debug Panel</p>
+              <p>Events: {eventsQuery.isLoading ? '⏳' : eventsQuery.isError ? '❌' : `✅ (${displayEvents.length})`}</p>
+              <p>Learn: {learnContentQuery.isLoading ? '⏳' : learnContentQuery.isError ? '❌' : `✅ (${displayLearnContent.length})`}</p>
+              <p>Mentors: {mentorsQuery.isLoading ? '⏳' : mentorsQuery.isError ? '❌' : `✅ (${displayMentors.length})`}</p>
+              <p>Alumni: {alumniTestimonialsQuery.isLoading ? '⏳' : alumniTestimonialsQuery.isError ? '❌' : `✅ (${displayAlumni.length})`}</p>
+              <p>User Cohort: {userCohortType || '(none)'}</p>
             </div>
+          )}
+
+          {/* Error State */}
+          {isAnyError && (
+            <HomeErrorState 
+              failedQueries={failedQueries} 
+              onRetry={handleRetry}
+              showDebug={showDebug}
+            />
+          )}
+
+          {/* Loading Skeletons */}
+          {isAnyLoading && !isAnyError && (
+            <div className="space-y-5 sm:space-y-6">
+              <HomeCarouselSkeleton title="Meet Your Mentors" />
+              <HomeCarouselSkeleton title="Alumni Spotlight" />
+              <HomeCarouselSkeleton title="Learn" />
+              <HomeCarouselSkeleton title="Events" />
+            </div>
+          )}
+
+          {/* Content Sections (only render when not loading and no errors) */}
+          {!isAnyLoading && !isAnyError && (
+            <>
+              {/* Meet Your Mentors */}
+              {displayMentors.length > 0 && (
+                <ContentCarousel title="Meet Your Mentors">
+                  {displayMentors.map((mentor) => {
+                    const mentorData: Mentor = {
+                      id: mentor.id,
+                      name: mentor.name,
+                      title: mentor.title,
+                      roles: (mentor.roles as string[]) || [],
+                      imageUrl: mentor.image_url || '',
+                      modalImageUrl: mentor.modal_image_url || undefined,
+                      bio: (mentor.bio as string[]) || [],
+                      brands: (mentor.brands as any[]) || [],
+                    };
+                    return (
+                      <FlipMentorCard
+                        key={mentor.id}
+                        mentor={mentorData}
+                        onClick={() => handleMentorClick(mentorData)}
+                      />
+                    );
+                  })}
+                </ContentCarousel>
+              )}
+
+              {/* Mentor Detail Modal */}
+              <MentorDetailModal
+                mentor={selectedMentor}
+                isOpen={isMentorModalOpen}
+                onClose={() => setIsMentorModalOpen(false)}
+              />
+
+              {/* Alumni Testimonials */}
+              {displayAlumni.length > 0 && (
+                <ContentCarousel title="Alumni Spotlight">
+                  {displayAlumni.map((alumni) => (
+                    <TestimonialVideoCard
+                      key={alumni.id}
+                      name={alumni.name}
+                      role={alumni.role || undefined}
+                      videoUrl={alumni.video_url}
+                    />
+                  ))}
+                </ContentCarousel>
+              )}
+
+              {/* Learn Section */}
+              {displayLearnContent.length > 0 && (
+                <ContentCarousel title="Fundamental learning for Forge and beyond" onSeeAll={() => navigate('/learn')}>
+                  {displayLearnContent.map((content: any) => (
+                    <LearnCourseCard
+                      key={content.id}
+                      id={content.id}
+                      title={content.title}
+                      thumbnailUrl={content.thumbnail_url || undefined}
+                      durationMinutes={content.duration_minutes}
+                    />
+                  ))}
+                </ContentCarousel>
+              )}
+
+              {/* Events Section */}
+              {displayEvents.length > 0 && (
+                <ContentCarousel title="More from LevelUp" onSeeAll={() => navigate('/events')}>
+                  {displayEvents.map((event: any) => (
+                    <SimpleEventCard
+                      key={event.id}
+                      id={event.id}
+                      title={event.title}
+                      imageUrl={event.image_url || undefined}
+                      onClick={() => navigate('/events')}
+                    />
+                  ))}
+                </ContentCarousel>
+              )}
+
+              {/* Empty State - Only show when all queries succeeded AND no content */}
+              {allFetched && !hasAnyContent && (
+                <div className="glass-premium rounded-2xl p-8 text-center">
+                  <Users className="h-12 w-12 text-primary/50 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Content Coming Soon</h3>
+                  <p className="text-muted-foreground">
+                    Check back soon for alumni stories, mentors, courses, and events!
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
         
