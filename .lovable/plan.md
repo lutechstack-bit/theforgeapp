@@ -1,178 +1,185 @@
 
 ## Goal
-Fix the Home page and app-wide loading issue where content queries appear stuck in loading state and never resolve, causing infinite loading skeletons and missing content.
+Fix the app-wide issue where no content is loading because Supabase queries are not executing, causing infinite loading states across the entire application.
 
 ---
 
-## What I Found
+## Root Cause Analysis
 
-### Issue 1: Queries Stuck in Loading State
-The Home page shows loading skeletons indefinitely because:
-- The Supabase network requests appear to not be completing
-- React Query's `isLoading` stays true when queries don't resolve
-- The current implementation only shows content when ALL queries finish loading
+After investigating the console logs, network requests, database, and RLS policies, I've identified **multiple interconnected issues**:
 
-### Issue 2: No Timeout Protection
-When queries hang (network issues, Supabase client issues, etc.), there's no fallback:
-- Users see infinite skeletons
-- No retry option appears
-- No indication of what's happening
+### Issue 1: RLS Policies Require `authenticated` Role
+Several key tables have RLS policies that **only allow SELECT for `authenticated` role**:
+- `events` - `roles: {authenticated}`
+- `learn_content` - `roles: {authenticated}`
+- `editions` - `roles: {authenticated}`
+- `roadmap_days` - `roles: {authenticated}`
 
-### Issue 3: AuthContext Profile Not Loading
-The AuthContext's `profile` is null or not loading properly, causing:
-- "Hi there" instead of "Hi [Name]"
-- Countdown showing 00:00:00:00 (no edition)
-- Journey section showing "Your journey is being prepared"
+This means if the Supabase client's session isn't properly established when queries run, **ALL data requests to these tables will fail silently or return empty**.
+
+Tables like `mentors` and `alumni_testimonials` allow `public` access and should work, but even those aren't loading.
+
+### Issue 2: No Network Requests Being Made
+The network logs show **zero Supabase requests**. This indicates:
+1. React Query queries are not executing at all, OR
+2. The Supabase client is broken/not initialized, OR  
+3. Queries are hitting stale cache and never refetching
+
+### Issue 3: QueryClient Has No Default Configuration
+```javascript
+const queryClient = new QueryClient();  // No defaults!
+```
+
+This means:
+- No default `staleTime` - data goes stale immediately
+- No retry configuration
+- No error handling
+- Potential caching issues that prevent refetches
+
+### Issue 4: AuthContext Loading Race Condition
+```javascript
+// Line 132 - sets loading=false BEFORE profile is fetched
+setLoading(false);
+```
+
+The `loading` state is set to `false` before `fetchUserData()` completes. This means:
+- ProtectedRoute allows rendering with `profile = null`
+- Downstream components/queries that depend on profile data start with null
+- The profile loads LATER but dependent queries may not re-run
 
 ---
 
 ## Implementation Plan
 
-### A) Add Query Timeout Protection in Home.tsx
-Add a timeout that transitions from "loading" to "error with retry" if queries don't resolve within a reasonable time (e.g., 15 seconds).
+### A) Fix QueryClient Configuration
+**File:** `src/App.tsx`
 
-**Changes to `src/pages/Home.tsx`:**
-1. Add a `useState` for loading timeout
-2. Add a `useEffect` that sets a timeout when loading starts
-3. If timeout fires and still loading, show error state with retry
+Add sensible defaults to QueryClient to ensure:
+- Queries retry on failure
+- Network-aware behavior for offline scenarios
+- Proper cache management
 
-### B) Show Each Section Independently
-Instead of waiting for ALL queries to finish, render each section as soon as its data arrives.
+```typescript
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+```
 
-**Changes to `src/pages/Home.tsx`:**
-1. Change from "all or nothing" loading to per-section loading
-2. Each carousel shows its own skeleton while loading
-3. Each carousel shows content as soon as its query succeeds
-4. Failed sections show individual error messages
+### B) Fix AuthContext Loading State
+**File:** `src/contexts/AuthContext.tsx`
 
-### C) Improve Error Visibility
-Make it clear when something fails so users aren't left guessing.
+Change the loading state to only be set to `false` AFTER profile data is fetched:
 
-**Changes to `src/components/home/HomeErrorState.tsx`:**
-1. Add more diagnostic information in debug mode
-2. Include network connectivity check
+```typescript
+// Current (broken):
+if (session?.user) {
+  fetchUserData(session.user.id);  // Async - runs in background
+}
+setLoading(false);  // Runs immediately
 
-### D) Add Loading Timeout to Content Queries
-Use React Query's timeout/retry configuration to prevent indefinite loading.
+// Fixed:
+if (session?.user) {
+  await fetchUserData(session.user.id);
+}
+setLoading(false);  // Runs after profile is loaded
+```
 
-**Changes to `src/pages/Home.tsx`:**
-1. Add `staleTime` and `gcTime` configuration
-2. Add `retry` and `retryDelay` configuration
-3. Add network mode configuration for offline handling
+Also add error handling to prevent silent failures.
+
+### C) Fix RLS Policies for Public-Facing Content
+**Database Migration:**
+
+Update RLS policies on content tables to allow `public` role for SELECT:
+- `events` - Should be publicly viewable
+- `learn_content` - Should be publicly viewable
+- `editions` - Should be publicly viewable (needed for countdown)
+
+This ensures the Home page can load even before authentication is fully established.
+
+### D) Add Error Boundaries and Diagnostic Logging
+**File:** `src/pages/Home.tsx`
+
+Add console logging in development mode to help diagnose query states:
+```typescript
+if (import.meta.env.DEV) {
+  console.log('Home queries:', {
+    mentors: mentorsQuery.status,
+    alumni: alumniTestimonialsQuery.status,
+    events: eventsQuery.status,
+    learn: learnContentQuery.status,
+  });
+}
+```
 
 ---
 
 ## Detailed File Changes
 
-### File: `src/pages/Home.tsx`
+### 1. `src/App.tsx` - Fix QueryClient
+Add default options with retry logic and proper error handling.
 
-**Add loading timeout state and effect:**
-```tsx
-const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+### 2. `src/contexts/AuthContext.tsx` - Fix Loading Race Condition  
+- Make the auth state change handler properly await profile loading
+- Add error handling for profile/edition fetch failures
+- Ensure `loading` is only `false` when auth state is fully resolved
 
-useEffect(() => {
-  if (isAnyLoading) {
-    const timeout = setTimeout(() => {
-      setLoadingTimedOut(true);
-    }, 15000); // 15 second timeout
-    return () => clearTimeout(timeout);
-  } else {
-    setLoadingTimedOut(false);
-  }
-}, [isAnyLoading]);
+### 3. Database Migration - Fix RLS Policies
+```sql
+-- Allow public to view events
+DROP POLICY IF EXISTS "Everyone can view events" ON events;
+CREATE POLICY "Everyone can view events" 
+  ON events FOR SELECT 
+  USING (true);
+
+-- Allow public to view learn content  
+DROP POLICY IF EXISTS "Everyone can view learn content" ON learn_content;
+CREATE POLICY "Everyone can view learn content" 
+  ON learn_content FOR SELECT 
+  USING (true);
+
+-- Allow public to view editions
+DROP POLICY IF EXISTS "Everyone can view editions" ON editions;
+CREATE POLICY "Everyone can view editions" 
+  ON editions FOR SELECT 
+  USING (true);
 ```
-
-**Change loading condition to include timeout:**
-```tsx
-// Show error state if timed out while loading
-{(isAnyError || loadingTimedOut) && (
-  <HomeErrorState 
-    failedQueries={loadingTimedOut ? [{ name: 'All', error: new Error('Loading timed out. Please check your connection.') }] : failedQueries} 
-    onRetry={handleRetry}
-    showDebug={showDebug}
-  />
-)}
-```
-
-**Change to per-section rendering:**
-```tsx
-{/* Mentors Section */}
-{mentorsQuery.isLoading ? (
-  <HomeCarouselSkeleton title="Meet Your Mentors" />
-) : displayMentors.length > 0 ? (
-  <ContentCarousel title="Meet Your Mentors">
-    {/* ... mentors content ... */}
-  </ContentCarousel>
-) : null}
-
-{/* Alumni Section */}
-{alumniTestimonialsQuery.isLoading ? (
-  <HomeCarouselSkeleton title="Alumni Spotlight" />
-) : displayAlumni.length > 0 ? (
-  <ContentCarousel title="Alumni Spotlight">
-    {/* ... alumni content ... */}
-  </ContentCarousel>
-) : null}
-
-// ... same pattern for Learn and Events ...
-```
-
-**Add query configuration for resilience:**
-```tsx
-const mentorsQuery = useQuery({
-  queryKey: ['home_mentors_all'],
-  queryFn: async () => { /* ... */ },
-  staleTime: 5 * 60 * 1000, // 5 minutes
-  gcTime: 10 * 60 * 1000, // 10 minutes
-  retry: 2,
-  retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-});
-```
-
----
-
-## Files to Change
-
-1. **`src/pages/Home.tsx`**
-   - Add loading timeout protection
-   - Change to per-section independent rendering
-   - Add query configuration for resilience
-   - Show error state when timeout fires
-
-2. **`src/components/home/HomeErrorState.tsx`**
-   - Add timeout-specific messaging
-   - Improve diagnostics display
-
----
-
-## Verification Steps
-
-1. **Test Normal Loading:**
-   - Open Home page
-   - Sections should appear as their data loads
-   - No infinite skeletons
-
-2. **Test Slow Network:**
-   - Throttle network to Slow 3G
-   - Should see skeletons briefly, then content
-   - If takes too long (>15s), should see error with retry
-
-3. **Test Network Failure:**
-   - Disconnect network
-   - Should see error state with retry button
-   - Reconnect and click retry - content should load
-
-4. **Test with User Who Has Edition:**
-   - Login as admin@admin.in
-   - Countdown should show days until forge
-   - Journey section should show roadmap
-   - Content carousels should display
 
 ---
 
 ## Why This Will Work
 
-1. **Loading timeout** - Ensures users never see infinite skeletons; they get actionable feedback after 15 seconds
-2. **Per-section rendering** - Successful queries show content immediately even if others are slow/failing
-3. **Query configuration** - Automatic retries handle transient network issues
-4. **Clear error states** - Users know what's happening and can take action (retry)
+1. **QueryClient defaults** - Ensures queries retry and have proper cache behavior
+2. **AuthContext fix** - Ensures `profile` is available when components render
+3. **RLS policy changes** - Allows content to load regardless of auth state
+4. **Diagnostic logging** - Helps identify if queries are running or stuck
+
+---
+
+## Verification Steps
+
+1. **Test Home page load:**
+   - Content carousels should appear with data
+   - Countdown should show proper dates
+   - Journey section should load
+
+2. **Test with fresh session:**
+   - Clear localStorage and cookies
+   - Login fresh and verify content loads
+
+3. **Test network failures:**
+   - Should see error states with retry buttons
+
+---
+
+## Files to Change
+
+1. `src/App.tsx` - Add QueryClient default options
+2. `src/contexts/AuthContext.tsx` - Fix loading state race condition
+3. Database migration - Update RLS policies on `events`, `learn_content`, `editions`
