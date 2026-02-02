@@ -35,16 +35,13 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ["**/*.{js,css,html,ico,svg,woff2}"],
         globIgnores: ["**/images/mentors/**"],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
+        // Production hardening: ensure fresh content on updates
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/.*supabase\.co\/.*/i,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "supabase-cache",
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 },
-            },
-          },
-          {
+            // Cache images with CacheFirst (safe, no auth tokens)
             urlPattern: /\.(?:png|jpg|jpeg|webp|gif)$/i,
             handler: "CacheFirst",
             options: {
@@ -52,6 +49,7 @@ export default defineConfig(({ mode }) => ({
               expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
             },
           },
+          // Removed Supabase caching to prevent auth token issues
         ],
       },
     }),

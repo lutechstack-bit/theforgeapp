@@ -1,8 +1,12 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateForgeMode, ForgeMode } from '@/lib/forgeUtils';
 import { useAdminTestingSafe } from '@/contexts/AdminTestingContext';
+import { AuthRecovery } from '@/components/auth/AuthRecovery';
+
+// Auth initialization timeout in milliseconds (8 seconds)
+const AUTH_INIT_TIMEOUT_MS = 8000;
 
 interface Profile {
   id: string;
@@ -57,6 +61,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [edition, setEdition] = useState<Edition | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authTimedOut, setAuthTimedOut] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const initAttemptRef = useRef(0);
+  const loadingRef = useRef(true); // Track loading state for watchdog closure
 
   const fetchEdition = async (editionId: string) => {
     const { data, error } = await supabase
@@ -104,12 +112,85 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Helper to clear session and force reload
+  const clearSessionAndReload = useCallback(() => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          registrations.forEach((registration) => registration.unregister());
+        });
+      }
+    } catch (e) {
+      console.error('Error during session cleanup:', e);
+    }
+    window.location.href = '/auth';
+  }, []);
+
+  // Retry auth initialization
+  const retryAuth = useCallback(async () => {
+    setIsRetrying(true);
+    setAuthTimedOut(false);
+    setLoading(true);
+    initAttemptRef.current += 1;
+    
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Retry auth error:', error);
+        setAuthTimedOut(true);
+        return;
+      }
+      
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        try {
+          await fetchUserData(session.user.id);
+        } catch (fetchError) {
+          console.error('Error fetching user data on retry:', fetchError);
+        }
+      }
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Retry auth exception:', error);
+      setAuthTimedOut(true);
+    } finally {
+      setIsRetrying(false);
+    }
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    
+    // Reset loading ref on mount
+    loadingRef.current = true;
+    
+    // Auth initialization watchdog - prevents infinite loading
+    // Uses loadingRef to avoid stale closure issues
+    timeoutId = setTimeout(() => {
+      if (isMounted && loadingRef.current) {
+        console.warn('Auth initialization timed out after', AUTH_INIT_TIMEOUT_MS, 'ms');
+        setAuthTimedOut(true);
+        setLoading(false);
+        loadingRef.current = false;
+      }
+    }, AUTH_INIT_TIMEOUT_MS);
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!isMounted) return;
+        
+        // Clear timeout on any auth state change
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -124,7 +205,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setProfile(null);
           setEdition(null);
         }
-        if (isMounted) setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+          loadingRef.current = false;
+          setAuthTimedOut(false);
+        }
       }
     );
 
@@ -135,11 +220,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (error) {
           console.error('Error getting session:', error);
-          if (isMounted) setLoading(false);
+          if (isMounted) {
+            setLoading(false);
+            loadingRef.current = false;
+          }
           return;
         }
         
         if (!isMounted) return;
+        
+        // Clear timeout on successful init
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -152,10 +246,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
         
-        if (isMounted) setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+          loadingRef.current = false;
+          setAuthTimedOut(false);
+        }
       } catch (error) {
         console.error('Auth initialization error:', error);
-        if (isMounted) setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+          loadingRef.current = false;
+        }
       }
     };
 
@@ -163,9 +264,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [initAttemptRef.current]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -227,6 +329,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isTestingMode ? { simulatedMode: simulatedForgeMode } : undefined
   );
   const isDuringForge = forgeMode === 'DURING_FORGE';
+
+  // Show recovery UI if auth timed out
+  if (authTimedOut && !loading) {
+    return (
+      <AuthRecovery
+        isRetrying={isRetrying}
+        onRetry={retryAuth}
+        onClearSession={clearSessionAndReload}
+      />
+    );
+  }
 
   return (
     <AuthContext.Provider value={{
