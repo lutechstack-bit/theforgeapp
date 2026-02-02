@@ -1,79 +1,87 @@
 
-## What’s actually happening (root cause)
-Right now the app **only calls `window.Marker.show()` when a user is authenticated**:
+Goal
+- Fix the Home page showing the “Content Coming Soon” empty state even when content exists.
+- Make failures visible (loading vs error vs truly empty) so it’s obvious why content is/isn’t showing.
 
-- On the login/public pages, `user === null`
-- The current logic runs `window.Marker.hide()`
-- So even if Marker is correctly installed + allowed on the domain, the widget will remain hidden on `/auth` and other public routes
+What I found (why it looks like “nothing” is on Home)
+- Home (src/pages/Home.tsx) shows “Content Coming Soon” when all of these are empty/undefined:
+  - mentors
+  - alumniTestimonials
+  - learnContent
+  - events
+- Right now, the empty-state condition treats “undefined (still loading or errored)” the same as “empty array (truly no content)”. That means:
+  - If any query is still loading, the empty state can flash.
+  - If any query errors (permissions/network), the empty state can appear permanently with no visible error.
+- The backend tables actually contain content (mentors, alumni testimonials, learn content, and homepage events), so the most likely causes are:
+  - One or more queries are erroring (silently), or
+  - Queries are never firing/finishing in that environment, or
+  - Cohort filtering removes all results (and we don’t fall back).
 
-Your screenshot is from the login page, which matches this behavior.
+Implementation approach (frontend only)
+A) Make Home “state-aware”: Loading vs Error vs Empty vs Content
+1) Update Home.tsx to capture query states:
+   - For each useQuery call (events, learnContent, mentors, alumniTestimonials), also read:
+     - isLoading / isFetching
+     - isError
+     - error
+     - isFetched
+2) Change the empty-state condition so it only renders when:
+   - All queries have finished fetching (isFetched for each), AND
+   - None are in an error state, AND
+   - All final arrays are truly empty.
 
-## Goal
-Make Marker.io visible:
-- on **all pages**, including **login/public pages**
-- while still identifying the reporter when the user is signed in
+B) Add visible loading placeholders (so Home never looks broken)
+1) While queries are loading:
+   - Keep the countdown + journey section visible.
+   - Show lightweight skeletons for the carousels (Mentors / Alumni / Learn / Events) instead of immediately showing “Content Coming Soon”.
 
-## Proposed changes (code)
-### 1) Show Marker.io for everyone (remove auth gating for visibility)
-Update `src/components/feedback/MarkerProvider.tsx` so that:
-- It calls `window.Marker.show()` as soon as Marker is available (or stubbed) — regardless of auth state.
-- It no longer calls `window.Marker.hide()` when `user` is null.
+C) Add a visible error state with a Retry button (so we stop guessing)
+1) If any query errors:
+   - Render a card/banner such as:
+     - “We couldn’t load home content. Please try again.”
+   - Add a “Retry” button that triggers refetch/invalidate for the failed queries (via React Query’s useQueryClient()).
+2) In Preview/dev only, optionally show a compact details block:
+   - Which query failed + the error message
+   - Current route
+   - Whether the user is authenticated
 
-### 2) Keep reporter identification when signed in, clear when signed out
-Still use auth/profile data, but only for reporter metadata:
-- If `user` exists:
-  - `setReporter({ email, fullName })`
-  - `setCustomData({ userId, isAuthenticated: true, ... })`
-- If `user` is null:
-  - `clearReporter()` (if available)
-  - `setCustomData({ isAuthenticated: false, ... })`
+D) Make cohort filtering resilient (so content doesn’t disappear due to cohort mismatch)
+Right now, mentors/testimonials are filtered at the query layer using `.contains('cohort_types', [userCohortType])`.
+To prevent “no content” due to filtering edge cases, refactor to:
+1) Fetch all active mentors/testimonials once.
+2) Filter client-side:
+   - If user cohort exists: show items that include it.
+   - If that produces 0 results: fall back to showing all active items (or show a small “No cohort-specific mentors yet” note and still show global items).
+This avoids extra round trips and prevents silent “filtered to nothing”.
 
-This avoids accidental “sticky” reporter identity across sessions.
+E) (Optional but recommended) Add a debug switch
+- Add a `?homeDebug=1` query param that, when present, shows a small debug panel:
+  - Query statuses (loading/error/success)
+  - Counts returned
+  - Helpful for diagnosing issues on custom domain vs preview quickly.
 
-### 3) Fix a subtle bug: profile name won’t update on sign-in
-Currently `profileName` is fetched only in the initial `getUser()` call. If a user logs in after that, the `onAuthStateChange` handler sets `user` but doesn’t fetch the profile name.
-Refactor to a helper like `loadProfileName(userId)` and call it:
-- after initial `getUser()`
-- whenever auth changes to a logged-in user
+Files to change
+- src/pages/Home.tsx
+  - Adjust query state handling
+  - Add loading/error UI
+  - Fix empty-state logic
+  - Refactor cohort filtering to client-side with safe fallback
 
-### 4) Add a safe fallback loader (optional but recommended for reliability)
-If Marker’s snippet ever isn’t present on a particular deployment/domain:
-- detect missing `window.Marker`
-- inject the shim script `https://edge.marker.io/latest/shim.js`
-- set `window.markerConfig` if missing
+Verification steps (end-to-end)
+1) In Preview:
+   - Open “/” and confirm you see loading skeletons briefly (not “Content Coming Soon” immediately).
+   - Once loaded, confirm at least one section appears (Mentors / Alumni / Learn / Events).
+2) Force a failure scenario:
+   - Temporarily disable network (or simulate) and confirm you see a clear error card + Retry.
+3) Confirm empty state:
+   - Only appears if the backend truly has no content AND queries succeeded.
+4) Mobile check:
+   - Ensure layout doesn’t collapse or hide content on smaller widths.
 
-This makes the widget resilient across deployments/custom domains.
+Why this will solve it
+- It prevents “Content Coming Soon” from masking the real issue (loading vs error).
+- It ensures cohort filtering can’t accidentally hide everything.
+- It makes problems diagnosable immediately without guessing.
 
-## Proposed file edits
-- `src/components/feedback/MarkerProvider.tsx`
-  - Change visibility rule: always show
-  - Split concerns:
-    - effect A: ensure Marker is loaded / ready
-    - effect B: always call `Marker.show()`
-    - effect C: sync reporter/customData based on auth state
-  - Fetch profile name on sign-in events
-  - Extend the TS typing for `window.Marker` to include `clearReporter?: () => void` (and optionally `isVisible`, `capture`, etc.)
-
-## Marker.io settings to double-check (non-code)
-Even after the code fix, Marker can still hide itself if settings are restrictive. Please ensure:
-- Allowed domains includes:
-  - `app.forgebylevelup.com` (and `www.` version if used)
-  - any preview domains you test on
-- Widget/Button targeting is set to “everyone” (or equivalent)
-- The widget button is enabled (not configured as “no button / custom trigger only”)
-
-## How we’ll verify (end-to-end)
-1. Open `app.forgebylevelup.com/auth` in an incognito window
-2. Confirm the Marker button appears (bottom corner)
-3. Log in, then submit a Marker report
-4. Confirm the report includes:
-   - reporter email/name (for signed-in users)
-   - customData fields (environment/app/userId when signed in; isAuthenticated false when not)
-
-## If it still doesn’t show after this
-We’ll add a temporary debug mode (dev only) that logs:
-- whether `window.Marker` exists
-- whether the shim script request succeeds
-- whether Marker API calls are returning `403` (domain restriction) or being blocked by an ad blocker/CSP
-Then we can pinpoint whether it’s still a Marker-side restriction vs. script-blocking.
-
+Notes (related, but separate from Home)
+- Marker.io still shows a 403 ping in preview, which is a Marker-side domain verification issue; once Home is fixed, we can add a similar visible “Marker blocked for this domain” diagnostic if you want so it never fails silently again.
