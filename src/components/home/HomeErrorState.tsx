@@ -1,7 +1,6 @@
 import React from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Clock, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useQueryClient } from '@tanstack/react-query';
 
 interface HomeErrorStateProps {
   failedQueries: { name: string; error: Error | null }[];
@@ -15,20 +14,36 @@ export const HomeErrorState: React.FC<HomeErrorStateProps> = ({
   showDebug = false,
 }) => {
   const isDev = import.meta.env.DEV;
+  const isTimeout = failedQueries.some(q => q.error?.message?.includes('timed out'));
+  const isOffline = !navigator.onLine;
+
+  const getTitle = () => {
+    if (isOffline) return "You're offline";
+    if (isTimeout) return "Taking longer than expected";
+    return "Couldn't load content";
+  };
+
+  const getMessage = () => {
+    if (isOffline) return "Check your internet connection and try again.";
+    if (isTimeout) return "This is taking longer than usual. Please check your connection and try again.";
+    return "We had trouble loading some sections. Please try again.";
+  };
+
+  const Icon = isOffline ? WifiOff : isTimeout ? Clock : AlertTriangle;
 
   return (
     <div className="glass-premium rounded-2xl p-6 border border-destructive/30 bg-destructive/5">
       <div className="flex items-start gap-4">
         <div className="p-2 rounded-full bg-destructive/10">
-          <AlertTriangle className="h-6 w-6 text-destructive" />
+          <Icon className="h-6 w-6 text-destructive" />
         </div>
         <div className="flex-1 space-y-3">
           <div>
             <h3 className="text-lg font-semibold text-foreground">
-              Couldn't load content
+              {getTitle()}
             </h3>
             <p className="text-sm text-muted-foreground mt-1">
-              We had trouble loading some sections. Please try again.
+              {getMessage()}
             </p>
           </div>
 
@@ -36,6 +51,7 @@ export const HomeErrorState: React.FC<HomeErrorStateProps> = ({
           {(isDev || showDebug) && failedQueries.length > 0 && (
             <div className="text-xs font-mono bg-muted/50 rounded p-3 space-y-1">
               <p className="font-semibold text-muted-foreground">Debug info:</p>
+              <p className="text-muted-foreground">Online: {navigator.onLine ? 'Yes' : 'No'}</p>
               {failedQueries.map((q) => (
                 <p key={q.name} className="text-destructive">
                   {q.name}: {q.error?.message || 'Unknown error'}

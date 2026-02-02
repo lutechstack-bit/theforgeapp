@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -26,6 +26,7 @@ const Home: React.FC = () => {
   const { profile } = useAuth();
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [isMentorModalOpen, setIsMentorModalOpen] = useState(false);
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
 
   const showDebug = searchParams.get('homeDebug') === '1';
 
@@ -83,6 +84,10 @@ const Home: React.FC = () => {
       if (pastError) throw pastError;
       return { events: pastEvents || [], isPastEvents: true };
     },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Fetch learn content from database
@@ -97,6 +102,10 @@ const Home: React.FC = () => {
       if (error) throw error;
       return data || [];
     },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Fetch ALL active mentors (client-side filtering for resilience)
@@ -111,6 +120,10 @@ const Home: React.FC = () => {
       if (error) throw error;
       return data || [];
     },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Fetch ALL active alumni testimonials (client-side filtering for resilience)
@@ -125,6 +138,10 @@ const Home: React.FC = () => {
       if (error) throw error;
       return data || [];
     },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Client-side filtering with fallback for mentors
@@ -189,7 +206,19 @@ const Home: React.FC = () => {
     alumniTestimonialsQuery.isError && { name: 'Alumni', error: alumniTestimonialsQuery.error as Error },
   ].filter(Boolean) as { name: string; error: Error }[];
 
+  // Loading timeout protection - show error after 15 seconds
+  useEffect(() => {
+    if (isAnyLoading) {
+      setLoadingTimedOut(false);
+      const timeout = setTimeout(() => {
+        setLoadingTimedOut(true);
+      }, 15000);
+      return () => clearTimeout(timeout);
+    }
+  }, [isAnyLoading]);
+
   const handleRetry = () => {
+    setLoadingTimedOut(false);
     queryClient.invalidateQueries({ queryKey: ['home_events'] });
     queryClient.invalidateQueries({ queryKey: ['home_learn_content'] });
     queryClient.invalidateQueries({ queryKey: ['home_mentors_all'] });
@@ -221,30 +250,24 @@ const Home: React.FC = () => {
             </div>
           )}
 
-          {/* Error State */}
-          {isAnyError && (
+          {/* Error State - show when queries fail or timeout */}
+          {(isAnyError || loadingTimedOut) && (
             <HomeErrorState 
-              failedQueries={failedQueries} 
+              failedQueries={loadingTimedOut && !isAnyError 
+                ? [{ name: 'All', error: new Error('Loading timed out. Please check your connection.') }] 
+                : failedQueries} 
               onRetry={handleRetry}
               showDebug={showDebug}
             />
           )}
 
-          {/* Loading Skeletons */}
-          {isAnyLoading && !isAnyError && (
-            <div className="space-y-5 sm:space-y-6">
-              <HomeCarouselSkeleton title="Meet Your Mentors" />
-              <HomeCarouselSkeleton title="Alumni Spotlight" />
-              <HomeCarouselSkeleton title="Learn" />
-              <HomeCarouselSkeleton title="Events" />
-            </div>
-          )}
-
-          {/* Content Sections (only render when not loading and no errors) */}
-          {!isAnyLoading && !isAnyError && (
+          {/* Per-section rendering - each section loads independently */}
+          {!loadingTimedOut && (
             <>
-              {/* Meet Your Mentors */}
-              {displayMentors.length > 0 && (
+              {/* Mentors Section */}
+              {mentorsQuery.isLoading ? (
+                <HomeCarouselSkeleton title="Meet Your Mentors" />
+              ) : displayMentors.length > 0 ? (
                 <ContentCarousel title="Meet Your Mentors">
                   {displayMentors.map((mentor) => {
                     const mentorData: Mentor = {
@@ -266,7 +289,7 @@ const Home: React.FC = () => {
                     );
                   })}
                 </ContentCarousel>
-              )}
+              ) : null}
 
               {/* Mentor Detail Modal */}
               <MentorDetailModal
@@ -275,8 +298,10 @@ const Home: React.FC = () => {
                 onClose={() => setIsMentorModalOpen(false)}
               />
 
-              {/* Alumni Testimonials */}
-              {displayAlumni.length > 0 && (
+              {/* Alumni Section */}
+              {alumniTestimonialsQuery.isLoading ? (
+                <HomeCarouselSkeleton title="Alumni Spotlight" />
+              ) : displayAlumni.length > 0 ? (
                 <ContentCarousel title="Alumni Spotlight">
                   {displayAlumni.map((alumni) => (
                     <TestimonialVideoCard
@@ -287,10 +312,12 @@ const Home: React.FC = () => {
                     />
                   ))}
                 </ContentCarousel>
-              )}
+              ) : null}
 
               {/* Learn Section */}
-              {displayLearnContent.length > 0 && (
+              {learnContentQuery.isLoading ? (
+                <HomeCarouselSkeleton title="Fundamental learning for Forge and beyond" />
+              ) : displayLearnContent.length > 0 ? (
                 <ContentCarousel title="Fundamental learning for Forge and beyond" onSeeAll={() => navigate('/learn')}>
                   {displayLearnContent.map((content: any) => (
                     <LearnCourseCard
@@ -302,10 +329,12 @@ const Home: React.FC = () => {
                     />
                   ))}
                 </ContentCarousel>
-              )}
+              ) : null}
 
               {/* Events Section */}
-              {displayEvents.length > 0 && (
+              {eventsQuery.isLoading ? (
+                <HomeCarouselSkeleton title="More from LevelUp" />
+              ) : displayEvents.length > 0 ? (
                 <ContentCarousel title="More from LevelUp" onSeeAll={() => navigate('/events')}>
                   {displayEvents.map((event: any) => (
                     <SimpleEventCard
@@ -317,10 +346,10 @@ const Home: React.FC = () => {
                     />
                   ))}
                 </ContentCarousel>
-              )}
+              ) : null}
 
               {/* Empty State - Only show when all queries succeeded AND no content */}
-              {allFetched && !hasAnyContent && (
+              {allFetched && !hasAnyContent && !isAnyError && (
                 <div className="glass-premium rounded-2xl p-8 text-center">
                   <Users className="h-12 w-12 text-primary/50 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-foreground mb-2">Content Coming Soon</h3>
