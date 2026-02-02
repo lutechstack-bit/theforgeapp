@@ -11,6 +11,8 @@ import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { AdminRoute } from "@/components/admin/AdminRoute";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { MarkerProvider } from "@/components/feedback/MarkerProvider";
+import { ErrorBoundary } from "@/components/error/ErrorBoundary";
+import forgeLogo from "@/assets/forge-logo.png";
 
 // Pages
 import Auth from "./pages/Auth";
@@ -80,7 +82,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-primary">Loading...</div>
+        <div className="flex flex-col items-center gap-4">
+          <img src={forgeLogo} alt="the Forge" className="h-10 opacity-80" />
+          <div className="animate-pulse text-primary text-sm">Loading...</div>
+        </div>
       </div>
     );
   }
@@ -310,23 +315,25 @@ const AppRoutes = () => {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AdminTestingProvider>
-        <AuthProvider>
-          <ThemeProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <ScrollToTop />
-                <MarkerProvider />
-                <AppRoutes />
-              </BrowserRouter>
-            </TooltipProvider>
-          </ThemeProvider>
-        </AuthProvider>
-      </AdminTestingProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AdminTestingProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <ScrollToTop />
+                  <MarkerProvider />
+                  <AppRoutes />
+                </BrowserRouter>
+              </TooltipProvider>
+            </ThemeProvider>
+          </AuthProvider>
+        </AdminTestingProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

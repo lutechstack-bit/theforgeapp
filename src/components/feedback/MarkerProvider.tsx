@@ -43,54 +43,34 @@ export const MarkerProvider = () => {
     }
   }, []);
 
-  // Effect A: Ensure Marker script is loaded (fallback loader)
+  // Effect A: Wait for Marker to be ready (loaded via deferred script in index.html)
   useEffect(() => {
-    // If Marker is already available, we're good
+    // Check if Marker is already available
     if (window.Marker) {
       setMarkerReady(true);
       return;
     }
 
-    // Ensure markerConfig is set
-    if (!window.markerConfig) {
-      window.markerConfig = {
-        project: MARKER_PROJECT_ID,
-        source: 'snippet'
-      };
-    }
-
-    // Check if script already exists
-    const existingScript = document.querySelector('script[src*="marker.io"]');
-    if (existingScript) {
-      // Script exists, just wait for it to load
-      const interval = setInterval(() => {
-        if (window.Marker) {
-          setMarkerReady(true);
-          clearInterval(interval);
-        }
-      }, 100);
-
-      const timeout = setTimeout(() => clearInterval(interval), 10000);
-      return () => {
+    // Poll for Marker availability (it loads deferred)
+    const interval = setInterval(() => {
+      if (window.Marker) {
+        setMarkerReady(true);
         clearInterval(interval);
-        clearTimeout(timeout);
-      };
-    }
+      }
+    }, 500);
 
-    // Inject the Marker shim script as fallback
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = 'https://edge.marker.io/latest/shim.js';
-    script.onload = () => {
-      const interval = setInterval(() => {
-        if (window.Marker) {
-          setMarkerReady(true);
-          clearInterval(interval);
-        }
-      }, 100);
-      setTimeout(() => clearInterval(interval), 10000);
+    // Stop polling after 30 seconds (Marker loads 2s after page load + network time)
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+      if (!window.Marker) {
+        console.warn('MarkerProvider: Marker.io did not load within expected time');
+      }
+    }, 30000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
     };
-    document.head.appendChild(script);
   }, []);
 
   // Effect B: Always show Marker widget when ready (no auth gating)
