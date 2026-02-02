@@ -98,18 +98,32 @@ const Community = () => {
   };
 
   const fetchCohortGroup = async () => {
-    if (!profile?.edition_id) return;
+    // Allow community to load even without edition - user can still use city groups
+    if (!profile?.edition_id) {
+      // Default to first city group if available
+      if (cityGroups.length > 0) {
+        setActiveGroupId(cityGroups[0].id);
+        setActiveGroupType('city');
+      }
+      return;
+    }
     
     const { data } = await supabase
       .from('cohort_groups')
       .select('*')
       .eq('edition_id', profile.edition_id)
-      .single();
+      .maybeSingle(); // Use maybeSingle to prevent error if not found
     
     if (data) {
       setCohortGroup(data);
       setActiveGroupId(data.id);
       setActiveGroupType('cohort');
+    } else {
+      // No cohort group found - default to first city group
+      if (cityGroups.length > 0) {
+        setActiveGroupId(cityGroups[0].id);
+        setActiveGroupType('city');
+      }
     }
   };
 
