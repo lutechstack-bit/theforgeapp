@@ -75,10 +75,11 @@ const queryClient = new QueryClient({
   },
 });
 
-// Protected Route wrapper
+// Protected Route wrapper - only checks session loading, not user data
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
   
+  // Only block on session initialization (fast)
   if (loading) {
     return <LoadingScreen />;
   }
@@ -92,9 +93,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 // KYF Route - Smart redirect based on cohort type
 const KYFRedirect: React.FC = () => {
-  const { profile, loading } = useAuth();
+  const { profile, userDataLoading } = useAuth();
   
-  if (loading) {
+  // Show loading while fetching profile (but with a reasonable expectation it will complete)
+  if (userDataLoading && !profile) {
     return <LoadingScreen />;
   }
   
@@ -113,24 +115,29 @@ const KYFRedirect: React.FC = () => {
 
 // Profile Setup Check wrapper - ensures profile setup is completed first
 const ProfileSetupCheck: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { profile, loading } = useAuth();
+  const { profile, userDataLoading } = useAuth();
   
-  if (loading) {
+  // If user data is still loading and we don't have profile yet, show loading briefly
+  // But don't block forever - if profile is null after loading, proceed anyway
+  if (userDataLoading && !profile) {
     return <LoadingScreen />;
   }
   
+  // If we have profile data and setup is not complete, redirect
   if (profile && !profile.profile_setup_completed) {
     return <Navigate to="/profile-setup" replace />;
   }
   
+  // Either profile is loaded with setup complete, or profile is null (let app handle gracefully)
   return <>{children}</>;
 };
 
 // KY Form Check wrapper - ensures KY form is completed before accessing main app
 const KYFormCheck: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { profile, loading } = useAuth();
+  const { profile, userDataLoading } = useAuth();
   
-  if (loading) {
+  // If user data is still loading and we don't have profile yet, show loading briefly
+  if (userDataLoading && !profile) {
     return <LoadingScreen />;
   }
   
@@ -144,9 +151,10 @@ const KYFormCheck: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 // Redirect away from profile setup if already completed
 const ProfileSetupRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { profile, loading } = useAuth();
+  const { profile, userDataLoading } = useAuth();
   
-  if (loading) {
+  // If user data is still loading and we don't have profile yet, show loading briefly
+  if (userDataLoading && !profile) {
     return <LoadingScreen />;
   }
   
@@ -161,6 +169,7 @@ const ProfileSetupRoute: React.FC<{ children: React.ReactNode }> = ({ children }
 const AppRoutes = () => {
   const { user, loading } = useAuth();
 
+  // Only block on session initialization
   if (loading) {
     return <LoadingScreen />;
   }
