@@ -12,7 +12,7 @@ import { AdminRoute } from "@/components/admin/AdminRoute";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { MarkerProvider } from "@/components/feedback/MarkerProvider";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
-import forgeLogo from "@/assets/forge-logo.png";
+import { LoadingScreen } from "@/components/shared/LoadingScreen";
 
 // Pages
 import Auth from "./pages/Auth";
@@ -77,17 +77,10 @@ const queryClient = new QueryClient({
 
 // Protected Route wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading, profile } = useAuth();
+  const { user, loading } = useAuth();
   
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <img src={forgeLogo} alt="the Forge" className="h-10 opacity-80" />
-          <div className="animate-pulse text-primary text-sm">Loading...</div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
   
   if (!user) {
@@ -102,11 +95,7 @@ const KYFRedirect: React.FC = () => {
   const { profile, loading } = useAuth();
   
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-primary">Loading...</div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
   
   // Get cohort type from edition if available
@@ -127,11 +116,7 @@ const ProfileSetupCheck: React.FC<{ children: React.ReactNode }> = ({ children }
   const { profile, loading } = useAuth();
   
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-primary">Loading...</div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
   
   if (profile && !profile.profile_setup_completed) {
@@ -146,11 +131,7 @@ const KYFormCheck: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { profile, loading } = useAuth();
   
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-primary">Loading...</div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
   
   // If profile setup is done but KY form is NOT complete, redirect to form
@@ -166,11 +147,7 @@ const ProfileSetupRoute: React.FC<{ children: React.ReactNode }> = ({ children }
   const { profile, loading } = useAuth();
   
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-primary">Loading...</div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
   
   // If profile setup is already completed, redirect to home
@@ -185,11 +162,7 @@ const AppRoutes = () => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-primary">Loading...</div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (

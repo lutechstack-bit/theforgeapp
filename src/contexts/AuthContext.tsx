@@ -7,6 +7,8 @@ import { AuthRecovery } from '@/components/auth/AuthRecovery';
 
 // Auth initialization timeout in milliseconds (8 seconds)
 const AUTH_INIT_TIMEOUT_MS = 8000;
+// User data fetch timeout (5 seconds) - prevents stalled profile fetches from blocking forever
+const USER_DATA_TIMEOUT_MS = 5000;
 
 interface Profile {
   id: string;
@@ -55,6 +57,19 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper: wrap a promise with a timeout
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T | null> {
+  return Promise.race([
+    promise,
+    new Promise<null>((resolve) => {
+      setTimeout(() => {
+        console.warn(`[Auth] ${label} timed out after ${ms}ms`);
+        resolve(null);
+      }, ms);
+    }),
+  ]);
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -63,10 +78,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [authTimedOut, setAuthTimedOut] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
-  const initAttemptRef = useRef(0);
-  const loadingRef = useRef(true); // Track loading state for watchdog closure
+  
+  // Refs to track initialization state
+  const hasInitializedRef = useRef(false);
+  const watchdogTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchEdition = async (editionId: string) => {
+  const fetchEdition = async (editionId: string): Promise<Edition | null> => {
     const { data, error } = await supabase
       .from('editions')
       .select('id, forge_start_date, forge_end_date, cohort_type')
@@ -74,13 +91,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .single();
     
     if (error) {
-      console.error('Error fetching edition:', error);
+      console.error('[Auth] Error fetching edition:', error);
       return null;
     }
     return data as Edition;
   };
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string): Promise<Profile | null> => {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -88,29 +105,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .single();
     
     if (error) {
-      console.error('Error fetching profile:', error);
+      console.error('[Auth] Error fetching profile:', error);
       return null;
     }
     return data as Profile;
   };
 
-  const fetchUserData = async (userId: string) => {
-    const profileData = await fetchProfile(userId);
-    setProfile(profileData);
-    
-    if (profileData?.edition_id) {
-      const editionData = await fetchEdition(profileData.edition_id);
-      setEdition(editionData);
-    } else {
-      setEdition(null);
+  // Fetch user data with timeout protection
+  const fetchUserDataWithTimeout = async (userId: string): Promise<void> => {
+    try {
+      const profileData = await withTimeout(
+        fetchProfile(userId),
+        USER_DATA_TIMEOUT_MS,
+        'Profile fetch'
+      );
+      
+      setProfile(profileData);
+      
+      if (profileData?.edition_id) {
+        const editionData = await withTimeout(
+          fetchEdition(profileData.edition_id),
+          USER_DATA_TIMEOUT_MS,
+          'Edition fetch'
+        );
+        setEdition(editionData);
+      } else {
+        setEdition(null);
+      }
+    } catch (error) {
+      console.error('[Auth] Error in fetchUserDataWithTimeout:', error);
+      // Don't throw - we want to continue even if profile fetch fails
     }
   };
 
   const refreshProfile = async () => {
     if (user) {
-      await fetchUserData(user.id);
+      await fetchUserDataWithTimeout(user.id);
     }
   };
+
+  // Helper to safely complete initialization
+  const completeInit = useCallback((timedOut = false) => {
+    // Clear watchdog timer
+    if (watchdogTimerRef.current) {
+      clearTimeout(watchdogTimerRef.current);
+      watchdogTimerRef.current = null;
+    }
+    
+    setLoading(false);
+    setAuthTimedOut(timedOut);
+    hasInitializedRef.current = true;
+  }, []);
 
   // Helper to clear session and force reload
   const clearSessionAndReload = useCallback(() => {
@@ -123,7 +168,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
     } catch (e) {
-      console.error('Error during session cleanup:', e);
+      console.error('[Auth] Error during session cleanup:', e);
     }
     window.location.href = '/auth';
   }, []);
@@ -133,14 +178,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsRetrying(true);
     setAuthTimedOut(false);
     setLoading(true);
-    initAttemptRef.current += 1;
+    hasInitializedRef.current = false;
     
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
-        console.error('Retry auth error:', error);
-        setAuthTimedOut(true);
+        console.error('[Auth] Retry auth error:', error);
+        completeInit(true);
         return;
       }
       
@@ -148,114 +193,99 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        try {
-          await fetchUserData(session.user.id);
-        } catch (fetchError) {
-          console.error('Error fetching user data on retry:', fetchError);
-        }
+        await fetchUserDataWithTimeout(session.user.id);
       }
       
-      setLoading(false);
+      completeInit(false);
     } catch (error) {
-      console.error('Retry auth exception:', error);
-      setAuthTimedOut(true);
+      console.error('[Auth] Retry auth exception:', error);
+      completeInit(true);
     } finally {
       setIsRetrying(false);
     }
-  }, []);
+  }, [completeInit]);
 
   useEffect(() => {
     let isMounted = true;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     
-    // Reset loading ref on mount
-    loadingRef.current = true;
+    // Reset initialization state on mount
+    hasInitializedRef.current = false;
     
-    // Auth initialization watchdog - prevents infinite loading
-    // Uses loadingRef to avoid stale closure issues
-    timeoutId = setTimeout(() => {
-      if (isMounted && loadingRef.current) {
-        console.warn('Auth initialization timed out after', AUTH_INIT_TIMEOUT_MS, 'ms');
-        setAuthTimedOut(true);
-        setLoading(false);
-        loadingRef.current = false;
+    // Start the watchdog timer - this is our fail-safe
+    // It will NOT be cleared until initialization is complete
+    watchdogTimerRef.current = setTimeout(() => {
+      if (isMounted && !hasInitializedRef.current) {
+        console.warn('[Auth] Initialization timed out after', AUTH_INIT_TIMEOUT_MS, 'ms');
+        completeInit(true);
       }
     }, AUTH_INIT_TIMEOUT_MS);
     
+    // Subscribe to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event, newSession) => {
         if (!isMounted) return;
         
-        // Clear timeout on any auth state change
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }
+        console.log('[Auth] Auth state change:', event);
         
-        setSession(session);
-        setUser(session?.user ?? null);
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
         
-        if (session?.user) {
+        if (newSession?.user) {
           try {
-            await fetchUserData(session.user.id);
+            await fetchUserDataWithTimeout(newSession.user.id);
           } catch (error) {
-            console.error('Error fetching user data on auth change:', error);
+            console.error('[Auth] Error fetching user data on auth change:', error);
           }
         } else {
           setProfile(null);
           setEdition(null);
         }
-        if (isMounted) {
-          setLoading(false);
-          loadingRef.current = false;
-          setAuthTimedOut(false);
+        
+        // Complete initialization if this is the first auth event
+        if (isMounted && !hasInitializedRef.current) {
+          completeInit(false);
         }
       }
     );
 
-    // Initial session check
+    // Initial session check - this runs after subscription is set up
     const initializeAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('[Auth] Starting initial session check');
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Error getting session:', error);
-          if (isMounted) {
-            setLoading(false);
-            loadingRef.current = false;
+          console.error('[Auth] Error getting initial session:', error);
+          if (isMounted && !hasInitializedRef.current) {
+            completeInit(false); // Not a timeout, just no session
           }
           return;
         }
         
         if (!isMounted) return;
         
-        // Clear timeout on successful init
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          try {
-            await fetchUserData(session.user.id);
-          } catch (fetchError) {
-            console.error('Error fetching initial user data:', fetchError);
+        // If onAuthStateChange hasn't fired yet, handle the session here
+        if (!hasInitializedRef.current) {
+          setSession(initialSession);
+          setUser(initialSession?.user ?? null);
+          
+          if (initialSession?.user) {
+            try {
+              await fetchUserDataWithTimeout(initialSession.user.id);
+            } catch (fetchError) {
+              console.error('[Auth] Error fetching initial user data:', fetchError);
+            }
+          }
+          
+          // Complete initialization
+          if (isMounted && !hasInitializedRef.current) {
+            completeInit(false);
           }
         }
-        
-        if (isMounted) {
-          setLoading(false);
-          loadingRef.current = false;
-          setAuthTimedOut(false);
-        }
       } catch (error) {
-        console.error('Auth initialization error:', error);
-        if (isMounted) {
-          setLoading(false);
-          loadingRef.current = false;
+        console.error('[Auth] Auth initialization error:', error);
+        if (isMounted && !hasInitializedRef.current) {
+          completeInit(false);
         }
       }
     };
@@ -264,10 +294,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       isMounted = false;
-      if (timeoutId) clearTimeout(timeoutId);
+      if (watchdogTimerRef.current) {
+        clearTimeout(watchdogTimerRef.current);
+        watchdogTimerRef.current = null;
+      }
       subscription.unsubscribe();
     };
-  }, [initAttemptRef.current]);
+  }, [completeInit]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -298,7 +331,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Use scope: 'local' to clear local session even if server session is already gone
       await supabase.auth.signOut({ scope: 'local' });
     } catch (error) {
-      console.error('Sign out error (session may already be expired):', error);
+      console.error('[Auth] Sign out error (session may already be expired):', error);
       // Even if server signout fails, we've already cleared local state
     }
   };
