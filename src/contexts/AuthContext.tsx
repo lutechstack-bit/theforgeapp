@@ -5,10 +5,12 @@ import { calculateForgeMode, ForgeMode } from '@/lib/forgeUtils';
 import { useAdminTestingSafe } from '@/contexts/AdminTestingContext';
 import { AuthRecovery } from '@/components/auth/AuthRecovery';
 
-// Auth initialization timeout in milliseconds (8 seconds)
-const AUTH_INIT_TIMEOUT_MS = 8000;
-// User data fetch timeout (5 seconds) - prevents stalled profile fetches from blocking forever
+// Session initialization timeout (3 seconds) - just for determining if user is logged in
+const SESSION_INIT_TIMEOUT_MS = 3000;
+// User data fetch timeout (5 seconds) - for profile/edition fetch
 const USER_DATA_TIMEOUT_MS = 5000;
+// Overall app-level failsafe (10 seconds) - if loading is still true, force recovery
+const APP_FAILSAFE_TIMEOUT_MS = 10000;
 
 interface Profile {
   id: string;
@@ -43,6 +45,7 @@ interface AuthContextType {
   profile: Profile | null;
   edition: Edition | null;
   loading: boolean;
+  userDataLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -75,26 +78,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [edition, setEdition] = useState<Edition | null>(null);
-  const [loading, setLoading] = useState(true);
+  
+  // Split loading states: auth (session) vs user data (profile/edition)
+  const [loading, setLoading] = useState(true); // Session initialization only
+  const [userDataLoading, setUserDataLoading] = useState(false);
   const [authTimedOut, setAuthTimedOut] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   
   // Refs to track initialization state
   const hasInitializedRef = useRef(false);
-  const watchdogTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const failsafeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchEdition = async (editionId: string): Promise<Edition | null> => {
     const { data, error } = await supabase
       .from('editions')
       .select('id, forge_start_date, forge_end_date, cohort_type')
       .eq('id', editionId)
-      .single();
+      .maybeSingle(); // Use maybeSingle to handle missing rows gracefully
     
     if (error) {
       console.error('[Auth] Error fetching edition:', error);
       return null;
     }
-    return data as Edition;
+    return data as Edition | null;
   };
 
   const fetchProfile = async (userId: string): Promise<Profile | null> => {
@@ -102,17 +108,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle(); // Use maybeSingle to handle missing rows gracefully
     
     if (error) {
       console.error('[Auth] Error fetching profile:', error);
       return null;
     }
-    return data as Profile;
+    return data as Profile | null;
   };
 
-  // Fetch user data with timeout protection
-  const fetchUserDataWithTimeout = async (userId: string): Promise<void> => {
+  // Fetch user data with timeout protection - NON-BLOCKING
+  const fetchUserDataInBackground = useCallback(async (userId: string): Promise<void> => {
+    setUserDataLoading(true);
+    
     try {
       const profileData = await withTimeout(
         fetchProfile(userId),
@@ -133,43 +141,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setEdition(null);
       }
     } catch (error) {
-      console.error('[Auth] Error in fetchUserDataWithTimeout:', error);
+      console.error('[Auth] Error in fetchUserDataInBackground:', error);
       // Don't throw - we want to continue even if profile fetch fails
+    } finally {
+      setUserDataLoading(false);
     }
-  };
+  }, []);
 
   const refreshProfile = async () => {
     if (user) {
-      await fetchUserDataWithTimeout(user.id);
+      await fetchUserDataInBackground(user.id);
     }
   };
 
-  // Helper to safely complete initialization
-  const completeInit = useCallback((timedOut = false) => {
-    // Clear watchdog timer
-    if (watchdogTimerRef.current) {
-      clearTimeout(watchdogTimerRef.current);
-      watchdogTimerRef.current = null;
-    }
+  // Helper to complete session initialization (NOT user data)
+  const completeSessionInit = useCallback((timedOut = false) => {
+    if (hasInitializedRef.current) return; // Already initialized
     
+    console.log('[Auth] Session initialization complete, timedOut:', timedOut);
+    hasInitializedRef.current = true;
     setLoading(false);
     setAuthTimedOut(timedOut);
-    hasInitializedRef.current = true;
+    
+    // Clear failsafe timer since we're done
+    if (failsafeTimerRef.current) {
+      clearTimeout(failsafeTimerRef.current);
+      failsafeTimerRef.current = null;
+    }
   }, []);
 
   // Helper to clear session and force reload
-  const clearSessionAndReload = useCallback(() => {
+  const clearSessionAndReload = useCallback(async () => {
     try {
+      // Clear all storage
       localStorage.clear();
       sessionStorage.clear();
+      
+      // Unregister all service workers
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then((registrations) => {
-          registrations.forEach((registration) => registration.unregister());
-        });
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(r => r.unregister()));
+      }
+      
+      // Clear caches
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
       }
     } catch (e) {
       console.error('[Auth] Error during session cleanup:', e);
     }
+    
+    // Hard reload to auth page
     window.location.href = '/auth';
   }, []);
 
@@ -181,29 +204,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     hasInitializedRef.current = false;
     
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
+      const sessionResult = await withTimeout(
+        supabase.auth.getSession(),
+        SESSION_INIT_TIMEOUT_MS,
+        'Session retry'
+      );
       
-      if (error) {
-        console.error('[Auth] Retry auth error:', error);
-        completeInit(true);
+      if (!sessionResult) {
+        console.warn('[Auth] Session retry timed out');
+        completeSessionInit(true);
         return;
       }
       
-      setSession(session);
-      setUser(session?.user ?? null);
+      const { data: { session: retrySession }, error } = sessionResult;
       
-      if (session?.user) {
-        await fetchUserDataWithTimeout(session.user.id);
+      if (error) {
+        console.error('[Auth] Retry auth error:', error);
+        completeSessionInit(true);
+        return;
       }
       
-      completeInit(false);
+      setSession(retrySession);
+      setUser(retrySession?.user ?? null);
+      completeSessionInit(false);
+      
+      // Fetch user data in background (non-blocking)
+      if (retrySession?.user) {
+        fetchUserDataInBackground(retrySession.user.id);
+      }
     } catch (error) {
       console.error('[Auth] Retry auth exception:', error);
-      completeInit(true);
+      completeSessionInit(true);
     } finally {
       setIsRetrying(false);
     }
-  }, [completeInit]);
+  }, [completeSessionInit, fetchUserDataInBackground]);
 
   useEffect(() => {
     let isMounted = true;
@@ -211,14 +246,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Reset initialization state on mount
     hasInitializedRef.current = false;
     
-    // Start the watchdog timer - this is our fail-safe
-    // It will NOT be cleared until initialization is complete
-    watchdogTimerRef.current = setTimeout(() => {
+    // App-level failsafe: if loading is STILL true after 10s, force recovery
+    failsafeTimerRef.current = setTimeout(() => {
       if (isMounted && !hasInitializedRef.current) {
-        console.warn('[Auth] Initialization timed out after', AUTH_INIT_TIMEOUT_MS, 'ms');
-        completeInit(true);
+        console.error('[Auth] FAILSAFE: App still loading after', APP_FAILSAFE_TIMEOUT_MS, 'ms - forcing recovery');
+        completeSessionInit(true);
       }
-    }, AUTH_INIT_TIMEOUT_MS);
+    }, APP_FAILSAFE_TIMEOUT_MS);
     
     // Subscribe to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -227,65 +261,75 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         console.log('[Auth] Auth state change:', event);
         
+        // Update session/user immediately
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
+        // Complete session init FIRST (unblocks routing)
+        if (!hasInitializedRef.current) {
+          completeSessionInit(false);
+        }
+        
+        // Then fetch user data in background (non-blocking)
         if (newSession?.user) {
-          try {
-            await fetchUserDataWithTimeout(newSession.user.id);
-          } catch (error) {
-            console.error('[Auth] Error fetching user data on auth change:', error);
-          }
+          fetchUserDataInBackground(newSession.user.id);
         } else {
           setProfile(null);
           setEdition(null);
-        }
-        
-        // Complete initialization if this is the first auth event
-        if (isMounted && !hasInitializedRef.current) {
-          completeInit(false);
+          setUserDataLoading(false);
         }
       }
     );
 
-    // Initial session check - this runs after subscription is set up
+    // Initial session check with timeout
     const initializeAuth = async () => {
       try {
         console.log('[Auth] Starting initial session check');
-        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error('[Auth] Error getting initial session:', error);
-          if (isMounted && !hasInitializedRef.current) {
-            completeInit(false); // Not a timeout, just no session
+        const sessionResult = await withTimeout(
+          supabase.auth.getSession(),
+          SESSION_INIT_TIMEOUT_MS,
+          'Initial session check'
+        );
+        
+        if (!isMounted) return;
+        
+        // If timeout occurred
+        if (!sessionResult) {
+          console.warn('[Auth] Initial session check timed out');
+          if (!hasInitializedRef.current) {
+            completeSessionInit(true);
           }
           return;
         }
         
-        if (!isMounted) return;
+        const { data: { session: initialSession }, error } = sessionResult;
+        
+        if (error) {
+          console.error('[Auth] Error getting initial session:', error);
+          if (!hasInitializedRef.current) {
+            completeSessionInit(false); // Not a timeout, just no session
+          }
+          return;
+        }
         
         // If onAuthStateChange hasn't fired yet, handle the session here
         if (!hasInitializedRef.current) {
           setSession(initialSession);
           setUser(initialSession?.user ?? null);
           
-          if (initialSession?.user) {
-            try {
-              await fetchUserDataWithTimeout(initialSession.user.id);
-            } catch (fetchError) {
-              console.error('[Auth] Error fetching initial user data:', fetchError);
-            }
-          }
+          // Complete session init FIRST (unblocks routing)
+          completeSessionInit(false);
           
-          // Complete initialization
-          if (isMounted && !hasInitializedRef.current) {
-            completeInit(false);
+          // Then fetch user data in background (non-blocking)
+          if (initialSession?.user) {
+            fetchUserDataInBackground(initialSession.user.id);
           }
         }
       } catch (error) {
         console.error('[Auth] Auth initialization error:', error);
         if (isMounted && !hasInitializedRef.current) {
-          completeInit(false);
+          completeSessionInit(false);
         }
       }
     };
@@ -294,13 +338,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       isMounted = false;
-      if (watchdogTimerRef.current) {
-        clearTimeout(watchdogTimerRef.current);
-        watchdogTimerRef.current = null;
+      if (failsafeTimerRef.current) {
+        clearTimeout(failsafeTimerRef.current);
+        failsafeTimerRef.current = null;
       }
       subscription.unsubscribe();
     };
-  }, [completeInit]);
+  }, [completeSessionInit, fetchUserDataInBackground]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -381,6 +425,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       profile,
       edition,
       loading,
+      userDataLoading,
       signIn,
       signUp,
       signOut,
