@@ -94,14 +94,8 @@ const CountdownContent = ({
 export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ edition }) => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
-  // Show loading placeholder when edition is not yet available
-  if (!edition) {
-    return (
-      <div className="h-14 sm:h-16 rounded-xl bg-muted/30 animate-pulse border border-muted/50" />
-    );
-  }
-
   // Calculate progress based on days remaining (30-day visual scale)
+  // IMPORTANT: All hooks must be called unconditionally (before any early returns)
   const progressPercent = useMemo(() => {
     if (!edition?.forge_start_date) return 0;
     
@@ -146,6 +140,14 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
     const timer = setInterval(calculateTimeLeft, 1000);
     return () => clearInterval(timer);
   }, [edition?.forge_start_date]);
+
+  // Show loading placeholder when edition is not yet available
+  // This early return is AFTER all hooks, so React's rules are satisfied
+  if (!edition) {
+    return (
+      <div className="h-14 sm:h-16 rounded-xl bg-muted/30 animate-pulse border border-muted/50" />
+    );
+  }
 
   return (
     <div 
