@@ -60,22 +60,22 @@ const houseRules: RuleItem[] = [
 const RulesAccordion: React.FC = () => {
   return (
     <section id="roadmap-rules" className="py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-lg bg-primary/10">
+      <div className="flex items-center gap-3 mb-8">
+        <div className="p-2.5 rounded-lg bg-primary/15 border border-primary/20">
           <Shield className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-foreground">Rules & Guidelines</h2>
-          <p className="text-sm text-muted-foreground">Keep the Forge safe and creative for everyone</p>
+          <h2 className="text-xl font-bold text-foreground border-l-3 border-primary pl-3">Rules & Guidelines</h2>
+          <p className="text-sm text-muted-foreground pl-3">Keep the Forge safe and creative for everyone</p>
         </div>
       </div>
 
-      <Accordion type="multiple" defaultValue={[]} className="space-y-3">
+      <Accordion type="multiple" defaultValue={[]} className="space-y-4">
         {/* Zero Tolerance */}
-        <AccordionItem value="zero-tolerance" className="glass-card rounded-xl border-destructive/20 overflow-hidden">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline">
+        <AccordionItem value="zero-tolerance" className="card-warm rounded-xl border-destructive/30 overflow-hidden">
+          <AccordionTrigger className="px-5 py-4 hover:no-underline">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-destructive/10">
+              <div className="p-2.5 rounded-lg bg-destructive/15 border border-destructive/20">
                 <AlertTriangle className="w-4 h-4 text-destructive" />
               </div>
               <div className="text-left">
@@ -84,14 +84,14 @@ const RulesAccordion: React.FC = () => {
               </div>
             </div>
           </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <div className="space-y-3 pt-2">
+          <AccordionContent className="px-5 pb-6">
+            <div className="space-y-4 pt-3">
               {zeroToleranceItems.map((rule, i) => (
-                <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-destructive/5 border border-destructive/10">
-                  <div className="text-destructive mt-0.5">{rule.icon}</div>
-                  <div>
-                    <h4 className="font-medium text-foreground text-sm">{rule.title}</h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">{rule.description}</p>
+                <div key={i} className="flex items-start gap-4 p-5 rounded-xl bg-destructive/5 border border-destructive/15">
+                  <div className="text-destructive mt-0.5 flex-shrink-0">{rule.icon}</div>
+                  <div className="space-y-1.5">
+                    <h4 className="font-medium text-primary/80 text-sm">{rule.title}</h4>
+                    <p className="text-[15px] leading-relaxed text-foreground/90">{rule.description}</p>
                   </div>
                 </div>
               ))}
@@ -100,10 +100,10 @@ const RulesAccordion: React.FC = () => {
         </AccordionItem>
 
         {/* General Rules */}
-        <AccordionItem value="general" className="glass-card rounded-xl overflow-hidden">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline">
+        <AccordionItem value="general" className="card-warm rounded-xl overflow-hidden">
+          <AccordionTrigger className="px-5 py-4 hover:no-underline">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
+              <div className="p-2.5 rounded-lg bg-primary/15 border border-primary/20">
                 <Shield className="w-4 h-4 text-primary" />
               </div>
               <div className="text-left">
@@ -112,14 +112,14 @@ const RulesAccordion: React.FC = () => {
               </div>
             </div>
           </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <div className="space-y-2 pt-2">
+          <AccordionContent className="px-5 pb-6">
+            <div className="space-y-4 pt-3">
               {generalRules.map((rule, i) => (
-                <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-secondary/30 transition-colors">
-                  <div className="text-primary mt-0.5">{rule.icon}</div>
-                  <div>
-                    <h4 className="font-medium text-foreground text-sm">{rule.title}</h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">{rule.description}</p>
+                <div key={i} className="flex items-start gap-4 p-5 rounded-xl bg-primary/5 border border-primary/10 hover:bg-primary/8 transition-colors">
+                  <div className="text-primary mt-0.5 flex-shrink-0">{rule.icon}</div>
+                  <div className="space-y-1.5">
+                    <h4 className="font-medium text-primary/80 text-sm">{rule.title}</h4>
+                    <p className="text-[15px] leading-relaxed text-foreground/90">{rule.description}</p>
                   </div>
                 </div>
               ))}
@@ -128,11 +128,11 @@ const RulesAccordion: React.FC = () => {
         </AccordionItem>
 
         {/* House Rules */}
-        <AccordionItem value="house" className="glass-card rounded-xl overflow-hidden">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline">
+        <AccordionItem value="house" className="card-warm rounded-xl overflow-hidden">
+          <AccordionTrigger className="px-5 py-4 hover:no-underline">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-accent/10">
-                <Home className="w-4 h-4 text-accent" />
+              <div className="p-2.5 rounded-lg bg-primary/15 border border-primary/20">
+                <Home className="w-4 h-4 text-primary" />
               </div>
               <div className="text-left">
                 <h3 className="font-semibold text-foreground text-sm">House Rules</h3>
@@ -140,14 +140,14 @@ const RulesAccordion: React.FC = () => {
               </div>
             </div>
           </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <div className="space-y-2 pt-2">
+          <AccordionContent className="px-5 pb-6">
+            <div className="space-y-4 pt-3">
               {houseRules.map((rule, i) => (
-                <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-secondary/30 transition-colors">
-                  <div className="text-accent mt-0.5">{rule.icon}</div>
-                  <div>
-                    <h4 className="font-medium text-foreground text-sm">{rule.title}</h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">{rule.description}</p>
+                <div key={i} className="flex items-start gap-4 p-5 rounded-xl bg-primary/5 border border-primary/10 hover:bg-primary/8 transition-colors">
+                  <div className="text-primary mt-0.5 flex-shrink-0">{rule.icon}</div>
+                  <div className="space-y-1.5">
+                    <h4 className="font-medium text-primary/80 text-sm">{rule.title}</h4>
+                    <p className="text-[15px] leading-relaxed text-foreground/90">{rule.description}</p>
                   </div>
                 </div>
               ))}
@@ -157,11 +157,11 @@ const RulesAccordion: React.FC = () => {
       </Accordion>
 
       {/* Footer note */}
-      <div className="mt-6 p-4 rounded-xl gradient-subtle border border-primary/20 text-center">
-        <p className="text-sm text-foreground font-medium mb-1">
+      <div className="mt-8 p-5 rounded-xl gradient-subtle border border-primary/25 text-center">
+        <p className="text-base text-foreground font-medium mb-1.5">
           Let's co-create a space where creativity and collaboration can thrive.
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           These rules exist to protect everyone and ensure the best experience for all.
         </p>
       </div>

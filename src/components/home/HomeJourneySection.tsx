@@ -240,9 +240,9 @@ const HomeJourneySection: React.FC = () => {
 
   // Success: Show the journey
   return (
-    <section className="space-y-4">
+    <section className="space-y-6">
       {/* Personalized Welcome */}
-      <div className="mb-2">
+      <div className="mb-4">
         <h1 className="text-2xl font-bold text-foreground">
           Hi {firstName}
         </h1>
@@ -254,12 +254,12 @@ const HomeJourneySection: React.FC = () => {
       {/* Section Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
+          <div className="p-2.5 rounded-lg bg-primary/15 border border-primary/20">
             <MapIcon className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-foreground">Your Journey</h2>
-            <p className="text-xs text-muted-foreground">Day by day through the Forge</p>
+            <h2 className="text-lg font-bold text-foreground border-l-3 border-primary pl-3">Your Journey</h2>
+            <p className="text-xs text-muted-foreground pl-3">Day by day through the Forge</p>
           </div>
         </div>
         <Button

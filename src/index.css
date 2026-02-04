@@ -183,7 +183,7 @@
     background: hsl(var(--card) / 0.4);
     backdrop-filter: blur(16px) saturate(150%);
     -webkit-backdrop-filter: blur(16px) saturate(150%);
-    border: 1px solid hsl(var(--border) / 0.3);
+    border: 1px solid hsl(var(--primary) / 0.15);
     box-shadow: 
       0 4px 30px hsl(var(--background) / 0.2),
       inset 0 1px 0 hsl(var(--foreground) / 0.05);
@@ -823,7 +823,45 @@
 }
 
 .section-title {
-  @apply text-base sm:text-lg font-bold text-foreground border-l-2 border-primary pl-3;
+  @apply text-base sm:text-lg font-bold text-foreground border-l-3 border-primary pl-3;
+}
+
+/* Gold-tinted warm card backgrounds */
+.card-warm {
+  background: linear-gradient(
+    135deg, 
+    hsl(var(--primary) / 0.06), 
+    hsl(var(--card) / 0.5)
+  );
+  border: 1px solid hsl(var(--primary) / 0.18);
+}
+
+.card-warm:hover {
+  border-color: hsl(var(--primary) / 0.3);
+}
+
+/* Section divider with gold accent */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg, 
+    transparent 0%, 
+    hsl(var(--primary) / 0.25) 50%, 
+    transparent 100%
+  );
+  margin: 2.5rem 0;
+}
+
+/* Section title with warm gold accent */
+.section-title-warm {
+  @apply text-lg sm:text-xl font-bold text-foreground;
+  border-left: 3px solid hsl(var(--primary));
+  padding-left: 0.75rem;
+}
+
+/* Border utility for 3px left border */
+.border-l-3 {
+  border-left-width: 3px;
 }
 
 /* Input focus enhancement */

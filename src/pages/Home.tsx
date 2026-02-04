@@ -256,7 +256,7 @@ const Home: React.FC = () => {
       <div className="flex gap-6 px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-6">
         
         {/* Main Content Column */}
-        <div className="flex-1 space-y-5 sm:space-y-6 min-w-0">
+        <div className="flex-1 space-y-10 sm:space-y-12 min-w-0">
           {/* Compact Countdown Timer - Gold themed strip at top */}
           <CompactCountdownTimer edition={edition} />
 
