@@ -1,113 +1,158 @@
 
-## What’s actually happening (based on codebase research)
 
-On the production domain, you’re seeing the **full-screen Forge LoadingScreen** and it **never resolves**. That screen is rendered whenever `useAuth().loading` is `true` (see `src/App.tsx`: `ProtectedRoute`, `ProfileSetupCheck`, `KYFormCheck`, `AppRoutes`).
+## Summary
 
-Even though we added a watchdog (`AUTH_INIT_TIMEOUT_MS = 8000`) in `src/contexts/AuthContext.tsx`, you are not reaching the recovery UI—meaning that **in production, auth initialization can still get stuck with `loading=true`**.
+Two changes requested:
+1. **Logo navigation** — Already works correctly. Both `SideNav.tsx` and `TopBar.tsx` have `Link to="/"` that navigates to Home from any page. No changes needed.
+2. **Remove the "0/7 days" progress bar** — Remove the confusing/inaccurate days progress indicator from the Roadmap, applying to all three cohorts (Filmmakers, Writers, Creators).
 
-In the current AuthProvider flow, `loading` is tied to “auth + profile/edition fetch”. If any part of that chain stalls in production (session restore, profile fetch, edition fetch, storage issues, network hangs), the UI stays gated behind `LoadingScreen`.
+---
 
-This is exactly the failure mode you’re describing: refresh → auth init starts → the app waits forever → you never reach routes/content.
+## Analysis: Logo Navigation
 
-## Fix approach (make “infinite LoadingScreen” impossible)
+The logo already navigates to Home from any page:
 
-We will **separate “auth session initialization” from “user data (profile/edition) loading”**, and add **hard timeouts** around session restore + user data fetch so the app always progresses.
+| File | Line | Current Implementation |
+|------|------|------------------------|
+| `SideNav.tsx` | 110 | `<Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>` |
+| `TopBar.tsx` | 30 | `<Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>` |
 
-Key idea:
-- `loading` should represent only “do we know if there is a signed-in session?”
-- profile/edition fetch should **never** block the entire application from rendering indefinitely
-- if profile/edition takes too long, we show the app (or show a targeted message), not a permanent global loader
+**Result:** No changes needed — this already works as expected.
 
-## Planned changes (code)
+---
 
-### 1) AuthContext: split loading into two phases + add session timeout
-**File:** `src/contexts/AuthContext.tsx`
+## Analysis: Days Progress Bar
 
-**Add:**
-- `authLoading` (or keep `loading` but redefine it strictly as “session init”)
-- `userDataLoading` (new boolean for profile/edition fetch)
-- `initStage` (optional string for diagnostics: `"boot" | "session" | "userData" | "ready" | "timedOut"`)
+The "X/Y days" progress indicator appears in **two components**:
 
-**Change flow:**
-- Start `authLoading=true` on mount.
-- Wrap `supabase.auth.getSession()` in `withTimeout(...)` as well (right now only profile/edition are protected).
-- As soon as we determine session state (session exists or not), set:
-  - `authLoading=false` (this unblocks routing)
-- Then fetch profile/edition **in the background**:
-  - set `userDataLoading=true`
-  - call `fetchUserDataWithTimeout(user.id)` without blocking route rendering
-  - finally set `userDataLoading=false`
+### 1. RoadmapHero.tsx (lines 71-121)
+Currently shows:
+- A progress ring (SVG circle) with percentage
+- Text: `{completedCount} / {totalCount}` days complete
+- Mobile progress bar with `{completedCount}/{totalCount} days`
 
-**Important:** In `onAuthStateChange`, do **not** `await fetchUserDataWithTimeout(...)` before flipping the auth init state. Awaiting in production is a common cause of “stuck forever” if the fetch never resolves.
+### 2. JourneyStats.tsx (lines 150-167)
+Currently shows:
+- Text: `{completedCount}/{totalCount}`
+- A small `<Progress>` bar (16 wide on desktop)
 
-### 2) App route guards: use the right loading state
-**File:** `src/App.tsx`
+---
 
-Update wrappers:
-- `ProtectedRoute` should block only on `authLoading` (session init)
-- `ProfileSetupCheck` and `KYFormCheck` should consider `userDataLoading`
-  - But also must have a timeout fallback: if user data didn’t load, don’t block forever
+## Implementation Plan
 
-Recommended behavior:
-- If `authLoading` → show `<LoadingScreen />`
-- If no user → redirect to `/auth`
-- If user exists and `userDataLoading` → show `<LoadingScreen />` **for a short bounded window only** (or show a lighter inline loader)
-- If user exists and userData failed/timed out (profile is null after timeout) → render app but show a non-blocking banner/toast: “We couldn’t load your profile, tap to retry”
+### File 1: `src/components/roadmap/RoadmapHero.tsx`
 
-This prevents the “forever global loader” while still preserving onboarding gating when data is available.
+**Remove:** The entire "Right side - Progress Ring" section (lines 71-111) and the mobile progress bar (lines 114-121).
 
-### 3) Make single-row reads safer in user boot path
-**File:** `src/contexts/AuthContext.tsx`
+**Keep:** The left side status & title section which shows:
+- Mode badge (e.g., "X days until Forge", "FORGE IS LIVE", "FORGE COMPLETE")
+- Cohort-specific headline and subtitle
 
-Change `.single()` to `.maybeSingle()` for:
-- profile fetch
-- edition fetch
+The hero will become a clean header showing only the status and title without the confusing days counter.
 
-Reason: `.single()` can throw/produce errors when no row exists, and the boot path should never be brittle. We’ll handle “no profile row yet” gracefully and not block the app.
+### File 2: `src/components/roadmap/JourneyStats.tsx`
 
-### 4) Add an app-level failsafe (redundant safety net)
-**File:** `src/App.tsx` (or a small new component like `StartupGuard`)
+**Remove:** The "Progress" section (lines 150-167) which shows the `{completedCount}/{totalCount}` text and the small progress bar.
 
-Implement a second failsafe:
-- If `authLoading` stays true beyond N seconds (e.g. 10s), render `AuthRecovery` instead of `LoadingScreen`.
+**Keep:**
+- Status badge (PRE_FORGE / DURING_FORGE / POST_FORGE)
+- Cohort name and label
+- Countdown timer (for PRE_FORGE and DURING_FORGE modes)
+- Mobile cohort name display
 
-This is intentionally redundant: even if something goes wrong inside AuthContext in production, the UI will never be stuck on LoadingScreen forever.
+### File 3: `src/components/roadmap/RoadmapLayout.tsx`
 
-### 5) Improve “recovery” to fix production PWA/cache edge cases
-**File:** `src/components/auth/AuthRecovery.tsx` (and reuse existing `clearSessionAndReload`)
+**Update:** Remove the `completedCount` and `totalCount` props being passed to `RoadmapHero` since they're no longer needed.
 
-Enhance copy + button to explicitly:
-- clear session storage + local storage
-- unregister service workers
-- reload to `/auth`
+### File 4: `src/components/roadmap/JourneyStats.tsx` (interface)
 
-This is important on the production domain if a stale PWA/service worker/cache creates a loop where session restore never resolves.
+**Update:** Remove `completedCount` and `totalCount` from the props interface since they're no longer used.
 
-## Verification plan (production-focused)
+### File 5: `src/pages/roadmap/RoadmapJourney.tsx`
 
-After implementing the above:
+**Update:** Remove `completedCount` and `totalCount` props being passed to `JourneyStats`.
 
-1) On production domain, signed-in user:
-   - Hard refresh 5–10 times
-   - Expected: you should never be stuck on the LoadingScreen indefinitely
-   - Worst case: within ~10 seconds you’ll see the recovery UI with a clear action
+---
 
-2) Slow network simulation:
-   - Confirm that if profile/edition is slow, the app still becomes usable and does not remain blocked indefinitely
+## Technical Details
 
-3) Onboarding correctness:
-   - Confirm profile setup + KY form redirects still happen once profile loads
-   - If profile fails to load, confirm user is not trapped; instead they see an actionable “retry profile load” UI
+### RoadmapHero.tsx Changes
 
-## Files involved
+**Before (lines 6-12 interface):**
+```tsx
+interface RoadmapHeroProps {
+  cohortName: string;
+  forgeMode: 'PRE_FORGE' | 'DURING_FORGE' | 'POST_FORGE';
+  forgeStartDate?: Date | null;
+  completedCount: number;
+  totalCount: number;
+}
+```
 
-- `src/contexts/AuthContext.tsx` (primary fix: split loading phases, timeouts, non-blocking user data fetch)
-- `src/App.tsx` (use new loading states in guards + add global failsafe)
-- `src/components/auth/AuthRecovery.tsx` (stronger recovery messaging/actions)
+**After:**
+```tsx
+interface RoadmapHeroProps {
+  cohortName: string;
+  forgeMode: 'PRE_FORGE' | 'DURING_FORGE' | 'POST_FORGE';
+  forgeStartDate?: Date | null;
+}
+```
 
-## Expected outcome
+**Remove lines 20-22** (progressPercent calculation and unused props).
 
-- Refresh on **production domain** will no longer result in an infinite full-screen LoadingScreen.
-- If backend/session restore is unhealthy, the user will see a clear recovery screen and can self-repair without getting stuck.
-- Normal users will reach content faster because session init will not wait on profile/edition calls.
+**Remove lines 71-121** (entire progress ring section + mobile progress bar).
+
+### JourneyStats.tsx Changes
+
+**Before (interface lines 8-18):**
+```tsx
+interface JourneyStatsProps {
+  cohortName: string;
+  cohortType: CohortType;
+  forgeMode: 'PRE_FORGE' | 'DURING_FORGE' | 'POST_FORGE';
+  forgeStartDate?: Date | null;
+  forgeEndDate?: Date | null;
+  completedCount: number;
+  totalCount: number;
+  currentDayNumber: number;
+  nextDayDate?: Date | null;
+}
+```
+
+**After:**
+```tsx
+interface JourneyStatsProps {
+  cohortName: string;
+  cohortType: CohortType;
+  forgeMode: 'PRE_FORGE' | 'DURING_FORGE' | 'POST_FORGE';
+  forgeStartDate?: Date | null;
+  forgeEndDate?: Date | null;
+  currentDayNumber: number;
+  nextDayDate?: Date | null;
+}
+```
+
+**Remove line 33** (progressPercent calculation).
+
+**Remove lines 147-167** (separator + progress section).
+
+---
+
+## Affected Cohorts
+
+These changes apply universally to all three cohorts:
+- **FORGE** (Filmmakers)
+- **FORGE_WRITING** (Writers)
+- **FORGE_CREATORS** (Creators)
+
+The components already use `cohortType` and `cohortName` props dynamically, so removing the progress display will work consistently across all cohorts.
+
+---
+
+## Files Changed
+
+1. `src/components/roadmap/RoadmapHero.tsx` — Remove progress ring and mobile progress bar
+2. `src/components/roadmap/JourneyStats.tsx` — Remove progress count and bar
+3. `src/components/roadmap/RoadmapLayout.tsx` — Remove unused props from RoadmapHero
+4. `src/pages/roadmap/RoadmapJourney.tsx` — Remove unused props from JourneyStats
 
