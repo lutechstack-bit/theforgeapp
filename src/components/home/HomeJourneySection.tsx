@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const HomeJourneySection: React.FC = () => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, userDataLoading } = useAuth();
   
   const {
     roadmapDays,
@@ -53,8 +53,9 @@ const HomeJourneySection: React.FC = () => {
     return roadmapDays.slice(startIndex, startIndex + 4);
   }, [roadmapDays, getDayStatus]);
 
-  // Show skeleton only during actual loading
-  if (isLoadingDays) {
+  // Show skeleton while user data OR roadmap days are loading
+  // This prevents the "cohort not assigned" message from flashing
+  if (userDataLoading || isLoadingDays) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-16 w-full rounded-xl" />

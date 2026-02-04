@@ -10,12 +10,12 @@ interface TimeLeft {
 
 interface CompactCountdownTimerProps {
   edition: {
-    name: string;
-    city: string;
-    forge_start_date: string | null;
-    forge_end_date: string | null;
-    cohort_type: string;
-  } | null;
+    name?: string;
+    city?: string;
+    forge_start_date?: string | null;
+    forge_end_date?: string | null;
+    cohort_type?: string;
+  } | null | undefined;
 }
 
 // Simple TimeUnit - no split logic, just renders value + label
@@ -93,6 +93,13 @@ const CountdownContent = ({
 
 export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ edition }) => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  // Show loading placeholder when edition is not yet available
+  if (!edition) {
+    return (
+      <div className="h-14 sm:h-16 rounded-xl bg-muted/30 animate-pulse border border-muted/50" />
+    );
+  }
 
   // Calculate progress based on days remaining (30-day visual scale)
   const progressPercent = useMemo(() => {

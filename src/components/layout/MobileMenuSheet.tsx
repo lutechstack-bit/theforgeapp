@@ -33,7 +33,10 @@ interface MobileMenuSheetProps {
   onClose: () => void;
 }
 
-export const MobileMenuSheet: React.FC<MobileMenuSheetProps> = ({ onClose }) => {
+export const MobileMenuSheet = React.forwardRef<
+  React.ElementRef<typeof SheetContent>,
+  MobileMenuSheetProps
+>(({ onClose }, ref) => {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { isAdmin } = useAdminCheck();
@@ -53,6 +56,7 @@ export const MobileMenuSheet: React.FC<MobileMenuSheetProps> = ({ onClose }) => 
 
   return (
     <SheetContent 
+      ref={ref}
       side="right" 
       className="w-[85%] sm:max-w-md p-0 flex flex-col bg-background border-l border-border/50"
     >
@@ -203,4 +207,6 @@ export const MobileMenuSheet: React.FC<MobileMenuSheetProps> = ({ onClose }) => 
       </div>
     </SheetContent>
   );
-};
+});
+
+MobileMenuSheet.displayName = 'MobileMenuSheet';
