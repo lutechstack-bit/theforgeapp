@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { promiseWithTimeout } from '@/lib/promiseTimeout';
 import SidebarMomentsCarousel from './SidebarMomentsCarousel';
 import SidebarStudentWorkCarousel from './SidebarStudentWorkCarousel';
 import SidebarStayCarousel from './SidebarStayCarousel';
@@ -44,6 +45,9 @@ interface StayLocation {
 
 type ModalType = 'moments' | 'studentWork' | null;
 
+// Sidebar query timeout
+const SIDEBAR_QUERY_TIMEOUT = 12000;
+
 const RoadmapSidebar: React.FC<RoadmapSidebarProps> = ({ editionId }) => {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [selectedStayLocation, setSelectedStayLocation] = useState<StayLocation | null>(null);
@@ -55,44 +59,63 @@ const RoadmapSidebar: React.FC<RoadmapSidebarProps> = ({ editionId }) => {
     queryFn: async () => {
       if (!editionId) return null;
       
-      const { data, error } = await supabase
-        .from('roadmap_sidebar_content_editions')
-        .select('content_id')
-        .eq('edition_id', editionId);
+      const result = await promiseWithTimeout(
+        supabase
+          .from('roadmap_sidebar_content_editions')
+          .select('content_id')
+          .eq('edition_id', editionId)
+          .then(res => res),
+        SIDEBAR_QUERY_TIMEOUT,
+        'sidebar-content-ids'
+      );
       
-      if (error) throw error;
-      return data.map(item => item.content_id);
+      if (result.error) throw result.error;
+      return result.data.map(item => item.content_id);
     },
-    enabled: !!editionId
+    enabled: !!editionId,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 
   // Fetch all content IDs that have ANY edition mapping (to identify global content)
   const { data: allMappedContentIds } = useQuery({
     queryKey: ['all-mapped-content-ids'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('roadmap_sidebar_content_editions')
-        .select('content_id');
+      const result = await promiseWithTimeout(
+        supabase
+          .from('roadmap_sidebar_content_editions')
+          .select('content_id')
+          .then(res => res),
+        SIDEBAR_QUERY_TIMEOUT,
+        'all-mapped-content-ids'
+      );
       
-      if (error) throw error;
+      if (result.error) throw result.error;
       // Get unique content IDs that have mappings
-      return [...new Set(data.map(item => item.content_id))];
-    }
+      return [...new Set(result.data.map(item => item.content_id))];
+    },
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes - rarely changes
+    retry: 1,
   });
 
   const { data: sidebarContent } = useQuery({
     queryKey: ['roadmap-sidebar-content', editionId, linkedContentIds, allMappedContentIds],
     queryFn: async () => {
-      const { data: allContent, error } = await supabase
-        .from('roadmap_sidebar_content')
-        .select('*')
-        .eq('is_active', true)
-        .order('order_index');
+      const result = await promiseWithTimeout(
+        supabase
+          .from('roadmap_sidebar_content')
+          .select('*')
+          .eq('is_active', true)
+          .order('order_index')
+          .then(res => res),
+        SIDEBAR_QUERY_TIMEOUT,
+        'sidebar-content'
+      );
 
-      if (error) throw error;
+      if (result.error) throw result.error;
       
       // Filter content based on edition
-      const filteredContent = (allContent || []).filter(item => {
+      const filteredContent = (result.data || []).filter(item => {
         // If no edition specified, show all content
         if (!editionId) return true;
         
@@ -110,7 +133,9 @@ const RoadmapSidebar: React.FC<RoadmapSidebarProps> = ({ editionId }) => {
 
       return filteredContent as SidebarItem[];
     },
-    enabled: allMappedContentIds !== undefined
+    enabled: allMappedContentIds !== undefined,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 
   // Fetch stay location edition mappings for current edition
@@ -119,44 +144,63 @@ const RoadmapSidebar: React.FC<RoadmapSidebarProps> = ({ editionId }) => {
     queryFn: async () => {
       if (!editionId) return null;
       
-      const { data, error } = await supabase
-        .from('stay_location_editions')
-        .select('stay_location_id')
-        .eq('edition_id', editionId);
+      const result = await promiseWithTimeout(
+        supabase
+          .from('stay_location_editions')
+          .select('stay_location_id')
+          .eq('edition_id', editionId)
+          .then(res => res),
+        SIDEBAR_QUERY_TIMEOUT,
+        'stay-location-editions'
+      );
       
-      if (error) throw error;
-      return data.map(d => d.stay_location_id);
+      if (result.error) throw result.error;
+      return result.data.map(d => d.stay_location_id);
     },
-    enabled: !!editionId
+    enabled: !!editionId,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 
   // Fetch all stay location IDs that have ANY edition mapping (to identify global ones)
   const { data: allMappedStayLocationIds } = useQuery({
     queryKey: ['all-mapped-stay-location-ids'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('stay_location_editions')
-        .select('stay_location_id');
+      const result = await promiseWithTimeout(
+        supabase
+          .from('stay_location_editions')
+          .select('stay_location_id')
+          .then(res => res),
+        SIDEBAR_QUERY_TIMEOUT,
+        'all-mapped-stay-location-ids'
+      );
       
-      if (error) throw error;
-      return [...new Set(data.map(d => d.stay_location_id))];
-    }
+      if (result.error) throw result.error;
+      return [...new Set(result.data.map(d => d.stay_location_id))];
+    },
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+    retry: 1,
   });
 
   // Fetch stay locations from new table
   const { data: stayLocations = [] } = useQuery({
     queryKey: ['stay-locations', editionId, stayLocationEditionIds, allMappedStayLocationIds],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('stay_locations')
-        .select('*')
-        .eq('is_active', true)
-        .order('order_index');
+      const result = await promiseWithTimeout(
+        supabase
+          .from('stay_locations')
+          .select('*')
+          .eq('is_active', true)
+          .order('order_index')
+          .then(res => res),
+        SIDEBAR_QUERY_TIMEOUT,
+        'stay-locations'
+      );
 
-      if (error) throw error;
+      if (result.error) throw result.error;
 
       // Filter by edition - show edition-specific + global (no mappings)
-      const filteredData = (data || []).filter(loc => {
+      const filteredData = (result.data || []).filter(loc => {
         if (!editionId) return true;
         
         const hasMappings = allMappedStayLocationIds?.includes(loc.id);
@@ -172,7 +216,9 @@ const RoadmapSidebar: React.FC<RoadmapSidebarProps> = ({ editionId }) => {
         gallery_images: (loc.gallery_images as unknown as GalleryImage[]) || [],
       })) as StayLocation[];
     },
-    enabled: allMappedStayLocationIds !== undefined
+    enabled: allMappedStayLocationIds !== undefined,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 
   // Group content by block type

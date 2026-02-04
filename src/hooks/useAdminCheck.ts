@@ -1,46 +1,49 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { promiseWithTimeout } from '@/lib/promiseTimeout';
+
+// Cache admin check for 10 minutes to reduce backend calls
+const ADMIN_CHECK_STALE_TIME = 10 * 60 * 1000;
+const ADMIN_CHECK_TIMEOUT = 8000;
 
 export const useAdminCheck = () => {
   const { user, loading: authLoading } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const checkAdminRole = async () => {
-      if (!user) {
-        setIsAdmin(false);
-        setLoading(false);
-        return;
-      }
-
+  const { data: isAdmin = false, isLoading } = useQuery({
+    queryKey: ['admin-check', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      
       try {
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error checking admin role:', error);
-          setIsAdmin(false);
-        } else {
-          setIsAdmin(!!data);
+        const result = await promiseWithTimeout(
+          supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+            .eq('role', 'admin')
+            .maybeSingle()
+            .then(res => res),
+          ADMIN_CHECK_TIMEOUT,
+          'Admin check'
+        );
+        
+        if (result.error) {
+          console.error('Error checking admin role:', result.error);
+          return false;
         }
+        
+        return !!result.data;
       } catch (err) {
         console.error('Admin check error:', err);
-        setIsAdmin(false);
-      } finally {
-        setLoading(false);
+        return false;
       }
-    };
+    },
+    enabled: !!user?.id && !authLoading,
+    staleTime: ADMIN_CHECK_STALE_TIME,
+    gcTime: ADMIN_CHECK_STALE_TIME * 2,
+    retry: 1,
+  });
 
-    if (!authLoading) {
-      checkAdminRole();
-    }
-  }, [user, authLoading]);
-
-  return { isAdmin, loading: authLoading || loading };
+  return { isAdmin, loading: authLoading || isLoading };
 };

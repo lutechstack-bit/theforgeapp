@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useMemo } from 'react';
 import type { Database } from '@/integrations/supabase/types';
 import { CohortType } from '@/contexts/ThemeContext';
-import { promiseWithTimeout } from '@/lib/promiseTimeout';
+import { promiseWithTimeout, isTimeoutError } from '@/lib/promiseTimeout';
 
 export type RoadmapDay = Database['public']['Tables']['roadmap_days']['Row'];
 
@@ -115,8 +115,15 @@ export const useRoadmapData = () => {
     enabled: queryEnabled,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+    // IMPORTANT: Don't retry on timeout errors to prevent long skeleton delays
+    retry: (failureCount, error) => {
+      if (isTimeoutError(error)) {
+        console.warn('[Roadmap] Not retrying after timeout error');
+        return false;
+      }
+      return failureCount < 2;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
   });
 
   // Calculate dates dynamically based on forge_start_date + day_number
@@ -173,7 +180,7 @@ export const useRoadmapData = () => {
     },
     enabled: !!profile?.edition_id,
     staleTime: 5 * 60 * 1000,
-    retry: 2,
+    retry: (failureCount, error) => !isTimeoutError(error) && failureCount < 2,
   });
 
   // Fetch student films with timeout
@@ -193,7 +200,7 @@ export const useRoadmapData = () => {
       return result.data;
     },
     staleTime: 5 * 60 * 1000,
-    retry: 2,
+    retry: (failureCount, error) => !isTimeoutError(error) && failureCount < 2,
   });
 
   // Fetch prep checklist items filtered by cohort type with timeout
@@ -215,7 +222,7 @@ export const useRoadmapData = () => {
     },
     enabled: !!userCohortType,
     staleTime: 5 * 60 * 1000,
-    retry: 2,
+    retry: (failureCount, error) => !isTimeoutError(error) && failureCount < 2,
   });
 
   // Fetch user's prep progress with timeout
@@ -238,7 +245,7 @@ export const useRoadmapData = () => {
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
-    retry: 2,
+    retry: (failureCount, error) => !isTimeoutError(error) && failureCount < 2,
   });
 
   const completedIds = useMemo(() => 
