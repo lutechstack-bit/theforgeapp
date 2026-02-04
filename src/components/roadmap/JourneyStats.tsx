@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds } from 'date-fns';
-import { Rocket, Star, Trophy, Clock, Calendar, CheckCircle2 } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+import { Rocket, Star, Trophy, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { CohortType } from '@/lib/roadmapIcons';
 
@@ -11,8 +10,6 @@ interface JourneyStatsProps {
   forgeMode: 'PRE_FORGE' | 'DURING_FORGE' | 'POST_FORGE';
   forgeStartDate?: Date | null;
   forgeEndDate?: Date | null;
-  completedCount: number;
-  totalCount: number;
   currentDayNumber: number;
   nextDayDate?: Date | null;
 }
@@ -23,14 +20,10 @@ const JourneyStats: React.FC<JourneyStatsProps> = ({
   forgeMode,
   forgeStartDate,
   forgeEndDate,
-  completedCount,
-  totalCount,
   currentDayNumber,
   nextDayDate
 }) => {
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  
-  const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   
   // Calculate countdown based on mode
   useEffect(() => {
@@ -143,28 +136,6 @@ const JourneyStats: React.FC<JourneyStatsProps> = ({
               </div>
             </div>
           )}
-
-          {/* Separator */}
-          <div className="h-6 w-px bg-border hidden sm:block" />
-
-          {/* Progress */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              {forgeMode === 'POST_FORGE' ? (
-                <CheckCircle2 className="w-4 h-4 text-primary" />
-              ) : (
-                <Calendar className="w-4 h-4 text-muted-foreground" />
-              )}
-              <span className="text-sm">
-                <span className="font-bold text-foreground">{completedCount}</span>
-                <span className="text-muted-foreground">/{totalCount}</span>
-              </span>
-            </div>
-            
-            <div className="w-16 hidden sm:block">
-              <Progress value={progressPercent} className="h-1.5" />
-            </div>
-          </div>
         </div>
       </div>
 

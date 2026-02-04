@@ -73,8 +73,6 @@ const RoadmapJourney: React.FC = () => {
         forgeMode={forgeMode}
         forgeStartDate={forgeStartDate}
         forgeEndDate={forgeEndDate}
-        completedCount={completedCount}
-        totalCount={totalCount}
         currentDayNumber={currentDayNumber}
         nextDayDate={nextDayDate}
       />

@@ -104,8 +104,6 @@ const RoadmapLayout: React.FC = () => {
             cohortName={cohortName}
             forgeMode={forgeMode}
             forgeStartDate={forgeStartDate}
-            completedCount={completedCount}
-            totalCount={totalCount}
           />
 
           {/* Quick Actions - Clean navigation tabs */}
