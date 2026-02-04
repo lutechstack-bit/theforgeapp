@@ -4,13 +4,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { calculateForgeMode, ForgeMode } from '@/lib/forgeUtils';
 import { useAdminTestingSafe } from '@/contexts/AdminTestingContext';
 import { AuthRecovery } from '@/components/auth/AuthRecovery';
+import { promiseWithSoftTimeout } from '@/lib/promiseTimeout';
 
 // Session initialization timeout (3 seconds) - just for determining if user is logged in
 const SESSION_INIT_TIMEOUT_MS = 3000;
-// User data fetch timeout (5 seconds) - for profile/edition fetch
-const USER_DATA_TIMEOUT_MS = 5000;
+// User data fetch timeout (8 seconds) - for profile/edition fetch (increased from 5s)
+const USER_DATA_TIMEOUT_MS = 8000;
 // Overall app-level failsafe (10 seconds) - if loading is still true, force recovery
 const APP_FAILSAFE_TIMEOUT_MS = 10000;
+// Max retry attempts for user data
+const MAX_USER_DATA_RETRIES = 3;
+// Retry delays (exponential backoff)
+const RETRY_DELAYS = [2000, 4000, 8000];
 
 interface Profile {
   id: string;
@@ -46,12 +51,15 @@ interface AuthContextType {
   edition: Edition | null;
   loading: boolean;
   userDataLoading: boolean;
+  userDataTimedOut: boolean;
+  userDataError: Error | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   updatePassword: (newPassword: string) => Promise<{ error: any }>;
   refreshProfile: () => Promise<void>;
+  retryUserData: () => Promise<void>;
   isFullAccess: boolean;
   isBalancePaid: boolean;
   isDuringForge: boolean;
@@ -60,7 +68,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper: wrap a promise with a timeout
+// Helper: wrap a promise with a timeout (for session init)
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T | null> {
   return Promise.race([
     promise,
@@ -82,23 +90,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Split loading states: auth (session) vs user data (profile/edition)
   const [loading, setLoading] = useState(true); // Session initialization only
   const [userDataLoading, setUserDataLoading] = useState(false);
+  const [userDataTimedOut, setUserDataTimedOut] = useState(false);
+  const [userDataError, setUserDataError] = useState<Error | null>(null);
   const [authTimedOut, setAuthTimedOut] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   
   // Refs to track initialization state
   const hasInitializedRef = useRef(false);
   const failsafeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userDataRetryCountRef = useRef(0);
+  const userDataRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchEdition = async (editionId: string): Promise<Edition | null> => {
     const { data, error } = await supabase
       .from('editions')
       .select('id, forge_start_date, forge_end_date, cohort_type')
       .eq('id', editionId)
-      .maybeSingle(); // Use maybeSingle to handle missing rows gracefully
+      .maybeSingle();
     
     if (error) {
       console.error('[Auth] Error fetching edition:', error);
-      return null;
+      throw error;
     }
     return data as Edition | null;
   };
@@ -108,62 +120,131 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .maybeSingle(); // Use maybeSingle to handle missing rows gracefully
+      .maybeSingle();
     
     if (error) {
       console.error('[Auth] Error fetching profile:', error);
-      return null;
+      throw error;
     }
     return data as Profile | null;
   };
 
-  // Fetch user data with timeout protection - NON-BLOCKING
-  const fetchUserDataInBackground = useCallback(async (userId: string): Promise<void> => {
-    setUserDataLoading(true);
+  // Clear user data retry timer
+  const clearUserDataRetryTimer = useCallback(() => {
+    if (userDataRetryTimerRef.current) {
+      clearTimeout(userDataRetryTimerRef.current);
+      userDataRetryTimerRef.current = null;
+    }
+  }, []);
+
+  // Fetch user data with timeout protection and retry logic
+  const fetchUserDataInBackground = useCallback(async (userId: string, isRetry = false): Promise<void> => {
+    if (!isRetry) {
+      setUserDataLoading(true);
+      setUserDataTimedOut(false);
+      setUserDataError(null);
+      userDataRetryCountRef.current = 0;
+    }
     
     try {
-      const profileData = await withTimeout(
+      console.log(`[Auth] Fetching profile for user ${userId} (attempt ${userDataRetryCountRef.current + 1})`);
+      
+      // Fetch profile with timeout
+      const profileResult = await promiseWithSoftTimeout(
         fetchProfile(userId),
         USER_DATA_TIMEOUT_MS,
         'Profile fetch'
       );
       
-      setProfile(profileData);
+      // Handle timeout or error
+      if (profileResult.timedOut || profileResult.error) {
+        const error = profileResult.error || new Error('Profile fetch timed out');
+        console.warn('[Auth] Profile fetch failed:', error.message);
+        
+        // Check if we should retry
+        if (userDataRetryCountRef.current < MAX_USER_DATA_RETRIES) {
+          const delay = RETRY_DELAYS[userDataRetryCountRef.current] || 8000;
+          console.log(`[Auth] Will retry in ${delay}ms (attempt ${userDataRetryCountRef.current + 2})`);
+          
+          userDataRetryCountRef.current++;
+          clearUserDataRetryTimer();
+          userDataRetryTimerRef.current = setTimeout(() => {
+            fetchUserDataInBackground(userId, true);
+          }, delay);
+          
+          // Don't set error state yet - we're retrying
+          if (!isRetry) {
+            // Keep userDataLoading true during retries
+          }
+          return;
+        }
+        
+        // Max retries reached - mark as timed out/errored but DON'T clear existing profile
+        console.error('[Auth] Max retries reached for profile fetch');
+        setUserDataTimedOut(profileResult.timedOut);
+        setUserDataError(error);
+        setUserDataLoading(false);
+        return;
+      }
       
+      const profileData = profileResult.data;
+      
+      // SUCCESS: Update profile
+      setProfile(profileData);
+      setUserDataTimedOut(false);
+      setUserDataError(null);
+      
+      // Fetch edition if profile has one
       if (profileData?.edition_id) {
-        const editionData = await withTimeout(
+        const editionResult = await promiseWithSoftTimeout(
           fetchEdition(profileData.edition_id),
           USER_DATA_TIMEOUT_MS,
           'Edition fetch'
         );
-        setEdition(editionData);
+        
+        if (editionResult.data) {
+          setEdition(editionResult.data);
+        } else if (editionResult.timedOut || editionResult.error) {
+          // Edition fetch failed but profile succeeded - not critical
+          console.warn('[Auth] Edition fetch failed, continuing with profile only');
+        }
       } else {
         setEdition(null);
       }
+      
+      setUserDataLoading(false);
     } catch (error) {
-      console.error('[Auth] Error in fetchUserDataInBackground:', error);
-      // Don't throw - we want to continue even if profile fetch fails
-    } finally {
+      console.error('[Auth] Unexpected error in fetchUserDataInBackground:', error);
+      setUserDataError(error instanceof Error ? error : new Error('Unknown error'));
       setUserDataLoading(false);
     }
-  }, []);
+  }, [clearUserDataRetryTimer]);
+
+  // Manual retry function exposed to UI
+  const retryUserData = useCallback(async () => {
+    if (!user) return;
+    clearUserDataRetryTimer();
+    userDataRetryCountRef.current = 0;
+    await fetchUserDataInBackground(user.id, false);
+  }, [user, fetchUserDataInBackground, clearUserDataRetryTimer]);
 
   const refreshProfile = async () => {
     if (user) {
-      await fetchUserDataInBackground(user.id);
+      clearUserDataRetryTimer();
+      userDataRetryCountRef.current = 0;
+      await fetchUserDataInBackground(user.id, false);
     }
   };
 
   // Helper to complete session initialization (NOT user data)
   const completeSessionInit = useCallback((timedOut = false) => {
-    if (hasInitializedRef.current) return; // Already initialized
+    if (hasInitializedRef.current) return;
     
     console.log('[Auth] Session initialization complete, timedOut:', timedOut);
     hasInitializedRef.current = true;
     setLoading(false);
     setAuthTimedOut(timedOut);
     
-    // Clear failsafe timer since we're done
     if (failsafeTimerRef.current) {
       clearTimeout(failsafeTimerRef.current);
       failsafeTimerRef.current = null;
@@ -173,17 +254,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Helper to clear session and force reload
   const clearSessionAndReload = useCallback(async () => {
     try {
-      // Clear all storage
       localStorage.clear();
       sessionStorage.clear();
       
-      // Unregister all service workers
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         await Promise.all(registrations.map(r => r.unregister()));
       }
       
-      // Clear caches
       if ('caches' in window) {
         const cacheNames = await caches.keys();
         await Promise.all(cacheNames.map(name => caches.delete(name)));
@@ -192,7 +270,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('[Auth] Error during session cleanup:', e);
     }
     
-    // Hard reload to auth page
     window.location.href = '/auth';
   }, []);
 
@@ -228,7 +305,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(retrySession?.user ?? null);
       completeSessionInit(false);
       
-      // Fetch user data in background (non-blocking)
       if (retrySession?.user) {
         fetchUserDataInBackground(retrySession.user.id);
       }
@@ -240,13 +316,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [completeSessionInit, fetchUserDataInBackground]);
 
+  // Retry user data on window focus (if timed out)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (userDataTimedOut && user && !userDataLoading) {
+        console.log('[Auth] Window focused, retrying user data fetch');
+        retryUserData();
+      }
+    };
+
+    const handleOnline = () => {
+      if (userDataTimedOut && user && !userDataLoading) {
+        console.log('[Auth] Browser came online, retrying user data fetch');
+        retryUserData();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [userDataTimedOut, user, userDataLoading, retryUserData]);
+
   useEffect(() => {
     let isMounted = true;
     
-    // Reset initialization state on mount
     hasInitializedRef.current = false;
     
-    // App-level failsafe: if loading is STILL true after 10s, force recovery
     failsafeTimerRef.current = setTimeout(() => {
       if (isMounted && !hasInitializedRef.current) {
         console.error('[Auth] FAILSAFE: App still loading after', APP_FAILSAFE_TIMEOUT_MS, 'ms - forcing recovery');
@@ -254,34 +353,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }, APP_FAILSAFE_TIMEOUT_MS);
     
-    // Subscribe to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         if (!isMounted) return;
         
         console.log('[Auth] Auth state change:', event);
         
-        // Update session/user immediately
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
-        // Complete session init FIRST (unblocks routing)
         if (!hasInitializedRef.current) {
           completeSessionInit(false);
         }
         
-        // Then fetch user data in background (non-blocking)
         if (newSession?.user) {
           fetchUserDataInBackground(newSession.user.id);
         } else {
           setProfile(null);
           setEdition(null);
           setUserDataLoading(false);
+          setUserDataTimedOut(false);
+          setUserDataError(null);
         }
       }
     );
 
-    // Initial session check with timeout
     const initializeAuth = async () => {
       try {
         console.log('[Auth] Starting initial session check');
@@ -294,7 +390,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (!isMounted) return;
         
-        // If timeout occurred
         if (!sessionResult) {
           console.warn('[Auth] Initial session check timed out');
           if (!hasInitializedRef.current) {
@@ -308,20 +403,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (error) {
           console.error('[Auth] Error getting initial session:', error);
           if (!hasInitializedRef.current) {
-            completeSessionInit(false); // Not a timeout, just no session
+            completeSessionInit(false);
           }
           return;
         }
         
-        // If onAuthStateChange hasn't fired yet, handle the session here
         if (!hasInitializedRef.current) {
           setSession(initialSession);
           setUser(initialSession?.user ?? null);
           
-          // Complete session init FIRST (unblocks routing)
           completeSessionInit(false);
           
-          // Then fetch user data in background (non-blocking)
           if (initialSession?.user) {
             fetchUserDataInBackground(initialSession.user.id);
           }
@@ -342,9 +434,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         clearTimeout(failsafeTimerRef.current);
         failsafeTimerRef.current = null;
       }
+      clearUserDataRetryTimer();
       subscription.unsubscribe();
     };
-  }, [completeSessionInit, fetchUserDataInBackground]);
+  }, [completeSessionInit, fetchUserDataInBackground, clearUserDataRetryTimer]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -365,18 +458,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    // Clear local state FIRST to ensure logout even if server call fails
     setProfile(null);
     setEdition(null);
     setUser(null);
     setSession(null);
+    clearUserDataRetryTimer();
     
     try {
-      // Use scope: 'local' to clear local session even if server session is already gone
       await supabase.auth.signOut({ scope: 'local' });
     } catch (error) {
       console.error('[Auth] Sign out error (session may already be expired):', error);
-      // Even if server signout fails, we've already cleared local state
     }
   };
 
@@ -393,13 +484,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
-  // Get admin testing state (safe hook returns defaults if outside provider)
   const { isTestingMode, simulatedForgeMode } = useAdminTestingSafe();
 
   const isFullAccess = profile?.unlock_level === 'FULL';
   const isBalancePaid = profile?.payment_status === 'BALANCE_PAID';
   
-  // Calculate forge mode with optional admin simulation
   const forgeMode: ForgeMode = calculateForgeMode(
     edition?.forge_start_date, 
     edition?.forge_end_date,
@@ -407,7 +496,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
   const isDuringForge = forgeMode === 'DURING_FORGE';
 
-  // Show recovery UI if auth timed out
   if (authTimedOut && !loading) {
     return (
       <AuthRecovery
@@ -426,12 +514,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       edition,
       loading,
       userDataLoading,
+      userDataTimedOut,
+      userDataError,
       signIn,
       signUp,
       signOut,
       resetPassword,
       updatePassword,
       refreshProfile,
+      retryUserData,
       isFullAccess,
       isBalancePaid,
       isDuringForge,

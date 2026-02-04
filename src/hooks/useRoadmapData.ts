@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useMemo } from 'react';
 import type { Database } from '@/integrations/supabase/types';
 import { CohortType } from '@/contexts/ThemeContext';
+import { promiseWithTimeout } from '@/lib/promiseTimeout';
 
 export type RoadmapDay = Database['public']['Tables']['roadmap_days']['Row'];
 
@@ -14,8 +15,11 @@ export const cohortDisplayNames: Record<CohortType, string> = {
   FORGE_CREATORS: 'Forge Creators',
 };
 
+// Timeout for roadmap queries (12 seconds)
+const ROADMAP_QUERY_TIMEOUT = 12000;
+
 export const useRoadmapData = () => {
-  const { profile, edition, forgeMode, user } = useAuth();
+  const { profile, edition, forgeMode, user, userDataLoading, userDataTimedOut } = useAuth();
   const { isTestingMode, simulatedDayNumber, simulatedForgeMode, simulatedCohortType } = useAdminTestingSafe();
   const queryClient = useQueryClient();
   
@@ -26,71 +30,100 @@ export const useRoadmapData = () => {
   const cohortName = userCohortType ? cohortDisplayNames[userCohortType] : 'The Forge';
   const forgeStartDate = edition?.forge_start_date ? new Date(edition.forge_start_date) : null;
 
+  // Determine if we should enable the query:
+  // 1. NOT while user data is still loading (prevents caching empty results)
+  // 2. NOT if user data fetch timed out (we don't know the real state)
+  const profileLoaded = !userDataLoading && !userDataTimedOut;
+  
+  // Query is enabled only when profile loading is complete
+  const queryEnabled = profileLoaded;
+
   // Fetch roadmap days - prioritize edition-specific, then cohort-specific, then shared template
-  // IMPORTANT: Query is only enabled when BOTH profile.edition_id AND edition.cohort_type are known
-  const { data: templateDays, isLoading: isLoadingDays } = useQuery({
-    queryKey: ['roadmap-days', profile?.edition_id, userCohortType],
+  const { data: templateDays, isLoading: isLoadingDays, isError: isErrorDays, error: daysError } = useQuery({
+    queryKey: ['roadmap-days', profile?.edition_id, userCohortType, profileLoaded],
     queryFn: async () => {
-      // Return empty array if no edition assigned - this prevents blocking
+      // If profile is loaded but has no edition, return empty (this is the true state)
       if (!profile?.edition_id) {
+        console.log('[Roadmap] No edition_id on profile, returning empty days');
         return [];
       }
       
-      // Step 1: Try user's exact edition
-      const { data: editionDays, error: editionError } = await supabase
-        .from('roadmap_days')
-        .select('*')
-        .eq('edition_id', profile.edition_id)
-        .order('day_number', { ascending: true });
+      // Step 1: Try user's exact edition (with timeout)
+      const editionResult = await promiseWithTimeout(
+        supabase
+          .from('roadmap_days')
+          .select('*')
+          .eq('edition_id', profile.edition_id)
+          .order('day_number', { ascending: true })
+          .then(res => res),
+        ROADMAP_QUERY_TIMEOUT,
+        'roadmap_days_edition'
+      );
       
-      if (!editionError && editionDays && editionDays.length > 0) {
-        return editionDays as RoadmapDay[];
+      if (!editionResult.error && editionResult.data && editionResult.data.length > 0) {
+        return editionResult.data as RoadmapDay[];
       }
+      
       // Step 2: Find another edition of SAME cohort type with roadmap days
       if (userCohortType) {
-        const { data: sameTypeEditions } = await supabase
-          .from('editions')
-          .select('id')
-          .eq('cohort_type', userCohortType);
+        const sameTypeResult = await promiseWithTimeout(
+          supabase
+            .from('editions')
+            .select('id')
+            .eq('cohort_type', userCohortType)
+            .then(res => res),
+          ROADMAP_QUERY_TIMEOUT,
+          'editions_same_type'
+        );
         
-        if (sameTypeEditions && sameTypeEditions.length > 0) {
-          const editionIds = sameTypeEditions.map(e => e.id);
+        if (sameTypeResult.data && sameTypeResult.data.length > 0) {
+          const editionIds = sameTypeResult.data.map(e => e.id);
           
-          const { data: cohortDays } = await supabase
-            .from('roadmap_days')
-            .select('*')
-            .in('edition_id', editionIds)
-            .order('day_number', { ascending: true });
+          const cohortResult = await promiseWithTimeout(
+            supabase
+              .from('roadmap_days')
+              .select('*')
+              .in('edition_id', editionIds)
+              .order('day_number', { ascending: true })
+              .then(res => res),
+            ROADMAP_QUERY_TIMEOUT,
+            'roadmap_days_cohort'
+          );
           
-          if (cohortDays && cohortDays.length > 0) {
-            return cohortDays as RoadmapDay[];
+          if (cohortResult.data && cohortResult.data.length > 0) {
+            return cohortResult.data as RoadmapDay[];
           }
         }
       }
       
       // Step 3: Last resort - shared template
-      const { data, error } = await supabase
-        .from('roadmap_days')
-        .select('*')
-        .is('edition_id', null)
-        .order('day_number', { ascending: true });
+      const sharedResult = await promiseWithTimeout(
+        supabase
+          .from('roadmap_days')
+          .select('*')
+          .is('edition_id', null)
+          .order('day_number', { ascending: true })
+          .then(res => res),
+        ROADMAP_QUERY_TIMEOUT,
+        'roadmap_days_shared'
+      );
       
-      if (error) throw error;
-      return data as RoadmapDay[];
+      if (sharedResult.error) throw sharedResult.error;
+      return sharedResult.data as RoadmapDay[];
     },
-    // Always enabled - we return [] early in queryFn if no edition
-    enabled: true,
+    // CRITICAL: Only enable when profile loading is complete
+    enabled: queryEnabled,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 
   // Calculate dates dynamically based on forge_start_date + day_number
-  // IMPORTANT: Only preserve original dates for user's OWN edition's online sessions
-  // For fallback data, always recalculate dates to prevent wrong 2025 dates showing as completed
   const roadmapDays = useMemo(() => {
     if (!templateDays) return [];
     
     return templateDays.map(day => {
-      // For online sessions (negative day numbers) from user's OWN edition, keep the original date
-      // This preserves specific meeting times set for the user's cohort
       const isOwnEditionOnlineSession = 
         day.edition_id === profile?.edition_id && 
         day.day_number < 0 && 
@@ -100,22 +133,18 @@ export const useRoadmapData = () => {
         return day;
       }
       
-      // Calculate all other dates based on user's forge_start_date
       let calculatedDate: string | null = null;
       
       if (forgeStartDate) {
         if (day.day_number > 0) {
-          // Physical days: Day 1 = forge_start_date, Day 2 = forge_start_date + 1, etc.
           const dayDate = new Date(forgeStartDate);
           dayDate.setDate(dayDate.getDate() + (day.day_number - 1));
           calculatedDate = dayDate.toISOString().split('T')[0];
         } else if (day.day_number < 0) {
-          // Online sessions from fallback: calculate relative to forge_start_date
           const dayDate = new Date(forgeStartDate);
           dayDate.setDate(dayDate.getDate() + day.day_number);
           calculatedDate = dayDate.toISOString().split('T')[0];
         }
-        // day_number === 0 (Pre-Forge Preparation) has no date
       }
       
       return {
@@ -125,66 +154,95 @@ export const useRoadmapData = () => {
     });
   }, [templateDays, forgeStartDate, profile?.edition_id]);
 
-  // Fetch galleries
+  // Fetch galleries with timeout
   const { data: galleries } = useQuery({
     queryKey: ['roadmap-galleries', profile?.edition_id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('roadmap_galleries')
-        .select('*')
-        .eq('edition_id', profile?.edition_id || '')
-        .order('order_index');
-      if (error) throw error;
-      return data;
+      const result = await promiseWithTimeout(
+        supabase
+          .from('roadmap_galleries')
+          .select('*')
+          .eq('edition_id', profile?.edition_id || '')
+          .order('order_index')
+          .then(res => res),
+        ROADMAP_QUERY_TIMEOUT,
+        'galleries'
+      );
+      if (result.error) throw result.error;
+      return result.data;
     },
-    enabled: !!profile?.edition_id
+    enabled: !!profile?.edition_id,
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
   });
 
-  // Fetch student films
+  // Fetch student films with timeout
   const { data: studentFilms } = useQuery({
     queryKey: ['student-films', profile?.edition_id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('student_films')
-        .select('*')
-        .order('order_index');
-      if (error) throw error;
-      return data;
-    }
+      const result = await promiseWithTimeout(
+        supabase
+          .from('student_films')
+          .select('*')
+          .order('order_index')
+          .then(res => res),
+        ROADMAP_QUERY_TIMEOUT,
+        'student_films'
+      );
+      if (result.error) throw result.error;
+      return result.data;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
   });
 
-  // Fetch prep checklist items filtered by cohort type
+  // Fetch prep checklist items filtered by cohort type with timeout
   const { data: prepItems } = useQuery({
     queryKey: ['prep-checklist-items', userCohortType],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('prep_checklist_items')
-        .select('*')
-        .eq('cohort_type', userCohortType)
-        .order('order_index');
-      if (error) throw error;
-      return data;
+      const result = await promiseWithTimeout(
+        supabase
+          .from('prep_checklist_items')
+          .select('*')
+          .eq('cohort_type', userCohortType!)
+          .order('order_index')
+          .then(res => res),
+        ROADMAP_QUERY_TIMEOUT,
+        'prep_items'
+      );
+      if (result.error) throw result.error;
+      return result.data;
     },
-    enabled: !!userCohortType
+    enabled: !!userCohortType,
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
   });
 
-  // Fetch user's prep progress
+  // Fetch user's prep progress with timeout
   const { data: userProgress } = useQuery({
     queryKey: ['user-prep-progress', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from('user_prep_progress')
-        .select('checklist_item_id')
-        .eq('user_id', user.id);
-      if (error) throw error;
-      return data;
+      
+      const result = await promiseWithTimeout(
+        supabase
+          .from('user_prep_progress')
+          .select('checklist_item_id')
+          .eq('user_id', user.id)
+          .then(res => res),
+        ROADMAP_QUERY_TIMEOUT,
+        'user_prep_progress'
+      );
+      if (result.error) throw result.error;
+      return result.data;
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
   });
 
   const completedIds = useMemo(() => 
-    new Set(userProgress?.map(p => p.checklist_item_id) || []),
+    new Set((userProgress || []).map(p => p.checklist_item_id)),
     [userProgress]
   );
 
@@ -205,9 +263,7 @@ export const useRoadmapData = () => {
       }
     },
     onSuccess: () => {
-      // Invalidate prep progress
       queryClient.invalidateQueries({ queryKey: ['user-prep-progress'] });
-      // Bidirectional sync: Also invalidate journey progress so sticky notes refresh
       queryClient.invalidateQueries({ queryKey: ['user_journey_progress'] });
       queryClient.invalidateQueries({ queryKey: ['prep-checklist-items'] });
     }
@@ -216,39 +272,32 @@ export const useRoadmapData = () => {
   const getDayStatus = (day: RoadmapDay): 'completed' | 'current' | 'upcoming' | 'locked' => {
     if (!day.is_active) return 'locked';
     
-    // Admin testing mode: use simulated day number for status calculation
     if (isTestingMode && simulatedDayNumber !== null && simulatedForgeMode === 'DURING_FORGE') {
       if (day.day_number < simulatedDayNumber) return 'completed';
       if (day.day_number === simulatedDayNumber) return 'current';
       return 'upcoming';
     }
     
-    // Admin testing: PRE_FORGE means all days are upcoming
     if (isTestingMode && simulatedForgeMode === 'PRE_FORGE') {
       if (day.day_number === 0) return 'current';
       return 'upcoming';
     }
     
-    // Admin testing: POST_FORGE means all days are completed
     if (isTestingMode && simulatedForgeMode === 'POST_FORGE') {
       return 'completed';
     }
     
-    // REAL MODE: PRE_FORGE - All physical days are upcoming (none completed yet)
     if (forgeMode === 'PRE_FORGE') {
-      // Day 0 (Pre-Forge Prep) is "current" before forge starts
       if (day.day_number === 0) return 'current';
       return 'upcoming';
     }
     
-    // REAL MODE: POST_FORGE - All days are completed
     if (forgeMode === 'POST_FORGE') {
       return 'completed';
     }
     
-    // REAL MODE: DURING_FORGE - Use date comparison
     if (!day.date) {
-      return 'current'; // Day 0 without date during forge
+      return 'current';
     }
     
     const today = new Date();
@@ -268,7 +317,6 @@ export const useRoadmapData = () => {
     return 'right';
   };
 
-  // Calculate current day number (for nightly ritual)
   const currentDayNumber = useMemo(() => {
     const currentDay = roadmapDays?.find(d => getDayStatus(d) === 'current');
     return currentDay?.day_number || 1;
@@ -278,7 +326,6 @@ export const useRoadmapData = () => {
   const totalCount = roadmapDays?.length || 0;
   const nodeStatuses = useMemo(() => roadmapDays?.map(getDayStatus) || [], [roadmapDays]);
 
-  // Separate galleries by type
   const stayGallery = galleries?.filter(g => g.gallery_type === 'stay_location') || [];
   const momentsGallery = galleries?.filter(g => g.gallery_type === 'forge_moment') || [];
 
@@ -291,7 +338,9 @@ export const useRoadmapData = () => {
     cohortName,
     forgeStartDate,
     roadmapDays,
-    isLoadingDays,
+    isLoadingDays: userDataLoading || isLoadingDays,
+    isErrorDays,
+    daysError,
     galleries,
     stayGallery,
     momentsGallery,
