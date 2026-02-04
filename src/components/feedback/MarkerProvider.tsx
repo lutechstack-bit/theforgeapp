@@ -1,6 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { User } from '@supabase/supabase-js';
+import { useEffect, useRef } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Marker.io project ID
 const MARKER_PROJECT_ID = '696f7d063702deb92d871f48';
@@ -23,38 +22,32 @@ declare global {
   }
 }
 
+/**
+ * MarkerProvider - Initializes and syncs Marker.io feedback widget
+ * 
+ * IMPORTANT: This component now uses the centralized AuthContext instead of
+ * making its own auth.getUser() network calls. This prevents slow auth endpoints
+ * from blocking app startup or interfering with session restoration.
+ */
 export const MarkerProvider = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [profileName, setProfileName] = useState<string>('');
-  const [markerReady, setMarkerReady] = useState(false);
-
-  // Helper to fetch profile name
-  const loadProfileName = useCallback(async (userId: string) => {
-    try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', userId)
-        .single();
-      setProfileName(profile?.full_name || '');
-    } catch (error) {
-      console.error('MarkerProvider: Error fetching profile name:', error);
-      setProfileName('');
-    }
-  }, []);
+  // Use centralized auth state - no direct Supabase auth calls
+  const { user, profile } = useAuth();
+  const markerReadyRef = useRef(false);
 
   // Effect A: Wait for Marker to be ready (loaded via deferred script in index.html)
   useEffect(() => {
     // Check if Marker is already available
     if (window.Marker) {
-      setMarkerReady(true);
+      markerReadyRef.current = true;
+      window.Marker.show();
       return;
     }
 
     // Poll for Marker availability (it loads deferred)
     const interval = setInterval(() => {
       if (window.Marker) {
-        setMarkerReady(true);
+        markerReadyRef.current = true;
+        window.Marker.show();
         clearInterval(interval);
       }
     }, 500);
@@ -73,56 +66,21 @@ export const MarkerProvider = () => {
     };
   }, []);
 
-  // Effect B: Always show Marker widget when ready (no auth gating)
+  // Effect B: Sync reporter and customData based on auth state from AuthContext
   useEffect(() => {
-    if (!markerReady || !window.Marker) return;
-    
-    // Always show the widget for everyone
+    if (!markerReadyRef.current || !window.Marker) return;
+
+    // Always show the widget
     window.Marker.show();
-  }, [markerReady]);
-
-  // Effect C: Handle auth state and sync reporter/customData
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        setUser(user);
-        
-        if (user) {
-          await loadProfileName(user.id);
-        }
-      } catch (error) {
-        console.error('MarkerProvider auth check error:', error);
-      }
-    };
-
-    initAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      
-      if (currentUser) {
-        // User signed in - fetch their profile name
-        await loadProfileName(currentUser.id);
-      } else {
-        // User signed out - clear profile name
-        setProfileName('');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [loadProfileName]);
-
-  // Effect D: Sync reporter and customData based on auth state
-  useEffect(() => {
-    if (!markerReady || !window.Marker) return;
 
     if (user) {
+      // Get display name from profile (from AuthContext) or fallback to email
+      const displayName = profile?.full_name || user.email?.split('@')[0] || 'User';
+      
       // Set reporter info for authenticated users
       window.Marker.setReporter({
         email: user.email || '',
-        fullName: profileName || user.email?.split('@')[0] || 'User',
+        fullName: displayName,
       });
 
       window.Marker.setCustomData({
@@ -145,7 +103,16 @@ export const MarkerProvider = () => {
         currentPath: window.location.pathname,
       });
     }
-  }, [markerReady, user, profileName]);
+  }, [user, profile?.full_name]);
+
+  // Effect C: Update path on navigation (lightweight)
+  useEffect(() => {
+    if (!markerReadyRef.current || !window.Marker) return;
+
+    window.Marker.setCustomData({
+      currentPath: window.location.pathname,
+    });
+  }, []);
 
   return null;
 };

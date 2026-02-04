@@ -5,10 +5,17 @@ import { calculateForgeMode, ForgeMode } from '@/lib/forgeUtils';
 import { useAdminTestingSafe } from '@/contexts/AdminTestingContext';
 import { AuthRecovery } from '@/components/auth/AuthRecovery';
 import { promiseWithSoftTimeout } from '@/lib/promiseTimeout';
+import { 
+  cacheProfile, 
+  getCachedProfile, 
+  cacheEdition, 
+  getCachedEdition,
+  clearAllAuthCaches 
+} from '@/lib/authCache';
 
 // Session initialization timeout (3 seconds) - just for determining if user is logged in
 const SESSION_INIT_TIMEOUT_MS = 3000;
-// User data fetch timeout (8 seconds) - for profile/edition fetch (increased from 5s)
+// User data fetch timeout (8 seconds) - for profile/edition fetch
 const USER_DATA_TIMEOUT_MS = 8000;
 // Overall app-level failsafe (10 seconds) - if loading is still true, force recovery
 const APP_FAILSAFE_TIMEOUT_MS = 10000;
@@ -16,6 +23,9 @@ const APP_FAILSAFE_TIMEOUT_MS = 10000;
 const MAX_USER_DATA_RETRIES = 3;
 // Retry delays (exponential backoff)
 const RETRY_DELAYS = [2000, 4000, 8000];
+
+// Supabase storage key for session (standard Supabase SDK key pattern)
+const SUPABASE_AUTH_STORAGE_KEY = 'sb-tprvyhzpecopryylxznm-auth-token';
 
 interface Profile {
   id: string;
@@ -60,6 +70,7 @@ interface AuthContextType {
   updatePassword: (newPassword: string) => Promise<{ error: any }>;
   refreshProfile: () => Promise<void>;
   retryUserData: () => Promise<void>;
+  clearCacheAndReload: () => Promise<void>;
   isFullAccess: boolean;
   isBalancePaid: boolean;
   isDuringForge: boolean;
@@ -81,6 +92,46 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   ]);
 }
 
+/**
+ * Try to read stored session from localStorage immediately (local-first).
+ * This allows instant hydration without waiting for network.
+ */
+function getStoredSession(): { user: User; session: Session } | null {
+  try {
+    const raw = localStorage.getItem(SUPABASE_AUTH_STORAGE_KEY);
+    if (!raw) return null;
+    
+    const parsed = JSON.parse(raw);
+    
+    // Supabase stores session with expires_at timestamp
+    if (parsed?.expires_at) {
+      const expiresAt = parsed.expires_at * 1000; // Convert to ms
+      if (Date.now() >= expiresAt) {
+        console.log('[Auth] Stored session expired');
+        return null;
+      }
+    }
+    
+    // Validate we have required session data
+    if (parsed?.access_token && parsed?.user?.id) {
+      const session: Session = {
+        access_token: parsed.access_token,
+        refresh_token: parsed.refresh_token || '',
+        expires_in: parsed.expires_in || 3600,
+        expires_at: parsed.expires_at,
+        token_type: parsed.token_type || 'bearer',
+        user: parsed.user,
+      };
+      return { user: parsed.user, session };
+    }
+    
+    return null;
+  } catch (error) {
+    console.warn('[Auth] Failed to parse stored session:', error);
+    return null;
+  }
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -94,6 +145,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userDataError, setUserDataError] = useState<Error | null>(null);
   const [authTimedOut, setAuthTimedOut] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
+  
+  // Track if we've hydrated from cache (to avoid flicker)
+  const [hydratedFromCache, setHydratedFromCache] = useState(false);
   
   // Refs to track initialization state
   const hasInitializedRef = useRef(false);
@@ -144,6 +198,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserDataTimedOut(false);
       setUserDataError(null);
       userDataRetryCountRef.current = 0;
+      
+      // Immediately hydrate from cache if available (optimistic UI)
+      const cachedProfile = getCachedProfile(userId);
+      const cachedEdition = getCachedEdition(userId);
+      
+      if (cachedProfile && !hydratedFromCache) {
+        console.log('[Auth] Hydrating profile from cache');
+        setProfile(cachedProfile as Profile);
+        if (cachedEdition) {
+          setEdition(cachedEdition as Edition);
+        }
+        setHydratedFromCache(true);
+      }
     }
     
     try {
@@ -172,9 +239,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             fetchUserDataInBackground(userId, true);
           }, delay);
           
-          // Don't set error state yet - we're retrying
-          if (!isRetry) {
-            // Keep userDataLoading true during retries
+          // If we have cached data, consider loading "done" for UI purposes
+          if (hydratedFromCache) {
+            setUserDataLoading(false);
           }
           return;
         }
@@ -189,8 +256,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const profileData = profileResult.data;
       
-      // SUCCESS: Update profile
-      setProfile(profileData);
+      // SUCCESS: Update profile and cache it
+      if (profileData) {
+        setProfile(profileData);
+        cacheProfile(userId, {
+          id: profileData.id,
+          full_name: profileData.full_name,
+          avatar_url: profileData.avatar_url,
+          edition_id: profileData.edition_id,
+          profile_setup_completed: profileData.profile_setup_completed,
+          ky_form_completed: profileData.ky_form_completed,
+          unlock_level: profileData.unlock_level,
+          payment_status: profileData.payment_status,
+          city: profileData.city,
+        });
+      }
+      
       setUserDataTimedOut(false);
       setUserDataError(null);
       
@@ -204,6 +285,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (editionResult.data) {
           setEdition(editionResult.data);
+          cacheEdition(userId, {
+            id: editionResult.data.id,
+            cohort_type: editionResult.data.cohort_type,
+            forge_start_date: editionResult.data.forge_start_date,
+            forge_end_date: editionResult.data.forge_end_date,
+          });
         } else if (editionResult.timedOut || editionResult.error) {
           // Edition fetch failed but profile succeeded - not critical
           console.warn('[Auth] Edition fetch failed, continuing with profile only');
@@ -213,16 +300,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       setUserDataLoading(false);
+      setHydratedFromCache(false);
     } catch (error) {
       console.error('[Auth] Unexpected error in fetchUserDataInBackground:', error);
       setUserDataError(error instanceof Error ? error : new Error('Unknown error'));
       setUserDataLoading(false);
     }
-  }, [clearUserDataRetryTimer]);
+  }, [clearUserDataRetryTimer, hydratedFromCache]);
 
   // Manual retry function exposed to UI
   const retryUserData = useCallback(async () => {
     if (!user) return;
+    setHydratedFromCache(false);
     clearUserDataRetryTimer();
     userDataRetryCountRef.current = 0;
     await fetchUserDataInBackground(user.id, false);
@@ -230,6 +319,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshProfile = async () => {
     if (user) {
+      setHydratedFromCache(false);
       clearUserDataRetryTimer();
       userDataRetryCountRef.current = 0;
       await fetchUserDataInBackground(user.id, false);
@@ -252,8 +342,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Helper to clear session and force reload
-  const clearSessionAndReload = useCallback(async () => {
+  const clearCacheAndReload = useCallback(async () => {
     try {
+      clearAllAuthCaches();
       localStorage.clear();
       sessionStorage.clear();
       
@@ -346,6 +437,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     hasInitializedRef.current = false;
     
+    // === LOCAL-FIRST: Hydrate from stored session immediately ===
+    const storedSession = getStoredSession();
+    if (storedSession) {
+      console.log('[Auth] Hydrating session from localStorage (local-first)');
+      setSession(storedSession.session);
+      setUser(storedSession.user);
+      
+      // Also hydrate profile/edition from cache
+      const cachedProfile = getCachedProfile(storedSession.user.id);
+      const cachedEdition = getCachedEdition(storedSession.user.id);
+      
+      if (cachedProfile) {
+        console.log('[Auth] Hydrating profile from cache (local-first)');
+        setProfile(cachedProfile as Profile);
+        setHydratedFromCache(true);
+      }
+      if (cachedEdition) {
+        setEdition(cachedEdition as Edition);
+      }
+    }
+    
     failsafeTimerRef.current = setTimeout(() => {
       if (isMounted && !hasInitializedRef.current) {
         console.error('[Auth] FAILSAFE: App still loading after', APP_FAILSAFE_TIMEOUT_MS, 'ms - forcing recovery');
@@ -374,6 +486,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUserDataLoading(false);
           setUserDataTimedOut(false);
           setUserDataError(null);
+          setHydratedFromCache(false);
         }
       }
     );
@@ -392,7 +505,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (!sessionResult) {
           console.warn('[Auth] Initial session check timed out');
-          if (!hasInitializedRef.current) {
+          // If we have local session, still complete as success
+          if (storedSession) {
+            console.log('[Auth] Using locally stored session despite timeout');
+            completeSessionInit(false);
+            fetchUserDataInBackground(storedSession.user.id);
+          } else if (!hasInitializedRef.current) {
             completeSessionInit(true);
           }
           return;
@@ -458,11 +576,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    // Clear local state first (local-first sign out)
     setProfile(null);
     setEdition(null);
     setUser(null);
     setSession(null);
+    setHydratedFromCache(false);
     clearUserDataRetryTimer();
+    clearAllAuthCaches();
     
     try {
       await supabase.auth.signOut({ scope: 'local' });
@@ -501,7 +622,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       <AuthRecovery
         isRetrying={isRetrying}
         onRetry={retryAuth}
-        onClearSession={clearSessionAndReload}
+        onClearSession={clearCacheAndReload}
       />
     );
   }
@@ -523,6 +644,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updatePassword,
       refreshProfile,
       retryUserData,
+      clearCacheAndReload,
       isFullAccess,
       isBalancePaid,
       isDuringForge,

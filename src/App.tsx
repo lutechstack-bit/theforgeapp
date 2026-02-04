@@ -13,6 +13,8 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { MarkerProvider } from "@/components/feedback/MarkerProvider";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { LoadingScreen } from "@/components/shared/LoadingScreen";
+import { UserDataRecovery } from "@/components/shared/UserDataRecovery";
+import { useEffect, useState } from "react";
 
 // Pages
 import Auth from "./pages/Auth";
@@ -48,7 +50,6 @@ import AdminAutoUpdates from "./pages/admin/AdminAutoUpdates";
 import AdminRoadmap from "./pages/admin/AdminRoadmap";
 import AdminRoadmapSidebar from "./pages/admin/AdminRoadmapSidebar";
 import AdminKYForms from "./pages/admin/AdminKYForms";
-
 import AdminCommunityHighlights from "./pages/admin/AdminCommunityHighlights";
 import AdminNightlyRituals from "./pages/admin/AdminNightlyRituals";
 import AdminEquipment from "./pages/admin/AdminEquipment";
@@ -59,7 +60,6 @@ import AdminJourneyStages from "./pages/admin/AdminJourneyStages";
 import AdminJourneyTasks from "./pages/admin/AdminJourneyTasks";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
 import AdminChangelog from "./pages/admin/AdminChangelog";
-
 import DynamicKYForm from "./pages/DynamicKYForm";
 import EventDetail from "./pages/EventDetail";
 
@@ -74,6 +74,9 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Timeout for user data loading in route guards (10 seconds)
+const USER_DATA_GUARD_TIMEOUT_MS = 10000;
 
 // Protected Route wrapper - only checks session loading, not user data
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -113,12 +116,41 @@ const KYFRedirect: React.FC = () => {
   }
 };
 
-// Profile Setup Check wrapper - ensures profile setup is completed first
+/**
+ * ProfileSetupCheck - Ensures profile setup is completed first
+ * Now with timeout-based recovery UI to prevent infinite loading
+ */
 const ProfileSetupCheck: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { profile, userDataLoading } = useAuth();
+  const { profile, userDataLoading, userDataTimedOut, userDataError, retryUserData, clearCacheAndReload, signOut } = useAuth();
+  const [guardTimedOut, setGuardTimedOut] = useState(false);
+  
+  // Start a timeout when entering loading state
+  useEffect(() => {
+    if (userDataLoading && !profile) {
+      const timer = setTimeout(() => {
+        setGuardTimedOut(true);
+      }, USER_DATA_GUARD_TIMEOUT_MS);
+      
+      return () => clearTimeout(timer);
+    } else {
+      setGuardTimedOut(false);
+    }
+  }, [userDataLoading, profile]);
+  
+  // Show recovery UI if: guard timed out, or userDataTimedOut, or userDataError
+  if ((guardTimedOut || userDataTimedOut || userDataError) && !profile) {
+    return (
+      <UserDataRecovery
+        isRetrying={userDataLoading}
+        onRetry={retryUserData}
+        onClearCache={clearCacheAndReload}
+        onSignOut={signOut}
+        message={userDataError ? "We couldn't load your profile. Please try again." : "Loading is taking longer than expected."}
+      />
+    );
+  }
   
   // If user data is still loading and we don't have profile yet, show loading briefly
-  // But don't block forever - if profile is null after loading, proceed anyway
   if (userDataLoading && !profile) {
     return <LoadingScreen />;
   }
@@ -132,9 +164,37 @@ const ProfileSetupCheck: React.FC<{ children: React.ReactNode }> = ({ children }
   return <>{children}</>;
 };
 
-// KY Form Check wrapper - ensures KY form is completed before accessing main app
+/**
+ * KYFormCheck - Ensures KY form is completed before accessing main app
+ * Now with timeout-based recovery UI
+ */
 const KYFormCheck: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { profile, userDataLoading } = useAuth();
+  const { profile, userDataLoading, userDataTimedOut, userDataError, retryUserData, clearCacheAndReload, signOut } = useAuth();
+  const [guardTimedOut, setGuardTimedOut] = useState(false);
+  
+  useEffect(() => {
+    if (userDataLoading && !profile) {
+      const timer = setTimeout(() => {
+        setGuardTimedOut(true);
+      }, USER_DATA_GUARD_TIMEOUT_MS);
+      
+      return () => clearTimeout(timer);
+    } else {
+      setGuardTimedOut(false);
+    }
+  }, [userDataLoading, profile]);
+  
+  // Show recovery UI on timeout/error
+  if ((guardTimedOut || userDataTimedOut || userDataError) && !profile) {
+    return (
+      <UserDataRecovery
+        isRetrying={userDataLoading}
+        onRetry={retryUserData}
+        onClearCache={clearCacheAndReload}
+        onSignOut={signOut}
+      />
+    );
+  }
   
   // If user data is still loading and we don't have profile yet, show loading briefly
   if (userDataLoading && !profile) {
@@ -151,7 +211,32 @@ const KYFormCheck: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 // Redirect away from profile setup if already completed
 const ProfileSetupRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { profile, userDataLoading } = useAuth();
+  const { profile, userDataLoading, userDataTimedOut, userDataError, retryUserData, clearCacheAndReload, signOut } = useAuth();
+  const [guardTimedOut, setGuardTimedOut] = useState(false);
+  
+  useEffect(() => {
+    if (userDataLoading && !profile) {
+      const timer = setTimeout(() => {
+        setGuardTimedOut(true);
+      }, USER_DATA_GUARD_TIMEOUT_MS);
+      
+      return () => clearTimeout(timer);
+    } else {
+      setGuardTimedOut(false);
+    }
+  }, [userDataLoading, profile]);
+  
+  // Show recovery UI on timeout/error
+  if ((guardTimedOut || userDataTimedOut || userDataError) && !profile) {
+    return (
+      <UserDataRecovery
+        isRetrying={userDataLoading}
+        onRetry={retryUserData}
+        onClearCache={clearCacheAndReload}
+        onSignOut={signOut}
+      />
+    );
+  }
   
   // If user data is still loading and we don't have profile yet, show loading briefly
   if (userDataLoading && !profile) {
@@ -225,13 +310,6 @@ const AppRoutes = () => {
           </ProfileSetupCheck>
         </ProtectedRoute>
       } />
-      <Route path="/kyw-form" element={
-        <ProtectedRoute>
-          <ProfileSetupCheck>
-            <KYWForm />
-          </ProfileSetupCheck>
-        </ProtectedRoute>
-      } />
       
       {/* App routes with layout */}
       <Route element={
@@ -275,7 +353,6 @@ const AppRoutes = () => {
         <Route path="auto-updates" element={<AdminAutoUpdates />} />
         <Route path="roadmap" element={<AdminRoadmap />} />
         <Route path="roadmap-sidebar" element={<AdminRoadmapSidebar />} />
-        
         <Route path="equipment" element={<AdminEquipment />} />
         <Route path="ky-forms" element={<AdminKYForms />} />
         <Route path="journey-stages" element={<AdminJourneyStages />} />
