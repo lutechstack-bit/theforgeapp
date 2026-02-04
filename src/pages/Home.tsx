@@ -18,12 +18,15 @@ import FloatingHighlightsButton from '@/components/roadmap/FloatingHighlightsBut
 import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
 import { Users } from 'lucide-react';
 import { Mentor } from '@/data/mentorsData';
+import { promiseWithTimeout, isTimeoutError } from '@/lib/promiseTimeout';
+
+// Query timeout (12 seconds)
+const QUERY_TIMEOUT = 12000;
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-  // Use edition directly from AuthContext instead of redundant query
   const { profile, edition, userDataLoading } = useAuth();
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [isMentorModalOpen, setIsMentorModalOpen] = useState(false);
@@ -37,38 +40,44 @@ const Home: React.FC = () => {
     setIsMentorModalOpen(true);
   };
 
-  // Get user's cohort type from their edition
   const userCohortType = edition?.cohort_type;
 
-  // Fetch events from database - prioritize homepage featured, then past events fallback
+  // Fetch events with timeout protection
   const eventsQuery = useQuery({
     queryKey: ['home_events'],
     queryFn: async () => {
-      // First try to get events marked for homepage
-      const { data: homepageEvents, error: homepageError } = await supabase
-        .from('events')
-        .select('*')
-        .eq('show_on_homepage', true)
-        .order('event_date', { ascending: false })
-        .limit(6);
+      const homepageResult = await promiseWithTimeout(
+        supabase
+          .from('events')
+          .select('*')
+          .eq('show_on_homepage', true)
+          .order('event_date', { ascending: false })
+          .limit(6)
+          .then(res => res),
+        QUERY_TIMEOUT,
+        'home_events_featured'
+      );
       
-      if (homepageError) throw homepageError;
+      if (homepageResult.error) throw homepageResult.error;
       
-      // If we have homepage events, return them
-      if (homepageEvents && homepageEvents.length > 0) {
-        return { events: homepageEvents, isPastEvents: false };
+      if (homepageResult.data && homepageResult.data.length > 0) {
+        return { events: homepageResult.data, isPastEvents: false };
       }
       
-      // Fallback to recent past events
-      const { data: pastEvents, error: pastError } = await supabase
-        .from('events')
-        .select('*')
-        .lt('event_date', new Date().toISOString())
-        .order('event_date', { ascending: false })
-        .limit(6);
+      const pastResult = await promiseWithTimeout(
+        supabase
+          .from('events')
+          .select('*')
+          .lt('event_date', new Date().toISOString())
+          .order('event_date', { ascending: false })
+          .limit(6)
+          .then(res => res),
+        QUERY_TIMEOUT,
+        'home_events_past'
+      );
       
-      if (pastError) throw pastError;
-      return { events: pastEvents || [], isPastEvents: true };
+      if (pastResult.error) throw pastResult.error;
+      return { events: pastResult.data || [], isPastEvents: true };
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -76,17 +85,22 @@ const Home: React.FC = () => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Fetch learn content from database
+  // Fetch learn content with timeout protection
   const learnContentQuery = useQuery({
     queryKey: ['home_learn_content'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('learn_content')
-        .select('*')
-        .order('order_index', { ascending: true })
-        .limit(6);
-      if (error) throw error;
-      return data || [];
+      const result = await promiseWithTimeout(
+        supabase
+          .from('learn_content')
+          .select('*')
+          .order('order_index', { ascending: true })
+          .limit(6)
+          .then(res => res),
+        QUERY_TIMEOUT,
+        'home_learn_content'
+      );
+      if (result.error) throw result.error;
+      return result.data || [];
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -94,17 +108,22 @@ const Home: React.FC = () => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Fetch ALL active mentors (client-side filtering for resilience)
+  // Fetch mentors with timeout protection
   const mentorsQuery = useQuery({
     queryKey: ['home_mentors_all'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('mentors')
-        .select('*')
-        .eq('is_active', true)
-        .order('order_index', { ascending: true });
-      if (error) throw error;
-      return data || [];
+      const result = await promiseWithTimeout(
+        supabase
+          .from('mentors')
+          .select('*')
+          .eq('is_active', true)
+          .order('order_index', { ascending: true })
+          .then(res => res),
+        QUERY_TIMEOUT,
+        'home_mentors'
+      );
+      if (result.error) throw result.error;
+      return result.data || [];
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -112,17 +131,22 @@ const Home: React.FC = () => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Fetch ALL active alumni testimonials (client-side filtering for resilience)
+  // Fetch alumni testimonials with timeout protection
   const alumniTestimonialsQuery = useQuery({
     queryKey: ['home_alumni_testimonials_all'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('alumni_testimonials')
-        .select('*')
-        .eq('is_active', true)
-        .order('order_index', { ascending: true });
-      if (error) throw error;
-      return data || [];
+      const result = await promiseWithTimeout(
+        supabase
+          .from('alumni_testimonials')
+          .select('*')
+          .eq('is_active', true)
+          .order('order_index', { ascending: true })
+          .then(res => res),
+        QUERY_TIMEOUT,
+        'home_alumni'
+      );
+      if (result.error) throw result.error;
+      return result.data || [];
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -139,7 +163,6 @@ const Home: React.FC = () => {
     const filtered = allMentors.filter(
       (m) => m.cohort_types && m.cohort_types.includes(userCohortType)
     );
-    // Fallback to all if cohort filtering produces 0 results
     return filtered.length > 0 ? filtered : allMentors;
   }, [mentorsQuery.data, userCohortType]);
 
@@ -152,7 +175,6 @@ const Home: React.FC = () => {
     const filtered = allAlumni.filter(
       (a) => a.cohort_types && a.cohort_types.includes(userCohortType)
     );
-    // Fallback to all if cohort filtering produces 0 results
     return filtered.length > 0 ? filtered : allAlumni;
   }, [alumniTestimonialsQuery.data, userCohortType]);
 
@@ -193,9 +215,7 @@ const Home: React.FC = () => {
   ].filter(Boolean) as { name: string; error: Error }[];
 
   // Loading timeout protection - only start counting AFTER user data is loaded
-  // This prevents false timeouts during initial profile/edition loading
   useEffect(() => {
-    // Clear any existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
@@ -247,11 +267,12 @@ const Home: React.FC = () => {
           {showDebug && (
             <div className="text-xs font-mono bg-muted/50 border border-border rounded-lg p-4 space-y-2">
               <p className="font-semibold">Home Debug Panel</p>
-              <p>Events: {eventsQuery.isLoading ? '⏳' : eventsQuery.isError ? '❌' : `✅ (${displayEvents.length})`}</p>
-              <p>Learn: {learnContentQuery.isLoading ? '⏳' : learnContentQuery.isError ? '❌' : `✅ (${displayLearnContent.length})`}</p>
-              <p>Mentors: {mentorsQuery.isLoading ? '⏳' : mentorsQuery.isError ? '❌' : `✅ (${displayMentors.length})`}</p>
-              <p>Alumni: {alumniTestimonialsQuery.isLoading ? '⏳' : alumniTestimonialsQuery.isError ? '❌' : `✅ (${displayAlumni.length})`}</p>
+              <p>Events: {eventsQuery.isLoading ? '⏳' : eventsQuery.isError ? `❌ ${isTimeoutError(eventsQuery.error) ? 'TIMEOUT' : 'ERROR'}` : `✅ (${displayEvents.length})`}</p>
+              <p>Learn: {learnContentQuery.isLoading ? '⏳' : learnContentQuery.isError ? `❌ ${isTimeoutError(learnContentQuery.error) ? 'TIMEOUT' : 'ERROR'}` : `✅ (${displayLearnContent.length})`}</p>
+              <p>Mentors: {mentorsQuery.isLoading ? '⏳' : mentorsQuery.isError ? `❌ ${isTimeoutError(mentorsQuery.error) ? 'TIMEOUT' : 'ERROR'}` : `✅ (${displayMentors.length})`}</p>
+              <p>Alumni: {alumniTestimonialsQuery.isLoading ? '⏳' : alumniTestimonialsQuery.isError ? `❌ ${isTimeoutError(alumniTestimonialsQuery.error) ? 'TIMEOUT' : 'ERROR'}` : `✅ (${displayAlumni.length})`}</p>
               <p>User Cohort: {userCohortType || '(none)'}</p>
+              <p>User Data Loading: {userDataLoading ? 'Yes' : 'No'}</p>
             </div>
           )}
 

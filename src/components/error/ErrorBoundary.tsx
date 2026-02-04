@@ -29,7 +29,20 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    // Generate a short error ID for tracking
+    const errorId = `ERR-${Date.now().toString(36).toUpperCase()}`;
+    
+    // Enhanced error logging with context
+    console.error('[ErrorBoundary] Caught error:', {
+      errorId,
+      message: error.message,
+      name: error.name,
+      stack: error.stack?.split('\n').slice(0, 5).join('\n'),
+      componentStack: errorInfo.componentStack?.split('\n').slice(0, 5).join('\n'),
+      url: window.location.href,
+      timestamp: new Date().toISOString(),
+    });
+    
     this.setState({ errorInfo });
   }
 
