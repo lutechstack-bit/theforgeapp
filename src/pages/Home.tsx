@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -23,10 +23,12 @@ const Home: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-  const { profile } = useAuth();
+  // Use edition directly from AuthContext instead of redundant query
+  const { profile, edition, userDataLoading } = useAuth();
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [isMentorModalOpen, setIsMentorModalOpen] = useState(false);
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const showDebug = searchParams.get('homeDebug') === '1';
 
@@ -34,22 +36,6 @@ const Home: React.FC = () => {
     setSelectedMentor(mentor);
     setIsMentorModalOpen(true);
   };
-
-  // Fetch edition data for countdown and cohort filtering
-  const { data: edition } = useQuery({
-    queryKey: ['user-edition', profile?.edition_id],
-    queryFn: async () => {
-      if (!profile?.edition_id) return null;
-      const { data, error } = await supabase
-        .from('editions')
-        .select('*')
-        .eq('id', profile.edition_id)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!profile?.edition_id,
-  });
 
   // Get user's cohort type from their edition
   const userCohortType = edition?.cohort_type;
@@ -206,16 +192,35 @@ const Home: React.FC = () => {
     alumniTestimonialsQuery.isError && { name: 'Alumni', error: alumniTestimonialsQuery.error as Error },
   ].filter(Boolean) as { name: string; error: Error }[];
 
-  // Loading timeout protection - show error after 15 seconds
+  // Loading timeout protection - only start counting AFTER user data is loaded
+  // This prevents false timeouts during initial profile/edition loading
   useEffect(() => {
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
+    // Don't start timeout while profile/edition are still loading
+    if (userDataLoading) {
+      return;
+    }
+
+    // If still loading content after profile is ready, start the timeout
     if (isAnyLoading) {
       setLoadingTimedOut(false);
-      const timeout = setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         setLoadingTimedOut(true);
       }, 15000);
-      return () => clearTimeout(timeout);
     }
-  }, [isAnyLoading]);
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, [isAnyLoading, userDataLoading]);
 
   const handleRetry = () => {
     setLoadingTimedOut(false);
