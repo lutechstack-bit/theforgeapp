@@ -20,12 +20,9 @@ const USER_DATA_TIMEOUT_MS = 8000;
 // Overall app-level failsafe (10 seconds) - if loading is still true, force recovery
 const APP_FAILSAFE_TIMEOUT_MS = 10000;
 // Max retry attempts for user data
-const MAX_USER_DATA_RETRIES = 3;
+const MAX_USER_DATA_RETRIES = 2;
 // Retry delays (exponential backoff)
-const RETRY_DELAYS = [2000, 4000, 8000];
-
-// Supabase storage key for session (standard Supabase SDK key pattern)
-const SUPABASE_AUTH_STORAGE_KEY = 'sb-tprvyhzpecopryylxznm-auth-token';
+const RETRY_DELAYS = [2000, 4000];
 
 interface Profile {
   id: string;
@@ -79,17 +76,36 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper: wrap a promise with a timeout (for session init)
-function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T | null> {
-  return Promise.race([
-    promise,
-    new Promise<null>((resolve) => {
-      setTimeout(() => {
-        console.warn(`[Auth] ${label} timed out after ${ms}ms`);
-        resolve(null);
-      }, ms);
-    }),
-  ]);
+// Check if running with boot debug enabled
+const isBootDebugEnabled = () => {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).has('bootDebug');
+};
+
+const bootLog = (message: string, ...args: any[]) => {
+  if (isBootDebugEnabled()) {
+    console.log(`[BootDebug] ${message}`, ...args);
+  }
+};
+
+/**
+ * Discover the Supabase auth storage key dynamically.
+ * This handles cases where the project ID might differ or the key format changes.
+ */
+function discoverSupabaseAuthKey(): string | null {
+  try {
+    // Try common patterns
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        bootLog('Discovered auth key:', key);
+        return key;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -98,16 +114,26 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
  */
 function getStoredSession(): { user: User; session: Session } | null {
   try {
-    const raw = localStorage.getItem(SUPABASE_AUTH_STORAGE_KEY);
-    if (!raw) return null;
+    const authKey = discoverSupabaseAuthKey();
+    if (!authKey) {
+      bootLog('No auth key found in localStorage');
+      return null;
+    }
+    
+    const raw = localStorage.getItem(authKey);
+    if (!raw) {
+      bootLog('Auth key exists but no value');
+      return null;
+    }
     
     const parsed = JSON.parse(raw);
     
     // Supabase stores session with expires_at timestamp
     if (parsed?.expires_at) {
       const expiresAt = parsed.expires_at * 1000; // Convert to ms
-      if (Date.now() >= expiresAt) {
-        console.log('[Auth] Stored session expired');
+      const now = Date.now();
+      if (now >= expiresAt) {
+        bootLog('Stored session expired', { expiresAt, now });
         return null;
       }
     }
@@ -122,9 +148,11 @@ function getStoredSession(): { user: User; session: Session } | null {
         token_type: parsed.token_type || 'bearer',
         user: parsed.user,
       };
+      bootLog('Valid stored session found for user:', parsed.user.id);
       return { user: parsed.user, session };
     }
     
+    bootLog('Stored session missing required fields');
     return null;
   } catch (error) {
     console.warn('[Auth] Failed to parse stored session:', error);
@@ -146,14 +174,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authTimedOut, setAuthTimedOut] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   
-  // Track if we've hydrated from cache (to avoid flicker)
-  const [hydratedFromCache, setHydratedFromCache] = useState(false);
-  
-  // Refs to track initialization state
+  // Refs to track initialization state (NOT state to avoid re-render loops)
   const hasInitializedRef = useRef(false);
   const failsafeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userDataRetryCountRef = useRef(0);
   const userDataRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hydratedFromCacheRef = useRef(false);
+  const currentFetchIdRef = useRef(0); // Track fetch request IDs to prevent stale updates
+  const bootCompleteRef = useRef(false);
 
   const fetchEdition = async (editionId: string): Promise<Edition | null> => {
     const { data, error } = await supabase
@@ -192,7 +220,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Fetch user data with timeout protection and retry logic
-  const fetchUserDataInBackground = useCallback(async (userId: string, isRetry = false): Promise<void> => {
+  // NOTE: This function does NOT depend on any state that changes frequently
+  const fetchUserDataWithId = useCallback(async (userId: string, fetchId: number, isRetry = false): Promise<void> => {
+    // Check if this fetch is still the current one
+    if (fetchId !== currentFetchIdRef.current) {
+      bootLog('Ignoring stale fetch', { fetchId, current: currentFetchIdRef.current });
+      return;
+    }
+    
     if (!isRetry) {
       setUserDataLoading(true);
       setUserDataTimedOut(false);
@@ -203,18 +238,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const cachedProfile = getCachedProfile(userId);
       const cachedEdition = getCachedEdition(userId);
       
-      if (cachedProfile && !hydratedFromCache) {
-        console.log('[Auth] Hydrating profile from cache');
+      if (cachedProfile && !hydratedFromCacheRef.current) {
+        bootLog('Hydrating profile from cache');
         setProfile(cachedProfile as Profile);
         if (cachedEdition) {
           setEdition(cachedEdition as Edition);
         }
-        setHydratedFromCache(true);
+        hydratedFromCacheRef.current = true;
       }
     }
     
     try {
-      console.log(`[Auth] Fetching profile for user ${userId} (attempt ${userDataRetryCountRef.current + 1})`);
+      bootLog(`Fetching profile for user ${userId} (attempt ${userDataRetryCountRef.current + 1})`);
       
       // Fetch profile with timeout
       const profileResult = await promiseWithSoftTimeout(
@@ -223,6 +258,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         'Profile fetch'
       );
       
+      // Check if this fetch is still the current one after await
+      if (fetchId !== currentFetchIdRef.current) {
+        bootLog('Ignoring stale profile result', { fetchId, current: currentFetchIdRef.current });
+        return;
+      }
+      
       // Handle timeout or error
       if (profileResult.timedOut || profileResult.error) {
         const error = profileResult.error || new Error('Profile fetch timed out');
@@ -230,17 +271,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Check if we should retry
         if (userDataRetryCountRef.current < MAX_USER_DATA_RETRIES) {
-          const delay = RETRY_DELAYS[userDataRetryCountRef.current] || 8000;
-          console.log(`[Auth] Will retry in ${delay}ms (attempt ${userDataRetryCountRef.current + 2})`);
+          const delay = RETRY_DELAYS[userDataRetryCountRef.current] || 4000;
+          bootLog(`Will retry in ${delay}ms (attempt ${userDataRetryCountRef.current + 2})`);
           
           userDataRetryCountRef.current++;
           clearUserDataRetryTimer();
           userDataRetryTimerRef.current = setTimeout(() => {
-            fetchUserDataInBackground(userId, true);
+            fetchUserDataWithId(userId, fetchId, true);
           }, delay);
           
           // If we have cached data, consider loading "done" for UI purposes
-          if (hydratedFromCache) {
+          if (hydratedFromCacheRef.current) {
             setUserDataLoading(false);
           }
           return;
@@ -270,10 +311,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           payment_status: profileData.payment_status,
           city: profileData.city,
         });
+        bootLog('Profile fetched successfully');
       }
       
       setUserDataTimedOut(false);
       setUserDataError(null);
+      hydratedFromCacheRef.current = false;
       
       // Fetch edition if profile has one
       if (profileData?.edition_id) {
@@ -282,6 +325,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           USER_DATA_TIMEOUT_MS,
           'Edition fetch'
         );
+        
+        // Check staleness again
+        if (fetchId !== currentFetchIdRef.current) return;
         
         if (editionResult.data) {
           setEdition(editionResult.data);
@@ -300,37 +346,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       setUserDataLoading(false);
-      setHydratedFromCache(false);
     } catch (error) {
-      console.error('[Auth] Unexpected error in fetchUserDataInBackground:', error);
-      setUserDataError(error instanceof Error ? error : new Error('Unknown error'));
-      setUserDataLoading(false);
+      console.error('[Auth] Unexpected error in fetchUserData:', error);
+      if (fetchId === currentFetchIdRef.current) {
+        setUserDataError(error instanceof Error ? error : new Error('Unknown error'));
+        setUserDataLoading(false);
+      }
     }
-  }, [clearUserDataRetryTimer, hydratedFromCache]);
+  }, [clearUserDataRetryTimer]);
+
+  // Wrapper to start a new fetch with a fresh ID
+  const startUserDataFetch = useCallback((userId: string) => {
+    currentFetchIdRef.current++;
+    const fetchId = currentFetchIdRef.current;
+    clearUserDataRetryTimer();
+    fetchUserDataWithId(userId, fetchId, false);
+  }, [fetchUserDataWithId, clearUserDataRetryTimer]);
 
   // Manual retry function exposed to UI
   const retryUserData = useCallback(async () => {
     if (!user) return;
-    setHydratedFromCache(false);
-    clearUserDataRetryTimer();
-    userDataRetryCountRef.current = 0;
-    await fetchUserDataInBackground(user.id, false);
-  }, [user, fetchUserDataInBackground, clearUserDataRetryTimer]);
+    hydratedFromCacheRef.current = false;
+    startUserDataFetch(user.id);
+  }, [user, startUserDataFetch]);
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (user) {
-      setHydratedFromCache(false);
-      clearUserDataRetryTimer();
-      userDataRetryCountRef.current = 0;
-      await fetchUserDataInBackground(user.id, false);
+      hydratedFromCacheRef.current = false;
+      startUserDataFetch(user.id);
     }
-  };
+  }, [user, startUserDataFetch]);
 
   // Helper to complete session initialization (NOT user data)
   const completeSessionInit = useCallback((timedOut = false) => {
     if (hasInitializedRef.current) return;
     
-    console.log('[Auth] Session initialization complete, timedOut:', timedOut);
+    bootLog('Session initialization complete, timedOut:', timedOut);
     hasInitializedRef.current = true;
     setLoading(false);
     setAuthTimedOut(timedOut);
@@ -372,19 +423,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     hasInitializedRef.current = false;
     
     try {
-      const sessionResult = await withTimeout(
-        supabase.auth.getSession(),
-        SESSION_INIT_TIMEOUT_MS,
-        'Session retry'
-      );
-      
-      if (!sessionResult) {
-        console.warn('[Auth] Session retry timed out');
-        completeSessionInit(true);
-        return;
-      }
-      
-      const { data: { session: retrySession }, error } = sessionResult;
+      const { data: { session: retrySession }, error } = await supabase.auth.getSession();
       
       if (error) {
         console.error('[Auth] Retry auth error:', error);
@@ -397,7 +436,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       completeSessionInit(false);
       
       if (retrySession?.user) {
-        fetchUserDataInBackground(retrySession.user.id);
+        startUserDataFetch(retrySession.user.id);
       }
     } catch (error) {
       console.error('[Auth] Retry auth exception:', error);
@@ -405,20 +444,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsRetrying(false);
     }
-  }, [completeSessionInit, fetchUserDataInBackground]);
+  }, [completeSessionInit, startUserDataFetch]);
 
   // Retry user data on window focus (if timed out)
   useEffect(() => {
     const handleFocus = () => {
       if (userDataTimedOut && user && !userDataLoading) {
-        console.log('[Auth] Window focused, retrying user data fetch');
+        bootLog('Window focused, retrying user data fetch');
         retryUserData();
       }
     };
 
     const handleOnline = () => {
       if (userDataTimedOut && user && !userDataLoading) {
-        console.log('[Auth] Browser came online, retrying user data fetch');
+        bootLog('Browser came online, retrying user data fetch');
         retryUserData();
       }
     };
@@ -432,15 +471,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [userDataTimedOut, user, userDataLoading, retryUserData]);
 
+  // MAIN BOOT EFFECT - runs exactly ONCE
   useEffect(() => {
-    let isMounted = true;
+    // Prevent re-running if already booted
+    if (bootCompleteRef.current) {
+      bootLog('Boot already complete, skipping re-initialization');
+      return;
+    }
+    bootCompleteRef.current = true;
     
-    hasInitializedRef.current = false;
+    let isMounted = true;
+    bootLog('Starting auth boot sequence');
     
     // === LOCAL-FIRST: Hydrate from stored session immediately ===
     const storedSession = getStoredSession();
     if (storedSession) {
-      console.log('[Auth] Hydrating session from localStorage (local-first)');
+      bootLog('Hydrating session from localStorage (local-first)');
       setSession(storedSession.session);
       setUser(storedSession.user);
       
@@ -449,15 +495,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const cachedEdition = getCachedEdition(storedSession.user.id);
       
       if (cachedProfile) {
-        console.log('[Auth] Hydrating profile from cache (local-first)');
+        bootLog('Hydrating profile from cache (local-first)');
         setProfile(cachedProfile as Profile);
-        setHydratedFromCache(true);
+        hydratedFromCacheRef.current = true;
       }
       if (cachedEdition) {
         setEdition(cachedEdition as Edition);
       }
     }
     
+    // Set up app-level failsafe
     failsafeTimerRef.current = setTimeout(() => {
       if (isMounted && !hasInitializedRef.current) {
         console.error('[Auth] FAILSAFE: App still loading after', APP_FAILSAFE_TIMEOUT_MS, 'ms - forcing recovery');
@@ -465,75 +512,99 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }, APP_FAILSAFE_TIMEOUT_MS);
     
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         if (!isMounted) return;
         
-        console.log('[Auth] Auth state change:', event);
+        bootLog('Auth state change:', event);
         
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
+        // Complete session init on first auth event
         if (!hasInitializedRef.current) {
           completeSessionInit(false);
         }
         
+        // Handle user data based on session
         if (newSession?.user) {
-          fetchUserDataInBackground(newSession.user.id);
-        } else {
+          // Only start a new fetch if this is a login/token refresh, not initial hydration
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            startUserDataFetch(newSession.user.id);
+          } else if (event === 'INITIAL_SESSION') {
+            // For INITIAL_SESSION, only fetch if we don't have cached data
+            if (!hydratedFromCacheRef.current) {
+              startUserDataFetch(newSession.user.id);
+            } else {
+              // We have cached data, start a background refresh
+              bootLog('Have cached data, starting background refresh');
+              startUserDataFetch(newSession.user.id);
+            }
+          }
+        } else if (event === 'SIGNED_OUT') {
           setProfile(null);
           setEdition(null);
           setUserDataLoading(false);
           setUserDataTimedOut(false);
           setUserDataError(null);
-          setHydratedFromCache(false);
+          hydratedFromCacheRef.current = false;
         }
       }
     );
 
+    // Also do an explicit getSession call with timeout as backup
+    // (onAuthStateChange should fire first, but this is a safety net)
     const initializeAuth = async () => {
       try {
-        console.log('[Auth] Starting initial session check');
+        bootLog('Starting initial session check');
         
-        const sessionResult = await withTimeout(
-          supabase.auth.getSession(),
-          SESSION_INIT_TIMEOUT_MS,
-          'Initial session check'
-        );
+        // Short timeout - we mainly rely on onAuthStateChange
+        const timeoutPromise = new Promise<null>((resolve) => {
+          setTimeout(() => resolve(null), SESSION_INIT_TIMEOUT_MS);
+        });
+        
+        const sessionPromise = supabase.auth.getSession();
+        const result = await Promise.race([sessionPromise, timeoutPromise]);
         
         if (!isMounted) return;
         
-        if (!sessionResult) {
-          console.warn('[Auth] Initial session check timed out');
+        if (!result) {
+          bootLog('Initial session check timed out');
           // If we have local session, still complete as success
-          if (storedSession) {
-            console.log('[Auth] Using locally stored session despite timeout');
+          if (storedSession && !hasInitializedRef.current) {
+            bootLog('Using locally stored session despite timeout');
             completeSessionInit(false);
-            fetchUserDataInBackground(storedSession.user.id);
+            startUserDataFetch(storedSession.user.id);
           } else if (!hasInitializedRef.current) {
             completeSessionInit(true);
           }
           return;
         }
         
-        const { data: { session: initialSession }, error } = sessionResult;
+        const { data: { session: initialSession }, error } = result;
         
         if (error) {
           console.error('[Auth] Error getting initial session:', error);
           if (!hasInitializedRef.current) {
-            completeSessionInit(false);
+            // If we have stored session, don't fail on error
+            if (storedSession) {
+              completeSessionInit(false);
+            } else {
+              completeSessionInit(false);
+            }
           }
           return;
         }
         
+        // If onAuthStateChange hasn't fired yet, apply the session
         if (!hasInitializedRef.current) {
           setSession(initialSession);
           setUser(initialSession?.user ?? null);
-          
           completeSessionInit(false);
           
           if (initialSession?.user) {
-            fetchUserDataInBackground(initialSession.user.id);
+            startUserDataFetch(initialSession.user.id);
           }
         }
       } catch (error) {
@@ -555,7 +626,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearUserDataRetryTimer();
       subscription.unsubscribe();
     };
-  }, [completeSessionInit, fetchUserDataInBackground, clearUserDataRetryTimer]);
+  }, []); // Empty dependency array - runs ONCE
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -581,7 +652,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setEdition(null);
     setUser(null);
     setSession(null);
-    setHydratedFromCache(false);
+    hydratedFromCacheRef.current = false;
     clearUserDataRetryTimer();
     clearAllAuthCaches();
     

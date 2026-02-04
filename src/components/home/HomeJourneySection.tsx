@@ -1,21 +1,28 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Map as MapIcon, ChevronRight, RefreshCw, AlertCircle } from 'lucide-react';
 import { useRoadmapData } from '@/hooks/useRoadmapData';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 import JourneyCard, { type JourneyCardDay } from '@/components/roadmap/JourneyCard';
 import { TimelineNode } from '@/components/roadmap/TimelineSpine';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
+// Maximum time to show skeleton before showing retry UI
+const JOURNEY_LOADING_TIMEOUT_MS = 15000;
+
 const HomeJourneySection: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { profile, userDataLoading, userDataTimedOut, userDataError, retryUserData } = useAuth();
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
   
   const {
     roadmapDays,
     isLoadingDays,
     isErrorDays,
+    daysError,
     getDayStatus,
     forgeMode,
     forgeStartDate,
@@ -23,6 +30,31 @@ const HomeJourneySection: React.FC = () => {
   } = useRoadmapData();
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there';
+
+  // Timer to prevent infinite skeleton
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    
+    // Only start timer if we're loading roadmap (not user data)
+    if (isLoadingDays && !userDataLoading) {
+      timer = setTimeout(() => {
+        console.warn('[Journey] Loading timed out after', JOURNEY_LOADING_TIMEOUT_MS, 'ms');
+        setLoadingTimedOut(true);
+      }, JOURNEY_LOADING_TIMEOUT_MS);
+    } else {
+      // Reset timeout if loading completes
+      setLoadingTimedOut(false);
+    }
+    
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isLoadingDays, userDataLoading]);
+
+  const handleRetryJourney = () => {
+    setLoadingTimedOut(false);
+    queryClient.invalidateQueries({ queryKey: ['roadmap-days'] });
+  };
 
   const getJourneyType = () => {
     switch (userCohortType) {
@@ -49,8 +81,8 @@ const HomeJourneySection: React.FC = () => {
     return roadmapDays.slice(startIndex, startIndex + 4);
   }, [roadmapDays, getDayStatus]);
 
-  // Priority 1: Show skeleton while user data OR roadmap days are loading
-  if (userDataLoading || isLoadingDays) {
+  // Priority 1: Show skeleton while user data is loading
+  if (userDataLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-16 w-full rounded-xl" />
@@ -91,7 +123,50 @@ const HomeJourneySection: React.FC = () => {
     );
   }
 
-  // Priority 3: Roadmap query errored (not timeout from user data)
+  // Priority 3: Journey loading timed out - show retry UI instead of infinite skeleton
+  if (loadingTimedOut || (isLoadingDays && !userDataLoading && loadingTimedOut)) {
+    return (
+      <section className="space-y-4">
+        <div className="mb-2">
+          <h1 className="text-2xl font-bold text-foreground">
+            Hi {firstName}
+          </h1>
+          <p className="text-muted-foreground">Your journey is loading</p>
+        </div>
+        <div className="glass-premium rounded-xl p-6 text-center border border-amber-500/20">
+          <AlertCircle className="h-8 w-8 text-amber-500/70 mx-auto mb-3" />
+          <p className="text-sm text-foreground font-medium mb-2">
+            Taking longer than expected
+          </p>
+          <p className="text-xs text-muted-foreground mb-4">
+            Your journey data is still loading. This could be due to a slow connection.
+          </p>
+          <Button 
+            onClick={handleRetryJourney} 
+            size="sm" 
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Try Again
+          </Button>
+        </div>
+      </section>
+    );
+  }
+
+  // Priority 4: Still loading roadmap days - show skeleton (with timer active)
+  if (isLoadingDays) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-16 w-full rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-xl" />
+      </div>
+    );
+  }
+
+  // Priority 5: Roadmap query errored (not timeout from user data)
   if (isErrorDays) {
     return (
       <section className="space-y-4">
@@ -107,23 +182,23 @@ const HomeJourneySection: React.FC = () => {
             Couldn't load your journey
           </p>
           <p className="text-xs text-muted-foreground mb-4">
-            There was an error loading your roadmap. Please try again.
+            {daysError?.message || 'There was an error loading your roadmap. Please try again.'}
           </p>
           <Button 
-            onClick={() => window.location.reload()} 
+            onClick={handleRetryJourney} 
             size="sm" 
             variant="outline"
             className="gap-2"
           >
             <RefreshCw className="h-4 w-4" />
-            Reload Page
+            Retry
           </Button>
         </div>
       </section>
     );
   }
 
-  // Priority 4: Profile loaded but no edition assigned
+  // Priority 6: Profile loaded but no edition assigned
   if (profile && !profile.edition_id) {
     return (
       <section className="space-y-4">
@@ -143,7 +218,7 @@ const HomeJourneySection: React.FC = () => {
     );
   }
 
-  // Priority 5: Edition assigned but no roadmap days configured (admin issue)
+  // Priority 7: Edition assigned but no roadmap days configured (admin issue)
   if (!roadmapDays || roadmapDays.length === 0) {
     return (
       <section className="space-y-4">
