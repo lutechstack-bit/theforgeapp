@@ -1,240 +1,215 @@
 
+## What’s actually happening (root cause with evidence)
 
-## Root Cause Analysis
+### Symptoms you’re seeing
+- After login, **refresh** shows:
+  - “Your journey is being prepared / cohort assigned” (even though it was working)
+  - After ~15s: **“Taking longer than expected”**
+  - Sometimes a full-screen **“Something went wrong”** (ErrorBoundary) on desktop
+- Happens on **both Preview and Published**, and on **Safari Mac + Chrome/Edge**.
 
-After thorough investigation of the codebase, I've identified **multiple interconnected issues** causing the problems you're seeing:
+### Evidence from in-app diagnostics
+- With `/?homeDebug=1`, the **Home Debug Panel shows**:
+  - Events: ⏳, Learn: ⏳, Mentors: ⏳, Alumni: ⏳
+  - User Cohort: **(none)**
+- At the same time, the network capture did **not show any completed XHR/fetch calls** for those queries, which strongly suggests **queries are stuck in a “pending” state** (not erroring, not completing).
 
----
+### Core root cause (there are two coupled problems)
 
-### Issue 1: "Taking longer than expected" Error on Refresh (Production)
+#### Root cause A — “Hardened startup” timeouts create an inconsistent state
+In `AuthContext.tsx`, profile/edition fetching is “non-blocking” and wrapped in a 5s timeout:
+- If the request is slow or stalls, `withTimeout(..., 5000)` returns `null`
+- The app then sets:
+  - `profile = null`
+  - `edition = null`
+  - `userDataLoading = false`
 
-**Root Cause:** The `Home.tsx` page has a 15-second timeout that triggers `HomeErrorState` when any of its data queries (events, mentors, learn content, alumni) are still loading. The problem chain is:
+This causes two downstream problems:
+1) **Home starts its 15s timeout only after** `userDataLoading` becomes `false`.  
+   If profile fetch silently timed out, Home incorrectly assumes “user data is ready” and begins timing out the content queries.
+2) Components that rely on profile/edition (Roadmap, Journey header, cohort filtering) now behave as if:
+   - the user has no cohort, and
+   - roadmap has no days,
+   even though the real issue is “profile fetch didn’t finish”.
 
-1. **Auth context completes quickly** (session init under 3s) → routes render
-2. **But `profile` and `edition` are fetched in background** → `userDataLoading=true`
-3. **Home page queries depend on `profile.edition_id`** for cohort filtering
-4. **React Query starts these queries immediately** even when `profile` is null
-5. **Queries with `enabled: !!profile?.edition_id`** stay in "loading" state indefinitely waiting for profile
-6. **15-second timeout fires** → shows "Taking longer than expected"
+So refresh produces a misleading “cohort not assigned” UI and then the timeout error.
 
-**Why it works on first load but fails on refresh:** 
-- First load: Auth completes, profile loads, queries fire with valid edition_id
-- Refresh: Race condition where page renders before profile arrives, queries never start properly
+#### Root cause B — Some data queries can hang indefinitely (no abort) and React Query stays ⏳
+Your Home page queries (events/learn/mentors/alumni) throw on error, but **they never reach error**—they remain `isLoading`.
+That happens when the underlying fetch **stalls/hangs** (common on flaky networks and occasionally on mobile Safari/Chrome) because:
+- there is **no request-level abort timeout** (native fetch can hang for a long time),
+- and React Query will keep the query in loading state.
 
----
+This is exactly why you get “Taking longer than expected” after 15 seconds: the UI timeout triggers, but the requests are still stuck.
 
-### Issue 2: Countdown Timer Shows "00:00:00:00"
+### Important note (why it “never happened before”)
+These issues tend to appear when one of these changes happens:
+- a stricter timeout was introduced (profile fetch = 5 seconds),
+- the app started rendering more while user data is unresolved (by design),
+- or some users/devices encounter transient stalls to the backend endpoints (which becomes visible because there’s no abort).
 
-**Root Cause:** In `Home.tsx` (line 39-52), the edition is fetched via a **separate React Query** that depends on `profile?.edition_id`:
-
-```tsx
-const { data: edition } = useQuery({
-  queryKey: ['user-edition', profile?.edition_id],
-  queryFn: async () => {
-    if (!profile?.edition_id) return null;  // Returns null early
-    // ...
-  },
-  enabled: !!profile?.edition_id,  // Disabled if profile not loaded
-});
-```
-
-When `profile` is null (still loading), this query returns `null` → `edition` is null → `CompactCountdownTimer` receives `edition={null}` → countdown shows 00:00:00:00.
-
-**Additionally:** The `useAuth()` context already has `edition` data! But `Home.tsx` is fetching it again redundantly instead of using `const { edition } = useAuth()`.
-
----
-
-### Issue 3: "Your journey will appear here once your cohort is assigned"
-
-**Root Cause:** In `HomeJourneySection.tsx`, `useRoadmapData()` hook checks for `roadmapDays`:
-
-```tsx
-if (!roadmapDays || roadmapDays.length === 0) {
-  return (
-    <section>
-      ...
-      <p>Your journey will appear here once your cohort is assigned.</p>
-    </section>
-  );
-}
-```
-
-The `useRoadmapData()` hook returns empty `roadmapDays` when `profile?.edition_id` is null (line 33-37):
-
-```tsx
-if (!profile?.edition_id) {
-  return [];  // No edition = no roadmap data
-}
-```
-
-This happens because `profile` hasn't loaded yet when the component renders.
+This is not “1000 users will break the backend” by itself; it’s primarily **client resilience**: the app must handle slow/stalled requests and never silently treat “timed out” as “no cohort”.
 
 ---
 
-### Issue 4: Skeleton Loaders Never Resolve
+## The fix strategy (make refresh bulletproof)
 
-**Root Cause:** The carousels (Mentors, Alumni, Learn, Events) show skeletons because their queries are "loading" but never actually fetch data:
+We’ll implement three layers:
 
-- `mentorsQuery` → fetches immediately (no profile dependency) ✅
-- `alumniTestimonialsQuery` → fetches immediately ✅
-- `eventsQuery` → fetches immediately ✅
-- `learnContentQuery` → fetches immediately ✅
+### Layer 1 — Don’t convert “timeout” into “null profile”
+**Goal:** If profile fetch times out, don’t pretend the user has no profile/cohort. Instead mark a dedicated error state and keep recovery paths.
 
-BUT the filtering logic `displayMentors` depends on `userCohortType` which comes from `edition?.cohort_type`. When `edition` is null, filtering returns all items (fallback works), BUT the 15-second timeout still fires because `isAnyLoading` may still be true due to waterfall effects.
+Changes in `src/contexts/AuthContext.tsx`:
+- Add explicit states:
+  - `userDataError: Error | null`
+  - `userDataTimedOut: boolean`
+  - `lastUserDataFetchAt: number`
+- Update `withTimeout` usage so timeouts do NOT set `profile=null` as “truth”.
+  - If timed out:
+    - keep existing `profile/edition` (if any) instead of overwriting with null
+    - set `userDataTimedOut=true` and `userDataError` with a meaningful message
+    - keep background retry running (see Layer 2)
+- Add a “retry profile fetch” mechanism that:
+  - retries automatically (exponential backoff) a few times
+  - and also retries on:
+    - window focus
+    - browser coming back online
+- If timed out repeatedly, show a **purpose-built recovery UI** (reusing your existing “AuthRecovery” pattern) but for user data:
+  - “We couldn’t load your profile data”
+  - buttons: Retry, Clear Cache & Reload
 
----
+Why this matters:
+- It prevents the app from mistakenly switching to “cohort not assigned”.
+- It avoids cascading UI timeouts caused by incorrect `userDataLoading=false`.
 
-### Issue 5: forwardRef Warning (Minor)
+### Layer 2 — Add request-level abort timeouts for backend reads
+**Goal:** Any backend read should fail fast (e.g., 8–12 seconds), so React Query moves to `isError` and users can retry. No more infinite ⏳.
 
-**Root Cause:** In `BottomNav.tsx` (line 97):
-```tsx
-<MobileMenuSheet onClose={() => setMenuOpen(false)} />
-```
+Implementation approach:
+- Create a small utility in `src/lib/` (e.g., `queryTimeout.ts`) that wraps a promise and rejects after X ms.
+- Wrap every critical `useQuery` queryFn (Home queries + roadmap queries + sidebar highlights) like:
+  - `await promiseWithTimeout(supabaseCallPromise, 12000, 'home_mentors_all')`
+- When timeout occurs, throw an Error with a recognizable message (e.g., `FORGE_TIMEOUT:` prefix) so the UI can detect and display a correct message.
 
-The `MobileMenuSheet` component is passed directly to Sheet's children, but Sheet/SheetContent expects refs to be forwarded. This is a warning, not a blocker, but should be fixed.
+Where we apply this first (highest impact):
+- `src/pages/Home.tsx` queries:
+  - events
+  - learn_content
+  - mentors
+  - alumni_testimonials
+- `src/hooks/useRoadmapData.ts` roadmap days query and sidebar-related queries that impact Home rendering
 
----
+This ensures:
+- The app shows an actionable error state, not endless loading.
+- “Try Again” actually has a chance to succeed because queries aren’t stuck forever.
 
-## Fix Strategy
+### Layer 3 — Fix roadmap query enabling + remove “instant []” caching
+**Goal:** Roadmap should not cache an empty result just because profile wasn’t ready at that moment.
 
-### Fix 1: Use AuthContext's edition data instead of redundant query
+In `src/hooks/useRoadmapData.ts`:
+- Change the roadmap-days query:
+  - Remove `enabled: true`
+  - Replace with:
+    - enabled only when:
+      - `!userDataLoading` AND
+      - `profile` is known (or explicitly known missing) AND
+      - when edition is present: `!!profile.edition_id`
+  - If there is truly no edition assigned, we still return `[]`, but only after we know profile is loaded successfully.
+- Add a distinct UI message path:
+  - “Loading your journey…” (while profile is loading)
+  - “Your cohort isn’t assigned yet” (profile loaded AND edition_id is null)
+  - “We couldn’t load your profile data” (profile fetch failed/timed out)
 
-**File:** `src/pages/Home.tsx`
-
-Remove the redundant `useQuery` for edition (lines 39-52) and use the edition from AuthContext directly:
-
-```tsx
-const { profile, edition, userDataLoading } = useAuth();
-```
-
-This eliminates the query dependency chain and uses already-loaded data.
-
----
-
-### Fix 2: Add graceful loading state for when profile/edition are loading
-
-**File:** `src/pages/Home.tsx`
-
-Instead of showing the error state on timeout, show a more graceful "loading content" state when `userDataLoading` is true. The page should render with placeholders but NOT trigger the error timeout.
-
-Add check:
-```tsx
-const isProfileLoading = userDataLoading && !profile;
-
-// Adjust timeout to NOT fire while profile is still loading
-useEffect(() => {
-  // Only start timeout AFTER profile has loaded (or failed)
-  if (isProfileLoading) return;
-  
-  if (isAnyLoading) {
-    // ... existing timeout logic
-  }
-}, [isAnyLoading, isProfileLoading]);
-```
-
----
-
-### Fix 3: Update HomeJourneySection to handle loading state
-
-**File:** `src/components/home/HomeJourneySection.tsx`
-
-Currently shows "cohort not assigned" message when profile is loading. Should show skeleton instead:
-
-```tsx
-const { profile, userDataLoading } = useAuth();
-
-// Show loading skeleton if profile is still loading
-if (userDataLoading && !profile) {
-  return (
-    <div className="space-y-4">
-      <Skeleton className="h-16 w-full rounded-xl" />
-      <Skeleton className="h-32 w-full rounded-xl" />
-    </div>
-  );
-}
-
-// Then show "cohort not assigned" only if profile loaded but has no edition
-if (profile && !profile.edition_id) {
-  return <section>... cohort not assigned ...</section>;
-}
-```
+In `src/components/home/HomeJourneySection.tsx`:
+- Update empty state decision tree:
+  1) if `userDataLoading` → skeleton
+  2) if `userDataTimedOut` or `userDataError` → show “Couldn’t load profile” with Retry
+  3) if `profile && !profile.edition_id` → show “cohort not assigned”
+  4) else if roadmapDays empty → show “journey not configured yet” (admin/config issue) rather than cohort message
 
 ---
 
-### Fix 4: Fix CompactCountdownTimer to handle null edition
+## Address the “Something went wrong” (ErrorBoundary) screen
+That screen means a runtime exception is being thrown (not just slow queries).
 
-**File:** `src/components/home/CompactCountdownTimer.tsx`
-
-Add early return or skeleton when edition is null:
-
-```tsx
-export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ edition }) => {
-  // If no edition data yet, show a loading placeholder
-  if (!edition) {
-    return (
-      <div className="h-16 rounded-xl bg-muted/30 animate-pulse" />
-    );
-  }
-  // ... rest of component
-};
-```
+We will:
+1) Audit the components that always mount on Home:
+   - `RoadmapSidebar`
+   - `FloatingHighlightsButton`
+   - `AdminCohortSwitcher`
+   - `CompactCountdownTimer`
+2) Ensure they are null-safe when `profile` or `edition` is temporarily unavailable.
+3) Add a tiny “crash signature” logger inside `ErrorBoundary.componentDidCatch` (console + optional backend logging in a later step) so we can pinpoint the exact component/line if it ever happens again in production.
 
 ---
 
-### Fix 5: Fix forwardRef warning in MobileMenuSheet
+## Fix the remaining ref warning (quality + stability)
+Console still shows “Function components cannot be given refs” referencing `BottomNav`. Even if it’s “just a warning”, it’s better to eliminate it (and in some UI-lib compositions it can cause weird runtime behavior).
 
-**File:** `src/components/layout/MobileMenuSheet.tsx`
-
-Wrap component with `forwardRef`:
-
-```tsx
-export const MobileMenuSheet = React.forwardRef<
-  React.ElementRef<typeof SheetContent>,
-  MobileMenuSheetProps
->((props, ref) => {
-  // ... component body, pass ref to SheetContent
-});
-MobileMenuSheet.displayName = 'MobileMenuSheet';
-```
+Change:
+- `src/components/layout/BottomNav.tsx` → wrap export in `React.forwardRef` (or ensure it’s never used where a ref is passed). This completes the ref-forwarding cleanup.
 
 ---
 
-### Fix 6: Fix HomeErrorState forwardRef warning
+## Implementation checklist (files we’ll change)
 
-**File:** `src/components/home/HomeErrorState.tsx`
+### Auth + startup resilience
+- `src/contexts/AuthContext.tsx`
+  - introduce `userDataError`, `userDataTimedOut`
+  - change timeout behavior to not overwrite profile/edition with null
+  - add retry/backoff and retry triggers (focus/online)
+  - expose `refreshProfile()` that also clears timedOut state
 
-Similar fix - wrap with forwardRef since it's being used in a context that may pass refs.
+### Query abort timeouts
+- Add `src/lib/promiseTimeout.ts` (or similar)
+- Update:
+  - `src/pages/Home.tsx` queryFns wrapped with timeout
+  - `src/hooks/useRoadmapData.ts` queryFns wrapped with timeout
+  - (If needed) `src/components/roadmap/RoadmapSidebar.tsx` and the FAB hook/queries
+
+### Roadmap query enable + UI logic
+- `src/hooks/useRoadmapData.ts`
+  - fix roadmap-days query `enabled` logic
+  - ensure no “instant []” unless we truly know there’s no edition
+- `src/components/home/HomeJourneySection.tsx`
+  - correct empty state logic using new auth flags
+
+### ErrorBoundary improvements (diagnostic)
+- `src/components/error/ErrorBoundary.tsx`
+  - include a short “Error ID” / “last action” info (optional)
+  - keep existing recovery buttons
+
+### Ref forwarding cleanup
+- `src/components/layout/BottomNav.tsx`
+  - forwardRef or adjust usage to avoid refs
 
 ---
 
-## Technical Summary
-
-| Issue | Cause | Fix File | Change |
-|-------|-------|----------|--------|
-| Error on refresh | 15s timeout fires before profile loads | `Home.tsx` | Don't start timeout until profile loaded |
-| 00:00:00:00 countdown | Redundant edition query | `Home.tsx` | Use `edition` from AuthContext |
-| "Cohort not assigned" | Profile not loaded yet | `HomeJourneySection.tsx` | Show skeleton while loading |
-| Eternal skeletons | Queries wait for null profile | `Home.tsx` | Pass profile-loading state downstream |
-| forwardRef warnings | Components missing forwardRef | Multiple | Add React.forwardRef wrapper |
-
----
-
-## Expected Outcome
-
-After these fixes:
-1. **On refresh:** Page shows skeletons briefly, then content appears (no error)
-2. **Countdown timer:** Shows loading placeholder until edition loads, then correct countdown
-3. **Journey section:** Shows skeleton while loading, then content (or "no cohort" if actually unassigned)
-4. **No console warnings** for forwardRef issues
-5. **Production and preview behave identically**
+## How we will verify (end-to-end tests)
+1) Login → land on Home → confirm content loads.
+2) Refresh immediately after login (multiple times):
+   - Home content still loads; no “Taking longer than expected”
+3) Enable `/?homeDebug=1`:
+   - verify the debug panel shows queries progress to ✅
+   - verify `User Cohort` shows correctly once profile/edition loaded
+4) Simulate slow network (browser throttling):
+   - confirm queries fail within ~12s with a clear error + retry
+   - retry recovers without hard reload
+5) Mobile Safari test:
+   - same refresh scenario, confirm no stuck loading
+6) Confirm no ref warnings in console.
 
 ---
 
-## Files to Change
+## Expected outcome
+- Refresh becomes safe and consistent:
+  - No false “cohort not assigned” due to timeouts
+  - No indefinite ⏳ (backend reads either succeed or fail fast)
+  - Users see actionable recovery instead of broken state
+- Much stronger behavior under real-world conditions (spotty mobile networks), which is what matters for 1000+ users.
 
-1. `src/pages/Home.tsx` - Main fixes for timeout and edition query
-2. `src/components/home/HomeJourneySection.tsx` - Loading state handling
-3. `src/components/home/CompactCountdownTimer.tsx` - Null edition handling
-4. `src/components/layout/MobileMenuSheet.tsx` - forwardRef fix
-5. `src/components/home/HomeErrorState.tsx` - forwardRef fix
+---
 
+## One critical follow-up question (only if you want)
+To ensure the published domain behaves exactly the same: are users installing the app as a PWA (Add to Home Screen), or using it in Safari/Chrome normally?  
+If PWAs are used, we’ll also add a small “Version / Update available” indicator and force-refresh logic when a new build is detected to prevent stale bundles.
