@@ -1,179 +1,198 @@
 
-# Visual Design & Readability Improvements
+# Prep Section: Prominent Homepage Card with Cohort-Specific Content
 
 ## Summary
-This plan addresses three core issues: (1) the UI feeling too dark and discouraging reading, (2) the Rules section having poor typography hierarchy, and (3) the homepage being cluttered without enough breathing room.
+Elevate the Prep checklist visibility by adding a dedicated card on the Homepage, positioned immediately after the Journey section. Filter out "Mindset & Wellness" and "Script Preparation" categories from display. Use a horizontal progress bar (not a progress ring) to match the app's existing design language.
 
 ---
 
-## Changes Overview
+## Key Design Decisions
 
-### 1. Rules Section Typography Fix
-**Problem**: Headings and descriptions are nearly the same size (both ~14px), but the descriptions contain the important information users need to read.
+### Why NOT a Progress Ring?
+1. **Inconsistent with app design language** - The app uses horizontal progress bars throughout:
+   - `OnboardingChecklist` → horizontal progress bar
+   - `TaskStageCard` → horizontal progress bar in headers
+   - `PrepChecklistSection` → horizontal progress bar
+2. **Too complex for the card layout** - A ring takes up significant vertical space
+3. **Horizontal bar is more scannable** - Users can quickly see progress at a glance
 
-**Solution**: Apply "same size, different emphasis" approach:
-- **Titles**: Slightly lighter weight (`font-medium`), smaller size (`text-sm`/14px), muted gold/cream color
-- **Descriptions**: Same or slightly larger size (`text-[15px]`), regular weight but with increased line-height (`leading-relaxed` → `leading-loose`), cream foreground color for maximum readability
-- **Increased padding** within rule cards (p-4 → p-5)
-- **More vertical spacing** between rule items (gap-3 → gap-4)
+### Recommended Alternative: Horizontal Progress Strip
+A clean card with:
+- **Left**: Icon (ClipboardCheck) + Title + Subtitle
+- **Center**: Horizontal progress bar with `X/Y complete` label
+- **Right**: Chevron to navigate to full checklist
 
-**Files**: `src/components/roadmap/RulesAccordion.tsx`
-
----
-
-### 2. Add Yellow/Gold Color Across UI
-
-**Problem**: The pure black background with minimal accent colors feels sterile and discourages engagement.
-
-**Solution**: Apply gold accents comprehensively:
-
-#### A) Section Headers & Titles
-- Add gold left-border accent to all section titles (`.section-title` pattern)
-- Use gradient-text on primary headings where appropriate
-- Add subtle gold underline or glow to "Meet Your Mentors", "Alumni Spotlight", etc.
-
-#### B) Card Backgrounds & Borders
-- Change `.glass-card` to have a subtle gold-tinted border (`border-primary/20`)
-- Add gold-tinted background gradient to accordion headers
-- Rules section cards: gold-tinted backgrounds for general/house rules
-
-#### C) Icons & Interactive Elements
-- Icons in rule cards: use `text-primary` (gold) instead of muted
-- Buttons get gold hover states
-- Active/current indicators use gold glow
-
-**Files**: 
-- `src/index.css` (add new utility classes)
-- `src/pages/Home.tsx` (section header styling)
-- `src/components/roadmap/RulesAccordion.tsx` (icons, card backgrounds)
-- `src/components/shared/ContentCarousel.tsx` (title styling)
+This matches the `OnboardingChecklist` header pattern already used in the app.
 
 ---
 
-### 3. Homepage Breathing Room - Generous Spacing
+## Cohort-Specific Content Reminder
 
-**Problem**: Sections are stacked too tightly, creating visual clutter.
+The prep content already varies by cohort via the `prep_checklist_items` table:
+- **Filmmakers (FORGE)**: Script prep, technical, packing
+- **Writers (FORGE_WRITING)**: Writing prep, technical, packing
+- **Creators (FORGE_CREATORS)**: Content prep, technical, packing
 
-**Solution**: Double the current spacing between major sections:
-
-#### Current State
-- Main content: `space-y-5 sm:space-y-6` (~20-24px gaps)
-- Carousel internal: `space-y-4` (~16px)
-
-#### New State
-- Main content: `space-y-10 sm:space-y-12` (~40-48px gaps between major sections)
-- Add visual separators between sections (subtle horizontal line or gradient fade)
-- Increase padding within ContentCarousel headers
-
-**Files**:
-- `src/pages/Home.tsx` (main content spacing)
-- `src/components/shared/ContentCarousel.tsx` (internal spacing)
-- `src/components/home/HomeJourneySection.tsx` (section spacing)
+The `useRoadmapData` hook already filters by `userCohortType`, so the Homepage card will automatically show cohort-relevant progress.
 
 ---
 
-## Detailed Implementation
+## Implementation Plan
 
-### File 1: `src/components/roadmap/RulesAccordion.tsx`
+### File 1: Create `src/components/home/PrepHighlightCard.tsx` (NEW)
 
-**Typography Hierarchy Changes**:
-1. Rule item titles: `text-sm font-medium text-primary/90` (muted gold, medium weight)
-2. Rule item descriptions: `text-[15px] leading-loose text-foreground/90` (slightly larger, more line-height, cream color)
-3. Section headers: Add gold background tint, slightly larger padding
-4. Icons: Change from muted colors to `text-primary` (gold)
-5. Card backgrounds: Add `bg-primary/5` tint for warmth
+A warm-styled card that surfaces Prep checklist status on the Homepage.
 
-**Spacing Changes**:
-1. Rule card padding: `p-3` → `p-5`
-2. Gap between rules: `space-y-2` → `space-y-4`
-3. Accordion content padding: `pb-4` → `pb-6`
+```text
+Layout (Mobile-First):
+┌─────────────────────────────────────────────────────┐
+│  ┌────┐                                             │
+│  │ 📋 │  Prep Checklist          [ View → ]        │
+│  └────┘  Get ready for Forge                        │
+│                                                     │
+│  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░  5/8 complete              │
+└─────────────────────────────────────────────────────┘
+```
 
-### File 2: `src/index.css`
+**Features**:
+- Uses `card-warm` styling (gold-tinted gradient background)
+- Gold icon (`ClipboardCheck` or `Luggage` in `text-primary`)
+- Horizontal progress bar (`<Progress />` component)
+- "X/Y complete" text label
+- Tap navigates to `/roadmap/prep`
+- Empty state: "Get Started →" CTA if 0% progress
 
-**New Utility Classes**:
-```css
-/* Gold-tinted card backgrounds */
-.card-warm {
-  background: linear-gradient(135deg, 
-    hsl(var(--primary) / 0.05), 
-    hsl(var(--card) / 0.4)
-  );
-  border: 1px solid hsl(var(--primary) / 0.15);
-}
-
-/* Section divider */
-.section-divider {
-  height: 1px;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    hsl(var(--primary) / 0.2) 50%, 
-    transparent 100%
-  );
-  margin: 2rem 0;
-}
-
-/* Enhanced section title with gold accent */
-.section-title-warm {
-  @apply text-lg sm:text-xl font-bold text-foreground;
-  border-left: 3px solid hsl(var(--primary));
-  padding-left: 0.75rem;
+**Props**:
+```typescript
+interface PrepHighlightCardProps {
+  totalItems: number;
+  completedItems: number;
+  progressPercent: number;
 }
 ```
 
-### File 3: `src/pages/Home.tsx`
+---
 
-**Spacing Changes**:
-1. Main content area: `space-y-5 sm:space-y-6` → `space-y-10 sm:space-y-12`
-2. Add optional dividers between major carousel sections
+### File 2: Update `src/hooks/useRoadmapData.ts`
 
-### File 4: `src/components/shared/ContentCarousel.tsx`
+Add a computed `prepProgress` object that:
+1. **Filters out excluded categories** (`mindset`, `script_prep`)
+2. **Calculates progress** on visible items only
+3. **Exposes summary** for Homepage consumption
 
-**Visual Changes**:
-1. Title: Add gold left-border accent
-2. Increase margin-bottom for title row: `mb-4` → `mb-6`
-3. Add subtle gold tint to the section container
+**New Return Values**:
+```typescript
+// Add to useRoadmapData return
+prepProgress: {
+  totalItems: number;
+  completedItems: number;
+  progressPercent: number;
+  hasData: boolean;
+}
+```
 
-### File 5: `src/components/home/HomeJourneySection.tsx`
+**Filter Logic**:
+```typescript
+const EXCLUDED_PREP_CATEGORIES = ['mindset', 'script_prep'];
 
-**Spacing & Visual Changes**:
-1. Increase bottom margin after welcome header
-2. Add gold accent to "Your Journey" section header
+const visiblePrepItems = useMemo(() => {
+  if (!prepItems) return [];
+  return prepItems.filter(item => !EXCLUDED_PREP_CATEGORIES.includes(item.category));
+}, [prepItems]);
+
+const prepProgress = useMemo(() => {
+  const total = visiblePrepItems.length;
+  const completed = visiblePrepItems.filter(item => completedIds.has(item.id)).length;
+  return {
+    totalItems: total,
+    completedItems: completed,
+    progressPercent: total > 0 ? Math.round((completed / total) * 100) : 0,
+    hasData: total > 0,
+  };
+}, [visiblePrepItems, completedIds]);
+```
 
 ---
 
-## Before/After Comparison
+### File 3: Update `src/components/roadmap/PrepChecklistSection.tsx`
 
-| Element | Before | After |
-|---------|--------|-------|
-| Rules title | `text-sm font-medium text-foreground` | `text-sm font-medium text-primary/80` |
-| Rules description | `text-xs text-muted-foreground mt-0.5` | `text-[15px] leading-loose text-foreground/90 mt-1.5` |
-| Rule card | `p-3 rounded-lg hover:bg-secondary/30` | `p-5 rounded-lg card-warm` |
-| Homepage sections | `space-y-5` | `space-y-10` |
-| Section titles | Plain text | Gold left-border + slightly larger |
-| Card borders | `border-border/30` | `border-primary/20` |
-| Icons | Various muted | `text-primary` (gold) |
+Apply the same category filter so the Roadmap/Prep page is consistent with Homepage.
+
+**Changes**:
+1. Add `EXCLUDED_CATEGORIES` constant
+2. Filter items before grouping by category
+3. Remove `mindset` and `script_prep` from `categoryConfig` object (cleanup)
+
+```typescript
+const EXCLUDED_CATEGORIES = ['mindset', 'script_prep'];
+
+// Early in component, before groupedItems:
+const visibleItems = items.filter(item => !EXCLUDED_CATEGORIES.includes(item.category));
+
+// Then use visibleItems instead of items for all calculations
+```
 
 ---
 
-## Technical Details
+### File 4: Update `src/pages/Home.tsx`
 
-### CSS Variables Used
-- `--primary`: Gold (#FFBC3B)
-- `--forge-gold`: Deep Gold (#D38F0C)
-- `--foreground`: Cream (#FCF7EF)
-- `--muted-foreground`: Muted cream for less important text
+Add the `PrepHighlightCard` component after `HomeJourneySection`.
 
-### Responsive Considerations
-- Mobile: Slightly reduced spacing (40px → 32px) to prevent excessive scrolling
-- Desktop: Full generous spacing applied
-- Touch targets remain 44px+ minimum
+**Position in Layout**:
+```tsx
+{/* Journey Section */}
+<HomeJourneySection />
+
+{/* NEW: Prep Checklist Card */}
+{prepProgress?.hasData && (
+  <PrepHighlightCard 
+    totalItems={prepProgress.totalItems}
+    completedItems={prepProgress.completedItems}
+    progressPercent={prepProgress.progressPercent}
+  />
+)}
+
+{/* Existing Carousels */}
+<ContentCarousel title="Meet Your Mentors" ... />
+```
+
+This ensures Prep is visible immediately after Journey, without scrolling through all carousels.
+
+---
+
+## Files Summary
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `src/components/home/PrepHighlightCard.tsx` | CREATE | New Homepage card component |
+| `src/hooks/useRoadmapData.ts` | MODIFY | Add `prepProgress` computed object with filtering |
+| `src/components/roadmap/PrepChecklistSection.tsx` | MODIFY | Filter out mindset/script_prep categories |
+| `src/pages/Home.tsx` | MODIFY | Import and render PrepHighlightCard after Journey |
+
+---
+
+## Visual Design Specifications
+
+### PrepHighlightCard Styling
+- **Container**: `card-warm rounded-xl p-4` (matches Rules accordion cards)
+- **Icon wrapper**: `p-2.5 rounded-lg bg-primary/15 border border-primary/20`
+- **Icon**: `Luggage` or `ClipboardCheck` in `text-primary`
+- **Title**: `text-foreground font-semibold`
+- **Subtitle**: `text-xs text-muted-foreground`
+- **Progress bar**: `<Progress className="h-2" />` with gold fill
+- **Count label**: `text-sm text-muted-foreground` → "5/8 complete"
+- **CTA**: Gold text with chevron → navigates to `/roadmap/prep`
+
+### Responsive Behavior
+- **Mobile**: Full-width card, stacked layout if needed
+- **Desktop**: Same full-width within main content column
 
 ---
 
 ## Expected Outcome
 
-After implementing these changes:
-1. **Rules section** will have clear visual hierarchy where descriptions stand out as the primary content
-2. **Overall UI** will feel warmer and more inviting with gold accents throughout
-3. **Homepage** will feel less cluttered with clear visual separation between sections
-4. **Readability** will improve significantly with larger description text and increased line spacing
+1. **Prep is visible on Homepage** - Users see their prep progress immediately after Journey
+2. **Cohort-specific content** - Each cohort sees only their relevant categories
+3. **Consistent design** - Uses horizontal progress bar like rest of app
+4. **Clean filtering** - Mindset & script_prep categories hidden from view
+5. **One-tap access** - Card navigates to full `/roadmap/prep` checklist
