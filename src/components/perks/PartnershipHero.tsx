@@ -1,22 +1,22 @@
  import React from 'react';
  import { Badge } from '@/components/ui/badge';
  
- const partners = [
-   {
-     id: 'sony',
-     name: 'Sony',
-     logo: '/images/brands/sony.png',
-     discount: 'Up to 25% off',
-     description: 'Cameras, lenses & accessories',
-   },
-   {
-     id: 'digitek',
-     name: 'Digitek',
-     logo: '/images/brands/digitek.png',
-     discount: 'Up to 30% off',
-     description: 'Lighting & production gear',
-   },
- ];
+const partners = [
+  {
+    id: 'sony',
+    name: 'Sony',
+    logo: '/images/brands/sony.png?v=2',
+    discount: 'Up to 25% off',
+    description: 'Cameras, lenses & accessories',
+  },
+  {
+    id: 'digitek',
+    name: 'Digitek',
+    logo: '/images/brands/digitek.png?v=2',
+    discount: 'Up to 30% off',
+    description: 'Lighting & production gear',
+  },
+];
  
  export const PartnershipHero: React.FC = () => {
    return (

@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => ({
             handler: "CacheFirst",
             options: {
               cacheName: "images-cache",
-              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 7 },
             },
           },
           // Removed Supabase caching to prevent auth token issues
