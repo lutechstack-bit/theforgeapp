@@ -1,162 +1,178 @@
 
-# Prep Section: Prominent Homepage Card with Cohort-Specific Content
+# Mentor Card Redesign - Clean GrowthX-Inspired Design
 
 ## Summary
-Elevate the Prep checklist visibility by adding a dedicated card on the Homepage, positioned immediately after the Journey section. Filter out "Mindset & Wellness" and "Script Preparation" categories from display. Use a horizontal progress bar (not a progress ring) to match the app's existing design language.
+Redesign the mentor cards to feel modern, warm, and credible by switching from the current flip-card design to a cleaner vertical layout with color photos, proper spacing, and visible brand logos. The new design is inspired by GrowthX's clean aesthetic while maintaining Forge's gold-accented brand identity.
 
 ---
 
-## Key Design Decisions
+## Current Issues
 
-### Why NOT a Progress Ring?
-1. **Inconsistent with app design language** - The app uses horizontal progress bars throughout:
-   - `OnboardingChecklist` → horizontal progress bar
-   - `TaskStageCard` → horizontal progress bar in headers
-   - `PrepChecklistSection` → horizontal progress bar
-2. **Too complex for the card layout** - A ring takes up significant vertical space
-3. **Horizontal bar is more scannable** - Users can quickly see progress at a glance
-
-### Recommended Alternative: Horizontal Progress Strip
-A clean card with:
-- **Left**: Icon (ClipboardCheck) + Title + Subtitle
-- **Center**: Horizontal progress bar with `X/Y complete` label
-- **Right**: Chevron to navigate to full checklist
-
-This matches the `OnboardingChecklist` header pattern already used in the app.
+| Problem | Impact |
+|---------|--------|
+| Black & white photos | Reduces warmth, feels dated and less personable |
+| Complex flip animation | Confusing UX, hides important info (brands) behind interaction |
+| Small card size | Cramped content, hard to read on mobile |
+| Topic/role buried | Not immediately visible what mentor teaches |
+| Brands only visible on flip | Missing credibility signals at first glance |
 
 ---
 
-## Cohort-Specific Content Reminder
+## New Card Structure (GrowthX-Inspired)
 
-The prep content already varies by cohort via the `prep_checklist_items` table:
-- **Filmmakers (FORGE)**: Script prep, technical, packing
-- **Writers (FORGE_WRITING)**: Writing prep, technical, packing
-- **Creators (FORGE_CREATORS)**: Content prep, technical, packing
+```text
+┌──────────────────────────────────┐
+│                                  │
+│        [COLOR PHOTO]             │
+│        (3:4 aspect ratio)        │
+│        object-cover              │
+│                                  │
+├──────────────────────────────────┤
+│  Topic / What They Teach         │  <- Gold text, uppercase, small
+│  ─────────────────────────       │
+│  Mentor Name                     │  <- Bold, larger, cream
+│                                  │
+│  ┌─────┐ ┌─────┐ ┌─────┐        │  <- Brand logos (3 max)
+│  │ Logo│ │ Logo│ │ Logo│        │
+│  └─────┘ └─────┘ └─────┘        │
+└──────────────────────────────────┘
+```
 
-The `useRoadmapData` hook already filters by `userCohortType`, so the Homepage card will automatically show cohort-relevant progress.
+**Key Design Principles:**
+1. **Full color photos** - No filters, no grayscale, warm and inviting
+2. **Topic first** - What they teach is immediately visible (gold text)
+3. **Name prominent** - Clear, bold, easy to read
+4. **Brands visible** - Credibility logos always shown (not hidden behind flip)
+5. **Generous padding** - Breathing room for premium feel
+6. **Gold accents** - Consistent with Forge brand identity
 
 ---
 
 ## Implementation Plan
 
-### File 1: Create `src/components/home/PrepHighlightCard.tsx` (NEW)
+### File 1: Create `src/components/shared/CleanMentorCard.tsx` (NEW)
 
-A warm-styled card that surfaces Prep checklist status on the Homepage.
+A completely new mentor card component with the GrowthX-inspired design.
 
-```text
-Layout (Mobile-First):
-┌─────────────────────────────────────────────────────┐
-│  ┌────┐                                             │
-│  │ 📋 │  Prep Checklist          [ View → ]        │
-│  └────┘  Get ready for Forge                        │
-│                                                     │
-│  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░  5/8 complete              │
-└─────────────────────────────────────────────────────┘
-```
+**Component Features:**
+- **No flip animation** - Static card, tap opens modal
+- **Full-color photo** - Uses existing `image_url` without filters
+- **Topic badge** - Shows first role/specialty in gold
+- **Clean typography** - Name is prominent, topic is secondary but visible
+- **Brand strip** - Up to 3 logos displayed at the bottom
+- **Subtle hover** - Light scale + gold border glow (desktop)
+- **Touch feedback** - `tap-scale` class for mobile
 
-**Features**:
-- Uses `card-warm` styling (gold-tinted gradient background)
-- Gold icon (`ClipboardCheck` or `Luggage` in `text-primary`)
-- Horizontal progress bar (`<Progress />` component)
-- "X/Y complete" text label
-- Tap navigates to `/roadmap/prep`
-- Empty state: "Get Started →" CTA if 0% progress
+**Card Dimensions:**
+- Mobile: `min-w-[180px]` (slightly wider than current 160px)
+- Desktop: `min-w-[240px]`
+- Aspect: `aspect-[3/4]` maintained
 
-**Props**:
-```typescript
-interface PrepHighlightCardProps {
-  totalItems: number;
-  completedItems: number;
-  progressPercent: number;
-}
-```
+**Styling:**
+- Container: `card-warm` background with gold border accent
+- Photo: `object-cover object-top` (no grayscale filter)
+- Topic: `text-xs text-primary uppercase tracking-wide font-semibold`
+- Name: `text-lg font-bold text-foreground`
+- Brands: Small logo pills in a flex row
 
----
+### File 2: Update `src/pages/Home.tsx`
 
-### File 2: Update `src/hooks/useRoadmapData.ts`
-
-Add a computed `prepProgress` object that:
-1. **Filters out excluded categories** (`mindset`, `script_prep`)
-2. **Calculates progress** on visible items only
-3. **Exposes summary** for Homepage consumption
-
-**New Return Values**:
-```typescript
-// Add to useRoadmapData return
-prepProgress: {
-  totalItems: number;
-  completedItems: number;
-  progressPercent: number;
-  hasData: boolean;
-}
-```
-
-**Filter Logic**:
-```typescript
-const EXCLUDED_PREP_CATEGORIES = ['mindset', 'script_prep'];
-
-const visiblePrepItems = useMemo(() => {
-  if (!prepItems) return [];
-  return prepItems.filter(item => !EXCLUDED_PREP_CATEGORIES.includes(item.category));
-}, [prepItems]);
-
-const prepProgress = useMemo(() => {
-  const total = visiblePrepItems.length;
-  const completed = visiblePrepItems.filter(item => completedIds.has(item.id)).length;
-  return {
-    totalItems: total,
-    completedItems: completed,
-    progressPercent: total > 0 ? Math.round((completed / total) * 100) : 0,
-    hasData: total > 0,
-  };
-}, [visiblePrepItems, completedIds]);
-```
-
----
-
-### File 3: Update `src/components/roadmap/PrepChecklistSection.tsx`
-
-Apply the same category filter so the Roadmap/Prep page is consistent with Homepage.
-
-**Changes**:
-1. Add `EXCLUDED_CATEGORIES` constant
-2. Filter items before grouping by category
-3. Remove `mindset` and `script_prep` from `categoryConfig` object (cleanup)
+Replace `FlipMentorCard` import with `CleanMentorCard`:
 
 ```typescript
-const EXCLUDED_CATEGORIES = ['mindset', 'script_prep'];
+// Change from:
+import { FlipMentorCard } from '@/components/shared/FlipMentorCard';
 
-// Early in component, before groupedItems:
-const visibleItems = items.filter(item => !EXCLUDED_CATEGORIES.includes(item.category));
-
-// Then use visibleItems instead of items for all calculations
+// To:
+import { CleanMentorCard } from '@/components/shared/CleanMentorCard';
 ```
 
----
+Update the carousel to use the new component:
 
-### File 4: Update `src/pages/Home.tsx`
-
-Add the `PrepHighlightCard` component after `HomeJourneySection`.
-
-**Position in Layout**:
 ```tsx
-{/* Journey Section */}
-<HomeJourneySection />
-
-{/* NEW: Prep Checklist Card */}
-{prepProgress?.hasData && (
-  <PrepHighlightCard 
-    totalItems={prepProgress.totalItems}
-    completedItems={prepProgress.completedItems}
-    progressPercent={prepProgress.progressPercent}
-  />
-)}
-
-{/* Existing Carousels */}
-<ContentCarousel title="Meet Your Mentors" ... />
+<CleanMentorCard
+  key={mentor.id}
+  mentor={mentorData}
+  onClick={() => handleMentorClick(mentorData)}
+/>
 ```
 
-This ensures Prep is visible immediately after Journey, without scrolling through all carousels.
+### File 3: Update `src/data/mentorsData.ts` (Optional Cleanup)
+
+Since mentors are now stored in the database and fetched dynamically, this file may only serve as a type definition reference. The existing `Mentor` interface remains valid:
+
+```typescript
+export interface Mentor {
+  id: string;
+  name: string;
+  title: string;
+  roles: string[];  // First role = topic they teach
+  imageUrl: string;
+  modalImageUrl?: string;
+  bio: string[];
+  brands: MentorBrand[];
+}
+```
+
+No changes needed to the interface.
+
+### File 4: Keep `src/components/shared/FlipMentorCard.tsx` (RETAIN)
+
+Keep the flip card component for potential future use or A/B testing. No modifications.
+
+---
+
+## Visual Specifications
+
+### Color Photo Treatment
+- **Current**: Photos may have grayscale or desaturated effects
+- **New**: Full color, natural warmth
+- **Image object fit**: `object-cover object-top` (faces centered at top)
+
+### Typography Hierarchy
+| Element | Style |
+|---------|-------|
+| Topic (role) | `text-xs text-primary uppercase tracking-wide font-semibold` |
+| Name | `text-lg sm:text-xl font-bold text-foreground` |
+| Brand text fallback | `text-[10px] font-medium text-muted-foreground` |
+
+### Spacing
+| Area | Value |
+|------|-------|
+| Card padding (content area) | `p-4` |
+| Gap between topic and name | `mb-1` |
+| Gap between name and brands | `mt-3` |
+| Brand logo height | `h-6` |
+| Brand pill spacing | `gap-2` |
+
+### Hover Effects (Desktop Only)
+- Scale: `hover:scale-[1.02]`
+- Border glow: `hover:border-primary/50 hover:shadow-[0_0_20px_hsl(var(--primary)/0.2)]`
+- Transition: `transition-all duration-300`
+
+### Mobile Touch Feedback
+- Uses existing `tap-scale` class from CSS
+- Subtle press animation on tap
+
+---
+
+## Brand Logo Display Logic
+
+The new card shows up to 3 brand logos at the bottom:
+
+```typescript
+// Show up to 3 brands with logos
+const visibleBrands = mentor.brands.slice(0, 3);
+
+// If no logo URL, show text badge instead
+{brand.logoUrl ? (
+  <img src={brand.logoUrl} alt={brand.name} className="h-5 max-w-[60px] object-contain" />
+) : (
+  <span className="text-[10px] font-medium text-muted-foreground bg-muted/50 px-2 py-0.5 rounded">
+    {brand.name}
+  </span>
+)}
+```
 
 ---
 
@@ -164,35 +180,38 @@ This ensures Prep is visible immediately after Journey, without scrolling throug
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `src/components/home/PrepHighlightCard.tsx` | CREATE | New Homepage card component |
-| `src/hooks/useRoadmapData.ts` | MODIFY | Add `prepProgress` computed object with filtering |
-| `src/components/roadmap/PrepChecklistSection.tsx` | MODIFY | Filter out mindset/script_prep categories |
-| `src/pages/Home.tsx` | MODIFY | Import and render PrepHighlightCard after Journey |
-
----
-
-## Visual Design Specifications
-
-### PrepHighlightCard Styling
-- **Container**: `card-warm rounded-xl p-4` (matches Rules accordion cards)
-- **Icon wrapper**: `p-2.5 rounded-lg bg-primary/15 border border-primary/20`
-- **Icon**: `Luggage` or `ClipboardCheck` in `text-primary`
-- **Title**: `text-foreground font-semibold`
-- **Subtitle**: `text-xs text-muted-foreground`
-- **Progress bar**: `<Progress className="h-2" />` with gold fill
-- **Count label**: `text-sm text-muted-foreground` → "5/8 complete"
-- **CTA**: Gold text with chevron → navigates to `/roadmap/prep`
-
-### Responsive Behavior
-- **Mobile**: Full-width card, stacked layout if needed
-- **Desktop**: Same full-width within main content column
+| `src/components/shared/CleanMentorCard.tsx` | CREATE | New GrowthX-inspired card design |
+| `src/pages/Home.tsx` | MODIFY | Switch to CleanMentorCard in carousel |
+| `src/components/shared/FlipMentorCard.tsx` | RETAIN | Keep for potential future use |
 
 ---
 
 ## Expected Outcome
 
-1. **Prep is visible on Homepage** - Users see their prep progress immediately after Journey
-2. **Cohort-specific content** - Each cohort sees only their relevant categories
-3. **Consistent design** - Uses horizontal progress bar like rest of app
-4. **Clean filtering** - Mindset & script_prep categories hidden from view
-5. **One-tap access** - Card navigates to full `/roadmap/prep` checklist
+1. **Warmer appearance** - Full color photos feel more personal and inviting
+2. **Immediate credibility** - Brand logos visible without interaction
+3. **Clear topic focus** - What they teach is shown first (gold text)
+4. **Premium feel** - Clean spacing, gold accents, subtle animations
+5. **Consistent with brand** - Uses existing `card-warm` and gold styling
+6. **Mobile-first** - Wider cards with better touch feedback
+7. **Future-ready** - Easy to add new mentors via admin panel
+
+---
+
+## Technical Notes
+
+### Image Loading
+- Maintains lazy loading with `loading="lazy"` attribute
+- Uses `skeleton-premium` shimmer placeholder while loading
+- Fade-in animation on load complete
+
+### Responsive Sizing
+- Mobile: `min-w-[180px]` for comfortable card width
+- Tablet: `sm:min-w-[200px]`
+- Desktop: `md:min-w-[240px]`
+
+### Accessibility
+- Full alt text on images: `alt={mentor.name}`
+- Brand logos have descriptive alt text
+- Sufficient color contrast on all text elements
+
