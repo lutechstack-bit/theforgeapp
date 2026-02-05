@@ -1,24 +1,71 @@
 
 
-# Update Sony Logo - White Version for Dark Background
+# Fix Partner Logos on Published Site
 
-## Summary
-Replace the current Sony logo with the new white version that's designed for dark backgrounds. This matches the premium floating logo design we just implemented.
-
----
-
-## Change
-
-The user uploaded a white Sony logo (`user-uploads://Untitled_design-3.png`) which will display properly on the dark gradient background of the Partnership Hero section.
+## Problem Identified
+The logos ARE working correctly in the **preview** (I can see both Sony and Digitek logos properly displayed). However, you're viewing the **published site** which:
+1. Hasn't received the latest code changes yet (needs publishing)
+2. May have old images cached in the browser for up to 30 days (current PWA cache setting)
 
 ---
 
-## Implementation
+## Solution: Cache-Busting + Reduced Caching
 
-### Step 1: Copy New Sony Logo
+### Step 1: Add Cache-Busting to Logo URLs
 
-Copy the uploaded white Sony logo to replace the existing one:
-- `user-uploads://Untitled_design-3.png` → `public/images/brands/sony.png`
+Add a version query parameter to the logo URLs so browsers fetch fresh images instead of serving stale cached versions.
+
+**File: `src/components/perks/PartnershipHero.tsx`**
+
+```typescript
+const partners = [
+  {
+    id: 'sony',
+    name: 'Sony',
+    logo: '/images/brands/sony.png?v=2',  // Cache-bust
+    discount: 'Up to 25% off',
+    description: 'Cameras, lenses & accessories',
+  },
+  {
+    id: 'digitek',
+    name: 'Digitek',
+    logo: '/images/brands/digitek.png?v=2',  // Cache-bust
+    discount: 'Up to 30% off',
+    description: 'Lighting & production gear',
+  },
+];
+```
+
+### Step 2: Reduce Image Cache Duration (Optional)
+
+Update the PWA configuration to cache images for 7 days instead of 30 days for faster updates.
+
+**File: `vite.config.ts`**
+
+Change the image cache expiration from 30 days to 7 days:
+```typescript
+runtimeCaching: [
+  {
+    urlPattern: /\.(?:png|jpg|jpeg|webp|gif)$/i,
+    handler: "CacheFirst",
+    options: {
+      cacheName: "images-cache",
+      expiration: { 
+        maxEntries: 100, 
+        maxAgeSeconds: 60 * 60 * 24 * 7  // Changed from 30 to 7 days
+      },
+    },
+  },
+],
+```
+
+---
+
+## After Publishing
+
+Once you publish, users will see:
+- **New users / cleared cache**: Fresh logos immediately
+- **Existing users**: Fresh logos due to cache-busting `?v=2` parameter
 
 ---
 
@@ -26,11 +73,14 @@ Copy the uploaded white Sony logo to replace the existing one:
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `public/images/brands/sony.png` | REPLACE | White Sony logo for dark background |
+| `src/components/perks/PartnershipHero.tsx` | MODIFY | Add cache-busting query params to logo URLs |
+| `vite.config.ts` | MODIFY | Reduce image cache from 30 to 7 days |
 
 ---
 
 ## Expected Outcome
 
-Both logos (Sony and Digitek) will now be white/light colored and display perfectly on the dark gradient background with the gold glow effects.
+1. Both Sony (white) and Digitek (white+red) logos display perfectly on the dark gradient
+2. Cache-busting ensures fresh images are served after publishing
+3. Future image updates will propagate faster (7 days vs 30 days cache)
 
