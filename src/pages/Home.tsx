@@ -13,12 +13,14 @@ import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
 import { HomeCarouselSkeleton } from '@/components/home/HomeCarouselSkeleton';
 import { HomeErrorState } from '@/components/home/HomeErrorState';
 import HomeJourneySection from '@/components/home/HomeJourneySection';
+ import PrepHighlightCard from '@/components/home/PrepHighlightCard';
 import RoadmapSidebar from '@/components/roadmap/RoadmapSidebar';
 import FloatingHighlightsButton from '@/components/roadmap/FloatingHighlightsButton';
 import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
 import { Users } from 'lucide-react';
 import { Mentor } from '@/data/mentorsData';
 import { promiseWithTimeout, isTimeoutError } from '@/lib/promiseTimeout';
+ import { useRoadmapData } from '@/hooks/useRoadmapData';
 
 // Query timeout (12 seconds)
 const QUERY_TIMEOUT = 12000;
@@ -32,6 +34,9 @@ const Home: React.FC = () => {
   const [isMentorModalOpen, setIsMentorModalOpen] = useState(false);
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+   
+   // Get prep progress data for PrepHighlightCard
+   const { prepProgress } = useRoadmapData();
 
   const showDebug = searchParams.get('homeDebug') === '1';
 
@@ -263,6 +268,15 @@ const Home: React.FC = () => {
           {/* Journey Timeline - Embedded from Roadmap */}
           <HomeJourneySection />
 
+           {/* Prep Checklist Card - Prominent position after Journey */}
+           {prepProgress?.hasData && (
+             <PrepHighlightCard 
+               totalItems={prepProgress.totalItems}
+               completedItems={prepProgress.completedItems}
+               progressPercent={prepProgress.progressPercent}
+             />
+           )}
+ 
           {/* Debug Panel (only when ?homeDebug=1) */}
           {showDebug && (
             <div className="text-xs font-mono bg-muted/50 border border-border rounded-lg p-4 space-y-2">

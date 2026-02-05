@@ -7,6 +7,9 @@ import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { differenceInDays } from 'date-fns';
 
+ // Categories to exclude from display
+ const EXCLUDED_CATEGORIES = ['mindset', 'script_prep'];
+ 
 interface ChecklistItem {
   id: string;
   category: string;
@@ -23,12 +26,7 @@ interface PrepChecklistSectionProps {
   forgeStartDate?: Date | null;
 }
 
-const categoryConfig: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-  script_prep: { 
-    label: 'Script Preparation', 
-    icon: <FileText className="w-5 h-5" />,
-    color: 'text-primary'
-  },
+const categoryConfig: Record<string, { label: string; icon: React.ReactNode; color: string }> = {  
   writing_prep: { 
     label: 'Writing Preparation', 
     icon: <BookOpen className="w-5 h-5" />,
@@ -44,11 +42,6 @@ const categoryConfig: Record<string, { label: string; icon: React.ReactNode; col
     icon: <Wrench className="w-5 h-5" />,
     color: 'text-accent'
   },
-  mindset: { 
-    label: 'Mindset & Wellness', 
-    icon: <Brain className="w-5 h-5" />,
-    color: 'text-green-500'
-  },
   packing: { 
     label: 'Packing Essentials', 
     icon: <Package className="w-5 h-5" />,
@@ -62,7 +55,10 @@ const PrepChecklistSection: React.FC<PrepChecklistSectionProps> = ({
   onToggle,
   forgeStartDate
 }) => {
-  if (!items || items.length === 0) {
+  // Filter out excluded categories
+  const visibleItems = items.filter(item => !EXCLUDED_CATEGORIES.includes(item.category));
+ 
+  if (!visibleItems || visibleItems.length === 0) {
     return (
       <section className="py-8">
         <div className="text-center glass-card rounded-xl py-12">
@@ -74,7 +70,7 @@ const PrepChecklistSection: React.FC<PrepChecklistSectionProps> = ({
   }
 
   // Group by category
-  const groupedItems = items.reduce((acc, item) => {
+  const groupedItems = visibleItems.reduce((acc, item) => {
     const cat = item.category || 'packing';
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(item);
@@ -82,8 +78,8 @@ const PrepChecklistSection: React.FC<PrepChecklistSectionProps> = ({
   }, {} as Record<string, ChecklistItem[]>);
 
   // Calculate overall progress
-  const totalItems = items.length;
-  const completedCount = items.filter(item => completedIds.has(item.id)).length;
+  const totalItems = visibleItems.length;
+  const completedCount = visibleItems.filter(item => completedIds.has(item.id)).length;
   const progressPercent = totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : 0;
 
   const getDueStatus = (item: ChecklistItem) => {

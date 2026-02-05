@@ -4,6 +4,10 @@ import { useAdminTestingSafe } from '@/contexts/AdminTestingContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useMemo } from 'react';
 import type { Database } from '@/integrations/supabase/types';
+
+ // Categories to exclude from Prep display (per plan)
+ const EXCLUDED_PREP_CATEGORIES = ['mindset', 'script_prep'];
+
 import { CohortType } from '@/contexts/ThemeContext';
 import { promiseWithTimeout, isTimeoutError } from '@/lib/promiseTimeout';
 
@@ -253,6 +257,24 @@ export const useRoadmapData = () => {
     [userProgress]
   );
 
+   // Compute visible prep items (filtered by excluded categories)
+   const visiblePrepItems = useMemo(() => {
+     if (!prepItems) return [];
+     return prepItems.filter(item => !EXCLUDED_PREP_CATEGORIES.includes(item.category));
+   }, [prepItems]);
+
+   // Compute prep progress summary for Homepage
+   const prepProgress = useMemo(() => {
+     const total = visiblePrepItems.length;
+     const completed = visiblePrepItems.filter(item => completedIds.has(item.id)).length;
+     return {
+       totalItems: total,
+       completedItems: completed,
+       progressPercent: total > 0 ? Math.round((completed / total) * 100) : 0,
+       hasData: total > 0,
+     };
+   }, [visiblePrepItems, completedIds]);
+
   // Toggle prep item completion
   const togglePrepMutation = useMutation({
     mutationFn: async ({ itemId, completed }: { itemId: string; completed: boolean }) => {
@@ -361,5 +383,6 @@ export const useRoadmapData = () => {
     completedCount,
     totalCount,
     nodeStatuses,
+     prepProgress,
   };
 };
