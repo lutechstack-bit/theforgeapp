@@ -1,133 +1,130 @@
 
-# Perks Page Redesign - Brand Logos + Social Sharing Enhancement
+
+# Partnership Hero Redesign - Premium Transparent Logo Display
 
 ## Summary
-Redesign the Perks page with proper Sony and Digitek brand logos, a GrowthX-inspired partnership hero section, platform-specific social sharing buttons (Instagram, LinkedIn, WhatsApp, X, Facebook), and fixed grammar. Move the goodie bag section to the bottom to prioritize high-value partnership perks.
+Remove the white card backgrounds completely and display Sony and Digitek logos directly on the gradient background. Create a premium, eye-catching layout with transparent logos, larger sizing, proper alignment, and elegant gold accents.
 
 ---
 
-## Part 1: Add Brand Logos to Project
+## Current vs New Design
 
-### Step 1: Copy uploaded logos to public folder
-The user uploaded Sony and Digitek logos that need to be copied:
-- `user-uploads://1-5.png` → `public/images/brands/sony.png`
-- `user-uploads://2-5.png` → `public/images/brands/digitek.png`
+### Current (Issues)
+- White card backgrounds clash with dark theme
+- Digitek white logo invisible on white cards
+- Cards feel boxy and dated
+- Logos appear small and cramped
 
-These will be placed alongside existing brand logos in `public/images/brands/`.
+### New (Premium)
+- No card backgrounds - logos float on gradient
+- Both logos work perfectly on dark gradient
+- Open, breathing layout
+- Large, prominent logos with gold glow effects
 
 ---
 
-## Part 2: New Partnership Hero Component
-
-### File: `src/components/perks/PartnershipHero.tsx` (NEW)
-
-A prominent GrowthX-inspired section showcasing Sony and Digitek as official partners.
+## Visual Design
 
 ```text
-Layout:
-┌─────────────────────────────────────────────────────────────────┐
-│                    OFFICIAL PARTNERS                            │
-│                                                                 │
-│     ┌───────────────┐           ┌───────────────┐              │
-│     │   [SONY       │           │   [DIGITEK    │              │
-│     │    LOGO]      │           │    LOGO]      │              │
-│     │   ─────────   │           │   ─────────   │              │
-│     │   Up to 25%   │           │   Up to 30%   │              │
-│     │   off         │           │   off         │              │
-│     └───────────────┘           └───────────────┘              │
-│                                                                 │
-│          Exclusive pricing on cameras, lenses,                  │
-│          lighting & production equipment                        │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│              ✦ OFFICIAL PARTNERS ✦                              │
+│                                                                  │
+│           Exclusive Partner Pricing                              │
+│                                                                  │
+│     ┌─────────────────────────────────────────────────────┐     │
+│     │                                                      │     │
+│     │     [SONY LOGO]              [DIGITEK LOGO]         │     │  ← Transparent,
+│     │      (large)                    (large)             │     │    floating on
+│     │                                                      │     │    gradient
+│     │   ───────────────        ───────────────            │     │
+│     │                                                      │     │
+│     │    Up to 25% off          Up to 30% off             │     │
+│     │   Cameras & lenses      Lighting & gear             │     │
+│     │                                                      │     │
+│     └─────────────────────────────────────────────────────┘     │
+│                                                                  │
+│            ✧ Gold blur orbs for depth ✧                         │
+└──────────────────────────────────────────────────────────────────┘
 ```
-
-**Styling:**
-- Full-width gradient card with gold blur orbs
-- White/light rounded containers for logos (GrowthX style)
-- Logos displayed as actual `<img>` elements using the new files
-- Gold discount badges on each partner card
-- Premium gold glow on hover
 
 ---
 
-## Part 3: Enhanced Acceptance Share Card
+## Implementation Details
 
-### File: `src/components/perks/AcceptanceShareCard.tsx` (MODIFY)
+### File: `src/components/perks/PartnershipHero.tsx` (MODIFY)
 
-Add platform-specific social sharing buttons:
+**Key Changes:**
 
-**New Social Button Row:**
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  Share to:                                                   │
-│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐     │
-│  │ Insta  │ │LinkedIn│ │WhatsApp│ │   X    │ │  FB    │     │
-│  └────────┘ └────────┘ └────────┘ └────────┘ └────────┘     │
-│                                                              │
-│  ┌─────────────────┐  ┌─────────────────┐                   │
-│  │    Download     │  │   Copy Link     │                   │
-│  └─────────────────┘  └─────────────────┘                   │
-└─────────────────────────────────────────────────────────────┘
+1. **Remove white card backgrounds** - Replace `bg-white` with transparent containers
+2. **Increase logo sizes** - From `h-10 md:h-14` to `h-14 md:h-20` for more prominence
+3. **Add gold glow on logos** - Subtle `drop-shadow` effect for premium feel
+4. **Enhance dividers** - Use animated gold gradient lines
+5. **Improve typography** - Larger discount text, cream/gold description text
+6. **Add hover animation** - Scale and glow effect on each partner section
+
+**Updated Partner Display:**
+```tsx
+<div className="grid grid-cols-2 gap-6 md:gap-10 max-w-xl mx-auto">
+  {partners.map((partner) => (
+    <div
+      key={partner.id}
+      className="group flex flex-col items-center text-center py-4 transition-all duration-300 hover:scale-[1.03]"
+    >
+      {/* Logo - larger, with drop shadow for depth */}
+      <div className="h-14 md:h-20 flex items-center justify-center mb-4 md:mb-5">
+        <img
+          src={partner.logo}
+          alt={partner.name}
+          className="h-full w-auto object-contain max-w-[120px] md:max-w-[160px] drop-shadow-[0_0_15px_rgba(255,188,59,0.3)] group-hover:drop-shadow-[0_0_25px_rgba(255,188,59,0.5)] transition-all duration-300"
+        />
+      </div>
+      
+      {/* Gold divider line */}
+      <div className="w-16 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent mb-4" />
+      
+      {/* Discount badge - more prominent */}
+      <Badge className="bg-gradient-to-r from-primary to-deep-gold text-primary-foreground border-0 font-black text-sm md:text-base px-4 py-1.5 mb-2">
+        {partner.discount}
+      </Badge>
+      
+      {/* Description in cream/muted color */}
+      <p className="text-xs md:text-sm text-muted-foreground/80 leading-tight">
+        {partner.description}
+      </p>
+    </div>
+  ))}
+</div>
 ```
 
-**Platform Sharing Logic:**
-| Platform | Method | Action |
-|----------|--------|--------|
-| Instagram | Download + Copy | Downloads image, copies caption, shows instructions |
-| LinkedIn | URL intent | Opens `linkedin.com/sharing/share-offsite/?url=...` |
-| WhatsApp | URL scheme | Opens `wa.me/?text=...` with share text |
-| Twitter/X | Tweet intent | Opens `twitter.com/intent/tweet?text=...` |
-| Facebook | Sharer URL | Opens `facebook.com/sharer/sharer.php?quote=...` |
-
-**Social Button Styling:**
-- Platform brand colors (Instagram gradient, LinkedIn blue, WhatsApp green, etc.)
-- `h-11 w-11` touch-friendly size
-- Rounded squares with subtle hover effects
-- Custom SVG icons for each platform
+**Enhanced Container Styling:**
+```tsx
+<div className="relative mb-6 md:mb-8 overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-primary/10 via-card/80 to-card border border-primary/30 shadow-lg">
+  {/* Enhanced decorative blur orbs */}
+  <div className="absolute top-0 right-0 w-48 md:w-64 h-48 md:h-64 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+  <div className="absolute bottom-0 left-0 w-36 md:w-48 h-36 md:h-48 bg-primary/15 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+  <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-deep-gold/10 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2" />
+  
+  {/* Content with more padding */}
+  <div className="relative p-6 md:p-10">
+    ...
+  </div>
+</div>
+```
 
 ---
 
-## Part 4: Grammar Fixes
+## Visual Enhancements
 
-### File: `src/pages/Perks.tsx`
-
-**Current (incorrect):**
-```typescript
-const cohortTitles: Record<CohortType, string> = {
-  FORGE: 'Filmmaker',      // sounds like singular person
-  FORGE_WRITING: 'Writer',
-  FORGE_CREATORS: 'Creator',
-};
-```
-
-**Fixed (correct):**
-```typescript
-const cohortTitles: Record<CohortType, string> = {
-  FORGE: 'Filmmakers',       // program name (plural)
-  FORGE_WRITING: 'Writing',  // keep as program name
-  FORGE_CREATORS: 'Creators', // program name (plural)
-};
-```
-
-This fixes:
-- "Welcome to Forge Filmmaker" → "Welcome to Forge Filmmakers"
-- "I got accepted into Forge Filmmaker!" → "I got accepted into Forge Filmmakers!"
-
----
-
-## Part 5: Page Layout Restructure
-
-### File: `src/pages/Perks.tsx` (MODIFY)
-
-**New Section Order:**
-1. **PartnershipHero** (NEW) - Sony & Digitek prominently displayed with actual logos
-2. **Acceptance Card** (COMPACTED) - Smaller card with integrated social sharing buttons
-3. **Perks Unlocked** - Alumni Network section (keep as is)
-4. **Forge Bag** (MOVED DOWN) - Deprioritized, shown at bottom
-
-**Remove from current position:**
-- Remove `equipmentDiscounts` section (replaced by PartnershipHero)
-- Move goodie bag section to bottom
+| Element | Change | Effect |
+|---------|--------|--------|
+| Card backgrounds | Removed | Logos float elegantly on gradient |
+| Logo size | `h-14 md:h-20` | 40% larger, more prominent |
+| Logo effect | Gold drop-shadow | Premium glow, depth |
+| Hover state | Scale + enhanced glow | Interactive feedback |
+| Divider | Gold gradient, wider | Elegant separation |
+| Discount badge | Larger font, more padding | Eye-catching |
+| Blur orbs | Larger, extra center orb | Richer depth |
+| Container border | `border-primary/30` | Slightly more visible gold edge |
 
 ---
 
@@ -135,39 +132,15 @@ This fixes:
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `public/images/brands/sony.png` | COPY | Sony logo from uploaded file |
-| `public/images/brands/digitek.png` | COPY | Digitek logo from uploaded file |
-| `src/components/perks/PartnershipHero.tsx` | CREATE | GrowthX-inspired partner showcase with actual logos |
-| `src/components/perks/AcceptanceShareCard.tsx` | MODIFY | Add social platform buttons (Insta, LinkedIn, WhatsApp, X, FB) |
-| `src/pages/Perks.tsx` | MODIFY | Fix grammar, restructure layout, integrate PartnershipHero |
-
----
-
-## Visual Specifications
-
-### PartnershipHero Card Design
-- **Container**: `rounded-2xl bg-gradient-to-br from-primary/10 via-card to-card border border-primary/20`
-- **Logo containers**: White rounded cards (`bg-white rounded-xl p-4`) for brand logos
-- **Logo images**: `h-8 md:h-10` height, maintain aspect ratio
-- **Discount badges**: Gold gradient badges below each logo
-- **Decorative elements**: Gold blur orbs in corners
-
-### Social Button Colors
-| Platform | Background | Text/Icon |
-|----------|------------|-----------|
-| Instagram | `bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#F77737]` | White |
-| LinkedIn | `bg-[#0A66C2]` | White |
-| WhatsApp | `bg-[#25D366]` | White |
-| Twitter/X | `bg-black border border-white/20` | White |
-| Facebook | `bg-[#1877F2]` | White |
+| `src/components/perks/PartnershipHero.tsx` | MODIFY | Remove card backgrounds, larger logos, add gold glow effects |
 
 ---
 
 ## Expected Outcome
 
-1. **Real brand logos** - Sony and Digitek logos displayed prominently (not icons)
-2. **GrowthX-inspired layout** - Clean, professional partnership showcase
-3. **Platform-specific sharing** - Direct buttons for Instagram, LinkedIn, WhatsApp, X, Facebook
-4. **Correct grammar** - "Forge Filmmakers" instead of "Forge Filmmaker"
-5. **Prioritized content** - Partnerships first, goodie bag last
-6. **Mobile-optimized** - Touch-friendly social buttons, responsive cards
+1. **Both logos visible** - Sony (black) and Digitek (white+red) both pop on the dark gradient
+2. **Premium aesthetic** - Floating logos with gold glows, no boxy cards
+3. **Eye-catching** - Larger logos, prominent discount badges, rich visual depth
+4. **Consistent with brand** - Gold accents, dark theme, elite feel
+5. **Interactive** - Subtle scale and glow on hover
+
