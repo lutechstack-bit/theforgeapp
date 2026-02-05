@@ -1,178 +1,133 @@
 
-# Mentor Card Redesign - Clean GrowthX-Inspired Design
+# Perks Page Redesign - Brand Logos + Social Sharing Enhancement
 
 ## Summary
-Redesign the mentor cards to feel modern, warm, and credible by switching from the current flip-card design to a cleaner vertical layout with color photos, proper spacing, and visible brand logos. The new design is inspired by GrowthX's clean aesthetic while maintaining Forge's gold-accented brand identity.
+Redesign the Perks page with proper Sony and Digitek brand logos, a GrowthX-inspired partnership hero section, platform-specific social sharing buttons (Instagram, LinkedIn, WhatsApp, X, Facebook), and fixed grammar. Move the goodie bag section to the bottom to prioritize high-value partnership perks.
 
 ---
 
-## Current Issues
+## Part 1: Add Brand Logos to Project
 
-| Problem | Impact |
-|---------|--------|
-| Black & white photos | Reduces warmth, feels dated and less personable |
-| Complex flip animation | Confusing UX, hides important info (brands) behind interaction |
-| Small card size | Cramped content, hard to read on mobile |
-| Topic/role buried | Not immediately visible what mentor teaches |
-| Brands only visible on flip | Missing credibility signals at first glance |
+### Step 1: Copy uploaded logos to public folder
+The user uploaded Sony and Digitek logos that need to be copied:
+- `user-uploads://1-5.png` → `public/images/brands/sony.png`
+- `user-uploads://2-5.png` → `public/images/brands/digitek.png`
+
+These will be placed alongside existing brand logos in `public/images/brands/`.
 
 ---
 
-## New Card Structure (GrowthX-Inspired)
+## Part 2: New Partnership Hero Component
+
+### File: `src/components/perks/PartnershipHero.tsx` (NEW)
+
+A prominent GrowthX-inspired section showcasing Sony and Digitek as official partners.
 
 ```text
-┌──────────────────────────────────┐
-│                                  │
-│        [COLOR PHOTO]             │
-│        (3:4 aspect ratio)        │
-│        object-cover              │
-│                                  │
-├──────────────────────────────────┤
-│  Topic / What They Teach         │  <- Gold text, uppercase, small
-│  ─────────────────────────       │
-│  Mentor Name                     │  <- Bold, larger, cream
-│                                  │
-│  ┌─────┐ ┌─────┐ ┌─────┐        │  <- Brand logos (3 max)
-│  │ Logo│ │ Logo│ │ Logo│        │
-│  └─────┘ └─────┘ └─────┘        │
-└──────────────────────────────────┘
+Layout:
+┌─────────────────────────────────────────────────────────────────┐
+│                    OFFICIAL PARTNERS                            │
+│                                                                 │
+│     ┌───────────────┐           ┌───────────────┐              │
+│     │   [SONY       │           │   [DIGITEK    │              │
+│     │    LOGO]      │           │    LOGO]      │              │
+│     │   ─────────   │           │   ─────────   │              │
+│     │   Up to 25%   │           │   Up to 30%   │              │
+│     │   off         │           │   off         │              │
+│     └───────────────┘           └───────────────┘              │
+│                                                                 │
+│          Exclusive pricing on cameras, lenses,                  │
+│          lighting & production equipment                        │
+└─────────────────────────────────────────────────────────────────┘
 ```
-
-**Key Design Principles:**
-1. **Full color photos** - No filters, no grayscale, warm and inviting
-2. **Topic first** - What they teach is immediately visible (gold text)
-3. **Name prominent** - Clear, bold, easy to read
-4. **Brands visible** - Credibility logos always shown (not hidden behind flip)
-5. **Generous padding** - Breathing room for premium feel
-6. **Gold accents** - Consistent with Forge brand identity
-
----
-
-## Implementation Plan
-
-### File 1: Create `src/components/shared/CleanMentorCard.tsx` (NEW)
-
-A completely new mentor card component with the GrowthX-inspired design.
-
-**Component Features:**
-- **No flip animation** - Static card, tap opens modal
-- **Full-color photo** - Uses existing `image_url` without filters
-- **Topic badge** - Shows first role/specialty in gold
-- **Clean typography** - Name is prominent, topic is secondary but visible
-- **Brand strip** - Up to 3 logos displayed at the bottom
-- **Subtle hover** - Light scale + gold border glow (desktop)
-- **Touch feedback** - `tap-scale` class for mobile
-
-**Card Dimensions:**
-- Mobile: `min-w-[180px]` (slightly wider than current 160px)
-- Desktop: `min-w-[240px]`
-- Aspect: `aspect-[3/4]` maintained
 
 **Styling:**
-- Container: `card-warm` background with gold border accent
-- Photo: `object-cover object-top` (no grayscale filter)
-- Topic: `text-xs text-primary uppercase tracking-wide font-semibold`
-- Name: `text-lg font-bold text-foreground`
-- Brands: Small logo pills in a flex row
-
-### File 2: Update `src/pages/Home.tsx`
-
-Replace `FlipMentorCard` import with `CleanMentorCard`:
-
-```typescript
-// Change from:
-import { FlipMentorCard } from '@/components/shared/FlipMentorCard';
-
-// To:
-import { CleanMentorCard } from '@/components/shared/CleanMentorCard';
-```
-
-Update the carousel to use the new component:
-
-```tsx
-<CleanMentorCard
-  key={mentor.id}
-  mentor={mentorData}
-  onClick={() => handleMentorClick(mentorData)}
-/>
-```
-
-### File 3: Update `src/data/mentorsData.ts` (Optional Cleanup)
-
-Since mentors are now stored in the database and fetched dynamically, this file may only serve as a type definition reference. The existing `Mentor` interface remains valid:
-
-```typescript
-export interface Mentor {
-  id: string;
-  name: string;
-  title: string;
-  roles: string[];  // First role = topic they teach
-  imageUrl: string;
-  modalImageUrl?: string;
-  bio: string[];
-  brands: MentorBrand[];
-}
-```
-
-No changes needed to the interface.
-
-### File 4: Keep `src/components/shared/FlipMentorCard.tsx` (RETAIN)
-
-Keep the flip card component for potential future use or A/B testing. No modifications.
+- Full-width gradient card with gold blur orbs
+- White/light rounded containers for logos (GrowthX style)
+- Logos displayed as actual `<img>` elements using the new files
+- Gold discount badges on each partner card
+- Premium gold glow on hover
 
 ---
 
-## Visual Specifications
+## Part 3: Enhanced Acceptance Share Card
 
-### Color Photo Treatment
-- **Current**: Photos may have grayscale or desaturated effects
-- **New**: Full color, natural warmth
-- **Image object fit**: `object-cover object-top` (faces centered at top)
+### File: `src/components/perks/AcceptanceShareCard.tsx` (MODIFY)
 
-### Typography Hierarchy
-| Element | Style |
-|---------|-------|
-| Topic (role) | `text-xs text-primary uppercase tracking-wide font-semibold` |
-| Name | `text-lg sm:text-xl font-bold text-foreground` |
-| Brand text fallback | `text-[10px] font-medium text-muted-foreground` |
+Add platform-specific social sharing buttons:
 
-### Spacing
-| Area | Value |
-|------|-------|
-| Card padding (content area) | `p-4` |
-| Gap between topic and name | `mb-1` |
-| Gap between name and brands | `mt-3` |
-| Brand logo height | `h-6` |
-| Brand pill spacing | `gap-2` |
+**New Social Button Row:**
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  Share to:                                                   │
+│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐     │
+│  │ Insta  │ │LinkedIn│ │WhatsApp│ │   X    │ │  FB    │     │
+│  └────────┘ └────────┘ └────────┘ └────────┘ └────────┘     │
+│                                                              │
+│  ┌─────────────────┐  ┌─────────────────┐                   │
+│  │    Download     │  │   Copy Link     │                   │
+│  └─────────────────┘  └─────────────────┘                   │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### Hover Effects (Desktop Only)
-- Scale: `hover:scale-[1.02]`
-- Border glow: `hover:border-primary/50 hover:shadow-[0_0_20px_hsl(var(--primary)/0.2)]`
-- Transition: `transition-all duration-300`
+**Platform Sharing Logic:**
+| Platform | Method | Action |
+|----------|--------|--------|
+| Instagram | Download + Copy | Downloads image, copies caption, shows instructions |
+| LinkedIn | URL intent | Opens `linkedin.com/sharing/share-offsite/?url=...` |
+| WhatsApp | URL scheme | Opens `wa.me/?text=...` with share text |
+| Twitter/X | Tweet intent | Opens `twitter.com/intent/tweet?text=...` |
+| Facebook | Sharer URL | Opens `facebook.com/sharer/sharer.php?quote=...` |
 
-### Mobile Touch Feedback
-- Uses existing `tap-scale` class from CSS
-- Subtle press animation on tap
+**Social Button Styling:**
+- Platform brand colors (Instagram gradient, LinkedIn blue, WhatsApp green, etc.)
+- `h-11 w-11` touch-friendly size
+- Rounded squares with subtle hover effects
+- Custom SVG icons for each platform
 
 ---
 
-## Brand Logo Display Logic
+## Part 4: Grammar Fixes
 
-The new card shows up to 3 brand logos at the bottom:
+### File: `src/pages/Perks.tsx`
 
+**Current (incorrect):**
 ```typescript
-// Show up to 3 brands with logos
-const visibleBrands = mentor.brands.slice(0, 3);
-
-// If no logo URL, show text badge instead
-{brand.logoUrl ? (
-  <img src={brand.logoUrl} alt={brand.name} className="h-5 max-w-[60px] object-contain" />
-) : (
-  <span className="text-[10px] font-medium text-muted-foreground bg-muted/50 px-2 py-0.5 rounded">
-    {brand.name}
-  </span>
-)}
+const cohortTitles: Record<CohortType, string> = {
+  FORGE: 'Filmmaker',      // sounds like singular person
+  FORGE_WRITING: 'Writer',
+  FORGE_CREATORS: 'Creator',
+};
 ```
+
+**Fixed (correct):**
+```typescript
+const cohortTitles: Record<CohortType, string> = {
+  FORGE: 'Filmmakers',       // program name (plural)
+  FORGE_WRITING: 'Writing',  // keep as program name
+  FORGE_CREATORS: 'Creators', // program name (plural)
+};
+```
+
+This fixes:
+- "Welcome to Forge Filmmaker" → "Welcome to Forge Filmmakers"
+- "I got accepted into Forge Filmmaker!" → "I got accepted into Forge Filmmakers!"
+
+---
+
+## Part 5: Page Layout Restructure
+
+### File: `src/pages/Perks.tsx` (MODIFY)
+
+**New Section Order:**
+1. **PartnershipHero** (NEW) - Sony & Digitek prominently displayed with actual logos
+2. **Acceptance Card** (COMPACTED) - Smaller card with integrated social sharing buttons
+3. **Perks Unlocked** - Alumni Network section (keep as is)
+4. **Forge Bag** (MOVED DOWN) - Deprioritized, shown at bottom
+
+**Remove from current position:**
+- Remove `equipmentDiscounts` section (replaced by PartnershipHero)
+- Move goodie bag section to bottom
 
 ---
 
@@ -180,38 +135,39 @@ const visibleBrands = mentor.brands.slice(0, 3);
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `src/components/shared/CleanMentorCard.tsx` | CREATE | New GrowthX-inspired card design |
-| `src/pages/Home.tsx` | MODIFY | Switch to CleanMentorCard in carousel |
-| `src/components/shared/FlipMentorCard.tsx` | RETAIN | Keep for potential future use |
+| `public/images/brands/sony.png` | COPY | Sony logo from uploaded file |
+| `public/images/brands/digitek.png` | COPY | Digitek logo from uploaded file |
+| `src/components/perks/PartnershipHero.tsx` | CREATE | GrowthX-inspired partner showcase with actual logos |
+| `src/components/perks/AcceptanceShareCard.tsx` | MODIFY | Add social platform buttons (Insta, LinkedIn, WhatsApp, X, FB) |
+| `src/pages/Perks.tsx` | MODIFY | Fix grammar, restructure layout, integrate PartnershipHero |
+
+---
+
+## Visual Specifications
+
+### PartnershipHero Card Design
+- **Container**: `rounded-2xl bg-gradient-to-br from-primary/10 via-card to-card border border-primary/20`
+- **Logo containers**: White rounded cards (`bg-white rounded-xl p-4`) for brand logos
+- **Logo images**: `h-8 md:h-10` height, maintain aspect ratio
+- **Discount badges**: Gold gradient badges below each logo
+- **Decorative elements**: Gold blur orbs in corners
+
+### Social Button Colors
+| Platform | Background | Text/Icon |
+|----------|------------|-----------|
+| Instagram | `bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#F77737]` | White |
+| LinkedIn | `bg-[#0A66C2]` | White |
+| WhatsApp | `bg-[#25D366]` | White |
+| Twitter/X | `bg-black border border-white/20` | White |
+| Facebook | `bg-[#1877F2]` | White |
 
 ---
 
 ## Expected Outcome
 
-1. **Warmer appearance** - Full color photos feel more personal and inviting
-2. **Immediate credibility** - Brand logos visible without interaction
-3. **Clear topic focus** - What they teach is shown first (gold text)
-4. **Premium feel** - Clean spacing, gold accents, subtle animations
-5. **Consistent with brand** - Uses existing `card-warm` and gold styling
-6. **Mobile-first** - Wider cards with better touch feedback
-7. **Future-ready** - Easy to add new mentors via admin panel
-
----
-
-## Technical Notes
-
-### Image Loading
-- Maintains lazy loading with `loading="lazy"` attribute
-- Uses `skeleton-premium` shimmer placeholder while loading
-- Fade-in animation on load complete
-
-### Responsive Sizing
-- Mobile: `min-w-[180px]` for comfortable card width
-- Tablet: `sm:min-w-[200px]`
-- Desktop: `md:min-w-[240px]`
-
-### Accessibility
-- Full alt text on images: `alt={mentor.name}`
-- Brand logos have descriptive alt text
-- Sufficient color contrast on all text elements
-
+1. **Real brand logos** - Sony and Digitek logos displayed prominently (not icons)
+2. **GrowthX-inspired layout** - Clean, professional partnership showcase
+3. **Platform-specific sharing** - Direct buttons for Instagram, LinkedIn, WhatsApp, X, Facebook
+4. **Correct grammar** - "Forge Filmmakers" instead of "Forge Filmmaker"
+5. **Prioritized content** - Partnerships first, goodie bag last
+6. **Mobile-optimized** - Touch-friendly social buttons, responsive cards
