@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ContentCarousel } from '@/components/shared/ContentCarousel';
 import { SimpleEventCard } from '@/components/shared/SimpleEventCard';
 import { TestimonialVideoCard } from '@/components/shared/TestimonialVideoCard';
-import { FlipMentorCard } from '@/components/shared/FlipMentorCard';
+ import { CleanMentorCard } from '@/components/shared/CleanMentorCard';
 import { MentorDetailModal } from '@/components/shared/MentorDetailModal';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
@@ -321,7 +321,7 @@ const Home: React.FC = () => {
                       brands: (mentor.brands as any[]) || [],
                     };
                     return (
-                      <FlipMentorCard
+                       <CleanMentorCard
                         key={mentor.id}
                         mentor={mentorData}
                         onClick={() => handleMentorClick(mentorData)}
