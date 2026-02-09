@@ -15,8 +15,6 @@ import TodaysFocusCard from '@/components/home/TodaysFocusCard';
 import OnboardingStepsSection from '@/components/home/OnboardingStepsSection';
 import BatchmatesSection from '@/components/home/BatchmatesSection';
 import AlumniShowcaseSection from '@/components/home/AlumniShowcaseSection';
-import RoadmapSidebar from '@/components/roadmap/RoadmapSidebar';
-import FloatingHighlightsButton from '@/components/roadmap/FloatingHighlightsButton';
 import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
 import { useTodaysFocus } from '@/hooks/useTodaysFocus';
 import { useHomepageSections } from '@/hooks/useHomepageSections';
@@ -159,9 +157,9 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="flex gap-6 px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-6">
-        {/* Main Content Column */}
-        <div className="flex-1 space-y-8 sm:space-y-10 min-w-0">
+      <div className="px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-6">
+        {/* Main Content */}
+        <div className="space-y-8 sm:space-y-10 max-w-3xl mx-auto">
           {/* Personalized Welcome */}
           <div>
             <h1 className="text-2xl font-bold text-foreground">Hi {firstName}</h1>
@@ -286,17 +284,7 @@ const Home: React.FC = () => {
               </div>
             )}
         </div>
-
-        {/* Desktop Sidebar */}
-        <div className="hidden lg:block w-64 xl:w-72 flex-shrink-0">
-          <div className="sticky top-24">
-            <RoadmapSidebar editionId={profile?.edition_id} />
-          </div>
-        </div>
       </div>
-
-      {/* Mobile Floating Button */}
-      <FloatingHighlightsButton editionId={profile?.edition_id} />
 
       {/* Admin Cohort Switcher */}
       <AdminCohortSwitcher />
