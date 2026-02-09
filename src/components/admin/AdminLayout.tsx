@@ -22,13 +22,17 @@ import {
   Megaphone,
   History,
   PanelLeft,
-  PanelLeftClose
+  PanelLeftClose,
+  Home,
+  Target
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const adminNavItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
+  { to: '/admin/homepage', icon: Home, label: 'Homepage' },
+  { to: '/admin/todays-focus', icon: Target, label: 'Today\'s Focus' },
   { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/editions', icon: Calendar, label: 'Editions' },
   { to: '/admin/ky-forms', icon: ClipboardList, label: 'KY Forms' },
