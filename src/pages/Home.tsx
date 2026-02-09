@@ -4,25 +4,26 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentCarousel } from '@/components/shared/ContentCarousel';
-import { SimpleEventCard } from '@/components/shared/SimpleEventCard';
 import { TestimonialVideoCard } from '@/components/shared/TestimonialVideoCard';
- import { CleanMentorCard } from '@/components/shared/CleanMentorCard';
+import { CleanMentorCard } from '@/components/shared/CleanMentorCard';
 import { MentorDetailModal } from '@/components/shared/MentorDetailModal';
-import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
 import { HomeCarouselSkeleton } from '@/components/home/HomeCarouselSkeleton';
 import { HomeErrorState } from '@/components/home/HomeErrorState';
 import HomeJourneySection from '@/components/home/HomeJourneySection';
- import PrepHighlightCard from '@/components/home/PrepHighlightCard';
+import TodaysFocusCard from '@/components/home/TodaysFocusCard';
+import OnboardingStepsSection from '@/components/home/OnboardingStepsSection';
+import BatchmatesSection from '@/components/home/BatchmatesSection';
+import AlumniShowcaseSection from '@/components/home/AlumniShowcaseSection';
 import RoadmapSidebar from '@/components/roadmap/RoadmapSidebar';
 import FloatingHighlightsButton from '@/components/roadmap/FloatingHighlightsButton';
 import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
+import { useTodaysFocus } from '@/hooks/useTodaysFocus';
+import { useHomepageSections } from '@/hooks/useHomepageSections';
 import { Users } from 'lucide-react';
 import { Mentor } from '@/data/mentorsData';
 import { promiseWithTimeout, isTimeoutError } from '@/lib/promiseTimeout';
- import { useRoadmapData } from '@/hooks/useRoadmapData';
 
-// Query timeout (12 seconds)
 const QUERY_TIMEOUT = 12000;
 
 const Home: React.FC = () => {
@@ -34,86 +35,19 @@ const Home: React.FC = () => {
   const [isMentorModalOpen, setIsMentorModalOpen] = useState(false);
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-   
-   // Get prep progress data for PrepHighlightCard
-   const { prepProgress } = useRoadmapData();
+
+  const { activeFocusCard } = useTodaysFocus();
+  const { getSection } = useHomepageSections();
 
   const showDebug = searchParams.get('homeDebug') === '1';
+  const userCohortType = edition?.cohort_type;
 
   const handleMentorClick = (mentor: Mentor) => {
     setSelectedMentor(mentor);
     setIsMentorModalOpen(true);
   };
 
-  const userCohortType = edition?.cohort_type;
-
-  // Fetch events with timeout protection
-  const eventsQuery = useQuery({
-    queryKey: ['home_events'],
-    queryFn: async () => {
-      const homepageResult = await promiseWithTimeout(
-        supabase
-          .from('events')
-          .select('*')
-          .eq('show_on_homepage', true)
-          .order('event_date', { ascending: false })
-          .limit(6)
-          .then(res => res),
-        QUERY_TIMEOUT,
-        'home_events_featured'
-      );
-      
-      if (homepageResult.error) throw homepageResult.error;
-      
-      if (homepageResult.data && homepageResult.data.length > 0) {
-        return { events: homepageResult.data, isPastEvents: false };
-      }
-      
-      const pastResult = await promiseWithTimeout(
-        supabase
-          .from('events')
-          .select('*')
-          .lt('event_date', new Date().toISOString())
-          .order('event_date', { ascending: false })
-          .limit(6)
-          .then(res => res),
-        QUERY_TIMEOUT,
-        'home_events_past'
-      );
-      
-      if (pastResult.error) throw pastResult.error;
-      return { events: pastResult.data || [], isPastEvents: true };
-    },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-  });
-
-  // Fetch learn content with timeout protection
-  const learnContentQuery = useQuery({
-    queryKey: ['home_learn_content'],
-    queryFn: async () => {
-      const result = await promiseWithTimeout(
-        supabase
-          .from('learn_content')
-          .select('*')
-          .order('order_index', { ascending: true })
-          .limit(6)
-          .then(res => res),
-        QUERY_TIMEOUT,
-        'home_learn_content'
-      );
-      if (result.error) throw result.error;
-      return result.data || [];
-    },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-  });
-
-  // Fetch mentors with timeout protection
+  // Fetch mentors
   const mentorsQuery = useQuery({
     queryKey: ['home_mentors_all'],
     queryFn: async () => {
@@ -136,7 +70,7 @@ const Home: React.FC = () => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Fetch alumni testimonials with timeout protection
+  // Fetch alumni testimonials
   const alumniTestimonialsQuery = useQuery({
     queryKey: ['home_alumni_testimonials_all'],
     queryFn: async () => {
@@ -159,86 +93,45 @@ const Home: React.FC = () => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Client-side filtering with fallback for mentors
+  // Filtered data
   const displayMentors = useMemo(() => {
     const allMentors = mentorsQuery.data || [];
-    if (!userCohortType || allMentors.length === 0) {
-      return allMentors;
-    }
+    if (!userCohortType || allMentors.length === 0) return allMentors;
     const filtered = allMentors.filter(
       (m) => m.cohort_types && m.cohort_types.includes(userCohortType)
     );
     return filtered.length > 0 ? filtered : allMentors;
   }, [mentorsQuery.data, userCohortType]);
 
-  // Client-side filtering with fallback for alumni
   const displayAlumni = useMemo(() => {
     const allAlumni = alumniTestimonialsQuery.data || [];
-    if (!userCohortType || allAlumni.length === 0) {
-      return allAlumni;
-    }
+    if (!userCohortType || allAlumni.length === 0) return allAlumni;
     const filtered = allAlumni.filter(
       (a) => a.cohort_types && a.cohort_types.includes(userCohortType)
     );
     return filtered.length > 0 ? filtered : allAlumni;
   }, [alumniTestimonialsQuery.data, userCohortType]);
 
-  const displayLearnContent = learnContentQuery.data || [];
-  const displayEvents = eventsQuery.data?.events || [];
+  // Aggregate states
+  const isAnyError = mentorsQuery.isError || alumniTestimonialsQuery.isError;
+  const isAnyLoading = mentorsQuery.isLoading || alumniTestimonialsQuery.isLoading;
 
-  // Aggregate query states
-  const isAnyLoading = 
-    eventsQuery.isLoading || 
-    learnContentQuery.isLoading || 
-    mentorsQuery.isLoading || 
-    alumniTestimonialsQuery.isLoading;
-
-  const isAnyError = 
-    eventsQuery.isError || 
-    learnContentQuery.isError || 
-    mentorsQuery.isError || 
-    alumniTestimonialsQuery.isError;
-
-  const allFetched = 
-    eventsQuery.isFetched && 
-    learnContentQuery.isFetched && 
-    mentorsQuery.isFetched && 
-    alumniTestimonialsQuery.isFetched;
-
-  const hasAnyContent = 
-    displayMentors.length > 0 || 
-    displayAlumni.length > 0 || 
-    displayLearnContent.length > 0 || 
-    displayEvents.length > 0;
-
-  // Collect failed queries for error display
   const failedQueries = [
-    eventsQuery.isError && { name: 'Events', error: eventsQuery.error as Error },
-    learnContentQuery.isError && { name: 'Learn', error: learnContentQuery.error as Error },
     mentorsQuery.isError && { name: 'Mentors', error: mentorsQuery.error as Error },
     alumniTestimonialsQuery.isError && { name: 'Alumni', error: alumniTestimonialsQuery.error as Error },
   ].filter(Boolean) as { name: string; error: Error }[];
 
-  // Loading timeout protection - only start counting AFTER user data is loaded
+  // Loading timeout
   useEffect(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-
-    // Don't start timeout while profile/edition are still loading
-    if (userDataLoading) {
-      return;
-    }
-
-    // If still loading content after profile is ready, start the timeout
+    if (userDataLoading) return;
     if (isAnyLoading) {
       setLoadingTimedOut(false);
-      timeoutRef.current = setTimeout(() => {
-        setLoadingTimedOut(true);
-      }, 15000);
+      timeoutRef.current = setTimeout(() => setLoadingTimedOut(true), 15000);
     }
-
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -249,66 +142,93 @@ const Home: React.FC = () => {
 
   const handleRetry = () => {
     setLoadingTimedOut(false);
-    queryClient.invalidateQueries({ queryKey: ['home_events'] });
-    queryClient.invalidateQueries({ queryKey: ['home_learn_content'] });
     queryClient.invalidateQueries({ queryKey: ['home_mentors_all'] });
     queryClient.invalidateQueries({ queryKey: ['home_alumni_testimonials_all'] });
   };
 
+  const firstName = profile?.full_name?.split(' ')[0] || 'there';
+
+  // Get section configs
+  const countdownSection = getSection('countdown');
+  const focusSection = getSection('todays_focus');
+  const onboardingSection = getSection('onboarding');
+  const journeySection = getSection('journey');
+  const batchmatesSection = getSection('batchmates');
+  const mentorsSection = getSection('mentors');
+  const alumniSection = getSection('alumni');
+
   return (
     <div className="min-h-screen">
-      {/* Desktop Layout with Sidebar */}
       <div className="flex gap-6 px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-6">
-        
         {/* Main Content Column */}
-        <div className="flex-1 space-y-10 sm:space-y-12 min-w-0">
-          {/* Compact Countdown Timer - Gold themed strip at top */}
-          <CompactCountdownTimer edition={edition} />
+        <div className="flex-1 space-y-8 sm:space-y-10 min-w-0">
+          {/* Personalized Welcome */}
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Hi {firstName}</h1>
+            <p className="text-muted-foreground text-sm">Let's make today count</p>
+          </div>
 
-          {/* Journey Timeline - Embedded from Roadmap */}
-          <HomeJourneySection />
+          {/* 1. Countdown Timer */}
+          {countdownSection && <CompactCountdownTimer edition={edition} />}
 
-           {/* Prep Checklist Card - Prominent position after Journey */}
-           {prepProgress?.hasData && (
-             <PrepHighlightCard 
-               totalItems={prepProgress.totalItems}
-               completedItems={prepProgress.completedItems}
-               progressPercent={prepProgress.progressPercent}
-             />
-           )}
- 
-          {/* Debug Panel (only when ?homeDebug=1) */}
+          {/* 2. Today's Focus */}
+          {focusSection && activeFocusCard && (
+            <TodaysFocusCard card={activeFocusCard} />
+          )}
+
+          {/* 3. Onboarding Steps */}
+          {onboardingSection && (
+            <OnboardingStepsSection
+              title={onboardingSection.title}
+              subtitle={onboardingSection.subtitle || undefined}
+            />
+          )}
+
+          {/* 4. Journey Timeline */}
+          {journeySection && (
+            <HomeJourneySection
+              title={journeySection.title}
+              subtitle={journeySection.subtitle || undefined}
+            />
+          )}
+
+          {/* 5. Batchmates */}
+          {batchmatesSection && (
+            <BatchmatesSection
+              title={batchmatesSection.title}
+              subtitle={batchmatesSection.subtitle || undefined}
+            />
+          )}
+
+          {/* Debug Panel */}
           {showDebug && (
             <div className="text-xs font-mono bg-muted/50 border border-border rounded-lg p-4 space-y-2">
               <p className="font-semibold">Home Debug Panel</p>
-              <p>Events: {eventsQuery.isLoading ? '⏳' : eventsQuery.isError ? `❌ ${isTimeoutError(eventsQuery.error) ? 'TIMEOUT' : 'ERROR'}` : `✅ (${displayEvents.length})`}</p>
-              <p>Learn: {learnContentQuery.isLoading ? '⏳' : learnContentQuery.isError ? `❌ ${isTimeoutError(learnContentQuery.error) ? 'TIMEOUT' : 'ERROR'}` : `✅ (${displayLearnContent.length})`}</p>
-              <p>Mentors: {mentorsQuery.isLoading ? '⏳' : mentorsQuery.isError ? `❌ ${isTimeoutError(mentorsQuery.error) ? 'TIMEOUT' : 'ERROR'}` : `✅ (${displayMentors.length})`}</p>
-              <p>Alumni: {alumniTestimonialsQuery.isLoading ? '⏳' : alumniTestimonialsQuery.isError ? `❌ ${isTimeoutError(alumniTestimonialsQuery.error) ? 'TIMEOUT' : 'ERROR'}` : `✅ (${displayAlumni.length})`}</p>
+              <p>Mentors: {mentorsQuery.isLoading ? '⏳' : mentorsQuery.isError ? '❌' : `✅ (${displayMentors.length})`}</p>
+              <p>Alumni: {alumniTestimonialsQuery.isLoading ? '⏳' : alumniTestimonialsQuery.isError ? '❌' : `✅ (${displayAlumni.length})`}</p>
+              <p>Focus Card: {activeFocusCard ? activeFocusCard.title : '(none)'}</p>
               <p>User Cohort: {userCohortType || '(none)'}</p>
-              <p>User Data Loading: {userDataLoading ? 'Yes' : 'No'}</p>
             </div>
           )}
 
-          {/* Error State - show when queries fail or timeout */}
+          {/* Error State */}
           {(isAnyError || loadingTimedOut) && (
-            <HomeErrorState 
-              failedQueries={loadingTimedOut && !isAnyError 
-                ? [{ name: 'All', error: new Error('Loading timed out. Please check your connection.') }] 
-                : failedQueries} 
+            <HomeErrorState
+              failedQueries={loadingTimedOut && !isAnyError
+                ? [{ name: 'All', error: new Error('Loading timed out.') }]
+                : failedQueries}
               onRetry={handleRetry}
               showDebug={showDebug}
             />
           )}
 
-          {/* Per-section rendering - each section loads independently */}
-          {!loadingTimedOut && (
+          {/* 6. Mentors Section */}
+          {mentorsSection && !loadingTimedOut && (
             <>
-              {/* Mentors Section */}
               {mentorsQuery.isLoading ? (
-                <HomeCarouselSkeleton title="Meet Your Mentors" />
+                <HomeCarouselSkeleton title={mentorsSection.title} />
               ) : displayMentors.length > 0 ? (
-                <ContentCarousel title="Meet Your Mentors">
+                <ContentCarousel title={mentorsSection.title}>
                   {displayMentors.map((mentor) => {
                     const mentorData: Mentor = {
                       id: mentor.id,
@@ -321,7 +241,7 @@ const Home: React.FC = () => {
                       brands: (mentor.brands as any[]) || [],
                     };
                     return (
-                       <CleanMentorCard
+                      <CleanMentorCard
                         key={mentor.id}
                         mentor={mentorData}
                         onClick={() => handleMentorClick(mentorData)}
@@ -330,79 +250,44 @@ const Home: React.FC = () => {
                   })}
                 </ContentCarousel>
               ) : null}
-
-              {/* Mentor Detail Modal */}
-              <MentorDetailModal
-                mentor={selectedMentor}
-                isOpen={isMentorModalOpen}
-                onClose={() => setIsMentorModalOpen(false)}
-              />
-
-              {/* Alumni Section */}
-              {alumniTestimonialsQuery.isLoading ? (
-                <HomeCarouselSkeleton title="Alumni Spotlight" />
-              ) : displayAlumni.length > 0 ? (
-                <ContentCarousel title="Alumni Spotlight">
-                  {displayAlumni.map((alumni) => (
-                    <TestimonialVideoCard
-                      key={alumni.id}
-                      name={alumni.name}
-                      role={alumni.role || undefined}
-                      videoUrl={alumni.video_url}
-                    />
-                  ))}
-                </ContentCarousel>
-              ) : null}
-
-              {/* Learn Section */}
-              {learnContentQuery.isLoading ? (
-                <HomeCarouselSkeleton title="Fundamental learning for Forge and beyond" />
-              ) : displayLearnContent.length > 0 ? (
-                <ContentCarousel title="Fundamental learning for Forge and beyond" onSeeAll={() => navigate('/learn')}>
-                  {displayLearnContent.map((content: any) => (
-                    <LearnCourseCard
-                      key={content.id}
-                      id={content.id}
-                      title={content.title}
-                      thumbnailUrl={content.thumbnail_url || undefined}
-                      durationMinutes={content.duration_minutes}
-                    />
-                  ))}
-                </ContentCarousel>
-              ) : null}
-
-              {/* Events Section */}
-              {eventsQuery.isLoading ? (
-                <HomeCarouselSkeleton title="More from LevelUp" />
-              ) : displayEvents.length > 0 ? (
-                <ContentCarousel title="More from LevelUp" onSeeAll={() => navigate('/events')}>
-                  {displayEvents.map((event: any) => (
-                    <SimpleEventCard
-                      key={event.id}
-                      id={event.id}
-                      title={event.title}
-                      imageUrl={event.image_url || undefined}
-                      onClick={() => navigate('/events')}
-                    />
-                  ))}
-                </ContentCarousel>
-              ) : null}
-
-              {/* Empty State - Only show when all queries succeeded AND no content */}
-              {allFetched && !hasAnyContent && !isAnyError && (
-                <div className="glass-premium rounded-2xl p-8 text-center">
-                  <Users className="h-12 w-12 text-primary/50 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-foreground mb-2">Content Coming Soon</h3>
-                  <p className="text-muted-foreground">
-                    Check back soon for alumni stories, mentors, courses, and events!
-                  </p>
-                </div>
-              )}
             </>
           )}
+
+          {/* Mentor Detail Modal */}
+          <MentorDetailModal
+            mentor={selectedMentor}
+            isOpen={isMentorModalOpen}
+            onClose={() => setIsMentorModalOpen(false)}
+          />
+
+          {/* 7. Alumni Showcase */}
+          {alumniSection && !loadingTimedOut && (
+            <AlumniShowcaseSection
+              alumni={displayAlumni}
+              isLoading={alumniTestimonialsQuery.isLoading}
+              title={alumniSection.title}
+              subtitle={alumniSection.subtitle || undefined}
+            />
+          )}
+
+          {/* Empty State */}
+          {!loadingTimedOut &&
+            mentorsQuery.isFetched &&
+            alumniTestimonialsQuery.isFetched &&
+            displayMentors.length === 0 &&
+            displayAlumni.length === 0 &&
+            !isAnyError && (
+              <div className="rounded-2xl p-8 text-center bg-card/50 border border-border/30">
+                <Users className="h-12 w-12 text-primary/50 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">Content Coming Soon</h3>
+                <p className="text-muted-foreground">
+                  Check back soon for mentors, alumni stories, and more!
+                </p>
+              </div>
+            )}
         </div>
-        
-        {/* Desktop Sidebar - Hidden on mobile/tablet */}
+
+        {/* Desktop Sidebar */}
         <div className="hidden lg:block w-64 xl:w-72 flex-shrink-0">
           <div className="sticky top-24">
             <RoadmapSidebar editionId={profile?.edition_id} />
@@ -410,10 +295,10 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Floating Button - Hidden on desktop */}
+      {/* Mobile Floating Button */}
       <FloatingHighlightsButton editionId={profile?.edition_id} />
-      
-      {/* Admin Cohort Switcher - Admin only */}
+
+      {/* Admin Cohort Switcher */}
       <AdminCohortSwitcher />
     </div>
   );

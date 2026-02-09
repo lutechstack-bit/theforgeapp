@@ -60,6 +60,8 @@ import AdminJourneyStages from "./pages/admin/AdminJourneyStages";
 import AdminJourneyTasks from "./pages/admin/AdminJourneyTasks";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
 import AdminChangelog from "./pages/admin/AdminChangelog";
+import AdminHomepage from "./pages/admin/AdminHomepage";
+import AdminTodaysFocus from "./pages/admin/AdminTodaysFocus";
 import DynamicKYForm from "./pages/DynamicKYForm";
 import EventDetail from "./pages/EventDetail";
 
@@ -364,6 +366,8 @@ const AppRoutes = () => {
         <Route path="alumni-testimonials" element={<AdminAlumniTestimonials />} />
         <Route path="docs" element={<AdminDocs />} />
         <Route path="changelog" element={<AdminChangelog />} />
+        <Route path="homepage" element={<AdminHomepage />} />
+        <Route path="todays-focus" element={<AdminTodaysFocus />} />
       </Route>
       
       {/* Catch-all */}

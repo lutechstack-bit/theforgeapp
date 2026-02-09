@@ -4,20 +4,33 @@ import { Map as MapIcon, ChevronRight, RefreshCw, AlertCircle } from 'lucide-rea
 import { useRoadmapData } from '@/hooks/useRoadmapData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
-import JourneyCard, { type JourneyCardDay } from '@/components/roadmap/JourneyCard';
-import { TimelineNode } from '@/components/roadmap/TimelineSpine';
+import { format } from 'date-fns';
+import DatePillSelector from './DatePillSelector';
+import SessionDetailCard from './SessionDetailCard';
+import DayDetailModal from '@/components/roadmap/DayDetailModal';
+import type { JourneyCardDay } from '@/components/roadmap/JourneyCard';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
-// Maximum time to show skeleton before showing retry UI
 const JOURNEY_LOADING_TIMEOUT_MS = 15000;
 
-const HomeJourneySection: React.FC = () => {
+interface HomeJourneySectionProps {
+  title?: string;
+  subtitle?: string;
+}
+
+const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
+  title = 'Your Forge Journey',
+  subtitle,
+}) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { profile, userDataLoading, userDataTimedOut, userDataError, retryUserData } = useAuth();
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
-  
+  const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
   const {
     roadmapDays,
     isLoadingDays,
@@ -34,21 +47,14 @@ const HomeJourneySection: React.FC = () => {
   // Timer to prevent infinite skeleton
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
-    
-    // Only start timer if we're loading roadmap (not user data)
     if (isLoadingDays && !userDataLoading) {
       timer = setTimeout(() => {
-        console.warn('[Journey] Loading timed out after', JOURNEY_LOADING_TIMEOUT_MS, 'ms');
         setLoadingTimedOut(true);
       }, JOURNEY_LOADING_TIMEOUT_MS);
     } else {
-      // Reset timeout if loading completes
       setLoadingTimedOut(false);
     }
-    
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
+    return () => { if (timer) clearTimeout(timer); };
   }, [isLoadingDays, userDataLoading]);
 
   const handleRetryJourney = () => {
@@ -56,159 +62,196 @@ const HomeJourneySection: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: ['roadmap-days'] });
   };
 
-  const getJourneyType = () => {
-    switch (userCohortType) {
-      case 'FORGE':
-        return 'Filmmaking';
-      case 'FORGE_CREATORS':
-        return 'Creating';
-      case 'FORGE_WRITING':
-        return 'Writing';
-      default:
-        return 'Forge';
+  // Split days into online sessions and bootcamp
+  const { onlineSessions, bootcampDays, onlineCount, bootcampCount } = useMemo(() => {
+    if (!roadmapDays || roadmapDays.length === 0) {
+      return { onlineSessions: [], bootcampDays: [], onlineCount: 0, bootcampCount: 0 };
     }
-  };
 
-  const displayDays = useMemo(() => {
-    if (!roadmapDays || roadmapDays.length === 0) return [];
-    
-    const currentIndex = roadmapDays.findIndex(d => {
-      const status = getDayStatus(d);
-      return status === 'current' || status === 'upcoming';
+    const online = roadmapDays.filter(d => d.day_number < 0 || (d as any).is_virtual);
+    const bootcamp = roadmapDays.filter(d => d.day_number > 0 && !(d as any).is_virtual);
+
+    return {
+      onlineSessions: online,
+      bootcampDays: bootcamp,
+      onlineCount: online.length,
+      bootcampCount: bootcamp.length,
+    };
+  }, [roadmapDays]);
+
+  // Auto-select current day
+  useEffect(() => {
+    if (!roadmapDays || selectedDayId) return;
+
+    const currentDay = roadmapDays.find(d => getDayStatus(d) === 'current');
+    if (currentDay) {
+      setSelectedDayId(currentDay.id);
+    } else if (roadmapDays.length > 0) {
+      setSelectedDayId(roadmapDays[0].id);
+    }
+  }, [roadmapDays, getDayStatus, selectedDayId]);
+
+  const selectedDay = useMemo(() => {
+    if (!roadmapDays || !selectedDayId) return null;
+    return roadmapDays.find(d => d.id === selectedDayId) || null;
+  }, [roadmapDays, selectedDayId]);
+
+  // Build pill data for online sessions
+  const onlinePills = useMemo(() => {
+    return onlineSessions.map(day => {
+      const date = day.date ? new Date(day.date) : null;
+      return {
+        id: day.id,
+        date,
+        dayNumber: day.day_number,
+        label: date ? format(date, 'd') : `S${Math.abs(day.day_number)}`,
+        subLabel: date ? format(date, 'EEE') : undefined,
+        status: getDayStatus(day),
+      };
     });
+  }, [onlineSessions, getDayStatus]);
 
-    const startIndex = currentIndex >= 0 ? Math.max(0, currentIndex - 1) : 0;
-    return roadmapDays.slice(startIndex, startIndex + 4);
-  }, [roadmapDays, getDayStatus]);
+  // Build pill data for bootcamp days
+  const bootcampPills = useMemo(() => {
+    return bootcampDays.map(day => {
+      const date = day.date ? new Date(day.date) : null;
+      return {
+        id: day.id,
+        date,
+        dayNumber: day.day_number,
+        label: date ? format(date, 'd') : String(day.day_number),
+        subLabel: date ? format(date, 'EEE') : `Day ${day.day_number}`,
+        status: getDayStatus(day),
+      };
+    });
+  }, [bootcampDays, getDayStatus]);
 
-  // Priority 1: Show skeleton while user data is loading
+  // Get date ranges for labels
+  const onlineDateRange = useMemo(() => {
+    if (onlineSessions.length === 0) return '';
+    const first = onlineSessions[0].date ? new Date(onlineSessions[0].date) : null;
+    const last = onlineSessions[onlineSessions.length - 1].date
+      ? new Date(onlineSessions[onlineSessions.length - 1].date!)
+      : null;
+    if (first && last) return `${format(first, 'MMM d')} - ${format(last, 'MMM d')}`;
+    return '';
+  }, [onlineSessions]);
+
+  const bootcampDateRange = useMemo(() => {
+    if (bootcampDays.length === 0) return '';
+    const first = bootcampDays[0].date ? new Date(bootcampDays[0].date) : null;
+    const last = bootcampDays[bootcampDays.length - 1].date
+      ? new Date(bootcampDays[bootcampDays.length - 1].date!)
+      : null;
+    if (first && last) return `${format(first, 'MMM d')} - ${format(last, 'MMM d')}`;
+    return '';
+  }, [bootcampDays]);
+
+  // Convert selected day for detail card
+  const selectedCardDay: JourneyCardDay | null = useMemo(() => {
+    if (!selectedDay) return null;
+    return {
+      id: selectedDay.id,
+      day_number: selectedDay.day_number,
+      title: selectedDay.title,
+      description: selectedDay.description,
+      date: selectedDay.date,
+      location: selectedDay.location,
+      call_time: selectedDay.call_time,
+      checklist: (selectedDay.checklist as string[]) || [],
+      mentors: (selectedDay.mentors as string[]) || [],
+      key_learnings: (selectedDay.key_learnings as string[]) || [],
+      activity_type: selectedDay.activity_type,
+      duration_hours: selectedDay.duration_hours ? Number(selectedDay.duration_hours) : undefined,
+      intensity_level: selectedDay.intensity_level,
+      teaser_text: selectedDay.teaser_text,
+      reveal_days_before: selectedDay.reveal_days_before,
+      theme_name: selectedDay.theme_name,
+      objective: selectedDay.objective,
+      schedule: Array.isArray(selectedDay.schedule)
+        ? (selectedDay.schedule as { time: string; activity: string; icon?: string }[])
+        : [],
+      location_image_url: selectedDay.location_image_url,
+      milestone_type: selectedDay.milestone_type,
+      is_virtual: (selectedDay as any).is_virtual,
+      meeting_url: (selectedDay as any).meeting_url,
+      meeting_id: (selectedDay as any).meeting_id,
+      meeting_passcode: (selectedDay as any).meeting_passcode,
+      session_start_time: (selectedDay as any).session_start_time,
+      session_duration_hours: (selectedDay as any).session_duration_hours,
+    };
+  }, [selectedDay]);
+
+  // Loading states
   if (userDataLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-16 w-full rounded-xl" />
-        <Skeleton className="h-32 w-full rounded-xl" />
-        <Skeleton className="h-32 w-full rounded-xl" />
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-12 w-full rounded-xl" />
+        <Skeleton className="h-40 w-full rounded-xl" />
       </div>
     );
   }
 
-  // Priority 2: User data fetch timed out or errored - show actionable error
   if (userDataTimedOut || userDataError) {
     return (
       <section className="space-y-4">
-        <div className="mb-2">
-          <h1 className="text-2xl font-bold text-foreground">
-            Hi {firstName}
-          </h1>
-          <p className="text-muted-foreground">Let's get you connected</p>
-        </div>
-        <div className="glass-premium rounded-xl p-6 text-center border border-destructive/20">
+        <div className="rounded-xl p-6 text-center border border-destructive/20 bg-card/50">
           <AlertCircle className="h-8 w-8 text-destructive/70 mx-auto mb-3" />
-          <p className="text-sm text-foreground font-medium mb-2">
-            Couldn't load your profile data
-          </p>
+          <p className="text-sm text-foreground font-medium mb-2">Couldn't load your profile data</p>
           <p className="text-xs text-muted-foreground mb-4">
-            {userDataError?.message || 'The request timed out. Please check your connection.'}
+            {userDataError?.message || 'The request timed out.'}
           </p>
-          <Button 
-            onClick={retryUserData} 
-            size="sm" 
-            className="gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Try Again
+          <Button onClick={retryUserData} size="sm" className="gap-2">
+            <RefreshCw className="h-4 w-4" /> Try Again
           </Button>
         </div>
       </section>
     );
   }
 
-  // Priority 3: Journey loading timed out - show retry UI instead of infinite skeleton
-  if (loadingTimedOut || (isLoadingDays && !userDataLoading && loadingTimedOut)) {
+  if (loadingTimedOut) {
     return (
       <section className="space-y-4">
-        <div className="mb-2">
-          <h1 className="text-2xl font-bold text-foreground">
-            Hi {firstName}
-          </h1>
-          <p className="text-muted-foreground">Your journey is loading</p>
-        </div>
-        <div className="glass-premium rounded-xl p-6 text-center border border-amber-500/20">
+        <div className="rounded-xl p-6 text-center border border-amber-500/20 bg-card/50">
           <AlertCircle className="h-8 w-8 text-amber-500/70 mx-auto mb-3" />
-          <p className="text-sm text-foreground font-medium mb-2">
-            Taking longer than expected
-          </p>
-          <p className="text-xs text-muted-foreground mb-4">
-            Your journey data is still loading. This could be due to a slow connection.
-          </p>
-          <Button 
-            onClick={handleRetryJourney} 
-            size="sm" 
-            variant="outline"
-            className="gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Try Again
+          <p className="text-sm text-foreground font-medium mb-2">Taking longer than expected</p>
+          <Button onClick={handleRetryJourney} size="sm" variant="outline" className="gap-2">
+            <RefreshCw className="h-4 w-4" /> Try Again
           </Button>
         </div>
       </section>
     );
   }
 
-  // Priority 4: Still loading roadmap days - show skeleton (with timer active)
   if (isLoadingDays) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-16 w-full rounded-xl" />
-        <Skeleton className="h-32 w-full rounded-xl" />
-        <Skeleton className="h-32 w-full rounded-xl" />
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-12 w-full rounded-xl" />
+        <Skeleton className="h-40 w-full rounded-xl" />
       </div>
     );
   }
 
-  // Priority 5: Roadmap query errored (not timeout from user data)
   if (isErrorDays) {
     return (
       <section className="space-y-4">
-        <div className="mb-2">
-          <h1 className="text-2xl font-bold text-foreground">
-            Hi {firstName}
-          </h1>
-          <p className="text-muted-foreground">Your journey is being prepared</p>
-        </div>
-        <div className="glass-premium rounded-xl p-6 text-center border border-destructive/20">
+        <div className="rounded-xl p-6 text-center border border-destructive/20 bg-card/50">
           <AlertCircle className="h-8 w-8 text-destructive/70 mx-auto mb-3" />
-          <p className="text-sm text-foreground font-medium mb-2">
-            Couldn't load your journey
-          </p>
-          <p className="text-xs text-muted-foreground mb-4">
-            {daysError?.message || 'There was an error loading your roadmap. Please try again.'}
-          </p>
-          <Button 
-            onClick={handleRetryJourney} 
-            size="sm" 
-            variant="outline"
-            className="gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Retry
+          <p className="text-sm text-foreground font-medium mb-2">Couldn't load your journey</p>
+          <Button onClick={handleRetryJourney} size="sm" variant="outline" className="gap-2">
+            <RefreshCw className="h-4 w-4" /> Retry
           </Button>
         </div>
       </section>
     );
   }
 
-  // Priority 6: Profile loaded but no edition assigned
   if (profile && !profile.edition_id) {
     return (
       <section className="space-y-4">
-        <div className="mb-2">
-          <h1 className="text-2xl font-bold text-foreground">
-            Hi {firstName}
-          </h1>
-          <p className="text-muted-foreground">Your journey is being prepared</p>
-        </div>
-        <div className="glass-premium rounded-xl p-6 text-center">
+        <div className="rounded-xl p-6 text-center bg-card/50">
           <MapIcon className="h-8 w-8 text-primary/50 mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">
             Your journey will appear here once your cohort is assigned.
@@ -218,17 +261,10 @@ const HomeJourneySection: React.FC = () => {
     );
   }
 
-  // Priority 7: Edition assigned but no roadmap days configured (admin issue)
   if (!roadmapDays || roadmapDays.length === 0) {
     return (
       <section className="space-y-4">
-        <div className="mb-2">
-          <h1 className="text-2xl font-bold text-foreground">
-            Hi {firstName}
-          </h1>
-          <p className="text-muted-foreground">Your journey is being prepared</p>
-        </div>
-        <div className="glass-premium rounded-xl p-6 text-center">
+        <div className="rounded-xl p-6 text-center bg-card/50">
           <MapIcon className="h-8 w-8 text-primary/50 mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">
             Your journey is being configured. Check back soon!
@@ -238,28 +274,29 @@ const HomeJourneySection: React.FC = () => {
     );
   }
 
-  // Success: Show the journey
-  return (
-    <section className="space-y-6">
-      {/* Personalized Welcome */}
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold text-foreground">
-          Hi {firstName}
-        </h1>
-        <p className="text-muted-foreground">
-          Your {getJourneyType()} Journey Starts Here
-        </p>
-      </div>
+  // Build subtitle dynamically
+  const journeySubtitle = subtitle || (() => {
+    const parts: string[] = [];
+    if (onlineCount > 0) parts.push(`${onlineCount} online session${onlineCount > 1 ? 's' : ''}`);
+    if (bootcampCount > 0) parts.push(`${bootcampCount} days in Goa`);
+    return parts.join(' + ');
+  })();
 
-      {/* Section Header */}
+  return (
+    <section className="space-y-5">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-lg bg-primary/15 border border-primary/20">
             <MapIcon className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-foreground border-l-3 border-primary pl-3">Your Journey</h2>
-            <p className="text-xs text-muted-foreground pl-3">Day by day through the Forge</p>
+            <h3 className="text-lg font-bold text-foreground border-l-3 border-primary pl-3">
+              {title}
+            </h3>
+            {journeySubtitle && (
+              <p className="text-xs text-muted-foreground pl-3">{journeySubtitle}</p>
+            )}
           </div>
         </div>
         <Button
@@ -273,86 +310,60 @@ const HomeJourneySection: React.FC = () => {
         </Button>
       </div>
 
-      {/* Timeline Preview */}
-      <div className="relative">
-        <div className="space-y-0">
-          {displayDays.map((day, index) => {
-            const status = getDayStatus(day);
-            const prevStatus = index > 0 ? getDayStatus(displayDays[index - 1]) : undefined;
-            const isFirst = index === 0;
-            const isLast = index === displayDays.length - 1;
-
-            const cardDay: JourneyCardDay = {
-              id: day.id,
-              day_number: day.day_number,
-              title: day.title,
-              description: day.description,
-              date: day.date,
-              location: day.location,
-              call_time: day.call_time,
-              checklist: (day.checklist as string[]) || [],
-              mentors: (day.mentors as string[]) || [],
-              key_learnings: (day.key_learnings as string[]) || [],
-              activity_type: day.activity_type,
-              duration_hours: day.duration_hours ? Number(day.duration_hours) : undefined,
-              intensity_level: day.intensity_level,
-              teaser_text: day.teaser_text,
-              reveal_days_before: day.reveal_days_before,
-              theme_name: day.theme_name,
-              objective: day.objective,
-              schedule: Array.isArray(day.schedule) 
-                ? (day.schedule as { time: string; activity: string; icon?: string }[]) 
-                : [],
-              location_image_url: day.location_image_url,
-              milestone_type: day.milestone_type,
-            };
-
-            return (
-              <div 
-                key={day.id} 
-                className="flex items-stretch animate-slide-up" 
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
-                {/* Timeline Node */}
-                <div className="flex-shrink-0 flex flex-col items-center w-6 mr-3">
-                  <TimelineNode 
-                    status={status} 
-                    isFirst={isFirst} 
-                    isLast={isLast}
-                    prevStatus={prevStatus}
-                    forgeMode={forgeMode}
-                    isHighlighted={status === 'current'}
-                  />
-                </div>
-
-                {/* Card */}
-                <div className="flex-1 pb-3">
-                  <JourneyCard
-                    day={cardDay}
-                    status={status}
-                    forgeMode={forgeMode}
-                    forgeStartDate={forgeStartDate}
-                    cohortType={userCohortType}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* View More Link */}
-        {roadmapDays.length > 4 && (
-          <div 
-            className="flex items-center justify-center py-3 cursor-pointer group"
-            onClick={() => navigate('/roadmap')}
-          >
-            <div className="flex items-center gap-2 text-sm text-muted-foreground group-hover:text-primary transition-colors">
-              <span>View all {roadmapDays.length} days</span>
-              <ChevronRight className="w-4 h-4" />
-            </div>
+      {/* Online Sessions Section */}
+      {onlineSessions.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-foreground">Online Sessions</h4>
+            {onlineDateRange && (
+              <span className="text-xs text-muted-foreground">{onlineDateRange}</span>
+            )}
           </div>
-        )}
-      </div>
+          <DatePillSelector
+            pills={onlinePills}
+            selectedId={selectedDayId}
+            onSelect={setSelectedDayId}
+          />
+        </div>
+      )}
+
+      {/* Bootcamp Section */}
+      {bootcampDays.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-foreground">Goa Bootcamp</h4>
+            {bootcampDateRange && (
+              <span className="text-xs text-muted-foreground">{bootcampDateRange}</span>
+            )}
+          </div>
+          <DatePillSelector
+            pills={bootcampPills}
+            selectedId={selectedDayId}
+            onSelect={setSelectedDayId}
+          />
+        </div>
+      )}
+
+      {/* Selected Day Detail */}
+      {selectedCardDay && selectedDay && (
+        <SessionDetailCard
+          day={selectedCardDay}
+          status={getDayStatus(selectedDay)}
+          onViewDetail={() => setIsDetailModalOpen(true)}
+        />
+      )}
+
+      {/* Day Detail Modal */}
+      {selectedCardDay && selectedDay && (
+        <DayDetailModal
+          isOpen={isDetailModalOpen}
+          onClose={() => setIsDetailModalOpen(false)}
+          day={selectedCardDay}
+          status={getDayStatus(selectedDay)}
+          cohortType={userCohortType as any}
+          forgeMode={forgeMode}
+        />
+      )}
     </section>
   );
 };

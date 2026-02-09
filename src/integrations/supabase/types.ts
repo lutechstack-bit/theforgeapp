@@ -337,6 +337,7 @@ export type Database = {
           id: string
           is_archived: boolean
           name: string
+          show_batchmates: boolean
         }
         Insert: {
           archived_at?: string | null
@@ -348,6 +349,7 @@ export type Database = {
           id?: string
           is_archived?: boolean
           name: string
+          show_batchmates?: boolean
         }
         Update: {
           archived_at?: string | null
@@ -359,6 +361,7 @@ export type Database = {
           id?: string
           is_archived?: boolean
           name?: string
+          show_batchmates?: boolean
         }
         Relationships: []
       }
@@ -606,6 +609,39 @@ export type Database = {
           order_index?: number
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      homepage_sections: {
+        Row: {
+          cohort_types: string[] | null
+          created_at: string
+          id: string
+          is_visible: boolean
+          order_index: number
+          section_key: string
+          subtitle: string | null
+          title: string
+        }
+        Insert: {
+          cohort_types?: string[] | null
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          order_index?: number
+          section_key: string
+          subtitle?: string | null
+          title: string
+        }
+        Update: {
+          cohort_types?: string[] | null
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          order_index?: number
+          section_key?: string
+          subtitle?: string | null
+          title?: string
         }
         Relationships: []
       }
@@ -2224,6 +2260,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      today_focus_cards: {
+        Row: {
+          auto_detect_field: string | null
+          cohort_types: string[] | null
+          created_at: string
+          cta_route: string
+          cta_text: string
+          description: string | null
+          icon_emoji: string | null
+          id: string
+          is_active: boolean
+          order_index: number
+          priority: number
+          title: string
+        }
+        Insert: {
+          auto_detect_field?: string | null
+          cohort_types?: string[] | null
+          created_at?: string
+          cta_route: string
+          cta_text?: string
+          description?: string | null
+          icon_emoji?: string | null
+          id?: string
+          is_active?: boolean
+          order_index?: number
+          priority?: number
+          title: string
+        }
+        Update: {
+          auto_detect_field?: string | null
+          cohort_types?: string[] | null
+          created_at?: string
+          cta_route?: string
+          cta_text?: string
+          description?: string | null
+          icon_emoji?: string | null
+          id?: string
+          is_active?: boolean
+          order_index?: number
+          priority?: number
+          title?: string
+        }
+        Relationships: []
       }
       user_journey_progress: {
         Row: {
