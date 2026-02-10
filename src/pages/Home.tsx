@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentCarousel } from '@/components/shared/ContentCarousel';
-import { TestimonialVideoCard } from '@/components/shared/TestimonialVideoCard';
 import { CleanMentorCard } from '@/components/shared/CleanMentorCard';
 import { MentorDetailModal } from '@/components/shared/MentorDetailModal';
 import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
@@ -15,6 +14,7 @@ import TodaysFocusCard from '@/components/home/TodaysFocusCard';
 import OnboardingStepsSection from '@/components/home/OnboardingStepsSection';
 import BatchmatesSection from '@/components/home/BatchmatesSection';
 import AlumniShowcaseSection from '@/components/home/AlumniShowcaseSection';
+import TravelStaySection from '@/components/home/TravelStaySection';
 import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
 import { useTodaysFocus } from '@/hooks/useTodaysFocus';
 import { useHomepageSections } from '@/hooks/useHomepageSections';
@@ -154,6 +154,7 @@ const Home: React.FC = () => {
   const batchmatesSection = getSection('batchmates');
   const mentorsSection = getSection('mentors');
   const alumniSection = getSection('alumni');
+  const travelStaySection = getSection('travel_stay');
 
   return (
     <div className="min-h-screen">
@@ -265,6 +266,14 @@ const Home: React.FC = () => {
               isLoading={alumniTestimonialsQuery.isLoading}
               title={alumniSection.title}
               subtitle={alumniSection.subtitle || undefined}
+            />
+          )}
+
+          {/* 8. Travel & Stay */}
+          {travelStaySection && !loadingTimedOut && (
+            <TravelStaySection
+              title={travelStaySection.title}
+              subtitle={travelStaySection.subtitle || undefined}
             />
           )}
 
