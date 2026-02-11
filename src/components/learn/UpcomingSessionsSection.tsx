@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Video, CalendarPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { generateGoogleCalendarUrl } from '@/lib/calendarUtils';
 import {
   Carousel,
   CarouselContent,
@@ -127,7 +128,24 @@ export const UpcomingSessionsSection: React.FC = () => {
                     size="sm"
                     variant="outline"
                     className="h-9 w-9 p-0 rounded-lg border-border/50"
-                    onClick={() => setSelectedSession(session)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!session.date) return;
+                      const startDate = new Date(session.date);
+                      if (session.session_start_time) {
+                        const [h, m] = session.session_start_time.split(':').map(Number);
+                        startDate.setHours(h, m, 0);
+                      }
+                      const endDate = new Date(startDate.getTime() + (session.session_duration_hours || 1) * 60 * 60 * 1000);
+                      const url = generateGoogleCalendarUrl({
+                        title: `Forge: ${session.title}`,
+                        description: session.description || '',
+                        startDate,
+                        endDate,
+                        isVirtual: true,
+                      });
+                      window.open(url, '_blank');
+                    }}
                   >
                     <CalendarPlus className="w-3.5 h-3.5" />
                   </Button>
