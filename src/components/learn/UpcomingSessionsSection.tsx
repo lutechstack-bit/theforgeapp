@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Video, CalendarPlus } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { generateGoogleCalendarUrl } from '@/lib/calendarUtils';
 import {
@@ -130,7 +131,10 @@ export const UpcomingSessionsSection: React.FC = () => {
                     className="h-9 w-9 p-0 rounded-lg border-border/50"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (!session.date) return;
+                      if (!session.date) {
+                        toast.info('Session date not yet announced. Check back soon!');
+                        return;
+                      }
                       const startDate = new Date(session.date);
                       if (session.session_start_time) {
                         const [h, m] = session.session_start_time.split(':').map(Number);
