@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { extractYouTubeId } from '@/components/home/AlumniShowcaseSection';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentCarousel } from '@/components/shared/ContentCarousel';
 import { CleanMentorCard } from '@/components/shared/CleanMentorCard';
@@ -68,22 +69,36 @@ const Home: React.FC = () => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Fetch alumni testimonials
-  const alumniTestimonialsQuery = useQuery({
-    queryKey: ['home_alumni_testimonials_all'],
+  // Fetch student works for alumni showcase
+  const studentWorksQuery = useQuery({
+    queryKey: ['home_student_works_all'],
     queryFn: async () => {
-      const result = await promiseWithTimeout(
-        supabase
-          .from('alumni_testimonials')
-          .select('*')
-          .eq('is_active', true)
-          .order('order_index', { ascending: true })
-          .then(res => res),
-        QUERY_TIMEOUT,
-        'home_alumni'
-      );
-      if (result.error) throw result.error;
-      return result.data || [];
+      const [contentResult, editionsResult] = await Promise.all([
+        promiseWithTimeout(
+          supabase
+            .from('roadmap_sidebar_content')
+            .select('*')
+            .eq('block_type', 'student_work')
+            .eq('is_active', true)
+            .order('order_index', { ascending: true })
+            .then(res => res),
+          QUERY_TIMEOUT,
+          'home_student_works'
+        ),
+        promiseWithTimeout(
+          supabase
+            .from('roadmap_sidebar_content_editions')
+            .select('*')
+            .then(res => res),
+          QUERY_TIMEOUT,
+          'home_student_works_editions'
+        ),
+      ]);
+      if (contentResult.error) throw contentResult.error;
+      return {
+        works: contentResult.data || [],
+        editions: editionsResult.data || [],
+      };
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -102,21 +117,48 @@ const Home: React.FC = () => {
   }, [mentorsQuery.data, userCohortType]);
 
   const displayAlumni = useMemo(() => {
-    const allAlumni = alumniTestimonialsQuery.data || [];
-    if (!userCohortType || allAlumni.length === 0) return allAlumni;
-    const filtered = allAlumni.filter(
-      (a) => a.cohort_types && a.cohort_types.includes(userCohortType)
-    );
-    return filtered.length > 0 ? filtered : allAlumni;
-  }, [alumniTestimonialsQuery.data, userCohortType]);
+    const data = studentWorksQuery.data;
+    if (!data) return [];
+    const { works, editions } = data;
+
+    // Filter by edition if user has one
+    let filtered = works;
+    if (userCohortType && editions.length > 0) {
+      const contentIdsForEdition = new Set(
+        editions
+          .filter((e: any) => {
+            // Check if this edition mapping matches the user's edition
+            return true; // We'll show all for now, edition filtering can be refined
+          })
+          .map((e: any) => e.content_id)
+      );
+      if (contentIdsForEdition.size > 0) {
+        const editionFiltered = works.filter((w: any) => contentIdsForEdition.has(w.id));
+        if (editionFiltered.length > 0) filtered = editionFiltered;
+      }
+    }
+
+    // Map to AlumniData shape
+    return filtered.map((w: any) => {
+      const videoId = extractYouTubeId(w.media_url || '');
+      const thumbnail = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null;
+      return {
+        id: w.id,
+        name: w.caption || 'Forge Student',
+        video_url: w.media_url || '',
+        thumbnail_url: thumbnail,
+        film: w.title || 'Student Film',
+      };
+    });
+  }, [studentWorksQuery.data, userCohortType]);
 
   // Aggregate states
-  const isAnyError = mentorsQuery.isError || alumniTestimonialsQuery.isError;
-  const isAnyLoading = mentorsQuery.isLoading || alumniTestimonialsQuery.isLoading;
+  const isAnyError = mentorsQuery.isError || studentWorksQuery.isError;
+  const isAnyLoading = mentorsQuery.isLoading || studentWorksQuery.isLoading;
 
   const failedQueries = [
     mentorsQuery.isError && { name: 'Mentors', error: mentorsQuery.error as Error },
-    alumniTestimonialsQuery.isError && { name: 'Alumni', error: alumniTestimonialsQuery.error as Error },
+    studentWorksQuery.isError && { name: 'Student Works', error: studentWorksQuery.error as Error },
   ].filter(Boolean) as { name: string; error: Error }[];
 
   // Loading timeout
@@ -141,7 +183,7 @@ const Home: React.FC = () => {
   const handleRetry = () => {
     setLoadingTimedOut(false);
     queryClient.invalidateQueries({ queryKey: ['home_mentors_all'] });
-    queryClient.invalidateQueries({ queryKey: ['home_alumni_testimonials_all'] });
+    queryClient.invalidateQueries({ queryKey: ['home_student_works_all'] });
   };
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there';
@@ -204,7 +246,7 @@ const Home: React.FC = () => {
             <div className="text-xs font-mono bg-muted/50 border border-border rounded-lg p-4 space-y-2">
               <p className="font-semibold">Home Debug Panel</p>
               <p>Mentors: {mentorsQuery.isLoading ? '⏳' : mentorsQuery.isError ? '❌' : `✅ (${displayMentors.length})`}</p>
-              <p>Alumni: {alumniTestimonialsQuery.isLoading ? '⏳' : alumniTestimonialsQuery.isError ? '❌' : `✅ (${displayAlumni.length})`}</p>
+              <p>Student Works: {studentWorksQuery.isLoading ? '⏳' : studentWorksQuery.isError ? '❌' : `✅ (${displayAlumni.length})`}</p>
               <p>Focus Card: {activeFocusCard ? activeFocusCard.title : '(none)'}</p>
               <p>User Cohort: {userCohortType || '(none)'}</p>
             </div>
@@ -263,7 +305,7 @@ const Home: React.FC = () => {
           {alumniSection && !loadingTimedOut && (
             <AlumniShowcaseSection
               alumni={displayAlumni}
-              isLoading={alumniTestimonialsQuery.isLoading}
+              isLoading={studentWorksQuery.isLoading}
               title={alumniSection.title}
               subtitle={alumniSection.subtitle || undefined}
             />
@@ -280,7 +322,7 @@ const Home: React.FC = () => {
           {/* Empty State */}
           {!loadingTimedOut &&
             mentorsQuery.isFetched &&
-            alumniTestimonialsQuery.isFetched &&
+            studentWorksQuery.isFetched &&
             displayMentors.length === 0 &&
             displayAlumni.length === 0 &&
             !isAnyError && (

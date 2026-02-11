@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Film, Play, ChevronRight } from 'lucide-react';
 import { HomeCarouselSkeleton } from '@/components/home/HomeCarouselSkeleton';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { SecureVideoPlayer } from '@/components/learn/SecureVideoPlayer';
+
+export function extractYouTubeId(input: string): string | null {
+  const match = input.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : null;
+}
 
 interface AlumniData {
   id: string;
@@ -36,6 +40,11 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
   }
 
   if (alumni.length === 0) return null;
+
+  const getEmbedUrl = (url: string) => {
+    const id = extractYouTubeId(url);
+    return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : url;
+  };
 
   return (
     <>
@@ -88,7 +97,7 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
               </div>
 
               <h4 className="text-sm font-semibold text-foreground line-clamp-1">
-                {a.film || 'Untitled Film'}
+                {a.film || 'Student Film'}
               </h4>
               <p className="text-[11px] text-muted-foreground line-clamp-1">
                 by {a.name}{a.role ? ` · ${a.role}` : ''}
@@ -98,15 +107,17 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
         </div>
       </div>
 
-      {/* Simple Video Dialog */}
+      {/* YouTube Video Dialog */}
       <Dialog open={!!playingVideo} onOpenChange={() => setPlayingVideo(null)}>
         <DialogContent className="max-w-2xl p-0 overflow-hidden bg-black border-border/50">
           <DialogTitle className="sr-only">{playingVideo?.title}</DialogTitle>
           {playingVideo && (
             <div className="aspect-video">
-              <SecureVideoPlayer
-                videoUrl={playingVideo.url}
-                contentId={playingVideo.url}
+              <iframe
+                src={getEmbedUrl(playingVideo.url)}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
                 title={playingVideo.title}
               />
             </div>
