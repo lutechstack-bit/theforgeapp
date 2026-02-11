@@ -5,13 +5,6 @@ import { Video, CalendarPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { generateGoogleCalendarUrl } from '@/lib/calendarUtils';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/components/ui/carousel';
 import { SessionDetailModal } from './SessionDetailModal';
 
 interface VirtualSession {
@@ -78,10 +71,10 @@ export const UpcomingSessionsSection: React.FC = () => {
         <p className="text-sm text-muted-foreground mt-0.5">Join live sessions with mentors</p>
       </div>
 
-      <Carousel opts={{ align: 'start', loop: sessions.length > 2 }} className="w-full">
-        <CarouselContent className="-ml-3">
+      <div className="relative">
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory pb-1 -mx-4 px-4">
           {sessions.map((session) => (
-            <CarouselItem key={session.id} className="pl-3 basis-auto">
+            <div key={session.id} className="snap-start flex-shrink-0">
               <div className="w-[270px] sm:w-[300px] bg-card rounded-2xl border border-border/30 p-4 flex flex-col gap-3 hover:border-primary/30 transition-colors duration-300">
                 {/* Date pill + Title */}
                 <div className="flex items-start gap-3">
@@ -155,16 +148,12 @@ export const UpcomingSessionsSection: React.FC = () => {
                   </Button>
                 </div>
               </div>
-            </CarouselItem>
+            </div>
           ))}
-        </CarouselContent>
-        {sessions.length > 2 && (
-          <>
-            <CarouselPrevious className="-left-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
-            <CarouselNext className="-right-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
-          </>
-        )}
-      </Carousel>
+        </div>
+        {/* Fade edges */}
+        <div className="absolute top-0 right-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
+      </div>
 
       {/* Session detail modal */}
       <SessionDetailModal
