@@ -180,33 +180,33 @@ const Learn: React.FC = () => {
               onCardClick={handleCardClick}
               onViewAll={(st) => navigate(`/learn/all?section=${st}`)}
             />
-
-            {/* Learn from the Best */}
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-foreground">Learn from the Best</h2>
-                  <p className="text-sm text-muted-foreground mt-0.5">Masterclasses by industry leaders</p>
-                </div>
-              </div>
-              <Carousel opts={{ align: 'start', loop: true }} className="w-full">
-                <CarouselContent className="-ml-3">
-                  {masterclassCards.map((card) => (
-                    <CarouselItem key={card.name} className="pl-3 basis-auto">
-                      <MasterclassCard
-                        imageUrl={card.image}
-                        externalUrl={card.url}
-                        name={card.name}
-                      />
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="-left-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
-                <CarouselNext className="-right-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
-              </Carousel>
-            </section>
           </div>
         )}
+
+        {/* Learn from the Best - always visible */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold text-foreground">Learn from the Best</h2>
+              <p className="text-sm text-muted-foreground mt-0.5">Masterclasses by industry leaders</p>
+            </div>
+          </div>
+          <Carousel opts={{ align: 'start', loop: true }} className="w-full">
+            <CarouselContent className="-ml-3">
+              {masterclassCards.map((card) => (
+                <CarouselItem key={card.name} className="pl-3 basis-auto">
+                  <MasterclassCard
+                    imageUrl={card.image}
+                    externalUrl={card.url}
+                    name={card.name}
+                  />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="-left-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
+            <CarouselNext className="-right-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
+          </Carousel>
+        </section>
       </div>
     </div>
   );
