@@ -1,27 +1,27 @@
 
-# Make Calendar Button Work Directly on Session Cards
 
-## What Changes
+# Fix Calendar Button Not Working on Session Cards
 
-The calendar icon button (CalendarPlus) on each Upcoming Online Sessions card currently opens the same modal as "Join Session". It will be updated to directly add the session to the user's calendar -- opening Google Calendar in a new tab, without opening the modal.
+## Problem
 
-## Changes
+The calendar button silently fails because the `date` column is `null` for all virtual sessions in the database. The current code checks `if (!session.date) return;` and exits early, so nothing happens when clicked.
+
+## Solution
+
+Update the click handler to handle sessions without a date gracefully:
+
+1. If `session.date` exists, proceed as normal (open Google Calendar with the correct date/time).
+2. If `session.date` is missing, show a toast notification informing the user that the session date hasn't been announced yet, so they know why it didn't work -- instead of silently failing.
+
+## Technical Details
 
 ### `src/components/learn/UpcomingSessionsSection.tsx`
 
-1. Import `generateGoogleCalendarUrl` from `@/lib/calendarUtils`
-2. Add a `handleAddToCalendar` function that:
-   - Takes a session object
-   - Constructs a start date from `session.date` and `session.session_start_time`
-   - Calculates the end date using `session.session_duration_hours`
-   - Calls `generateGoogleCalendarUrl()` and opens it in a new tab
-3. Update the CalendarPlus button's `onClick` to call `handleAddToCalendar(session)` instead of `setSelectedSession(session)`
-4. Add `e.stopPropagation()` to prevent any parent click handlers from firing
-
-No other files need to change -- all calendar utilities already exist in `src/lib/calendarUtils.ts`.
-
-## Files Summary
+- Import `toast` from `sonner`
+- Replace the silent `return` with a toast message like: "Session date not yet announced. Check back soon!"
+- Keep the rest of the Google Calendar logic unchanged for when dates are available
 
 | File | Action |
 |------|--------|
-| `src/components/learn/UpcomingSessionsSection.tsx` | UPDATE -- Wire calendar button to directly open Google Calendar |
+| `src/components/learn/UpcomingSessionsSection.tsx` | UPDATE -- Add toast feedback when date is unavailable |
+
