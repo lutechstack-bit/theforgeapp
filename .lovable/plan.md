@@ -1,42 +1,27 @@
 
-
-# Update Masterclass Cards with Official Website Images
+# Make Calendar Button Work Directly on Session Cards
 
 ## What Changes
 
-Replace the local placeholder masterclass images with the official high-quality images from the LevelUp Learning website, and polish the card design to look seamless and premium.
-
-## Image Mapping
-
-| Instructor | New Image URL (from leveluplearning.in CDN) |
-|---|---|
-| Lokesh Kanagaraj | `https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/6899f2de01c2b6f380973a82_Frame%20191%20LK.png` |
-| Nelson Dilipkumar | `https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/6878bd67851730bc31658da7_NM.png` |
-| Karthik Subbaraj | `https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/650c1be5224f49f6432aaae6_1.Karthik_Subburaj%20course%20banner.png` |
-| G Venket Ram | `https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/64f2f14d67e5504737c57ea5_2.Venket_Ram.png` |
-| Anthony | `https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/64f60ddd91f67b7db8f6716b_3.Anthony_Gonsalvez.png` |
-| DRK Kiran | `https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/64b79ef6d61b238747788c6c_kiran%20website%201.webp` |
-| Ravi Basrur | `https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/64b79ef642421ae3cbe004d9_ravi%20website%201.webp` |
+The calendar icon button (CalendarPlus) on each Upcoming Online Sessions card currently opens the same modal as "Join Session". It will be updated to directly add the session to the user's calendar -- opening Google Calendar in a new tab, without opening the modal.
 
 ## Changes
 
-### 1. `src/pages/Learn.tsx` -- Update image URLs
+### `src/components/learn/UpcomingSessionsSection.tsx`
 
-Replace all 7 local image paths (e.g., `/images/masterclass/lokesh.png`) with the CDN URLs from the official LevelUp website listed above.
+1. Import `generateGoogleCalendarUrl` from `@/lib/calendarUtils`
+2. Add a `handleAddToCalendar` function that:
+   - Takes a session object
+   - Constructs a start date from `session.date` and `session.session_start_time`
+   - Calculates the end date using `session.session_duration_hours`
+   - Calls `generateGoogleCalendarUrl()` and opens it in a new tab
+3. Update the CalendarPlus button's `onClick` to call `handleAddToCalendar(session)` instead of `setSelectedSession(session)`
+4. Add `e.stopPropagation()` to prevent any parent click handlers from firing
 
-### 2. `src/components/learn/MasterclassCard.tsx` -- Polish card design
-
-Refine the card to look seamless and premium:
-- Set a fixed aspect ratio for the image area so all cards render uniformly regardless of source image dimensions
-- Add a subtle dark overlay gradient at the bottom of the image for visual depth
-- Ensure the "Start Learning" button sits flush with the card bottom
-- Add a loading state / skeleton for the image while it loads from the external CDN
-- Remove visible borders for a cleaner look, using subtle shadow instead
+No other files need to change -- all calendar utilities already exist in `src/lib/calendarUtils.ts`.
 
 ## Files Summary
 
 | File | Action |
 |------|--------|
-| `src/pages/Learn.tsx` | UPDATE -- Replace local image paths with CDN URLs |
-| `src/components/learn/MasterclassCard.tsx` | UPDATE -- Polish card design for seamless look |
-
+| `src/components/learn/UpcomingSessionsSection.tsx` | UPDATE -- Wire calendar button to directly open Google Calendar |
