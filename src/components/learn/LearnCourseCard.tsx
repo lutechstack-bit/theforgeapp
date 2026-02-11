@@ -46,7 +46,7 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
   return (
     <div
       onClick={handleClick}
-      className="group cursor-pointer w-[180px] sm:w-[200px] md:w-[220px] flex-shrink-0"
+      className="group cursor-pointer w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px] flex-shrink-0"
     >
       {/* Thumbnail */}
       <div className="relative aspect-[3/4] rounded-xl overflow-hidden border border-border/30 group-hover:border-primary/30 transition-colors duration-300">

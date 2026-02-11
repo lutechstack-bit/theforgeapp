@@ -112,8 +112,8 @@ const Learn: React.FC = () => {
     .sort((a, b) => b.progress_percent - a.progress_percent);
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="px-4 sm:px-5 py-5 space-y-8 sm:space-y-10 max-w-full overflow-hidden">
+    <div className="min-h-screen bg-background pb-24 overflow-x-clip">
+      <div className="px-4 sm:px-5 py-5 space-y-8 sm:space-y-10">
         {/* Header */}
         <div className="space-y-1">
           <h1 className="text-xl sm:text-2xl font-bold text-foreground">Learn</h1>
