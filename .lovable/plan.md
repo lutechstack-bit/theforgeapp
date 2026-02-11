@@ -1,51 +1,42 @@
 
 
-# Add "Start Learning" Button to Masterclass Cards + Explore Programs Banners
+# Update Masterclass Cards with Official Website Images
 
 ## What Changes
 
-Two additions to the Learn page:
-1. A gold "Start Learning" button below each masterclass card image
-2. A new "Explore Programs" section with 3 full-width gradient banners, each with a centered "Request Invite" CTA
+Replace the local placeholder masterclass images with the official high-quality images from the LevelUp Learning website, and polish the card design to look seamless and premium.
+
+## Image Mapping
+
+| Instructor | New Image URL (from leveluplearning.in CDN) |
+|---|---|
+| Lokesh Kanagaraj | `https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/6899f2de01c2b6f380973a82_Frame%20191%20LK.png` |
+| Nelson Dilipkumar | `https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/6878bd67851730bc31658da7_NM.png` |
+| Karthik Subbaraj | `https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/650c1be5224f49f6432aaae6_1.Karthik_Subburaj%20course%20banner.png` |
+| G Venket Ram | `https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/64f2f14d67e5504737c57ea5_2.Venket_Ram.png` |
+| Anthony | `https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/64f60ddd91f67b7db8f6716b_3.Anthony_Gonsalvez.png` |
+| DRK Kiran | `https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/64b79ef6d61b238747788c6c_kiran%20website%201.webp` |
+| Ravi Basrur | `https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/64b79ef642421ae3cbe004d9_ravi%20website%201.webp` |
 
 ## Changes
 
-### 1. Update MasterclassCard.tsx -- Add "Start Learning" Button
+### 1. `src/pages/Learn.tsx` -- Update image URLs
 
-Add a gold gradient "Start Learning >" button below the image inside each card, matching the reference style:
-- Button uses the brand gold gradient (from #FFBC3B to #D38F0C)
-- Full width within the card
-- Text: "Start Learning" with a chevron-right icon
-- Click still opens the external link in a new tab
+Replace all 7 local image paths (e.g., `/images/masterclass/lokesh.png`) with the CDN URLs from the official LevelUp website listed above.
 
-### 2. Create ProgramBanner Component
+### 2. `src/components/learn/MasterclassCard.tsx` -- Polish card design
 
-**New file: `src/components/learn/ProgramBanner.tsx`**
-
-A full-width banner card with:
-- Left side: "LEVELUP PROGRAM" label, bold title, description text
-- Right side: gradient background (will eventually support an admin-uploaded image)
-- Centered gold "REQUEST INVITE" button
-- Each banner has a unique gradient tint (purple-blue, blue, olive-gold)
-- On click, the CTA opens an external link in a new tab
-
-### 3. Update Learn.tsx -- Add "Explore Programs" Section
-
-After the "Learn from the Best" section, add a new section titled "Explore Programs" with 3 hardcoded banners:
-
-| Program | Description | Gradient |
-|---------|-------------|----------|
-| Breakthrough Filmmaking | Comprehensive 12-week program to master filmmaking from script to screen. | Purple-blue |
-| Video Editing Academy | Master professional video editing with industry-standard tools and techniques. | Blue |
-| Cinematography Masterclass | Learn the art of visual storytelling from award-winning cinematographers. | Olive-gold |
-
-Each banner has a "REQUEST INVITE" button. The CTA links will be placeholder external URLs for now (e.g., linking to the main LevelUp site).
+Refine the card to look seamless and premium:
+- Set a fixed aspect ratio for the image area so all cards render uniformly regardless of source image dimensions
+- Add a subtle dark overlay gradient at the bottom of the image for visual depth
+- Ensure the "Start Learning" button sits flush with the card bottom
+- Add a loading state / skeleton for the image while it loads from the external CDN
+- Remove visible borders for a cleaner look, using subtle shadow instead
 
 ## Files Summary
 
 | File | Action |
 |------|--------|
-| `src/components/learn/MasterclassCard.tsx` | UPDATE -- Add gold "Start Learning" button below the image |
-| `src/components/learn/ProgramBanner.tsx` | CREATE -- New full-width gradient banner with centered CTA |
-| `src/pages/Learn.tsx` | UPDATE -- Add "Explore Programs" section with 3 hardcoded banners |
+| `src/pages/Learn.tsx` | UPDATE -- Replace local image paths with CDN URLs |
+| `src/components/learn/MasterclassCard.tsx` | UPDATE -- Polish card design for seamless look |
 
