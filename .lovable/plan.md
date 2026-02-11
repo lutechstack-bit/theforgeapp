@@ -1,27 +1,51 @@
 
 
-# Fix Masterclass Section Visibility
+# Add "Start Learning" Button to Masterclass Cards + Explore Programs Banners
 
-## Problem
+## What Changes
 
-The "Learn from the Best" masterclass section is nested inside a conditional that checks `courses.length === 0`. If the database has no `learn_content` rows, the masterclass cards (which are hardcoded and don't depend on database data) are hidden behind an empty state message.
+Two additions to the Learn page:
+1. A gold "Start Learning" button below each masterclass card image
+2. A new "Explore Programs" section with 3 full-width gradient banners, each with a centered "Request Invite" CTA
 
-Additionally, confirming that Anthony's redirect URL (`https://www.leveluplearning.in/anthony`) is already correctly set.
+## Changes
 
-## Change
+### 1. Update MasterclassCard.tsx -- Add "Start Learning" Button
 
-### `src/pages/Learn.tsx`
+Add a gold gradient "Start Learning >" button below the image inside each card, matching the reference style:
+- Button uses the brand gold gradient (from #FFBC3B to #D38F0C)
+- Full width within the card
+- Text: "Start Learning" with a chevron-right icon
+- Click still opens the external link in a new tab
 
-Move the "Learn from the Best" section **outside** the `courses.length` conditional block so it always renders regardless of whether other course data exists. The masterclass data is hardcoded, so it should never be hidden by the empty state.
+### 2. Create ProgramBanner Component
 
-Specifically:
-- Extract the masterclass `<section>` block (lines 184-207) from inside the conditional
-- Place it after the conditional block so it always appears at the bottom of the page
-- This ensures all 7 masterclass cards (including Anthony -> `https://www.leveluplearning.in/anthony`) are always visible and clickable
+**New file: `src/components/learn/ProgramBanner.tsx`**
 
-### Files Summary
+A full-width banner card with:
+- Left side: "LEVELUP PROGRAM" label, bold title, description text
+- Right side: gradient background (will eventually support an admin-uploaded image)
+- Centered gold "REQUEST INVITE" button
+- Each banner has a unique gradient tint (purple-blue, blue, olive-gold)
+- On click, the CTA opens an external link in a new tab
+
+### 3. Update Learn.tsx -- Add "Explore Programs" Section
+
+After the "Learn from the Best" section, add a new section titled "Explore Programs" with 3 hardcoded banners:
+
+| Program | Description | Gradient |
+|---------|-------------|----------|
+| Breakthrough Filmmaking | Comprehensive 12-week program to master filmmaking from script to screen. | Purple-blue |
+| Video Editing Academy | Master professional video editing with industry-standard tools and techniques. | Blue |
+| Cinematography Masterclass | Learn the art of visual storytelling from award-winning cinematographers. | Olive-gold |
+
+Each banner has a "REQUEST INVITE" button. The CTA links will be placeholder external URLs for now (e.g., linking to the main LevelUp site).
+
+## Files Summary
 
 | File | Action |
 |------|--------|
-| `src/pages/Learn.tsx` | Move masterclass section outside conditional |
+| `src/components/learn/MasterclassCard.tsx` | UPDATE -- Add gold "Start Learning" button below the image |
+| `src/components/learn/ProgramBanner.tsx` | CREATE -- New full-width gradient banner with centered CTA |
+| `src/pages/Learn.tsx` | UPDATE -- Add "Explore Programs" section with 3 hardcoded banners |
 
