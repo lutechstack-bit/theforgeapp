@@ -1,29 +1,51 @@
 
 
-# Fix Overflow Issue on Learn Page
+# Fix Overflow and Add Premium Arrow Navigation
 
-## Problem
-
-The outer content wrapper on the Learn page has `max-w-full overflow-hidden` which conflicts with the `-mx-4 px-4` negative-margin scroll trick used by the carousel sections. This causes the horizontal scroll containers to get clipped incorrectly, cutting off cards at the edges and potentially causing layout shifts on wider screens.
+## Problems
+1. The scroll containers extend beyond the viewport on the right side, causing visible overflow/clipping on the last card.
+2. No arrow controls to navigate between cards -- the user wants premium styled prev/next buttons.
 
 ## Solution
 
-1. Remove `overflow-hidden` from the outer wrapper div -- it's unnecessary since each scroll container already manages its own overflow independently.
-2. Add `overflow-x-clip` on the outermost page div instead, which prevents horizontal page-level scrollbar without interfering with child scroll containers.
-3. Cap card widths on larger screens so they don't grow disproportionately large.
+### 1. Fix Overflow
+The `-mx-4 px-4` trick on scroll containers is causing the right-side overflow because the negative margin extends the container but `overflow-x-clip` on the parent clips it inconsistently. The fix is to keep the scroll containers within the padded content area and remove the negative margin hack entirely.
+
+### 2. Add Premium Arrow Buttons
+Add sleek, semi-transparent circular arrow buttons (left/right) that appear on the edges of each carousel section. These will use `useRef` to programmatically scroll the container by one card width on click. The buttons will:
+- Use a glassmorphism style (backdrop-blur, semi-transparent background)
+- Have a gold/primary accent on hover
+- Be hidden on mobile (touch scrolling is natural there) and visible on `md:` screens and above
+- Auto-hide when scrolled to the start/end
+
+### 3. Apply to All Carousel Sections
+Extract a reusable `ScrollableCardRow` component that wraps any horizontal card list with:
+- Native smooth scroll + snap
+- Left/right premium arrow buttons (desktop only)
+- Proper containment (no overflow issues)
 
 ## Technical Details
 
-### `src/pages/Learn.tsx`
-- Line 115: Change outer div to `overflow-x-clip` to prevent page-level horizontal overflow
-- Line 116: Remove `max-w-full overflow-hidden` from the content wrapper -- let the scroll containers handle their own overflow
-- The `-mx-4 px-4` trick on scroll containers will now work correctly without being clipped by the parent
+### `src/components/learn/ScrollableCardRow.tsx` (NEW)
+- A reusable wrapper component accepting `children`
+- Uses `useRef` for the scroll container and `useState` to track scroll position
+- Renders left/right `ChevronLeft`/`ChevronRight` buttons with glassmorphism styling
+- Scrolls by ~300px on each click with `scrollBy({ behavior: 'smooth' })`
+- Buttons hidden when at scroll start/end via `onScroll` listener
+- Hidden on mobile (`hidden md:flex`)
 
-### `src/components/learn/LearnCourseCard.tsx`
-- Line 49: Adjust card width classes to prevent overly large cards on wider viewports -- cap at `lg:w-[240px]` max
+### `src/pages/Learn.tsx`
+- Import and use `ScrollableCardRow` in `CourseCarouselSection` and the Masterclass section
+- Remove the `-mx-4 px-4` negative margin hack from scroll containers
+- Remove the gradient fade overlay div (arrows replace this affordance)
+
+### `src/components/learn/UpcomingSessionsSection.tsx`
+- Same treatment: wrap session cards in `ScrollableCardRow`
+- Remove `-mx-4 px-4` and gradient overlay
 
 | File | Action |
 |------|--------|
-| `src/pages/Learn.tsx` | UPDATE -- Remove conflicting overflow-hidden from wrapper |
-| `src/components/learn/LearnCourseCard.tsx` | UPDATE -- Cap card width on large screens |
+| `src/components/learn/ScrollableCardRow.tsx` | CREATE -- Reusable scroll container with premium arrows |
+| `src/pages/Learn.tsx` | UPDATE -- Use ScrollableCardRow, remove overflow hacks |
+| `src/components/learn/UpcomingSessionsSection.tsx` | UPDATE -- Use ScrollableCardRow, remove overflow hacks |
 
