@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { generateGoogleCalendarUrl } from '@/lib/calendarUtils';
 import { SessionDetailModal } from './SessionDetailModal';
+import { ScrollableCardRow } from './ScrollableCardRow';
 
 interface VirtualSession {
   id: string;
@@ -71,8 +72,7 @@ export const UpcomingSessionsSection: React.FC = () => {
         <p className="text-sm text-muted-foreground mt-0.5">Join live sessions with mentors</p>
       </div>
 
-      <div className="relative">
-        <div className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory pb-1 -mx-4 px-4">
+      <ScrollableCardRow>
           {sessions.map((session) => (
             <div key={session.id} className="snap-start flex-shrink-0">
               <div className="w-[270px] sm:w-[300px] bg-card rounded-2xl border border-border/30 p-4 flex flex-col gap-3 hover:border-primary/30 transition-colors duration-300">
@@ -150,10 +150,7 @@ export const UpcomingSessionsSection: React.FC = () => {
               </div>
             </div>
           ))}
-        </div>
-        {/* Fade edges */}
-        <div className="absolute top-0 right-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
-      </div>
+      </ScrollableCardRow>
 
       {/* Session detail modal */}
       <SessionDetailModal
