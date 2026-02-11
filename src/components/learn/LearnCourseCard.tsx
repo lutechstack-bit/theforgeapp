@@ -7,6 +7,9 @@ interface LearnCourseCardProps {
   title: string;
   thumbnailUrl?: string;
   durationMinutes?: number;
+  category?: string;
+  instructorName?: string;
+  companyName?: string;
   onClick?: () => void;
 }
 
@@ -15,6 +18,9 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
   title,
   thumbnailUrl,
   durationMinutes,
+  category,
+  instructorName,
+  companyName,
   onClick,
 }) => {
   const navigate = useNavigate();
@@ -27,7 +33,6 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
     }
   };
 
-  // Format duration
   const formatDuration = (minutes?: number) => {
     if (!minutes) return null;
     if (minutes < 60) return `${minutes}m`;
@@ -41,10 +46,10 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
   return (
     <div
       onClick={handleClick}
-      className="group relative cursor-pointer rounded-2xl aspect-[3/4] min-w-[180px] sm:min-w-[200px] md:min-w-[220px] border border-transparent hover-gold-glow"
+      className="group cursor-pointer w-[180px] sm:w-[200px] md:w-[220px] flex-shrink-0"
     >
-      {/* Background Image */}
-      <div className="absolute inset-0 overflow-hidden rounded-2xl">
+      {/* Thumbnail */}
+      <div className="relative aspect-[3/4] rounded-xl overflow-hidden border border-border/30 group-hover:border-primary/30 transition-colors duration-300">
         {thumbnailUrl ? (
           <img
             src={thumbnailUrl}
@@ -54,20 +59,44 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50" />
         )}
+
+        {/* Hover overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+
+        {/* Duration badge */}
+        {duration && (
+          <div className="absolute top-2.5 right-2.5 z-10">
+            <div className="flex items-center gap-1 bg-black/70 backdrop-blur-sm text-white px-2 py-0.5 rounded-md">
+              <Clock className="w-3 h-3" />
+              <span className="text-[11px] font-medium">{duration}</span>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Subtle hover overlay */}
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-
-      {/* Duration Badge - Bottom Right Inside Card */}
-      {duration && (
-        <div className="absolute bottom-3 right-3 z-10">
-          <div className="flex items-center gap-1 bg-black/70 backdrop-blur-sm text-white px-2 py-1 rounded-md">
-            <Clock className="w-3 h-3" />
-            <span className="text-xs font-medium">{duration}</span>
+      {/* Metadata below thumbnail */}
+      <div className="mt-2.5 space-y-1 px-0.5">
+        {category && (
+          <p className="text-[10px] font-bold uppercase tracking-wider text-primary truncate">
+            {category}
+          </p>
+        )}
+        <h3 className="text-sm font-bold text-foreground line-clamp-2 leading-tight">
+          {title}
+        </h3>
+        {instructorName && (
+          <div className="flex items-center gap-1.5 pt-0.5">
+            <span className="text-[11px] font-medium text-foreground/80 bg-muted/50 rounded-full px-2 py-0.5 truncate max-w-[140px]">
+              {instructorName}
+            </span>
           </div>
-        </div>
-      )}
+        )}
+        {companyName && (
+          <p className="text-[11px] text-muted-foreground truncate">
+            {companyName}
+          </p>
+        )}
+      </div>
     </div>
   );
 };

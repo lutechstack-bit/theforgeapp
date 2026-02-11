@@ -5,7 +5,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { ContinueWatchingCarousel } from '@/components/learn/ContinueWatchingCarousel';
-import { Film, Sparkles, ChevronRight } from 'lucide-react';
+import { UpcomingSessionsSection } from '@/components/learn/UpcomingSessionsSection';
+import { MasterclassCard } from '@/components/learn/MasterclassCard';
+import { Sparkles, ChevronRight } from 'lucide-react';
 import {
   Carousel,
   CarouselContent,
@@ -13,9 +15,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-
-
-
 
 interface LearnContent {
   id: string;
@@ -41,12 +40,10 @@ interface WatchProgress {
   completed: boolean;
 }
 
-
 const Learn: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Fetch learn content
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ['learn_content'],
     queryFn: async () => {
@@ -59,7 +56,6 @@ const Learn: React.FC = () => {
     },
   });
 
-  // Fetch user's watch progress
   const { data: watchProgress = [] } = useQuery({
     queryKey: ['learn_watch_progress', user?.id],
     queryFn: async () => {
@@ -74,8 +70,6 @@ const Learn: React.FC = () => {
     enabled: !!user?.id,
   });
 
-
-  // Calculate progress for each content
   const getProgressPercent = (contentId: string, durationMinutes?: number) => {
     const progress = watchProgress.find(p => p.learn_content_id === contentId);
     if (!progress) return 0;
@@ -93,11 +87,12 @@ const Learn: React.FC = () => {
     navigate(`/learn/${content.id}`);
   };
 
-  // Group content by section_type
+  // Group content
   const forgeOnlineSessions = courses.filter(c => c.section_type === 'bfp_sessions');
   const communitySessions = courses.filter(c => c.section_type === 'community_sessions');
+  const masterclasses = courses.filter(c => c.category === 'Masterclass');
 
-  // Prepare continue watching items
+  // Continue watching
   const continueWatchingItems = courses
     .filter(c => {
       const progress = getProgressPercent(c.id, c.duration_minutes);
@@ -114,76 +109,19 @@ const Learn: React.FC = () => {
     }))
     .sort((a, b) => b.progress_percent - a.progress_percent);
 
-  const renderCourseCarousel = (items: LearnContent[], title: string, subtitle?: string, sectionType?: string) => {
-    if (items.length === 0) return null;
-
-    return (
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-foreground">{title}</h2>
-            {subtitle && (
-              <p className="text-sm font-medium text-muted-foreground mt-0.5">{subtitle}</p>
-            )}
-          </div>
-          {items.length > 3 && (
-            <button 
-              onClick={() => navigate(`/learn/all${sectionType ? `?section=${sectionType}` : ''}`)}
-              className="flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 transition-all duration-200 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/15 active:scale-95 tap-feedback"
-            >
-              View All <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </button>
-          )}
-        </div>
-
-        <Carousel
-          opts={{
-            align: 'start',
-            loop: items.length > 3,
-          }}
-          className="w-full"
-        >
-          <CarouselContent>
-            {items.map((item) => (
-              <CarouselItem
-                key={item.id}
-                className="pl-4 basis-auto"
-              >
-                <LearnCourseCard
-                  id={item.id}
-                  title={item.title}
-                  thumbnailUrl={item.thumbnail_url}
-                  durationMinutes={item.duration_minutes}
-                  onClick={() => handleCardClick(item)}
-                />
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          
-          {items.length > 3 && (
-            <>
-              <CarouselPrevious className="-left-4 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
-              <CarouselNext className="-right-4 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
-            </>
-          )}
-        </Carousel>
-      </section>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="p-3 sm:p-4 space-y-6 sm:space-y-10">
+      <div className="px-4 sm:px-5 py-5 space-y-8 sm:space-y-10 max-w-full overflow-hidden">
         {/* Header */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Film className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Pre Forge Sessions</h1>
-          </div>
-          <p className="text-muted-foreground">
-            Learn from industry experts and breakthrough filmmakers
+        <div className="space-y-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Learn</h1>
+          <p className="text-sm text-muted-foreground">
+            Explore courses, sessions & resources to enhance your filmmaking skills
           </p>
         </div>
+
+        {/* Upcoming Online Sessions */}
+        <UpcomingSessionsSection />
 
         {/* Continue Watching */}
         {continueWatchingItems.length > 0 && (
@@ -196,13 +134,13 @@ const Learn: React.FC = () => {
           />
         )}
 
-        {/* Loading State */}
+        {/* Loading / Empty */}
         {isLoading ? (
           <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {[...Array(4)].map((_, i) => (
-              <div 
-                key={i} 
-                className="aspect-[3/4] rounded-2xl skeleton-premium animate-slide-up-fade" 
+              <div
+                key={i}
+                className="aspect-[3/4] rounded-2xl skeleton-premium animate-slide-up-fade"
                 style={{ animationDelay: `${i * 0.05}s` }}
               />
             ))}
@@ -210,36 +148,136 @@ const Learn: React.FC = () => {
         ) : courses.length === 0 ? (
           <div className="text-center py-16 glass-card rounded-2xl">
             <Sparkles className="h-12 w-12 text-primary/50 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              No sessions yet
-            </h3>
-            <p className="text-muted-foreground">
-              Check back soon for new content
-            </p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">No sessions yet</h3>
+            <p className="text-muted-foreground">Check back soon for new content</p>
           </div>
         ) : (
-          <div className="space-y-10">
+          <div className="space-y-8 sm:space-y-10">
             {/* Pre Forge Sessions */}
-            {renderCourseCarousel(
-              forgeOnlineSessions,
-              'Pre Forge Sessions',
-              'Filmmaking fundamentals: For Forge and Beyond',
-              'bfp_sessions'
-            )}
+            <CourseCarouselSection
+              items={forgeOnlineSessions}
+              title="Pre Forge Sessions"
+              subtitle="Filmmaking fundamentals: For Forge and Beyond"
+              sectionType="bfp_sessions"
+              onCardClick={handleCardClick}
+              onViewAll={(st) => navigate(`/learn/all?section=${st}`)}
+            />
 
             {/* More from LevelUp */}
-            {renderCourseCarousel(
-              communitySessions,
-              'More from LevelUp',
-              'Online sessions exclusive with LevelUp',
-              'community_sessions'
+            <CourseCarouselSection
+              items={communitySessions}
+              title="More from LevelUp"
+              subtitle="Online sessions exclusive with LevelUp"
+              sectionType="community_sessions"
+              onCardClick={handleCardClick}
+              onViewAll={(st) => navigate(`/learn/all?section=${st}`)}
+            />
+
+            {/* Learn from the Best */}
+            {masterclasses.length > 0 && (
+              <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-bold text-foreground">Learn from the Best</h2>
+                    <p className="text-sm text-muted-foreground mt-0.5">Masterclasses by industry leaders</p>
+                  </div>
+                </div>
+                <Carousel opts={{ align: 'start', loop: masterclasses.length > 2 }} className="w-full">
+                  <CarouselContent className="-ml-3">
+                    {masterclasses.map((item) => (
+                      <CarouselItem key={item.id} className="pl-3 basis-auto">
+                        <MasterclassCard
+                          id={item.id}
+                          title={item.title}
+                          thumbnailUrl={item.thumbnail_url}
+                          instructorName={item.instructor_name}
+                          description={item.description}
+                          durationMinutes={item.duration_minutes}
+                          onClick={() => handleCardClick(item)}
+                        />
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  {masterclasses.length > 2 && (
+                    <>
+                      <CarouselPrevious className="-left-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
+                      <CarouselNext className="-right-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
+                    </>
+                  )}
+                </Carousel>
+              </section>
             )}
           </div>
         )}
       </div>
-
-
     </div>
+  );
+};
+
+/* Extracted carousel section for course cards */
+interface CourseCarouselSectionProps {
+  items: LearnContent[];
+  title: string;
+  subtitle?: string;
+  sectionType?: string;
+  onCardClick: (item: LearnContent) => void;
+  onViewAll: (sectionType: string) => void;
+}
+
+const CourseCarouselSection: React.FC<CourseCarouselSectionProps> = ({
+  items,
+  title,
+  subtitle,
+  sectionType,
+  onCardClick,
+  onViewAll,
+}) => {
+  if (items.length === 0) return null;
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg sm:text-xl font-bold text-foreground">{title}</h2>
+          {subtitle && (
+            <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+          )}
+        </div>
+        {items.length > 3 && sectionType && (
+          <button
+            onClick={() => onViewAll(sectionType)}
+            className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/15 active:scale-95 tap-feedback"
+          >
+            View All <ChevronRight className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      <Carousel opts={{ align: 'start', loop: items.length > 3 }} className="w-full">
+        <CarouselContent className="-ml-3">
+          {items.map((item) => (
+            <CarouselItem key={item.id} className="pl-3 basis-auto">
+              <LearnCourseCard
+                id={item.id}
+                title={item.title}
+                thumbnailUrl={item.thumbnail_url}
+                durationMinutes={item.duration_minutes}
+                category={item.category}
+                instructorName={item.instructor_name}
+                companyName={item.company_name}
+                onClick={() => onCardClick(item)}
+              />
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        {items.length > 3 && (
+          <>
+            <CarouselPrevious className="-left-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
+            <CarouselNext className="-right-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
+          </>
+        )}
+      </Carousel>
+    </section>
   );
 };
 
