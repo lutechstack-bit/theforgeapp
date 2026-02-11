@@ -90,7 +90,15 @@ const Learn: React.FC = () => {
   // Group content
   const forgeOnlineSessions = courses.filter(c => c.section_type === 'bfp_sessions');
   const communitySessions = courses.filter(c => c.section_type === 'community_sessions');
-  const masterclasses = courses.filter(c => c.category === 'Masterclass');
+  const masterclassCards = [
+    { name: 'Lokesh Kanagaraj', image: '/images/masterclass/lokesh.png', url: 'https://masterclass.leveluplearning.in/lokesh-kanagaraj' },
+    { name: 'Nelson Dilipkumar', image: '/images/masterclass/nelson.png', url: 'https://masterclass.leveluplearning.in/' },
+    { name: 'Karthik Subbaraj', image: '/images/masterclass/karthik.png', url: 'https://masterclass.leveluplearning.in/karthik-subbaraj' },
+    { name: 'G Venket Ram', image: '/images/masterclass/venket-ram.png', url: 'https://www.leveluplearning.in/g-venket-ram-1' },
+    { name: 'Anthony', image: '/images/masterclass/anthony.png', url: 'https://www.leveluplearning.in/anthony' },
+    { name: 'DRK Kiran', image: '/images/masterclass/drk-kiran.png', url: 'https://www.leveluplearning.in/kiran' },
+    { name: 'Ravi Basrur', image: '/images/masterclass/ravi-basrur.png', url: 'https://masterclass.leveluplearning.in/ravi-basrur' },
+  ];
 
   // Continue watching
   const continueWatchingItems = courses
@@ -174,39 +182,29 @@ const Learn: React.FC = () => {
             />
 
             {/* Learn from the Best */}
-            {masterclasses.length > 0 && (
-              <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg sm:text-xl font-bold text-foreground">Learn from the Best</h2>
-                    <p className="text-sm text-muted-foreground mt-0.5">Masterclasses by industry leaders</p>
-                  </div>
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-foreground">Learn from the Best</h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">Masterclasses by industry leaders</p>
                 </div>
-                <Carousel opts={{ align: 'start', loop: masterclasses.length > 2 }} className="w-full">
-                  <CarouselContent className="-ml-3">
-                    {masterclasses.map((item) => (
-                      <CarouselItem key={item.id} className="pl-3 basis-auto">
-                        <MasterclassCard
-                          id={item.id}
-                          title={item.title}
-                          thumbnailUrl={item.thumbnail_url}
-                          instructorName={item.instructor_name}
-                          description={item.description}
-                          durationMinutes={item.duration_minutes}
-                          onClick={() => handleCardClick(item)}
-                        />
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  {masterclasses.length > 2 && (
-                    <>
-                      <CarouselPrevious className="-left-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
-                      <CarouselNext className="-right-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
-                    </>
-                  )}
-                </Carousel>
-              </section>
-            )}
+              </div>
+              <Carousel opts={{ align: 'start', loop: true }} className="w-full">
+                <CarouselContent className="-ml-3">
+                  {masterclassCards.map((card) => (
+                    <CarouselItem key={card.name} className="pl-3 basis-auto">
+                      <MasterclassCard
+                        imageUrl={card.image}
+                        externalUrl={card.url}
+                        name={card.name}
+                      />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="-left-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
+                <CarouselNext className="-right-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
+              </Carousel>
+            </section>
           </div>
         )}
       </div>
