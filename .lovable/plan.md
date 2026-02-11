@@ -1,39 +1,29 @@
 
 
-# Remove Card Metadata & Upgrade Scroll Experience
+# Fix Overflow Issue on Learn Page
 
-## What Changes
+## Problem
 
-1. **Remove metadata sections below course cards** -- The category label (SESSION/WORKSHOP), title, and instructor name shown below thumbnails will be removed. The card becomes a clean thumbnail-only design.
+The outer content wrapper on the Learn page has `max-w-full overflow-hidden` which conflicts with the `-mx-4 px-4` negative-margin scroll trick used by the carousel sections. This causes the horizontal scroll containers to get clipped incorrectly, cutting off cards at the edges and potentially causing layout shifts on wider screens.
 
-2. **Replace arrow navigation with premium scroll** -- Remove the `CarouselPrevious`/`CarouselNext` arrow buttons. Instead, use native touch/drag scrolling with subtle fade edges on left/right to hint at more content. This feels more natural on mobile and cleaner on desktop.
+## Solution
 
-3. **Fix sizing/padding** -- Ensure consistent card sizing with no overflow or spacing issues.
+1. Remove `overflow-hidden` from the outer wrapper div -- it's unnecessary since each scroll container already manages its own overflow independently.
+2. Add `overflow-x-clip` on the outermost page div instead, which prevents horizontal page-level scrollbar without interfering with child scroll containers.
+3. Cap card widths on larger screens so they don't grow disproportionately large.
 
 ## Technical Details
 
-### 1. `src/components/learn/LearnCourseCard.tsx`
-- Remove the entire metadata `div` below the thumbnail (lines 78-99: category, title, instructor, company)
-- The card becomes just the thumbnail image with duration badge
-- Adjust card width to be slightly wider since there's no text below
+### `src/pages/Learn.tsx`
+- Line 115: Change outer div to `overflow-x-clip` to prevent page-level horizontal overflow
+- Line 116: Remove `max-w-full overflow-hidden` from the content wrapper -- let the scroll containers handle their own overflow
+- The `-mx-4 px-4` trick on scroll containers will now work correctly without being clipped by the parent
 
-### 2. `src/pages/Learn.tsx`
-- Remove `CarouselPrevious` and `CarouselNext` from **both** `CourseCarouselSection` and the Masterclass section
-- Replace `Carousel`/`CarouselContent` with a simple native horizontal scroll container that has:
-  - `overflow-x-auto scrollbar-hide` for smooth drag scrolling
-  - CSS `scroll-snap-type: x mandatory` for snappy card alignment
-  - Fade gradient overlays on edges to indicate scrollability
-- Clean up unused imports (`CarouselPrevious`, `CarouselNext`, etc.)
-
-### 3. `src/components/learn/UpcomingSessionsSection.tsx`
-- Same treatment: remove `CarouselPrevious`/`CarouselNext` arrows
-- Switch to native scroll container with snap and fade edges
-
-## Files Summary
+### `src/components/learn/LearnCourseCard.tsx`
+- Line 49: Adjust card width classes to prevent overly large cards on wider viewports -- cap at `lg:w-[240px]` max
 
 | File | Action |
 |------|--------|
-| `src/components/learn/LearnCourseCard.tsx` | UPDATE -- Remove metadata section below thumbnail |
-| `src/pages/Learn.tsx` | UPDATE -- Replace carousel arrows with native premium scroll |
-| `src/components/learn/UpcomingSessionsSection.tsx` | UPDATE -- Replace carousel arrows with native premium scroll |
+| `src/pages/Learn.tsx` | UPDATE -- Remove conflicting overflow-hidden from wrapper |
+| `src/components/learn/LearnCourseCard.tsx` | UPDATE -- Cap card width on large screens |
 
