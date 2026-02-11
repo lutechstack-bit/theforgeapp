@@ -74,29 +74,6 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
         )}
       </div>
 
-      {/* Metadata below thumbnail */}
-      <div className="mt-2.5 space-y-1 px-0.5">
-        {category && (
-          <p className="text-[10px] font-bold uppercase tracking-wider text-primary truncate">
-            {category}
-          </p>
-        )}
-        <h3 className="text-sm font-bold text-foreground line-clamp-2 leading-tight">
-          {title}
-        </h3>
-        {instructorName && (
-          <div className="flex items-center gap-1.5 pt-0.5">
-            <span className="text-[11px] font-medium text-foreground/80 bg-muted/50 rounded-full px-2 py-0.5 truncate max-w-[140px]">
-              {instructorName}
-            </span>
-          </div>
-        )}
-        {companyName && (
-          <p className="text-[11px] text-muted-foreground truncate">
-            {companyName}
-          </p>
-        )}
-      </div>
     </div>
   );
 };

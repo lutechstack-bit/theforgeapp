@@ -9,13 +9,6 @@ import { UpcomingSessionsSection } from '@/components/learn/UpcomingSessionsSect
 import { MasterclassCard } from '@/components/learn/MasterclassCard';
 import { ProgramBanner } from '@/components/learn/ProgramBanner';
 import { Sparkles, ChevronRight } from 'lucide-react';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/components/ui/carousel';
 
 interface LearnContent {
   id: string;
@@ -192,21 +185,20 @@ const Learn: React.FC = () => {
               <p className="text-sm text-muted-foreground mt-0.5">Masterclasses by industry leaders</p>
             </div>
           </div>
-          <Carousel opts={{ align: 'start', loop: true }} className="w-full">
-            <CarouselContent className="-ml-3">
+          <div className="relative">
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory pb-1 -mx-4 px-4">
               {masterclassCards.map((card) => (
-                <CarouselItem key={card.name} className="pl-3 basis-auto">
+                <div key={card.name} className="snap-start flex-shrink-0">
                   <MasterclassCard
                     imageUrl={card.image}
                     externalUrl={card.url}
                     name={card.name}
                   />
-                </CarouselItem>
+                </div>
               ))}
-            </CarouselContent>
-            <CarouselPrevious className="-left-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
-            <CarouselNext className="-right-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
-          </Carousel>
+            </div>
+            <div className="absolute top-0 right-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
+          </div>
         </section>
 
         {/* Explore Programs */}
@@ -280,10 +272,10 @@ const CourseCarouselSection: React.FC<CourseCarouselSectionProps> = ({
         )}
       </div>
 
-      <Carousel opts={{ align: 'start', loop: items.length > 3 }} className="w-full">
-        <CarouselContent className="-ml-3">
+      <div className="relative">
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory pb-1 -mx-4 px-4">
           {items.map((item) => (
-            <CarouselItem key={item.id} className="pl-3 basis-auto">
+            <div key={item.id} className="snap-start flex-shrink-0">
               <LearnCourseCard
                 id={item.id}
                 title={item.title}
@@ -294,16 +286,11 @@ const CourseCarouselSection: React.FC<CourseCarouselSectionProps> = ({
                 companyName={item.company_name}
                 onClick={() => onCardClick(item)}
               />
-            </CarouselItem>
+            </div>
           ))}
-        </CarouselContent>
-        {items.length > 3 && (
-          <>
-            <CarouselPrevious className="-left-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
-            <CarouselNext className="-right-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
-          </>
-        )}
-      </Carousel>
+        </div>
+        <div className="absolute top-0 right-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
+      </div>
     </section>
   );
 };
