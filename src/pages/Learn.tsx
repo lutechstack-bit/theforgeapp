@@ -92,13 +92,13 @@ const Learn: React.FC = () => {
   const forgeOnlineSessions = courses.filter(c => c.section_type === 'bfp_sessions');
   const communitySessions = courses.filter(c => c.section_type === 'community_sessions');
   const masterclassCards = [
-    { name: 'Lokesh Kanagaraj', image: '/images/masterclass/lokesh.png', url: 'https://masterclass.leveluplearning.in/lokesh-kanagaraj' },
-    { name: 'Nelson Dilipkumar', image: '/images/masterclass/nelson.png', url: 'https://masterclass.leveluplearning.in/' },
-    { name: 'Karthik Subbaraj', image: '/images/masterclass/karthik.png', url: 'https://masterclass.leveluplearning.in/karthik-subbaraj' },
-    { name: 'G Venket Ram', image: '/images/masterclass/venket-ram.png', url: 'https://www.leveluplearning.in/g-venket-ram-1' },
-    { name: 'Anthony', image: '/images/masterclass/anthony.png', url: 'https://www.leveluplearning.in/anthony' },
-    { name: 'DRK Kiran', image: '/images/masterclass/drk-kiran.png', url: 'https://www.leveluplearning.in/kiran' },
-    { name: 'Ravi Basrur', image: '/images/masterclass/ravi-basrur.png', url: 'https://masterclass.leveluplearning.in/ravi-basrur' },
+    { name: 'Lokesh Kanagaraj', image: 'https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/6899f2de01c2b6f380973a82_Frame%20191%20LK.png', url: 'https://masterclass.leveluplearning.in/lokesh-kanagaraj' },
+    { name: 'Nelson Dilipkumar', image: 'https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/6878bd67851730bc31658da7_NM.png', url: 'https://masterclass.leveluplearning.in/' },
+    { name: 'Karthik Subbaraj', image: 'https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/650c1be5224f49f6432aaae6_1.Karthik_Subburaj%20course%20banner.png', url: 'https://masterclass.leveluplearning.in/karthik-subbaraj' },
+    { name: 'G Venket Ram', image: 'https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/64f2f14d67e5504737c57ea5_2.Venket_Ram.png', url: 'https://www.leveluplearning.in/g-venket-ram-1' },
+    { name: 'Anthony', image: 'https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/64f60ddd91f67b7db8f6716b_3.Anthony_Gonsalvez.png', url: 'https://www.leveluplearning.in/anthony' },
+    { name: 'DRK Kiran', image: 'https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/64b79ef6d61b238747788c6c_kiran%20website%201.webp', url: 'https://www.leveluplearning.in/kiran' },
+    { name: 'Ravi Basrur', image: 'https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/64b79ef642421ae3cbe004d9_ravi%20website%201.webp', url: 'https://masterclass.leveluplearning.in/ravi-basrur' },
   ];
 
   // Continue watching
