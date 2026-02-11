@@ -8,6 +8,7 @@ import { ContinueWatchingCarousel } from '@/components/learn/ContinueWatchingCar
 import { UpcomingSessionsSection } from '@/components/learn/UpcomingSessionsSection';
 import { MasterclassCard } from '@/components/learn/MasterclassCard';
 import { ProgramBanner } from '@/components/learn/ProgramBanner';
+import { ScrollableCardRow } from '@/components/learn/ScrollableCardRow';
 import { Sparkles, ChevronRight } from 'lucide-react';
 
 interface LearnContent {
@@ -185,8 +186,7 @@ const Learn: React.FC = () => {
               <p className="text-sm text-muted-foreground mt-0.5">Masterclasses by industry leaders</p>
             </div>
           </div>
-          <div className="relative">
-            <div className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory pb-1 -mx-4 px-4">
+          <ScrollableCardRow>
               {masterclassCards.map((card) => (
                 <div key={card.name} className="snap-start flex-shrink-0">
                   <MasterclassCard
@@ -196,9 +196,7 @@ const Learn: React.FC = () => {
                   />
                 </div>
               ))}
-            </div>
-            <div className="absolute top-0 right-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
-          </div>
+          </ScrollableCardRow>
         </section>
 
         {/* Explore Programs */}
@@ -272,8 +270,7 @@ const CourseCarouselSection: React.FC<CourseCarouselSectionProps> = ({
         )}
       </div>
 
-      <div className="relative">
-        <div className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory pb-1 -mx-4 px-4">
+      <ScrollableCardRow>
           {items.map((item) => (
             <div key={item.id} className="snap-start flex-shrink-0">
               <LearnCourseCard
@@ -288,9 +285,7 @@ const CourseCarouselSection: React.FC<CourseCarouselSectionProps> = ({
               />
             </div>
           ))}
-        </div>
-        <div className="absolute top-0 right-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
-      </div>
+      </ScrollableCardRow>
     </section>
   );
 };
