@@ -7,6 +7,7 @@ import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { ContinueWatchingCarousel } from '@/components/learn/ContinueWatchingCarousel';
 import { UpcomingSessionsSection } from '@/components/learn/UpcomingSessionsSection';
 import { MasterclassCard } from '@/components/learn/MasterclassCard';
+import { ProgramBanner } from '@/components/learn/ProgramBanner';
 import { Sparkles, ChevronRight } from 'lucide-react';
 import {
   Carousel,
@@ -206,6 +207,34 @@ const Learn: React.FC = () => {
             <CarouselPrevious className="-left-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
             <CarouselNext className="-right-3 bg-card/80 backdrop-blur-md border-border/50 hover:bg-card" />
           </Carousel>
+        </section>
+
+        {/* Explore Programs */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold text-foreground">Explore Programs</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">Intensive programs to level up your craft</p>
+          </div>
+          <div className="space-y-4">
+            <ProgramBanner
+              title="Breakthrough Filmmaking"
+              description="Comprehensive 12-week program to master filmmaking from script to screen."
+              ctaUrl="https://www.leveluplearning.in/"
+              gradient="linear-gradient(135deg, hsl(260,60%,25%) 0%, hsl(230,50%,30%) 100%)"
+            />
+            <ProgramBanner
+              title="Video Editing Academy"
+              description="Master professional video editing with industry-standard tools and techniques."
+              ctaUrl="https://www.leveluplearning.in/"
+              gradient="linear-gradient(135deg, hsl(210,60%,25%) 0%, hsl(230,50%,35%) 100%)"
+            />
+            <ProgramBanner
+              title="Cinematography Masterclass"
+              description="Learn the art of visual storytelling from award-winning cinematographers."
+              ctaUrl="https://www.leveluplearning.in/"
+              gradient="linear-gradient(135deg, hsl(45,40%,20%) 0%, hsl(35,50%,25%) 100%)"
+            />
+          </div>
         </section>
       </div>
     </div>
