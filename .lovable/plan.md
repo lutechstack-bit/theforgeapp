@@ -1,121 +1,58 @@
 
 
-# Redesign Alumni Showcase, Add Travel & Stay, Compact Mentors, Polish Homepage
+# Use Student Works Content in Alumni Showcase
 
-## Overview
+## What Changes
 
-Three main changes:
-1. **Replace testimonial video cards** with film-style showcase cards (matching the reference: dark thumbnail with play icon, duration badge, film title + author + edition below)
-2. **Add inline Travel & Stay section** to the homepage (image carousel + property details + "Open in Maps" button, matching the reference)
-3. **Compact mentor cards** for a tighter, more balanced layout
-4. **Remove testimonials section** (it was previously the same as Alumni -- the Alumni Showcase stays but gets redesigned)
-5. **Overall polish**: consistent section spacing, card borders, and section header styling
+Keep the exact same frontend layout of the Alumni Showcase section (horizontal scroll of film cards with play icons, video dialog) but swap the data source from `alumni_testimonials` to `roadmap_sidebar_content` (student works uploaded via admin).
 
----
+## Changes
 
-## 1. Redesign AlumniShowcaseSection
+### 1. Home.tsx -- Replace alumni_testimonials query with student works query
 
-Replace the current `ContentCarousel` + `TestimonialVideoCard` approach with a card-grid layout matching the reference image:
+- Replace the `alumniTestimonialsQuery` to fetch from `roadmap_sidebar_content` where `block_type = 'student_work'` and `is_active = true`
+- Also fetch edition mappings from `roadmap_sidebar_content_editions` for cohort filtering
+- Map the student work data into the same `AlumniData` shape the component expects
+- Extract YouTube video IDs from the `media_url` field (handles both clean embed URLs and full iframe HTML strings) to generate thumbnails automatically
+- Update debug panel, error state, and empty state references accordingly
+- Update retry handler to invalidate the new query key
 
-- Section wrapped in a bordered rounded card (like journey section)
-- Header: Film icon + "Alumni Showcase" title + "View all >" link
-- Subtitle: "Click to watch films from past Forgers"
-- Cards in a horizontal scroll or 3-column grid:
-  - Dark thumbnail area with centered gold play icon and duration badge (bottom-right)
-  - Below the thumbnail: Film title (bold) and "by Name . Edition" (muted)
+### 2. AlumniShowcaseSection.tsx -- Update video playback to support YouTube
 
-**File: `src/components/home/AlumniShowcaseSection.tsx`** -- REWRITE
+- Keep the entire card layout, styling, and scroll behavior identical
+- Replace `SecureVideoPlayer` with a YouTube iframe for playback in the dialog
+- Add a helper function to extract YouTube video ID from various URL formats (embed URLs, iframe HTML)
+- Use `https://img.youtube.com/vi/{VIDEO_ID}/hqdefault.jpg` as auto-generated thumbnails when no explicit thumbnail exists
 
-The `alumni_testimonials` table already has `name`, `film`, `video_url`, `thumbnail_url`. We'll use `film` as the title and `name` as the author. A `duration` field doesn't exist yet, so we'll show it if available or skip.
+### Data Format
 
----
+The `roadmap_sidebar_content` student works have:
+- `media_url`: Either a clean YouTube embed URL (`https://www.youtube.com/embed/VIDEO_ID?si=...`) or a full `<iframe>` HTML string
+- `title` and `caption`: Currently null for all entries, so the component will show "Student Film" as fallback
+- `media_type`: "youtube"
 
-## 2. Create TravelStaySection
-
-New component that fetches from the `stay_locations` table (already populated with data) and renders:
-
-- Section wrapped in a bordered rounded card
-- Header: Location pin icon + "Travel & Stay" title + "Details >" link
-- Layout: Image carousel (left, ~40% width) + property info (right)
-  - Property name (bold) with home icon
-  - Address (muted)
-  - Description/notes
-  - "Open in Maps" gold button (full-width on mobile)
-
-**File: `src/components/home/TravelStaySection.tsx`** -- CREATE
-
-Data source: `stay_locations` table (already has `name`, `full_address`, `google_maps_url`, `gallery_images`, `featured_image_url`)
-
----
-
-## 3. Compact Mentor Cards
-
-Reduce the `CleanMentorCard` sizing:
-- Reduce `min-w` from `180px/200px/240px` to `140px/160px/180px`
-- Reduce image aspect ratio from `4/5` to `3/4`
-- Reduce text sizes (name from `text-lg/xl` to `text-sm/base`)
-- Reduce padding from `p-4` to `p-3`
-
-**File: `src/components/shared/CleanMentorCard.tsx`** -- MODIFY
-
----
-
-## 4. Update Home.tsx
-
-- Add `TravelStaySection` rendering (after alumni, before empty state)
-- Wire it to the `travel_stay` homepage section (already exists in DB)
-- Remove any remaining references to testimonials if separate from alumni
-- Ensure consistent section spacing (`space-y-8`)
-- Wrap major sections in bordered cards for visual grouping (matching the reference's card-based layout)
-
-**File: `src/pages/Home.tsx`** -- MODIFY
-
----
-
-## 5. Everything Admin-Customizable
-
-The `travel_stay` section key already exists in `homepage_sections` table. Admins can already:
-- Toggle visibility via `/admin/homepage`
-- Edit the title/subtitle
-- Reorder it relative to other sections
-
-Stay locations are managed via the existing `/admin/roadmap-sidebar` admin page. No new admin pages needed.
-
----
-
-## Files Summary
-
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/components/home/AlumniShowcaseSection.tsx` | REWRITE | Film-style showcase cards with play icons and duration badges |
-| `src/components/home/TravelStaySection.tsx` | CREATE | Inline stay location with image carousel and map link |
-| `src/components/shared/CleanMentorCard.tsx` | MODIFY | Smaller, more compact cards |
-| `src/pages/Home.tsx` | MODIFY | Add TravelStaySection, polish spacing and layout |
-
-No database migrations needed -- all data sources already exist.
-
----
+The YouTube video ID will be extracted via regex to generate both thumbnails and embed URLs for playback.
 
 ## Technical Details
 
-### AlumniShowcaseSection redesign
-- Wrapped in `rounded-2xl border border-border/40 bg-card/30 p-5` container
-- Header with Film icon + title + "View all >" button
-- Subtitle text in muted color
-- Horizontal scrollable row of film cards (each ~200px wide)
-- Each card: dark bg thumbnail area with gold Play circle centered, optional duration badge, then text below
+### Files Modified
 
-### TravelStaySection
-- Fetches `stay_locations` where `is_active = true` from database
-- Image carousel uses `gallery_images` JSON array (already has `url` and `caption`)
-- Carousel has prev/next arrows and dot indicators
-- Right side shows name, address, description from `notes` JSON
-- Gold "Open in Maps" button links to `google_maps_url`
-- Responsive: stacks vertically on mobile
+| File | Change |
+|------|--------|
+| `src/pages/Home.tsx` | Replace `alumni_testimonials` query with `roadmap_sidebar_content` query for student works; map data to AlumniData shape with auto-generated YouTube thumbnails |
+| `src/components/home/AlumniShowcaseSection.tsx` | Replace `SecureVideoPlayer` with YouTube iframe in the video dialog; add YouTube ID extraction helper |
 
-### CleanMentorCard compaction
-- `min-w-[140px] sm:min-w-[160px] md:min-w-[180px]`
-- `aspect-[3/4]` image
-- `text-sm sm:text-base` for name
-- `p-3` padding
-- Brand logos stay but smaller (`h-5`)
+### YouTube ID Extraction Logic
+
+```text
+Input formats:
+1. "https://www.youtube.com/embed/cxA5eMxwtDU?si=..."
+2. "<iframe ... src=\"https://www.youtube.com/embed/Slqg1Lpinqs?si=...\" ...></iframe>"
+
+Regex: /youtube\.com\/embed\/([a-zA-Z0-9_-]+)/
+Output: video ID (e.g., "cxA5eMxwtDU")
+
+Thumbnail: https://img.youtube.com/vi/{ID}/hqdefault.jpg
+Embed URL: https://www.youtube.com/embed/{ID}?autoplay=1
+```
+
