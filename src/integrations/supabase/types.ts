@@ -1785,6 +1785,7 @@ export type Database = {
           id: string
           instagram_handle: string | null
           ky_form_completed: boolean
+          ky_section_progress: Json | null
           kyf_completed: boolean
           last_active_at: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
@@ -1808,6 +1809,7 @@ export type Database = {
           id: string
           instagram_handle?: string | null
           ky_form_completed?: boolean
+          ky_section_progress?: Json | null
           kyf_completed?: boolean
           last_active_at?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
@@ -1831,6 +1833,7 @@ export type Database = {
           id?: string
           instagram_handle?: string | null
           ky_form_completed?: boolean
+          ky_section_progress?: Json | null
           kyf_completed?: boolean
           last_active_at?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]

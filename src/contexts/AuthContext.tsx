@@ -38,6 +38,7 @@ interface Profile {
   kyf_completed: boolean;
   profile_setup_completed: boolean;
   ky_form_completed: boolean;
+  ky_section_progress: Record<string, boolean> | null | any;
   bio: string | null;
   instagram_handle: string | null;
   twitter_handle: string | null;
