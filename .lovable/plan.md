@@ -1,87 +1,126 @@
 
-# Replace Section Sheets with Full-Page Premium Form UI + Remove KY Form Gate
+# Consolidated KY Form Content Overhaul + Hospitality Section
 
 ## Overview
 
-Two key changes:
-1. **Remove the KY form gate** -- new signups will no longer be blocked from accessing the app. The "Complete Your Profile" card on the homepage is the voluntary entry point.
-2. **Replace the drawer/dialog (KYSectionSheet)** with a **full-page form experience** using the existing premium KYFormCard UI (gold glowing card, Q.XX numbering, card stack animations, segmented progress bar, Back/Next pill buttons).
+Rewrite all three KY section configs (KYF, KYC, KYW) to match the exact fields from the uploaded wireframes across all 13 screenshots. The Hospitality section (shared across all cohorts) is split into 3 steps matching the new wireframes. The existing premium UI (`KYFormCardStack`, `KYSectionIntro`, `KYSectionFields`) stays -- only the data in `KYSectionConfig.ts` changes, plus the Hospitality section is restructured from 1 step to 3 steps.
 
-## What Changes
+## Section-by-Section Field Mapping
 
-### 1. Remove KY Form Gate from App Routes
+### SECTION 1: Filmmaker Profile (KYF) -- 4 Steps
 
-The `KYFormCheck` wrapper currently forces users to `/kyf` if `ky_form_completed` is false. This will be removed so new signups land directly on the homepage after profile setup. The "Complete Your Profile" card on the homepage becomes the sole entry point for KY forms.
+**Step 1: "General Details"** (subtitle: "The basics about you")
+- `certificate_name` -- text, required, placeholder "Your full legal name"
+- `current_occupation` -- text, required, placeholder "e.g. Student, Freelancer"
+- `instagram_id` -- text, required, placeholder "@yourhandle"
+- `date_of_birth` -- date, required
+- `address_line_1` -- text, required, placeholder "Street address"
+- `address_line_2` -- text, placeholder "Apartment, suite, etc."
+- `state` -- text, required
+- `pincode` -- text, required, placeholder "6-digit pincode"
 
-### 2. New Full-Page Section Form (`src/pages/KYSectionForm.tsx`)
+**Step 2: "Proficiency Level"** (subtitle: "How experienced are you?")
+- `proficiency_screenwriting` -- proficiency (existing options)
+- `proficiency_direction` -- proficiency (existing options)
+- `proficiency_cinematography` -- proficiency (existing options)
+- `proficiency_editing` -- proficiency (existing options)
+- `has_editing_laptop` -- radio (Yes/No), columns: 2
 
-A new page component that renders the old premium KYFormCard UI but is driven by `KYSectionConfig` data for a single section. Features:
+**Step 3: "Understanding You"** (subtitle: "Help us know you better")
+- `top_3_movies` -- tags, max 3, required
+- `mbti_type` -- mbti grid, required
+- `chronotype` -- radio (Early Bird / Night Owl / In between), required
+- `forge_intent` -- radio, required (existing film options)
+- `forge_intent_other` -- text, conditional
 
-- Full-screen centered layout with gold blur background effects
-- `KYFormCardStack` with card-stack depth animation
-- Each step rendered inside a `KYFormCard` with:
-  - Segmented multi-color progress bar (orange, gold, yellow)
-  - `Q.XX` question number label
-  - Bold step title
-  - Form fields using existing field components
-- Step 0 = Section intro (KYSectionIntro rendered inside a KYFormCard)
-- Navigation: Ghost "Back" button + solid rounded "Next/Complete" pill button
-- Saves progress on each "Next", saves + updates `ky_section_progress` on "Complete"
-- Exit dialog with "Save & Leave" option
-- Route: `/ky-section/:sectionKey` (e.g., `/ky-section/filmmaker_profile`)
+**Step 4 removed** -- General + Personal are merged into one step (Step 1), so it goes from 4 steps to 3 steps total.
 
-### 3. Update KYProfileCard Navigation
+Wait -- the wireframes show 4 screens for Section 1. Let me re-check: General Details, Personal Details (separate), Proficiency, Understanding You. So keeping 4 steps as-is.
 
-Instead of opening a `KYSectionSheet` (drawer/dialog), clicking a section navigates to `/ky-section/:sectionKey`. The `KYSectionSheet` import and state management are removed from this component.
+### SECTION 2: Casting Form (KYF) -- 2 Steps (unchanged structure)
 
-### 4. Route Changes in App.tsx
+**Step 1: "Casting Call"** (subtitle: "Basic casting information")
+- `languages_known` -- multi-select chips (English, Hindi, Tamil, Telugu, Malayalam, Kannada), required
+- `height_ft` -- text, required
+- `gender` -- radio (Male / Female / Non-Binary / Prefer not to say), columns: 2, required
 
-- Remove `KYFormCheck` wrapper from the main app routes
-- Remove the `/kyf` redirect route (no longer needed since there's no gate)
-- Add new route: `/ky-section/:sectionKey`
-- Keep old `/kyf-form`, `/kyc-form`, `/kyw-form` routes as legacy fallbacks
+**Step 2: "Your Pictures"** (subtitle: "Upload your casting photos")
+- `headshot_front_url` -- photo, required
+- `headshot_left_url` -- photo
+- `headshot_right_url` -- photo
+- `full_body_url` -- photo, required
+- `photo_favorite_url` -- photo, required
+
+### SECTION 3: Hospitality Details (ALL cohorts) -- NOW 3 Steps
+
+This is the key change. Currently 1 step with all fields crammed in. Now split into 3 steps per wireframes:
+
+**Intro screen**: "Almost there! Final details" with keep-handy items:
+1. Emergency contact number
+2. Your T-shirt size
+3. Any dietary restrictions or allergies
+Time: ~2 minutes
+
+**Step 1: "Preferences"** (subtitle: "Help us plan your stay")
+- `meal_preference` -- meal-preference (Vegetarian / Non-Veg emoji cards), required
+- `food_allergies` -- text, required, placeholder "None"
+- `medication_support` -- text, required, placeholder "None"
+
+**Step 2: "Final Details"** (subtitle: "Emergency contact and merch")
+- `tshirt_size` -- tshirt-size (size pills), required
+- `emergency_contact_name` -- text, required, placeholder "Parent / Guardian name"
+- `emergency_contact_number` -- phone, required
+
+**Step 3: "Terms"**
+- `terms_accepted` -- checkbox, required
+
+Actually, looking at the wireframes more carefully: Step 2 is "Preferences" (meal, allergies, medication) and Step 3 is "Final Details" (t-shirt, emergency contact name, emergency contact number). There's no separate terms step shown. So:
+
+**Step 1: "Preferences"** (subtitle: "Help us plan your stay")
+- `meal_preference` -- meal-preference, required
+- `food_allergies` -- text, required, placeholder "None"
+- `medication_support` -- text, required, placeholder "None"
+
+**Step 2: "Final Details"** (subtitle: "Emergency contact and merch")
+- `tshirt_size` -- tshirt-size, required
+- `emergency_contact_name` -- text, required, placeholder "Parent / Guardian name"
+- `emergency_contact_number` -- phone, required
+- `terms_accepted` -- checkbox, required (kept on last step)
+
+### Creator Profile (KYC) Sections
+
+Same structure but adapted:
+- Section 1: Creator Profile (General, Personal with platform, Proficiency for content/storytelling/video, Understanding You with top 3 creators)
+- Section 2: Hospitality Details (same 2-step structure as above, no casting form for creators)
+
+### Writer Profile (KYW) Sections
+
+- Section 1: Writer Profile (General with writing language, Writing Practice types, Proficiency for writing/voice, Understanding You with top 3 writers)
+- Section 2: Hospitality Details (same 2-step structure, no casting form for writers)
 
 ## Technical Details
-
-### Files to Create
-
-| File | Description |
-|------|-------------|
-| `src/pages/KYSectionForm.tsx` | Full-page form using KYFormCard UI, driven by KYSectionConfig |
 
 ### Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/App.tsx` | Remove KYFormCheck wrapper, remove /kyf redirect, add /ky-section/:sectionKey route |
-| `src/components/home/KYProfileCard.tsx` | Navigate to /ky-section/:key instead of opening KYSectionSheet |
+| `src/components/kyform/KYSectionConfig.ts` | Restructure Hospitality from 1 step to 2 steps for all 3 cohorts (KYF, KYC, KYW). Update intro keepHandy items. Merge KYF general+personal into combined step OR keep as-is per wireframe count. Ensure field keys match existing DB columns. |
 
-### User Flow After Changes
+### What stays the same
+- `KYSectionFields.tsx` -- already handles all field types (meal-preference, tshirt-size, phone, photo, etc.)
+- `KYSectionIntro.tsx` -- already renders keepHandy items and intro text
+- `KYSectionForm.tsx` -- already handles multi-step navigation, progress bar, card stack
+- `KYFormCardStack.tsx` -- animation system unchanged
+- All existing field rendering components (RadioSelectField, MultiSelectField, ProficiencyField, etc.)
 
-```text
-New Signup --> Auth --> Profile Setup --> Homepage (no KY gate!)
-                                           |
-                                           v
-                                  "Complete Your Profile" card
-                                           |
-                                  Click "Start now >" on Section 1
-                                           |
-                                           v
-                                  /ky-section/filmmaker_profile
-                                  (Full-page premium card form)
-                                  Q.01 General Details
-                                  Q.02 Personal Details
-                                  Q.03 Proficiency Level
-                                  Q.04 Understanding You
-                                           |
-                                  [Complete] --> saves + navigates home
-                                           |
-                                  Section 1 shows checkmark, Section 2 unlocks
-                                           |
-                                  Click "Continue >" on Section 2
-                                           |
-                                           v
-                                  /ky-section/casting_form
-                                  (Same premium card UI)
-                                  ...and so on
-```
+### What changes
+- Only the data definitions in `KYSectionConfig.ts`:
+  - KYF Hospitality: 1 step -> 2 steps (Preferences + Final Details)
+  - KYC Hospitality: 1 step -> 2 steps
+  - KYW Hospitality: 1 step -> 2 steps
+  - Update `keepHandy` items for Hospitality to match wireframe (emergency contact, t-shirt size, dietary restrictions)
+  - Update `introDescription` for Hospitality: "We want to make sure your stay is comfortable. This helps us plan meals, rooms, and emergencies."
+  - Ensure field order matches wireframes exactly
+
+### No database changes needed
+All field keys (`meal_preference`, `food_allergies`, `medication_support`, `tshirt_size`, `emergency_contact_name`, `emergency_contact_number`, `terms_accepted`) already exist in the response tables.
