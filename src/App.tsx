@@ -37,6 +37,7 @@ import Perks from "./pages/Perks";
 import Updates from "./pages/Updates";
 import Profile from "./pages/Profile";
 import MyKYForm from "./pages/MyKYForm";
+import KYSectionForm from "./pages/KYSectionForm";
 import PublicPortfolio from "./pages/PublicPortfolio";
 import NotFound from "./pages/NotFound";
 
@@ -313,13 +314,20 @@ const AppRoutes = () => {
         </ProtectedRoute>
       } />
       
+      {/* KY Section form (full-page) */}
+      <Route path="/ky-section/:sectionKey" element={
+        <ProtectedRoute>
+          <ProfileSetupCheck>
+            <KYSectionForm />
+          </ProfileSetupCheck>
+        </ProtectedRoute>
+      } />
+
       {/* App routes with layout */}
       <Route element={
         <ProtectedRoute>
           <ProfileSetupCheck>
-            <KYFormCheck>
-              <AppLayout />
-            </KYFormCheck>
+            <AppLayout />
           </ProfileSetupCheck>
         </ProtectedRoute>
       }>
