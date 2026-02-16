@@ -210,6 +210,13 @@ const AppRoutes = () => {
           </ProfileSetupCheck>
         </ProtectedRoute>
       } />
+      <Route path="/ky-section/:sectionKey" element={
+        <ProtectedRoute>
+          <ProfileSetupCheck>
+            <KYSectionForm />
+          </ProfileSetupCheck>
+        </ProtectedRoute>
+      } />
       
       {/* Onboarding flow */}
       <Route path="/profile-setup" element={
