@@ -287,7 +287,7 @@ const KYSectionForm: React.FC = () => {
       </div>
 
       {/* Card stack area */}
-      <div className="relative z-10 flex-1 px-4 pb-32 max-w-lg mx-auto">
+      <div className="relative z-10 flex-1 px-4 pb-32 max-w-xl mx-auto">
         <KYFormCardStack currentStep={currentStep} totalSteps={totalSteps}>
           {/* Intro card */}
           <KYFormCard>
