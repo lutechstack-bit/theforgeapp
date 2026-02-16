@@ -154,7 +154,7 @@ const KYF_SECTIONS: KYSection[] = [
           { key: 'instagram_id', type: 'text', label: 'Instagram ID', placeholder: '@yourhandle', required: true },
           { key: 'date_of_birth', type: 'date', label: 'Date of Birth', required: true },
           { key: 'address_line_1', type: 'text', label: 'Address Line 1', placeholder: 'Street address', required: true },
-          { key: 'address_line_2', type: 'text', label: 'Address Line 2', placeholder: 'Apartment, suite, etc.' },
+          
           { key: 'state', type: 'country-state', label: 'Country & State', countryKey: 'country', required: true, inline: 'location_row' },
           { key: 'pincode', type: 'text', label: 'Pincode', placeholder: '6-digit pincode', required: true, inline: 'location_row' },
         ],
