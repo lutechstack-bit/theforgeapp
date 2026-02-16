@@ -29,7 +29,7 @@ export const ProficiencyGrid: React.FC<ProficiencyGridProps> = ({
 
       <div className="rounded-2xl border border-forge-gold/20 bg-card/40 backdrop-blur-sm overflow-hidden">
         {/* Header row */}
-        <div className="grid" style={{ gridTemplateColumns: `minmax(80px, 1fr) repeat(${levels.length}, 1fr)` }}>
+        <div className="grid" style={{ gridTemplateColumns: `minmax(110px, 1.5fr) repeat(${levels.length}, 1fr)` }}>
           <div className="p-2 md:p-4" />
           {levels.map((level) => (
             <div
@@ -49,7 +49,7 @@ export const ProficiencyGrid: React.FC<ProficiencyGridProps> = ({
               'grid items-center border-t border-border/30',
               idx % 2 === 0 ? 'bg-card/20' : 'bg-card/40'
             )}
-            style={{ gridTemplateColumns: `minmax(80px, 1fr) repeat(${levels.length}, 1fr)` }}
+style={{ gridTemplateColumns: `minmax(110px, 1.5fr) repeat(${levels.length}, 1fr)` }}
           >
             <div className="p-2 md:p-4 text-[11px] md:text-sm font-medium text-foreground leading-tight">
               {skill.label}
