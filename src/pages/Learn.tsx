@@ -166,66 +166,82 @@ const Learn: React.FC = () => {
               onViewAll={(st) => navigate(`/learn/all?section=${st}`)}
             />
 
-            {/* More from LevelUp */}
-            <CourseCarouselSection
-              items={communitySessions}
-              title="More from LevelUp"
-              subtitle="Online sessions exclusive with LevelUp"
-              sectionType="community_sessions"
-              onCardClick={handleCardClick}
-              onViewAll={(st) => navigate(`/learn/all?section=${st}`)}
-            />
           </div>
         )}
 
-        {/* Learn from the Best - always visible */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg sm:text-xl font-bold text-foreground">Learn from the Best</h2>
-              <p className="text-sm text-muted-foreground mt-0.5">Masterclasses by industry leaders</p>
-            </div>
+        {/* LevelUp Zone */}
+        <div className="bg-white/[0.03] -mx-4 sm:-mx-5 px-4 sm:px-5 pt-8 pb-4 rounded-t-3xl mt-4">
+          {/* Zone header */}
+          <div className="mb-6">
+            <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
+              More from LevelUp
+            </p>
+            <div className="w-8 h-0.5 bg-primary/30 rounded-full mt-1" />
           </div>
-          <ScrollableCardRow>
-              {masterclassCards.map((card) => (
-                <div key={card.name} className="snap-start flex-shrink-0">
-                  <MasterclassCard
-                    imageUrl={card.image}
-                    externalUrl={card.url}
-                    name={card.name}
-                  />
-                </div>
-              ))}
-          </ScrollableCardRow>
-        </section>
 
-        {/* Explore Programs */}
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-lg sm:text-xl font-bold text-foreground">Explore Programs</h2>
-            <p className="text-sm text-muted-foreground mt-0.5">Intensive programs to level up your craft</p>
+          <div className="space-y-8 sm:space-y-10">
+            {/* Community Sessions */}
+            {!isLoading && communitySessions.length > 0 && (
+              <CourseCarouselSection
+                items={communitySessions}
+                title="Online Sessions"
+                subtitle="Online sessions exclusive with LevelUp"
+                sectionType="community_sessions"
+                onCardClick={handleCardClick}
+                onViewAll={(st) => navigate(`/learn/all?section=${st}`)}
+              />
+            )}
+
+            {/* Learn from the Best */}
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-foreground">Learn from the Best</h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">Masterclasses by industry leaders</p>
+                </div>
+              </div>
+              <ScrollableCardRow>
+                {masterclassCards.map((card) => (
+                  <div key={card.name} className="snap-start flex-shrink-0">
+                    <MasterclassCard
+                      imageUrl={card.image}
+                      externalUrl={card.url}
+                      name={card.name}
+                    />
+                  </div>
+                ))}
+              </ScrollableCardRow>
+            </section>
+
+            {/* Explore Programs */}
+            <section className="space-y-4">
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-foreground">Explore Programs</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">Intensive programs to level up your craft</p>
+              </div>
+              <div className="space-y-4">
+                <ProgramBanner
+                  title="Breakthrough Filmmaking"
+                  description="Comprehensive 12-week program to master filmmaking from script to screen."
+                  ctaUrl="https://www.leveluplearning.in/"
+                  gradient="linear-gradient(135deg, hsl(260,60%,25%) 0%, hsl(230,50%,30%) 100%)"
+                />
+                <ProgramBanner
+                  title="Video Editing Academy"
+                  description="Master professional video editing with industry-standard tools and techniques."
+                  ctaUrl="https://www.leveluplearning.in/"
+                  gradient="linear-gradient(135deg, hsl(210,60%,25%) 0%, hsl(230,50%,35%) 100%)"
+                />
+                <ProgramBanner
+                  title="Cinematography Masterclass"
+                  description="Learn the art of visual storytelling from award-winning cinematographers."
+                  ctaUrl="https://www.leveluplearning.in/"
+                  gradient="linear-gradient(135deg, hsl(45,40%,20%) 0%, hsl(35,50%,25%) 100%)"
+                />
+              </div>
+            </section>
           </div>
-          <div className="space-y-4">
-            <ProgramBanner
-              title="Breakthrough Filmmaking"
-              description="Comprehensive 12-week program to master filmmaking from script to screen."
-              ctaUrl="https://www.leveluplearning.in/"
-              gradient="linear-gradient(135deg, hsl(260,60%,25%) 0%, hsl(230,50%,30%) 100%)"
-            />
-            <ProgramBanner
-              title="Video Editing Academy"
-              description="Master professional video editing with industry-standard tools and techniques."
-              ctaUrl="https://www.leveluplearning.in/"
-              gradient="linear-gradient(135deg, hsl(210,60%,25%) 0%, hsl(230,50%,35%) 100%)"
-            />
-            <ProgramBanner
-              title="Cinematography Masterclass"
-              description="Learn the art of visual storytelling from award-winning cinematographers."
-              ctaUrl="https://www.leveluplearning.in/"
-              gradient="linear-gradient(135deg, hsl(45,40%,20%) 0%, hsl(35,50%,25%) 100%)"
-            />
-          </div>
-        </section>
+        </div>
       </div>
     </div>
   );
