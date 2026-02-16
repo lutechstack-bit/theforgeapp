@@ -2,7 +2,8 @@ import React, { useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Loader2, X, Image } from 'lucide-react';
+import { Loader2, X, Image } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface PhotoUploadFieldProps {
   label: string;
@@ -72,7 +73,7 @@ export const PhotoUploadField: React.FC<PhotoUploadFieldProps> = ({
       )}
       
       {value ? (
-        <div className="relative w-32 h-32 rounded-xl overflow-hidden border border-border">
+        <div className="relative w-32 h-32 rounded-xl overflow-hidden border-2 border-forge-gold/30 ring-2 ring-forge-gold/10">
           <img src={value} alt={label} className="w-full h-full object-cover" />
           <button
             onClick={handleRemove}
@@ -85,13 +86,17 @@ export const PhotoUploadField: React.FC<PhotoUploadFieldProps> = ({
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
-          className="w-32 h-32 rounded-xl border-2 border-dashed border-border hover:border-primary/50 bg-secondary/30 flex flex-col items-center justify-center gap-2 transition-colors"
+          className={cn(
+            'w-32 h-32 rounded-xl border-2 border-dashed bg-card/60 backdrop-blur-sm flex flex-col items-center justify-center gap-2 transition-all',
+            'border-border hover:border-forge-gold/50',
+            uploading && 'opacity-60'
+          )}
         >
           {uploading ? (
-            <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
+            <Loader2 className="h-6 w-6 text-forge-gold animate-spin" />
           ) : (
             <>
-              <Image className="h-6 w-6 text-muted-foreground" />
+              <Image className="h-6 w-6 text-forge-gold/60" />
               <span className="text-xs text-muted-foreground">Upload</span>
             </>
           )}

@@ -53,13 +53,19 @@ export const KYSectionSheet: React.FC<KYSectionSheetProps> = ({
         const mapped: Record<string, any> = {};
         section.steps.forEach((step) => {
           step.fields.forEach((field) => {
-            const rawVal = (data as any)[field.key];
-            if (field.key === 'has_editing_laptop') {
-              mapped[field.key] = rawVal === true ? 'yes' : rawVal === false ? 'no' : '';
-            } else if (field.type === 'multi-select' || field.type === 'tags') {
-              mapped[field.key] = rawVal || [];
+            if (field.type === 'proficiency-grid' && field.skills) {
+              field.skills.forEach((skill) => {
+                mapped[skill.key] = (data as any)[skill.key] ?? '';
+              });
             } else {
-              mapped[field.key] = rawVal ?? '';
+              const rawVal = (data as any)[field.key];
+              if (field.key === 'has_editing_laptop') {
+                mapped[field.key] = rawVal === true ? 'yes' : rawVal === false ? 'no' : '';
+              } else if (field.type === 'multi-select' || field.type === 'tags') {
+                mapped[field.key] = rawVal || [];
+              } else {
+                mapped[field.key] = rawVal ?? '';
+              }
             }
           });
         });
@@ -88,19 +94,25 @@ export const KYSectionSheet: React.FC<KYSectionSheetProps> = ({
 
     section.steps.forEach((step) => {
       step.fields.forEach((field) => {
-        const val = formData[field.key];
-        if (field.key === 'has_editing_laptop') {
-          payload[field.key] = val === 'yes' ? true : val === 'no' ? false : null;
-        } else if (field.key === 'terms_accepted') {
-          payload[field.key] = !!val;
-          if (val) payload['terms_accepted_at'] = new Date().toISOString();
-        } else if (field.type === 'multi-select' || field.type === 'tags') {
-          payload[field.key] = (val && val.length > 0) ? val : null;
-        } else if (field.key === 'date_of_birth') {
-          payload[field.key] = val || null;
-          payload['age'] = calculateAge(val);
+        if (field.type === 'proficiency-grid' && field.skills) {
+          field.skills.forEach((skill) => {
+            payload[skill.key] = formData[skill.key] || null;
+          });
         } else {
-          payload[field.key] = val || null;
+          const val = formData[field.key];
+          if (field.key === 'has_editing_laptop') {
+            payload[field.key] = val === 'yes' ? true : val === 'no' ? false : null;
+          } else if (field.key === 'terms_accepted') {
+            payload[field.key] = !!val;
+            if (val) payload['terms_accepted_at'] = new Date().toISOString();
+          } else if (field.type === 'multi-select' || field.type === 'tags') {
+            payload[field.key] = (val && val.length > 0) ? val : null;
+          } else if (field.key === 'date_of_birth') {
+            payload[field.key] = val || null;
+            payload['age'] = calculateAge(val);
+          } else {
+            payload[field.key] = val || null;
+          }
         }
       });
     });

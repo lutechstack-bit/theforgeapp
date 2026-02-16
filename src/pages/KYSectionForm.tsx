@@ -58,13 +58,19 @@ const KYSectionForm: React.FC = () => {
         const mapped: Record<string, any> = {};
         section.steps.forEach((step) => {
           step.fields.forEach((field) => {
-            const rawVal = (data as any)[field.key];
-            if (field.key === 'has_editing_laptop') {
-              mapped[field.key] = rawVal === true ? 'yes' : rawVal === false ? 'no' : '';
-            } else if (field.type === 'multi-select' || field.type === 'tags') {
-              mapped[field.key] = rawVal || [];
+            if (field.type === 'proficiency-grid' && field.skills) {
+              field.skills.forEach((skill) => {
+                mapped[skill.key] = (data as any)[skill.key] ?? '';
+              });
             } else {
-              mapped[field.key] = rawVal ?? '';
+              const rawVal = (data as any)[field.key];
+              if (field.key === 'has_editing_laptop') {
+                mapped[field.key] = rawVal === true ? 'yes' : rawVal === false ? 'no' : '';
+              } else if (field.type === 'multi-select' || field.type === 'tags') {
+                mapped[field.key] = rawVal || [];
+              } else {
+                mapped[field.key] = rawVal ?? '';
+              }
             }
           });
         });
@@ -93,19 +99,25 @@ const KYSectionForm: React.FC = () => {
 
     section.steps.forEach((step) => {
       step.fields.forEach((field) => {
-        const val = formData[field.key];
-        if (field.key === 'has_editing_laptop') {
-          payload[field.key] = val === 'yes' ? true : val === 'no' ? false : null;
-        } else if (field.key === 'terms_accepted') {
-          payload[field.key] = !!val;
-          if (val) payload['terms_accepted_at'] = new Date().toISOString();
-        } else if (field.type === 'multi-select' || field.type === 'tags') {
-          payload[field.key] = (val && val.length > 0) ? val : null;
-        } else if (field.key === 'date_of_birth') {
-          payload[field.key] = val || null;
-          payload['age'] = calculateAge(val);
+        if (field.type === 'proficiency-grid' && field.skills) {
+          field.skills.forEach((skill) => {
+            payload[skill.key] = formData[skill.key] || null;
+          });
         } else {
-          payload[field.key] = val || null;
+          const val = formData[field.key];
+          if (field.key === 'has_editing_laptop') {
+            payload[field.key] = val === 'yes' ? true : val === 'no' ? false : null;
+          } else if (field.key === 'terms_accepted') {
+            payload[field.key] = !!val;
+            if (val) payload['terms_accepted_at'] = new Date().toISOString();
+          } else if (field.type === 'multi-select' || field.type === 'tags') {
+            payload[field.key] = (val && val.length > 0) ? val : null;
+          } else if (field.key === 'date_of_birth') {
+            payload[field.key] = val || null;
+            payload['age'] = calculateAge(val);
+          } else {
+            payload[field.key] = val || null;
+          }
         }
       });
     });
@@ -251,19 +263,19 @@ const KYSectionForm: React.FC = () => {
       <div className="relative z-10 flex items-center justify-between px-4 pt-4 pb-2">
         <button
           onClick={handleBack}
-          className="p-2.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/50 hover:bg-secondary/80 transition-colors"
+          className="p-2.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/50 hover:border-forge-gold/30 hover:bg-secondary/80 transition-all"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="text-center">
-          <p className="text-xs text-muted-foreground font-medium">{section.title}</p>
+          <p className="text-xs text-forge-gold font-semibold">{section.title}</p>
           <p className="text-sm font-bold text-foreground">
             Step {currentStep + 1} of {totalSteps}
           </p>
         </div>
         <button
           onClick={() => setExitDialogOpen(true)}
-          className="p-2.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/50 hover:bg-secondary/80 transition-colors"
+          className="p-2.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/50 hover:border-forge-gold/30 hover:bg-secondary/80 transition-all"
         >
           <X className="w-5 h-5 text-foreground" />
         </button>
@@ -306,15 +318,15 @@ const KYSectionForm: React.FC = () => {
       </div>
 
       {/* Sticky bottom navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-background via-background/95 to-transparent pt-6 pb-6 px-4">
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-background via-background/95 to-transparent pt-6 pb-6 px-4 safe-area-pb">
         <div className="max-w-lg mx-auto flex gap-3">
           {currentStep > 0 && (
             <button
               onClick={handleBack}
               className={cn(
-                'flex-1 py-3.5 rounded-full text-sm font-bold transition-all',
-                'border border-border bg-card/80 text-foreground',
-                'hover:bg-secondary/80 active:scale-[0.98]'
+                'flex-1 h-12 rounded-full text-sm font-bold transition-all',
+                'border border-forge-gold/20 bg-card/80 text-foreground',
+                'hover:bg-secondary/80 hover:border-forge-gold/40 active:scale-[0.97]'
               )}
             >
               ← Back
@@ -324,11 +336,11 @@ const KYSectionForm: React.FC = () => {
             onClick={handleNext}
             disabled={!canProceed() || loading}
             className={cn(
-              'flex-1 py-3.5 rounded-full text-sm font-bold transition-all',
-              'bg-forge-orange text-foreground',
-              'hover:brightness-110 active:scale-[0.98]',
+              'flex-1 h-12 rounded-full text-sm font-bold transition-all',
+              'bg-gradient-to-r from-forge-gold to-forge-orange text-background',
+              'hover:brightness-110 active:scale-[0.97]',
               'disabled:opacity-40 disabled:cursor-not-allowed',
-              'shadow-[0_4px_20px_-4px_hsl(var(--forge-orange)/0.4)]',
+              'shadow-[0_4px_24px_-4px_hsl(var(--forge-gold)/0.4)]',
               currentStep === 0 && 'flex-[2]'
             )}
           >

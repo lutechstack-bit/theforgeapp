@@ -7,7 +7,7 @@ export interface KeepHandyItem {
 
 export interface SectionStepField {
   key: string;
-  type: 'text' | 'date' | 'select' | 'radio' | 'multi-select' | 'proficiency' | 'photo' | 'phone' | 'tags' | 'checkbox' | 'textarea' | 'meal-preference' | 'tshirt-size' | 'mbti';
+  type: 'text' | 'date' | 'select' | 'radio' | 'multi-select' | 'proficiency' | 'proficiency-grid' | 'photo' | 'phone' | 'tags' | 'checkbox' | 'textarea' | 'meal-preference' | 'tshirt-size' | 'mbti';
   label: string;
   placeholder?: string;
   required?: boolean;
@@ -17,6 +17,9 @@ export interface SectionStepField {
   photoFolder?: string;
   photoDescription?: string;
   helperText?: string;
+  // For proficiency-grid type
+  skills?: { key: string; label: string }[];
+  levels?: string[];
 }
 
 export interface SectionStep {
@@ -165,10 +168,18 @@ const KYF_SECTIONS: KYSection[] = [
         title: 'Proficiency Level',
         subtitle: 'How experienced are you in each area?',
         fields: [
-          { key: 'proficiency_screenwriting', type: 'proficiency', label: 'Screenwriting', options: SCREENWRITING_OPTIONS },
-          { key: 'proficiency_direction', type: 'proficiency', label: 'Direction', options: DIRECTION_OPTIONS },
-          { key: 'proficiency_cinematography', type: 'proficiency', label: 'Cinematography', options: CINEMATOGRAPHY_OPTIONS },
-          { key: 'proficiency_editing', type: 'proficiency', label: 'Editing', options: EDITING_OPTIONS },
+          {
+            key: 'proficiency_grid',
+            type: 'proficiency-grid',
+            label: 'Rate your proficiency',
+            skills: [
+              { key: 'proficiency_screenwriting', label: 'Screenwriting' },
+              { key: 'proficiency_direction', label: 'Direction' },
+              { key: 'proficiency_cinematography', label: 'Cinematography' },
+              { key: 'proficiency_editing', label: 'Editing' },
+            ],
+            levels: ['Beginner', 'Amateur', 'Ok', 'Good', 'Pro'],
+          },
           { key: 'has_editing_laptop', type: 'radio', label: 'Do you have a laptop for editing?', options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }], columns: 2 },
         ],
       },
