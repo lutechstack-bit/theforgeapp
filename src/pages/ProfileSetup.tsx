@@ -166,23 +166,11 @@ const ProfileSetup: React.FC = () => {
     await refreshProfile();
     toast({
       title: 'Profile Created!',
-      description: 'Now let\'s get to know you better.',
+      description: 'Welcome to The Forge!',
     });
     
-    // Navigate to the appropriate KY form based on selected edition's cohort type
-    switch (selectedEdition?.cohort_type) {
-      case 'FORGE':
-        navigate('/kyf-form');
-        break;
-      case 'FORGE_CREATORS':
-        navigate('/kyc-form');
-        break;
-      case 'FORGE_WRITING':
-        navigate('/kyw-form');
-        break;
-      default:
-        navigate('/');
-    }
+    // Navigate to the welcome celebration page
+    navigate('/welcome');
   };
 
   const canSubmit = formData.full_name && formData.email && formData.phone && formData.city && formData.edition_id;

@@ -167,50 +167,6 @@ const ProfileSetupCheck: React.FC<{ children: React.ReactNode }> = ({ children }
   return <>{children}</>;
 };
 
-/**
- * KYFormCheck - Ensures KY form is completed before accessing main app
- * Now with timeout-based recovery UI
- */
-const KYFormCheck: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { profile, userDataLoading, userDataTimedOut, userDataError, retryUserData, clearCacheAndReload, signOut } = useAuth();
-  const [guardTimedOut, setGuardTimedOut] = useState(false);
-  
-  useEffect(() => {
-    if (userDataLoading && !profile) {
-      const timer = setTimeout(() => {
-        setGuardTimedOut(true);
-      }, USER_DATA_GUARD_TIMEOUT_MS);
-      
-      return () => clearTimeout(timer);
-    } else {
-      setGuardTimedOut(false);
-    }
-  }, [userDataLoading, profile]);
-  
-  // Show recovery UI on timeout/error
-  if ((guardTimedOut || userDataTimedOut || userDataError) && !profile) {
-    return (
-      <UserDataRecovery
-        isRetrying={userDataLoading}
-        onRetry={retryUserData}
-        onClearCache={clearCacheAndReload}
-        onSignOut={signOut}
-      />
-    );
-  }
-  
-  // If user data is still loading and we don't have profile yet, show loading briefly
-  if (userDataLoading && !profile) {
-    return <LoadingScreen />;
-  }
-  
-  // If profile setup is done but KY form is NOT complete, redirect to form
-  if (profile?.profile_setup_completed && !profile?.ky_form_completed) {
-    return <Navigate to="/kyf" replace />;
-  }
-  
-  return <>{children}</>;
-};
 
 // Redirect away from profile setup if already completed
 const ProfileSetupRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
