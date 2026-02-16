@@ -39,41 +39,35 @@ export const CountryStateSelector: React.FC<CountryStateSelectorProps> = ({
 
   return (
     <div className={`grid grid-cols-2 gap-3 ${className}`}>
-      <div className="space-y-2">
-        <Label>Country {required && '*'}</Label>
-        <Select value={country} onValueChange={handleCountryChange}>
-          <SelectTrigger className="h-11 bg-secondary/50">
-            <SelectValue placeholder="Select country" />
-          </SelectTrigger>
-          <SelectContent className="bg-popover z-50 max-h-[300px]">
-            {COUNTRIES.map((c) => (
-              <SelectItem key={c.code} value={c.name}>
-                {c.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      
-      <div className="space-y-2">
-        <Label>State {required && '*'}</Label>
-        <Select 
-          value={state} 
-          onValueChange={onStateChange}
-          disabled={!country || !hasStates}
-        >
-          <SelectTrigger className="h-11 bg-secondary/50">
-            <SelectValue placeholder={!country ? 'Select country first' : hasStates ? 'Select state' : 'Enter below'} />
-          </SelectTrigger>
-          <SelectContent className="bg-popover z-50 max-h-[300px]">
-            {states.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <Select value={country} onValueChange={handleCountryChange}>
+        <SelectTrigger className="h-11 bg-secondary/50">
+          <SelectValue placeholder="Country" />
+        </SelectTrigger>
+        <SelectContent className="bg-popover z-50 max-h-[300px]">
+          {COUNTRIES.map((c) => (
+            <SelectItem key={c.code} value={c.name}>
+              {c.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select 
+        value={state} 
+        onValueChange={onStateChange}
+        disabled={!country || !hasStates}
+      >
+        <SelectTrigger className="h-11 bg-secondary/50">
+          <SelectValue placeholder={!country ? 'Select country first' : hasStates ? 'State' : 'Enter below'} />
+        </SelectTrigger>
+        <SelectContent className="bg-popover z-50 max-h-[300px]">
+          {states.map((s) => (
+            <SelectItem key={s} value={s}>
+              {s}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 };
