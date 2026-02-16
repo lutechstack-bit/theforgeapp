@@ -1,31 +1,28 @@
 
 
-# Reset Onboarding Profile for All Users
+# Fix "Start Now" Routing to New KY Forms
 
-## What will be reset
+## Problem
+The "Today's Focus" card on the homepage has a "Start Now" button that navigates to the **old** KY form routes (`/kyf-form`, `/kyc-form`, `/kyw-form`). These need to point to the **new** section-based KY flow instead.
 
-Run a single database update on the `profiles` table for **all 138 users** to clear:
+## Root Cause
+The `today_focus_cards` database table stores the route for each focus card. The current values are:
 
-| Field | Current | After Reset |
-|-------|---------|-------------|
-| `profile_setup_completed` | `true` (27 users) | `false` |
-| `ky_form_completed` | `true` (19 users) | `false` |
-| `kyf_completed` | `true` (19 users) | `false` |
-| `ky_section_progress` | `{}` or filled | `{}` (empty JSON) |
+| Cohort | Current Route (old) | New Route |
+|--------|-------------------|-----------|
+| FORGE | `/kyf-form` | `/ky-section/filmmaker_profile` |
+| FORGE_CREATORS | `/kyc-form` | `/ky-section/creator_profile` |
+| FORGE_WRITING | `/kyw-form` | `/ky-section/writer_profile` |
 
-After this, every user will see the Profile Setup flow on login, followed by the new section-based KY form experience.
+## Fix
+Run 3 SQL updates on the `today_focus_cards` table to change the `cta_route` for each cohort's focus card to point to the first section of the new KY flow.
+
+No code changes needed -- only database updates.
 
 ## Technical Details
 
-- Single SQL migration:
 ```sql
-UPDATE profiles
-SET profile_setup_completed = false,
-    ky_form_completed = false,
-    kyf_completed = false,
-    ky_section_progress = '{}'::jsonb;
+UPDATE today_focus_cards SET cta_route = '/ky-section/filmmaker_profile' WHERE id = '7be40ffe-0dcc-4978-84ba-0e71562d52a0';
+UPDATE today_focus_cards SET cta_route = '/ky-section/creator_profile' WHERE id = '466f555d-cb6c-41a8-a625-1bccf75886a7';
+UPDATE today_focus_cards SET cta_route = '/ky-section/writer_profile' WHERE id = '0d727730-daf3-495b-9812-810a03263a07';
 ```
-- No schema changes needed
-- No code changes needed -- the existing auth flow already redirects users to Profile Setup when `profile_setup_completed = false`
-- Users currently logged in will see the change on their next page load (auth context re-fetches profile)
-
