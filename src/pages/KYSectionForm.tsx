@@ -252,7 +252,7 @@ const KYSectionForm: React.FC = () => {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-background relative overflow-hidden">
+    <div className="h-[100dvh] flex flex-col bg-background relative overflow-hidden">
       {/* Ambient gold glow effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-forge-gold/5 blur-[120px]" />
@@ -287,7 +287,7 @@ const KYSectionForm: React.FC = () => {
       </div>
 
       {/* Card stack area */}
-      <div className="relative z-10 flex-1 px-4 pb-32 max-w-xl mx-auto">
+      <div className="relative z-10 flex-1 overflow-y-auto px-4 pb-28 max-w-xl mx-auto">
         <KYFormCardStack currentStep={currentStep} totalSteps={totalSteps}>
           {/* Intro card */}
           <KYFormCard>

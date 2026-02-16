@@ -36,7 +36,7 @@ export const KYSectionFields: React.FC<KYSectionFieldsProps> = ({
   const [termsModalOpen, setTermsModalOpen] = useState(false);
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-5">
       {/* Step header */}
       <div className="space-y-2.5">
         <h3 className="text-2xl font-bold text-foreground tracking-tight">{step.title}</h3>
@@ -47,7 +47,7 @@ export const KYSectionFields: React.FC<KYSectionFieldsProps> = ({
       </div>
 
       {/* Fields */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         {step.fields.map((field) => {
           const value = formData[field.key] ?? (field.type === 'multi-select' || field.type === 'tags' ? [] : '');
 
