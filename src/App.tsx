@@ -22,9 +22,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Welcome from "./pages/Welcome";
 import ProfileSetup from "./pages/ProfileSetup";
-import KYFForm from "./pages/KYFForm";
-import KYCForm from "./pages/KYCForm";
-import KYWForm from "./pages/KYWForm";
+// Old form imports removed
 import Home from "./pages/Home";
 import Community from "./pages/Community";
 import Learn from "./pages/Learn";
@@ -97,27 +95,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-// KYF Route - Smart redirect based on cohort type
-const KYFRedirect: React.FC = () => {
-  const { profile, userDataLoading } = useAuth();
-  
-  // Show loading while fetching profile (but with a reasonable expectation it will complete)
-  if (userDataLoading && !profile) {
-    return <LoadingScreen />;
-  }
-  
-  // Get cohort type from edition if available
-  const cohortType = (profile as any)?.edition?.cohort_type;
-  
-  switch (cohortType) {
-    case 'FORGE_WRITING':
-      return <Navigate to="/kyw-form" replace />;
-    case 'FORGE_CREATORS':
-      return <Navigate to="/kyc-form" replace />;
-    default:
-      return <Navigate to="/kyf-form" replace />;
-  }
-};
+
 
 /**
  * ProfileSetupCheck - Ensures profile setup is completed first
@@ -241,43 +219,7 @@ const AppRoutes = () => {
           </ProfileSetupRoute>
         </ProtectedRoute>
       } />
-      <Route path="/kyf" element={
-        <ProtectedRoute>
-          <ProfileSetupCheck>
-            <KYFRedirect />
-          </ProfileSetupCheck>
-        </ProtectedRoute>
-      } />
-      <Route path="/kyf-form" element={
-        <ProtectedRoute>
-          <ProfileSetupCheck>
-            <KYFForm />
-          </ProfileSetupCheck>
-        </ProtectedRoute>
-      } />
-      <Route path="/kyc-form" element={
-        <ProtectedRoute>
-          <ProfileSetupCheck>
-            <KYCForm />
-          </ProfileSetupCheck>
-        </ProtectedRoute>
-      } />
-      <Route path="/kyw-form" element={
-        <ProtectedRoute>
-          <ProfileSetupCheck>
-            <KYWForm />
-          </ProfileSetupCheck>
-        </ProtectedRoute>
-      } />
-      
-      {/* KY Section form (full-page) */}
-      <Route path="/ky-section/:sectionKey" element={
-        <ProtectedRoute>
-          <ProfileSetupCheck>
-            <KYSectionForm />
-          </ProfileSetupCheck>
-        </ProtectedRoute>
-      } />
+
 
       {/* App routes with layout */}
       <Route element={

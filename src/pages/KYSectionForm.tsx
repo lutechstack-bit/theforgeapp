@@ -296,17 +296,7 @@ const KYSectionForm: React.FC = () => {
 
           {/* Step cards */}
           {section.steps.map((step, idx) => (
-            <KYFormCard
-              key={step.key}
-              questionNumber={(() => {
-                let q = 0;
-                for (let i = 0; i < idx; i++) {
-                  q += section.steps[i].fields.length;
-                }
-                return q + 1;
-              })()}
-              stepTitle={step.title}
-            >
+            <KYFormCard key={step.key}>
               <KYSectionFields
                 step={step}
                 formData={formData}
