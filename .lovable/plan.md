@@ -1,69 +1,53 @@
 
 
-# Restructure All Form Sections to Fit Viewport
+# Differentiate Forge vs LevelUp Sections on Learn Page
 
-## Overview
-Apply the same wireframe-matching restructure across ALL three KYF sections (Filmmaker Profile, Casting Form, Hospitality) -- merge dense steps, add side-by-side field layout, and enable hidden-scrollbar internal scrolling so content looks clean even on longer steps.
+## Approach
+Instead of a hard divider line, use a **background color shift** and a **full-width "More from LevelUp" banner header** to create a natural visual break. The Forge sections stay on the default dark background, and the LevelUp sections sit inside a slightly different-toned container that feels like a new "zone" on the page.
 
-## Changes
+## What Changes
 
-### 1. KYSectionConfig.ts -- Merge Steps Across All Sections
+### Forge Zone (top -- no changes needed)
+Upcoming Sessions, Continue Watching, and Pre Forge Sessions stay as-is on the default `bg-background` (pure black). They already feel cohesive.
 
-**Filmmaker Profile** (already discussed):
-- Merge `general` (3 fields) + `personal` (5 fields) into one "General Details" step
-- State + Pincode get an `inline` property to render side-by-side
-- Result: Intro + 3 steps (General Details, Proficiency, Understanding You)
+### LevelUp Zone (bottom -- wrapped in a tinted container)
+Starting from "More from LevelUp" downward (including Masterclasses and Explore Programs):
+- Wrap in a full-bleed container with a subtle warm-neutral background (`bg-white/[0.03]`) and rounded top corners
+- Add top padding with a small **"More from LevelUp"** branded header strip -- a compact row with the LevelUp name in a slightly different typographic style (uppercase tracking-wide, muted color) to signal a context switch
+- This replaces the current "More from LevelUp" section title -- the branded strip becomes the zone header, and the carousel title changes to just the content description
 
-**Casting Form**:
-- Keep `casting_call` (languages, height, gender) as one step -- fits fine
-- Keep `pictures` (5 photos) as one step -- these are compact upload tiles
-- No merge needed, but fields are already tight enough
-
-**Hospitality** (all 3 cohorts: KYF, KYC, KYW):
-- Merge `preferences` (meal pref, allergies, medication) + `final_details` (tshirt, emergency name, emergency number, terms) into ONE step called "Hospitality Details"
-- This matches the wireframe showing all hospitality fields on a single screen
-- Result: Intro + 1 step (all 7 fields together)
-
-### 2. KYSectionFields.tsx -- Add Inline Field Rendering
-- Add `inline?: string` optional property to `SectionStepField` type
-- Fields sharing the same `inline` key render in a 2-column grid row
-- Used for: State + Pincode in Filmmaker Profile, Emergency Name + Number in Hospitality
-
-### 3. KYSectionForm.tsx -- Hidden Scrollbar
-- Change `overflow-hidden` back to `overflow-y-auto` so longer merged steps can scroll
-- Add `hide-scrollbar` CSS class to keep it visually clean (no visible scrollbar)
-
-### 4. src/index.css -- Add Hide Scrollbar Utility
-```css
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-```
-
-### 5. Apply to Creator (KYC) and Writer (KYW) Cohorts
-- KYC Hospitality: same merge (preferences + final_details into one step)
-- KYW Hospitality: same merge (preferences + final_details into one step)
-- KYC/KYW Profile sections: merge general + personal where applicable
-
-## Result Per Section (Filmmaker)
-
+### Visual Result
 ```text
-Filmmaker Profile:  Intro -> General Details (8 fields, scrollable) -> Proficiency -> Understanding You
-Casting Form:       Intro -> Casting Call (3 fields) -> Your Pictures (5 photos)
-Hospitality:        Intro -> Hospitality Details (7 fields, with inline pairs)
+[Default black background]
+  Learn (page header)
+  Upcoming Online Sessions
+  Continue Watching
+  Pre Forge Sessions
+
+[Subtle lighter background zone with rounded top]
+  ── MORE FROM LEVELUP ──────────────
+  Online Sessions (carousel)
+  Learn from the Best (masterclasses)
+  Explore Programs (banners)
 ```
 
-## Files Changed
+No divider lines. The background shift + branded header naturally creates two distinct zones.
+
+## Technical Details
+
+### File: `src/pages/Learn.tsx`
+
+1. Move the "More from LevelUp" carousel, "Learn from the Best", and "Explore Programs" sections into a new wrapper `div` with classes:
+   - `bg-white/[0.03] -mx-4 sm:-mx-5 px-4 sm:px-5 pt-8 pb-4 rounded-t-3xl mt-4`
+   - This creates a full-width tinted zone with rounded top corners
+
+2. Add a zone header at the top of this wrapper:
+   - A small row with "MORE FROM LEVELUP" text styled as `text-[11px] font-bold tracking-[0.2em] uppercase text-muted-foreground/60`
+   - Optionally a thin gold accent line below it (`w-8 h-0.5 bg-primary/30 rounded-full mt-1`)
+
+3. The existing "More from LevelUp" `CourseCarouselSection` title changes to just "Online Sessions" or "Community Sessions" since the zone header already says "LevelUp"
 
 | File | Change |
 |------|--------|
-| `src/components/kyform/KYSectionConfig.ts` | Merge general+personal for all profiles; merge hospitality steps for all cohorts; add `inline` property to paired fields |
-| `src/components/kyform/KYSectionConfig.ts` (types) | Add `inline?: string` to `SectionStepField` |
-| `src/components/kyform/KYSectionFields.tsx` | Group fields with matching `inline` keys into 2-column grid rows |
-| `src/pages/KYSectionForm.tsx` | Change `overflow-hidden` to `overflow-y-auto hide-scrollbar` |
-| `src/index.css` | Add `.hide-scrollbar` utility |
+| `src/pages/Learn.tsx` | Wrap LevelUp sections in tinted container with branded zone header; adjust carousel title |
 
