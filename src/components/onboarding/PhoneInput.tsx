@@ -36,7 +36,6 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
   const [number, setNumber] = useState(parsed.number);
   const [touched, setTouched] = useState(false);
 
-  // Sync internal state when external value changes
   useEffect(() => {
     const parsed = parsePhoneValue(value);
     setDialCode(parsed.dialCode);
@@ -52,7 +51,6 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
   };
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Only allow digits
     const digits = e.target.value.replace(/\D/g, '');
     setNumber(digits);
     onChange(formatPhoneValue(dialCode, digits));
@@ -69,7 +67,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
       )}
       <div className="flex gap-2">
         <Select value={dialCode} onValueChange={handleDialCodeChange}>
-          <SelectTrigger className="w-[110px] h-11 bg-secondary/50 shrink-0">
+          <SelectTrigger className="w-[110px] h-11 bg-card/60 backdrop-blur-sm shrink-0 focus:ring-2 focus:ring-forge-gold/30 focus:border-forge-gold/50">
             <SelectValue>
               <span className="flex items-center gap-1.5">
                 <span>{selectedCountry.flag}</span>
@@ -97,7 +95,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
           onChange={handleNumberChange}
           onBlur={() => setTouched(true)}
           placeholder={`e.g. ${'9'.repeat(selectedCountry.minDigits)}`}
-          className={`h-11 bg-secondary/50 flex-1 ${showError ? 'border-destructive' : ''}`}
+          className={`h-11 bg-card/60 backdrop-blur-sm flex-1 focus:ring-2 focus:ring-forge-gold/30 focus:border-forge-gold/50 ${showError ? 'border-destructive' : ''}`}
         />
       </div>
       

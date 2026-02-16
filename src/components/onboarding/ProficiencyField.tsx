@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 interface ProficiencyOption {
   value: string;
@@ -26,29 +27,36 @@ export const ProficiencyField: React.FC<ProficiencyFieldProps> = ({
         {label} {required && <span className="text-destructive">*</span>}
       </label>
       <div className="space-y-2">
-        {options.map((option, index) => (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => onChange(option.value)}
-            className={`w-full p-3 rounded-xl border text-left transition-all flex items-start gap-3 ${
-              value === option.value
-                ? 'border-primary bg-primary/10'
-                : 'border-border bg-card hover:border-primary/50'
-            }`}
-          >
-            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
-              value === option.value ? 'border-primary bg-primary' : 'border-muted-foreground'
-            }`}>
-              {value === option.value && (
-                <div className="w-2 h-2 rounded-full bg-primary-foreground" />
+        {options.map((option) => {
+          const isSelected = value === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onChange(option.value)}
+              className={cn(
+                'w-full p-3 rounded-xl border text-left transition-all flex items-start gap-3 active:scale-[0.98]',
+                isSelected
+                  ? 'border-forge-gold bg-forge-gold/10 shadow-[0_0_15px_-4px_hsl(var(--forge-gold)/0.3)]'
+                  : 'border-border bg-card/60 hover:border-forge-gold/40'
               )}
-            </div>
-            <span className={`text-sm ${value === option.value ? 'text-foreground' : 'text-muted-foreground'}`}>
-              {option.label}
-            </span>
-          </button>
-        ))}
+            >
+              <div className={cn(
+                'w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all',
+                isSelected
+                  ? 'border-forge-gold bg-forge-gold scale-110'
+                  : 'border-muted-foreground/40'
+              )}>
+                {isSelected && (
+                  <div className="w-2 h-2 rounded-full bg-background" />
+                )}
+              </div>
+              <span className={cn('text-sm', isSelected ? 'text-foreground font-medium' : 'text-muted-foreground')}>
+                {option.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

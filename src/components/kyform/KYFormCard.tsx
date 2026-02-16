@@ -24,16 +24,19 @@ export const KYFormCard: React.FC<KYFormCardProps> = ({
   return (
     <div
       className={cn(
-        'relative rounded-3xl p-6 md:p-7',
-        'bg-card/95 backdrop-blur-sm',
-        'border border-forge-gold/30',
-        'shadow-[0_0_30px_-5px_rgba(255,188,59,0.25),0_0_60px_-10px_rgba(211,143,12,0.15),0_8px_32px_-8px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(255,188,59,0.12)]',
-        'ring-1 ring-forge-gold/10',
+        'relative rounded-3xl p-6 md:p-7 overflow-hidden',
+        'bg-card/60 backdrop-blur-md',
+        'border border-forge-gold/25',
+        'shadow-[0_0_30px_-5px_rgba(255,188,59,0.2),0_0_60px_-10px_rgba(211,143,12,0.12),0_8px_32px_-8px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(255,188,59,0.1)]',
+        'ring-1 ring-forge-gold/8',
         isAnimating === 'out' && 'animate-stack-pop-out',
         isAnimating === 'in' && 'animate-stack-pop-in',
         className
       )}
     >
+      {/* Top shimmer line */}
+      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-forge-gold/40 to-transparent" />
+
       {/* Progress bar inside card */}
       {currentStep !== undefined && totalSteps !== undefined && (
         <KYFormProgressBar currentStep={currentStep} totalSteps={totalSteps} />
