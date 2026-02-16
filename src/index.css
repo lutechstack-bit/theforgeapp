@@ -972,3 +972,12 @@
     box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
   }
 }
+
+/* Hide scrollbar utility */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
