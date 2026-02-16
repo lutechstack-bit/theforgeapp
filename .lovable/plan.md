@@ -1,30 +1,24 @@
 
 
-# Reset KY Forms for All Users
+# Fix Proficiency Grid Label Overflow
 
-## What This Does
-Runs a database migration to reset all users' KY form progress, forcing everyone to go through the updated premium form flow again.
+## Problem
+The skill labels ("Screenwriting", "Cinematography") are overflowing into the first radio button column because the label column uses `minmax(80px, 1fr)` -- giving it the same width as each radio button column. Longer labels like "Cinematography" (14 characters) need more space.
 
-## SQL Migration
+## Fix
 
-```sql
-UPDATE public.profiles
-SET
-  ky_form_completed = false,
-  kyf_completed = false,
-  ky_section_progress = '{}'::jsonb;
-```
+### ProficiencyGrid.tsx
+Change the grid template so the label column gets proportionally more space:
 
-This sets three columns for every row in `profiles`:
-- `ky_form_completed` → `false`
-- `kyf_completed` → `false`
-- `ky_section_progress` → empty JSON object `{}`
+- **Current**: `minmax(80px, 1fr) repeat(5, 1fr)` -- label gets 1/6 of the width
+- **New**: `minmax(110px, 1.5fr) repeat(5, 1fr)` -- label gets ~1.4x the space of each radio column
 
-## Impact
-- All users will see the "Complete Your Profile" KYProfileCard on their homepage again
-- Section progress resets so every section shows as incomplete and must be filled from scratch
-- No structural/schema changes -- just a data update
+This gives "Cinematography" enough room without requiring horizontal scroll. The radio columns will be slightly narrower but still have plenty of space for the 24-28px buttons.
+
+Apply to both the header row (line 32) and skill rows (line 52).
 
 ## Files Changed
-None -- this is a data-only migration executed via the database migration tool.
 
+| File | Change |
+|------|--------|
+| `src/components/onboarding/ProficiencyGrid.tsx` | Update grid template columns from `minmax(80px, 1fr)` to `minmax(110px, 1.5fr)` on lines 32 and 52 |
