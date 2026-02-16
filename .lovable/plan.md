@@ -1,31 +1,33 @@
 
 
-# Make Form Pages Fit Within Viewport (No Scroll)
+# Remove Scrollbar -- Fit Form Cards Within Viewport
 
 ## Problem
-Form pages currently extend beyond the viewport, requiring the user to scroll. The "Understanding You" page is fine being scrollable (it has many fields), but all other steps should fit neatly within the visible area without any scrollbar.
-
-## Root Cause
-The page layout uses `min-h-[100dvh]` with no height constraint on the card area. The `pb-32` padding pushes content down and the card stack just grows as tall as its content, causing overflow on steps with several fields.
+The `overflow-y-auto` added to the card container is showing an ugly scrollbar. The form content should simply fit within the available viewport space without any scrolling.
 
 ## Fix
 
-### KYSectionForm.tsx - Constrain layout to viewport height
-- Change the outer container from `min-h-[100dvh]` to `h-[100dvh] flex flex-col` so everything is constrained to the viewport
-- Make the card area use `flex-1 overflow-y-auto` instead of a static `pb-32`, so content scrolls only within the card zone if needed (Understanding page) while shorter pages just fit
-- Remove the `pb-32` and replace with a bottom padding that accounts for the fixed bottom nav (~`pb-28`)
+### KYSectionForm.tsx
+- Remove `overflow-y-auto` from the card stack container
+- Keep the `h-[100dvh] flex flex-col` viewport constraint
+- The card area stays as `flex-1` but without scroll -- content must fit naturally
 
-### KYSectionFields.tsx - Compact spacing for non-understanding steps
-- Reduce the vertical spacing between fields from `space-y-7` / `space-y-6` to `space-y-5` / `space-y-4` to help content fit tighter in the viewport
+### KYFormCard.tsx
+- Reduce padding further on mobile: `p-3 md:p-7` to give more room to content
 
-### KYFormCard.tsx - Reduce card padding on mobile
-- Tighten the card padding from `p-6 md:p-7` to `p-4 md:p-7` on mobile to reclaim vertical space
+### KYSectionFields.tsx
+- Compact the step header: reduce title from `text-2xl` to `text-xl` and tighten header spacing
+- Reduce field spacing from `space-y-4` to `space-y-3`
+
+### KYSectionIntro.tsx
+- Compact the intro card content (reduce icon size, spacing, font sizes) so the intro step fits without scroll
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| `src/pages/KYSectionForm.tsx` | Flex column layout, constrain to `h-[100dvh]`, card area becomes `flex-1 overflow-y-auto`, remove `pb-32` |
-| `src/components/kyform/KYSectionFields.tsx` | Reduce `space-y-7` to `space-y-5`, `space-y-6` to `space-y-4` |
-| `src/components/kyform/KYFormCard.tsx` | Reduce mobile padding from `p-6` to `p-4` |
+| `src/pages/KYSectionForm.tsx` | Remove `overflow-y-auto` from card container |
+| `src/components/kyform/KYFormCard.tsx` | Mobile padding `p-3 md:p-7` |
+| `src/components/kyform/KYSectionFields.tsx` | Smaller title (`text-xl`), tighter spacing (`space-y-3`) |
+| `src/components/kyform/KYSectionIntro.tsx` | Compact intro layout to fit viewport |
 
