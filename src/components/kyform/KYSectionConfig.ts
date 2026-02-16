@@ -21,6 +21,8 @@ export interface SectionStepField {
   // For proficiency-grid type
   skills?: { key: string; label: string }[];
   levels?: string[];
+  // For inline field grouping (fields with same inline key render side-by-side)
+  inline?: string;
 }
 
 export interface SectionStep {
@@ -143,25 +145,18 @@ const KYF_SECTIONS: KYSection[] = [
     responseTable: 'kyf_responses',
     steps: [
       {
-        key: 'general',
+        key: 'general_details',
         title: 'General Details',
         subtitle: 'The basics about you',
         fields: [
           { key: 'certificate_name', type: 'text', label: 'Name (as on certificate)', placeholder: 'Your full legal name', required: true },
           { key: 'current_occupation', type: 'text', label: 'Current Occupation', placeholder: 'e.g. Student, Freelancer, Working Professional', required: true },
           { key: 'instagram_id', type: 'text', label: 'Instagram ID', placeholder: '@yourhandle', required: true },
-        ],
-      },
-      {
-        key: 'personal',
-        title: 'Personal Details',
-        subtitle: 'A little more about you',
-        fields: [
           { key: 'date_of_birth', type: 'date', label: 'Date of Birth', required: true },
           { key: 'address_line_1', type: 'text', label: 'Address Line 1', placeholder: 'Street address', required: true },
           { key: 'address_line_2', type: 'text', label: 'Address Line 2', placeholder: 'Apartment, suite, etc.' },
-          { key: 'state', type: 'country-state', label: 'Country & State', countryKey: 'country', required: true },
-          { key: 'pincode', type: 'text', label: 'Pincode', placeholder: '6-digit pincode', required: true },
+          { key: 'state', type: 'country-state', label: 'Country & State', countryKey: 'country', required: true, inline: 'location_row' },
+          { key: 'pincode', type: 'text', label: 'Pincode', placeholder: '6-digit pincode', required: true, inline: 'location_row' },
         ],
       },
       {
@@ -257,23 +252,16 @@ const KYF_SECTIONS: KYSection[] = [
     responseTable: 'kyf_responses',
     steps: [
       {
-        key: 'preferences',
-        title: 'Preferences',
-        subtitle: 'Help us plan your stay',
+        key: 'hospitality_details',
+        title: 'Hospitality Details',
+        subtitle: 'Meals, merch & emergency info',
         fields: [
           { key: 'meal_preference', type: 'meal-preference', label: 'Meal Preference', required: true },
           { key: 'food_allergies', type: 'text', label: 'Food Allergies', placeholder: 'None', required: true },
           { key: 'medication_support', type: 'text', label: 'Medication / Medical Support', placeholder: 'None', required: true },
-        ],
-      },
-      {
-        key: 'final_details',
-        title: 'Final Details',
-        subtitle: 'Emergency contact and merch',
-        fields: [
           { key: 'tshirt_size', type: 'tshirt-size', label: 'T-Shirt Size', required: true },
-          { key: 'emergency_contact_name', type: 'text', label: 'Emergency Contact Name', placeholder: 'Parent / Guardian name', required: true },
-          { key: 'emergency_contact_number', type: 'phone', label: 'Emergency Contact Number', required: true },
+          { key: 'emergency_contact_name', type: 'text', label: 'Emergency Contact Name', placeholder: 'Parent / Guardian name', required: true, inline: 'emergency_row' },
+          { key: 'emergency_contact_number', type: 'phone', label: 'Emergency Contact Number', required: true, inline: 'emergency_row' },
           { key: 'terms_accepted', type: 'checkbox', label: 'I accept the Terms & Conditions', required: true },
         ],
       },
@@ -299,7 +287,7 @@ const KYC_SECTIONS: KYSection[] = [
     responseTable: 'kyc_responses',
     steps: [
       {
-        key: 'general',
+        key: 'general_details',
         title: 'General Details',
         subtitle: 'The basics about you',
         fields: [
@@ -311,13 +299,6 @@ const KYC_SECTIONS: KYSection[] = [
             { value: 'full_time_creator', label: 'Full-time Creator' },
           ], required: true },
           { key: 'instagram_id', type: 'text', label: 'Instagram ID', placeholder: '@yourhandle', required: true },
-        ],
-      },
-      {
-        key: 'personal',
-        title: 'Personal Details',
-        subtitle: 'A little more about you',
-        fields: [
           { key: 'date_of_birth', type: 'date', label: 'Date of Birth', required: true },
           { key: 'state', type: 'country-state', label: 'Country & State', countryKey: 'country', required: true },
           { key: 'primary_platform', type: 'radio', label: 'Primary Platform', options: [
@@ -382,23 +363,16 @@ const KYC_SECTIONS: KYSection[] = [
     responseTable: 'kyc_responses',
     steps: [
       {
-        key: 'preferences',
-        title: 'Preferences',
-        subtitle: 'Help us plan your stay',
+        key: 'hospitality_details',
+        title: 'Hospitality Details',
+        subtitle: 'Meals, merch & emergency info',
         fields: [
           { key: 'meal_preference', type: 'meal-preference', label: 'Meal Preference', required: true },
           { key: 'food_allergies', type: 'text', label: 'Food Allergies', placeholder: 'None', required: true },
           { key: 'medication_support', type: 'text', label: 'Medication / Medical Support', placeholder: 'None', required: true },
-        ],
-      },
-      {
-        key: 'final_details',
-        title: 'Final Details',
-        subtitle: 'Emergency contact and merch',
-        fields: [
           { key: 'tshirt_size', type: 'tshirt-size', label: 'T-Shirt Size', required: true },
-          { key: 'emergency_contact_name', type: 'text', label: 'Emergency Contact Name', placeholder: 'Parent / Guardian name', required: true },
-          { key: 'emergency_contact_number', type: 'phone', label: 'Emergency Contact Number', required: true },
+          { key: 'emergency_contact_name', type: 'text', label: 'Emergency Contact Name', placeholder: 'Parent / Guardian name', required: true, inline: 'emergency_row' },
+          { key: 'emergency_contact_number', type: 'phone', label: 'Emergency Contact Number', required: true, inline: 'emergency_row' },
           { key: 'terms_accepted', type: 'checkbox', label: 'I accept the Terms & Conditions', required: true },
         ],
       },
@@ -423,7 +397,7 @@ const KYW_SECTIONS: KYSection[] = [
     responseTable: 'kyw_responses',
     steps: [
       {
-        key: 'general',
+        key: 'general_details',
         title: 'General Details',
         subtitle: 'The basics about you',
         fields: [
@@ -431,13 +405,6 @@ const KYW_SECTIONS: KYSection[] = [
           { key: 'current_occupation', type: 'text', label: 'Current Occupation', placeholder: 'e.g. Student, Freelancer, Working Professional', required: true },
           { key: 'date_of_birth', type: 'date', label: 'Date of Birth', required: true },
           { key: 'city', type: 'country-state', label: 'Country & State', countryKey: 'country', required: false },
-        ],
-      },
-      {
-        key: 'personal',
-        title: 'Writing Practice',
-        subtitle: 'Your writing style and types',
-        fields: [
           { key: 'writing_types', type: 'multi-select', label: 'Types of Writing', options: [
             { value: 'screenwriting', label: 'Screenwriting' },
             { value: 'fiction', label: 'Fiction' },
@@ -497,23 +464,16 @@ const KYW_SECTIONS: KYSection[] = [
     responseTable: 'kyw_responses',
     steps: [
       {
-        key: 'preferences',
-        title: 'Preferences',
-        subtitle: 'Help us plan your stay',
+        key: 'hospitality_details',
+        title: 'Hospitality Details',
+        subtitle: 'Meals, merch & emergency info',
         fields: [
           { key: 'meal_preference', type: 'meal-preference', label: 'Meal Preference', required: true },
           { key: 'food_allergies', type: 'text', label: 'Food Allergies', placeholder: 'None', required: true },
           { key: 'medication_support', type: 'text', label: 'Medication / Medical Support', placeholder: 'None', required: true },
-        ],
-      },
-      {
-        key: 'final_details',
-        title: 'Final Details',
-        subtitle: 'Emergency contact and merch',
-        fields: [
           { key: 'tshirt_size', type: 'tshirt-size', label: 'T-Shirt Size', required: true },
-          { key: 'emergency_contact_name', type: 'text', label: 'Emergency Contact Name', placeholder: 'Parent / Guardian name', required: true },
-          { key: 'emergency_contact_number', type: 'phone', label: 'Emergency Contact Number', required: true },
+          { key: 'emergency_contact_name', type: 'text', label: 'Emergency Contact Name', placeholder: 'Parent / Guardian name', required: true, inline: 'emergency_row' },
+          { key: 'emergency_contact_number', type: 'phone', label: 'Emergency Contact Number', required: true, inline: 'emergency_row' },
           { key: 'terms_accepted', type: 'checkbox', label: 'I accept the Terms & Conditions', required: true },
         ],
       },
