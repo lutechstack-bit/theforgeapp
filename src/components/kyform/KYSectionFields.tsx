@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioSelectField } from '@/components/onboarding/RadioSelectField';
 import { MultiSelectField } from '@/components/onboarding/MultiSelectField';
 import { ProficiencyField } from '@/components/onboarding/ProficiencyField';
@@ -10,8 +13,10 @@ import { PhotoUploadField } from '@/components/onboarding/PhotoUploadField';
 import { PhoneInput } from '@/components/onboarding/PhoneInput';
 import { TagInput } from '@/components/onboarding/TagInput';
 import { TermsModal } from '@/components/onboarding/TermsModal';
-import { ExternalLink } from 'lucide-react';
+import { CountryStateSelector } from '@/components/onboarding/CountryStateSelector';
+import { ExternalLink, CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { format, parse } from 'date-fns';
 import type { SectionStep } from './KYSectionConfig';
 
 const MBTI_TYPES = ['ISTJ', 'ISFJ', 'INFJ', 'INTJ', 'ISTP', 'ISFP', 'INFP', 'INTP', 'ESTP', 'ESFP', 'ENFP', 'ENTP', 'ESTJ', 'ESFJ', 'ENFJ', 'ENTJ'];
@@ -33,12 +38,12 @@ export const KYSectionFields: React.FC<KYSectionFieldsProps> = ({
   return (
     <div className="space-y-7">
       {/* Step header */}
-      <div className="space-y-2">
-        <h3 className="text-xl font-bold text-foreground">{step.title}</h3>
+      <div className="space-y-2.5">
+        <h3 className="text-2xl font-bold text-foreground tracking-tight">{step.title}</h3>
         {step.subtitle && (
-          <p className="text-sm text-muted-foreground">{step.subtitle}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{step.subtitle}</p>
         )}
-        <div className="w-10 h-0.5 rounded-full bg-gradient-to-r from-forge-gold to-forge-orange" />
+        <div className="w-12 h-0.5 rounded-full bg-gradient-to-r from-forge-gold to-forge-orange" />
       </div>
 
       {/* Fields */}
@@ -51,7 +56,7 @@ export const KYSectionFields: React.FC<KYSectionFieldsProps> = ({
             case 'textarea':
               return (
                 <div key={field.key} className="space-y-2">
-                  <Label className="text-sm font-medium">
+                  <Label className="text-sm font-semibold text-foreground/90">
                     {field.label} {field.required && <span className="text-destructive">*</span>}
                   </Label>
                   {field.helperText && (
@@ -61,35 +66,81 @@ export const KYSectionFields: React.FC<KYSectionFieldsProps> = ({
                     value={value}
                     onChange={(e) => updateField(field.key, e.target.value)}
                     placeholder={field.placeholder}
-                    className="rounded-xl border-border bg-card/60 backdrop-blur-sm focus:ring-2 focus:ring-forge-gold/30 focus:border-forge-gold/50 transition-all"
+                    className="rounded-xl h-12 border-border/50 bg-card/60 backdrop-blur-sm shadow-[0_0_0_1px_hsl(var(--forge-gold)/0.05)] focus:ring-2 focus:ring-forge-gold/30 focus:border-forge-gold/50 transition-all"
                   />
                 </div>
               );
 
-            case 'date':
+            case 'date': {
+              const selectedDate = value ? new Date(value) : undefined;
+              const currentYear = new Date().getFullYear();
+              const calcAge = () => {
+                if (!value) return null;
+                const today = new Date();
+                const birth = new Date(value);
+                let age = today.getFullYear() - birth.getFullYear();
+                const m = today.getMonth() - birth.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+                return Math.max(0, age);
+              };
               return (
                 <div key={field.key} className="space-y-2">
-                  <Label className="text-sm font-medium">
+                  <Label className="text-sm font-semibold text-foreground/90">
                     {field.label} {field.required && <span className="text-destructive">*</span>}
                   </Label>
-                  <Input
-                    type="date"
-                    value={value}
-                    onChange={(e) => updateField(field.key, e.target.value)}
-                    className="rounded-xl border-border bg-card/60 backdrop-blur-sm focus:ring-2 focus:ring-forge-gold/30 focus:border-forge-gold/50 transition-all"
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          'w-full h-12 justify-start text-left font-normal rounded-xl border-border/50 bg-card/60 backdrop-blur-sm shadow-[0_0_0_1px_hsl(var(--forge-gold)/0.05)] hover:border-forge-gold/40 transition-all',
+                          !value && 'text-muted-foreground'
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4 text-forge-gold/70" />
+                        {value ? format(new Date(value), 'PPP') : 'Pick your date of birth'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-popover z-50" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => {
+                          if (date) {
+                            updateField(field.key, format(date, 'yyyy-MM-dd'));
+                          }
+                        }}
+                        disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
+                        captionLayout="dropdown-buttons"
+                        fromYear={1900}
+                        toYear={currentYear}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
                   {value && (
-                    <p className="text-xs text-muted-foreground">
-                      Age: {(() => {
-                        const today = new Date();
-                        const birth = new Date(value);
-                        let age = today.getFullYear() - birth.getFullYear();
-                        const m = today.getMonth() - birth.getMonth();
-                        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-                        return age;
-                      })()} years
+                    <p className="text-xs text-forge-gold/80 font-medium">
+                      Age: {calcAge()} years
                     </p>
                   )}
+                </div>
+              );
+            }
+
+            case 'country-state':
+              return (
+                <div key={field.key} className="space-y-2">
+                  <Label className="text-sm font-semibold text-foreground/90">
+                    {field.label} {field.required && <span className="text-destructive">*</span>}
+                  </Label>
+                  <CountryStateSelector
+                    country={formData[field.countryKey || 'country'] || ''}
+                    state={value}
+                    onCountryChange={(v) => updateField(field.countryKey || 'country', v)}
+                    onStateChange={(v) => updateField(field.key, v)}
+                    required={field.required}
+                  />
                 </div>
               );
 
@@ -163,7 +214,7 @@ export const KYSectionFields: React.FC<KYSectionFieldsProps> = ({
             case 'phone':
               return (
                 <div key={field.key} className="space-y-2">
-                  <Label className="text-sm font-medium">
+                  <Label className="text-sm font-semibold text-foreground/90">
                     {field.label} {field.required && <span className="text-destructive">*</span>}
                   </Label>
                   <PhoneInput
@@ -189,7 +240,7 @@ export const KYSectionFields: React.FC<KYSectionFieldsProps> = ({
             case 'mbti':
               return (
                 <div key={field.key} className="space-y-2">
-                  <Label className="text-sm font-medium">
+                  <Label className="text-sm font-semibold text-foreground/90">
                     {field.label} {field.required && <span className="text-destructive">*</span>}
                   </Label>
                   {field.helperText && (
@@ -202,17 +253,17 @@ export const KYSectionFields: React.FC<KYSectionFieldsProps> = ({
                       {field.helperText} <ExternalLink className="w-3 h-3" />
                     </a>
                   )}
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-4 gap-2.5">
                     {MBTI_TYPES.map((type) => (
                       <button
                         key={type}
                         type="button"
                         onClick={() => updateField(field.key, type)}
                         className={cn(
-                          'py-2.5 rounded-xl border text-sm font-bold transition-all active:scale-[0.96]',
+                          'py-3 rounded-xl border text-sm font-bold transition-all active:scale-[0.96]',
                           value === type
                             ? 'border-forge-gold bg-forge-gold/15 text-forge-gold shadow-[0_0_12px_-3px_hsl(var(--forge-gold)/0.3)]'
-                            : 'border-border bg-card/60 text-muted-foreground hover:border-forge-gold/40'
+                            : 'border-border/50 bg-card/60 text-muted-foreground hover:border-forge-gold/40'
                         )}
                       >
                         {type}
@@ -225,7 +276,7 @@ export const KYSectionFields: React.FC<KYSectionFieldsProps> = ({
             case 'meal-preference':
               return (
                 <div key={field.key} className="space-y-2">
-                  <Label className="text-sm font-medium">
+                  <Label className="text-sm font-semibold text-foreground/90">
                     {field.label} {field.required && <span className="text-destructive">*</span>}
                   </Label>
                   <div className="grid grid-cols-2 gap-3">
@@ -238,10 +289,10 @@ export const KYSectionFields: React.FC<KYSectionFieldsProps> = ({
                         type="button"
                         onClick={() => updateField(field.key, option.value)}
                         className={cn(
-                          'flex flex-col items-center gap-2 p-5 rounded-2xl border-2 transition-all active:scale-[0.97]',
+                          'flex flex-col items-center gap-2 p-6 rounded-2xl border-2 transition-all active:scale-[0.97]',
                           value === option.value
                             ? 'border-forge-gold bg-forge-gold/10 shadow-[0_0_20px_-5px_hsl(var(--forge-gold)/0.3)]'
-                            : 'border-border bg-card/60 hover:border-forge-gold/40'
+                            : 'border-border/50 bg-card/60 hover:border-forge-gold/40'
                         )}
                       >
                         <span className="text-3xl">{option.emoji}</span>
@@ -260,20 +311,20 @@ export const KYSectionFields: React.FC<KYSectionFieldsProps> = ({
             case 'tshirt-size':
               return (
                 <div key={field.key} className="space-y-2">
-                  <Label className="text-sm font-medium">
+                  <Label className="text-sm font-semibold text-foreground/90">
                     {field.label} {field.required && <span className="text-destructive">*</span>}
                   </Label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2.5">
                     {TSHIRT_SIZES.map((size) => (
                       <button
                         key={size}
                         type="button"
                         onClick={() => updateField(field.key, size)}
                         className={cn(
-                          'px-4 py-2.5 rounded-xl border text-sm font-bold transition-all min-w-[52px] active:scale-[0.96]',
+                          'px-5 py-3 rounded-xl border text-sm font-bold transition-all min-w-[52px] active:scale-[0.96]',
                           value === size
                             ? 'border-forge-gold bg-forge-gold/15 text-forge-gold shadow-[0_0_12px_-3px_hsl(var(--forge-gold)/0.3)]'
-                            : 'border-border bg-card/60 text-muted-foreground hover:border-forge-gold/40'
+                            : 'border-border/50 bg-card/60 text-muted-foreground hover:border-forge-gold/40'
                         )}
                       >
                         {size}

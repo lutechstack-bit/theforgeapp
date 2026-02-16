@@ -7,7 +7,8 @@ export interface KeepHandyItem {
 
 export interface SectionStepField {
   key: string;
-  type: 'text' | 'date' | 'select' | 'radio' | 'multi-select' | 'proficiency' | 'proficiency-grid' | 'photo' | 'phone' | 'tags' | 'checkbox' | 'textarea' | 'meal-preference' | 'tshirt-size' | 'mbti';
+  type: 'text' | 'date' | 'select' | 'radio' | 'multi-select' | 'proficiency' | 'proficiency-grid' | 'photo' | 'phone' | 'tags' | 'checkbox' | 'textarea' | 'meal-preference' | 'tshirt-size' | 'mbti' | 'country-state';
+  countryKey?: string;
   label: string;
   placeholder?: string;
   required?: boolean;
@@ -159,7 +160,7 @@ const KYF_SECTIONS: KYSection[] = [
           { key: 'date_of_birth', type: 'date', label: 'Date of Birth', required: true },
           { key: 'address_line_1', type: 'text', label: 'Address Line 1', placeholder: 'Street address', required: true },
           { key: 'address_line_2', type: 'text', label: 'Address Line 2', placeholder: 'Apartment, suite, etc.' },
-          { key: 'state', type: 'text', label: 'State', placeholder: 'Your state', required: true },
+          { key: 'state', type: 'country-state', label: 'Country & State', countryKey: 'country', required: true },
           { key: 'pincode', type: 'text', label: 'Pincode', placeholder: '6-digit pincode', required: true },
         ],
       },
@@ -318,7 +319,7 @@ const KYC_SECTIONS: KYSection[] = [
         subtitle: 'A little more about you',
         fields: [
           { key: 'date_of_birth', type: 'date', label: 'Date of Birth', required: true },
-          { key: 'state', type: 'text', label: 'State', placeholder: 'Your state', required: true },
+          { key: 'state', type: 'country-state', label: 'Country & State', countryKey: 'country', required: true },
           { key: 'primary_platform', type: 'radio', label: 'Primary Platform', options: [
             { value: 'youtube', label: 'YouTube' },
             { value: 'instagram', label: 'Instagram' },
@@ -429,7 +430,7 @@ const KYW_SECTIONS: KYSection[] = [
           { key: 'certificate_name', type: 'text', label: 'Name (as on certificate)', placeholder: 'Your full legal name', required: true },
           { key: 'current_occupation', type: 'text', label: 'Current Occupation', placeholder: 'e.g. Student, Freelancer, Working Professional', required: true },
           { key: 'date_of_birth', type: 'date', label: 'Date of Birth', required: true },
-          { key: 'primary_language', type: 'text', label: 'Primary Writing Language', placeholder: 'e.g. English, Hindi, Tamil', required: true },
+          { key: 'city', type: 'country-state', label: 'Country & State', countryKey: 'country', required: false },
         ],
       },
       {
@@ -549,5 +550,5 @@ export function calculateAge(dateOfBirth: string): number | null {
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
     age--;
   }
-  return age;
+  return Math.max(0, age);
 }

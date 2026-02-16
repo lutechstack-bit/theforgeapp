@@ -37,27 +37,6 @@ export const KYFormCard: React.FC<KYFormCardProps> = ({
       {/* Top shimmer line */}
       <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-forge-gold/40 to-transparent" />
 
-      {/* Progress bar inside card */}
-      {currentStep !== undefined && totalSteps !== undefined && (
-        <KYFormProgressBar currentStep={currentStep} totalSteps={totalSteps} />
-      )}
-      
-      {/* Question number indicator */}
-      {questionNumber !== undefined && (
-        <div className="mt-5 mb-1">
-          <span className="text-xs font-bold text-forge-gold/80 tracking-widest uppercase">
-            Q.{String(questionNumber).padStart(2, '0')}
-          </span>
-        </div>
-      )}
-      
-      {/* Step title */}
-      {stepTitle && (
-        <h2 className="text-xl md:text-2xl font-bold text-foreground mb-5">
-          {stepTitle}
-        </h2>
-      )}
-      
       {children}
     </div>
   );
