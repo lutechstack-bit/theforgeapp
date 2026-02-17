@@ -1,107 +1,33 @@
 
 
-# Redesign CourseDetail: Inline Video + Lesson Sidebar with Completion
+# Fix Broken Logo/Image Display
 
-## Overview
-Transform the CourseDetail page into a Udemy-style layout where the video plays inline (not in a modal), sibling lessons appear in a sidebar on the right, and each lesson tracks completion status.
+## Root Cause
+Two issues are causing broken images:
 
-## Layout Structure
+### Issue 1: Incorrect Asset Paths in ThemeContext
+`src/contexts/ThemeContext.tsx` uses raw file paths like `/src/assets/forge-logo.png` instead of proper ES module imports. These paths work in development but **break in production** because Vite doesn't serve `/src/` files directly -- it bundles them with hashed filenames.
 
-```text
-Desktop:
-+--------------------------------------------------+-------------+
-| [<-] Course Title                                               |
-+--------------------------------------------------+-------------+
-|                                                   | Content     |
-|           INLINE VIDEO PLAYER                     | CATEGORY    |
-|           (SecureVideoPlayer)                     | 2 of 5 done |
-|                                                   |             |
-+--------------------------------------------------+ 01 Lesson A |
-| Description | Resources                          |    [check]  |
-|                                                   | 02 Lesson B |
-| Full description text...                          |    playing  |
-|                                                   | 03 Lesson C |
-+--------------------------------------------------+-------------+
+### Issue 2: PWA Service Worker Stale Cache
+The PWA `CacheFirst` strategy for `.png` files can serve stale cached responses. When Vite rebuilds and image filenames change (hashed), the old service worker may still try to serve from an outdated cache entry, resulting in broken images.
 
-Mobile:
-Video stacks on top, sidebar becomes a
-scrollable lesson list below the tabs.
+## Fix
+
+### File 1: `src/contexts/ThemeContext.tsx`
+- Replace raw string paths with proper ES module imports
+- Import logo assets at the top of the file and reference them in the cohort config
+
+```
+Before:  logo: '/src/assets/forge-logo.png'
+After:   logo: forgeLogoImg  (imported at top)
 ```
 
-## Key Changes
-
-### 1. Inline Video Player (replace modal)
-- Embed `SecureVideoPlayer` directly in the page (left/main column)
-- Remove `VideoPlayerModal` usage -- video plays on page load or on click
-- Show the thumbnail with a play button when not yet playing; switch to the player on click
-
-### 2. Content Sidebar (new component)
-- Fetch all sibling content sharing the same `section_type` and `category` as the current lesson
-- Display as a numbered list (01, 02, 03...) with title, duration, and type badge
-- Highlight the currently active lesson with a gold/primary accent
-- Show a checkmark icon on completed lessons (from `learn_watch_progress`)
-- Show progress count header ("2 of 5 completed")
-- Clicking a sibling navigates to `/learn/:id`
-
-### 3. Completion System
-- Use existing `learn_watch_progress` table (already has `completed` boolean)
-- Show a "Mark as Complete" button below the video for manual completion
-- Auto-mark complete when video reaches 90%+ (existing logic in SecureVideoPlayer)
-- Completed lessons get a green checkmark in the sidebar
-- Progress count updates in real-time
-
-### 4. Mobile Responsive
-- Single column: video on top, tabs below, lesson list at bottom
-- Lesson list becomes a compact horizontal strip or vertical list
-
-## Files Changed
+### File 2: `vite.config.ts`
+- Change the PWA image caching strategy from `CacheFirst` to `StaleWhileRevalidate`
+- This ensures the browser always fetches a fresh version in the background while serving the cached version, preventing permanently stale images
 
 | File | Change |
 |------|--------|
-| `src/pages/CourseDetail.tsx` | Major restructure: remove hero card layout, embed SecureVideoPlayer inline in a two-column grid, add sibling content query, add "Mark as Complete" button, remove VideoPlayerModal |
-| `src/components/learn/ContentSidebar.tsx` | **New file** -- Sidebar component showing numbered sibling lessons with active state, completion checkmarks, progress count, and click-to-navigate |
-
-## Technical Details
-
-### Sibling Content Query
-Fetch all lessons in the same section and category to populate the sidebar:
-```typescript
-const { data: siblings } = useQuery({
-  queryKey: ['learn_siblings', course?.section_type, course?.category],
-  queryFn: async () => {
-    const { data } = await supabase
-      .from('learn_content')
-      .select('id, title, duration_minutes, order_index, video_url')
-      .eq('section_type', course.section_type)
-      .eq('category', course.category)
-      .order('order_index');
-    return data;
-  },
-  enabled: !!course,
-});
-```
-
-### Batch Watch Progress Query
-Fetch completion status for all siblings at once:
-```typescript
-const { data: allProgress } = useQuery({
-  queryKey: ['learn_progress_batch', user?.id, siblingIds],
-  queryFn: async () => {
-    const { data } = await supabase
-      .from('learn_watch_progress')
-      .select('learn_content_id, completed, progress_seconds, total_seconds')
-      .eq('user_id', user.id)
-      .in('learn_content_id', siblingIds);
-    return data;
-  },
-});
-```
-
-### Mark as Complete Button
-Insert or update the `learn_watch_progress` row with `completed: true` when the user clicks "Mark as Complete". This uses an upsert on `(user_id, learn_content_id)`.
-
-### Layout CSS
-- Desktop: `grid grid-cols-[1fr_320px]` -- fluid video area, fixed sidebar
-- Mobile: single column, sidebar renders below tabs as a scrollable list
-- Video container maintains 16:9 aspect ratio
+| `src/contexts/ThemeContext.tsx` | Add 3 logo imports at top; replace string paths with imported references |
+| `vite.config.ts` | Change image runtime caching handler from `CacheFirst` to `StaleWhileRevalidate` |
 
