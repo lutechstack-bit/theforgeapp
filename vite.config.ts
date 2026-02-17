@@ -43,7 +43,7 @@ export default defineConfig(({ mode }) => ({
           {
             // Cache images with CacheFirst (safe, no auth tokens)
             urlPattern: /\.(?:png|jpg|jpeg|webp|gif)$/i,
-            handler: "CacheFirst",
+            handler: "StaleWhileRevalidate",
             options: {
               cacheName: "images-cache",
               expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 7 },
