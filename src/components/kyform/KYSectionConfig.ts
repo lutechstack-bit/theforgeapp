@@ -176,7 +176,7 @@ const KYF_SECTIONS: KYSection[] = [
             ],
             levels: ['Beginner', 'Amateur', 'Ok', 'Good', 'Pro'],
           },
-          { key: 'has_editing_laptop', type: 'radio', label: 'Do you have a laptop for editing?', options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }], columns: 2 },
+          { key: 'has_editing_laptop', type: 'radio', label: 'Are you bringing a laptop for editing to Forge?', options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }], columns: 2 },
         ],
       },
       {
