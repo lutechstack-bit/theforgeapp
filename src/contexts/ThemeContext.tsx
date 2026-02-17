@@ -1,4 +1,7 @@
 import React, { createContext, useContext } from 'react';
+import forgeLogoImg from '@/assets/forge-logo.png';
+import forgeWritingLogoImg from '@/assets/forge-writing-logo.png';
+import forgeCreatorsLogoImg from '@/assets/forge-creators-logo.png';
 
 type CohortType = 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS';
 
@@ -20,17 +23,17 @@ const cohortInfo: Record<CohortType, CohortInfo> = {
   FORGE: {
     name: 'The Forge',
     description: 'Master the art of filmmaking',
-    logo: '/src/assets/forge-logo.png',
+    logo: forgeLogoImg,
   },
   FORGE_WRITING: {
     name: 'The Forge Writing',
     description: 'Craft compelling screenplays',
-    logo: '/src/assets/forge-writing-logo.png',
+    logo: forgeWritingLogoImg,
   },
   FORGE_CREATORS: {
     name: 'The Forge Creators',
     description: 'Build your creator career',
-    logo: '/src/assets/forge-creators-logo.png',
+    logo: forgeCreatorsLogoImg,
   },
 };
 
