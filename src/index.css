@@ -62,67 +62,67 @@
 @layer base {
   :root,
   .theme-forge {
-    /* Strict 60-30-10 Palette */
-    /* Base 60%: #000000 | Text: #FFFFFF #E5E5E5 #BDBDBD #8A8A8A | Accent 10%: #FFBF00 */
+    /* Strict Greyscale Palette — 8 values, zero accent, zero tint */
+    /* #000 | #1A1A1A | #2E2E2E | #5C5C5C | #8A8A8A | #D4D4D4 | #F0F0F0 | #FFF */
 
-    --background: 0 0% 0%;
+    --background: 0 0% 10%;
     --foreground: 0 0% 100%;
 
-    --card: 0 0% 5%;
+    --card: 0 0% 18%;
     --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 5%;
+    --popover: 0 0% 18%;
     --popover-foreground: 0 0% 100%;
 
-    --primary: 45 100% 50%;
+    --primary: 0 0% 100%;
     --primary-foreground: 0 0% 0%;
 
-    --secondary: 0 0% 8%;
-    --secondary-foreground: 0 0% 90%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 10%;
+    --muted: 0 0% 18%;
     --muted-foreground: 0 0% 54%;
 
-    --accent: 45 100% 50%;
+    --accent: 0 0% 94%;
     --accent-foreground: 0 0% 0%;
 
-    --destructive: 0 75% 55%;
+    --destructive: 0 0% 36%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 15%;
-    --input: 0 0% 8%;
-    --ring: 45 100% 50%;
+    --border: 0 0% 54%;
+    --input: 0 0% 83%;
+    --ring: 0 0% 100%;
 
     --radius: 0.75rem;
 
-    /* Forge tokens — unified to single accent */
-    --forge-yellow: 45 100% 50%;
-    --forge-gold: 45 100% 50%;
-    --forge-orange: 45 100% 50%;
-    --forge-cream: 0 0% 100%;
+    /* Forge tokens — neutralized to greyscale */
+    --forge-yellow: 0 0% 100%;
+    --forge-gold: 0 0% 100%;
+    --forge-orange: 0 0% 100%;
+    --forge-cream: 0 0% 94%;
     --forge-charcoal: 0 0% 0%;
 
-    --glow-primary: 45 100% 50%;
-    --glow-secondary: 45 100% 50%;
-    --gradient-start: 45 100% 50%;
-    --gradient-end: 45 100% 40%;
-    --surface-elevated: 0 0% 8%;
-    --surface-glass: 0 0% 5%;
+    --glow-primary: 0 0% 100%;
+    --glow-secondary: 0 0% 83%;
+    --gradient-start: 0 0% 18%;
+    --gradient-end: 0 0% 10%;
+    --surface-elevated: 0 0% 18%;
+    --surface-glass: 0 0% 10%;
 
     /* Shadows */
-    --shadow-glow: 0 0 40px hsl(45 100% 50% / 0.2);
+    --shadow-glow: 0 0 40px hsl(0 0% 100% / 0.08);
     --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.5);
     --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.7);
 
     /* Sidebar */
-    --sidebar-background: 0 0% 2%;
+    --sidebar-background: 0 0% 0%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 45 100% 50%;
+    --sidebar-primary: 0 0% 100%;
     --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 8%;
-    --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 0 0% 12%;
-    --sidebar-ring: 45 100% 50%;
+    --sidebar-accent: 0 0% 18%;
+    --sidebar-accent-foreground: 0 0% 94%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 0 0% 100%;
   }
 
 }
