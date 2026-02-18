@@ -268,10 +268,7 @@ const KYSectionForm: React.FC = () => {
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="text-center">
-          <p className="text-xs text-forge-gold font-semibold">{section.title}</p>
-          <p className="text-sm font-bold text-foreground">
-            Step {currentStep + 1} of {totalSteps}
-          </p>
+          <p className="text-sm font-semibold text-foreground">{section.title}</p>
         </div>
         <button
           onClick={() => setExitDialogOpen(true)}
@@ -309,15 +306,11 @@ const KYSectionForm: React.FC = () => {
 
       {/* Sticky bottom navigation */}
       <div className="fixed bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-background via-background/95 to-transparent pt-6 pb-6 px-4 safe-area-pb">
-        <div className="max-w-lg mx-auto flex gap-3">
+        <div className="max-w-lg mx-auto flex items-center gap-3">
           {currentStep > 0 && (
             <button
               onClick={handleBack}
-              className={cn(
-                'flex-1 h-12 rounded-full text-sm font-bold transition-all',
-                'border border-forge-gold/20 bg-card/80 text-foreground',
-                'hover:bg-secondary/80 hover:border-forge-gold/40 active:scale-[0.97]'
-              )}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors active:scale-[0.97] px-2"
             >
               ← Back
             </button>
@@ -327,11 +320,9 @@ const KYSectionForm: React.FC = () => {
             disabled={!canProceed() || loading}
             className={cn(
               'flex-1 h-12 rounded-full text-sm font-bold transition-all',
-              'bg-gradient-to-r from-forge-gold to-forge-orange text-background',
-              'hover:brightness-110 active:scale-[0.97]',
-              'disabled:opacity-40 disabled:cursor-not-allowed',
-              'shadow-[0_4px_24px_-4px_hsl(var(--forge-gold)/0.4)]',
-              currentStep === 0 && 'flex-[2]'
+              'bg-[#FCF7EF] text-[#1a1a1a]',
+              'hover:bg-[#f5eddf] active:scale-[0.97]',
+              'disabled:opacity-40 disabled:cursor-not-allowed'
             )}
           >
             {loading ? (
