@@ -74,7 +74,7 @@
    };
  
    return (
-     <div className="container py-4 md:py-6 px-4 md:px-6 max-w-4xl pb-safe">
+     <div className="page-container max-w-4xl mx-auto pb-safe">
        {/* Partnership Hero - Sony & Digitek */}
        <PartnershipHero />
  
@@ -179,13 +179,13 @@
            </div>
          </div>
  
-         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 md:gap-3">
-           {bagItems.map((item, index) => (
-             <div
-               key={item.id}
-               className="group relative p-3 md:p-4 rounded-xl md:rounded-2xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-gold-glow transition-all duration-300 hover:scale-[1.02] animate-fade-in"
-               style={{ animationDelay: `${index * 0.05}s` }}
-             >
+          <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 md:gap-3">
+            {bagItems.map((item, index) => (
+              <div
+                key={item.id}
+                className="group relative p-3 md:p-4 rounded-xl bg-card border border-border/50 animate-fade-in"
+                style={{ animationDelay: `${index * 0.05}s` }}
+              >
                <div className="flex flex-col gap-2.5">
                  <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center text-primary group-hover:bg-gradient-to-br group-hover:from-primary group-hover:to-deep-gold group-hover:text-primary-foreground transition-all duration-300 border border-primary/10 group-hover:border-transparent">
                    {item.icon}

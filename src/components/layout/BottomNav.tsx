@@ -1,6 +1,6 @@
 import React, { useState, forwardRef } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Map, BookOpen, Calendar, User } from 'lucide-react';
+import { Home, Map, BookOpen, MessageCircle, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Sheet, SheetTrigger } from '@/components/ui/sheet';
@@ -11,7 +11,7 @@ const navItems = [
   { to: '/', icon: Home, label: 'Home' },
   { to: '/roadmap', icon: Map, label: 'Roadmap' },
   { to: '/learn', icon: BookOpen, label: 'Learn' },
-  { to: '/events', icon: Calendar, label: 'Events' },
+  { to: '/community', icon: MessageCircle, label: 'Community' },
 ];
 
 export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
@@ -23,12 +23,17 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
     const showBadge = profile?.profile_setup_completed && !profile?.ky_form_completed;
     const initials = profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U';
 
+    const isNavActive = (to: string) => {
+      if (to === '/') return location.pathname === '/';
+      return location.pathname === to || location.pathname.startsWith(to + '/');
+    };
+
     return (
       <nav ref={ref} className="fixed bottom-0 left-0 right-0 z-50 glass-nav md:hidden safe-area-pb" {...props}>
         <div className="container">
           <div className="flex items-center justify-around h-[68px]">
             {navItems.map(({ to, icon: Icon, label }) => {
-              const isActive = location.pathname === to;
+              const isActive = isNavActive(to);
               return (
                 <NavLink
                   key={to}
@@ -60,6 +65,7 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
             <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
               <SheetTrigger asChild>
                 <button
+                  aria-label="Open profile menu"
                   className={cn(
                     "relative flex flex-col items-center justify-center gap-0.5 min-h-[52px] min-w-[52px] px-3 py-2 rounded-2xl transition-all duration-300",
                     "active:scale-95 tap-feedback",
@@ -71,7 +77,7 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
                   <div className="relative">
                     {profile?.avatar_url ? (
                       <Avatar className="h-5 w-5">
-                        <AvatarImage src={profile.avatar_url} alt="" />
+                        <AvatarImage src={profile.avatar_url} alt={profile?.full_name || 'Profile photo'} />
                         <AvatarFallback className="text-[8px] bg-primary/20 text-primary">
                           {initials}
                         </AvatarFallback>

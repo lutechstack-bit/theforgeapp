@@ -21,7 +21,7 @@ const navItems = [
 ];
 
 const bottomItems = [
-  { to: '/updates', icon: Info, label: 'About Forge' },
+  { to: '/updates', icon: Info, label: 'Updates' },
 ];
 
 export const SideNav: React.FC = () => {
@@ -57,7 +57,7 @@ export const SideNav: React.FC = () => {
               "h-[22px] w-[22px] transition-transform duration-300 ease-out",
               "group-hover:scale-110",
               isActive && "text-primary"
-            )} strokeWidth={isActive ? 2.2 : 1.8} />
+            )} strokeWidth={isActive ? 2.5 : 2} />
           </span>
           
           {!collapsed && (
@@ -142,15 +142,20 @@ export const SideNav: React.FC = () => {
 
         {/* Main Navigation */}
         <nav className={cn("flex-1 space-y-1", collapsed ? "px-3" : "px-3")}>
-          {navItems.map(({ to, icon, label }) => (
-            <NavItem 
-              key={to} 
-              to={to} 
-              icon={icon} 
-              label={label} 
-              isActive={location.pathname === to} 
-            />
-          ))}
+          {navItems.map(({ to, icon, label }) => {
+            const isActive = to === '/' 
+              ? location.pathname === '/' 
+              : location.pathname === to || location.pathname.startsWith(to + '/');
+            return (
+              <NavItem 
+                key={to} 
+                to={to} 
+                icon={icon} 
+                label={label} 
+                isActive={isActive} 
+              />
+            );
+          })}
         </nav>
 
         {/* Bottom Section */}
@@ -161,7 +166,7 @@ export const SideNav: React.FC = () => {
               to={to} 
               icon={icon} 
               label={label} 
-              isActive={location.pathname === to} 
+              isActive={location.pathname === to || location.pathname.startsWith(to + '/')} 
             />
           ))}
 
@@ -191,7 +196,7 @@ export const SideNav: React.FC = () => {
                   <span className="block">
                     <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold text-primary overflow-hidden ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
                       {profile?.avatar_url ? (
-                        <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                        <img src={profile.avatar_url} alt={profile?.full_name || 'Profile photo'} className="w-full h-full object-cover" />
                       ) : (
                         profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'
                       )}
@@ -207,7 +212,7 @@ export const SideNav: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold text-primary shrink-0 overflow-hidden ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
                     {profile?.avatar_url ? (
-                      <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                      <img src={profile.avatar_url} alt={profile?.full_name || 'Profile photo'} className="w-full h-full object-cover" />
                     ) : (
                       profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'
                     )}

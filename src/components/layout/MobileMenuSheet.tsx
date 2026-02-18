@@ -26,7 +26,7 @@ const menuItems = [
   { to: '/learn', icon: BookOpen, label: 'Learn' },
   { to: '/events', icon: Calendar, label: 'Events' },
   { to: '/community', icon: Users, label: 'Community' },
-  { to: '/updates', icon: Info, label: 'About Forge' },
+  { to: '/updates', icon: Info, label: 'Updates' },
 ];
 
 interface MobileMenuSheetProps {

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CleanEventCard } from '@/components/shared/CleanEventCard';
 import { EventRegistrationModal } from '@/components/events/EventRegistrationModal';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { Search, Calendar } from 'lucide-react';
 import { isPast } from 'date-fns';
 import { useEventRegistration } from '@/hooks/useEventRegistration';
@@ -70,10 +71,10 @@ const Events: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="p-4 sm:p-6 space-y-5 sm:space-y-6 max-w-5xl mx-auto">
+      <div className="page-container space-y-5 sm:space-y-6 max-w-5xl mx-auto">
         {/* Header */}
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Events</h1>
+          <h1 className="page-title">Events</h1>
           <p className="text-muted-foreground text-sm">
             {upcomingEvents.length} upcoming event{upcomingEvents.length !== 1 ? 's' : ''}
           </p>
@@ -102,17 +103,11 @@ const Events: React.FC = () => {
             ))}
           </div>
         ) : hasNoResults ? (
-          <div className="text-center py-16 space-y-4">
-            <div className="w-16 h-16 mx-auto bg-muted/30 rounded-full flex items-center justify-center">
-              <Calendar className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-foreground font-medium">No events found</p>
-              <p className="text-muted-foreground text-sm mt-1">
-                {searchQuery ? 'Try a different search term' : 'Check back soon for upcoming events'}
-              </p>
-            </div>
-          </div>
+          <EmptyState
+            icon={Calendar}
+            title="No events found"
+            description={searchQuery ? 'Try a different search term' : 'Check back soon for upcoming events'}
+          />
         ) : (
           <div className="space-y-8">
             {/* Upcoming Events */}

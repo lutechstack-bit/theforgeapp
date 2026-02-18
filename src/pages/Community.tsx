@@ -5,7 +5,7 @@ import { CommunityHeader } from '@/components/community/CommunityHeader';
 import { CompactChat } from '@/components/community/CompactChat';
 import { GroupSwitcher } from '@/components/community/GroupSwitcher';
 import { MembersDrawer } from '@/components/community/MembersDrawer';
-import { Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { getCityGroupKey } from '@/lib/cityUtils';
 
@@ -155,14 +155,30 @@ const Community = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[80vh]">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="flex flex-col h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] px-4 sm:px-5 md:px-6 gap-2.5 sm:gap-3">
+        <Skeleton className="h-10 w-48 rounded-xl" />
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-24 rounded-full" />
+          <Skeleton className="h-9 w-20 rounded-full" />
+          <Skeleton className="h-9 w-28 rounded-full" />
+        </div>
+        <div className="flex-1 space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex gap-3 items-start">
+              <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+              <div className="space-y-1.5 flex-1">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] px-3 sm:px-4 gap-2.5 sm:gap-3">
+    <div className="flex flex-col h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] px-4 sm:px-5 md:px-6 gap-2.5 sm:gap-3">
       {/* Header with Members Button */}
       <div className="flex items-center justify-between gap-2 sm:gap-3">
         <CommunityHeader memberCount={stats.totalMembers} onlineCount={onlineUserIds.length} />
