@@ -36,10 +36,10 @@ export const KYSectionFields: React.FC<KYSectionFieldsProps> = ({
   const [termsModalOpen, setTermsModalOpen] = useState(false);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       {/* Step header */}
-      <div className="space-y-1.5">
-        <h3 className="text-xl font-bold text-foreground tracking-tight">{step.title}</h3>
+      <div className="space-y-1">
+        <h3 className="text-lg font-bold text-foreground tracking-tight">{step.title}</h3>
         {step.subtitle && (
           <p className="text-sm text-muted-foreground leading-relaxed">{step.subtitle}</p>
         )}
@@ -47,7 +47,7 @@ export const KYSectionFields: React.FC<KYSectionFieldsProps> = ({
       </div>
 
       {/* Fields - group inline fields together */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {(() => {
           const rendered: string[] = [];
           return step.fields.map((field) => {
@@ -83,8 +83,8 @@ function renderField(
     case 'text':
     case 'textarea':
       return (
-        <div key={field.key} className="space-y-2">
-          <Label className="text-sm font-semibold text-foreground/90">
+        <div key={field.key} className="space-y-1.5">
+          <Label className="text-[13px] font-semibold text-foreground/90">
             {field.label} {field.required && <span className="text-destructive">*</span>}
           </Label>
           {field.helperText && (
@@ -94,7 +94,7 @@ function renderField(
             value={value}
             onChange={(e) => updateField(field.key, e.target.value)}
             placeholder={field.placeholder}
-            className="rounded-xl h-12 border-border/50 bg-card/60 backdrop-blur-sm shadow-[0_0_0_1px_hsl(var(--forge-gold)/0.05)] focus:ring-2 focus:ring-forge-gold/30 focus:border-forge-gold/50 transition-all"
+            className="rounded-xl h-10 border-border/50 bg-card/60 backdrop-blur-sm shadow-[0_0_0_1px_hsl(var(--forge-gold)/0.05)] focus:ring-2 focus:ring-forge-gold/30 focus:border-forge-gold/50 transition-all"
           />
         </div>
       );
@@ -112,8 +112,8 @@ function renderField(
         return Math.max(0, age);
       };
       return (
-        <div key={field.key} className="space-y-2">
-          <Label className="text-sm font-semibold text-foreground/90">
+        <div key={field.key} className="space-y-1.5">
+          <Label className="text-[13px] font-semibold text-foreground/90">
             {field.label} {field.required && <span className="text-destructive">*</span>}
           </Label>
           <Popover>
@@ -121,7 +121,7 @@ function renderField(
               <Button
                 variant="outline"
                 className={cn(
-                  'w-full h-12 justify-start text-left font-normal rounded-xl border-border/50 bg-card/60 backdrop-blur-sm shadow-[0_0_0_1px_hsl(var(--forge-gold)/0.05)] hover:border-forge-gold/40 transition-all',
+                  'w-full h-10 justify-start text-left font-normal rounded-xl border-border/50 bg-card/60 backdrop-blur-sm shadow-[0_0_0_1px_hsl(var(--forge-gold)/0.05)] hover:border-forge-gold/40 transition-all',
                   !value && 'text-muted-foreground'
                 )}
               >
@@ -158,8 +158,8 @@ function renderField(
 
     case 'country-state':
       return (
-        <div key={field.key} className="space-y-2">
-          <Label className="text-sm font-semibold text-foreground/90">
+        <div key={field.key} className="space-y-1.5">
+          <Label className="text-[13px] font-semibold text-foreground/90">
             {field.label} {field.required && <span className="text-destructive">*</span>}
           </Label>
           <CountryStateSelector
@@ -241,8 +241,8 @@ function renderField(
 
     case 'phone':
       return (
-        <div key={field.key} className="space-y-2">
-          <Label className="text-sm font-semibold text-foreground/90">
+        <div key={field.key} className="space-y-1.5">
+          <Label className="text-[13px] font-semibold text-foreground/90">
             {field.label} {field.required && <span className="text-destructive">*</span>}
           </Label>
           <PhoneInput
@@ -267,8 +267,8 @@ function renderField(
 
     case 'mbti':
       return (
-        <div key={field.key} className="space-y-2">
-          <Label className="text-sm font-semibold text-foreground/90">
+        <div key={field.key} className="space-y-1.5">
+          <Label className="text-[13px] font-semibold text-foreground/90">
             {field.label} {field.required && <span className="text-destructive">*</span>}
           </Label>
           {field.helperText && (
@@ -288,7 +288,7 @@ function renderField(
                 type="button"
                 onClick={() => updateField(field.key, type)}
                 className={cn(
-                  'py-3 rounded-xl border text-sm font-bold transition-all active:scale-[0.96]',
+                  'py-2 rounded-xl border text-sm font-bold transition-all active:scale-[0.96]',
                   value === type
                     ? 'border-forge-gold bg-forge-gold/15 text-forge-gold shadow-[0_0_12px_-3px_hsl(var(--forge-gold)/0.3)]'
                     : 'border-border/50 bg-card/60 text-muted-foreground hover:border-forge-gold/40'
@@ -303,11 +303,11 @@ function renderField(
 
     case 'meal-preference':
       return (
-        <div key={field.key} className="space-y-2">
-          <Label className="text-sm font-semibold text-foreground/90">
+        <div key={field.key} className="space-y-1.5">
+          <Label className="text-[13px] font-semibold text-foreground/90">
             {field.label} {field.required && <span className="text-destructive">*</span>}
           </Label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             {[
               { value: 'vegetarian', emoji: '🥬', label: 'Vegetarian' },
               { value: 'non_vegetarian', emoji: '🍗', label: 'Non-Veg' },
@@ -317,13 +317,13 @@ function renderField(
                 type="button"
                 onClick={() => updateField(field.key, option.value)}
                 className={cn(
-                  'flex flex-col items-center gap-2 p-6 rounded-2xl border-2 transition-all active:scale-[0.97]',
+                  'flex flex-col items-center gap-1.5 p-4 rounded-2xl border-2 transition-all active:scale-[0.97]',
                   value === option.value
                     ? 'border-forge-gold bg-forge-gold/10 shadow-[0_0_20px_-5px_hsl(var(--forge-gold)/0.3)]'
                     : 'border-border/50 bg-card/60 hover:border-forge-gold/40'
                 )}
               >
-                <span className="text-3xl">{option.emoji}</span>
+                <span className="text-2xl">{option.emoji}</span>
                 <span className={cn(
                   'text-sm font-semibold',
                   value === option.value ? 'text-forge-gold' : 'text-foreground'
@@ -338,18 +338,18 @@ function renderField(
 
     case 'tshirt-size':
       return (
-        <div key={field.key} className="space-y-2">
-          <Label className="text-sm font-semibold text-foreground/90">
+        <div key={field.key} className="space-y-1.5">
+          <Label className="text-[13px] font-semibold text-foreground/90">
             {field.label} {field.required && <span className="text-destructive">*</span>}
           </Label>
-          <div className="flex flex-wrap gap-2.5">
+          <div className="flex flex-wrap gap-2">
             {TSHIRT_SIZES.map((size) => (
               <button
                 key={size}
                 type="button"
                 onClick={() => updateField(field.key, size)}
                 className={cn(
-                  'px-5 py-3 rounded-xl border text-sm font-bold transition-all min-w-[52px] active:scale-[0.96]',
+                  'px-4 py-2 rounded-xl border text-sm font-bold transition-all min-w-[48px] active:scale-[0.96]',
                   value === size
                     ? 'border-forge-gold bg-forge-gold/15 text-forge-gold shadow-[0_0_12px_-3px_hsl(var(--forge-gold)/0.3)]'
                     : 'border-border/50 bg-card/60 text-muted-foreground hover:border-forge-gold/40'
