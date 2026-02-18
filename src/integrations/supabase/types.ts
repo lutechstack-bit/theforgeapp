@@ -1227,6 +1227,7 @@ export type Database = {
         Row: {
           access_token: string | null
           bonuses: Json | null
+          card_layout: string | null
           category: string
           company_name: string | null
           created_at: string
@@ -1250,6 +1251,7 @@ export type Database = {
         Insert: {
           access_token?: string | null
           bonuses?: Json | null
+          card_layout?: string | null
           category: string
           company_name?: string | null
           created_at?: string
@@ -1273,6 +1275,7 @@ export type Database = {
         Update: {
           access_token?: string | null
           bonuses?: Json | null
+          card_layout?: string | null
           category?: string
           company_name?: string | null
           created_at?: string
