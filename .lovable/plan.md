@@ -1,63 +1,99 @@
 
 
-# Fix KY Form Card to Fit Viewport with Internal Scrolling
+# Fix All KY Form Steps to Fit Within Viewport
 
-## Problem
+## Problem Audit
 
-The card and its content overflow below the screen. The `KYFormCardStack` component doesn't fill the available height, so cards extend past the viewport and get clipped by the bottom navigation. Users cannot scroll to see hidden fields.
+Every form step across all three cohorts (FORGE, FORGE_CREATORS, FORGE_WRITING) has components that are too tall, causing content to overflow below the visible card area. Here is a step-by-step audit of what overflows and why:
 
-## Root Cause
+### FORGE (KYF) -- 3 sections, 6 steps
+| Step | Fields | Overflow Cause |
+|------|--------|----------------|
+| General Details | 7 fields (5 text inputs + DOB picker + country-state/pincode inline) | Too many stacked inputs with generous spacing |
+| Proficiency | Grid table (4 skills x 5 levels) + laptop radio | Proficiency grid rows have large padding (p-2 to p-4) |
+| Understanding | Tags + MBTI (16 buttons) + Chronotype (3 radios) + Intent (7 radios) + text | MOST PROBLEMATIC -- 5 components, MBTI alone is 16 buttons with py-2 each |
+| Casting Call | Multi-select + text + gender radio | Moderate, but radio buttons have p-3 padding |
+| Pictures | 5 photo uploads at 128x128px stacked | 5 x 128px = 640px for photos alone |
+| Hospitality | Meal pref + 2 text + tshirt + emergency inline + checkbox | Meal cards have p-4 padding, tshirt has 7 buttons |
 
-The height chain is broken:
-- Parent container (`flex-1 flex min-h-0`) correctly offers space
-- But `KYFormCardStack` uses `className="relative"` without `h-full`, breaking the flex height chain
-- Cards inside the stack also lack height constraints
-- Result: cards render at their natural content height, which overflows
+### FORGE_CREATORS (KYC) -- 2 sections, 4 steps
+| Step | Overflow Cause |
+|------|----------------|
+| General Details | 6 fields including 2 radio groups with p-3 per option |
+| Proficiency | 3 proficiency fields, each with 3-4 stacked options at p-3 per option |
+| Understanding | Same as KYF -- tags + MBTI + chronotype + intent |
+| Hospitality | Same as KYF |
 
-## Fix (3 files)
+### FORGE_WRITERS (KYW) -- 2 sections, 4 steps
+| Step | Overflow Cause |
+|------|----------------|
+| General Details | 5 fields + multi-select -- moderate |
+| Proficiency | 2 proficiency fields -- moderate but still tight |
+| Understanding | Same pattern as KYF |
+| Hospitality | Same as KYF |
 
-### 1. `src/components/kyform/KYFormCardStack.tsx`
-- Change outer wrapper from `relative` to `relative h-full w-full`
-- Change inner card containers from `relative` to `relative h-full`
-- Ensure the current card wrapper and animation wrappers all use `h-full`
+## Root Causes (Component Level)
 
-### 2. `src/components/kyform/KYFormCard.tsx`
-- Add `h-full` to the card root so it stretches to fill the stack
-- The internal `overflow-y-auto hide-scrollbar` area already exists and will now properly scroll when content overflows
+1. **RadioSelectField** -- `space-y-3` gap + `p-3` per option button = too tall
+2. **ProficiencyField** -- `space-y-3` gap + `p-3` per option + radio circle = too tall
+3. **ProficiencyGrid** -- `p-2 md:p-4` cell padding, generous header = too tall
+4. **PhotoUploadField** -- `w-32 h-32` (128px) boxes stacked vertically
+5. **MBTI buttons** -- `py-2` + `gap-2.5` grid = 16 buttons take ~200px
+6. **Meal preference** -- `p-4` cards with `text-2xl` emoji
+7. **KYSectionFields** -- `space-y-2.5` between all fields, `space-y-1` for step header
 
-### 3. `src/components/kyform/KYSectionFields.tsx` and `KYSectionIntro.tsx` -- compact sizing
-- Reduce field spacing from `space-y-3` to `space-y-2.5`
-- Reduce input heights from `h-12` to `h-10`
-- Reduce label font from `text-sm` to `text-[13px]`
-- Reduce step title from `text-xl` to `text-lg`
-- Reduce intro icon from `w-16 h-16` to `w-14 h-14`, title from `text-xl md:text-2xl` to `text-lg md:text-xl`
-- Reduce Keep Handy item padding from `px-3 py-2` to `px-2.5 py-1.5`
-- These reductions help content fit on smaller screens without scrolling, while still allowing internal scroll when needed
+## Solution: Compact Every Component
 
-## How It Works After Fix
+### 1. `src/components/onboarding/RadioSelectField.tsx`
+- Reduce label gap: `space-y-3` to `space-y-1.5`
+- Reduce option padding: `p-3` to `p-2`
+- Reduce font: `text-sm` to `text-[13px]`
 
-```text
-+----------------------------------+  <- h-[100dvh]
-| Top bar (fixed height)           |
-|                                  |
-| +------------------------------+ |  <- flex-1, min-h-0
-| | Card (h-full, flex col)      | |
-| | [progress bar]               | |
-| | [scrollable content area]    | |  <- overflow-y-auto
-| +------------------------------+ |
-|                                  |
-| [< Back]  [Next >]              |  <- fixed bottom
-+----------------------------------+
-```
+### 2. `src/components/onboarding/ProficiencyField.tsx`
+- Reduce label gap: `space-y-3` to `space-y-1.5`
+- Reduce option gap: `space-y-2` to `space-y-1.5`
+- Reduce option padding: `p-3` to `p-2`
+- Reduce radio circle: `w-6 h-6` to `w-5 h-5`
 
-The key insight: `min-h-0` on the flex parent + `h-full` down the chain + `overflow-y-auto` on the content area = card fits viewport, content scrolls internally.
+### 3. `src/components/onboarding/ProficiencyGrid.tsx`
+- Reduce cell padding: `p-2 md:p-4` to `p-1.5 md:p-2.5`
+- Reduce header padding: `p-1.5 md:p-3` to `p-1 md:p-2`
+- Reduce label gap: `space-y-3` to `space-y-1.5`
+
+### 4. `src/components/onboarding/PhotoUploadField.tsx`
+- Reduce box size: `w-32 h-32` (128px) to `w-20 h-20` (80px)
+
+### 5. `src/components/kyform/KYSectionFields.tsx`
+- Photos: Detect consecutive photo fields and render in `grid grid-cols-3 gap-2` instead of stacking vertically (5 photos in 2 rows instead of 5 rows)
+- MBTI: Reduce `gap-2.5` to `gap-1.5`, `py-2` to `py-1.5`
+- Meal preference: Reduce `p-4` to `p-2.5`, emoji from `text-2xl` to `text-lg`
+- T-shirt: Reduce `px-4 py-2` to `px-3 py-1.5`
+- Checkbox: Reduce `p-4` to `p-3`
+- Reduce step header title from `text-lg` to `text-base`
+
+### 6. `src/pages/KYSectionForm.tsx`
+- Reduce bottom nav padding from `pb-24` to `pb-20` in card container
+- Reduce bottom nav area from `pt-6 pb-6` to `pt-4 pb-5`
+
+## Space Savings Summary
+
+| Component | Before | After | Savings per instance |
+|-----------|--------|-------|---------------------|
+| Radio option | p-3 (12px each side) | p-2 (8px) | ~8px per option |
+| Proficiency option | p-3 + w-6 circle | p-2 + w-5 circle | ~10px per option |
+| Photo box | 128x128 stacked | 80x80 in 3-col grid | ~340px total (5 photos) |
+| MBTI grid | py-2, gap-2.5 | py-1.5, gap-1.5 | ~30px total |
+| Meal cards | p-4, text-2xl | p-2.5, text-lg | ~20px total |
+| Bottom nav | pt-6 pb-6 | pt-4 pb-5 | ~12px |
 
 ## Files Modified
 
 | File | Change |
 |------|--------|
-| `src/components/kyform/KYFormCardStack.tsx` | Add `h-full w-full` to all container levels |
-| `src/components/kyform/KYFormCard.tsx` | Add `h-full` to card root |
-| `src/components/kyform/KYSectionFields.tsx` | Compact field sizes (h-10 inputs, tighter spacing) |
-| `src/components/kyform/KYSectionIntro.tsx` | Compact intro sizes (smaller icon, tighter spacing) |
+| `src/components/onboarding/RadioSelectField.tsx` | Tighter spacing and padding |
+| `src/components/onboarding/ProficiencyField.tsx` | Compact options and circles |
+| `src/components/onboarding/ProficiencyGrid.tsx` | Tighter cell padding |
+| `src/components/onboarding/PhotoUploadField.tsx` | Smaller upload boxes (80px) |
+| `src/components/kyform/KYSectionFields.tsx` | Photo grid layout, compact MBTI/meal/tshirt/checkbox |
+| `src/pages/KYSectionForm.tsx` | Tighter bottom nav spacing |
 
