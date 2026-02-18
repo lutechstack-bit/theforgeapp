@@ -10,6 +10,7 @@ interface LearnCourseCardProps {
   category?: string;
   instructorName?: string;
   companyName?: string;
+  cardLayout?: 'portrait' | 'landscape';
   onClick?: () => void;
 }
 
@@ -21,6 +22,7 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
   category,
   instructorName,
   companyName,
+  cardLayout = 'portrait',
   onClick,
 }) => {
   const navigate = useNavigate();
@@ -41,6 +43,64 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
   };
 
+  if (cardLayout === 'landscape') {
+    return (
+      <div
+        onClick={handleClick}
+        className="group cursor-pointer w-[320px] sm:w-[360px] flex-shrink-0"
+      >
+        <div className="relative aspect-[16/10] rounded-2xl overflow-hidden border border-border/30 group-hover:border-primary/30 transition-colors duration-300">
+          {/* Background image */}
+          <img
+            src={thumbnailUrl || '/images/learn/pre-forge-placeholder.png'}
+            alt={title}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+
+          {/* Warm golden gradient overlay from left */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(to right, rgba(245,230,200,0.88) 0%, rgba(245,230,200,0.7) 50%, rgba(245,230,200,0.15) 100%)',
+            }}
+          />
+
+          {/* Content overlay */}
+          <div className="absolute inset-0 flex flex-col justify-between p-4">
+            {/* Top-left label */}
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+              <span className="text-[11px] font-semibold tracking-wide uppercase text-black/70">
+                Pre-Forge Session
+              </span>
+            </div>
+
+            {/* Title - center left */}
+            <div className="flex-1 flex items-center">
+              <h3 className="text-xl sm:text-2xl font-black text-black leading-tight line-clamp-3 max-w-[75%]">
+                {title}
+              </h3>
+            </div>
+
+            {/* Bottom-left instructor */}
+            <div>
+              {instructorName && (
+                <p className="text-sm font-bold text-black">{instructorName}</p>
+              )}
+              {companyName && (
+                <p className="text-xs text-black/60">{companyName}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Hover overlay */}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
+        </div>
+      </div>
+    );
+  }
+
+  // Portrait layout (default)
   const duration = formatDuration(durationMinutes);
 
   return (
@@ -73,7 +133,6 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
           </div>
         )}
       </div>
-
     </div>
   );
 };

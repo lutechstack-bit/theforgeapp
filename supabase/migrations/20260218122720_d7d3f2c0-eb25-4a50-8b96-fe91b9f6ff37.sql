@@ -1,0 +1,1 @@
+ALTER TABLE public.learn_content ADD COLUMN card_layout text DEFAULT 'portrait';

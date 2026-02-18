@@ -48,7 +48,7 @@ const Learn: React.FC = () => {
         .select('*')
         .order('order_index', { ascending: true });
       if (error) throw error;
-      return (data || []) as LearnContent[];
+      return (data || []) as (LearnContent & { card_layout?: string })[];
     },
   });
 
@@ -163,6 +163,8 @@ const Learn: React.FC = () => {
               title="Pre Forge Sessions"
               subtitle="Filmmaking fundamentals: For Forge and Beyond"
               sectionType="bfp_sessions"
+              defaultCardLayout="landscape"
+              defaultThumbnail="/images/learn/pre-forge-placeholder.png"
               onCardClick={handleCardClick}
               onViewAll={(st) => navigate(`/learn/all?section=${st}`)}
             />
@@ -250,10 +252,12 @@ const Learn: React.FC = () => {
 
 /* Extracted carousel section for course cards */
 interface CourseCarouselSectionProps {
-  items: LearnContent[];
+  items: (LearnContent & { card_layout?: string })[];
   title: string;
   subtitle?: string;
   sectionType?: string;
+  defaultCardLayout?: 'portrait' | 'landscape';
+  defaultThumbnail?: string;
   onCardClick: (item: LearnContent) => void;
   onViewAll: (sectionType: string) => void;
 }
@@ -263,6 +267,8 @@ const CourseCarouselSection: React.FC<CourseCarouselSectionProps> = ({
   title,
   subtitle,
   sectionType,
+  defaultCardLayout,
+  defaultThumbnail,
   onCardClick,
   onViewAll,
 }) => {
@@ -288,20 +294,25 @@ const CourseCarouselSection: React.FC<CourseCarouselSectionProps> = ({
       </div>
 
       <ScrollableCardRow>
-          {items.map((item) => (
-            <div key={item.id} className="snap-start flex-shrink-0">
-              <LearnCourseCard
-                id={item.id}
-                title={item.title}
-                thumbnailUrl={item.thumbnail_url}
-                durationMinutes={item.duration_minutes}
-                category={item.category}
-                instructorName={item.instructor_name}
-                companyName={item.company_name}
-                onClick={() => onCardClick(item)}
-              />
-            </div>
-          ))}
+          {items.map((item) => {
+            const layout = (item.card_layout as 'portrait' | 'landscape') || defaultCardLayout || 'portrait';
+            const thumb = item.thumbnail_url || (defaultThumbnail && layout === 'landscape' ? defaultThumbnail : undefined);
+            return (
+              <div key={item.id} className="snap-start flex-shrink-0">
+                <LearnCourseCard
+                  id={item.id}
+                  title={item.title}
+                  thumbnailUrl={thumb}
+                  durationMinutes={item.duration_minutes}
+                  category={item.category}
+                  instructorName={item.instructor_name}
+                  companyName={item.company_name}
+                  cardLayout={layout}
+                  onClick={() => onCardClick(item)}
+                />
+              </div>
+            );
+          })}
       </ScrollableCardRow>
     </section>
   );
