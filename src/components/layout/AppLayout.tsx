@@ -15,7 +15,7 @@ const AppLayoutContent: React.FC = () => {
     <div className="min-h-[100dvh] bg-background safe-area-pt">
       {showNav && <SideNav />}
       <main className={cn(
-        "relative pb-20 md:pb-0 transition-all duration-300 ease-in-out safe-area-pb",
+        "relative pb-24 md:pb-0 transition-all duration-300 ease-in-out safe-area-pb",
         showNav && (collapsed ? "md:ml-[72px]" : "md:ml-64")
       )}>
         <Outlet />

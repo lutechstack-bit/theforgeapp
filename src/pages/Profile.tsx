@@ -8,6 +8,18 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import {
   ProfileHero,
   AboutSection,
@@ -22,11 +34,20 @@ import {
 import { PerksQuickAccess } from '@/components/profile/PerksQuickAccess';
 import { KYFormQuickAccess } from '@/components/profile/KYFormQuickAccess';
 
+const ProfileSkeleton = () => (
+  <div className="max-w-3xl mx-auto page-container space-y-4 pb-24 md:pb-6">
+    <Skeleton className="h-48 rounded-2xl" />
+    <Skeleton className="h-20 rounded-2xl" />
+    <Skeleton className="h-32 rounded-2xl" />
+    <Skeleton className="h-24 rounded-2xl" />
+  </div>
+);
+
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, profile, edition, signOut, refreshProfile } = useAuth();
-  const { data: profileData, refetch: refetchProfile } = useProfileData();
+  const { data: profileData, isLoading: profileLoading, refetch: refetchProfile } = useProfileData();
   const { works, createWork, updateWork, deleteWork } = useUserWorks();
   const { portfolio, isPublic, getPortfolioUrl, createOrUpdatePortfolio } = usePublicPortfolio();
 
@@ -34,6 +55,7 @@ const Profile: React.FC = () => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [addWorkOpen, setAddWorkOpen] = useState(false);
   const [editingWork, setEditingWork] = useState<UserWork | null>(null);
+  const [deleteWorkId, setDeleteWorkId] = useState<string | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
   const sectionParam = searchParams.get('section');
@@ -43,7 +65,6 @@ const Profile: React.FC = () => {
     const actionParam = searchParams.get('action');
     if (actionParam === 'edit') {
       setEditSheetOpen(true);
-      // Clear the params to prevent re-triggering on refresh
       searchParams.delete('action');
       setSearchParams(searchParams, { replace: true });
     }
@@ -65,6 +86,7 @@ const Profile: React.FC = () => {
     if (!user?.id) return;
     await supabase.from('profiles').update({ bio }).eq('id', user.id);
     await refreshProfile();
+    toast({ title: 'Bio Updated', description: 'Your bio has been saved.' });
   };
 
   const handleAddWork = async (data: CreateWorkInput) => {
@@ -82,7 +104,14 @@ const Profile: React.FC = () => {
   };
 
   const handleDeleteWork = async (workId: string) => {
-    await deleteWork.mutateAsync(workId);
+    setDeleteWorkId(workId);
+  };
+
+  const confirmDeleteWork = async () => {
+    if (deleteWorkId) {
+      await deleteWork.mutateAsync(deleteWorkId);
+      setDeleteWorkId(null);
+    }
   };
 
   const handleTogglePublic = async (isPublic: boolean) => {
@@ -98,8 +127,12 @@ const Profile: React.FC = () => {
     refetchProfile();
   };
 
+  if (profileLoading && !profile) {
+    return <ProfileSkeleton />;
+  }
+
   return (
-    <div className="max-w-3xl mx-auto px-3 sm:px-4 md:px-6 space-y-4 sm:space-y-5 pb-24 md:pb-6 pt-2 sm:pt-0">
+    <div className="max-w-3xl mx-auto page-container space-y-4 sm:space-y-5 pb-24 md:pb-6">
       {/* Profile Hero */}
       <ProfileHero
         profile={profile}
@@ -158,15 +191,48 @@ const Profile: React.FC = () => {
         isUpdating={createOrUpdatePortfolio.isPending}
       />
 
-      {/* Sign Out */}
-      <Button
-        variant="ghost"
-        className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
-        onClick={handleSignOut}
-      >
-        <LogOut className="h-4 w-4 mr-2" />
-        Sign Out
-      </Button>
+      {/* Sign Out with confirmation */}
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to sign out of your account?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSignOut}>Sign Out</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Work confirmation */}
+      <AlertDialog open={!!deleteWorkId} onOpenChange={(open) => !open && setDeleteWorkId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this work?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete this work from your portfolio.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteWork} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Modals */}
       <ProfileEditSheet

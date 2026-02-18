@@ -62,7 +62,7 @@
 @layer base {
   :root,
   .theme-forge {
-    /* Forge Brand Color Palette - EXACT 5 COLORS */
+    /* Forge Brand Color Palette - 6 CUSTOM TOKENS */
     /* Primary Yellow: #FFBC3B → HSL(41, 100%, 62%) */
     /* Deep Gold: #D38F0C → HSL(39, 90%, 44%) */
     /* Orange: #DD6F16 → HSL(27, 85%, 48%) */
@@ -172,6 +172,14 @@
   }
 
   /* Premium Glass Effects */
+  .glass-surface {
+    background: hsl(var(--surface-glass) / 0.6);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid hsl(var(--border) / 0.4);
+  }
+
+  /* Backward compat alias */
   .glass {
     background: hsl(var(--surface-glass) / 0.6);
     backdrop-filter: blur(20px) saturate(180%);
@@ -187,8 +195,20 @@
     box-shadow: 
       0 4px 30px hsl(var(--background) / 0.2),
       inset 0 1px 0 hsl(var(--foreground) / 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  .glass-card:hover {
+    background: hsl(var(--card) / 0.6);
+    border-color: hsl(var(--primary) / 0.3);
+    box-shadow: 
+      0 8px 40px hsl(var(--primary) / 0.15),
+      0 0 0 1px hsl(var(--primary) / 0.1),
+      inset 0 1px 0 hsl(var(--foreground) / 0.08);
+    transform: translateY(-2px);
+  }
+
+  /* Backward compat aliases */
   .glass-card-hover {
     background: hsl(var(--card) / 0.4);
     backdrop-filter: blur(16px) saturate(150%);
@@ -820,6 +840,14 @@
 
 .label-premium {
   @apply text-[10px] uppercase tracking-wider font-semibold text-muted-foreground;
+}
+
+.page-title {
+  @apply text-2xl sm:text-3xl font-bold text-foreground;
+}
+
+.page-container {
+  @apply px-4 sm:px-5 md:px-6 py-4 md:py-6;
 }
 
 .section-title {

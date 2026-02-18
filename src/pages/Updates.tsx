@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bell, Users, BookOpen, Calendar, Map, Settings, Check } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 interface Notification {
   id: string;
@@ -108,10 +109,10 @@ const Updates: React.FC = () => {
   };
 
   return (
-    <div className="container py-6">
+    <div className="page-container max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">Updates</h1>
+          <h1 className="page-title mb-2">Updates</h1>
           <p className="text-muted-foreground">
             {unreadCount > 0 ? `${unreadCount} unread notifications` : 'All caught up!'}
           </p>
@@ -134,15 +135,11 @@ const Updates: React.FC = () => {
 
         <div className="space-y-2">
           {filteredNotifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                <Bell className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="font-semibold text-foreground mb-2">No notifications</h3>
-              <p className="text-sm text-muted-foreground">
-                You're all caught up! New updates will appear here.
-              </p>
-            </div>
+            <EmptyState
+              icon={Bell}
+              title="No notifications"
+              description="You're all caught up! New updates will appear here."
+            />
           ) : (
             filteredNotifications.map((notification, index) => (
               <div
@@ -162,7 +159,7 @@ const Updates: React.FC = () => {
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className={`font-medium ${notification.isRead ? 'text-foreground' : 'text-foreground'}`}>
+                      <h3 className="font-medium text-foreground">
                         {notification.title}
                       </h3>
                       {!notification.isRead && (

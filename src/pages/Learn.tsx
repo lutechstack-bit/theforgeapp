@@ -9,6 +9,7 @@ import { UpcomingSessionsSection } from '@/components/learn/UpcomingSessionsSect
 import { MasterclassCard } from '@/components/learn/MasterclassCard';
 import { ProgramBanner } from '@/components/learn/ProgramBanner';
 import { ScrollableCardRow } from '@/components/learn/ScrollableCardRow';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { Sparkles, ChevronRight } from 'lucide-react';
 
 interface LearnContent {
@@ -114,10 +115,10 @@ const Learn: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 overflow-x-clip">
-      <div className="px-4 sm:px-5 py-5 space-y-8 sm:space-y-10">
+      <div className="page-container space-y-8 sm:space-y-10 max-w-5xl mx-auto">
         {/* Header */}
         <div className="space-y-1">
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Learn</h1>
+          <h1 className="page-title">Learn</h1>
           <p className="text-sm text-muted-foreground">
             Explore courses, sessions & resources to enhance your filmmaking skills
           </p>
@@ -149,11 +150,11 @@ const Learn: React.FC = () => {
             ))}
           </div>
         ) : courses.length === 0 ? (
-          <div className="text-center py-16 glass-card rounded-2xl">
-            <Sparkles className="h-12 w-12 text-primary/50 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">No sessions yet</h3>
-            <p className="text-muted-foreground">Check back soon for new content</p>
-          </div>
+          <EmptyState
+            icon={Sparkles}
+            title="No sessions yet"
+            description="Check back soon for new content"
+          />
         ) : (
           <div className="space-y-8 sm:space-y-10">
             {/* Pre Forge Sessions */}

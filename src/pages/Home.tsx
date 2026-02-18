@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -200,17 +201,18 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-6">
+      <div className="page-container">
         {/* Main Content */}
         <div className="space-y-8 sm:space-y-10 max-w-3xl mx-auto">
           {/* Personalized Welcome */}
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Hi {firstName}</h1>
+            <h1 className="page-title">Hi {firstName}</h1>
             <p className="text-muted-foreground text-sm">Let's make today count</p>
           </div>
 
           {/* 1. Countdown Timer */}
           {countdownSection && <CompactCountdownTimer edition={edition} />}
+          {!countdownSection && userDataLoading && <Skeleton className="h-24 rounded-2xl" />}
 
           {/* 2. Today's Focus */}
           {focusSection && activeFocusCard && (
