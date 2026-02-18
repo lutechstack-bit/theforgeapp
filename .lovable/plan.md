@@ -1,58 +1,63 @@
 
 
-# KY Form UI: Gold Outline Card with No-Scroll Fit
+# Fix KY Form Card to Fit Viewport with Internal Scrolling
 
-## What Changes
+## Problem
 
-Two main structural changes to match the reference wireframe exactly:
+The card and its content overflow below the screen. The `KYFormCardStack` component doesn't fill the available height, so cards extend past the viewport and get clipped by the bottom navigation. Users cannot scroll to see hidden fields.
 
-1. **Progress bar moves inside the card** -- currently it sits between the top bar and the card. In the reference, it's at the very top inside the card border.
-2. **Card fills the viewport without scrolling** -- the card should stretch to fill the space between the top bar and the bottom navigation. Content fits inside without needing to scroll.
-3. **Bottom nav becomes compact centered buttons** -- "< Back" text and "Next >" pill are centered together, not full-width stretched.
+## Root Cause
 
-## File Changes
+The height chain is broken:
+- Parent container (`flex-1 flex min-h-0`) correctly offers space
+- But `KYFormCardStack` uses `className="relative"` without `h-full`, breaking the flex height chain
+- Cards inside the stack also lack height constraints
+- Result: cards render at their natural content height, which overflows
 
-### 1. `src/pages/KYSectionForm.tsx`
-- Remove the standalone progress bar section (lines 281-284) from between the top bar and card area
-- Pass `currentStep` and `totalSteps` to `KYFormCard` so the progress bar renders inside each card
-- Change card container from `overflow-y-auto pb-28` to `flex-1 flex` so the card fills available space vertically without scrolling. Use `overflow-y-auto hide-scrollbar` on the card content inner area only if needed for dense steps
-- Bottom nav: change from `flex-1` full-width Next button to a compact auto-width pill button, centered with Back text
+## Fix (3 files)
+
+### 1. `src/components/kyform/KYFormCardStack.tsx`
+- Change outer wrapper from `relative` to `relative h-full w-full`
+- Change inner card containers from `relative` to `relative h-full`
+- Ensure the current card wrapper and animation wrappers all use `h-full`
 
 ### 2. `src/components/kyform/KYFormCard.tsx`
-- Accept optional `currentStep` and `totalSteps` props
-- When provided, render `KYFormProgressBar` at the top of the card, inside the border, above the children content
-- Card itself uses `flex flex-col h-full` to fill available space, with children in a scrollable area if content overflows
+- Add `h-full` to the card root so it stretches to fill the stack
+- The internal `overflow-y-auto hide-scrollbar` area already exists and will now properly scroll when content overflows
 
-### 3. `src/components/kyform/KYFormProgressBar.tsx`
-- No structural changes needed -- already segmented. Just ensure it works well inside the card padding.
+### 3. `src/components/kyform/KYSectionFields.tsx` and `KYSectionIntro.tsx` -- compact sizing
+- Reduce field spacing from `space-y-3` to `space-y-2.5`
+- Reduce input heights from `h-12` to `h-10`
+- Reduce label font from `text-sm` to `text-[13px]`
+- Reduce step title from `text-xl` to `text-lg`
+- Reduce intro icon from `w-16 h-16` to `w-14 h-14`, title from `text-xl md:text-2xl` to `text-lg md:text-xl`
+- Reduce Keep Handy item padding from `px-3 py-2` to `px-2.5 py-1.5`
+- These reductions help content fit on smaller screens without scrolling, while still allowing internal scroll when needed
 
-## Visual Layout (top to bottom)
+## How It Works After Fix
 
 ```text
-+----------------------------------+
-| [<-]   Section Title       [X]  |  <- Top bar (unchanged)
++----------------------------------+  <- h-[100dvh]
+| Top bar (fixed height)           |
 |                                  |
-| +------------------------------+ |
-| | ■■ ■■ □□ □□ □□ □□            | |  <- Progress bar INSIDE card
-| |                              | |
-| | Step Title                   | |
-| |                              | |
-| | Field 1 label                | |
-| | [____________]               | |
-| |                              | |
-| | Field 2 label                | |
-| | [____________]               | |
-| |                              | |
+| +------------------------------+ |  <- flex-1, min-h-0
+| | Card (h-full, flex col)      | |
+| | [progress bar]               | |
+| | [scrollable content area]    | |  <- overflow-y-auto
 | +------------------------------+ |
 |                                  |
-|       < Back    [Next >]        |  <- Compact centered nav
+| [< Back]  [Next >]              |  <- fixed bottom
 +----------------------------------+
 ```
+
+The key insight: `min-h-0` on the flex parent + `h-full` down the chain + `overflow-y-auto` on the content area = card fits viewport, content scrolls internally.
 
 ## Files Modified
 
 | File | Change |
 |------|--------|
-| `src/pages/KYSectionForm.tsx` | Move progress bar into card, fix layout to fill viewport, compact bottom nav |
-| `src/components/kyform/KYFormCard.tsx` | Accept and render progress bar inside, use flex layout for filling |
+| `src/components/kyform/KYFormCardStack.tsx` | Add `h-full w-full` to all container levels |
+| `src/components/kyform/KYFormCard.tsx` | Add `h-full` to card root |
+| `src/components/kyform/KYSectionFields.tsx` | Compact field sizes (h-10 inputs, tighter spacing) |
+| `src/components/kyform/KYSectionIntro.tsx` | Compact intro sizes (smaller icon, tighter spacing) |
 
