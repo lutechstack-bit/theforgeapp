@@ -1,38 +1,58 @@
 
-# Redesign KY Form UI to Match Reference Wireframe
+
+# KY Form UI: Gold Outline Card with No-Scroll Fit
 
 ## What Changes
 
-Updating the KY section form UI to match the reference wireframe across all cohorts (FORGE, FORGE_WRITING, FORGE_CREATORS). This is a visual-only change -- no logic, data flow, or field configuration changes. No question number labels.
+Two main structural changes to match the reference wireframe exactly:
 
-## Changes by File
+1. **Progress bar moves inside the card** -- currently it sits between the top bar and the card. In the reference, it's at the very top inside the card border.
+2. **Card fills the viewport without scrolling** -- the card should stretch to fill the space between the top bar and the bottom navigation. Content fits inside without needing to scroll.
+3. **Bottom nav becomes compact centered buttons** -- "< Back" text and "Next >" pill are centered together, not full-width stretched.
 
-### 1. `src/components/kyform/KYFormProgressBar.tsx`
-Replace the single continuous progress bar with a segmented bar. Each segment represents one step. Completed segments are orange/gold, current segment is gold (brighter), remaining segments are grey/muted. Small gap between segments.
+## File Changes
 
-### 2. `src/pages/KYSectionForm.tsx`
-- Redesign bottom navigation:
-  - "Back" becomes a plain text button with chevron: `< Back` (no border, no background, muted text)
-  - "Next" becomes a cream/off-white pill button with dark text: `Next >` (replacing gold gradient)
-  - "Complete" uses the same cream pill style
-- Remove "Step X of Y" text from top bar (segmented bar already shows progress)
-- Keep section title in top bar
+### 1. `src/pages/KYSectionForm.tsx`
+- Remove the standalone progress bar section (lines 281-284) from between the top bar and card area
+- Pass `currentStep` and `totalSteps` to `KYFormCard` so the progress bar renders inside each card
+- Change card container from `overflow-y-auto pb-28` to `flex-1 flex` so the card fills available space vertically without scrolling. Use `overflow-y-auto hide-scrollbar` on the card content inner area only if needed for dense steps
+- Bottom nav: change from `flex-1` full-width Next button to a compact auto-width pill button, centered with Back text
 
-### 3. No changes to `KYSectionFields.tsx`, `KYFormCard.tsx`, `KYFormCardStack.tsx`, or any config/logic files.
+### 2. `src/components/kyform/KYFormCard.tsx`
+- Accept optional `currentStep` and `totalSteps` props
+- When provided, render `KYFormProgressBar` at the top of the card, inside the border, above the children content
+- Card itself uses `flex flex-col h-full` to fill available space, with children in a scrollable area if content overflows
 
-## Visual Summary
+### 3. `src/components/kyform/KYFormProgressBar.tsx`
+- No structural changes needed -- already segmented. Just ensure it works well inside the card padding.
 
-| Element | Current | New |
-|---------|---------|-----|
-| Progress bar | Single continuous gradient | Segmented: gold (done), bright gold (current), grey (remaining) |
-| Back button | Bordered pill "arrow Back" | Plain text "< Back", no background |
-| Next button | Gold gradient pill, dark text | Cream/off-white pill, dark text |
-| Complete button | Gold gradient "Complete check" | Cream pill "Complete" |
-| Step counter | "Step X of Y" in top bar | Removed |
+## Visual Layout (top to bottom)
+
+```text
++----------------------------------+
+| [<-]   Section Title       [X]  |  <- Top bar (unchanged)
+|                                  |
+| +------------------------------+ |
+| | ■■ ■■ □□ □□ □□ □□            | |  <- Progress bar INSIDE card
+| |                              | |
+| | Step Title                   | |
+| |                              | |
+| | Field 1 label                | |
+| | [____________]               | |
+| |                              | |
+| | Field 2 label                | |
+| | [____________]               | |
+| |                              | |
+| +------------------------------+ |
+|                                  |
+|       < Back    [Next >]        |  <- Compact centered nav
++----------------------------------+
+```
 
 ## Files Modified
 
 | File | Change |
 |------|--------|
-| `src/components/kyform/KYFormProgressBar.tsx` | Rebuild as segmented progress bar |
-| `src/pages/KYSectionForm.tsx` | Bottom nav redesign, remove step counter |
+| `src/pages/KYSectionForm.tsx` | Move progress bar into card, fix layout to fill viewport, compact bottom nav |
+| `src/components/kyform/KYFormCard.tsx` | Accept and render progress bar inside, use flex layout for filling |
+
