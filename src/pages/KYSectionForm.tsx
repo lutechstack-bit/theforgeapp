@@ -278,22 +278,17 @@ const KYSectionForm: React.FC = () => {
         </button>
       </div>
 
-      {/* Progress bar */}
-      <div className="relative z-10 px-6 pb-4">
-        <KYFormProgressBar currentStep={currentStep + 1} totalSteps={totalSteps} />
-      </div>
-
-      {/* Card stack area */}
-      <div className="relative z-10 flex-1 overflow-y-auto hide-scrollbar px-4 pb-28 max-w-xl mx-auto w-full">
+      {/* Card stack area - fills viewport between top bar and bottom nav */}
+      <div className="relative z-10 flex-1 flex px-4 pb-24 max-w-xl mx-auto w-full min-h-0">
         <KYFormCardStack currentStep={currentStep} totalSteps={totalSteps}>
           {/* Intro card */}
-          <KYFormCard>
+          <KYFormCard currentStep={currentStep + 1} totalSteps={totalSteps}>
             <KYSectionIntro section={section} />
           </KYFormCard>
 
           {/* Step cards */}
           {section.steps.map((step, idx) => (
-            <KYFormCard key={step.key}>
+            <KYFormCard key={step.key} currentStep={currentStep + 1} totalSteps={totalSteps}>
               <KYSectionFields
                 step={step}
                 formData={formData}
@@ -304,13 +299,13 @@ const KYSectionForm: React.FC = () => {
         </KYFormCardStack>
       </div>
 
-      {/* Sticky bottom navigation */}
+      {/* Compact centered bottom navigation */}
       <div className="fixed bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-background via-background/95 to-transparent pt-6 pb-6 px-4 safe-area-pb">
-        <div className="max-w-lg mx-auto flex items-center gap-3">
+        <div className="max-w-lg mx-auto flex items-center justify-center gap-4">
           {currentStep > 0 && (
             <button
               onClick={handleBack}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors active:scale-[0.97] px-2"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors active:scale-[0.97] px-3"
             >
               ← Back
             </button>
@@ -319,7 +314,7 @@ const KYSectionForm: React.FC = () => {
             onClick={handleNext}
             disabled={!canProceed() || loading}
             className={cn(
-              'flex-1 h-12 rounded-full text-sm font-bold transition-all',
+              'h-11 px-10 rounded-full text-sm font-bold transition-all',
               'bg-[#FCF7EF] text-[#1a1a1a]',
               'hover:bg-[#f5eddf] active:scale-[0.97]',
               'disabled:opacity-40 disabled:cursor-not-allowed'
