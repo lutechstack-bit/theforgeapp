@@ -39,28 +39,56 @@ export const KYSectionFields: React.FC<KYSectionFieldsProps> = ({
     <div className="space-y-2.5">
       {/* Step header */}
       <div className="space-y-1">
-        <h3 className="text-lg font-bold text-foreground tracking-tight">{step.title}</h3>
+        <h3 className="text-base font-bold text-foreground tracking-tight">{step.title}</h3>
         {step.subtitle && (
           <p className="text-sm text-muted-foreground leading-relaxed">{step.subtitle}</p>
         )}
         <div className="w-12 h-0.5 rounded-full bg-gradient-to-r from-forge-gold to-forge-orange" />
       </div>
 
-      {/* Fields - group inline fields together */}
+      {/* Fields - group inline and photo fields together */}
       <div className="space-y-2.5">
         {(() => {
           const rendered: string[] = [];
-          return step.fields.map((field) => {
+          const renderedIndices = new Set<number>();
+          return step.fields.map((field, idx) => {
+            if (renderedIndices.has(idx)) return null;
+
+            // Group inline fields
             if (field.inline) {
               if (rendered.includes(field.inline)) return null;
               rendered.push(field.inline);
               const inlineGroup = step.fields.filter(f => f.inline === field.inline);
+              inlineGroup.forEach((_, i) => {
+                const fi = step.fields.findIndex((f, fi2) => f.inline === field.inline && !renderedIndices.has(fi2));
+                if (fi >= 0) renderedIndices.add(fi);
+              });
               return (
                 <div key={field.inline} className="grid grid-cols-2 gap-3">
                   {inlineGroup.map(f => renderField(f, formData, updateField, setTermsModalOpen))}
                 </div>
               );
             }
+
+            // Group consecutive photo fields into a grid
+            if (field.type === 'photo') {
+              const photoFields: SectionStepField[] = [field];
+              renderedIndices.add(idx);
+              for (let j = idx + 1; j < step.fields.length; j++) {
+                if (step.fields[j].type === 'photo' && !step.fields[j].inline) {
+                  photoFields.push(step.fields[j]);
+                  renderedIndices.add(j);
+                } else break;
+              }
+              if (photoFields.length > 1) {
+                return (
+                  <div key={`photo-grid-${idx}`} className="grid grid-cols-3 gap-2">
+                    {photoFields.map(f => renderField(f, formData, updateField, setTermsModalOpen))}
+                  </div>
+                );
+              }
+            }
+
             return renderField(field, formData, updateField, setTermsModalOpen);
           });
         })()}
@@ -281,14 +309,14 @@ function renderField(
               {field.helperText} <ExternalLink className="w-3 h-3" />
             </a>
           )}
-          <div className="grid grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-4 gap-1.5">
             {MBTI_TYPES.map((type) => (
               <button
                 key={type}
                 type="button"
                 onClick={() => updateField(field.key, type)}
                 className={cn(
-                  'py-2 rounded-xl border text-sm font-bold transition-all active:scale-[0.96]',
+                  'py-1.5 rounded-xl border text-[13px] font-bold transition-all active:scale-[0.96]',
                   value === type
                     ? 'border-forge-gold bg-forge-gold/15 text-forge-gold shadow-[0_0_12px_-3px_hsl(var(--forge-gold)/0.3)]'
                     : 'border-border/50 bg-card/60 text-muted-foreground hover:border-forge-gold/40'
@@ -307,7 +335,7 @@ function renderField(
           <Label className="text-[13px] font-semibold text-foreground/90">
             {field.label} {field.required && <span className="text-destructive">*</span>}
           </Label>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-2">
             {[
               { value: 'vegetarian', emoji: '🥬', label: 'Vegetarian' },
               { value: 'non_vegetarian', emoji: '🍗', label: 'Non-Veg' },
@@ -317,13 +345,13 @@ function renderField(
                 type="button"
                 onClick={() => updateField(field.key, option.value)}
                 className={cn(
-                  'flex flex-col items-center gap-1.5 p-4 rounded-2xl border-2 transition-all active:scale-[0.97]',
+                  'flex flex-col items-center gap-1 p-2.5 rounded-2xl border-2 transition-all active:scale-[0.97]',
                   value === option.value
                     ? 'border-forge-gold bg-forge-gold/10 shadow-[0_0_20px_-5px_hsl(var(--forge-gold)/0.3)]'
                     : 'border-border/50 bg-card/60 hover:border-forge-gold/40'
                 )}
               >
-                <span className="text-2xl">{option.emoji}</span>
+                <span className="text-lg">{option.emoji}</span>
                 <span className={cn(
                   'text-sm font-semibold',
                   value === option.value ? 'text-forge-gold' : 'text-foreground'
@@ -349,7 +377,7 @@ function renderField(
                 type="button"
                 onClick={() => updateField(field.key, size)}
                 className={cn(
-                  'px-4 py-2 rounded-xl border text-sm font-bold transition-all min-w-[48px] active:scale-[0.96]',
+                  'px-3 py-1.5 rounded-xl border text-[13px] font-bold transition-all min-w-[44px] active:scale-[0.96]',
                   value === size
                     ? 'border-forge-gold bg-forge-gold/15 text-forge-gold shadow-[0_0_12px_-3px_hsl(var(--forge-gold)/0.3)]'
                     : 'border-border/50 bg-card/60 text-muted-foreground hover:border-forge-gold/40'
@@ -365,7 +393,7 @@ function renderField(
     case 'checkbox':
       return (
         <div key={field.key} className="space-y-3">
-          <div className="flex items-start gap-3 p-4 rounded-xl border border-forge-gold/20 bg-card/60 backdrop-blur-sm">
+          <div className="flex items-start gap-3 p-3 rounded-xl border border-forge-gold/20 bg-card/60 backdrop-blur-sm">
             <Checkbox
               id={field.key}
               checked={!!value}

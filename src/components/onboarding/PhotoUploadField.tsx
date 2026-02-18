@@ -73,11 +73,11 @@ export const PhotoUploadField: React.FC<PhotoUploadFieldProps> = ({
       )}
       
       {value ? (
-        <div className="relative w-32 h-32 rounded-xl overflow-hidden border-2 border-forge-gold/30 ring-2 ring-forge-gold/10">
+        <div className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-forge-gold/30 ring-2 ring-forge-gold/10">
           <img src={value} alt={label} className="w-full h-full object-cover" />
           <button
             onClick={handleRemove}
-            className="absolute top-1 right-1 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
           >
             <X className="h-3 w-3" />
           </button>
@@ -87,17 +87,17 @@ export const PhotoUploadField: React.FC<PhotoUploadFieldProps> = ({
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
           className={cn(
-            'w-32 h-32 rounded-xl border-2 border-dashed bg-card/60 backdrop-blur-sm flex flex-col items-center justify-center gap-2 transition-all',
+            'w-20 h-20 rounded-xl border-2 border-dashed bg-card/60 backdrop-blur-sm flex flex-col items-center justify-center gap-1.5 transition-all',
             'border-border hover:border-forge-gold/50',
             uploading && 'opacity-60'
           )}
         >
           {uploading ? (
-            <Loader2 className="h-6 w-6 text-forge-gold animate-spin" />
+            <Loader2 className="h-5 w-5 text-forge-gold animate-spin" />
           ) : (
             <>
-              <Image className="h-6 w-6 text-forge-gold/60" />
-              <span className="text-xs text-muted-foreground">Upload</span>
+              <Image className="h-5 w-5 text-forge-gold/60" />
+              <span className="text-[10px] text-muted-foreground">Upload</span>
             </>
           )}
         </button>

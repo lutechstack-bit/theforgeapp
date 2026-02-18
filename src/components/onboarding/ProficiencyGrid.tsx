@@ -22,19 +22,19 @@ export const ProficiencyGrid: React.FC<ProficiencyGridProps> = ({
   required = false,
 }) => {
   return (
-    <div className="space-y-3">
-      <label className="text-sm font-semibold text-foreground">
+    <div className="space-y-1.5">
+      <label className="text-[13px] font-semibold text-foreground">
         Rate your proficiency {required && <span className="text-destructive">*</span>}
       </label>
 
       <div className="rounded-2xl border border-forge-gold/20 bg-card/40 backdrop-blur-sm overflow-hidden">
         {/* Header row */}
         <div className="grid" style={{ gridTemplateColumns: `minmax(110px, 1.5fr) repeat(${levels.length}, 1fr)` }}>
-          <div className="p-2 md:p-4" />
+          <div className="p-1 md:p-2" />
           {levels.map((level) => (
             <div
               key={level}
-              className="p-1.5 md:p-3 text-center text-[9px] md:text-xs font-bold text-forge-gold uppercase tracking-wider"
+              className="p-1 md:p-2 text-center text-[9px] md:text-xs font-bold text-forge-gold uppercase tracking-wider"
             >
               {level}
             </div>
@@ -49,16 +49,16 @@ export const ProficiencyGrid: React.FC<ProficiencyGridProps> = ({
               'grid items-center border-t border-border/30',
               idx % 2 === 0 ? 'bg-card/20' : 'bg-card/40'
             )}
-style={{ gridTemplateColumns: `minmax(110px, 1.5fr) repeat(${levels.length}, 1fr)` }}
+            style={{ gridTemplateColumns: `minmax(110px, 1.5fr) repeat(${levels.length}, 1fr)` }}
           >
-            <div className="p-2 md:p-4 text-[11px] md:text-sm font-medium text-foreground leading-tight">
+            <div className="p-1.5 md:p-2.5 text-[11px] md:text-sm font-medium text-foreground leading-tight">
               {skill.label}
             </div>
             {levels.map((level) => {
               const levelValue = level.toLowerCase();
               const isSelected = values[skill.key] === levelValue;
               return (
-                <div key={level} className="flex items-center justify-center p-2 md:p-3">
+                <div key={level} className="flex items-center justify-center p-1.5 md:p-2.5">
                   <button
                     type="button"
                     onClick={() => onChange(skill.key, levelValue)}
