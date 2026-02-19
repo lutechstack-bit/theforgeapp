@@ -265,21 +265,21 @@ const KYF_SECTIONS: KYSection[] = [
     responseTable: 'kyf_responses',
     steps: [
       {
-        key: 'food_merch',
-        title: 'Food & Merch',
-        subtitle: 'Meals and T-shirt',
+        key: 'food_dietary',
+        title: 'Food & Dietary',
+        subtitle: 'Meals and dietary needs',
         fields: [
           { key: 'meal_preference', type: 'meal-preference', label: 'Meal Preference', required: true },
           { key: 'food_allergies', type: 'text', label: 'Food Allergies', placeholder: 'None', required: true },
           { key: 'medication_support', type: 'text', label: 'Medication / Medical Support', placeholder: 'None', required: true },
-          { key: 'tshirt_size', type: 'tshirt-size', label: 'T-Shirt Size', required: true },
         ],
       },
       {
-        key: 'emergency_terms',
-        title: 'Emergency & Terms',
-        subtitle: 'Safety and confirmation',
+        key: 'merch_emergency',
+        title: 'Merch & Emergency',
+        subtitle: 'T-shirt, safety, and confirmation',
         fields: [
+          { key: 'tshirt_size', type: 'tshirt-size', label: 'T-Shirt Size', required: true },
           { key: 'emergency_contact_name', type: 'text', label: 'Emergency Contact Name', placeholder: 'Parent / Guardian name', required: true, inline: 'emergency_row' },
           { key: 'emergency_contact_number', type: 'phone', label: 'Emergency Contact Number', required: true, inline: 'emergency_row' },
           { key: 'terms_accepted', type: 'checkbox', label: 'I accept the Terms & Conditions', required: true },
@@ -397,21 +397,21 @@ const KYC_SECTIONS: KYSection[] = [
     responseTable: 'kyc_responses',
     steps: [
       {
-        key: 'food_merch',
-        title: 'Food & Merch',
-        subtitle: 'Meals and T-shirt',
+        key: 'food_dietary',
+        title: 'Food & Dietary',
+        subtitle: 'Meals and dietary needs',
         fields: [
           { key: 'meal_preference', type: 'meal-preference', label: 'Meal Preference', required: true },
           { key: 'food_allergies', type: 'text', label: 'Food Allergies', placeholder: 'None', required: true },
           { key: 'medication_support', type: 'text', label: 'Medication / Medical Support', placeholder: 'None', required: true },
-          { key: 'tshirt_size', type: 'tshirt-size', label: 'T-Shirt Size', required: true },
         ],
       },
       {
-        key: 'emergency_terms',
-        title: 'Emergency & Terms',
-        subtitle: 'Safety and confirmation',
+        key: 'merch_emergency',
+        title: 'Merch & Emergency',
+        subtitle: 'T-shirt, safety, and confirmation',
         fields: [
+          { key: 'tshirt_size', type: 'tshirt-size', label: 'T-Shirt Size', required: true },
           { key: 'emergency_contact_name', type: 'text', label: 'Emergency Contact Name', placeholder: 'Parent / Guardian name', required: true, inline: 'emergency_row' },
           { key: 'emergency_contact_number', type: 'phone', label: 'Emergency Contact Number', required: true, inline: 'emergency_row' },
           { key: 'terms_accepted', type: 'checkbox', label: 'I accept the Terms & Conditions', required: true },
@@ -519,21 +519,21 @@ const KYW_SECTIONS: KYSection[] = [
     responseTable: 'kyw_responses',
     steps: [
       {
-        key: 'food_merch',
-        title: 'Food & Merch',
-        subtitle: 'Meals and T-shirt',
+        key: 'food_dietary',
+        title: 'Food & Dietary',
+        subtitle: 'Meals and dietary needs',
         fields: [
           { key: 'meal_preference', type: 'meal-preference', label: 'Meal Preference', required: true },
           { key: 'food_allergies', type: 'text', label: 'Food Allergies', placeholder: 'None', required: true },
           { key: 'medication_support', type: 'text', label: 'Medication / Medical Support', placeholder: 'None', required: true },
-          { key: 'tshirt_size', type: 'tshirt-size', label: 'T-Shirt Size', required: true },
         ],
       },
       {
-        key: 'emergency_terms',
-        title: 'Emergency & Terms',
-        subtitle: 'Safety and confirmation',
+        key: 'merch_emergency',
+        title: 'Merch & Emergency',
+        subtitle: 'T-shirt, safety, and confirmation',
         fields: [
+          { key: 'tshirt_size', type: 'tshirt-size', label: 'T-Shirt Size', required: true },
           { key: 'emergency_contact_name', type: 'text', label: 'Emergency Contact Name', placeholder: 'Parent / Guardian name', required: true, inline: 'emergency_row' },
           { key: 'emergency_contact_number', type: 'phone', label: 'Emergency Contact Number', required: true, inline: 'emergency_row' },
           { key: 'terms_accepted', type: 'checkbox', label: 'I accept the Terms & Conditions', required: true },
