@@ -1,58 +1,53 @@
 
 
-# Fix KY Form Card Sizing, Padding, and Empty Space Issues
+# Merge "Your Vibe" into "Favorites & Personality" for All Cohorts
 
-## Problems (from screenshots)
+## What Changes
 
-1. **Content overflows requiring scroll** -- Dense steps like "Food & Merch" (4 fields including meal-preference and tshirt-size) still clip at the bottom
-2. **Cards stretch to fill full height** -- Steps with fewer fields (like "Your Address" with 3 fields) show a large empty gap at the bottom
-3. **Header + bottom nav eat too much vertical space** -- Combined with generous internal padding (`md:p-7` = 28px), content gets squeezed
+Remove the separate "Your Vibe" step from all three cohorts (KYF, KYC, KYW) and merge its fields into the preceding "Favorites & Personality" step, creating a single combined final step titled **"Understanding You"** that matches the reference wireframe.
 
-## Root Cause
+## Reference Layout (Second Image)
 
-- `KYFormCard` uses `h-full` forcing all cards to stretch to the full container height regardless of content
-- Internal padding (`p-3 md:p-7`) and progress bar padding (`px-3 pt-3 md:px-7 md:pt-5`) are too generous
-- `KYFormCardStack` wraps cards with `h-full` propagating the stretch
-- `KYSectionForm` card area uses `pb-20` (80px) for bottom nav clearance -- too much
-- `KYSectionFields` step header has `space-y-1` wrapper adding unnecessary vertical space
+The final step should show all these fields in one card:
+1. **Top 3 movies/creators/writers** (tags input)
+2. **Your MBTI** (4x4 pill grid)
+3. **You are** (2 compact horizontal pills: Early bird / Night owl)
+4. **What brings you here?** (compact horizontal wrap pills)
 
-## Changes
+## Changes to `src/components/kyform/KYSectionConfig.ts`
 
-### 1. `src/components/kyform/KYFormCard.tsx`
-- Change `h-full` to `max-h-full` so cards shrink to fit content
-- Reduce content padding from `p-3 md:p-7` to `p-3 md:p-5`
-- Reduce progress bar padding from `px-3 pt-3 md:px-7 md:pt-5` to `px-3 pt-3 md:px-5 md:pt-4`
+### For all 3 cohorts (KYF lines 188-206, KYC lines 363-381, KYW lines 485-503):
 
-### 2. `src/components/kyform/KYFormCardStack.tsx`
-- Add `items-center` to the stack container so cards center vertically instead of stretching top-to-bottom
-- Change current card and incoming card wrappers from `h-full` to `h-auto max-h-full`
+**Delete** the `your_vibe` step entirely and **merge** its fields into the `favorites_personality` step. Rename the combined step:
 
-### 3. `src/pages/KYSectionForm.tsx`
-- Add `items-center` to the card area flex container so the card sits centered vertically
-- Reduce `pb-20` to `pb-16` to reclaim 16px of vertical space
+- **key**: `understanding_you`
+- **title**: "Understanding You"
+- **subtitle**: "To assign you to compatible groups"
 
-### 4. `src/components/kyform/KYSectionFields.tsx`
-- Replace the step header `space-y-1` wrapper with `mb-2` for tighter spacing
-- Reduce the gold accent line's visual gap
+**Fields in the merged step (in order):**
+1. `top_3_movies` / `top_3_creators` / `top_3_writers_books` (tags, maxItems: 3)
+2. `mbti_type` (mbti grid)
+3. `chronotype` (radio, columns: 2) -- simplified to 2 options: Early bird and Night owl (remove "Somewhere in between")
+4. `forge_intent` (radio) -- keep cohort-specific options but remove `forge_intent_other` text field to save space
 
-### 5. `src/components/kyform/KYSectionConfig.ts` -- Further split "Food & Merch"
-The "Food & Merch" step has 4 fields including meal-preference (tall 2-column buttons) and tshirt-size (wrapped pill row), which together still overflow. Split into:
-- **"Food & Dietary"**: meal_preference + food_allergies + medication_support (3 fields)
-- **"Merch"**: tshirt_size only (1 field -- but pairs naturally with the next "Emergency & Terms" step, so merge tshirt into that step instead)
+**Simplify chronotype options** (shared across all cohorts):
+- From 3 options with descriptions to 2 compact options: `{ value: 'early_bird', label: 'Early bird' }` and `{ value: 'night_owl', label: 'Night owl' }`
+- Use `columns: 2` for side-by-side layout
 
-Final hospitality layout for ALL three cohorts:
-- Step 1: "Food & Dietary" -- meal_preference, food_allergies, medication_support
-- Step 2: "Merch & Emergency" -- tshirt_size, emergency_contact (inline), terms_accepted
+**Simplify forge_intent options** per cohort:
+- KYF: Keep top 4 (Make a film, Learn, Find crew, Portfolio) -- remove verbose labels, drop "Other"
+- KYC: Keep top 4 similarly
+- KYW: Keep top 4 similarly
 
-This keeps each step at 3-4 fields max.
+**Remove** `forge_intent_other` field from all cohorts (no longer needed without "Other" option).
+
+### Net result per cohort profile section:
+- **Before**: 5 steps (general, address, proficiency, favorites_personality, your_vibe)
+- **After**: 4 steps (general, address, proficiency, understanding_you)
 
 ## Files Modified
 
 | File | Change |
 |------|--------|
-| `src/components/kyform/KYFormCard.tsx` | `h-full` to `max-h-full`, reduce padding |
-| `src/components/kyform/KYFormCardStack.tsx` | Add `items-center`, card wrappers to `h-auto max-h-full` |
-| `src/pages/KYSectionForm.tsx` | Add `items-center`, reduce `pb-20` to `pb-16` |
-| `src/components/kyform/KYSectionFields.tsx` | Tighten header spacing |
-| `src/components/kyform/KYSectionConfig.ts` | Re-split hospitality steps for all 3 cohorts (KYF, KYC, KYW) |
+| `src/components/kyform/KYSectionConfig.ts` | Merge your_vibe into favorites_personality for KYF, KYC, KYW; simplify chronotype to 2 options; remove forge_intent_other |
 
