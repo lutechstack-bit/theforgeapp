@@ -90,9 +90,9 @@ const AllCourses: React.FC = () => {
       {/* Content */}
       <div className="p-4">
         {isLoading ? (
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="aspect-[3/4] rounded-2xl bg-card animate-pulse" />
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="aspect-[16/10] rounded-2xl bg-card animate-pulse" />
             ))}
           </div>
         ) : filteredCourses.length === 0 ? (
@@ -108,7 +108,7 @@ const AllCourses: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {filteredCourses.map((course) => (
               <LearnCourseCard
                 key={course.id}
@@ -116,6 +116,7 @@ const AllCourses: React.FC = () => {
                 title={course.title}
                 thumbnailUrl={course.thumbnail_url}
                 durationMinutes={course.duration_minutes}
+                cardLayout="landscape"
                 onClick={() => handleCardClick(course)}
               />
             ))}
