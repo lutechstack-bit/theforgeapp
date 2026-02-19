@@ -427,6 +427,8 @@ export type Database = {
           description: string | null
           event_date: string
           event_type_id: string | null
+          host_avatar_url: string | null
+          host_name: string | null
           id: string
           image_url: string | null
           is_virtual: boolean
@@ -441,6 +443,8 @@ export type Database = {
           description?: string | null
           event_date: string
           event_type_id?: string | null
+          host_avatar_url?: string | null
+          host_name?: string | null
           id?: string
           image_url?: string | null
           is_virtual?: boolean
@@ -455,6 +459,8 @@ export type Database = {
           description?: string | null
           event_date?: string
           event_type_id?: string | null
+          host_avatar_url?: string | null
+          host_name?: string | null
           id?: string
           image_url?: string | null
           is_virtual?: boolean
