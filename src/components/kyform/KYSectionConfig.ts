@@ -49,36 +49,29 @@ export interface KYSection {
 const MBTI_TYPES = ['ISTJ', 'ISFJ', 'INFJ', 'INTJ', 'ISTP', 'ISFP', 'INFP', 'INTP', 'ESTP', 'ESFP', 'ENFP', 'ENTP', 'ESTJ', 'ESFJ', 'ENFJ', 'ENTJ'];
 
 const CHRONOTYPE_OPTIONS = [
-  { value: 'early_bird', label: '🌅 Early Bird', description: 'I wake up early and am most productive in the morning' },
-  { value: 'night_owl', label: '🦉 Night Owl', description: 'I stay up late and am most creative at night' },
-  { value: 'in_between', label: '⚖️ Somewhere in between' },
+  { value: 'early_bird', label: 'Early bird' },
+  { value: 'night_owl', label: 'Night owl' },
 ];
 
 const INTENT_OPTIONS_FILM = [
-  { value: 'vacation', label: 'Enjoy a vacation combined with filmmaking' },
-  { value: 'crew', label: 'Finding your crew' },
-  { value: 'learn', label: 'Learn filmmaking in the best environment' },
-  { value: 'make_film', label: 'Make your short film' },
-  { value: 'networking', label: 'Networking / Making new friends' },
-  { value: 'equipment', label: 'Use Cinema-grade Equipment' },
-  { value: 'other', label: 'Other' },
+  { value: 'make_film', label: 'Make a film' },
+  { value: 'learn', label: 'Learn filmmaking' },
+  { value: 'crew', label: 'Find my crew' },
+  { value: 'networking', label: 'Build my portfolio' },
 ];
 
 const INTENT_OPTIONS_CREATOR = [
-  { value: 'learn', label: 'Learn content creation professionally' },
-  { value: 'networking', label: 'Networking / Making new friends' },
-  { value: 'grow_channel', label: 'Grow my channel / platform' },
-  { value: 'collab', label: 'Find collaboration partners' },
-  { value: 'equipment', label: 'Use professional equipment' },
-  { value: 'other', label: 'Other' },
+  { value: 'learn', label: 'Learn professionally' },
+  { value: 'grow_channel', label: 'Grow my channel' },
+  { value: 'collab', label: 'Find collaborators' },
+  { value: 'networking', label: 'Build my network' },
 ];
 
 const INTENT_OPTIONS_WRITER = [
-  { value: 'learn', label: 'Learn screenwriting professionally' },
+  { value: 'learn', label: 'Learn writing' },
   { value: 'finish_script', label: 'Finish my script' },
-  { value: 'networking', label: 'Networking / Making new friends' },
-  { value: 'feedback', label: 'Get feedback on my work' },
-  { value: 'other', label: 'Other' },
+  { value: 'feedback', label: 'Get feedback' },
+  { value: 'networking', label: 'Build my network' },
 ];
 
 const LANGUAGES = ['English', 'Hindi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada'];
@@ -186,22 +179,14 @@ const KYF_SECTIONS: KYSection[] = [
         ],
       },
       {
-        key: 'favorites_personality',
-        title: 'Favorites & Personality',
-        subtitle: 'Your taste and type',
+        key: 'understanding_you',
+        title: 'Understanding You',
+        subtitle: 'To assign you to compatible groups',
         fields: [
           { key: 'top_3_movies', type: 'tags', label: 'Your Top 3 Movies', placeholder: 'Type a movie name and press Enter', maxItems: 3, required: true },
-          { key: 'mbti_type', type: 'mbti', label: 'MBTI Personality Type', required: true, helperText: 'Take the test at 16personalities.com if unsure' },
-        ],
-      },
-      {
-        key: 'your_vibe',
-        title: 'Your Vibe',
-        subtitle: 'How you roll',
-        fields: [
-          { key: 'chronotype', type: 'radio', label: 'What\'s your chronotype?', options: CHRONOTYPE_OPTIONS, required: true },
-          { key: 'forge_intent', type: 'radio', label: 'What do you hope to gain from Forge?', options: INTENT_OPTIONS_FILM, required: true },
-          { key: 'forge_intent_other', type: 'text', label: 'Please specify', placeholder: 'Tell us more...', helperText: 'Only if you selected "Other" above' },
+          { key: 'mbti_type', type: 'mbti', label: 'Your MBTI', required: true, helperText: 'Take the test at 16personalities.com if unsure' },
+          { key: 'chronotype', type: 'radio', label: 'You are', options: CHRONOTYPE_OPTIONS, required: true, columns: 2 },
+          { key: 'forge_intent', type: 'radio', label: 'What brings you here?', options: INTENT_OPTIONS_FILM, required: true, columns: 2 },
         ],
       },
     ],
@@ -361,22 +346,14 @@ const KYC_SECTIONS: KYSection[] = [
         ],
       },
       {
-        key: 'favorites_personality',
-        title: 'Favorites & Personality',
-        subtitle: 'Your taste and type',
+        key: 'understanding_you',
+        title: 'Understanding You',
+        subtitle: 'To assign you to compatible groups',
         fields: [
           { key: 'top_3_creators', type: 'tags', label: 'Your Top 3 Creators', placeholder: 'Type a creator name and press Enter', maxItems: 3, required: true },
-          { key: 'mbti_type', type: 'mbti', label: 'MBTI Personality Type', required: true, helperText: 'Take the test at 16personalities.com if unsure' },
-        ],
-      },
-      {
-        key: 'your_vibe',
-        title: 'Your Vibe',
-        subtitle: 'How you roll',
-        fields: [
-          { key: 'chronotype', type: 'radio', label: 'What\'s your chronotype?', options: CHRONOTYPE_OPTIONS, required: true },
-          { key: 'forge_intent', type: 'radio', label: 'What do you hope to gain from Forge?', options: INTENT_OPTIONS_CREATOR, required: true },
-          { key: 'forge_intent_other', type: 'text', label: 'Please specify', placeholder: 'Tell us more...', helperText: 'Only if you selected "Other" above' },
+          { key: 'mbti_type', type: 'mbti', label: 'Your MBTI', required: true, helperText: 'Take the test at 16personalities.com if unsure' },
+          { key: 'chronotype', type: 'radio', label: 'You are', options: CHRONOTYPE_OPTIONS, required: true, columns: 2 },
+          { key: 'forge_intent', type: 'radio', label: 'What brings you here?', options: INTENT_OPTIONS_CREATOR, required: true, columns: 2 },
         ],
       },
     ],
@@ -483,22 +460,14 @@ const KYW_SECTIONS: KYSection[] = [
         ],
       },
       {
-        key: 'favorites_personality',
-        title: 'Favorites & Personality',
-        subtitle: 'Your taste and type',
+        key: 'understanding_you',
+        title: 'Understanding You',
+        subtitle: 'To assign you to compatible groups',
         fields: [
           { key: 'top_3_writers_books', type: 'tags', label: 'Your Top 3 Writers or Books', placeholder: 'Type a name and press Enter', maxItems: 3, required: true },
-          { key: 'mbti_type', type: 'mbti', label: 'MBTI Personality Type', required: true, helperText: 'Take the test at 16personalities.com if unsure' },
-        ],
-      },
-      {
-        key: 'your_vibe',
-        title: 'Your Vibe',
-        subtitle: 'How you roll',
-        fields: [
-          { key: 'chronotype', type: 'radio', label: 'What\'s your chronotype?', options: CHRONOTYPE_OPTIONS, required: true },
-          { key: 'forge_intent', type: 'radio', label: 'What do you hope to gain from Forge?', options: INTENT_OPTIONS_WRITER, required: true },
-          { key: 'forge_intent_other', type: 'text', label: 'Please specify', placeholder: 'Tell us more...', helperText: 'Only if you selected "Other" above' },
+          { key: 'mbti_type', type: 'mbti', label: 'Your MBTI', required: true, helperText: 'Take the test at 16personalities.com if unsure' },
+          { key: 'chronotype', type: 'radio', label: 'You are', options: CHRONOTYPE_OPTIONS, required: true, columns: 2 },
+          { key: 'forge_intent', type: 'radio', label: 'What brings you here?', options: INTENT_OPTIONS_WRITER, required: true, columns: 2 },
         ],
       },
     ],
