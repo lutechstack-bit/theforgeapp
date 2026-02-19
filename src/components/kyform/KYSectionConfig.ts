@@ -179,12 +179,19 @@ const KYF_SECTIONS: KYSection[] = [
         ],
       },
       {
-        key: 'understanding_you',
-        title: 'Understanding You',
+        key: 'favorites_personality',
+        title: 'Favorites & Personality',
         subtitle: 'To assign you to compatible groups',
         fields: [
           { key: 'top_3_movies', type: 'tags', label: 'Your Top 3 Movies', placeholder: 'Type a movie name and press Enter', maxItems: 3, required: true },
           { key: 'mbti_type', type: 'mbti', label: 'Your MBTI', required: true, helperText: 'Take the test at 16personalities.com if unsure' },
+        ],
+      },
+      {
+        key: 'your_vibe',
+        title: 'Your Vibe',
+        subtitle: 'One last thing about you',
+        fields: [
           { key: 'chronotype', type: 'chronotype', label: 'You are', options: CHRONOTYPE_OPTIONS, required: true },
           { key: 'forge_intent', type: 'pill-select', label: 'What brings you here?', options: INTENT_OPTIONS_FILM, required: true },
         ],
@@ -346,12 +353,19 @@ const KYC_SECTIONS: KYSection[] = [
         ],
       },
       {
-        key: 'understanding_you',
-        title: 'Understanding You',
+        key: 'favorites_personality',
+        title: 'Favorites & Personality',
         subtitle: 'To assign you to compatible groups',
         fields: [
           { key: 'top_3_creators', type: 'tags', label: 'Your Top 3 Creators', placeholder: 'Type a creator name and press Enter', maxItems: 3, required: true },
           { key: 'mbti_type', type: 'mbti', label: 'Your MBTI', required: true, helperText: 'Take the test at 16personalities.com if unsure' },
+        ],
+      },
+      {
+        key: 'your_vibe',
+        title: 'Your Vibe',
+        subtitle: 'One last thing about you',
+        fields: [
           { key: 'chronotype', type: 'chronotype', label: 'You are', options: CHRONOTYPE_OPTIONS, required: true },
           { key: 'forge_intent', type: 'pill-select', label: 'What brings you here?', options: INTENT_OPTIONS_CREATOR, required: true },
         ],
@@ -460,12 +474,19 @@ const KYW_SECTIONS: KYSection[] = [
         ],
       },
       {
-        key: 'understanding_you',
-        title: 'Understanding You',
+        key: 'favorites_personality',
+        title: 'Favorites & Personality',
         subtitle: 'To assign you to compatible groups',
         fields: [
           { key: 'top_3_writers_books', type: 'tags', label: 'Your Top 3 Writers or Books', placeholder: 'Type a name and press Enter', maxItems: 3, required: true },
           { key: 'mbti_type', type: 'mbti', label: 'Your MBTI', required: true, helperText: 'Take the test at 16personalities.com if unsure' },
+        ],
+      },
+      {
+        key: 'your_vibe',
+        title: 'Your Vibe',
+        subtitle: 'One last thing about you',
+        fields: [
           { key: 'chronotype', type: 'chronotype', label: 'You are', options: CHRONOTYPE_OPTIONS, required: true },
           { key: 'forge_intent', type: 'pill-select', label: 'What brings you here?', options: INTENT_OPTIONS_WRITER, required: true },
         ],
