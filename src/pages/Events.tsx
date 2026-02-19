@@ -130,6 +130,8 @@ const Events: React.FC = () => {
                       isFillingFast={!event.is_virtual}
                       isRegistered={userRegistrations.includes(event.id)}
                       isPastEvent={false}
+                      hostName={(event as any).host_name || undefined}
+                      hostAvatar={(event as any).host_avatar_url || undefined}
                       onRegister={(e) => handleRegisterClick(e, event)}
                       onClick={() => navigate(`/events/${event.id}`)}
                     />
@@ -156,6 +158,8 @@ const Events: React.FC = () => {
                       isVirtual={event.is_virtual}
                       eventType={event.event_types?.name}
                       isPastEvent={true}
+                      hostName={(event as any).host_name || undefined}
+                      hostAvatar={(event as any).host_avatar_url || undefined}
                       onClick={() => navigate(`/events/${event.id}`)}
                     />
                   ))}
