@@ -38,12 +38,12 @@ export const KYSectionFields: React.FC<KYSectionFieldsProps> = ({
   return (
     <div className="space-y-2.5">
       {/* Step header */}
-      <div className="space-y-1">
+      <div className="mb-2">
         <h3 className="text-base font-bold text-foreground tracking-tight">{step.title}</h3>
         {step.subtitle && (
-          <p className="text-sm text-muted-foreground leading-relaxed">{step.subtitle}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{step.subtitle}</p>
         )}
-        <div className="w-12 h-0.5 rounded-full bg-gradient-to-r from-forge-gold to-forge-orange" />
+        <div className="w-12 h-0.5 rounded-full bg-gradient-to-r from-forge-gold to-forge-orange mt-1" />
       </div>
 
       {/* Fields - group inline and photo fields together */}
