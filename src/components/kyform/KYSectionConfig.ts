@@ -153,8 +153,14 @@ const KYF_SECTIONS: KYSection[] = [
           { key: 'current_occupation', type: 'text', label: 'Current Occupation', placeholder: 'e.g. Student, Freelancer, Working Professional', required: true },
           { key: 'instagram_id', type: 'text', label: 'Instagram ID', placeholder: '@yourhandle', required: true },
           { key: 'date_of_birth', type: 'date', label: 'Date of Birth', required: true },
+        ],
+      },
+      {
+        key: 'address_details',
+        title: 'Your Address',
+        subtitle: 'Where are you based?',
+        fields: [
           { key: 'address_line_1', type: 'text', label: 'Address Line 1', placeholder: 'Street address', required: true },
-          
           { key: 'state', type: 'country-state', label: 'Country & State', countryKey: 'country', required: true, inline: 'location_row' },
           { key: 'pincode', type: 'text', label: 'Pincode', placeholder: '6-digit pincode', required: true, inline: 'location_row' },
         ],
@@ -180,12 +186,19 @@ const KYF_SECTIONS: KYSection[] = [
         ],
       },
       {
-        key: 'understanding',
-        title: 'Understanding You',
-        subtitle: 'Help us know you better',
+        key: 'favorites_personality',
+        title: 'Favorites & Personality',
+        subtitle: 'Your taste and type',
         fields: [
           { key: 'top_3_movies', type: 'tags', label: 'Your Top 3 Movies', placeholder: 'Type a movie name and press Enter', maxItems: 3, required: true },
           { key: 'mbti_type', type: 'mbti', label: 'MBTI Personality Type', required: true, helperText: 'Take the test at 16personalities.com if unsure' },
+        ],
+      },
+      {
+        key: 'your_vibe',
+        title: 'Your Vibe',
+        subtitle: 'How you roll',
+        fields: [
           { key: 'chronotype', type: 'radio', label: 'What\'s your chronotype?', options: CHRONOTYPE_OPTIONS, required: true },
           { key: 'forge_intent', type: 'radio', label: 'What do you hope to gain from Forge?', options: INTENT_OPTIONS_FILM, required: true },
           { key: 'forge_intent_other', type: 'text', label: 'Please specify', placeholder: 'Tell us more...', helperText: 'Only if you selected "Other" above' },
@@ -252,14 +265,21 @@ const KYF_SECTIONS: KYSection[] = [
     responseTable: 'kyf_responses',
     steps: [
       {
-        key: 'hospitality_details',
-        title: 'Hospitality Details',
-        subtitle: 'Meals, merch & emergency info',
+        key: 'food_merch',
+        title: 'Food & Merch',
+        subtitle: 'Meals and T-shirt',
         fields: [
           { key: 'meal_preference', type: 'meal-preference', label: 'Meal Preference', required: true },
           { key: 'food_allergies', type: 'text', label: 'Food Allergies', placeholder: 'None', required: true },
           { key: 'medication_support', type: 'text', label: 'Medication / Medical Support', placeholder: 'None', required: true },
           { key: 'tshirt_size', type: 'tshirt-size', label: 'T-Shirt Size', required: true },
+        ],
+      },
+      {
+        key: 'emergency_terms',
+        title: 'Emergency & Terms',
+        subtitle: 'Safety and confirmation',
+        fields: [
           { key: 'emergency_contact_name', type: 'text', label: 'Emergency Contact Name', placeholder: 'Parent / Guardian name', required: true, inline: 'emergency_row' },
           { key: 'emergency_contact_number', type: 'phone', label: 'Emergency Contact Number', required: true, inline: 'emergency_row' },
           { key: 'terms_accepted', type: 'checkbox', label: 'I accept the Terms & Conditions', required: true },
@@ -300,6 +320,13 @@ const KYC_SECTIONS: KYSection[] = [
           ], required: true },
           { key: 'instagram_id', type: 'text', label: 'Instagram ID', placeholder: '@yourhandle', required: true },
           { key: 'date_of_birth', type: 'date', label: 'Date of Birth', required: true },
+        ],
+      },
+      {
+        key: 'location_platform',
+        title: 'Location & Platform',
+        subtitle: 'Where you are and what you use',
+        fields: [
           { key: 'state', type: 'country-state', label: 'Country & State', countryKey: 'country', required: true },
           { key: 'primary_platform', type: 'radio', label: 'Primary Platform', options: [
             { value: 'youtube', label: 'YouTube' },
@@ -334,12 +361,19 @@ const KYC_SECTIONS: KYSection[] = [
         ],
       },
       {
-        key: 'understanding',
-        title: 'Understanding You',
-        subtitle: 'Help us know you better',
+        key: 'favorites_personality',
+        title: 'Favorites & Personality',
+        subtitle: 'Your taste and type',
         fields: [
           { key: 'top_3_creators', type: 'tags', label: 'Your Top 3 Creators', placeholder: 'Type a creator name and press Enter', maxItems: 3, required: true },
           { key: 'mbti_type', type: 'mbti', label: 'MBTI Personality Type', required: true, helperText: 'Take the test at 16personalities.com if unsure' },
+        ],
+      },
+      {
+        key: 'your_vibe',
+        title: 'Your Vibe',
+        subtitle: 'How you roll',
+        fields: [
           { key: 'chronotype', type: 'radio', label: 'What\'s your chronotype?', options: CHRONOTYPE_OPTIONS, required: true },
           { key: 'forge_intent', type: 'radio', label: 'What do you hope to gain from Forge?', options: INTENT_OPTIONS_CREATOR, required: true },
           { key: 'forge_intent_other', type: 'text', label: 'Please specify', placeholder: 'Tell us more...', helperText: 'Only if you selected "Other" above' },
@@ -363,14 +397,21 @@ const KYC_SECTIONS: KYSection[] = [
     responseTable: 'kyc_responses',
     steps: [
       {
-        key: 'hospitality_details',
-        title: 'Hospitality Details',
-        subtitle: 'Meals, merch & emergency info',
+        key: 'food_merch',
+        title: 'Food & Merch',
+        subtitle: 'Meals and T-shirt',
         fields: [
           { key: 'meal_preference', type: 'meal-preference', label: 'Meal Preference', required: true },
           { key: 'food_allergies', type: 'text', label: 'Food Allergies', placeholder: 'None', required: true },
           { key: 'medication_support', type: 'text', label: 'Medication / Medical Support', placeholder: 'None', required: true },
           { key: 'tshirt_size', type: 'tshirt-size', label: 'T-Shirt Size', required: true },
+        ],
+      },
+      {
+        key: 'emergency_terms',
+        title: 'Emergency & Terms',
+        subtitle: 'Safety and confirmation',
+        fields: [
           { key: 'emergency_contact_name', type: 'text', label: 'Emergency Contact Name', placeholder: 'Parent / Guardian name', required: true, inline: 'emergency_row' },
           { key: 'emergency_contact_number', type: 'phone', label: 'Emergency Contact Number', required: true, inline: 'emergency_row' },
           { key: 'terms_accepted', type: 'checkbox', label: 'I accept the Terms & Conditions', required: true },
@@ -404,6 +445,13 @@ const KYW_SECTIONS: KYSection[] = [
           { key: 'certificate_name', type: 'text', label: 'Name (as on certificate)', placeholder: 'Your full legal name', required: true },
           { key: 'current_occupation', type: 'text', label: 'Current Occupation', placeholder: 'e.g. Student, Freelancer, Working Professional', required: true },
           { key: 'date_of_birth', type: 'date', label: 'Date of Birth', required: true },
+        ],
+      },
+      {
+        key: 'location_writing',
+        title: 'Location & Writing',
+        subtitle: 'Where you are and what you write',
+        fields: [
           { key: 'city', type: 'country-state', label: 'Country & State', countryKey: 'country', required: false },
           { key: 'writing_types', type: 'multi-select', label: 'Types of Writing', options: [
             { value: 'screenwriting', label: 'Screenwriting' },
@@ -435,12 +483,19 @@ const KYW_SECTIONS: KYSection[] = [
         ],
       },
       {
-        key: 'understanding',
-        title: 'Understanding You',
-        subtitle: 'Help us know you better',
+        key: 'favorites_personality',
+        title: 'Favorites & Personality',
+        subtitle: 'Your taste and type',
         fields: [
           { key: 'top_3_writers_books', type: 'tags', label: 'Your Top 3 Writers or Books', placeholder: 'Type a name and press Enter', maxItems: 3, required: true },
           { key: 'mbti_type', type: 'mbti', label: 'MBTI Personality Type', required: true, helperText: 'Take the test at 16personalities.com if unsure' },
+        ],
+      },
+      {
+        key: 'your_vibe',
+        title: 'Your Vibe',
+        subtitle: 'How you roll',
+        fields: [
           { key: 'chronotype', type: 'radio', label: 'What\'s your chronotype?', options: CHRONOTYPE_OPTIONS, required: true },
           { key: 'forge_intent', type: 'radio', label: 'What do you hope to gain from Forge?', options: INTENT_OPTIONS_WRITER, required: true },
           { key: 'forge_intent_other', type: 'text', label: 'Please specify', placeholder: 'Tell us more...', helperText: 'Only if you selected "Other" above' },
@@ -464,14 +519,21 @@ const KYW_SECTIONS: KYSection[] = [
     responseTable: 'kyw_responses',
     steps: [
       {
-        key: 'hospitality_details',
-        title: 'Hospitality Details',
-        subtitle: 'Meals, merch & emergency info',
+        key: 'food_merch',
+        title: 'Food & Merch',
+        subtitle: 'Meals and T-shirt',
         fields: [
           { key: 'meal_preference', type: 'meal-preference', label: 'Meal Preference', required: true },
           { key: 'food_allergies', type: 'text', label: 'Food Allergies', placeholder: 'None', required: true },
           { key: 'medication_support', type: 'text', label: 'Medication / Medical Support', placeholder: 'None', required: true },
           { key: 'tshirt_size', type: 'tshirt-size', label: 'T-Shirt Size', required: true },
+        ],
+      },
+      {
+        key: 'emergency_terms',
+        title: 'Emergency & Terms',
+        subtitle: 'Safety and confirmation',
+        fields: [
           { key: 'emergency_contact_name', type: 'text', label: 'Emergency Contact Name', placeholder: 'Parent / Guardian name', required: true, inline: 'emergency_row' },
           { key: 'emergency_contact_number', type: 'phone', label: 'Emergency Contact Number', required: true, inline: 'emergency_row' },
           { key: 'terms_accepted', type: 'checkbox', label: 'I accept the Terms & Conditions', required: true },
