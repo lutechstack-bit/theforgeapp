@@ -45,7 +45,7 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
 
   if (cardLayout === 'landscape') {
     return (
-      <div onClick={handleClick} className="group cursor-pointer w-[320px] sm:w-[360px] flex-shrink-0">
+      <div onClick={handleClick} className="group cursor-pointer w-full flex-shrink-0">
         <div className="relative aspect-[16/10] rounded-2xl overflow-hidden border border-border/30 group-hover:border-primary/30 transition-colors duration-300">
           <img
             src={thumbnailUrl || '/images/learn/pre-forge-placeholder.png'}

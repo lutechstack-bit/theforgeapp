@@ -163,6 +163,7 @@ const Learn: React.FC = () => {
               title="Pre Forge Sessions"
               subtitle="Filmmaking fundamentals: For Forge and Beyond"
               sectionType="bfp_sessions"
+              gridLayout={true}
               defaultCardLayout="landscape"
               defaultThumbnail="/images/learn/pre-forge-placeholder.png"
               onCardClick={handleCardClick}
@@ -256,6 +257,7 @@ interface CourseCarouselSectionProps {
   title: string;
   subtitle?: string;
   sectionType?: string;
+  gridLayout?: boolean;
   defaultCardLayout?: 'portrait' | 'landscape';
   defaultThumbnail?: string;
   onCardClick: (item: LearnContent) => void;
@@ -267,12 +269,16 @@ const CourseCarouselSection: React.FC<CourseCarouselSectionProps> = ({
   title,
   subtitle,
   sectionType,
+  gridLayout,
   defaultCardLayout,
   defaultThumbnail,
   onCardClick,
   onViewAll,
 }) => {
   if (items.length === 0) return null;
+
+  const displayItems = gridLayout ? items.slice(0, 6) : items;
+  const showViewAll = gridLayout ? items.length > 6 : items.length > 3;
 
   return (
     <section className="space-y-4">
@@ -283,7 +289,7 @@ const CourseCarouselSection: React.FC<CourseCarouselSectionProps> = ({
             <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
           )}
         </div>
-        {items.length > 3 && sectionType && (
+        {showViewAll && sectionType && (
           <button
             onClick={() => onViewAll(sectionType)}
             className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/15 active:scale-95 tap-feedback"
@@ -293,7 +299,29 @@ const CourseCarouselSection: React.FC<CourseCarouselSectionProps> = ({
         )}
       </div>
 
-      <ScrollableCardRow>
+      {gridLayout ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {displayItems.map((item) => {
+            const layout = (item.card_layout as 'portrait' | 'landscape') || defaultCardLayout || 'portrait';
+            const thumb = item.thumbnail_url || (defaultThumbnail && layout === 'landscape' ? defaultThumbnail : undefined);
+            return (
+              <LearnCourseCard
+                key={item.id}
+                id={item.id}
+                title={item.title}
+                thumbnailUrl={thumb}
+                durationMinutes={item.duration_minutes}
+                category={item.category}
+                instructorName={item.instructor_name}
+                companyName={item.company_name}
+                cardLayout={layout}
+                onClick={() => onCardClick(item)}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        <ScrollableCardRow>
           {items.map((item) => {
             const layout = (item.card_layout as 'portrait' | 'landscape') || defaultCardLayout || 'portrait';
             const thumb = item.thumbnail_url || (defaultThumbnail && layout === 'landscape' ? defaultThumbnail : undefined);
@@ -313,7 +341,8 @@ const CourseCarouselSection: React.FC<CourseCarouselSectionProps> = ({
               </div>
             );
           })}
-      </ScrollableCardRow>
+        </ScrollableCardRow>
+      )}
     </section>
   );
 };
