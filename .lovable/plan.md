@@ -1,56 +1,77 @@
 
 
-# Redesign Event Cards to Match Reference
+# Restructure KY Form Steps to Eliminate Scrolling
 
-## Current State
-The Events page uses `CleanEventCard` with a **landscape 4:3 aspect ratio**, a title at the bottom of the image, date/location text, and a full-width CTA button ("Attend Event" / "Registered").
+## Problem
+Multiple form steps across all three cohorts (KYF, KYC, KYW) pack too many fields into a single step, forcing users to scroll within the card to reach all inputs and the bottom of the form. The screenshot clearly shows the "General Details" step with 7 fields overflowing.
 
-## Reference Design
-The uploaded image shows a **portrait card** with:
-- Full-bleed background image (aspect ratio ~4:5)
-- Title overlaid at the bottom of the image with a dark gradient
-- A footer bar with: host avatar + name on the left, date + location in small pill badges on the right
-- Rounded corners with a subtle border
-- No prominent CTA button on the card face
+## Root Cause
+The step definitions in `KYSectionConfig.ts` group too many fields into single steps. Since the card is constrained to viewport height, dense steps overflow.
 
-## Changes Required
+## Solution
+Split every overflowing step into smaller sub-steps (3-4 fields max per step) so all content fits within the viewport without any scrolling. This only requires changes to `KYSectionConfig.ts` -- no UI component changes needed since the step rendering, progress bar, and navigation already work dynamically based on the config.
 
-### 1. Database: Add host fields to `events` table
-Add `host_name` (text, nullable) and `host_avatar_url` (text, nullable) columns so admins can assign a host to each event. These are optional -- cards will gracefully hide the avatar area if not set.
+## Audit of Every Step (All Cohorts)
 
-```sql
-ALTER TABLE public.events
-  ADD COLUMN host_name text,
-  ADD COLUMN host_avatar_url text;
-```
+### KYF -- Filmmaker Profile
 
-### 2. `src/components/shared/CleanEventCard.tsx` -- Redesign
+| Step | Fields | Overflows? | Action |
+|------|--------|-----------|--------|
+| general_details | 7 fields (name, occupation, instagram, DOB, address, country/state+pincode) | YES | Split into 2: "General Details" (4 fields) + "Your Address" (3 fields) |
+| proficiency | proficiency-grid + laptop radio | Borderline | Keep as-is (grid is compact) |
+| understanding | tags + MBTI(16 buttons) + chronotype + forge_intent + other | YES | Split into 2: "Favorites & Personality" (tags + MBTI) + "Your Vibe" (chronotype + intent + other) |
 
-Restyle the card to match the reference:
+### KYF -- Casting Form
 
-| Element | Current | New |
-|---------|---------|-----|
-| Image aspect ratio | `aspect-[4/3]` (landscape) | `aspect-[4/5]` (portrait) |
-| Title position | Bottom of image | Same, but larger font with drop-shadow |
-| Footer | Date + location text + full CTA button | Host avatar + name (left), date pill + location pill (right) |
-| CTA button | Full-width "Attend Event" | Removed from card face (registration happens on click/detail page) |
-| Badges | "FILLING FAST" / "PAST EVENT" top-left | Keep as-is |
+| Step | Fields | Overflows? | Action |
+|------|--------|-----------|--------|
+| casting_call | languages + height + gender | OK | Keep as-is |
+| pictures | 5 photo uploads (grid-cols-3) | OK | Keep as-is |
 
-New props: `hostName?: string`, `hostAvatar?: string`
+### KYF -- Hospitality Details
 
-### 3. `src/pages/Events.tsx` -- Pass new props
+| Step | Fields | Overflows? | Action |
+|------|--------|-----------|--------|
+| hospitality_details | meal + allergies + medication + tshirt + emergency(inline) + terms | YES | Split into 2: "Food & Merch" (meal, allergies, medication, tshirt) + "Emergency & Terms" (emergency inline + terms) |
 
-Pass `host_name` and `host_avatar_url` from the query results to `CleanEventCard`.
+### KYC -- Creator Profile
 
-### 4. Admin page (if exists) -- no changes now
+| Step | Fields | Overflows? | Action |
+|------|--------|-----------|--------|
+| general_details | 6 fields (name, status radio, instagram, DOB, country/state, platform radio) | YES | Split into 2: "General Details" (name, status, instagram, DOB) + "Location & Platform" (country/state, platform) |
+| proficiency | 3 proficiency selectors | Borderline | Keep as-is |
+| understanding | tags + MBTI + chronotype + intent + other | YES | Split into 2 (same as KYF) |
 
-The admin events page already uses the events table; the new columns will appear for editing later.
+### KYC -- Hospitality Details
 
-## Files Modified
+| Step | Fields | Overflows? | Action |
+|------|--------|-----------|--------|
+| hospitality_details | same 7 fields as KYF | YES | Split into 2 (same pattern as KYF) |
 
-| File | Change |
-|------|--------|
-| Database migration | Add `host_name` and `host_avatar_url` to `events` |
-| `src/components/shared/CleanEventCard.tsx` | Redesign to portrait layout with host footer, remove CTA button |
-| `src/pages/Events.tsx` | Pass `hostName` and `hostAvatar` props |
+### KYW -- Writer Profile
+
+| Step | Fields | Overflows? | Action |
+|------|--------|-----------|--------|
+| general_details | 5 fields (name, occupation, DOB, country/state, writing_types multi-select) | YES | Split into 2: "General Details" (name, occupation, DOB) + "Location & Writing" (country/state, writing_types) |
+| proficiency | 2 proficiency selectors | OK | Keep as-is |
+| understanding | tags + MBTI + chronotype + intent + other | YES | Split into 2 (same pattern) |
+
+### KYW -- Hospitality Details
+
+| Step | Fields | Overflows? | Action |
+|------|--------|-----------|--------|
+| hospitality_details | same 7 fields | YES | Split into 2 (same pattern) |
+
+## Summary of Changes
+
+**Only one file modified:** `src/components/kyform/KYSectionConfig.ts`
+
+Total step splits across all cohorts:
+- KYF: 3 steps split into 6 (general, understanding, hospitality)
+- KYC: 3 steps split into 6 (general, understanding, hospitality)
+- KYW: 3 steps split into 6 (general, understanding, hospitality)
+
+Progress bars, navigation, and step counting all update automatically since they derive from `section.steps.length`.
+
+No changes needed to `KYSectionFields.tsx`, `KYFormCard.tsx`, `KYFormCardStack.tsx`, or `KYSectionForm.tsx` -- the rendering logic is already fully dynamic.
 
