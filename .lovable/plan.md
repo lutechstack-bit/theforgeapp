@@ -1,53 +1,83 @@
 
 
-# Merge "Your Vibe" into "Favorites & Personality" for All Cohorts
+# Make "Understanding You" Fit in One Card (No Scroll)
 
-## What Changes
+## Goal
+Match the wireframe exactly: all 4 fields (tags, MBTI, chronotype, intent) on a single card without scrolling. The current layout overflows because components use too much vertical space.
 
-Remove the separate "Your Vibe" step from all three cohorts (KYF, KYC, KYW) and merge its fields into the preceding "Favorites & Personality" step, creating a single combined final step titled **"Understanding You"** that matches the reference wireframe.
+## Root Cause
+The card overflows because:
+1. **TagInput** has `min-h-[80px]` and generous padding even when empty
+2. **MBTI grid** buttons use `py-1.5` + `gap-1.5` -- slightly too tall
+3. **Chronotype** renders as small radio pills instead of the wireframe's larger emoji buttons (like the meal-preference style shown: sunrise emoji "Early bird" / moon emoji "Night owl")
+4. **Forge intent** renders as a 2-column grid of bordered cards instead of compact inline wrap pills
+5. Step header (`title` + `subtitle` + gold line) adds ~50px overhead
 
-## Reference Layout (Second Image)
+## Changes
 
-The final step should show all these fields in one card:
-1. **Top 3 movies/creators/writers** (tags input)
-2. **Your MBTI** (4x4 pill grid)
-3. **You are** (2 compact horizontal pills: Early bird / Night owl)
-4. **What brings you here?** (compact horizontal wrap pills)
+### 1. `src/components/kyform/KYSectionConfig.ts`
+- Change `chronotype` field type from `radio` to a new `chronotype` type (to render the emoji-style buttons from the wireframe)
+- Change `forge_intent` field type from `radio` to a new `pill-select` type (compact horizontal wrap pills without borders, matching the wireframe)
+- Remove `columns: 2` from both fields since they'll use custom renderers
 
-## Changes to `src/components/kyform/KYSectionConfig.ts`
+### 2. `src/components/kyform/KYSectionFields.tsx`
+Add two new compact renderers:
 
-### For all 3 cohorts (KYF lines 188-206, KYC lines 363-381, KYW lines 485-503):
+**`chronotype` renderer**: Two side-by-side buttons with emojis, matching the wireframe:
+- Sunrise emoji + "Early bird" (left)
+- Moon emoji + "Night owl" (right)
+- Uses the same 2-column grid as meal-preference but with horizontal layout (icon + text side-by-side, not stacked)
 
-**Delete** the `your_vibe` step entirely and **merge** its fields into the `favorites_personality` step. Rename the combined step:
+**`pill-select` renderer**: Compact horizontal wrap pills:
+- `flex flex-wrap gap-2` layout
+- Small rounded-full pills (`px-4 py-1.5 rounded-full`)
+- No descriptions, just labels
+- Matches the wireframe's "Make a film", "Learn", "Find crew", "Portfolio" style
 
-- **key**: `understanding_you`
-- **title**: "Understanding You"
-- **subtitle**: "To assign you to compatible groups"
+### 3. `src/components/onboarding/TagInput.tsx`
+- Reduce `min-h-[80px]` to `min-h-[56px]` to save vertical space when empty
+- Reduce padding from `p-3` to `p-2.5`
 
-**Fields in the merged step (in order):**
-1. `top_3_movies` / `top_3_creators` / `top_3_writers_books` (tags, maxItems: 3)
-2. `mbti_type` (mbti grid)
-3. `chronotype` (radio, columns: 2) -- simplified to 2 options: Early bird and Night owl (remove "Somewhere in between")
-4. `forge_intent` (radio) -- keep cohort-specific options but remove `forge_intent_other` text field to save space
+### 4. `src/components/kyform/KYSectionFields.tsx` (MBTI grid)
+- Reduce MBTI button padding from `py-1.5` to `py-1` and grid gap from `gap-1.5` to `gap-1`
 
-**Simplify chronotype options** (shared across all cohorts):
-- From 3 options with descriptions to 2 compact options: `{ value: 'early_bird', label: 'Early bird' }` and `{ value: 'night_owl', label: 'Night owl' }`
-- Use `columns: 2` for side-by-side layout
+### 5. `src/components/kyform/KYSectionConfig.ts` (type update)
+Add `chronotype` and `pill-select` to the `SectionStepField` type union.
 
-**Simplify forge_intent options** per cohort:
-- KYF: Keep top 4 (Make a film, Learn, Find crew, Portfolio) -- remove verbose labels, drop "Other"
-- KYC: Keep top 4 similarly
-- KYW: Keep top 4 similarly
+## Updated Field Type Union
+```
+'text' | 'date' | ... | 'mbti' | 'chronotype' | 'pill-select' | 'country-state'
+```
 
-**Remove** `forge_intent_other` field from all cohorts (no longer needed without "Other" option).
-
-### Net result per cohort profile section:
-- **Before**: 5 steps (general, address, proficiency, favorites_personality, your_vibe)
-- **After**: 4 steps (general, address, proficiency, understanding_you)
+## Visual Result (matching wireframe)
+```text
++----------------------------------+
+| Understanding You                |
+| To assign you to compatible...   |
+| ________________________________ |
+|                                  |
+| Your top 3 movies *        0/3  |
+| [Type movie name and press Enter]|
+|                                  |
+| Your MBTI *                      |
+| [ISTJ][ISFJ][INFJ][INTJ]       |
+| [ISTP][ISFP][INFP][INTP]       |
+| [ESTP][ESFP][ENFP][ENTP]       |
+| [ESTJ][ESFJ][ENFJ][ENTJ]       |
+|                                  |
+| You are *                        |
+| [sunrise Early bird][moon Night owl]|
+|                                  |
+| What brings you here? *          |
+| (Make a film)(Learn)(Find crew)  |
+| (Portfolio)                      |
++----------------------------------+
+```
 
 ## Files Modified
 
 | File | Change |
 |------|--------|
-| `src/components/kyform/KYSectionConfig.ts` | Merge your_vibe into favorites_personality for KYF, KYC, KYW; simplify chronotype to 2 options; remove forge_intent_other |
-
+| `src/components/kyform/KYSectionConfig.ts` | Change chronotype type to `chronotype`, forge_intent type to `pill-select`; update type union |
+| `src/components/kyform/KYSectionFields.tsx` | Add `chronotype` and `pill-select` renderers; make MBTI grid more compact |
+| `src/components/onboarding/TagInput.tsx` | Reduce min-height and padding |
