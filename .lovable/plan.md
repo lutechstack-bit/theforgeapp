@@ -1,39 +1,56 @@
 
 
-# Pre Forge Sessions: 3x2 Grid with "View All"
+# Redesign Event Cards to Match Reference
 
-## What Changes
+## Current State
+The Events page uses `CleanEventCard` with a **landscape 4:3 aspect ratio**, a title at the bottom of the image, date/location text, and a full-width CTA button ("Attend Event" / "Registered").
 
-Replace the horizontal scrolling carousel for "Pre Forge Sessions" with a **3-column, 2-row grid** (6 cards visible). The remaining cards are hidden until the user clicks "View All", which navigates to the existing `/learn/all?section=bfp_sessions` page.
+## Reference Design
+The uploaded image shows a **portrait card** with:
+- Full-bleed background image (aspect ratio ~4:5)
+- Title overlaid at the bottom of the image with a dark gradient
+- A footer bar with: host avatar + name on the left, date + location in small pill badges on the right
+- Rounded corners with a subtle border
+- No prominent CTA button on the card face
 
-## Layout
+## Changes Required
 
-- **Desktop**: 3 columns x 2 rows = 6 cards visible
-- **Tablet**: 2 columns x 3 rows = 6 cards visible
-- **Mobile**: 2 columns x 3 rows = 6 cards visible
-- Cards resize to fill available width (no fixed pixel widths; use `w-full` within grid cells)
-- Aspect ratio stays at 16:10 for landscape cards
-- "View All" button always shows if there are more than 6 items
+### 1. Database: Add host fields to `events` table
+Add `host_name` (text, nullable) and `host_avatar_url` (text, nullable) columns so admins can assign a host to each event. These are optional -- cards will gracefully hide the avatar area if not set.
 
-## Technical Changes
+```sql
+ALTER TABLE public.events
+  ADD COLUMN host_name text,
+  ADD COLUMN host_avatar_url text;
+```
 
-### 1. `src/pages/Learn.tsx` -- Update `CourseCarouselSection`
+### 2. `src/components/shared/CleanEventCard.tsx` -- Redesign
 
-Add an optional `gridLayout` prop (e.g., `gridLayout?: boolean`). When `true`:
-- Render items in a CSS grid (`grid grid-cols-2 md:grid-cols-3 gap-3`) instead of `ScrollableCardRow`
-- Slice items to show only the first 6
-- Always show "View All" button when total items exceed 6
+Restyle the card to match the reference:
 
-Pass `gridLayout={true}` for the Pre Forge Sessions section.
+| Element | Current | New |
+|---------|---------|-----|
+| Image aspect ratio | `aspect-[4/3]` (landscape) | `aspect-[4/5]` (portrait) |
+| Title position | Bottom of image | Same, but larger font with drop-shadow |
+| Footer | Date + location text + full CTA button | Host avatar + name (left), date pill + location pill (right) |
+| CTA button | Full-width "Attend Event" | Removed from card face (registration happens on click/detail page) |
+| Badges | "FILLING FAST" / "PAST EVENT" top-left | Keep as-is |
 
-### 2. `src/components/learn/LearnCourseCard.tsx` -- Make landscape cards responsive
+New props: `hostName?: string`, `hostAvatar?: string`
 
-Remove fixed width (`w-[320px] sm:w-[360px]`) from the landscape variant's outer div and replace with `w-full` so the card fills its grid cell.
+### 3. `src/pages/Events.tsx` -- Pass new props
+
+Pass `host_name` and `host_avatar_url` from the query results to `CleanEventCard`.
+
+### 4. Admin page (if exists) -- no changes now
+
+The admin events page already uses the events table; the new columns will appear for editing later.
 
 ## Files Modified
 
 | File | Change |
 |------|--------|
-| `src/pages/Learn.tsx` | Add `gridLayout` prop to `CourseCarouselSection`; pass it for bfp_sessions; render grid instead of carousel when enabled; slice to 6 items |
-| `src/components/learn/LearnCourseCard.tsx` | Change landscape card width from fixed to `w-full` |
+| Database migration | Add `host_name` and `host_avatar_url` to `events` |
+| `src/components/shared/CleanEventCard.tsx` | Redesign to portrait layout with host footer, remove CTA button |
+| `src/pages/Events.tsx` | Pass `hostName` and `hostAvatar` props |
 
