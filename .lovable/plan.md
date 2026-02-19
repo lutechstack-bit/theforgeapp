@@ -1,32 +1,31 @@
 
 
-# Fix: Pre Forge Cards Showing Portrait Instead of Landscape
+# Fix Pre Forge Session Card Backgrounds
 
 ## Problem
-All existing `bfp_sessions` rows in the database have `card_layout = 'portrait'` (set by the column default when it was added). The code on line 298 of `Learn.tsx` checks `item.card_layout || defaultCardLayout` -- but since the value is `'portrait'` (not null), the `defaultCardLayout="landscape"` fallback is never reached.
+The old thumbnail images stored in the database for each pre-forge session card contain text and graphics that bleed through the golden gradient overlay, creating a messy double-text effect.
 
-## Solution (2 changes)
+## Solution
 
-### 1. Database Migration
-Update all existing `bfp_sessions` rows to use `'landscape'`:
+### 1. Copy new image to project
+Copy the uploaded clean image (`Adv_PP_3_1.png`) to `public/images/learn/pre-forge-placeholder.png`, replacing the current placeholder.
+
+### 2. Update all database records
+Set `thumbnail_url` to `/images/learn/pre-forge-placeholder.png` for all 15 `bfp_sessions` rows. This ensures every card uses the clean background image instead of the old per-card thumbnails.
+
 ```sql
 UPDATE public.learn_content
-SET card_layout = 'landscape'
+SET thumbnail_url = '/images/learn/pre-forge-placeholder.png'
 WHERE section_type = 'bfp_sessions';
 ```
 
-### 2. Change the column default
-Change the default for future `bfp_sessions` content so admins don't have to manually set it:
-```sql
-ALTER TABLE public.learn_content
-ALTER COLUMN card_layout SET DEFAULT 'portrait';
-```
-(This is already the default, so no change needed here -- only the data update above.)
+Later, you can change individual card images from the admin panel -- the `thumbnail_url` field is already editable per card.
 
 ## Files Modified
 
 | File | Change |
 |------|--------|
-| Database migration | `UPDATE learn_content SET card_layout = 'landscape' WHERE section_type = 'bfp_sessions'` |
+| `public/images/learn/pre-forge-placeholder.png` | Replaced with new clean image |
+| Database | All 15 `bfp_sessions` rows updated to use new image path |
 
-No code file changes needed -- the `LearnCourseCard` landscape variant and `Learn.tsx` logic are already correct. The only issue is the data.
+No code changes needed -- the `LearnCourseCard` component already reads `thumbnail_url` from the database.
