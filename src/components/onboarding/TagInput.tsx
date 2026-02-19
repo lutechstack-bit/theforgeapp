@@ -86,7 +86,7 @@ export const TagInput: React.FC<TagInputProps> = ({
         </div>
       )}
       
-      <div className="min-h-[80px] p-3 rounded-xl border border-border bg-secondary/50 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
+      <div className="min-h-[56px] p-2.5 rounded-xl border border-border bg-secondary/50 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
         {/* Tags */}
         <div className="flex flex-wrap gap-2 mb-2">
           {value.map((tag, index) => (

@@ -7,7 +7,7 @@ export interface KeepHandyItem {
 
 export interface SectionStepField {
   key: string;
-  type: 'text' | 'date' | 'select' | 'radio' | 'multi-select' | 'proficiency' | 'proficiency-grid' | 'photo' | 'phone' | 'tags' | 'checkbox' | 'textarea' | 'meal-preference' | 'tshirt-size' | 'mbti' | 'country-state';
+  type: 'text' | 'date' | 'select' | 'radio' | 'multi-select' | 'proficiency' | 'proficiency-grid' | 'photo' | 'phone' | 'tags' | 'checkbox' | 'textarea' | 'meal-preference' | 'tshirt-size' | 'mbti' | 'chronotype' | 'pill-select' | 'country-state';
   countryKey?: string;
   label: string;
   placeholder?: string;
@@ -185,8 +185,8 @@ const KYF_SECTIONS: KYSection[] = [
         fields: [
           { key: 'top_3_movies', type: 'tags', label: 'Your Top 3 Movies', placeholder: 'Type a movie name and press Enter', maxItems: 3, required: true },
           { key: 'mbti_type', type: 'mbti', label: 'Your MBTI', required: true, helperText: 'Take the test at 16personalities.com if unsure' },
-          { key: 'chronotype', type: 'radio', label: 'You are', options: CHRONOTYPE_OPTIONS, required: true, columns: 2 },
-          { key: 'forge_intent', type: 'radio', label: 'What brings you here?', options: INTENT_OPTIONS_FILM, required: true, columns: 2 },
+          { key: 'chronotype', type: 'chronotype', label: 'You are', options: CHRONOTYPE_OPTIONS, required: true },
+          { key: 'forge_intent', type: 'pill-select', label: 'What brings you here?', options: INTENT_OPTIONS_FILM, required: true },
         ],
       },
     ],
@@ -352,8 +352,8 @@ const KYC_SECTIONS: KYSection[] = [
         fields: [
           { key: 'top_3_creators', type: 'tags', label: 'Your Top 3 Creators', placeholder: 'Type a creator name and press Enter', maxItems: 3, required: true },
           { key: 'mbti_type', type: 'mbti', label: 'Your MBTI', required: true, helperText: 'Take the test at 16personalities.com if unsure' },
-          { key: 'chronotype', type: 'radio', label: 'You are', options: CHRONOTYPE_OPTIONS, required: true, columns: 2 },
-          { key: 'forge_intent', type: 'radio', label: 'What brings you here?', options: INTENT_OPTIONS_CREATOR, required: true, columns: 2 },
+          { key: 'chronotype', type: 'chronotype', label: 'You are', options: CHRONOTYPE_OPTIONS, required: true },
+          { key: 'forge_intent', type: 'pill-select', label: 'What brings you here?', options: INTENT_OPTIONS_CREATOR, required: true },
         ],
       },
     ],
@@ -466,8 +466,8 @@ const KYW_SECTIONS: KYSection[] = [
         fields: [
           { key: 'top_3_writers_books', type: 'tags', label: 'Your Top 3 Writers or Books', placeholder: 'Type a name and press Enter', maxItems: 3, required: true },
           { key: 'mbti_type', type: 'mbti', label: 'Your MBTI', required: true, helperText: 'Take the test at 16personalities.com if unsure' },
-          { key: 'chronotype', type: 'radio', label: 'You are', options: CHRONOTYPE_OPTIONS, required: true, columns: 2 },
-          { key: 'forge_intent', type: 'radio', label: 'What brings you here?', options: INTENT_OPTIONS_WRITER, required: true, columns: 2 },
+          { key: 'chronotype', type: 'chronotype', label: 'You are', options: CHRONOTYPE_OPTIONS, required: true },
+          { key: 'forge_intent', type: 'pill-select', label: 'What brings you here?', options: INTENT_OPTIONS_WRITER, required: true },
         ],
       },
     ],

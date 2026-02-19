@@ -309,14 +309,14 @@ function renderField(
               {field.helperText} <ExternalLink className="w-3 h-3" />
             </a>
           )}
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-4 gap-1">
             {MBTI_TYPES.map((type) => (
               <button
                 key={type}
                 type="button"
                 onClick={() => updateField(field.key, type)}
                 className={cn(
-                  'py-1.5 rounded-xl border text-[13px] font-bold transition-all active:scale-[0.96]',
+                  'py-1 rounded-xl border text-[13px] font-bold transition-all active:scale-[0.96]',
                   value === type
                     ? 'border-forge-gold bg-forge-gold/15 text-forge-gold shadow-[0_0_12px_-3px_hsl(var(--forge-gold)/0.3)]'
                     : 'border-border/50 bg-card/60 text-muted-foreground hover:border-forge-gold/40'
@@ -384,6 +384,69 @@ function renderField(
                 )}
               >
                 {size}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+
+    case 'chronotype': {
+      const chronoOptions = [
+        { value: 'early_bird', emoji: '🌅', label: 'Early bird' },
+        { value: 'night_owl', emoji: '🌙', label: 'Night owl' },
+      ];
+      return (
+        <div key={field.key} className="space-y-1.5">
+          <Label className="text-[13px] font-semibold text-foreground/90">
+            {field.label} {field.required && <span className="text-destructive">*</span>}
+          </Label>
+          <div className="grid grid-cols-2 gap-2">
+            {chronoOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => updateField(field.key, option.value)}
+                className={cn(
+                  'flex items-center justify-center gap-2 py-2.5 rounded-2xl border-2 transition-all active:scale-[0.97]',
+                  value === option.value
+                    ? 'border-forge-gold bg-forge-gold/10 shadow-[0_0_20px_-5px_hsl(var(--forge-gold)/0.3)]'
+                    : 'border-border/50 bg-card/60 hover:border-forge-gold/40'
+                )}
+              >
+                <span className="text-lg">{option.emoji}</span>
+                <span className={cn(
+                  'text-sm font-semibold',
+                  value === option.value ? 'text-forge-gold' : 'text-foreground'
+                )}>
+                  {option.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    case 'pill-select':
+      return (
+        <div key={field.key} className="space-y-1.5">
+          <Label className="text-[13px] font-semibold text-foreground/90">
+            {field.label} {field.required && <span className="text-destructive">*</span>}
+          </Label>
+          <div className="flex flex-wrap gap-2">
+            {(field.options || []).map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => updateField(field.key, option.value)}
+                className={cn(
+                  'px-4 py-1.5 rounded-full border text-[13px] font-semibold transition-all active:scale-[0.96]',
+                  value === option.value
+                    ? 'border-forge-gold bg-forge-gold/15 text-forge-gold shadow-[0_0_12px_-3px_hsl(var(--forge-gold)/0.3)]'
+                    : 'border-border/50 bg-card/60 text-muted-foreground hover:border-forge-gold/40'
+                )}
+              >
+                {option.label}
               </button>
             ))}
           </div>
