@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, MapPin, RefreshCw, AlertCircle } from 'lucide-react';
+import { RefreshCw, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useRoadmapData } from '@/hooks/useRoadmapData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
@@ -29,6 +30,7 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'online' | 'bootcamp'>('online');
 
   const {
     roadmapDays,
@@ -65,13 +67,24 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
     return { onlineSessions: online, bootcampDays: bootcamp, onlineCount: online.length, bootcampCount: bootcamp.length };
   }, [roadmapDays]);
 
-  // Auto-select current day
+  // Set default activeTab based on available data
+  useEffect(() => {
+    if (onlineSessions.length === 0) setActiveTab('bootcamp');
+  }, [onlineSessions.length]);
+
+  // Auto-select current day on initial load
   useEffect(() => {
     if (!roadmapDays || selectedDayId) return;
     const currentDay = roadmapDays.find(d => getDayStatus(d) === 'current');
     if (currentDay) setSelectedDayId(currentDay.id);
     else if (roadmapDays.length > 0) setSelectedDayId(roadmapDays[0].id);
   }, [roadmapDays, getDayStatus, selectedDayId]);
+
+  // When activeTab changes, select first day of that tab
+  useEffect(() => {
+    const days = activeTab === 'online' ? onlineSessions : bootcampDays;
+    if (days.length > 0) setSelectedDayId(days[0].id);
+  }, [activeTab]);
 
   const selectedDay = useMemo(() => {
     if (!roadmapDays || !selectedDayId) return null;
@@ -176,7 +189,6 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
   if ((profile && !profile.edition_id) || !roadmapDays || roadmapDays.length === 0) {
     return (
       <div className="rounded-2xl p-8 text-center bg-card/50 border border-border/20">
-        <Camera className="h-8 w-8 text-primary/50 mx-auto mb-3" />
         <p className="text-sm text-muted-foreground">
           {profile && !profile.edition_id
             ? 'Your journey will appear here once your cohort is assigned.'
@@ -194,6 +206,10 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
     return parts.join(' + ');
   })();
 
+  const showToggle = onlineSessions.length > 0 && bootcampDays.length > 0;
+  const activePills = activeTab === 'online' ? onlinePills : bootcampPills;
+  const activeDateRange = activeTab === 'online' ? onlineDateRange : bootcampDateRange;
+
   return (
     <section className="space-y-6">
       {/* Header — clean, no icon box, no left border */}
@@ -204,33 +220,41 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
         )}
       </div>
 
-      {/* Online Sessions */}
-      {onlineSessions.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Camera className="w-4 h-4 text-primary" />
-            <span className="text-sm font-semibold text-foreground">Online Sessions</span>
-            {onlineDateRange && (
-              <span className="text-xs text-muted-foreground ml-auto">{onlineDateRange}</span>
+      {/* Segmented Control -- only when both types exist */}
+      {showToggle && (
+        <div className="bg-muted rounded-full p-1 flex">
+          <button
+            onClick={() => setActiveTab('online')}
+            className={cn(
+              'flex-1 py-2 text-sm rounded-full transition-all duration-200',
+              activeTab === 'online'
+                ? 'bg-background text-foreground shadow-sm font-medium'
+                : 'text-muted-foreground'
             )}
-          </div>
-          <DatePillSelector pills={onlinePills} selectedId={selectedDayId} onSelect={setSelectedDayId} />
+          >
+            Online Sessions
+          </button>
+          <button
+            onClick={() => setActiveTab('bootcamp')}
+            className={cn(
+              'flex-1 py-2 text-sm rounded-full transition-all duration-200',
+              activeTab === 'bootcamp'
+                ? 'bg-background text-foreground shadow-sm font-medium'
+                : 'text-muted-foreground'
+            )}
+          >
+            Goa Bootcamp
+          </button>
         </div>
       )}
 
-      {/* Goa Bootcamp */}
-      {bootcampDays.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-primary" />
-            <span className="text-sm font-semibold text-foreground">Goa Bootcamp</span>
-            {bootcampDateRange && (
-              <span className="text-xs text-muted-foreground ml-auto">{bootcampDateRange}</span>
-            )}
-          </div>
-          <DatePillSelector pills={bootcampPills} selectedId={selectedDayId} onSelect={setSelectedDayId} />
-        </div>
+      {/* Date range subtitle */}
+      {activeDateRange && (
+        <p className="text-xs text-muted-foreground">{activeDateRange}</p>
       )}
+
+      {/* Date pills for active tab */}
+      <DatePillSelector pills={activePills} selectedId={selectedDayId} onSelect={setSelectedDayId} />
 
       {/* Selected Day Detail */}
       {selectedCardDay && selectedDay && (
