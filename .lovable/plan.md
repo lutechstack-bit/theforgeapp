@@ -1,51 +1,69 @@
 
 
-# Add Segmented Control Toggle -- Cohort-Aware (No Icons)
+# Redesign Roadmap Page: Homepage Journey UI + No Sidebar
 
-## Goal
-Add an iOS-style segmented control to toggle between "Online Sessions" and "Goa Bootcamp" in the HomeJourneySection, without any icons in the toggle labels.
+## Summary
+Replace the roadmap's timeline-based Journey with the homepage-style journey UI (segmented control + date pills + session detail card), remove the sidebar completely, and clean up the layout for a focused, user-friendly experience.
 
-## Changes in `src/components/home/HomeJourneySection.tsx`
+## What Changes
 
-### 1. Add `activeTab` state
-- Type: `'online' | 'bootcamp'`
-- Default: `'online'` if online sessions exist, otherwise `'bootcamp'`
-- When tab switches, auto-select the first day of that tab
+### 1. Replace RoadmapJourney with Homepage-Style Journey
+The current `RoadmapJourney` component (vertical timeline with cards and nodes) gets replaced. The `/roadmap` index route will instead render the same UI pattern used in `HomeJourneySection` -- the segmented control toggle ("Online Sessions" / "Goa Bootcamp"), date pills, and session detail card.
 
-### 2. Segmented Control UI
-Rendered only when both `onlineSessions.length > 0` AND `bootcampDays.length > 0`:
+A new `RoadmapJourneyHome.tsx` component will be created that reuses the same logic from `HomeJourneySection` but adapted for the roadmap context (no section header since the Hero handles that, full-width layout).
 
-```text
-+------------------------------------------+
-|  [ Online Sessions ]  [ Goa Bootcamp ]   |
-+------------------------------------------+
-```
+### 2. Remove the Sidebar
+- Remove `RoadmapSidebar` from `RoadmapLayout`
+- Remove `FloatingHighlightsButton` (mobile sheet for sidebar content)
+- The layout becomes single-column, full-width (no `lg:block w-60` sidebar div)
 
-- Container: `bg-muted rounded-full p-1 flex`
-- Active segment: `bg-background text-foreground shadow-sm rounded-full font-medium`
-- Inactive segment: `text-muted-foreground`
-- Text-only labels, no icons
-- Smooth transition via `transition-all duration-200`
+### 3. Keep Everything Else
+- Hero section stays (cohort name + countdown/status badge)
+- Tab navigation stays (Journey, Tasks, Prep, Equipment, Rules, Gallery, Films)
+- Tasks, Prep, Rules, Equipment, Gallery, Films pages remain unchanged
 
-### 3. Conditional rendering
-- If toggle visible: show only the active tab's date range subtitle and DatePillSelector
-- If toggle hidden (Writers cohort or only one type): show the available section directly without toggle
-- Remove the per-section sub-headers (Camera/MapPin icon + label rows) since the toggle replaces them
-
-### 4. Tab switch resets selection
-When `activeTab` changes, `selectedDayId` is set to the first day in that tab's list.
-
-## Cohort Behavior
-
-| Cohort | Online Sessions | Toggle Visible | Default Tab |
-|--------|----------------|----------------|-------------|
-| Filmmakers | 3 | Yes | Online |
-| Creators | 6 | Yes | Online |
-| Writers | 0 | No | Bootcamp |
+### 4. Clean Up
+- Delete the old `RoadmapJourney.tsx` page
+- Remove unused imports from `RoadmapLayout`
+- Update the roadmap pages index export
 
 ## Files Modified
 
 | File | Change |
 |------|--------|
-| `src/components/home/HomeJourneySection.tsx` | Add activeTab state, segmented control (text-only, no icons), conditional rendering, remove Camera/MapPin sub-headers |
+| `src/pages/roadmap/RoadmapJourneyHome.tsx` | **New** -- Homepage-style journey with segmented control, date pills, session detail card (adapted from HomeJourneySection) |
+| `src/components/roadmap/RoadmapLayout.tsx` | Remove sidebar div, FloatingHighlightsButton, RoadmapSidebar import; single-column layout |
+| `src/pages/roadmap/RoadmapJourney.tsx` | Replace with new homepage-style journey (or redirect to new component) |
+| `src/pages/roadmap/index.ts` | Update export if component name changes |
+| `src/App.tsx` | No route changes needed (index route stays the same) |
+
+## Technical Details
+
+### New RoadmapJourney Component
+Reuses the exact same logic from `HomeJourneySection`:
+- `activeTab` state for online/bootcamp toggle
+- `DatePillSelector` for day selection
+- `SessionDetailCard` for selected day details
+- `DayDetailModal` for expanded view
+- Cohort-aware toggle visibility (hidden for Writers)
+- Auto-selects current day on load
+
+The key difference from the homepage version: no section header (the Hero already provides context), and it occupies the full content area.
+
+### Layout Change
+Current layout:
+```text
+[Hero]
+[Tabs]
+[Content (flex-1)] [Sidebar (w-60)]
+```
+
+New layout:
+```text
+[Hero]
+[Tabs]
+[Content (full width)]
+```
+
+The `container` class and existing padding handle max-width constraints.
 
