@@ -8,8 +8,6 @@ import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { supabase } from '@/integrations/supabase/client';
 import RoadmapHero from '@/components/roadmap/RoadmapHero';
 import QuickActionsBar from '@/components/roadmap/QuickActionsBar';
-import RoadmapSidebar from '@/components/roadmap/RoadmapSidebar';
-import FloatingHighlightsButton from '@/components/roadmap/FloatingHighlightsButton';
 import AdminTestingPanel from '@/components/admin/AdminTestingPanel';
 import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
 
@@ -95,38 +93,23 @@ const RoadmapLayout: React.FC = () => {
   }
 
   return (
-    <div className="container px-3 sm:px-4 md:px-6 py-4 md:py-6 pb-24">
-      <div className="flex gap-4 md:gap-6">
-        {/* Main Content */}
-        <div className="flex-1 min-w-0">
-          {/* Hero */}
-          <RoadmapHero
-            cohortName={cohortName}
-            forgeMode={forgeMode}
-            forgeStartDate={forgeStartDate}
-          />
+    <div className="container px-3 sm:px-4 md:px-6 py-4 md:py-6 pb-24 max-w-3xl mx-auto">
+      {/* Hero */}
+      <RoadmapHero
+        cohortName={cohortName}
+        forgeMode={forgeMode}
+        forgeStartDate={forgeStartDate}
+      />
 
-          {/* Quick Actions - Clean navigation tabs */}
-          <QuickActionsBar
-            hasGallery={stayGallery.length > 0 || momentsGallery.length > 0}
-            hasFilms={(studentFilms?.length || 0) > 0}
-            hasEquipment={showEquipment}
-          />
+      {/* Quick Actions - Clean navigation tabs */}
+      <QuickActionsBar
+        hasGallery={stayGallery.length > 0 || momentsGallery.length > 0}
+        hasFilms={(studentFilms?.length || 0) > 0}
+        hasEquipment={showEquipment}
+      />
 
-          {/* Page Content */}
-          <Outlet />
-        </div>
-
-        {/* Right Sidebar - Desktop only */}
-        <div className="hidden lg:block w-60 xl:w-64 flex-shrink-0">
-          <div className="sticky top-24">
-            <RoadmapSidebar editionId={profile.edition_id} />
-          </div>
-        </div>
-      </div>
-
-      {/* Floating Highlights Button - Mobile/Tablet only */}
-      <FloatingHighlightsButton editionId={profile.edition_id} />
+      {/* Page Content */}
+      <Outlet />
       
       {/* Admin Cohort Switcher - Admin only */}
       <AdminCohortSwitcher />
