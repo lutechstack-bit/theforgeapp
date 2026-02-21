@@ -1,195 +1,257 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { Map as MapIcon, Flag, Trophy } from 'lucide-react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { RefreshCw, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useRoadmapData } from '@/hooks/useRoadmapData';
-import JourneyCard, { type JourneyCardDay } from '@/components/roadmap/JourneyCard';
-import JourneyStats from '@/components/roadmap/JourneyStats';
-import { TimelineNode } from '@/components/roadmap/TimelineSpine';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import DatePillSelector from '@/components/home/DatePillSelector';
+import SessionDetailCard from '@/components/home/SessionDetailCard';
+import DayDetailModal from '@/components/roadmap/DayDetailModal';
+import type { JourneyCardDay } from '@/components/roadmap/JourneyCard';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const JOURNEY_LOADING_TIMEOUT_MS = 15000;
 
 const RoadmapJourney: React.FC = () => {
-  const [hoveredDayId, setHoveredDayId] = useState<string | null>(null);
-  const [scrollActiveDayId, setScrollActiveDayId] = useState<string | null>(null);
-  const cardRefs = useRef<globalThis.Map<string, HTMLDivElement>>(new globalThis.Map());
-  
+  const queryClient = useQueryClient();
+  const { profile, userDataLoading, userDataTimedOut, userDataError, retryUserData } = useAuth();
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'online' | 'bootcamp'>('online');
+
   const {
     roadmapDays,
+    isLoadingDays,
+    isErrorDays,
     getDayStatus,
-    nodeStatuses,
-    totalCount,
-    completedCount,
-    currentDayNumber,
     forgeMode,
-    forgeStartDate,
     userCohortType,
-    cohortName,
-    edition,
   } = useRoadmapData();
 
-  // Get next day date for countdown
-  const nextDayDate = useMemo(() => {
-    if (!roadmapDays) return null;
-    const upcomingDay = roadmapDays.find(d => getDayStatus(d) === 'upcoming');
-    return upcomingDay?.date ? new Date(upcomingDay.date) : null;
-  }, [roadmapDays, getDayStatus]);
-
-  const forgeEndDate = edition?.forge_end_date ? new Date(edition.forge_end_date) : null;
-
-  // Intersection Observer for scroll-based highlighting
+  // Timer to prevent infinite skeleton
   useEffect(() => {
-    if (!roadmapDays) return;
+    let timer: ReturnType<typeof setTimeout>;
+    if (isLoadingDays && !userDataLoading) {
+      timer = setTimeout(() => setLoadingTimedOut(true), JOURNEY_LOADING_TIMEOUT_MS);
+    } else {
+      setLoadingTimedOut(false);
+    }
+    return () => { if (timer) clearTimeout(timer); };
+  }, [isLoadingDays, userDataLoading]);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-            const dayId = entry.target.getAttribute('data-day-id');
-            if (dayId) {
-              setScrollActiveDayId(dayId);
-            }
-          }
-        });
-      },
-      { threshold: 0.5, rootMargin: '-20% 0px -20% 0px' }
-    );
+  const handleRetryJourney = () => {
+    setLoadingTimedOut(false);
+    queryClient.invalidateQueries({ queryKey: ['roadmap-days'] });
+  };
 
-    cardRefs.current.forEach((element) => {
-      observer.observe(element);
-    });
-
-    return () => observer.disconnect();
+  // Split days into online sessions and bootcamp
+  const { onlineSessions, bootcampDays, onlineCount, bootcampCount } = useMemo(() => {
+    if (!roadmapDays || roadmapDays.length === 0) {
+      return { onlineSessions: [], bootcampDays: [], onlineCount: 0, bootcampCount: 0 };
+    }
+    const online = roadmapDays.filter(d => d.day_number < 0 || (d as any).is_virtual);
+    const bootcamp = roadmapDays.filter(d => d.day_number > 0 && !(d as any).is_virtual);
+    return { onlineSessions: online, bootcampDays: bootcamp, onlineCount: online.length, bootcampCount: bootcamp.length };
   }, [roadmapDays]);
 
-  // Early return if no data - parent RoadmapLayout handles the empty state message
+  // Set default activeTab based on available data
+  useEffect(() => {
+    if (onlineSessions.length === 0) setActiveTab('bootcamp');
+  }, [onlineSessions.length]);
+
+  // Auto-select current day on initial load
+  useEffect(() => {
+    if (!roadmapDays || selectedDayId) return;
+    const currentDay = roadmapDays.find(d => getDayStatus(d) === 'current');
+    if (currentDay) setSelectedDayId(currentDay.id);
+    else if (roadmapDays.length > 0) setSelectedDayId(roadmapDays[0].id);
+  }, [roadmapDays, getDayStatus, selectedDayId]);
+
+  // When activeTab changes, select first day of that tab
+  useEffect(() => {
+    const days = activeTab === 'online' ? onlineSessions : bootcampDays;
+    if (days.length > 0) setSelectedDayId(days[0].id);
+  }, [activeTab]);
+
+  const selectedDay = useMemo(() => {
+    if (!roadmapDays || !selectedDayId) return null;
+    return roadmapDays.find(d => d.id === selectedDayId) || null;
+  }, [roadmapDays, selectedDayId]);
+
+  // Build pill data
+  const onlinePills = useMemo(() => {
+    return onlineSessions.map(day => {
+      const date = day.date ? new Date(day.date) : null;
+      return {
+        id: day.id, date, dayNumber: day.day_number,
+        label: date ? format(date, 'd') : `S${Math.abs(day.day_number)}`,
+        subLabel: date ? format(date, 'EEE') : undefined,
+        status: getDayStatus(day),
+      };
+    });
+  }, [onlineSessions, getDayStatus]);
+
+  const bootcampPills = useMemo(() => {
+    return bootcampDays.map(day => {
+      const date = day.date ? new Date(day.date) : null;
+      return {
+        id: day.id, date, dayNumber: day.day_number,
+        label: date ? format(date, 'd') : String(day.day_number),
+        subLabel: `Day ${day.day_number}`,
+        status: getDayStatus(day),
+      };
+    });
+  }, [bootcampDays, getDayStatus]);
+
+  // Date ranges
+  const getDateRange = (days: typeof roadmapDays) => {
+    if (!days || days.length === 0) return '';
+    const first = days[0].date ? new Date(days[0].date) : null;
+    const last = days[days.length - 1].date ? new Date(days[days.length - 1].date!) : null;
+    if (first && last) return `${format(first, 'MMM d')} - ${format(last, 'MMM d')}`;
+    return '';
+  };
+  const onlineDateRange = useMemo(() => getDateRange(onlineSessions), [onlineSessions]);
+  const bootcampDateRange = useMemo(() => getDateRange(bootcampDays), [bootcampDays]);
+
+  // Convert selected day for detail card
+  const selectedCardDay: JourneyCardDay | null = useMemo(() => {
+    if (!selectedDay) return null;
+    return {
+      id: selectedDay.id, day_number: selectedDay.day_number, title: selectedDay.title,
+      description: selectedDay.description, date: selectedDay.date, location: selectedDay.location,
+      call_time: selectedDay.call_time, checklist: (selectedDay.checklist as string[]) || [],
+      mentors: (selectedDay.mentors as string[]) || [], key_learnings: (selectedDay.key_learnings as string[]) || [],
+      activity_type: selectedDay.activity_type,
+      duration_hours: selectedDay.duration_hours ? Number(selectedDay.duration_hours) : undefined,
+      intensity_level: selectedDay.intensity_level, teaser_text: selectedDay.teaser_text,
+      reveal_days_before: selectedDay.reveal_days_before, theme_name: selectedDay.theme_name,
+      objective: selectedDay.objective,
+      schedule: Array.isArray(selectedDay.schedule)
+        ? (selectedDay.schedule as { time: string; activity: string; icon?: string }[])
+        : [],
+      location_image_url: selectedDay.location_image_url, milestone_type: selectedDay.milestone_type,
+      is_virtual: (selectedDay as any).is_virtual, meeting_url: (selectedDay as any).meeting_url,
+      meeting_id: (selectedDay as any).meeting_id, meeting_passcode: (selectedDay as any).meeting_passcode,
+      session_start_time: (selectedDay as any).session_start_time,
+      session_duration_hours: (selectedDay as any).session_duration_hours,
+    };
+  }, [selectedDay]);
+
+  // Loading state
+  if (isLoadingDays) {
+    return (
+      <div className="space-y-6 py-4">
+        <div className="flex gap-2">
+          {Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} className="h-16 w-14 rounded-lg" />)}
+        </div>
+        <Skeleton className="h-48 w-full rounded-2xl" />
+      </div>
+    );
+  }
+
+  if (userDataTimedOut || userDataError) {
+    return (
+      <div className="rounded-2xl p-6 text-center border border-destructive/20 bg-card/50">
+        <AlertCircle className="h-8 w-8 text-destructive/70 mx-auto mb-3" />
+        <p className="text-sm text-foreground font-medium mb-2">Couldn't load your profile data</p>
+        <p className="text-xs text-muted-foreground mb-4">{userDataError?.message || 'The request timed out.'}</p>
+        <Button onClick={retryUserData} size="sm" className="gap-2"><RefreshCw className="h-4 w-4" /> Try Again</Button>
+      </div>
+    );
+  }
+
+  if (loadingTimedOut || isErrorDays) {
+    return (
+      <div className="rounded-2xl p-6 text-center border border-border/30 bg-card/50">
+        <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+        <p className="text-sm text-foreground font-medium mb-2">{loadingTimedOut ? 'Taking longer than expected' : "Couldn't load your journey"}</p>
+        <Button onClick={handleRetryJourney} size="sm" variant="outline" className="gap-2"><RefreshCw className="h-4 w-4" /> Retry</Button>
+      </div>
+    );
+  }
+
+  // Parent RoadmapLayout handles no-edition and no-data states
   if (!roadmapDays || roadmapDays.length === 0) return null;
 
-  // Determine which day is currently highlighted (hover takes priority)
-  const getHighlightedId = () => hoveredDayId || scrollActiveDayId;
+  // Dynamic subtitle
+  const journeySubtitle = (() => {
+    const parts: string[] = [];
+    if (onlineCount > 0) parts.push(`${onlineCount} online session${onlineCount > 1 ? 's' : ''}`);
+    if (bootcampCount > 0) parts.push(`${bootcampCount} days in Goa`);
+    return parts.join(' + ');
+  })();
+
+  const showToggle = onlineSessions.length > 0 && bootcampDays.length > 0;
+  const activePills = activeTab === 'online' ? onlinePills : bootcampPills;
+  const activeDateRange = activeTab === 'online' ? onlineDateRange : bootcampDateRange;
 
   return (
-    <section className="py-4">
-      {/* Stats Bar */}
-      <JourneyStats
-        cohortName={cohortName}
-        cohortType={userCohortType}
-        forgeMode={forgeMode}
-        forgeStartDate={forgeStartDate}
-        forgeEndDate={forgeEndDate}
-        currentDayNumber={currentDayNumber}
-        nextDayDate={nextDayDate}
-      />
+    <section className="space-y-5 py-4">
+      {/* Subtitle */}
+      {journeySubtitle && (
+        <p className="text-sm text-muted-foreground">{journeySubtitle}</p>
+      )}
 
-      {/* Section Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-lg bg-primary/10">
-          <MapIcon className="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-foreground">Your Journey</h2>
-          <p className="text-sm text-muted-foreground">Day by day through the Forge</p>
-        </div>
-      </div>
-
-      {/* Timeline with Cards */}
-      <div className="relative">
-        <div className="space-y-0">
-          {roadmapDays.map((day, index) => {
-            const status = getDayStatus(day);
-            const prevStatus = index > 0 ? getDayStatus(roadmapDays[index - 1]) : undefined;
-            const isFirst = index === 0;
-            const isLast = index === roadmapDays.length - 1;
-
-            // Transform day data to match JourneyCard interface
-            const cardDay: JourneyCardDay = {
-              id: day.id,
-              day_number: day.day_number,
-              title: day.title,
-              description: day.description,
-              date: day.date,
-              location: day.location,
-              call_time: day.call_time,
-              checklist: (day.checklist as string[]) || [],
-              mentors: (day.mentors as string[]) || [],
-              key_learnings: (day.key_learnings as string[]) || [],
-              activity_type: day.activity_type,
-              duration_hours: day.duration_hours ? Number(day.duration_hours) : undefined,
-              intensity_level: day.intensity_level,
-              teaser_text: day.teaser_text,
-              reveal_days_before: day.reveal_days_before,
-              theme_name: day.theme_name,
-              objective: day.objective,
-              schedule: Array.isArray(day.schedule) 
-                ? (day.schedule as { time: string; activity: string; icon?: string }[]) 
-                : [],
-              location_image_url: day.location_image_url,
-              milestone_type: day.milestone_type,
-            };
-
-              const isHighlighted = getHighlightedId() === day.id;
-
-              return (
-                <div 
-                  key={day.id} 
-                  ref={(el) => {
-                    if (el) cardRefs.current.set(day.id, el);
-                  }}
-                  data-day-id={day.id}
-                  className="flex items-stretch animate-slide-up" 
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
-                  {/* Timeline Node */}
-                  <div className="flex-shrink-0 flex flex-col items-center w-6 mr-3">
-                    <TimelineNode 
-                      status={status} 
-                      isFirst={isFirst} 
-                      isLast={isLast}
-                      prevStatus={prevStatus}
-                      forgeMode={forgeMode}
-                      isHighlighted={isHighlighted}
-                    />
-                  </div>
-
-                  {/* Card */}
-                  <div className="flex-1 pb-4">
-                    <JourneyCard
-                      day={cardDay}
-                      status={status}
-                      forgeMode={forgeMode}
-                      forgeStartDate={forgeStartDate}
-                      cohortType={userCohortType}
-                      onHover={(isHovered) => setHoveredDayId(isHovered ? day.id : null)}
-                    />
-                  </div>
-                </div>
-              );
-          })}
-        </div>
-
-        {/* End Flag */}
-        <div className="flex items-center gap-3 mt-4 ml-9">
-          <div className={`
-            w-10 h-10 rounded-full flex items-center justify-center
-            ${forgeMode === 'POST_FORGE' 
-              ? 'gradient-primary shadow-glow' 
-              : forgeMode === 'DURING_FORGE'
-              ? 'bg-card border-2 border-primary/30'
-              : 'bg-card/50 border-2 border-muted/30'
-            }
-          `}>
-            {forgeMode === 'POST_FORGE' ? (
-              <Trophy className="w-5 h-5 text-primary-foreground" />
-            ) : (
-              <Flag className={`w-5 h-5 ${forgeMode === 'PRE_FORGE' ? 'text-muted-foreground' : 'text-primary/50'}`} />
+      {/* Segmented Control */}
+      {showToggle && (
+        <div className="bg-muted rounded-full p-1 flex">
+          <button
+            onClick={() => setActiveTab('online')}
+            className={cn(
+              'flex-1 py-2 text-sm rounded-full transition-all duration-200',
+              activeTab === 'online'
+                ? 'bg-background text-foreground shadow-sm font-medium'
+                : 'text-muted-foreground'
             )}
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">
-              {forgeMode === 'POST_FORGE' ? 'Achievement' : 'Destination'}
-            </p>
-            <p className={`font-bold text-sm ${forgeMode === 'PRE_FORGE' ? 'text-muted-foreground' : 'text-foreground'}`}>
-              {forgeMode === 'POST_FORGE' ? 'Journey Complete! 🎉' : `${cohortName} Complete`}
-            </p>
-          </div>
+          >
+            Online Sessions
+          </button>
+          <button
+            onClick={() => setActiveTab('bootcamp')}
+            className={cn(
+              'flex-1 py-2 text-sm rounded-full transition-all duration-200',
+              activeTab === 'bootcamp'
+                ? 'bg-background text-foreground shadow-sm font-medium'
+                : 'text-muted-foreground'
+            )}
+          >
+            Goa Bootcamp
+          </button>
         </div>
-      </div>
+      )}
+
+      {/* Date range */}
+      {activeDateRange && (
+        <p className="text-xs text-muted-foreground">{activeDateRange}</p>
+      )}
+
+      {/* Date pills */}
+      <DatePillSelector pills={activePills} selectedId={selectedDayId} onSelect={setSelectedDayId} />
+
+      {/* Selected Day Detail */}
+      {selectedCardDay && selectedDay && (
+        <SessionDetailCard
+          day={selectedCardDay}
+          status={getDayStatus(selectedDay)}
+          onViewDetail={() => setIsDetailModalOpen(true)}
+        />
+      )}
+
+      {/* Day Detail Modal */}
+      {selectedCardDay && selectedDay && (
+        <DayDetailModal
+          isOpen={isDetailModalOpen}
+          onClose={() => setIsDetailModalOpen(false)}
+          day={selectedCardDay}
+          status={getDayStatus(selectedDay)}
+          cohortType={userCohortType as any}
+          forgeMode={forgeMode}
+        />
+      )}
     </section>
   );
 };
