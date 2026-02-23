@@ -192,21 +192,9 @@ const Learn: React.FC = () => {
                 <p className="text-sm text-muted-foreground mt-0.5">Premium sessions from LevelUp</p>
               </div>
               <ScrollableCardRow>
-                {[
-                  { image: '/images/levelup/01.jpg', tags: ['Screenwriting', 'Storytelling'], title: 'The Future Of Cinematic Storytelling', accent: 'Cinematic Storytelling', instructor: 'Sarvesh Ponnusamy', subtitle: 'International Award-Winning Filmmaker' },
-                  { image: '/images/levelup/02.jpg', tags: ['Writing', 'Publishing'], title: 'From Idea To Global Publisher', accent: 'Global Publisher', instructor: 'Bishhal Paull', subtitle: 'Author Of The Liar Among Us' },
-                  { image: '/images/levelup/03.jpg', tags: ['Visual', 'Lens'], title: 'Master the Language of Cinematography', accent: 'Cinematography', instructor: 'Bishhal Paull', subtitle: 'Independent Cinematographer and Visual Storyteller' },
-                  { image: '/images/levelup/04.jpg', tags: [], title: 'Decoded Edition 1 x LOKAH', accent: 'Edition 1', instructor: 'LevelUp Community', subtitle: 'A community discussion' },
-                ].map((card) => (
-                  <div key={card.title} className="snap-start flex-shrink-0">
-                    <LevelUpCourseCard
-                      imageUrl={card.image}
-                      tags={card.tags}
-                      title={card.title}
-                      accentText={card.accent}
-                      instructorName={card.instructor}
-                      instructorSubtitle={card.subtitle}
-                    />
+                {['/images/levelup/01.jpg', '/images/levelup/02.jpg', '/images/levelup/03.jpg', '/images/levelup/04.jpg'].map((img) => (
+                  <div key={img} className="snap-start flex-shrink-0">
+                    <LevelUpCourseCard imageUrl={img} />
                   </div>
                 ))}
               </ScrollableCardRow>
