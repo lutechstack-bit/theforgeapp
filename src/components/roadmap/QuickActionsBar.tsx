@@ -38,10 +38,7 @@ const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
 
   return (
     <div className="-mx-3 sm:-mx-4 px-3 sm:px-4 py-2.5 sm:py-3 mb-4 sm:mb-6">
-      <div className={cn(
-        "flex items-center justify-between gap-2",
-        "sm:justify-start sm:gap-2"
-      )}>
+      <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
         {sections.map((section) => {
           const Icon = section.icon;
           const active = isActive(section.path);
@@ -51,15 +48,15 @@ const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
               key={section.id}
               onClick={() => navigate(section.path)}
               className={cn(
-                "flex-1 sm:flex-none flex items-center justify-center gap-1.5",
-                "px-3 py-2.5 rounded-full text-xs sm:text-sm font-medium",
+                "flex-shrink-0 flex items-center justify-center gap-1.5",
+                "px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-full text-[11px] sm:text-sm font-medium",
                 "border transition-all duration-200",
                 active
                   ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                  : "bg-transparent text-foreground border-border hover:bg-secondary/50"
+                  : "bg-transparent text-muted-foreground border-border/50 hover:bg-secondary/50 hover:text-foreground"
               )}
             >
-              <Icon className="hidden sm:block h-4 w-4" />
+              <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               {section.label}
             </button>
           );

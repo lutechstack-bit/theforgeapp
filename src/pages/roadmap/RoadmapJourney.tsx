@@ -101,6 +101,7 @@ const RoadmapJourney: React.FC = () => {
         id: day.id, date, dayNumber: day.day_number,
         label: date ? format(date, 'd') : String(day.day_number),
         subLabel: `Day ${day.day_number}`,
+        themeName: day.theme_name || undefined,
         status: getDayStatus(day),
       };
     });
@@ -177,8 +178,14 @@ const RoadmapJourney: React.FC = () => {
   // Parent RoadmapLayout handles no-edition and no-data states
   if (!roadmapDays || roadmapDays.length === 0) return null;
 
-  // Dynamic subtitle
-  const journeySubtitle = (() => {
+  // Dynamic heading
+  const journeyHeading = (() => {
+    if (activeTab === 'bootcamp' && bootcampCount > 0) {
+      return `${bootcampCount} days in Goa`;
+    }
+    if (activeTab === 'online' && onlineCount > 0) {
+      return `${onlineCount} online session${onlineCount > 1 ? 's' : ''}`;
+    }
     const parts: string[] = [];
     if (onlineCount > 0) parts.push(`${onlineCount} online session${onlineCount > 1 ? 's' : ''}`);
     if (bootcampCount > 0) parts.push(`${bootcampCount} days in Goa`);
@@ -191,9 +198,14 @@ const RoadmapJourney: React.FC = () => {
 
   return (
     <section className="space-y-5 py-4">
-      {/* Subtitle */}
-      {journeySubtitle && (
-        <p className="text-sm text-muted-foreground">{journeySubtitle}</p>
+      {/* Bold heading */}
+      {journeyHeading && (
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground">{journeyHeading}</h2>
+          {activeDateRange && (
+            <p className="text-sm text-muted-foreground mt-0.5">{activeDateRange}</p>
+          )}
+        </div>
       )}
 
       {/* Segmented Control */}
@@ -222,11 +234,6 @@ const RoadmapJourney: React.FC = () => {
             Goa Bootcamp
           </button>
         </div>
-      )}
-
-      {/* Date range */}
-      {activeDateRange && (
-        <p className="text-xs text-muted-foreground">{activeDateRange}</p>
       )}
 
       {/* Date pills */}

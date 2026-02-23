@@ -8,6 +8,7 @@ import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { supabase } from '@/integrations/supabase/client';
 import RoadmapHero from '@/components/roadmap/RoadmapHero';
 import QuickActionsBar from '@/components/roadmap/QuickActionsBar';
+import RoadmapSummaryCards from '@/components/roadmap/RoadmapSummaryCards';
 import AdminTestingPanel from '@/components/admin/AdminTestingPanel';
 import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
 
@@ -100,6 +101,9 @@ const RoadmapLayout: React.FC = () => {
         forgeMode={forgeMode}
         forgeStartDate={forgeStartDate}
       />
+
+      {/* Summary Cards */}
+      <RoadmapSummaryCards />
 
       {/* Quick Actions - Clean navigation tabs */}
       <QuickActionsBar
