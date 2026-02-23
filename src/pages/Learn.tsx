@@ -10,6 +10,7 @@ import { MasterclassCard } from '@/components/learn/MasterclassCard';
 import { ProgramBanner } from '@/components/learn/ProgramBanner';
 import { ScrollableCardRow } from '@/components/learn/ScrollableCardRow';
 import { EmptyState } from '@/components/shared/EmptyState';
+import LevelUpCourseCard from '@/components/learn/LevelUpCourseCard';
 import { Sparkles, ChevronRight } from 'lucide-react';
 
 interface LearnContent {
@@ -85,7 +86,7 @@ const Learn: React.FC = () => {
 
   // Group content
   const forgeOnlineSessions = courses.filter(c => c.section_type === 'bfp_sessions');
-  const communitySessions = courses.filter(c => c.section_type === 'community_sessions');
+  // communitySessions removed — replaced with hardcoded LevelUp cards
   const masterclassCards = [
     { name: 'Lokesh Kanagaraj', image: 'https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/6899f2de01c2b6f380973a82_Frame%20191%20LK.png', url: 'https://masterclass.leveluplearning.in/lokesh-kanagaraj' },
     { name: 'Nelson Dilipkumar', image: 'https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/6878bd67851730bc31658da7_NM.png', url: 'https://masterclass.leveluplearning.in/' },
@@ -184,17 +185,32 @@ const Learn: React.FC = () => {
           </div>
 
           <div className="space-y-8 sm:space-y-10">
-            {/* Community Sessions */}
-            {!isLoading && communitySessions.length > 0 && (
-              <CourseCarouselSection
-                items={communitySessions}
-                title="Online Sessions"
-                subtitle="Online sessions exclusive with LevelUp"
-                sectionType="community_sessions"
-                onCardClick={handleCardClick}
-                onViewAll={(st) => navigate(`/learn/all?section=${st}`)}
-              />
-            )}
+            {/* LevelUp Courses */}
+            <section className="space-y-4">
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-foreground">Online Sessions</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">Premium sessions from LevelUp</p>
+              </div>
+              <ScrollableCardRow>
+                {[
+                  { image: '/images/levelup/01.jpg', tags: ['Screenwriting', 'Storytelling'], title: 'The Future Of Cinematic Storytelling', accent: 'Cinematic Storytelling', instructor: 'Sarvesh Ponnusamy', subtitle: 'International Award-Winning Filmmaker' },
+                  { image: '/images/levelup/02.jpg', tags: ['Writing', 'Publishing'], title: 'From Idea To Global Publisher', accent: 'Global Publisher', instructor: 'Bishhal Paull', subtitle: 'Author Of The Liar Among Us' },
+                  { image: '/images/levelup/03.jpg', tags: ['Visual', 'Lens'], title: 'Master the Language of Cinematography', accent: 'Cinematography', instructor: 'Bishhal Paull', subtitle: 'Independent Cinematographer and Visual Storyteller' },
+                  { image: '/images/levelup/04.jpg', tags: [], title: 'Decoded Edition 1 x LOKAH', accent: 'Edition 1', instructor: 'LevelUp Community', subtitle: 'A community discussion' },
+                ].map((card) => (
+                  <div key={card.title} className="snap-start flex-shrink-0">
+                    <LevelUpCourseCard
+                      imageUrl={card.image}
+                      tags={card.tags}
+                      title={card.title}
+                      accentText={card.accent}
+                      instructorName={card.instructor}
+                      instructorSubtitle={card.subtitle}
+                    />
+                  </div>
+                ))}
+              </ScrollableCardRow>
+            </section>
 
             {/* Learn from the Best */}
             <section className="space-y-4">
