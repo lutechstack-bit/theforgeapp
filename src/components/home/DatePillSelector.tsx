@@ -7,6 +7,7 @@ interface DatePill {
   dayNumber: number;
   label: string;
   subLabel?: string;
+  themeName?: string;
   status: 'completed' | 'current' | 'upcoming' | 'locked';
 }
 
@@ -49,36 +50,47 @@ const DatePillSelector: React.FC<DatePillSelectorProps> = ({
         const isCompleted = pill.status === 'completed';
 
         return (
-          <button
-            key={pill.id}
-            ref={isSelected ? selectedRef : undefined}
-            onClick={() => onSelect(pill.id)}
-            className={cn(
-              'flex-shrink-0 flex flex-col items-center justify-center rounded-lg w-[56px] h-[64px] transition-all duration-200 border',
-              isSelected
-                ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/25'
-                : isCompleted
-                  ? 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/15'
-                  : isCurrent
-                    ? 'bg-primary/5 text-primary border-primary/25'
-                    : 'bg-card/60 text-muted-foreground border-border/40 hover:bg-card hover:border-border/60'
-            )}
-          >
-            <span className="text-lg font-bold leading-none">{pill.label}</span>
-            {pill.subLabel && (
+          <div key={pill.id} className="flex-shrink-0 flex flex-col items-center">
+            <button
+              ref={isSelected ? selectedRef : undefined}
+              onClick={() => onSelect(pill.id)}
+              className={cn(
+                'flex flex-col items-center justify-center rounded-lg w-[56px] h-[64px] transition-all duration-200 border',
+                isSelected
+                  ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/25'
+                  : isCompleted
+                    ? 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/15'
+                    : isCurrent
+                      ? 'bg-primary/5 text-primary border-primary/25'
+                      : 'bg-card/60 text-muted-foreground border-border/40 hover:bg-card hover:border-border/60'
+              )}
+            >
+              <span className="text-lg font-bold leading-none">{pill.label}</span>
+              {pill.subLabel && (
+                <span
+                  className={cn(
+                    'text-[10px] mt-1.5 font-medium leading-none',
+                    isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                  )}
+                >
+                  {pill.subLabel}
+                </span>
+              )}
+              {isCurrent && !isSelected && (
+                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1" />
+              )}
+            </button>
+            {pill.themeName && (
               <span
                 className={cn(
-                  'text-[10px] mt-1.5 font-medium leading-none',
-                  isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                  'text-[9px] font-medium leading-none text-center max-w-[56px] truncate mt-1',
+                  isSelected ? 'text-primary' : 'text-muted-foreground/60'
                 )}
               >
-                {pill.subLabel}
+                {pill.themeName}
               </span>
             )}
-            {isCurrent && !isSelected && (
-              <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1" />
-            )}
-          </button>
+          </div>
         );
       })}
     </div>
