@@ -1,69 +1,125 @@
 
 
-# Redesign Roadmap Page: Homepage Journey UI + No Sidebar
+# Roadmap Redesign: Reference Image Recreation (Functional + Dynamic)
 
-## Summary
-Replace the roadmap's timeline-based Journey with the homepage-style journey UI (segmented control + date pills + session detail card), remove the sidebar completely, and clean up the layout for a focused, user-friendly experience.
+## Overview
+Rebuild the Roadmap page to exactly match the uploaded reference image with fully functional, dynamic data from the database. All content is already admin-managed -- no new admin pages needed.
 
-## What Changes
+## What Gets Built
 
-### 1. Replace RoadmapJourney with Homepage-Style Journey
-The current `RoadmapJourney` component (vertical timeline with cards and nodes) gets replaced. The `/roadmap` index route will instead render the same UI pattern used in `HomeJourneySection` -- the segmented control toggle ("Online Sessions" / "Goa Bootcamp"), date pills, and session detail card.
+### 1. Summary Cards Row (New Component)
+Three horizontally scrollable cards between the Hero and Tabs, each pulling live data:
 
-A new `RoadmapJourneyHome.tsx` component will be created that reuses the same logic from `HomeJourneySection` but adapted for the roadmap context (no section header since the Hero handles that, full-width layout).
+**Journey Card**
+- "Day X/Y" with current day title and date/time
+- Dot progress indicator (one dot per day, filled = completed)
+- Data: `useRoadmapData()` -> `roadmapDays`, `getDayStatus`, `currentDayNumber`, `totalCount`
 
-### 2. Remove the Sidebar
-- Remove `RoadmapSidebar` from `RoadmapLayout`
-- Remove `FloatingHighlightsButton` (mobile sheet for sidebar content)
-- The layout becomes single-column, full-width (no `lg:block w-60` sidebar div)
+**Tasks Card**
+- Circular progress ring with completion percentage
+- "X remaining" and "Y required left" counts
+- Data: `useStudentJourney()` -> `stages`, `getStageStats`, `isTaskCompleted`
 
-### 3. Keep Everything Else
-- Hero section stays (cohort name + countdown/status badge)
-- Tab navigation stays (Journey, Tasks, Prep, Equipment, Rules, Gallery, Films)
-- Tasks, Prep, Rules, Equipment, Gallery, Films pages remain unchanged
+**Prep Card**
+- "X% ready" with progress bar
+- "X/Y items checked"
+- "Overdue" badge when items exist but progress is 0 and forge start is near
+- Data: `useRoadmapData()` -> `prepProgress`
 
-### 4. Clean Up
-- Delete the old `RoadmapJourney.tsx` page
-- Remove unused imports from `RoadmapLayout`
-- Update the roadmap pages index export
+Cards are `overflow-x-auto snap-x` on mobile for horizontal scrolling, and evenly distributed on desktop.
 
-## Files Modified
+### 2. Tab Navigation Redesign
+Update `QuickActionsBar` to match reference styling:
+- Show icons on ALL screen sizes (currently hidden on mobile)
+- Active tab: amber/primary filled background
+- Inactive tabs: ghost/outlined style
+- Horizontally scrollable on mobile
+
+### 3. Journey Tab Enhancement
+Update `RoadmapJourney` to match reference:
+- Bold heading: "6 days in Goa" (dynamic count) with date range subtitle
+- Date pills enhanced with `themeName` below each pill (sourced from `roadmap_days.theme_name`)
+- Detail card redesigned:
+  - Amber "DAY X | Date" badge header
+  - Large bold title
+  - Description paragraph
+  - Time + location meta row
+  - Numbered schedule list (amber-bordered circles with numbers replacing icon-based sub-cards)
+  - "View full details >" link
+
+### 4. DatePillSelector Enhancement
+Add optional `themeName` field to pill interface and render it below each pill as a small label.
+
+### 5. SessionDetailCard Redesign
+Replace icon-based schedule sub-cards with numbered list items (amber numbered circles + activity text).
+
+## Mobile Responsiveness
+- Summary cards: horizontal scroll with `snap-x snap-mandatory`
+- Tab bar: horizontal scroll with hidden scrollbar
+- Date pills: existing scroll behavior preserved with theme labels
+- Detail card: full-width stacked layout
+- All touch-friendly with adequate tap targets
+
+## Admin Customization
+All data is already admin-managed through existing panels:
+- Journey days: AdminRoadmap (roadmap_days table -- title, description, theme_name, schedule, etc.)
+- Tasks: AdminJourneyTasks (journey_tasks table)
+- Prep items: AdminRoadmap prep section (prep_checklist_items table)
+- Hero content: driven by edition data (cohort_type, forge_start_date)
+- No new admin pages or database changes needed
+
+## Files to Create/Modify
 
 | File | Change |
 |------|--------|
-| `src/pages/roadmap/RoadmapJourneyHome.tsx` | **New** -- Homepage-style journey with segmented control, date pills, session detail card (adapted from HomeJourneySection) |
-| `src/components/roadmap/RoadmapLayout.tsx` | Remove sidebar div, FloatingHighlightsButton, RoadmapSidebar import; single-column layout |
-| `src/pages/roadmap/RoadmapJourney.tsx` | Replace with new homepage-style journey (or redirect to new component) |
-| `src/pages/roadmap/index.ts` | Update export if component name changes |
-| `src/App.tsx` | No route changes needed (index route stays the same) |
+| `src/components/roadmap/RoadmapSummaryCards.tsx` | **New** -- 3 dynamic summary cards (Journey, Tasks, Prep) with live data |
+| `src/components/roadmap/RoadmapLayout.tsx` | Insert `RoadmapSummaryCards` between Hero and QuickActionsBar |
+| `src/components/roadmap/QuickActionsBar.tsx` | Show icons on all screens, amber active state styling |
+| `src/pages/roadmap/RoadmapJourney.tsx` | Add bold heading with dynamic count/date range, pass `themeName` to pills, update detail card rendering |
+| `src/components/home/DatePillSelector.tsx` | Add optional `themeName` to pill interface, render below pill |
+| `src/components/home/SessionDetailCard.tsx` | Numbered schedule items with amber circles, amber DAY badge header |
 
 ## Technical Details
 
-### New RoadmapJourney Component
-Reuses the exact same logic from `HomeJourneySection`:
-- `activeTab` state for online/bootcamp toggle
-- `DatePillSelector` for day selection
-- `SessionDetailCard` for selected day details
-- `DayDetailModal` for expanded view
-- Cohort-aware toggle visibility (hidden for Writers)
-- Auto-selects current day on load
+### Summary Cards Data Flow
 
-The key difference from the homepage version: no section header (the Hero already provides context), and it occupies the full content area.
-
-### Layout Change
-Current layout:
 ```text
-[Hero]
-[Tabs]
-[Content (flex-1)] [Sidebar (w-60)]
+RoadmapSummaryCards
+  |-- useRoadmapData()
+  |     |-- currentDayNumber, totalCount --> Journey card
+  |     |-- prepProgress --> Prep card
+  |-- useStudentJourney()
+        |-- stages, getStageStats, isTaskCompleted --> Tasks card
 ```
 
-New layout:
-```text
-[Hero]
-[Tabs]
-[Content (full width)]
+### DatePill Interface Update
+
+```typescript
+interface DatePill {
+  id: string;
+  date: Date | null;
+  dayNumber: number;
+  label: string;
+  subLabel?: string;
+  themeName?: string; // e.g., "Foundation", "Vision"
+  status: 'completed' | 'current' | 'upcoming' | 'locked';
+}
 ```
 
-The `container` class and existing padding handle max-width constraints.
+### Schedule List Rendering Change
+
+Current: Icon-based sub-cards with colored circles
+New: Numbered circles (1, 2, 3, 4) with amber border + activity text on the right
+
+```text
+  (1) Morning: Directing masterclass
+  (2) Afternoon: Shot planning workshop
+  (3) Evening: 1-on-1 mentor sessions
+```
+
+### Tapping Summary Cards
+Each card is tappable and navigates to its respective tab:
+- Journey card -> `/roadmap` (stays on journey)
+- Tasks card -> `/roadmap/tasks`
+- Prep card -> `/roadmap/prep`
 
