@@ -22,7 +22,9 @@ const RoadmapSummaryCards: React.FC = () => {
   const { tasks, isTaskCompleted } = useStudentJourney();
 
   // Journey card data
-  const currentDay = roadmapDays?.find(d => getDayStatus(d) === 'current');
+  const currentDay = roadmapDays?.find(d => getDayStatus(d) === 'current')
+    || roadmapDays?.find(d => getDayStatus(d) === 'upcoming')
+    || roadmapDays?.[roadmapDays.length - 1];
   const bootcampDays = roadmapDays?.filter(d => d.day_number > 0) || [];
 
   const formattedDate = currentDay?.date
