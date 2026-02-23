@@ -6,6 +6,7 @@ import { useRoadmapData } from '@/hooks/useRoadmapData';
 import { useStudentJourney } from '@/hooks/useStudentJourney';
 import { ProgressRing } from '@/components/journey/ProgressRing';
 import { Progress } from '@/components/ui/progress';
+import { format } from 'date-fns';
 
 const RoadmapSummaryCards: React.FC = () => {
   const navigate = useNavigate();
@@ -23,11 +24,12 @@ const RoadmapSummaryCards: React.FC = () => {
   // Journey card data
   const currentDay = roadmapDays?.find(d => getDayStatus(d) === 'current');
   const bootcampDays = roadmapDays?.filter(d => d.day_number > 0) || [];
-  const completedBootcampDays = bootcampDays.filter(d => getDayStatus(d) === 'completed').length;
-  const totalBootcampDays = bootcampDays.length;
-  const journeyDayLabel = currentDayNumber > 0
-    ? `Day ${currentDayNumber}/${totalBootcampDays || totalCount}`
-    : `${completedBootcampDays}/${totalBootcampDays || totalCount}`;
+
+  const formattedDate = currentDay?.date
+    ? format(new Date(currentDay.date), 'MMM d')
+    : null;
+  const timeLabel = (currentDay as any)?.session_start_time || null;
+  const subtitle = [formattedDate, timeLabel ? `at ${timeLabel}` : null].filter(Boolean).join(' ');
 
   // Tasks card data
   const totalTasks = tasks?.length || 0;
@@ -49,19 +51,20 @@ const RoadmapSummaryCards: React.FC = () => {
       path: '/roadmap',
       content: (
         <div className="flex flex-col gap-2">
-          <p className="text-lg font-bold text-foreground">{journeyDayLabel}</p>
-          {currentDay && (
-            <p className="text-xs text-muted-foreground line-clamp-1">{currentDay.title}</p>
+          <p className="text-sm font-bold text-foreground line-clamp-1">
+            {currentDay?.title || 'Journey'}
+          </p>
+          {subtitle && (
+            <p className="text-[11px] text-muted-foreground">{subtitle}</p>
           )}
-          {/* Dot progress */}
-          <div className="flex items-center gap-1 mt-1">
-            {bootcampDays.slice(0, 10).map((d, i) => {
+          <div className="flex items-center gap-0.5 mt-1">
+            {bootcampDays.slice(0, 12).map((d, i) => {
               const status = getDayStatus(d);
               return (
                 <div
                   key={i}
                   className={cn(
-                    'w-2 h-2 rounded-full transition-all',
+                    'h-1.5 flex-1 rounded-full transition-all',
                     status === 'completed' ? 'bg-primary' :
                     status === 'current' ? 'bg-primary animate-pulse' :
                     'bg-muted-foreground/20'
