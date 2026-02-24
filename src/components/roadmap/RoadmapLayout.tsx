@@ -94,7 +94,7 @@ const RoadmapLayout: React.FC = () => {
   }
 
   return (
-    <div className="container px-3 sm:px-4 md:px-6 py-4 md:py-6 pb-24 max-w-3xl mx-auto">
+    <div className="container px-3 sm:px-4 md:px-6 py-4 md:py-6 pb-24 max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto">
       {/* Hero */}
       <RoadmapHero
         cohortName={cohortName}

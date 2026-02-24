@@ -35,7 +35,7 @@ import { PerksQuickAccess } from '@/components/profile/PerksQuickAccess';
 import { KYFormQuickAccess } from '@/components/profile/KYFormQuickAccess';
 
 const ProfileSkeleton = () => (
-  <div className="max-w-3xl mx-auto page-container space-y-4 pb-24 md:pb-6">
+  <div className="max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto page-container space-y-4 pb-24 md:pb-6">
     <Skeleton className="h-48 rounded-2xl" />
     <Skeleton className="h-20 rounded-2xl" />
     <Skeleton className="h-32 rounded-2xl" />
@@ -132,7 +132,7 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <div className="max-w-3xl mx-auto page-container space-y-4 sm:space-y-5 pb-24 md:pb-6">
+    <div className="max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto page-container space-y-4 sm:space-y-5 pb-24 md:pb-6">
       {/* Profile Hero */}
       <ProfileHero
         profile={profile}
