@@ -7,11 +7,11 @@ interface LevelUpCourseCardProps {
 
 const LevelUpCourseCard: React.FC<LevelUpCourseCardProps> = ({ imageUrl, externalUrl }) => {
   const content = (
-    <div className="w-[260px] sm:w-[280px] aspect-[4/5] rounded-2xl overflow-hidden group cursor-pointer">
+    <div className="w-[260px] sm:w-[280px] flex-shrink-0 aspect-[4/5] rounded-2xl overflow-hidden relative group cursor-pointer">
       <img
         src={imageUrl}
         alt=""
-        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         loading="lazy"
       />
     </div>
