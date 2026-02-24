@@ -109,7 +109,7 @@ const Updates: React.FC = () => {
   };
 
   return (
-    <div className="page-container max-w-3xl mx-auto">
+    <div className="page-container max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="page-title mb-2">Updates</h1>

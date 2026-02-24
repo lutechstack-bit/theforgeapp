@@ -57,7 +57,7 @@ const EventDetail: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background p-4 pb-24 max-w-5xl mx-auto">
+      <div className="min-h-screen bg-background p-4 pb-24 max-w-5xl lg:max-w-6xl mx-auto">
         <Skeleton className="h-8 w-48 mb-6" />
         <div className="grid grid-cols-1 md:grid-cols-[minmax(0,400px)_1fr] gap-8">
           <div className="space-y-4">
@@ -93,7 +93,7 @@ const EventDetail: React.FC = () => {
     <div className="min-h-screen bg-background pb-20">
       {/* Breadcrumb Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border/50 px-4 py-3">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+        <div className="max-w-5xl lg:max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm min-w-0">
             <button
               onClick={() => navigate('/events')}
@@ -112,7 +112,7 @@ const EventDetail: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-5xl mx-auto px-4 pt-6">
+      <div className="max-w-5xl lg:max-w-6xl mx-auto px-4 pt-6">
         <div className="grid grid-cols-1 md:grid-cols-[minmax(0,380px)_1fr] gap-8">
           {/* Left Column */}
           <div className="flex flex-col gap-5">

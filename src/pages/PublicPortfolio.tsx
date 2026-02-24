@@ -56,7 +56,7 @@ const PublicPortfolio: React.FC = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border/30 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container py-4 flex items-center justify-between max-w-3xl mx-auto">
+        <div className="container py-4 flex items-center justify-between max-w-3xl lg:max-w-5xl mx-auto">
           <Link to="/" className="flex items-center gap-2">
             <img src={forgeLogo} alt="Forge" className="h-8" />
           </Link>
@@ -69,7 +69,7 @@ const PublicPortfolio: React.FC = () => {
       </header>
 
       {/* Content */}
-      <main className="container py-6 space-y-6 max-w-3xl mx-auto">
+      <main className="container py-6 space-y-6 max-w-3xl lg:max-w-5xl mx-auto">
         <ProfileHero
           profile={profile}
           edition={edition}
@@ -98,7 +98,7 @@ const PublicPortfolio: React.FC = () => {
 
       {/* Footer */}
       <footer className="border-t border-border/30 py-8 mt-12">
-        <div className="container text-center max-w-3xl mx-auto">
+        <div className="container text-center max-w-3xl lg:max-w-5xl mx-auto">
           <img src={forgeLogo} alt="Forge" className="h-6 mx-auto mb-3 opacity-50" />
           <p className="text-sm text-muted-foreground">
             Portfolio powered by LevelUp Forge

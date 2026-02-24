@@ -116,7 +116,7 @@ const Learn: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 overflow-x-clip">
-      <div className="page-container space-y-8 sm:space-y-10 max-w-5xl mx-auto">
+      <div className="page-container space-y-8 sm:space-y-10 max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto">
         {/* Header */}
         <div className="space-y-1">
           <h1 className="page-title">Learn</h1>
