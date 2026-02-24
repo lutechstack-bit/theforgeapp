@@ -86,7 +86,7 @@ const Learn: React.FC = () => {
 
   // Group content
   const forgeOnlineSessions = courses.filter(c => c.section_type === 'bfp_sessions');
-  // communitySessions removed — replaced with hardcoded LevelUp cards
+  const communitySessions = courses.filter(c => c.section_type === 'community_sessions');
   const masterclassCards = [
     { name: 'Lokesh Kanagaraj', image: 'https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/6899f2de01c2b6f380973a82_Frame%20191%20LK.png', url: 'https://masterclass.leveluplearning.in/lokesh-kanagaraj' },
     { name: 'Nelson Dilipkumar', image: 'https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/6878bd67851730bc31658da7_NM.png', url: 'https://masterclass.leveluplearning.in/' },
@@ -186,19 +186,21 @@ const Learn: React.FC = () => {
 
           <div className="space-y-8 sm:space-y-10">
             {/* LevelUp Courses */}
-            <section className="space-y-4">
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-foreground">Online Sessions</h2>
-                <p className="text-sm text-muted-foreground mt-0.5">Premium sessions from LevelUp</p>
-              </div>
-              <ScrollableCardRow>
-                {['/images/levelup/01.jpg', '/images/levelup/02.jpg', '/images/levelup/03.jpg', '/images/levelup/04.jpg'].map((img) => (
-                  <div key={img} className="snap-start flex-shrink-0">
-                    <LevelUpCourseCard imageUrl={img} />
-                  </div>
-                ))}
-              </ScrollableCardRow>
-            </section>
+            {communitySessions.length > 0 && (
+              <section className="space-y-4">
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-foreground">Online Sessions</h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">Premium sessions from LevelUp</p>
+                </div>
+                <ScrollableCardRow>
+                  {communitySessions.map((session) => (
+                    <div key={session.id} className="snap-start flex-shrink-0">
+                      <LevelUpCourseCard imageUrl={session.thumbnail_url || ''} />
+                    </div>
+                  ))}
+                </ScrollableCardRow>
+              </section>
+            )}
 
             {/* Learn from the Best */}
             <section className="space-y-4">
