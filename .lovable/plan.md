@@ -1,15 +1,31 @@
 
 
-# Replace Video Editing Academy Banner Image
+# Fix Community Session Thumbnail Fitting in Course Detail
 
-## What Changes
+## Problem
 
-1. Copy the newly uploaded image (`image-429.png`) to `public/images/programs/video-editing-academy.png`, overwriting the previous one
-2. No code changes needed — the `imageUrl` prop already points to this path
+Community session cards use portrait (4:5) thumbnails, but the course detail page forces them into a 16:9 `aspect-video` container with `object-cover`. This crops the image heavily, hiding the poster artwork.
+
+## Solution
+
+Change `object-cover` to `object-contain` on the thumbnail `<img>` in `CourseDetail.tsx`. The parent container already has `bg-black`, so the empty space on left/right will be solid black — clean and finished.
 
 ## Files Changed
 
 | File | Change |
 |---|---|
-| `public/images/programs/video-editing-academy.png` | Overwrite with new uploaded image |
+| `src/pages/CourseDetail.tsx` (line 299) | Change `object-cover` → `object-contain` on the thumbnail image |
+
+## Technical Detail
+
+Line 299 currently:
+```tsx
+className="w-full h-full object-cover"
+```
+Changes to:
+```tsx
+className="w-full h-full object-contain"
+```
+
+The parent `div` (line 283) already has `bg-black`, so the letterbox bars will be solid black with no extra work needed.
 
