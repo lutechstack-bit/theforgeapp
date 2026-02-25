@@ -1,21 +1,18 @@
 
 
-# Fix Community Sessions: Click Action + Rename
+# Replace Video Editing Academy Banner with Uploaded Image
 
-## Two Issues
+## What Changes
 
-1. **Cards not clickable**: The `LevelUpCourseCard` in the community sessions section has no click handler — clicking does nothing. The fix is to add an `onClick` wrapper that navigates to `/learn/{id}`, the same as other course cards.
-
-2. **Wrong label**: The section title says "Online Sessions" but should say "Community Sessions".
+1. Copy the uploaded image (`image-427.png`) to `public/images/programs/video-editing-academy.png`
+2. Update `src/pages/Learn.tsx` (line 240-244): Add `imageUrl="/images/programs/video-editing-academy.png"` to the second `ProgramBanner` (Video Editing Academy), exactly as was done for Breakthrough Filmmaking
 
 ## Files Changed
 
 | File | Change |
 |---|---|
-| `src/pages/Learn.tsx` (line 192) | Rename "Online Sessions" → "Community Sessions" |
-| `src/pages/Learn.tsx` (line 197) | Add `onClick={() => handleCardClick(session)}` to the wrapper `<div>` around each `LevelUpCourseCard` |
+| `public/images/programs/video-editing-academy.png` | New asset copied from upload |
+| `src/pages/Learn.tsx` (line 240) | Add `imageUrl` prop to the Video Editing Academy `ProgramBanner` |
 
-## Technical Details
-
-Both changes are in the same block (lines 191-200). The wrapper div gets a click handler that calls the existing `handleCardClick` function, which navigates to `/learn/${content.id}` — the course detail page. The `LevelUpCourseCard` component itself needs a `cursor-pointer` style which it already has, so the click will bubble up from the card to the wrapper div.
+The banner will render as a clickable image link with `aspect-[1280/465]`, matching the Breakthrough Filmmaking banner above it. The gradient background, text overlay, and CTA button will be hidden automatically by the existing `imageUrl` logic in `ProgramBanner.tsx`.
 
