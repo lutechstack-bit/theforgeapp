@@ -242,6 +242,7 @@ const Learn: React.FC = () => {
                   description="Master professional video editing with industry-standard tools and techniques."
                   ctaUrl="https://www.leveluplearning.in/"
                   gradient="linear-gradient(135deg, hsl(210,60%,25%) 0%, hsl(230,50%,35%) 100%)"
+                  imageUrl="/images/programs/video-editing-academy.png"
                 />
                 <ProgramBanner
                   title="Cinematography Masterclass"
