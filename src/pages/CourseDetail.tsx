@@ -296,7 +296,7 @@ const CourseDetail: React.FC = () => {
                     <img 
                       src={course.thumbnail_url} 
                       alt={course.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-primary/20 via-card to-accent/10" />
