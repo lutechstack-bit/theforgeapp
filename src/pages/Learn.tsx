@@ -235,6 +235,7 @@ const Learn: React.FC = () => {
                   description="Comprehensive 12-week program to master filmmaking from script to screen."
                   ctaUrl="https://www.leveluplearning.in/"
                   gradient="linear-gradient(135deg, hsl(260,60%,25%) 0%, hsl(230,50%,30%) 100%)"
+                  imageUrl="/images/programs/breakthrough-filmmaking.png"
                 />
                 <ProgramBanner
                   title="Video Editing Academy"
