@@ -189,12 +189,12 @@ const Learn: React.FC = () => {
             {communitySessions.length > 0 && (
               <section className="space-y-4">
                 <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-foreground">Online Sessions</h2>
+                  <h2 className="text-lg sm:text-xl font-bold text-foreground">Community Sessions</h2>
                   <p className="text-sm text-muted-foreground mt-0.5">Premium sessions from LevelUp</p>
                 </div>
                 <ScrollableCardRow>
                   {communitySessions.map((session) => (
-                    <div key={session.id} className="snap-start flex-shrink-0">
+                    <div key={session.id} className="snap-start flex-shrink-0 cursor-pointer" onClick={() => handleCardClick(session)}>
                       <LevelUpCourseCard imageUrl={session.thumbnail_url || ''} />
                     </div>
                   ))}
