@@ -222,14 +222,14 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
 
       {/* Segmented Control -- only when both types exist */}
       {showToggle && (
-        <div className="bg-muted rounded-full p-1 flex">
+        <div className="flex gap-2">
           <button
             onClick={() => setActiveTab('online')}
             className={cn(
-              'flex-1 py-2 text-sm rounded-full transition-all duration-200',
+              'px-4 py-2 text-sm rounded-full border transition-all duration-200',
               activeTab === 'online'
-                ? 'bg-background text-foreground shadow-sm font-medium'
-                : 'text-muted-foreground'
+                ? 'bg-primary text-primary-foreground border-primary font-medium'
+                : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30'
             )}
           >
             Online Sessions
@@ -237,10 +237,10 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
           <button
             onClick={() => setActiveTab('bootcamp')}
             className={cn(
-              'flex-1 py-2 text-sm rounded-full transition-all duration-200',
+              'px-4 py-2 text-sm rounded-full border transition-all duration-200',
               activeTab === 'bootcamp'
-                ? 'bg-background text-foreground shadow-sm font-medium'
-                : 'text-muted-foreground'
+                ? 'bg-primary text-primary-foreground border-primary font-medium'
+                : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30'
             )}
           >
             Goa Bootcamp
