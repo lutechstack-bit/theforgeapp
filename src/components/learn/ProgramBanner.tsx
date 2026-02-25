@@ -19,6 +19,24 @@ export const ProgramBanner: React.FC<ProgramBannerProps> = ({
   gradient,
   imageUrl,
 }) => {
+  if (imageUrl) {
+    return (
+      <a
+        href={ctaUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block w-full rounded-2xl overflow-hidden aspect-[1280/465] transition-opacity hover:opacity-95 active:scale-[0.99]"
+      >
+        <img
+          src={imageUrl}
+          alt={title}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+      </a>
+    );
+  }
+
   const handleCta = () => {
     window.open(ctaUrl, '_blank', 'noopener,noreferrer');
   };
@@ -26,11 +44,7 @@ export const ProgramBanner: React.FC<ProgramBannerProps> = ({
   return (
     <div
       className="relative w-full rounded-2xl overflow-hidden min-h-[220px] sm:min-h-[240px] flex flex-col items-center justify-center text-center p-6 sm:p-8"
-      style={{
-        background: imageUrl
-          ? `linear-gradient(0deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.2) 100%), url(${imageUrl}) center/cover no-repeat`
-          : gradient,
-      }}
+      style={{ background: gradient }}
     >
       <span className="text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase text-white/70 mb-2">
         {label}
