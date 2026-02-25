@@ -66,42 +66,46 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
           {subtitle || 'Click to watch films from past Forgers'}
         </p>
 
-        {/* Film Cards - Horizontal Scroll */}
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
+        {/* Film Strip Carousel */}
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1" style={{ scrollSnapType: 'x mandatory' }}>
           {alumni.map((a) => (
             <div
               key={a.id}
               onClick={() => setPlayingVideo({ url: a.video_url, title: a.film || a.name })}
-              className="flex-shrink-0 w-[160px] sm:w-[180px] cursor-pointer group"
+              className="flex-shrink-0 w-[260px] sm:w-[300px] cursor-pointer group"
+              style={{ scrollSnapAlign: 'start' }}
             >
-              {/* Thumbnail */}
-              <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-muted/50 border border-border/30 mb-2">
+              <div className="relative aspect-video rounded-xl overflow-hidden bg-black">
                 {a.thumbnail_url ? (
                   <img
                     src={a.thumbnail_url}
                     alt={a.film || a.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
                   />
                 ) : (
                   <div className="w-full h-full bg-muted/80 flex items-center justify-center">
-                    <Film className="h-8 w-8 text-muted-foreground/30" />
+                    <Film className="h-10 w-10 text-muted-foreground/30" />
                   </div>
                 )}
-                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors" />
+                {/* Vignette gradient — bottom half only */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                {/* Play button — frosted, subtle */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="h-10 w-10 rounded-full bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
-                    <Play className="h-4 w-4 text-primary-foreground fill-current ml-0.5" />
+                  <div className="h-8 w-8 rounded-full bg-foreground/20 backdrop-blur-sm flex items-center justify-center opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300">
+                    <Play className="h-3.5 w-3.5 text-white fill-current ml-0.5" />
                   </div>
                 </div>
+                {/* Overlay text — bottom-left */}
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <h4 className="text-sm font-semibold text-white line-clamp-1">
+                    {a.film || 'Student Film'}
+                  </h4>
+                  <p className="text-[11px] text-white/70 line-clamp-1">
+                    by {a.name}{a.role ? ` · ${a.role}` : ''}
+                  </p>
+                </div>
               </div>
-
-              <h4 className="text-sm font-semibold text-foreground line-clamp-1">
-                {a.film || 'Student Film'}
-              </h4>
-              <p className="text-[11px] text-muted-foreground line-clamp-1">
-                by {a.name}{a.role ? ` · ${a.role}` : ''}
-              </p>
             </div>
           ))}
         </div>
