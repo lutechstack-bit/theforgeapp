@@ -84,7 +84,8 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
   const handleNext = () => setCurrentImageIdx((i) => (i === allImages.length - 1 ? 0 : i + 1));
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-card/30 p-4 sm:p-5">
+    <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300">
+    <div className="rounded-[13px] bg-card/30 p-4 sm:p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -166,6 +167,7 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 };

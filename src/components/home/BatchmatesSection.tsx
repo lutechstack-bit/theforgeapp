@@ -99,7 +99,8 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
       </div>
 
       {/* Avatar Grid */}
-      <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide py-1">
+      <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300">
+      <div className="rounded-[13px] bg-card p-4 flex items-center gap-3 overflow-x-auto scrollbar-hide">
         {displayMembers.map((member) => (
           <div
             key={member.id}
@@ -138,6 +139,7 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
             </p>
           </button>
         )}
+      </div>
       </div>
     </section>
   );
