@@ -12,7 +12,7 @@ import { ScrollableCardRow } from '@/components/learn/ScrollableCardRow';
 import { EmptyState } from '@/components/shared/EmptyState';
 import LevelUpCourseCard from '@/components/learn/LevelUpCourseCard';
 import { Sparkles, ChevronRight } from 'lucide-react';
-import levelUpLogo from '@/assets/levelup-logo-white.png';
+import levelUpLogo from '@/assets/levelup-logo.png';
 
 interface LearnContent {
   id: string;
@@ -181,10 +181,10 @@ const Learn: React.FC = () => {
           <div className="mb-8 flex items-center gap-4">
             <div className="flex-1 h-px bg-border/50" />
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
+              <span className="text-sm font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
                 More from
               </span>
-              <img src={levelUpLogo} alt="LevelUp" className="h-4 opacity-70" />
+              <img src={levelUpLogo} alt="LevelUp" className="h-5 invert opacity-70" />
             </div>
             <div className="flex-1 h-px bg-border/50" />
           </div>
