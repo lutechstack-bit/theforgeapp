@@ -4,6 +4,7 @@ import {
   Ban, Cigarette, Home, Wrench, Waves, AlertTriangle
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import forgeIcon from '@/assets/forge-icon.png';
 
 interface RuleItem {
   icon: React.ReactNode;
@@ -97,7 +98,7 @@ const houseRules: RuleItem[] = [
 
 const RulesGuidelines: React.FC = () => {
   const RuleCard = ({ rule, variant = 'default' }: { rule: RuleItem; variant?: 'default' | 'warning' }) => (
-    <Card className={`p-4 ${variant === 'warning' ? 'border-destructive/30 bg-destructive/5' : 'glass-card'}`}>
+    <Card className={`p-4 ${variant === 'warning' ? 'border-destructive/30 bg-destructive/5' : 'bg-card border border-[#FFBF00]/20'}`}>
       <div className="flex items-start gap-3">
         <div className={`p-2 rounded-lg ${variant === 'warning' ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
           {rule.icon}
@@ -114,10 +115,8 @@ const RulesGuidelines: React.FC = () => {
     <div className="space-y-8 pb-8">
       {/* Zero Tolerance Section */}
       <section>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-destructive/10">
-            <AlertTriangle className="w-5 h-5 text-destructive" />
-          </div>
+        <div className="flex items-center gap-2 mb-4">
+          <img src={forgeIcon} alt="" className="w-4 h-4 opacity-60" />
           <div>
             <h3 className="font-bold text-foreground">Zero Tolerance Policy</h3>
             <p className="text-xs text-muted-foreground">
@@ -134,10 +133,8 @@ const RulesGuidelines: React.FC = () => {
 
       {/* General Rules Section */}
       <section>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Shield className="w-5 h-5 text-primary" />
-          </div>
+        <div className="flex items-center gap-2 mb-4">
+          <img src={forgeIcon} alt="" className="w-4 h-4 opacity-60" />
           <h3 className="font-bold text-foreground">General Rules</h3>
         </div>
         <div className="grid gap-3">
@@ -149,10 +146,8 @@ const RulesGuidelines: React.FC = () => {
 
       {/* House Rules Section */}
       <section>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-accent/10">
-            <Home className="w-5 h-5 text-accent" />
-          </div>
+        <div className="flex items-center gap-2 mb-4">
+          <img src={forgeIcon} alt="" className="w-4 h-4 opacity-60" />
           <h3 className="font-bold text-foreground">House Rules</h3>
         </div>
         <div className="grid gap-3">
@@ -163,7 +158,7 @@ const RulesGuidelines: React.FC = () => {
       </section>
 
       {/* Note */}
-      <div className="p-4 rounded-xl gradient-subtle border border-primary/20 text-center">
+      <div className="p-4 rounded-xl bg-card border border-[#FFBF00]/20 text-center">
         <p className="text-sm text-foreground font-medium mb-1">
           Let's co-create a space where creativity and collaboration can thrive.
         </p>

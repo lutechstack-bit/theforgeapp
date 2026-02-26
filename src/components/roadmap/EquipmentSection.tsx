@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Package, Loader2 } from 'lucide-react';
+import forgeIcon from '@/assets/forge-icon.png';
 import EquipmentHeroCard from './EquipmentHeroCard';
 import EquipmentCard from './EquipmentCard';
 
@@ -79,10 +80,8 @@ const EquipmentSection: React.FC<EquipmentSectionProps> = ({ cohortType }) => {
   return (
     <section id="roadmap-equipment" className="py-6">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-lg bg-primary/10">
-          <Package className="w-5 h-5 text-primary" />
-        </div>
+      <div className="flex items-center gap-2 mb-6">
+        <img src={forgeIcon} alt="" className="w-4 h-4 opacity-60" />
         <div>
           <h2 className="text-xl font-bold text-foreground">Your Filmmaking Arsenal</h2>
           <p className="text-sm text-muted-foreground">Professional gear at your fingertips</p>

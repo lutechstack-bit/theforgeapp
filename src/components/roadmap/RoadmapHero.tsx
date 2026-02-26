@@ -16,11 +16,8 @@ const RoadmapHero: React.FC<RoadmapHeroProps> = ({
   const daysUntilForge = forgeStartDate ? differenceInDays(forgeStartDate, new Date()) : null;
 
   return (
-    <div className="relative mb-8 overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 gradient-subtle rounded-2xl opacity-50" />
-      
-      <div className="relative glass-premium rounded-2xl p-6">
+    <div className="relative mb-8">
+      <div className="rounded-2xl border border-[#FFBF00]/20 bg-card p-6">
         {/* Status & Title */}
         <div className="text-center sm:text-left">
           {forgeMode === 'PRE_FORGE' && (

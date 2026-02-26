@@ -16,11 +16,7 @@ interface EquipmentHeroCardProps {
 
 const EquipmentHeroCard: React.FC<EquipmentHeroCardProps> = ({ equipment }) => {
   return (
-    <div className="relative rounded-3xl overflow-hidden mb-6 bg-gradient-to-br from-card via-card to-muted/30 border border-border/50">
-      {/* Animated Background Glow */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
-      <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
-      <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-accent/10 rounded-full blur-3xl" />
+    <div className="relative rounded-2xl overflow-hidden mb-6 border border-[#FFBF00]/20 bg-card">
       
       <div className="relative p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center">
         {/* Image Container */}
