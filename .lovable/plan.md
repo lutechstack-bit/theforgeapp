@@ -1,50 +1,66 @@
 
 
-# Add Amber Glow Borders to Program Banners
+# Add Amber Glow Border to All Learn Section Cards
 
 ## What Changes
 
-All three program banners in the "Explore Programs" section will get an amber/yellow gradient glow border that brightens on hover. Since all three use the `imageUrl` code path, the change is in the image-mode `<a>` wrapper.
+Apply the same amber `#FFBF00` glow border effect (currently on ProgramBanners) to all card types across the Learn page and the Alumni Showcase on Home:
+
+1. **Pre Forge Session cards** (`LearnCourseCard` — both landscape and portrait layouts)
+2. **LevelUp Community Session cards** (`LevelUpCourseCard`)
+3. **Masterclass cards** (`MasterclassCard`)
+4. **Alumni Showcase cards** (`AlumniShowcaseSection`)
 
 ## Approach
 
-Use a wrapper `div` with an amber gradient background and `p-[2px]` to create a glowing border effect. Apply `shadow-[0_0_15px_rgba(255,191,0,0.3)]` for ambient glow, increasing to `shadow-[0_0_25px_rgba(255,191,0,0.5)]` on hover. The inner content keeps `rounded-2xl overflow-hidden` so the image sits cleanly inside the glowing frame.
+Each card gets a wrapper `div` (or updated outer element) with:
+- `rounded-2xl p-[1.5px]` (thin border)
+- Default: `border` is subtle — `from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15`
+- **On hover**: brightens to `from-[#FFBF00]/50 via-[#FFBF00]/25 to-[#FFBF00]/50` with `shadow-[0_0_20px_rgba(255,191,0,0.3)]`
+- `transition-all duration-300`
+
+The inner content uses `rounded-[13px] overflow-hidden` to nest cleanly inside the border.
 
 ```text
-┌─ amber gradient border (2px) ──────────┐
-│ ┌─ image ────────────────────────────┐ │
-│ │                                    │ │
-│ │      [banner image]                │ │
-│ │                                    │ │
-│ └────────────────────────────────────┘ │
-└────────────────────────────────────────┘
-  ~~~ amber glow shadow underneath ~~~
+Normal state:          Hover state:
+┌─ faint amber ──┐     ┌─ bright amber ─┐
+│ ┌────────────┐ │     │ ┌────────────┐ │
+│ │  card img  │ │     │ │  card img  │ │
+│ └────────────┘ │     │ └────────────┘ │
+└────────────────┘     └───✧ glow ✧────┘
 ```
 
-## File Changed
+## Files Changed
 
 | File | Change |
 |---|---|
-| `src/components/learn/ProgramBanner.tsx` (lines 23-37) | Wrap the `<a>` tag in a glow container `div` with amber gradient border and hover-brightened shadow |
+| `src/components/learn/LearnCourseCard.tsx` | Wrap both landscape and portrait card containers in amber glow border div; remove old `border-border/30` |
+| `src/components/learn/LevelUpCourseCard.tsx` | Wrap the card div in amber glow border div |
+| `src/components/learn/MasterclassCard.tsx` | Wrap the outer card div in amber glow border div; remove old shadow classes |
+| `src/components/home/AlumniShowcaseSection.tsx` | Wrap each alumni film card in amber glow border div |
 
 ## Technical Detail
 
-The image-mode return block (lines 23-37) changes to:
+### LearnCourseCard (landscape mode, lines 47-58)
+- Wrap the outer `div` in a new glow container: `rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300`
+- Inner image container: change `rounded-2xl` to `rounded-[13px]`, remove `border border-border/30 group-hover:border-primary/30`
 
-```tsx
-<div className="group rounded-2xl p-[2px] bg-gradient-to-r from-[#FFBF00]/40 via-[#FFBF00]/20 to-[#FFBF00]/40 shadow-[0_0_15px_rgba(255,191,0,0.2)] hover:shadow-[0_0_25px_rgba(255,191,0,0.45)] hover:from-[#FFBF00]/60 hover:via-[#FFBF00]/35 hover:to-[#FFBF00]/60 transition-all duration-300">
-  <a
-    href={ctaUrl}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="block w-full rounded-[14px] overflow-hidden aspect-[1280/465] active:scale-[0.99]"
-  >
-    <img ... />
-  </a>
-</div>
-```
+### LearnCourseCard (portrait mode, lines 64-94)
+- Same glow wrapper around the outer `div`
+- Inner thumbnail div: change `rounded-xl` to `rounded-[11px]`, remove `border border-border/30 group-hover:border-primary/30`
 
-The same glow treatment is also applied to the gradient-fallback mode (lines 44-64) for consistency, wrapping the existing `div` in the same glow container.
+### LevelUpCourseCard (lines 9-17)
+- Wrap the card div in glow container
+- Inner div: change `rounded-2xl` to `rounded-[13px]`
 
-Uses the palette accent color `#FFBF00` at varying opacities for the gradient border and shadow glow.
+### MasterclassCard (lines 22-45)
+- Wrap the outer div in glow container
+- Remove existing `shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-primary/10` (replaced by amber glow)
+- Inner div: change `rounded-2xl` to `rounded-[13px]`
+
+### AlumniShowcaseSection (lines 75-109)
+- Wrap each card div in glow container
+- Inner `aspect-video` div: change `rounded-xl` to `rounded-[11px]`
+
+No database or backend changes needed.
 
