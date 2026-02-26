@@ -12,6 +12,7 @@ import { ScrollableCardRow } from '@/components/learn/ScrollableCardRow';
 import { EmptyState } from '@/components/shared/EmptyState';
 import LevelUpCourseCard from '@/components/learn/LevelUpCourseCard';
 import { Sparkles, ChevronRight } from 'lucide-react';
+import levelUpLogo from '@/assets/levelup-logo-white.png';
 
 interface LearnContent {
   id: string;
@@ -177,11 +178,15 @@ const Learn: React.FC = () => {
         {/* LevelUp Zone */}
         <div className="bg-white/[0.03] -mx-4 sm:-mx-5 px-4 sm:px-5 pt-8 pb-4 rounded-t-3xl mt-4">
           {/* Zone header */}
-          <div className="mb-6">
-            <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
-              More from LevelUp
-            </p>
-            <div className="w-8 h-0.5 bg-primary/30 rounded-full mt-1" />
+          <div className="mb-8 flex items-center gap-4">
+            <div className="flex-1 h-px bg-border/50" />
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
+                More from
+              </span>
+              <img src={levelUpLogo} alt="LevelUp" className="h-4 opacity-70" />
+            </div>
+            <div className="flex-1 h-px bg-border/50" />
           </div>
 
           <div className="space-y-8 sm:space-y-10">
