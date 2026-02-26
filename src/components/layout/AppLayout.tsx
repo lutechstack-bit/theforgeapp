@@ -16,7 +16,7 @@ const AppLayoutContent: React.FC = () => {
       {showNav && <SideNav />}
       <main className={cn(
         "relative pb-24 md:pb-0 transition-all duration-300 ease-in-out safe-area-pb",
-        showNav && (collapsed ? "md:ml-[72px]" : "md:ml-64")
+        showNav && (collapsed ? "md:ml-[72px]" : "md:ml-72")
       )}>
         <Outlet />
       </main>
