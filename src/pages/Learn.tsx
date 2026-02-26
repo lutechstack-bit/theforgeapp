@@ -180,11 +180,11 @@ const Learn: React.FC = () => {
           {/* Zone header */}
           <div className="mb-8 flex items-center gap-4">
             <div className="flex-1 h-px bg-border/50" />
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
+            <div className="flex items-center gap-3">
+              <span className="text-base font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
                 More from
               </span>
-              <img src={levelUpLogo} alt="LevelUp" className="h-5 invert opacity-70" />
+              <img src={levelUpLogo} alt="LevelUp" className="h-10 invert opacity-80 object-contain" />
             </div>
             <div className="flex-1 h-px bg-border/50" />
           </div>
