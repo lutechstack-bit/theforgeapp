@@ -1,6 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { Clock, MapPin, Video, Calendar, ChevronRight } from 'lucide-react';
+import { getScheduleIcon } from '@/lib/roadmapIcons';
 import { Button } from '@/components/ui/button';
 import type { JourneyCardDay } from '@/components/roadmap/JourneyCard';
 import { cn } from '@/lib/utils';
@@ -97,16 +98,11 @@ const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onVi
       {isBootcamp && day.schedule && day.schedule.length > 0 && (
         <div className="space-y-2.5">
           {day.schedule.map((item, idx) => (
-            <div key={idx} className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-7 h-7 rounded-full border-2 border-primary/40 flex items-center justify-center">
-                <span className="text-xs font-bold text-primary">{idx + 1}</span>
-              </div>
-              <div className="flex-1 min-w-0 pt-0.5">
-                <p className="text-sm text-foreground">
-                  <span className="font-medium text-muted-foreground">{item.time}:</span>{' '}
-                  {item.activity}
-                </p>
-              </div>
+            <div key={idx} className="flex items-center gap-3">
+              <span className="flex-shrink-0 text-primary/70">
+                {getScheduleIcon(item.activity, 'sm')}
+              </span>
+              <p className="text-sm text-foreground line-clamp-1">{item.activity}</p>
             </div>
           ))}
         </div>
