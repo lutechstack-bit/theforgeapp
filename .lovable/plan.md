@@ -1,42 +1,67 @@
 
 
-# Add Amber Glow Border to All Homepage Section Cards
+# Simplify Homepage: Clean Amber Borders + Refreshed Section Headers
 
-## What Changes
+## Two changes
 
-Apply the standard amber `#FFBF00` gradient glow border (matching the Learn page cards) to every section card on the homepage. The Countdown Timer already has its own gold treatment and Alumni Showcase already has the glow — so the remaining sections are:
+### 1. Replace gradient glow wrappers with a simple static amber border
 
-1. **Today's Focus Card** (`TodaysFocusCard.tsx`) — currently `border border-primary/20`
-2. **KY Profile / Onboarding Card** (`KYProfileCard.tsx`) — currently `border border-forge-gold/30`
-3. **Session Detail Card** (`SessionDetailCard.tsx`) — currently `border border-primary/30` or `border-border/30`
-4. **Travel & Stay Section** (`TravelStaySection.tsx`) — currently `border border-border/40`
-5. **Batchmates Section** (`BatchmatesSection.tsx`) — currently no card wrapper; will wrap the avatar grid area in a bordered card
+Every homepage card currently has a heavy nested gradient wrapper (`p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 ... hover:shadow-[0_0_20px...]`). Replace all of these with a single `border border-[#FFBF00]/20` on the card container itself. No hover effect, no gradient, no shadow, no extra wrapper div.
 
-## Files Changed
+**Files affected:**
 
-| File | Change |
+| File | What changes |
 |---|---|
-| `src/components/home/TodaysFocusCard.tsx` (line 23) | Wrap in amber glow container, remove old `border border-primary/20` |
-| `src/components/home/KYProfileCard.tsx` (line 32) | Wrap in amber glow container, remove old `border border-forge-gold/30` |
-| `src/components/home/SessionDetailCard.tsx` (lines 30-36) | Wrap in amber glow container, remove old border classes |
-| `src/components/home/TravelStaySection.tsx` (line 87) | Wrap in amber glow container, remove old `border border-border/40` |
-| `src/components/home/BatchmatesSection.tsx` (lines 74-142) | Wrap avatar grid content in a bordered card with amber glow |
+| `TodaysFocusCard.tsx` (lines 23-24, 64-65) | Remove outer glow div, add `border border-[#FFBF00]/20` to inner div, restore `rounded-2xl` |
+| `KYProfileCard.tsx` (lines 32-33, 109-110) | Remove outer glow div, add `border border-[#FFBF00]/20` to inner div, restore `rounded-2xl` |
+| `SessionDetailCard.tsx` (lines 30-31, 124-125) | Remove outer glow div, add `border border-[#FFBF00]/20` to inner div, restore `rounded-2xl` |
+| `TravelStaySection.tsx` (lines 87-88, 170-171) | Remove outer glow div, add `border border-[#FFBF00]/20` to inner div, restore `rounded-2xl` |
+| `BatchmatesSection.tsx` (lines 102-103, 142-143) | Remove outer glow div, add `border border-[#FFBF00]/20` to inner div, restore `rounded-2xl` |
+| `AlumniShowcaseSection.tsx` (lines 51, 72-76, 81, 113) | Remove glow wrappers from film cards. Add `border border-[#FFBF00]/20` to the outer section card. Restore `rounded-2xl` on inner elements. |
 
-## Technical Detail
+---
 
-Each component gets the standard wrapper:
+### 2. Clean up section headers — remove generic lucide icon boxes, use the Forge icon instead
 
-```tsx
-<div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300">
-  <div className="rounded-[13px] ... existing inner content ...">
-    ...
-  </div>
-</div>
+Currently each section header uses different lucide icons in rounded boxes (`Users`, `Film`, `MapPin`) which look generic and repetitive. Instead, use a small Forge brand icon (`src/assets/forge-icon.png`) as a subtle section marker — a tiny 16-20px logo mark next to the title text, no background box.
+
+This approach is inspired by the reference sites where the Level Up / Forge branding is used as a subtle visual anchor rather than generic stock icons.
+
+**Header pattern — before vs after:**
+
+```text
+BEFORE (Batchmates):              AFTER (all sections):
+┌────────┐                        [forge-icon] Your Batchmates    View All >
+│ Users  │ ┃ Your Batchmates
+│  icon  │ ┃
+└────────┘
+
+BEFORE (Alumni):                  AFTER:
+🎬 Alumni Showcase  View all >    [forge-icon] Alumni Showcase    View all >
+
+BEFORE (Travel):                  AFTER:
+📍 Travel & Stay    Details >     [forge-icon] Travel & Stay      Details >
 ```
 
-Inner containers change from `rounded-2xl` to `rounded-[13px]` and have old `border` classes removed (the gradient wrapper IS the border now).
+The Forge icon is a small brand mark (the existing `forge-icon.png` asset) rendered at 16x16 or 18x18px with `opacity-60`. No colored background boxes, no rounded containers, no left-border accents. Just: icon + bold title + optional subtitle below.
 
-For **BatchmatesSection**, the `<section>` keeps its header outside the glow, and the avatar row gets wrapped in the glow card so it matches the visual treatment of other sections.
+**Files affected for header changes:**
 
-**CompactCountdownTimer** and **AlumniShowcaseSection** are left untouched — they already have their own amber/gold treatments.
+| File | What changes |
+|---|---|
+| `BatchmatesSection.tsx` (lines 76-89) | Remove the icon box div (`<div className="p-2 rounded-lg bg-primary/15 ..."><Users ...>`), remove `border-l-3 border-primary pl-3`. Replace with `<img src={forgeIcon} className="w-4 h-4 opacity-60" />` + clean `text-lg font-bold` title. |
+| `AlumniShowcaseSection.tsx` (lines 53-56) | Remove inline `<Film>` icon. Replace with `<img src={forgeIcon} className="w-4 h-4 opacity-60" />` before title text. |
+| `TravelStaySection.tsx` (lines 90-94) | Remove inline `<MapPin>` icon. Replace with `<img src={forgeIcon} className="w-4 h-4 opacity-60" />` before title text. |
+| `HomeJourneySection.tsx` (lines 216-221) | Already clean text-only header. Add the same small Forge icon before the title for consistency. |
+
+**Not changed:** `TodaysFocusCard` (it's a special priority card with badge pills, not a standard section), `KYProfileCard` (self-contained onboarding card), `CompactCountdownTimer` (special widget).
+
+---
+
+## Summary
+
+- 6 files for border simplification
+- 4 files for header cleanup
+- Total: ~7 unique files modified (some overlap)
+- No color palette changes, no font changes, no layout restructuring
 
