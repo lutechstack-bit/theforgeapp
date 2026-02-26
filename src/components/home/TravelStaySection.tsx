@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, ChevronRight, ChevronLeft, Home, ExternalLink } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Home, ExternalLink } from 'lucide-react';
+import forgeIcon from '@/assets/forge-icon.png';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -84,12 +85,11 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
   const handleNext = () => setCurrentImageIdx((i) => (i === allImages.length - 1 ? 0 : i + 1));
 
   return (
-    <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300">
-    <div className="rounded-[13px] bg-card/30 p-4 sm:p-5">
+    <div className="rounded-2xl border border-[#FFBF00]/20 bg-card/30 p-4 sm:p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <MapPin className="h-4 w-4 text-primary" />
+          <img src={forgeIcon} alt="" className="w-4 h-4 opacity-60" />
           <h2 className="text-base sm:text-lg font-bold text-foreground">{title}</h2>
         </div>
         <button
@@ -167,7 +167,6 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
           )}
         </div>
       </div>
-    </div>
     </div>
   );
 };

@@ -27,10 +27,9 @@ const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onVi
       : `DAY ${day.day_number}`;
 
   return (
-    <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300">
     <div
       className={cn(
-        'rounded-[13px] p-5 sm:p-6',
+        'rounded-2xl border border-[#FFBF00]/20 p-5 sm:p-6',
         status === 'current' ? 'bg-card' : 'bg-card/60'
       )}
     >
@@ -121,7 +120,6 @@ const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onVi
         View full details
         <ChevronRight className="w-3.5 h-3.5" />
       </button>
-    </div>
     </div>
   );
 };
