@@ -21,19 +21,21 @@ export const ProgramBanner: React.FC<ProgramBannerProps> = ({
 }) => {
   if (imageUrl) {
     return (
-      <a
-        href={ctaUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block w-full rounded-2xl overflow-hidden aspect-[1280/465] transition-opacity hover:opacity-95 active:scale-[0.99]"
-      >
-        <img
-          src={imageUrl}
-          alt={title}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
-      </a>
+      <div className="rounded-2xl p-[2px] bg-gradient-to-r from-[#FFBF00]/40 via-[#FFBF00]/20 to-[#FFBF00]/40 shadow-[0_0_15px_rgba(255,191,0,0.2)] hover:shadow-[0_0_25px_rgba(255,191,0,0.45)] hover:from-[#FFBF00]/60 hover:via-[#FFBF00]/35 hover:to-[#FFBF00]/60 transition-all duration-300">
+        <a
+          href={ctaUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-full rounded-[14px] overflow-hidden aspect-[1280/465] active:scale-[0.99]"
+        >
+          <img
+            src={imageUrl}
+            alt={title}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </a>
+      </div>
     );
   }
 
