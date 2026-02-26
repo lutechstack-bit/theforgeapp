@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import forgeIcon from '@/assets/forge-icon.png';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -74,16 +75,12 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/15 border border-primary/20">
-            <Users className="w-5 h-5 text-primary" />
-          </div>
+        <div className="flex items-center gap-2">
+          <img src={forgeIcon} alt="" className="w-4 h-4 opacity-60" />
           <div>
-            <h3 className="text-lg font-bold text-foreground border-l-3 border-primary pl-3">
-              {title}
-            </h3>
+            <h3 className="text-lg font-bold text-foreground">{title}</h3>
             {subtitle && (
-              <p className="text-xs text-muted-foreground pl-3">{subtitle}</p>
+              <p className="text-xs text-muted-foreground">{subtitle}</p>
             )}
           </div>
         </div>
@@ -99,8 +96,7 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
       </div>
 
       {/* Avatar Grid */}
-      <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300">
-      <div className="rounded-[13px] bg-card p-4 flex items-center gap-3 overflow-x-auto scrollbar-hide">
+      <div className="rounded-2xl border border-[#FFBF00]/20 bg-card p-4 flex items-center gap-3 overflow-x-auto scrollbar-hide">
         {displayMembers.map((member) => (
           <div
             key={member.id}
@@ -139,7 +135,6 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
             </p>
           </button>
         )}
-      </div>
       </div>
     </section>
   );

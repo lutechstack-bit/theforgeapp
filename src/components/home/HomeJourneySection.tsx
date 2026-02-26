@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import forgeIcon from '@/assets/forge-icon.png';
 import { RefreshCw, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRoadmapData } from '@/hooks/useRoadmapData';
@@ -214,7 +215,10 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
     <section className="space-y-6">
       {/* Header — clean, no icon box, no left border */}
       <div>
-        <h3 className="text-xl font-bold text-foreground">{title}</h3>
+        <div className="flex items-center gap-2">
+          <img src={forgeIcon} alt="" className="w-4 h-4 opacity-60" />
+          <h3 className="text-xl font-bold text-foreground">{title}</h3>
+        </div>
         {journeySubtitle && (
           <p className="text-sm text-muted-foreground mt-0.5">{journeySubtitle}</p>
         )}

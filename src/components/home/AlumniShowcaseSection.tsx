@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Film, Play, ChevronRight } from 'lucide-react';
+import forgeIcon from '@/assets/forge-icon.png';
 import { HomeCarouselSkeleton } from '@/components/home/HomeCarouselSkeleton';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
@@ -48,11 +49,11 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
 
   return (
     <>
-      <div className="rounded-2xl border border-border/40 bg-card/30 p-4 sm:p-5">
+      <div className="rounded-2xl border border-[#FFBF00]/20 bg-card/30 p-4 sm:p-5">
         {/* Header */}
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            <Film className="h-4 w-4 text-primary" />
+            <img src={forgeIcon} alt="" className="w-4 h-4 opacity-60" />
             <h2 className="text-base sm:text-lg font-bold text-foreground">{title}</h2>
           </div>
           <button
@@ -71,14 +72,14 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
           {alumni.map((a) => (
             <div
               key={a.id}
-              className="flex-shrink-0 w-[260px] sm:w-[300px] rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300"
+              className="flex-shrink-0 w-[260px] sm:w-[300px]"
               style={{ scrollSnapAlign: 'start' }}
             >
             <div
               onClick={() => setPlayingVideo({ url: a.video_url, title: a.film || a.name })}
               className="cursor-pointer group"
             >
-              <div className="relative aspect-video rounded-[13px] overflow-hidden bg-black">
+              <div className="relative aspect-video rounded-2xl overflow-hidden bg-black">
                 {a.thumbnail_url ? (
                   <img
                     src={a.thumbnail_url}
