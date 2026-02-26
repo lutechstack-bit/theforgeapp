@@ -245,10 +245,11 @@ const Learn: React.FC = () => {
                   imageUrl="/images/programs/video-editing-academy.png"
                 />
                 <ProgramBanner
-                  title="Cinematography Masterclass"
+                  title="Creator Academy"
                   description="Learn the art of visual storytelling from award-winning cinematographers."
                   ctaUrl="https://www.leveluplearning.in/"
                   gradient="linear-gradient(135deg, hsl(45,40%,20%) 0%, hsl(35,50%,25%) 100%)"
+                  imageUrl="/images/programs/creator-academy.png"
                 />
               </div>
             </section>
