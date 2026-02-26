@@ -178,15 +178,18 @@ const Learn: React.FC = () => {
         {/* LevelUp Zone */}
         <div className="bg-white/[0.03] -mx-4 sm:-mx-5 px-4 sm:px-5 pt-8 pb-4 rounded-t-3xl mt-4">
           {/* Zone header */}
-          <div className="mb-8 flex items-center gap-4">
-            <div className="flex-1 h-px bg-border/50" />
-            <div className="flex items-center gap-3">
-              <span className="text-base font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
-                More from
-              </span>
-              <img src={levelUpLogo} alt="LevelUp" className="h-20 md:h-24 invert opacity-80 object-contain shrink-0" />
+          <div className="mb-8 flex flex-col items-center gap-3">
+            <div className="flex items-center gap-4 w-full">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#FFBF00]/40 to-transparent" />
+              <div className="flex items-center gap-3">
+                <span className="text-base font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
+                  More from
+                </span>
+                <img src={levelUpLogo} alt="LevelUp" className="h-28 md:h-36 invert opacity-90 object-contain shrink-0" />
+              </div>
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#FFBF00]/40 to-transparent" />
             </div>
-            <div className="flex-1 h-px bg-border/50" />
+            <div className="w-32 h-0.5 rounded-full bg-gradient-to-r from-[#FFBF00]/0 via-[#FFBF00]/60 to-[#FFBF00]/0" />
           </div>
 
           <div className="space-y-8 sm:space-y-10">
