@@ -184,7 +184,7 @@ const Learn: React.FC = () => {
               <span className="text-base font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
                 More from
               </span>
-              <img src={levelUpLogo} alt="LevelUp" className="h-10 invert opacity-80 object-contain" />
+              <img src={levelUpLogo} alt="LevelUp" className="h-14 invert opacity-80 object-contain" />
             </div>
             <div className="flex-1 h-px bg-border/50" />
           </div>
