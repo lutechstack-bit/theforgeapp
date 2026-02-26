@@ -45,14 +45,16 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
 
   if (cardLayout === 'landscape') {
     return (
-      <div onClick={handleClick} className="group cursor-pointer w-full flex-shrink-0">
-        <div className="relative aspect-[16/10] rounded-2xl overflow-hidden border border-border/30 group-hover:border-primary/30 transition-colors duration-300">
-          <img
-            src={thumbnailUrl || '/images/learn/pre-forge-placeholder.png'}
-            alt={title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
+      <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300">
+        <div onClick={handleClick} className="group cursor-pointer w-full flex-shrink-0">
+          <div className="relative aspect-[16/10] rounded-[13px] overflow-hidden transition-colors duration-300">
+            <img
+              src={thumbnailUrl || '/images/learn/pre-forge-placeholder.png'}
+              alt={title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
+          </div>
         </div>
       </div>
     );
@@ -62,12 +64,13 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
   const duration = formatDuration(durationMinutes);
 
   return (
+    <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300 w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px] flex-shrink-0">
     <div
       onClick={handleClick}
-      className="group cursor-pointer w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px] flex-shrink-0"
+      className="group cursor-pointer"
     >
       {/* Thumbnail */}
-      <div className="relative aspect-[3/4] rounded-xl overflow-hidden border border-border/30 group-hover:border-primary/30 transition-colors duration-300">
+      <div className="relative aspect-[3/4] rounded-[13px] overflow-hidden transition-colors duration-300">
         {thumbnailUrl ? (
           <img
             src={thumbnailUrl}
@@ -91,6 +94,7 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 };

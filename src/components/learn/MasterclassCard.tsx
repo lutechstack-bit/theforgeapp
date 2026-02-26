@@ -19,8 +19,9 @@ export const MasterclassCard: React.FC<MasterclassCardProps> = ({
   };
 
   return (
+    <div className="w-[200px] sm:w-[220px] flex-shrink-0 rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300">
     <div
-      className="w-[200px] sm:w-[220px] flex-shrink-0 rounded-2xl overflow-hidden shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 cursor-pointer group bg-card"
+      className="rounded-[13px] overflow-hidden cursor-pointer group bg-card"
       onClick={handleClick}
     >
       <div className="relative aspect-[3/4] bg-muted overflow-hidden">
@@ -42,6 +43,7 @@ export const MasterclassCard: React.FC<MasterclassCardProps> = ({
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
+    </div>
     </div>
   );
 };

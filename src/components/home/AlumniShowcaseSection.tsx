@@ -71,11 +71,14 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
           {alumni.map((a) => (
             <div
               key={a.id}
-              onClick={() => setPlayingVideo({ url: a.video_url, title: a.film || a.name })}
-              className="flex-shrink-0 w-[260px] sm:w-[300px] cursor-pointer group"
+              className="flex-shrink-0 w-[260px] sm:w-[300px] rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300"
               style={{ scrollSnapAlign: 'start' }}
             >
-              <div className="relative aspect-video rounded-xl overflow-hidden bg-black">
+            <div
+              onClick={() => setPlayingVideo({ url: a.video_url, title: a.film || a.name })}
+              className="cursor-pointer group"
+            >
+              <div className="relative aspect-video rounded-[13px] overflow-hidden bg-black">
                 {a.thumbnail_url ? (
                   <img
                     src={a.thumbnail_url}
@@ -106,6 +109,7 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
                   </p>
                 </div>
               </div>
+            </div>
             </div>
           ))}
         </div>
