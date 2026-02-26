@@ -52,16 +52,13 @@ export const PremiumVideoCard: React.FC<PremiumVideoCardProps> = ({
   };
 
   return (
+    <div className={cn("rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300", className)}>
     <div
       onClick={handleClick}
-      className={cn(
-        "group relative cursor-pointer rounded-2xl transition-all duration-300",
-        "bg-card border border-border/50 hover-gold-glow",
-        className
-      )}
+      className="group relative cursor-pointer rounded-[13px] bg-card"
     >
       {/* Thumbnail Container */}
-      <div className="relative aspect-video overflow-hidden rounded-t-2xl">
+      <div className="relative aspect-video overflow-hidden rounded-t-[13px]">
         {thumbnailUrl ? (
           <img
             src={thumbnailUrl}
@@ -146,6 +143,7 @@ export const PremiumVideoCard: React.FC<PremiumVideoCardProps> = ({
           </p>
         )}
       </div>
+    </div>
     </div>
   );
 };
