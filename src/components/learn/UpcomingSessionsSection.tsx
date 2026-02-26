@@ -75,7 +75,8 @@ export const UpcomingSessionsSection: React.FC = () => {
       <ScrollableCardRow>
           {sessions.map((session) => (
             <div key={session.id} className="snap-start flex-shrink-0">
-              <div className="w-[270px] sm:w-[300px] bg-card rounded-2xl border border-border/30 p-4 flex flex-col gap-3 hover:border-primary/30 transition-colors duration-300">
+              <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300">
+              <div className="w-[270px] sm:w-[300px] bg-card rounded-[13px] p-4 flex flex-col gap-3">
                 {/* Date pill + Title */}
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-12 h-14 rounded-xl bg-primary/15 flex flex-col items-center justify-center">
@@ -147,6 +148,7 @@ export const UpcomingSessionsSection: React.FC = () => {
                     <CalendarPlus className="w-3.5 h-3.5" />
                   </Button>
                 </div>
+              </div>
               </div>
             </div>
           ))}
