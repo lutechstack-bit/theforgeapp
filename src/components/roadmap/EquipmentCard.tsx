@@ -40,7 +40,7 @@ const EquipmentCard: React.FC<EquipmentCardProps> = ({ equipment }) => {
   const specsLine = equipment.specs?.slice(0, 3).join(' • ') || '';
 
   return (
-    <div className="group relative rounded-2xl overflow-hidden bg-card border border-border/40 hover:border-primary/40 transition-all duration-500 hover:shadow-[0_8px_40px_hsl(var(--primary)/0.15)] hover:-translate-y-1">
+    <div className="group relative rounded-2xl overflow-hidden bg-card border border-[#FFBF00]/20 transition-all duration-300">
       {/* Product Image Container - Clean White/Light Background */}
       <div className={`aspect-square relative overflow-hidden bg-gradient-to-br ${gradientClass}`}>
         {/* Subtle gradient backdrop */}
@@ -99,8 +99,6 @@ const EquipmentCard: React.FC<EquipmentCardProps> = ({ equipment }) => {
         )}
       </div>
 
-      {/* Hover Glow Effect */}
-      <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-primary/0 group-hover:ring-primary/20 transition-all duration-500 pointer-events-none" />
     </div>
   );
 };

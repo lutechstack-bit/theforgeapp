@@ -132,9 +132,8 @@ const RoadmapSummaryCards: React.FC = () => {
             onClick={() => navigate(card.path)}
             className={cn(
               'flex-1 min-w-[140px] snap-start',
-              'rounded-xl border border-border/40 bg-card/60 p-4',
+              'rounded-xl border border-[#FFBF00]/20 bg-card p-4',
               'text-left transition-all duration-200',
-              'hover:border-primary/30 hover:bg-card/80',
               'active:scale-[0.98]'
             )}
           >

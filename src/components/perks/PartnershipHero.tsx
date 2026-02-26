@@ -20,11 +20,7 @@ const partners = [
  
  export const PartnershipHero: React.FC = () => {
    return (
-     <div className="relative mb-6 md:mb-8 overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-primary/10 via-card/80 to-card border border-primary/30 shadow-lg">
-       {/* Enhanced decorative blur orbs */}
-       <div className="absolute top-0 right-0 w-48 md:w-64 h-48 md:h-64 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-       <div className="absolute bottom-0 left-0 w-36 md:w-48 h-36 md:h-48 bg-primary/15 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
-       <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-forge-gold/10 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2" />
+    <div className="relative mb-6 md:mb-8 overflow-hidden rounded-2xl border border-[#FFBF00]/20 bg-card">
        
        <div className="relative p-6 md:p-10">
          {/* Section header */}
@@ -52,14 +48,11 @@ const partners = [
                  <img
                    src={partner.logo}
                    alt={partner.name}
-                   className="h-full w-auto object-contain max-w-[120px] md:max-w-[160px] drop-shadow-[0_0_15px_rgba(255,188,59,0.3)] group-hover:drop-shadow-[0_0_25px_rgba(255,188,59,0.5)] transition-all duration-300"
+                   className="h-full w-auto object-contain max-w-[120px] md:max-w-[160px] transition-all duration-300"
                  />
                </div>
                
-               {/* Gold divider line */}
-               <div className="w-16 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent mb-4" />
-               
-               {/* Discount badge - more prominent */}
+                {/* Discount badge */}
                <Badge className="bg-gradient-to-r from-primary to-forge-gold text-primary-foreground border-0 font-black text-sm md:text-base px-4 py-1.5 mb-2">
                  {partner.discount}
                </Badge>
