@@ -1,38 +1,46 @@
 
 
-# Fix LevelUp Logo Visibility in "More From" Divider
+# Fix LevelUp Logo Visibility in Section Divider
 
 ## Problem
-The current white logo (`levelup-logo-white.png`) has massive whitespace/padding around the actual logo content, rendering it invisible at `h-4`. The centered divider text is also too small.
+The LevelUp logo image has excessive internal whitespace/padding, making it nearly invisible even at `h-5`. The "MORE FROM" text dwarfs the logo.
 
 ## Changes
 
-**Step 1: Replace logo asset**
-- Copy `user-uploads://LevelUp_Logo.png` (the full "LevelUp learning" logo with graph icon) to `src/assets/levelup-logo.png`
-- This logo is black on transparent, so we'll apply `invert` filter for the dark background
+**File: `src/pages/Learn.tsx`** (lines 181-189)
 
-**Step 2: Update `src/pages/Learn.tsx`**
-- Change import from `levelup-logo-white.png` to `levelup-logo.png`
-- Increase "MORE FROM" text from `text-[11px]` to `text-sm` (14px) so it's clearly readable
-- Increase logo from `h-4` to `h-5` to match the text height
-- Add `invert` class to the `<img>` so the black logo renders white on the dark background
-- Keep the centered divider layout with horizontal lines on both sides
+Increase the logo size significantly (from `h-5` to `h-10`) so the actual logo content within the padded image becomes visible and proportional to the "MORE FROM" text. Also increase the gap between text and logo.
 
 ```tsx
 // Before
-import levelUpLogo from '@/assets/levelup-logo-white.png';
-...
-<span className="text-[11px] font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
-  More from
-</span>
-<img src={levelUpLogo} alt="LevelUp" className="h-4 opacity-70" />
+<div className="mb-8 flex items-center gap-4">
+  <div className="flex-1 h-px bg-border/50" />
+  <div className="flex items-center gap-2">
+    <span className="text-sm font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
+      More from
+    </span>
+    <img src={levelUpLogo} alt="LevelUp" className="h-5 invert opacity-70" />
+  </div>
+  <div className="flex-1 h-px bg-border/50" />
+</div>
 
 // After
-import levelUpLogo from '@/assets/levelup-logo.png';
-...
-<span className="text-sm font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
-  More from
-</span>
-<img src={levelUpLogo} alt="LevelUp" className="h-5 invert opacity-70" />
+<div className="mb-8 flex items-center gap-4">
+  <div className="flex-1 h-px bg-border/50" />
+  <div className="flex items-center gap-3">
+    <span className="text-base font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
+      More from
+    </span>
+    <img src={levelUpLogo} alt="LevelUp" className="h-10 invert opacity-80 object-contain" />
+  </div>
+  <div className="flex-1 h-px bg-border/50" />
+</div>
 ```
+
+Key changes:
+- Logo height: `h-5` → `h-10` (compensates for internal padding in the image)
+- Text size: `text-sm` → `text-base` (larger, matching the logo)
+- Opacity: `0.70` → `0.80` (more visible)
+- Gap: `gap-2` → `gap-3`
+- Added `object-contain` for proper scaling
 
