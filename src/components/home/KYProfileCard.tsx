@@ -29,7 +29,8 @@ const KYProfileCard: React.FC = () => {
 
   return (
     <>
-      <div className="rounded-2xl border border-forge-gold/30 bg-card/80 backdrop-blur-sm overflow-hidden shadow-[0_0_30px_-8px_hsl(var(--primary)/0.2)]">
+      <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300">
+      <div className="rounded-[13px] bg-card/80 backdrop-blur-sm overflow-hidden">
         {/* Header */}
         <div className="p-5 pb-3">
           <div className="flex items-center justify-between mb-1">
@@ -106,7 +107,7 @@ const KYProfileCard: React.FC = () => {
           })}
         </div>
       </div>
-
+      </div>
     </>
   );
 };
