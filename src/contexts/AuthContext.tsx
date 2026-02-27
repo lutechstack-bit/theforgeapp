@@ -43,6 +43,7 @@ interface Profile {
   instagram_handle: string | null;
   twitter_handle: string | null;
   specialty: string | null;
+  tagline: string | null;
 }
 
 interface Edition {
