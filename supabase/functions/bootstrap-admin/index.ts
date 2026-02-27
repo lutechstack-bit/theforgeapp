@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 serve(async (req) => {
@@ -22,26 +22,24 @@ serve(async (req) => {
     });
 
     // Parse the request body
-    const { email, password, force } = await req.json();
+    const { email, password } = await req.json();
 
-    // Check if any admin already exists (unless force flag is set)
-    if (!force) {
-      const { data: existingAdmins, error: checkError } = await adminClient
-        .from('user_roles')
-        .select('id')
-        .eq('role', 'admin')
-        .limit(1);
+    // Check if any admin already exists — no bypass allowed
+    const { data: existingAdmins, error: checkError } = await adminClient
+      .from('user_roles')
+      .select('id')
+      .eq('role', 'admin')
+      .limit(1);
 
-      if (checkError) {
-        console.error('Error checking existing admins:', checkError);
-      }
+    if (checkError) {
+      console.error('Error checking existing admins:', checkError);
+    }
 
-      if (existingAdmins && existingAdmins.length > 0) {
-        return new Response(
-          JSON.stringify({ error: 'Admin already exists. Bootstrap disabled. Use force:true to override.' }),
-          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+    if (existingAdmins && existingAdmins.length > 0) {
+      return new Response(
+        JSON.stringify({ error: 'Admin already exists. Bootstrap disabled.' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     if (!email || !password) {
