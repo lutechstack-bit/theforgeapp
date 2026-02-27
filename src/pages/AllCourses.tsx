@@ -69,7 +69,7 @@ const AllCourses: React.FC = () => {
         </div>
 
         {/* Filter Tabs */}
-        <div className="px-4 pb-3 flex gap-2 overflow-x-auto scrollbar-hide">
+        <div className="px-4 pb-3 flex gap-2 overflow-x-auto scrollbar-hide pr-6">
           {FILTER_OPTIONS.map((filter) => (
             <button
               key={filter.id}
@@ -108,7 +108,12 @@ const AllCourses: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <div className={cn(
+            "grid gap-4",
+            activeFilter === 'community_sessions'
+              ? "grid-cols-1 max-w-md"
+              : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          )}>
             {filteredCourses.map((course) => (
               <LearnCourseCard
                 key={course.id}
@@ -116,7 +121,7 @@ const AllCourses: React.FC = () => {
                 title={course.title}
                 thumbnailUrl={course.thumbnail_url}
                 durationMinutes={course.duration_minutes}
-                cardLayout="landscape"
+                cardLayout={course.section_type === 'community_sessions' ? 'portrait' : 'landscape'}
                 onClick={() => handleCardClick(course)}
               />
             ))}
