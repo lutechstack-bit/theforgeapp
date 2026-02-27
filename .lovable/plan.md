@@ -1,45 +1,30 @@
 
 
-# Mobile Responsiveness Fixes — Home Page
+# Fix: Alumni Cards Full-Width + Travel Section Hidden Behind Bottom Nav
 
-All issues identified from 320px and 375px viewport testing.
+## Issues
+1. **Alumni Showcase cards** show at fixed `w-[220px]` on mobile — shows partial second card. Should show one full card at a time with snap scrolling.
+2. **Travel & Stay section** (last section on Home) gets hidden behind the 68px bottom nav bar — needs bottom margin/padding.
 
----
+## Fixes
 
-## Issues & Fixes
+### 1. `src/components/home/AlumniShowcaseSection.tsx` — Full-width cards on mobile
+- Line 75: Change card width from `w-[220px] sm:w-[280px]` → `w-[calc(100%-8px)] sm:w-[280px]`
+- This makes each card take full container width on mobile (minus a tiny peek), showing one card at a time
+- `snap-start` already present so swiping snaps cleanly
 
-### 1. `src/pages/Home.tsx` — Section spacing too generous on small screens
-- Line 152: Change `space-y-8 sm:space-y-10` → `space-y-6 sm:space-y-8`
+### 2. `src/pages/Home.tsx` — Add bottom padding to prevent last section hiding behind bottom nav
+- Line 152: Add `pb-6` to the `space-y-6` container (already has `page-container` which may include some padding, but the Travel section is the last item and gets clipped)
+- Alternatively, check `page-container` class — the `pb-24 md:pb-0` is on the `<main>` in AppLayout, so it should already work. Let me verify the actual padding chain.
 
-### 2. `src/components/home/CompactCountdownTimer.tsx` — City column too narrow on 320px
-- Line 69: Change `w-16` → `w-20` so "The Forge" and city names don't wrap awkwardly
-- Line 75: Add `truncate` to city name span to prevent overflow
+Looking at AppLayout: `<main className="pb-24 md:pb-0">` — this should provide 96px bottom padding. The issue might be that `page-container` or `min-h-screen` is interfering. The fix is simpler — ensure the content wrapper itself has adequate bottom spacing.
 
-### 3. `src/components/home/DatePillSelector.tsx` — Edge pills clip against container
-- Line 48: Add `px-1` to scroll container so first/last pills aren't flush against edges
+### File changes:
 
-### 4. `src/components/home/HomeJourneySection.tsx` — Segmented control buttons can wrap on 320px
-- Lines 231-251: Add `flex-wrap` to the segmented control container and make buttons `flex-1 min-w-0 text-center` so they share equal width instead of overflowing
+**`src/components/home/AlumniShowcaseSection.tsx`** (line 75):
+- `w-[220px] sm:w-[280px]` → `w-[calc(100vw-72px)] sm:w-[280px]`
+  - 72px = 32px container padding (p-4 × 2) + 8px inner padding (px-1 × 2) — ensures one full card visible with no half-card peek
 
-### 5. `src/components/home/AlumniShowcaseSection.tsx` — Film cards too wide for 320px
-- Line 75: Change `w-[260px] sm:w-[300px]` → `w-[220px] sm:w-[280px]`
-- Add `snap-x snap-mandatory` to scroll container, `snap-start` to each card
-
-### 6. `src/components/home/SessionDetailCard.tsx` — Inner padding too generous on mobile
-- Line 37: Change `p-5 sm:p-6` → `p-4 sm:p-6`
-
-### 7. `src/components/home/HomeErrorState.tsx` — Padding too generous on mobile
-- Line 32: Change `p-6` → `p-4 sm:p-6`
-
-### 8. `src/components/home/BatchmatesSection.tsx` — Skeleton loading shows 5 items that overflow on 320px
-- Line 57: Change skeleton count from 5 → 4
-- Add `snap-x` to the avatar scroll container (line 77)
-
-### 9. `src/components/home/TravelStaySection.tsx` — Image carousel takes too much vertical space on mobile
-- Line 108: Change `aspect-[4/3]` → `aspect-[16/10] sm:aspect-[4/3]`
-
----
-
-## Summary
-9 targeted fixes across 8 files. All changes are CSS/className-only — no logic changes.
+**`src/pages/Home.tsx`** (line 152):
+- Add `pb-8` to the space-y container so the Travel & Stay section clears the bottom nav
 
