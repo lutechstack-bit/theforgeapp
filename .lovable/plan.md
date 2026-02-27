@@ -1,26 +1,21 @@
 
 
-# Fix "Add to Calendar" Button Functionality
+# Open Apple Calendar Directly Instead of Downloading .ics
 
 ## Problem
-The "Add to Calendar" button on the homepage `SessionDetailCard` doesn't add anything to a calendar - it just opens the detail modal via `onViewDetail`. The button in `SessionDetailModal` does work (calls `handleAddToCalendar` which opens Google Calendar), but the homepage one is broken.
+Currently the "Apple / Other (.ics)" option downloads a file. User wants it to redirect/open directly in the calendar app instead.
+
+## Solution
+Replace `downloadICSFile()` calls with opening a blob URL in a new tab (`window.open`). On iOS/macOS, this triggers the native Calendar app to add the event directly. On other platforms, the browser will handle the .ics file appropriately (usually opening it in the default calendar app).
 
 ## Changes
 
-### 1. `src/components/home/SessionDetailCard.tsx`
-- Replace the dummy `onViewDetail` click handler on the "Add to Calendar" button with actual calendar functionality
-- Import `generateGoogleCalendarUrl` and `downloadICSFile` from `@/lib/calendarUtils`
-- Add a Popover dropdown with two options: **Google Calendar** (opens URL) and **Download .ics** (for Apple/Outlook)
-- Build the calendar event from the `day` prop data (title, description, date, session_start_time, duration, is_virtual)
+### 1. `src/lib/calendarUtils.ts`
+- Add a new `openICSFile()` function that generates ICS content, creates a blob URL, and opens it via `window.open()` instead of triggering a download link click.
 
-### 2. No other files need changes
-The `SessionDetailModal` already has a working implementation. The `calendarUtils.ts` library already has all needed helpers.
+### 2. `src/components/home/SessionDetailCard.tsx`
+- Replace `downloadICSFile(...)` call with the new `openICSFile(...)` function.
+- Update toast message from "Calendar file downloaded" to "Opening calendar...".
 
-## Technical Details
-
-**SessionDetailCard calendar button flow:**
-- Click "Add to Calendar" → opens a small Popover with two options
-- "Google Calendar" → calls `generateGoogleCalendarUrl()` with day data, opens in new tab
-- "Apple / Other (.ics)" → calls `downloadICSFile()` with day data, downloads file
-- If `day.date` is null, show a toast saying date not yet announced
+### 3. Check for other usages of `downloadICSFile` across the codebase and update if appropriate (the existing download functions remain available for batch/feed downloads).
 
