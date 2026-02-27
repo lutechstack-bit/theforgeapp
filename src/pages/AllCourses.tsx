@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,8 +20,8 @@ interface LearnContent {
 
 const FILTER_OPTIONS = [
   { id: 'all', label: 'All' },
-  { id: 'bfp_sessions', label: 'Pre Forge Sessions' },
-  { id: 'community_sessions', label: 'Community Sessions' },
+  { id: 'bfp_sessions', label: 'Pre Forge' },
+  { id: 'community_sessions', label: 'Community' },
 ];
 
 const AllCourses: React.FC = () => {
@@ -29,11 +29,6 @@ const AllCourses: React.FC = () => {
   const [searchParams] = useSearchParams();
   const initialSection = searchParams.get('section') || 'all';
   const [activeFilter, setActiveFilter] = useState(initialSection);
-  const activeButtonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    activeButtonRef.current?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
-  }, [activeFilter]);
 
   // Fetch all courses
   const { data: courses = [], isLoading } = useQuery({
@@ -74,14 +69,13 @@ const AllCourses: React.FC = () => {
         </div>
 
         {/* Filter Tabs */}
-        <div className="px-4 pb-3 flex gap-2 overflow-x-auto scrollbar-hide pr-8">
+        <div className="px-4 pb-3 grid grid-cols-3 gap-2">
           {FILTER_OPTIONS.map((filter) => (
             <button
               key={filter.id}
-              ref={activeFilter === filter.id ? activeButtonRef : null}
               onClick={() => setActiveFilter(filter.id)}
               className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0",
+                "w-full min-w-0 px-2 py-2 rounded-full text-xs font-medium leading-tight text-center transition-colors",
                 activeFilter === filter.id
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
