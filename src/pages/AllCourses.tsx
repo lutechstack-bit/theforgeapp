@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,6 +29,11 @@ const AllCourses: React.FC = () => {
   const [searchParams] = useSearchParams();
   const initialSection = searchParams.get('section') || 'all';
   const [activeFilter, setActiveFilter] = useState(initialSection);
+  const activeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    activeButtonRef.current?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+  }, [activeFilter]);
 
   // Fetch all courses
   const { data: courses = [], isLoading } = useQuery({
@@ -73,9 +78,10 @@ const AllCourses: React.FC = () => {
           {FILTER_OPTIONS.map((filter) => (
             <button
               key={filter.id}
+              ref={activeFilter === filter.id ? activeButtonRef : null}
               onClick={() => setActiveFilter(filter.id)}
               className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
+                "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0",
                 activeFilter === filter.id
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
