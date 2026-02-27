@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { JourneyCardDay } from '@/components/roadmap/JourneyCard';
 import { cn } from '@/lib/utils';
-import { generateGoogleCalendarUrl, openICSFile } from '@/lib/calendarUtils';
+import { generateGoogleCalendarUrl, generateOutlookCalendarUrl, generateYahooCalendarUrl, generateAppleCalendarUrl } from '@/lib/calendarUtils';
 import { toast } from 'sonner';
 
 interface SessionDetailCardProps {
@@ -105,54 +105,52 @@ const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onVi
             </PopoverTrigger>
             {day.date && (
               <PopoverContent className="w-48 p-2" align="start">
-                <button
-                  className="flex items-center gap-2 w-full rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
+                {(() => {
+                  const getEvent = () => {
                     const startDate = new Date(day.date!);
                     if (day.session_start_time) {
                       const [h, m] = day.session_start_time.split(':').map(Number);
                       startDate.setHours(h, m, 0);
                     }
                     const endDate = new Date(startDate.getTime() + (day.session_duration_hours || 1) * 60 * 60 * 1000);
-                    const url = generateGoogleCalendarUrl({
+                    return {
                       title: `Forge: ${day.title}`,
                       description: day.description || '',
                       startDate,
                       endDate,
                       isVirtual: day.is_virtual,
                       location: day.location || undefined,
-                    });
-                    window.open(url, '_blank');
-                  }}
-                >
-                  <Calendar className="w-4 h-4 text-primary" />
-                  Google Calendar
-                </button>
-                <button
-                  className="flex items-center gap-2 w-full rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const startDate = new Date(day.date!);
-                    if (day.session_start_time) {
-                      const [h, m] = day.session_start_time.split(':').map(Number);
-                      startDate.setHours(h, m, 0);
-                    }
-                    const endDate = new Date(startDate.getTime() + (day.session_duration_hours || 1) * 60 * 60 * 1000);
-                    openICSFile({
-                      title: `Forge: ${day.title}`,
-                      description: day.description || '',
-                      startDate,
-                      endDate,
-                      isVirtual: day.is_virtual,
-                      location: day.location || undefined,
-                    });
-                    toast.success('Opening calendar...');
-                  }}
-                >
-                  <Download className="w-4 h-4 text-primary" />
-                  Apple / Other (.ics)
-                </button>
+                    };
+                  };
+                  return (
+                    <>
+                      <button
+                        className="flex items-center gap-2 w-full rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
+                        onClick={(e) => { e.stopPropagation(); window.open(generateGoogleCalendarUrl(getEvent()), '_blank'); }}
+                      >
+                        📅 Google Calendar
+                      </button>
+                      <button
+                        className="flex items-center gap-2 w-full rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
+                        onClick={(e) => { e.stopPropagation(); window.open(generateAppleCalendarUrl(getEvent()), '_blank'); }}
+                      >
+                        🍎 Apple Calendar
+                      </button>
+                      <button
+                        className="flex items-center gap-2 w-full rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
+                        onClick={(e) => { e.stopPropagation(); window.open(generateOutlookCalendarUrl(getEvent()), '_blank'); }}
+                      >
+                        📧 Outlook
+                      </button>
+                      <button
+                        className="flex items-center gap-2 w-full rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
+                        onClick={(e) => { e.stopPropagation(); window.open(generateYahooCalendarUrl(getEvent()), '_blank'); }}
+                      >
+                        📆 Yahoo Calendar
+                      </button>
+                    </>
+                  );
+                })()}
               </PopoverContent>
             )}
           </Popover>

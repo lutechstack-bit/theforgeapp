@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow, addDays, format, isToday, isTomorrow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { generateGoogleCalendarUrl, openICSFile } from '@/lib/calendarUtils';
+import { generateGoogleCalendarUrl, generateOutlookCalendarUrl, generateYahooCalendarUrl, generateAppleCalendarUrl } from '@/lib/calendarUtils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -249,7 +249,20 @@ const SessionNotificationCard: React.FC<{
 
   const handleAppleCalendar = (e: React.MouseEvent) => {
     e.stopPropagation();
-    openICSFile(getCalendarEvent());
+    const url = generateAppleCalendarUrl(getCalendarEvent());
+    window.open(url, '_blank');
+  };
+
+  const handleOutlookCalendar = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = generateOutlookCalendarUrl(getCalendarEvent());
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleYahooCalendar = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = generateYahooCalendarUrl(getCalendarEvent());
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -330,6 +343,12 @@ const SessionNotificationCard: React.FC<{
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleAppleCalendar}>
               🍎 Apple Calendar
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleOutlookCalendar}>
+              📧 Outlook
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleYahooCalendar}>
+              📆 Yahoo Calendar
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

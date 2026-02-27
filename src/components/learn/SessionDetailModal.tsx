@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { generateGoogleCalendarUrl, openICSFile } from '@/lib/calendarUtils';
+import { generateGoogleCalendarUrl, generateOutlookCalendarUrl, generateYahooCalendarUrl, generateAppleCalendarUrl } from '@/lib/calendarUtils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface SessionData {
   id: string;
@@ -61,26 +62,20 @@ export const SessionDetailModal: React.FC<SessionDetailModalProps> = ({
     }
   };
 
-  const handleAddToCalendar = () => {
-    if (!session.date) return;
-    const startDate = new Date(session.date);
+  const getCalendarEvent = () => {
+    const startDate = new Date(session.date!);
     if (session.session_start_time) {
       const [h, m] = session.session_start_time.split(':').map(Number);
       startDate.setHours(h, m, 0);
     }
     const endDate = new Date(startDate.getTime() + (session.session_duration_hours || 1) * 60 * 60 * 1000);
-
-    const calEvent = {
+    return {
       title: `Forge: ${session.title}`,
       description: session.description || '',
       startDate,
       endDate,
       isVirtual: true,
     };
-
-    // Try Google Calendar first, fallback to ICS
-    const url = generateGoogleCalendarUrl(calEvent);
-    window.open(url, '_blank');
   };
 
   const content = (
@@ -143,14 +138,43 @@ export const SessionDetailModal: React.FC<SessionDetailModalProps> = ({
           </Button>
         )}
         {session.date && (
-          <Button
-            variant="outline"
-            className="w-full h-10 text-sm rounded-xl border-border/50 gap-2"
-            onClick={handleAddToCalendar}
-          >
-            <CalendarPlus className="w-4 h-4" />
-            Add to Calendar
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full h-10 text-sm rounded-xl border-border/50 gap-2"
+              >
+                <CalendarPlus className="w-4 h-4" />
+                Add to Calendar
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-52 p-2" align="center">
+              <button
+                className="flex items-center gap-2 w-full rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
+                onClick={() => window.open(generateGoogleCalendarUrl(getCalendarEvent()), '_blank')}
+              >
+                📅 Google Calendar
+              </button>
+              <button
+                className="flex items-center gap-2 w-full rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
+                onClick={() => window.open(generateAppleCalendarUrl(getCalendarEvent()), '_blank')}
+              >
+                🍎 Apple Calendar
+              </button>
+              <button
+                className="flex items-center gap-2 w-full rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
+                onClick={() => window.open(generateOutlookCalendarUrl(getCalendarEvent()), '_blank')}
+              >
+                📧 Outlook
+              </button>
+              <button
+                className="flex items-center gap-2 w-full rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
+                onClick={() => window.open(generateYahooCalendarUrl(getCalendarEvent()), '_blank')}
+              >
+                📆 Yahoo Calendar
+              </button>
+            </PopoverContent>
+          </Popover>
         )}
       </div>
     </div>
