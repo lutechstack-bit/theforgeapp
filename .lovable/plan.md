@@ -1,19 +1,11 @@
 
 
-# Add Batchmate Profile Popup on Click
+# Fix: Travel & Stay "Open in Maps" Button Hidden Behind Bottom Nav
 
-## Approach
-Reuse the existing `MemberModal` (bottom sheet) from `src/components/community/MemberModal.tsx` — it already shows avatar, name, city, and specialty in a clean popup.
+The current `pb-8` (32px) on the Home content container isn't enough to clear the bottom nav bar (~68px + safe area). The `AppLayout` already has `pb-24` on `<main>`, but the inner container's `pb-8` may be conflicting or insufficient.
 
-## Changes
+## Fix
 
-### 1. `src/components/home/BatchmatesSection.tsx`
-- **Import** `MemberModal` from `@/components/community/MemberModal`
-- **Add state**: `selectedMember` to track which batchmate was clicked
-- **Update query**: add `specialty` to the select fields (`id, full_name, avatar_url, city, specialty`)
-- **Make each avatar clickable**: wrap the avatar `div` (line 101-119) in a `button` with `onClick` setting `selectedMember`
-- **Render `MemberModal`** at the bottom of the component with `isOnline={false}` (no online status tracking on homepage) and `onClose` clearing the state
-
-### Technical detail
-The `MemberModal` expects `{ id, full_name, avatar_url, city, specialty }` — the batchmates query currently selects `id, full_name, avatar_url, city`. Adding `specialty` to the select is the only data change needed.
+### `src/pages/Home.tsx`
+- Line 152: Change `pb-8` → `pb-24 md:pb-8` on the `space-y-6` container. This adds 96px bottom padding on mobile (matching the bottom nav height) while keeping modest padding on desktop where there's no bottom nav.
 
