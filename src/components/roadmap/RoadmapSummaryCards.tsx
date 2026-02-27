@@ -84,18 +84,18 @@ const RoadmapSummaryCards: React.FC = () => {
       title: 'Tasks',
       path: '/roadmap/tasks',
       content: (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <ProgressRing
             progress={taskPercent}
-            size={44}
+            size={36}
             strokeWidth={4}
             variant={taskPercent === 100 ? 'completed' : taskPercent > 0 ? 'current' : 'upcoming'}
           >
             <span className="text-[10px] font-bold text-foreground">{taskPercent}%</span>
           </ProgressRing>
-          <div>
-            <p className="text-sm font-semibold text-foreground">{remainingTasks} remaining</p>
-            <p className="text-[11px] text-muted-foreground">{requiredLeft} required left</p>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground truncate">{remainingTasks} remaining</p>
+            <p className="text-[11px] text-muted-foreground truncate">{requiredLeft} required left</p>
           </div>
         </div>
       ),
@@ -123,7 +123,7 @@ const RoadmapSummaryCards: React.FC = () => {
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
       {cards.map((card) => {
         const Icon = card.icon;
         return (
@@ -132,7 +132,8 @@ const RoadmapSummaryCards: React.FC = () => {
             onClick={() => navigate(card.path)}
             className={cn(
               'min-w-0',
-              'rounded-xl border border-[#FFBF00]/20 bg-card p-4',
+              card.id === 'journey' && 'col-span-2 sm:col-span-1',
+              'rounded-xl border border-[#FFBF00]/20 bg-card p-3 sm:p-4',
               'text-left transition-all duration-200',
               'active:scale-[0.98]'
             )}
