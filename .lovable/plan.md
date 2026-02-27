@@ -1,21 +1,23 @@
 
 
-# Open Apple Calendar Directly Instead of Downloading .ics
+# Replace All `downloadICSFile` with `openICSFile`
 
 ## Problem
-Currently the "Apple / Other (.ics)" option downloads a file. User wants it to redirect/open directly in the calendar app instead.
-
-## Solution
-Replace `downloadICSFile()` calls with opening a blob URL in a new tab (`window.open`). On iOS/macOS, this triggers the native Calendar app to add the event directly. On other platforms, the browser will handle the .ics file appropriately (usually opening it in the default calendar app).
+Three components still use `downloadICSFile` which triggers a file download instead of opening the calendar app directly. Only `SessionDetailCard` was updated previously.
 
 ## Changes
 
-### 1. `src/lib/calendarUtils.ts`
-- Add a new `openICSFile()` function that generates ICS content, creates a blob URL, and opens it via `window.open()` instead of triggering a download link click.
+### 1. `src/components/learn/SessionDetailModal.tsx`
+- Change import from `downloadICSFile` to `openICSFile`
+- Replace all calls to `downloadICSFile` with `openICSFile`
 
-### 2. `src/components/home/SessionDetailCard.tsx`
-- Replace `downloadICSFile(...)` call with the new `openICSFile(...)` function.
-- Update toast message from "Calendar file downloaded" to "Opening calendar...".
+### 2. `src/components/home/MasterNotificationCenter.tsx` (line 16, 252)
+- Change import from `downloadICSFile` to `openICSFile`
+- Replace `downloadICSFile(getCalendarEvent())` with `openICSFile(getCalendarEvent())` in `handleAppleCalendar`
 
-### 3. Check for other usages of `downloadICSFile` across the codebase and update if appropriate (the existing download functions remain available for batch/feed downloads).
+### 3. `src/components/roadmap/SessionMeetingCard.tsx` (line 6, 96)
+- Change import from `downloadICSFile` to `openICSFile`
+- Replace `downloadICSFile(event)` with `openICSFile(event)` in `handleAppleCalendar`
+
+All three are simple import + call swaps. No logic changes needed.
 
