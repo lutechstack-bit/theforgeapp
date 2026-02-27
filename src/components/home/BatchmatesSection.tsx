@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { promiseWithTimeout } from '@/lib/promiseTimeout';
 import { cn } from '@/lib/utils';
+import { MemberModal } from '@/components/community/MemberModal';
 
 interface BatchmatesSectionProps {
   title?: string;
@@ -22,14 +23,20 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
 }) => {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
-
+  const [selectedMember, setSelectedMember] = useState<{
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+    city: string | null;
+    specialty: string | null;
+  } | null>(null);
   const { data: batchmates, isLoading } = useQuery({
     queryKey: ['batchmates', profile?.edition_id],
     queryFn: async () => {
       const result = await promiseWithTimeout(
         supabase
           .from('profiles')
-          .select('id, full_name, avatar_url, city')
+          .select('id, full_name, avatar_url, city, specialty')
           .eq('edition_id', profile!.edition_id!)
           .neq('id', user!.id)
           .limit(12)
@@ -98,8 +105,9 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
       {/* Avatar Grid */}
       <div className="rounded-2xl border border-[#FFBF00]/20 bg-card p-4 flex items-center gap-3 overflow-x-auto scrollbar-hide snap-x">
         {displayMembers.map((member) => (
-          <div
+          <button
             key={member.id}
+            onClick={() => setSelectedMember(member)}
             className="flex flex-col items-center gap-1.5 flex-shrink-0 min-w-[64px]"
           >
             <Avatar className="w-14 h-14 border-2 border-border/30">
@@ -116,7 +124,7 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
                 {member.city}
               </p>
             )}
-          </div>
+          </button>
         ))}
 
         {/* +N more */}
@@ -136,6 +144,12 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
           </button>
         )}
       </div>
+
+      <MemberModal
+        member={selectedMember}
+        isOnline={false}
+        onClose={() => setSelectedMember(null)}
+      />
     </section>
   );
 };
