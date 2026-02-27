@@ -108,7 +108,7 @@ const RoadmapSummaryCards: React.FC = () => {
       content: (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-foreground">{progressPercent}% ready</p>
+            <p className="text-sm font-semibold text-foreground truncate">{progressPercent}% ready</p>
             {isOverdue && (
               <span className="text-[10px] font-bold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded">
                 Overdue
@@ -123,7 +123,7 @@ const RoadmapSummaryCards: React.FC = () => {
   ];
 
   return (
-    <div className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 -mx-1 px-1 mb-4">
+    <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4">
       {cards.map((card) => {
         const Icon = card.icon;
         return (
@@ -131,7 +131,7 @@ const RoadmapSummaryCards: React.FC = () => {
             key={card.id}
             onClick={() => navigate(card.path)}
             className={cn(
-              'flex-1 min-w-[140px] snap-start',
+              'min-w-0',
               'rounded-xl border border-[#FFBF00]/20 bg-card p-4',
               'text-left transition-all duration-200',
               'active:scale-[0.98]'
