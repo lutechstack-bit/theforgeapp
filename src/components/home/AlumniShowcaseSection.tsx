@@ -68,12 +68,11 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
         </p>
 
         {/* Film Strip Carousel */}
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1" style={{ scrollSnapType: 'x mandatory' }}>
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1 snap-x snap-mandatory">
           {alumni.map((a) => (
             <div
               key={a.id}
-              className="flex-shrink-0 w-[260px] sm:w-[300px]"
-              style={{ scrollSnapAlign: 'start' }}
+              className="flex-shrink-0 w-[220px] sm:w-[280px] snap-start"
             >
             <div
               onClick={() => setPlayingVideo({ url: a.video_url, title: a.film || a.name })}

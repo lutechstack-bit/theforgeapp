@@ -30,7 +30,7 @@ const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onVi
   return (
     <div
       className={cn(
-        'rounded-2xl border border-[#FFBF00]/20 p-5 sm:p-6',
+        'rounded-2xl border border-[#FFBF00]/20 p-4 sm:p-6',
         status === 'current' ? 'bg-card' : 'bg-card/60'
       )}
     >

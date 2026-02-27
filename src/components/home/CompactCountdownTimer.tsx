@@ -66,13 +66,13 @@ const CountdownContent = ({
     <div className="flex flex-row w-full items-center">
       {/* Left: City section - compact inline */}
       <div className={cn(
-        "flex-shrink-0 w-16 sm:w-28 md:w-32 flex flex-col justify-center px-2 sm:px-3 py-2 sm:py-3",
+        "flex-shrink-0 w-20 sm:w-28 md:w-32 flex flex-col justify-center px-2 sm:px-3 py-2 sm:py-3",
         showBorder ? "border-r border-white/10" : ""
       )}>
         <span className={cn("text-[7px] sm:text-[9px] uppercase tracking-widest hidden sm:block", labelClass)}>
           See you in
         </span>
-        <span className={cn("text-xs sm:text-base md:text-lg font-bold", textClass)}>
+        <span className={cn("text-xs sm:text-base md:text-lg font-bold truncate", textClass)}>
           {city || 'The Forge'}
         </span>
       </div>

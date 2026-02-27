@@ -49,7 +49,7 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
       <div className="space-y-4">
         <Skeleton className="h-6 w-48" />
         <div className="flex gap-3">
-          {Array.from({ length: 5 }).map((_, i) => (
+          {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="w-16 h-20 rounded-xl" />
           ))}
         </div>
@@ -96,7 +96,7 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
       </div>
 
       {/* Avatar Grid */}
-      <div className="rounded-2xl border border-[#FFBF00]/20 bg-card p-4 flex items-center gap-3 overflow-x-auto scrollbar-hide">
+      <div className="rounded-2xl border border-[#FFBF00]/20 bg-card p-4 flex items-center gap-3 overflow-x-auto scrollbar-hide snap-x">
         {displayMembers.map((member) => (
           <div
             key={member.id}

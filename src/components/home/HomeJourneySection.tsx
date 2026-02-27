@@ -226,11 +226,11 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
 
       {/* Segmented Control -- only when both types exist */}
       {showToggle && (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setActiveTab('online')}
             className={cn(
-              'px-4 py-2 text-sm rounded-full border transition-all duration-200',
+              'flex-1 min-w-0 px-3 py-2 text-sm rounded-full border transition-all duration-200 text-center',
               activeTab === 'online'
                 ? 'bg-primary text-primary-foreground border-primary font-medium'
                 : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30'
@@ -241,7 +241,7 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
           <button
             onClick={() => setActiveTab('bootcamp')}
             className={cn(
-              'px-4 py-2 text-sm rounded-full border transition-all duration-200',
+              'flex-1 min-w-0 px-3 py-2 text-sm rounded-full border transition-all duration-200 text-center',
               activeTab === 'bootcamp'
                 ? 'bg-primary text-primary-foreground border-primary font-medium'
                 : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30'
