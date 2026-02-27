@@ -42,7 +42,7 @@ const DatePillSelector: React.FC<DatePillSelectorProps> = ({
   return (
     <div
       ref={scrollRef}
-      className={cn('flex gap-2.5 overflow-x-auto scrollbar-hide py-1', className)}
+      className={cn('flex gap-2.5 overflow-x-auto scrollbar-hide py-1 px-1', className)}
     >
       {pills.map((pill) => {
         const isSelected = pill.id === selectedId;

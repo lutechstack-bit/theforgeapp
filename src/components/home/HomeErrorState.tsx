@@ -29,7 +29,7 @@ export const HomeErrorState = forwardRef<HTMLDivElement, HomeErrorStateProps>(
     const Icon = isOffline ? WifiOff : isTimeout ? Clock : AlertTriangle;
 
     return (
-      <div ref={ref} className="glass-premium rounded-2xl p-6 border border-destructive/30 bg-destructive/5">
+      <div ref={ref} className="glass-premium rounded-2xl p-4 sm:p-6 border border-destructive/30 bg-destructive/5">
         <div className="flex items-start gap-4">
           <div className="p-2 rounded-full bg-destructive/10">
             <Icon className="h-6 w-6 text-destructive" />

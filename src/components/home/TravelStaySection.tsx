@@ -105,7 +105,7 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
       <div className="flex flex-col sm:flex-row gap-4">
         {/* Image Carousel */}
         {allImages.length > 0 && (
-          <div className="relative w-full sm:w-2/5 aspect-[4/3] rounded-xl overflow-hidden bg-muted/50 flex-shrink-0">
+          <div className="relative w-full sm:w-2/5 aspect-[16/10] sm:aspect-[4/3] rounded-xl overflow-hidden bg-muted/50 flex-shrink-0">
             <img
               src={allImages[currentImageIdx]?.url}
               alt={location.name}
