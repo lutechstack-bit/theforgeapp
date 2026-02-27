@@ -69,7 +69,7 @@ const AllCourses: React.FC = () => {
         </div>
 
         {/* Filter Tabs */}
-        <div className="px-4 pb-3 flex gap-2 overflow-x-auto scrollbar-hide pr-6">
+        <div className="px-4 pb-3 flex gap-2 overflow-x-auto scrollbar-hide pr-8">
           {FILTER_OPTIONS.map((filter) => (
             <button
               key={filter.id}
@@ -111,7 +111,7 @@ const AllCourses: React.FC = () => {
           <div className={cn(
             "grid gap-4",
             activeFilter === 'community_sessions'
-              ? "grid-cols-1 max-w-md"
+              ? "grid-cols-1"
               : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
           )}>
             {filteredCourses.map((course) => (
