@@ -1,11 +1,28 @@
 
 
-# Fix: Travel & Stay "Open in Maps" Button Hidden Behind Bottom Nav
+# Fix: Roadmap Summary Cards Overflow on Mobile
 
-The current `pb-8` (32px) on the Home content container isn't enough to clear the bottom nav bar (~68px + safe area). The `AppLayout` already has `pb-24` on `<main>`, but the inner container's `pb-8` may be conflicting or insufficient.
+## Problem
+On mobile (375px), three summary cards with `min-w-[140px]` each plus 12px gaps total ~444px, exceeding the ~343px available width. This causes the Prep card to be partially hidden/cut off.
 
 ## Fix
 
-### `src/pages/Home.tsx`
-- Line 152: Change `pb-8` → `pb-24 md:pb-8` on the `space-y-6` container. This adds 96px bottom padding on mobile (matching the bottom nav height) while keeping modest padding on desktop where there's no bottom nav.
+### `src/components/roadmap/RoadmapSummaryCards.tsx`
+
+**Line 126** — Change the container from `flex` with overflow-scroll to a CSS grid that fits all 3 cards:
+```
+flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 -mx-1 px-1 mb-4
+```
+→
+```
+grid grid-cols-3 gap-2 sm:gap-3 mb-4
+```
+
+**Line 133-134** — Remove scroll-related classes from cards:
+- Remove `flex-1 min-w-[140px] snap-start`
+- Replace with `min-w-0` (allows grid children to shrink below content size)
+
+**Line 111** — In the Prep card content, add `truncate` to the percentage text so it doesn't force the card wider.
+
+This ensures all three cards are always equally sized and fully visible regardless of viewport width, with no horizontal scrolling needed.
 
