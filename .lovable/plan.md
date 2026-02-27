@@ -1,57 +1,45 @@
 
 
-# SideNav Overhaul — Clean, Spacious, GrowthX-Inspired
+# Mobile Responsiveness Fixes — Home Page
 
-Referencing the uploaded GrowthX sidebar: clean dark background, large spaced-out nav items, no gradients/glows/chevrons, subtle active state, user avatar at bottom with settings icon.
+All issues identified from 320px and 375px viewport testing.
 
-## File: `src/components/layout/SideNav.tsx` — Full restyle
+---
 
-### 1. Icon swaps (more distinctive, less generic)
-```
-/           Home      → House        (filled feel)
-/roadmap    Map       → Compass      (adventurous)
-/perks      Gift      → Gift         (keep — matches GrowthX "Perks")
-/learn      BookOpen  → BookOpen     (keep — matches reference)
-/events     Calendar  → CalendarDays (more detailed)
-/community  Users     → Users        (keep)
-/profile    Settings  → remove from main nav (profile is bottom user card)
-/updates    Info      → Info         (keep)
-/admin      Shield    → ShieldCheck
-Toggle      PanelLeft → ChevronsLeft/ChevronsRight
-```
+## Issues & Fixes
 
-Remove `/profile` from `navItems` — profile is accessed via the bottom user card (matching reference).
+### 1. `src/pages/Home.tsx` — Section spacing too generous on small screens
+- Line 152: Change `space-y-8 sm:space-y-10` → `space-y-6 sm:space-y-8`
 
-### 2. NavItem restyle — clean and spacious like reference
-- Remove `ChevronRight` arrows entirely
-- Remove gradient active bg (`bg-gradient-to-r from-primary/20...`) and shadow glows
-- Active state: simple `bg-white/[0.08]` with `text-foreground` — flat, clean
-- Remove active indicator bar (the glowing left bar)
-- Remove `drop-shadow` and `group-hover:scale-110`
-- Increase spacing: `space-y-1` → `space-y-2` for breathing room
-- Increase padding: `py-3` → `py-3.5`
-- Font: `text-[15px]` → `text-base` (16px), `font-medium`
-- Inactive: `text-sidebar-foreground/50` — softer
-- Icon size: `22px` → `20px` with `strokeWidth` 1.75 (thinner, elegant)
-- Active icon `strokeWidth` 2 (not 2.5)
-- Rounded: `rounded-xl` → `rounded-2xl`
+### 2. `src/components/home/CompactCountdownTimer.tsx` — City column too narrow on 320px
+- Line 69: Change `w-16` → `w-20` so "The Forge" and city names don't wrap awkwardly
+- Line 75: Add `truncate` to city name span to prevent overflow
 
-### 3. Logo area
-- Keep logo/icon as-is
-- Toggle: swap `PanelLeft`/`PanelLeftClose` → `ChevronsRight`/`ChevronsLeft` (cleaner)
-- Toggle button: remove bg color, just icon with hover opacity
+### 3. `src/components/home/DatePillSelector.tsx` — Edge pills clip against container
+- Line 48: Add `px-1` to scroll container so first/last pills aren't flush against edges
 
-### 4. Bottom user section
-- Keep avatar + name
-- Remove `ChevronRight` from user card
-- Add a small settings gear icon (`Settings`) next to user name (like reference shows)
-- Cleaner border: `border-sidebar-border/50`
-- Remove ring effects on avatar, use simple `border-2 border-border/40`
+### 4. `src/components/home/HomeJourneySection.tsx` — Segmented control buttons can wrap on 320px
+- Lines 231-251: Add `flex-wrap` to the segmented control container and make buttons `flex-1 min-w-0 text-center` so they share equal width instead of overflowing
 
-### 5. Width adjustment
-- Expanded: `w-64` → `w-72` (slightly wider for breathing room, matching reference)
+### 5. `src/components/home/AlumniShowcaseSection.tsx` — Film cards too wide for 320px
+- Line 75: Change `w-[260px] sm:w-[300px]` → `w-[220px] sm:w-[280px]`
+- Add `snap-x snap-mandatory` to scroll container, `snap-start` to each card
 
-### Summary of visual effect
-Before: Gradient glows, chevrons, scale transforms, shadows — looks AI-generated
-After: Clean, spacious, flat, with generous padding and subtle hover — looks hand-crafted
+### 6. `src/components/home/SessionDetailCard.tsx` — Inner padding too generous on mobile
+- Line 37: Change `p-5 sm:p-6` → `p-4 sm:p-6`
+
+### 7. `src/components/home/HomeErrorState.tsx` — Padding too generous on mobile
+- Line 32: Change `p-6` → `p-4 sm:p-6`
+
+### 8. `src/components/home/BatchmatesSection.tsx` — Skeleton loading shows 5 items that overflow on 320px
+- Line 57: Change skeleton count from 5 → 4
+- Add `snap-x` to the avatar scroll container (line 77)
+
+### 9. `src/components/home/TravelStaySection.tsx` — Image carousel takes too much vertical space on mobile
+- Line 108: Change `aspect-[4/3]` → `aspect-[16/10] sm:aspect-[4/3]`
+
+---
+
+## Summary
+9 targeted fixes across 8 files. All changes are CSS/className-only — no logic changes.
 
