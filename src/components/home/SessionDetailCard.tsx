@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { JourneyCardDay } from '@/components/roadmap/JourneyCard';
 import { cn } from '@/lib/utils';
-import { generateGoogleCalendarUrl, downloadICSFile } from '@/lib/calendarUtils';
+import { generateGoogleCalendarUrl, openICSFile } from '@/lib/calendarUtils';
 import { toast } from 'sonner';
 
 interface SessionDetailCardProps {
@@ -139,7 +139,7 @@ const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onVi
                       startDate.setHours(h, m, 0);
                     }
                     const endDate = new Date(startDate.getTime() + (day.session_duration_hours || 1) * 60 * 60 * 1000);
-                    downloadICSFile({
+                    openICSFile({
                       title: `Forge: ${day.title}`,
                       description: day.description || '',
                       startDate,
@@ -147,7 +147,7 @@ const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onVi
                       isVirtual: day.is_virtual,
                       location: day.location || undefined,
                     });
-                    toast.success('Calendar file downloaded');
+                    toast.success('Opening calendar...');
                   }}
                 >
                   <Download className="w-4 h-4 text-primary" />
