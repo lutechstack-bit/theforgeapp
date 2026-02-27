@@ -1,38 +1,26 @@
 
 
-# Restructure Roadmap Summary Cards for Mobile
+# Update Roadmap Journey Toggle to Match Homepage Style
 
 ## Problem
-Three equal-width cards in a 3-column grid on mobile (~375px) leaves each card only ~105px wide. Text like "19 remaining" and "19 required left" gets clipped, and the ProgressRing crowds the Tasks card content.
-
-## New Layout
-Stack the cards: **Journey full-width on top**, **Tasks + Prep side-by-side below** in a 2-column grid.
-
-```text
-┌─────────────────────────────┐
-│  Journey  (full width)      │
-│  Screening...   Feb 16      │
-│  ●●●●●●●●○○○○              │
-└─────────────────────────────┘
-┌──────────────┐┌─────────────┐
-│  Tasks       ││  Prep       │
-│  ⟳41%  19    ││  85% ready  │
-│  remaining   ││  ████░ bar  │
-│  19 req left ││  22/26      │
-└──────────────┘└─────────────┘
-```
-
-On `sm:` (640px+), revert to the original 3-column layout so wider screens still get the compact row.
+The Roadmap page (`RoadmapJourney.tsx`) uses a grey segmented control (`bg-muted` with `bg-background` active state), while the homepage uses amber pill-style buttons (`bg-primary` active, transparent inactive with border). The user wants the same amber toggle style on both pages, fully visible on mobile without overflow.
 
 ## Changes
 
-### `src/components/roadmap/RoadmapSummaryCards.tsx`
+### `src/pages/roadmap/RoadmapJourney.tsx`
 
-1. **Container** (line 126): Change from `grid grid-cols-3` to `grid grid-cols-2 sm:grid-cols-3` — 2 columns on mobile, 3 on sm+.
+**Lines 212-237** — Replace the grey segmented control with the homepage's amber pill-style toggle:
 
-2. **Journey card** (line 130-148): Add `col-span-2 sm:col-span-1` so Journey spans the full width on mobile but takes one column on sm+.
+```tsx
+// FROM (grey segmented):
+<div className="bg-muted rounded-full p-1 flex">
+  <button className={cn('flex-1 py-2 ...', activeTab === 'online' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground')}>
 
-3. **Tasks card content** (line 87-100): Reduce ProgressRing size from 44→36 and gap from 3→2 on the inner flex to give text more room. Also add `min-w-0` on the text wrapper to allow truncation.
+// TO (amber pills, matching homepage):
+<div className="flex flex-wrap gap-2">
+  <button className={cn('flex-1 min-w-0 px-3 py-2 text-sm rounded-full border transition-all duration-200 text-center',
+    activeTab === 'online' ? 'bg-primary text-primary-foreground border-primary font-medium' : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30')}>
+```
 
-4. **Padding** (line 135): Tighten card padding from `p-4` to `p-3 sm:p-4` for mobile breathing room.
+Same change for both the "Online Sessions" and "Goa Bootcamp" buttons. The `flex-wrap` and `min-w-0` ensure no overflow on mobile — buttons will shrink equally within the row.
 
