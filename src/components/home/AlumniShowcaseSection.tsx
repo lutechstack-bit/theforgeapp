@@ -72,7 +72,7 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
           {alumni.map((a) => (
             <div
               key={a.id}
-              className="flex-shrink-0 w-[220px] sm:w-[280px] snap-start"
+              className="flex-shrink-0 w-[calc(100vw-72px)] sm:w-[280px] snap-start"
             >
             <div
               onClick={() => setPlayingVideo({ url: a.video_url, title: a.film || a.name })}
