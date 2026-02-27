@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Calendar, Download, ExternalLink } from 'lucide-react';
-import { generateGoogleCalendarUrl, downloadAllEventsICS } from '@/lib/calendarUtils';
+import { generateGoogleCalendarUrl, generateOutlookCalendarUrl, generateYahooCalendarUrl, generateAppleCalendarUrl } from '@/lib/calendarUtils';
 
 interface Event {
   id: string;
@@ -42,18 +42,37 @@ export const CalendarSyncModal: React.FC<CalendarSyncModalProps> = ({
     }
   };
 
-  const handleAppleCalendarSync = () => {
-    if (upcomingEvents.length === 0) return;
-    
-    const calendarEvents = upcomingEvents.map(event => ({
+  const getFirstEvent = () => {
+    if (upcomingEvents.length === 0) return null;
+    const event = upcomingEvents[0];
+    return {
       title: event.title,
       description: event.description,
       location: event.location,
       startDate: new Date(event.event_date),
       isVirtual: event.is_virtual,
-    }));
+    };
+  };
 
-    downloadAllEventsICS(calendarEvents);
+  const handleAppleCalendarSync = () => {
+    const event = getFirstEvent();
+    if (!event) return;
+    const url = generateAppleCalendarUrl(event);
+    window.open(url, '_blank');
+  };
+
+  const handleOutlookSync = () => {
+    const event = getFirstEvent();
+    if (!event) return;
+    const url = generateOutlookCalendarUrl(event);
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleYahooSync = () => {
+    const event = getFirstEvent();
+    if (!event) return;
+    const url = generateYahooCalendarUrl(event);
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -100,33 +119,45 @@ export const CalendarSyncModal: React.FC<CalendarSyncModalProps> = ({
               className="w-full flex items-center gap-4 p-4 rounded-xl bg-card/60 border border-border/50 hover:border-primary/30 hover:bg-card transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="p-2 rounded-lg bg-gradient-to-br from-red-500/10 to-orange-500/10">
-                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" className="text-red-500"/>
-                  <path d="M3 9h18" stroke="currentColor" strokeWidth="2" className="text-red-500"/>
-                  <path d="M8 2v4M16 2v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-red-500"/>
-                </svg>
+                <span className="text-2xl">🍎</span>
               </div>
               <div className="flex-1 text-left">
                 <h4 className="font-medium text-foreground">Apple Calendar</h4>
-                <p className="text-xs text-muted-foreground">Downloads .ics file for all events</p>
+                <p className="text-xs text-muted-foreground">Opens in Apple Calendar app</p>
               </div>
-              <Download className="h-4 w-4 text-muted-foreground" />
+              <ExternalLink className="h-4 w-4 text-muted-foreground" />
             </button>
 
-            {/* Other Calendars */}
+            {/* Outlook */}
             <button
-              onClick={handleAppleCalendarSync}
+              onClick={handleOutlookSync}
               disabled={upcomingEvents.length === 0}
               className="w-full flex items-center gap-4 p-4 rounded-xl bg-card/60 border border-border/50 hover:border-primary/30 hover:bg-card transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <div className="p-2 rounded-lg bg-muted">
-                <Calendar className="h-6 w-6 text-muted-foreground" />
+              <div className="p-2 rounded-lg bg-blue-500/10">
+                <span className="text-2xl">📧</span>
               </div>
               <div className="flex-1 text-left">
-                <h4 className="font-medium text-foreground">Other Calendars</h4>
-                <p className="text-xs text-muted-foreground">Outlook, Yahoo, or any .ics compatible app</p>
+                <h4 className="font-medium text-foreground">Outlook</h4>
+                <p className="text-xs text-muted-foreground">Opens in Outlook Web Calendar</p>
               </div>
-              <Download className="h-4 w-4 text-muted-foreground" />
+              <ExternalLink className="h-4 w-4 text-muted-foreground" />
+            </button>
+
+            {/* Yahoo */}
+            <button
+              onClick={handleYahooSync}
+              disabled={upcomingEvents.length === 0}
+              className="w-full flex items-center gap-4 p-4 rounded-xl bg-card/60 border border-border/50 hover:border-primary/30 hover:bg-card transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <div className="p-2 rounded-lg bg-purple-500/10">
+                <span className="text-2xl">📆</span>
+              </div>
+              <div className="flex-1 text-left">
+                <h4 className="font-medium text-foreground">Yahoo Calendar</h4>
+                <p className="text-xs text-muted-foreground">Opens in Yahoo Calendar</p>
+              </div>
+              <ExternalLink className="h-4 w-4 text-muted-foreground" />
             </button>
           </div>
 

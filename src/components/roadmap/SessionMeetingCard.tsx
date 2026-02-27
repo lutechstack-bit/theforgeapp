@@ -3,7 +3,7 @@ import { Video, Copy, Check, ExternalLink, Eye, EyeOff, Calendar } from 'lucide-
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { generateGoogleCalendarUrl, openICSFile } from '@/lib/calendarUtils';
+import { generateGoogleCalendarUrl, generateOutlookCalendarUrl, generateYahooCalendarUrl, generateAppleCalendarUrl } from '@/lib/calendarUtils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -92,8 +92,18 @@ const SessionMeetingCard: React.FC<SessionMeetingCardProps> = ({
   };
 
   const handleAppleCalendar = () => {
-    const event = getCalendarEvent();
-    openICSFile(event);
+    const url = generateAppleCalendarUrl(getCalendarEvent());
+    window.open(url, '_blank');
+  };
+
+  const handleOutlookCalendar = () => {
+    const url = generateOutlookCalendarUrl(getCalendarEvent());
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleYahooCalendar = () => {
+    const url = generateYahooCalendarUrl(getCalendarEvent());
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   // Detect platform from URL
@@ -135,6 +145,12 @@ const SessionMeetingCard: React.FC<SessionMeetingCardProps> = ({
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleAppleCalendar}>
               🍎 Apple Calendar
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleOutlookCalendar}>
+              📧 Outlook
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleYahooCalendar}>
+              📆 Yahoo Calendar
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -246,6 +262,20 @@ const SessionMeetingCard: React.FC<SessionMeetingCardProps> = ({
           onClick={handleAppleCalendar}
         >
           🍎 Apple
+        </Button>
+        <Button
+          variant="secondary"
+          className="gap-2 text-sm"
+          onClick={handleOutlookCalendar}
+        >
+          📧 Outlook
+        </Button>
+        <Button
+          variant="secondary"
+          className="gap-2 text-sm"
+          onClick={handleYahooCalendar}
+        >
+          📆 Yahoo
         </Button>
       </div>
     </div>
