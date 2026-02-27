@@ -3,7 +3,7 @@ import { Video, Copy, Check, ExternalLink, Eye, EyeOff, Calendar } from 'lucide-
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { generateGoogleCalendarUrl, downloadICSFile } from '@/lib/calendarUtils';
+import { generateGoogleCalendarUrl, openICSFile } from '@/lib/calendarUtils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -93,7 +93,7 @@ const SessionMeetingCard: React.FC<SessionMeetingCardProps> = ({
 
   const handleAppleCalendar = () => {
     const event = getCalendarEvent();
-    downloadICSFile(event);
+    openICSFile(event);
   };
 
   // Detect platform from URL

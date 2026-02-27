@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow, addDays, format, isToday, isTomorrow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { generateGoogleCalendarUrl, downloadICSFile } from '@/lib/calendarUtils';
+import { generateGoogleCalendarUrl, openICSFile } from '@/lib/calendarUtils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -249,7 +249,7 @@ const SessionNotificationCard: React.FC<{
 
   const handleAppleCalendar = (e: React.MouseEvent) => {
     e.stopPropagation();
-    downloadICSFile(getCalendarEvent());
+    openICSFile(getCalendarEvent());
   };
 
   return (
