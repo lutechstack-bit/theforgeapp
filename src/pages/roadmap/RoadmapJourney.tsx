@@ -210,14 +210,14 @@ const RoadmapJourney: React.FC = () => {
 
       {/* Segmented Control */}
       {showToggle && (
-        <div className="bg-muted rounded-full p-1 flex">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setActiveTab('online')}
             className={cn(
-              'flex-1 py-2 text-sm rounded-full transition-all duration-200',
+              'flex-1 min-w-0 px-3 py-2 text-sm rounded-full border transition-all duration-200 text-center',
               activeTab === 'online'
-                ? 'bg-background text-foreground shadow-sm font-medium'
-                : 'text-muted-foreground'
+                ? 'bg-primary text-primary-foreground border-primary font-medium'
+                : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30'
             )}
           >
             Online Sessions
@@ -225,10 +225,10 @@ const RoadmapJourney: React.FC = () => {
           <button
             onClick={() => setActiveTab('bootcamp')}
             className={cn(
-              'flex-1 py-2 text-sm rounded-full transition-all duration-200',
+              'flex-1 min-w-0 px-3 py-2 text-sm rounded-full border transition-all duration-200 text-center',
               activeTab === 'bootcamp'
-                ? 'bg-background text-foreground shadow-sm font-medium'
-                : 'text-muted-foreground'
+                ? 'bg-primary text-primary-foreground border-primary font-medium'
+                : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30'
             )}
           >
             Goa Bootcamp
