@@ -1,26 +1,33 @@
 
 
-# Update Roadmap Journey Toggle to Match Homepage Style
+# Fix Learn Page Card Layout Issues
 
-## Problem
-The Roadmap page (`RoadmapJourney.tsx`) uses a grey segmented control (`bg-muted` with `bg-background` active state), while the homepage uses amber pill-style buttons (`bg-primary` active, transparent inactive with border). The user wants the same amber toggle style on both pages, fully visible on mobile without overflow.
+## Issues Identified
+
+1. **AllCourses filter tabs**: "Community Sessions" button text is clipped at the edge — needs scroll padding so the last button is fully visible
+2. **AllCourses cards**: All cards forced to `cardLayout="landscape"` (16:10), but community session thumbnails are portrait (4:5) — cards appear cropped. Need to detect section and use appropriate layout, showing full-size stacked cards
+3. **Learn page Community Sessions**: Two cards peek on mobile but second is partially hidden. User wants exactly **one card** visible at a time on mobile
+4. **Learn page Masterclasses**: User wants exactly **two equal-sized cards** side by side without overflow
 
 ## Changes
 
-### `src/pages/roadmap/RoadmapJourney.tsx`
+### 1. `src/pages/AllCourses.tsx`
 
-**Lines 212-237** — Replace the grey segmented control with the homepage's amber pill-style toggle:
-
-```tsx
-// FROM (grey segmented):
-<div className="bg-muted rounded-full p-1 flex">
-  <button className={cn('flex-1 py-2 ...', activeTab === 'online' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground')}>
-
-// TO (amber pills, matching homepage):
-<div className="flex flex-wrap gap-2">
-  <button className={cn('flex-1 min-w-0 px-3 py-2 text-sm rounded-full border transition-all duration-200 text-center',
-    activeTab === 'online' ? 'bg-primary text-primary-foreground border-primary font-medium' : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30')}>
+**Filter tabs (line 72)**: Add right padding so the last button isn't clipped:
+```
+"px-4 pb-3 flex gap-2 overflow-x-auto scrollbar-hide"
+→ "px-4 pb-3 flex gap-2 overflow-x-auto scrollbar-hide pr-6"
 ```
 
-Same change for both the "Online Sessions" and "Goa Bootcamp" buttons. The `flex-wrap` and `min-w-0` ensure no overflow on mobile — buttons will shrink equally within the row.
+**Cards (line 111-123)**: Change from fixed `cardLayout="landscape"` to dynamic — use single-column full-width cards for `community_sessions` (portrait thumbnails) and keep landscape grid for `bfp_sessions`:
+- For community sessions: `grid-cols-1` with no forced landscape, letting cards render full-width portrait-style
+- For pre-forge / all: keep current `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` landscape grid
+
+### 2. `src/components/learn/LevelUpCourseCard.tsx` (line 10)
+
+Change fixed width from `w-[260px] sm:w-[280px]` to `w-[calc(100vw-48px)] sm:w-[280px]` so exactly one card fills the mobile viewport with proper margins, preventing the second card from peeking.
+
+### 3. `src/components/learn/MasterclassCard.tsx` (line 22)
+
+Change fixed width from `w-[200px] sm:w-[220px]` to `w-[calc(50vw-32px)] sm:w-[220px]` so exactly two cards fit side-by-side on mobile with proper gaps, preventing overflow or hiding.
 
