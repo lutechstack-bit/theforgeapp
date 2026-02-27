@@ -77,6 +77,15 @@ export const downloadICSFile = (event: CalendarEvent): void => {
   URL.revokeObjectURL(url);
 };
 
+// Open ICS file directly in native calendar app (no download)
+export const openICSFile = (event: CalendarEvent): void => {
+  const icsContent = generateICSContent(event);
+  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+};
+
 // Generate ICS content for multiple events (for subscription feed)
 export const generateICSFeed = (events: CalendarEvent[]): string => {
   const formatICSDate = (date: Date): string => {
