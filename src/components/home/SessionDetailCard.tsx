@@ -1,10 +1,13 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { Clock, MapPin, Video, Calendar, ChevronRight } from 'lucide-react';
+import { Clock, MapPin, Video, Calendar, ChevronRight, Download } from 'lucide-react';
 import { getScheduleIcon } from '@/lib/roadmapIcons';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { JourneyCardDay } from '@/components/roadmap/JourneyCard';
 import { cn } from '@/lib/utils';
+import { generateGoogleCalendarUrl, downloadICSFile } from '@/lib/calendarUtils';
+import { toast } from 'sonner';
 
 interface SessionDetailCardProps {
   day: JourneyCardDay;
@@ -82,15 +85,77 @@ const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onVi
       {/* Online session: calendar action */}
       {!isBootcamp && (
         <div className="flex flex-wrap items-center gap-3 mb-4">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
-            onClick={(e) => { e.stopPropagation(); onViewDetail?.(); }}
-          >
-            <Calendar className="w-3.5 h-3.5" />
-            Add to Calendar
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!day.date) {
+                    e.preventDefault();
+                    toast.info('Date not yet announced for this session');
+                  }
+                }}
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                Add to Calendar
+              </Button>
+            </PopoverTrigger>
+            {day.date && (
+              <PopoverContent className="w-48 p-2" align="start">
+                <button
+                  className="flex items-center gap-2 w-full rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const startDate = new Date(day.date!);
+                    if (day.session_start_time) {
+                      const [h, m] = day.session_start_time.split(':').map(Number);
+                      startDate.setHours(h, m, 0);
+                    }
+                    const endDate = new Date(startDate.getTime() + (day.session_duration_hours || 1) * 60 * 60 * 1000);
+                    const url = generateGoogleCalendarUrl({
+                      title: `Forge: ${day.title}`,
+                      description: day.description || '',
+                      startDate,
+                      endDate,
+                      isVirtual: day.is_virtual,
+                      location: day.location || undefined,
+                    });
+                    window.open(url, '_blank');
+                  }}
+                >
+                  <Calendar className="w-4 h-4 text-primary" />
+                  Google Calendar
+                </button>
+                <button
+                  className="flex items-center gap-2 w-full rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const startDate = new Date(day.date!);
+                    if (day.session_start_time) {
+                      const [h, m] = day.session_start_time.split(':').map(Number);
+                      startDate.setHours(h, m, 0);
+                    }
+                    const endDate = new Date(startDate.getTime() + (day.session_duration_hours || 1) * 60 * 60 * 1000);
+                    downloadICSFile({
+                      title: `Forge: ${day.title}`,
+                      description: day.description || '',
+                      startDate,
+                      endDate,
+                      isVirtual: day.is_virtual,
+                      location: day.location || undefined,
+                    });
+                    toast.success('Calendar file downloaded');
+                  }}
+                >
+                  <Download className="w-4 h-4 text-primary" />
+                  Apple / Other (.ics)
+                </button>
+              </PopoverContent>
+            )}
+          </Popover>
         </div>
       )}
 
