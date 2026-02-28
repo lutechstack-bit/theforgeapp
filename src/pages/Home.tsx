@@ -3,7 +3,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { extractYouTubeId } from '@/components/home/AlumniShowcaseSection';
 import { supabase } from '@/integrations/supabase/client';
 import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
 import { HomeCarouselSkeleton } from '@/components/home/HomeCarouselSkeleton';
@@ -36,19 +35,20 @@ const Home: React.FC = () => {
   const showDebug = searchParams.get('homeDebug') === '1';
   const userCohortType = edition?.cohort_type;
 
-  // Fetch alumni testimonials from admin-managed table
-  const alumniQuery = useQuery({
-    queryKey: ['home_alumni_testimonials', userCohortType],
+  // Fetch student works with public portfolios
+  const studentWorksQuery = useQuery({
+    queryKey: ['home_student_works'],
     queryFn: async () => {
       const result = await promiseWithTimeout(
         supabase
-          .from('alumni_testimonials')
-          .select('*')
-          .eq('is_active', true)
+          .from('user_works')
+          .select('*, profiles!inner(full_name)')
+          .not('media_url', 'is', null)
           .order('order_index', { ascending: true })
+          .limit(12)
           .then(res => res),
         QUERY_TIMEOUT,
-        'home_alumni_testimonials'
+        'home_student_works'
       );
       if (result.error) throw result.error;
       return result.data || [];
@@ -60,37 +60,25 @@ const Home: React.FC = () => {
   });
 
   const displayAlumni = useMemo(() => {
-    const data = alumniQuery.data;
+    const data = studentWorksQuery.data;
     if (!data) return [];
 
-    let filtered = data;
-    if (userCohortType) {
-      const cohortFiltered = data.filter((a: any) =>
-        a.cohort_types?.includes(userCohortType)
-      );
-      if (cohortFiltered.length > 0) filtered = cohortFiltered;
-    }
+    return data.map((w: any) => ({
+      id: w.id,
+      name: w.profiles?.full_name || 'Student',
+      role: w.type === 'personal' ? null : w.type,
+      video_url: w.media_url,
+      thumbnail_url: w.thumbnail_url,
+      film: w.title,
+      achievement: w.description,
+    }));
+  }, [studentWorksQuery.data]);
 
-    return filtered.map((a: any) => {
-      const videoId = extractYouTubeId(a.video_url || '');
-      const thumbnail = a.thumbnail_url || (videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null);
-      return {
-        id: a.id,
-        name: a.name,
-        role: a.role,
-        video_url: a.video_url,
-        thumbnail_url: thumbnail,
-        film: a.film,
-        achievement: a.achievement,
-      };
-    });
-  }, [alumniQuery.data, userCohortType]);
-
-  const isAnyError = alumniQuery.isError;
-  const isAnyLoading = alumniQuery.isLoading;
+  const isAnyError = studentWorksQuery.isError;
+  const isAnyLoading = studentWorksQuery.isLoading;
 
   const failedQueries = [
-    alumniQuery.isError && { name: 'Alumni Testimonials', error: alumniQuery.error as Error },
+    studentWorksQuery.isError && { name: 'Student Works', error: studentWorksQuery.error as Error },
   ].filter(Boolean) as { name: string; error: Error }[];
 
   // Loading timeout
@@ -175,7 +163,7 @@ const Home: React.FC = () => {
           {showDebug && (
             <div className="text-xs font-mono bg-muted/50 border border-border rounded-lg p-4 space-y-2">
               <p className="font-semibold">Home Debug Panel</p>
-              <p>Alumni: {alumniQuery.isLoading ? '⏳' : alumniQuery.isError ? '❌' : `✅ (${displayAlumni.length})`}</p>
+              <p>Student Works: {studentWorksQuery.isLoading ? '⏳' : studentWorksQuery.isError ? '❌' : `✅ (${displayAlumni.length})`}</p>
               <p>Focus Card: {activeFocusCard ? activeFocusCard.title : '(none)'}</p>
               <p>User Cohort: {userCohortType || '(none)'}</p>
             </div>
@@ -196,7 +184,7 @@ const Home: React.FC = () => {
           {alumniSection && !loadingTimedOut && (
             <AlumniShowcaseSection
               alumni={displayAlumni}
-              isLoading={alumniQuery.isLoading}
+              isLoading={studentWorksQuery.isLoading}
               title={alumniSection.title}
               subtitle={alumniSection.subtitle || undefined}
             />
@@ -212,7 +200,7 @@ const Home: React.FC = () => {
 
           {/* Empty State */}
           {!loadingTimedOut &&
-            alumniQuery.isFetched &&
+            studentWorksQuery.isFetched &&
             displayAlumni.length === 0 &&
             !isAnyError && (
               <div className="rounded-2xl p-8 text-center bg-card/50 border border-border/30">

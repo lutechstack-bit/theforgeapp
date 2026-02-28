@@ -354,7 +354,7 @@ const AdminDocs: React.FC = () => {
                     <tr><td className="border border-gray-300 px-3 py-2">learn_videos</td><td className="border border-gray-300 px-3 py-2">Video content for courses</td></tr>
                     <tr><td className="border border-gray-300 px-3 py-2">mentors</td><td className="border border-gray-300 px-3 py-2">Instructor profiles</td></tr>
                     <tr><td className="border border-gray-300 px-3 py-2">mentor_videos</td><td className="border border-gray-300 px-3 py-2">Mentor video content</td></tr>
-                    <tr><td className="border border-gray-300 px-3 py-2">alumni_testimonials</td><td className="border border-gray-300 px-3 py-2">Student testimonial videos</td></tr>
+                    
                     <tr><td className="border border-gray-300 px-3 py-2">community_highlights</td><td className="border border-gray-300 px-3 py-2">Featured community moments</td></tr>
                     <tr><td className="border border-gray-300 px-3 py-2">badges</td><td className="border border-gray-300 px-3 py-2">Achievement badge definitions</td></tr>
                     <tr><td className="border border-gray-300 px-3 py-2">perks</td><td className="border border-gray-300 px-3 py-2">Exclusive member perks</td></tr>
