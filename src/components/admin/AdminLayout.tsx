@@ -14,7 +14,6 @@ import {
   Package,
   PanelRight,
   UserCircle,
-  Video,
   Star,
   BookOpen,
   Route,
@@ -46,7 +45,7 @@ const adminNavItems = [
   { to: '/admin/events', icon: Calendar, label: 'Events' },
   { to: '/admin/learn', icon: FileText, label: 'Learn' },
   { to: '/admin/mentors', icon: UserCircle, label: 'Mentors' },
-  { to: '/admin/alumni-testimonials', icon: Video, label: 'Alumni Testimonials' },
+  
   { to: '/admin/community-highlights', icon: Star, label: 'Community Highlights' },
   { to: '/admin/auto-updates', icon: Sparkles, label: 'Auto Updates' },
   { to: '/admin/docs', icon: BookOpen, label: 'Documentation' },
