@@ -1,83 +1,81 @@
 
 
-# Final Implementation Plan: Dynamic City Labels + New Editions + Data Fixes
+# Make Admin Cohort Switcher Functional
 
-## Part 1: Code Changes — Make Bootcamp Toggle Dynamic
+## Problem
+The cohort switcher UI exists but only `useRoadmapData` respects `simulatedCohortType`. All other hooks (`useStudentJourney`, `useHomepageSections`, `useTodaysFocus`) and `Home.tsx` read `edition?.cohort_type` directly from `useAuth()`, so switching cohorts in the admin panel has no effect on most of the app.
 
-### 1a. `src/pages/roadmap/RoadmapJourney.tsx`
-- Destructure `edition` from `useRoadmapData()` (already returned by the hook)
-- Replace all 3 hardcoded "Goa" references with `edition?.city || 'Goa'`:
-  - Line 184: `` `${bootcampCount} days in ${edition?.city || 'Goa'}` ``
-  - Line 191: same pattern
-  - Line 234: `` `${edition?.city || 'Goa'} Bootcamp` ``
+Additionally, when simulating a different cohort, the system still uses the admin's own `edition_id` for data queries — meaning roadmap days, prep items, etc. won't load for the simulated cohort unless there's a matching edition.
 
-### 1b. `src/components/home/HomeJourneySection.tsx`
-- Destructure `edition` from `useRoadmapData()` (already used in this component)
-- Replace all 2 hardcoded "Goa" references:
-  - Line 206: `` `${bootcampCount} days in ${edition?.city || 'Goa'}` ``
-  - Line 250: `` `${edition?.city || 'Goa'} Bootcamp` ``
+## Approach
+Create a shared hook `useEffectiveCohort()` that centralizes the logic of "simulated cohort or real cohort" and also resolves a representative edition for the simulated cohort (so data queries work). Then update all consumers.
 
----
+## Implementation Steps
 
-## Part 2: Data Operations — Fix Journey Tasks for Writers
+### Step 1: Create `src/hooks/useEffectiveCohort.ts`
+A new hook that:
+- Reads `simulatedCohortType` from `useAdminTestingSafe()`
+- Reads `edition` from `useAuth()`
+- If simulating a different cohort, fetches the latest non-archived edition of that cohort type (using a react-query cache) to provide a `simulatedEdition` object
+- Returns `{ effectiveCohortType, effectiveEdition, isSimulating }`
 
-Update 2 journey tasks to remove `FORGE_WRITING` from their `cohort_types` (Writers have no online sessions):
+### Step 2: Update `useStudentJourney.ts`
+- Replace `const cohortType = edition?.cohort_type || 'FORGE'` with `useEffectiveCohort()` so journey tasks and stage filtering respect the simulated cohort
 
-| Task | ID | New cohort_types |
-|------|----|-----------------|
-| Attend Day 1 online session | `3d15305b-...` | `{FORGE, FORGE_CREATORS}` |
-| Pick your slot/team | `a30252ca-...` | `{FORGE, FORGE_CREATORS}` |
+### Step 3: Update `useHomepageSections.ts`
+- Replace `const userCohortType = edition?.cohort_type` with `useEffectiveCohort()` so homepage section visibility respects the simulated cohort
 
----
+### Step 4: Update `useTodaysFocus.ts`
+- Replace `const userCohortType = edition?.cohort_type` with `useEffectiveCohort()` so focus card cohort filtering works
 
-## Part 3: Data Operations — Create 6 New Editions
+### Step 5: Update `src/pages/Home.tsx`
+- Replace `const userCohortType = edition?.cohort_type` with `useEffectiveCohort()` for the debug display and any cohort-based logic
 
-Insert into `editions` table:
+### Step 6: Update `useRoadmapData.ts`
+- Use `useEffectiveCohort()` instead of its inline logic, so all hooks share the same simulated edition resolution (including the correct `edition_id` for roadmap_days queries)
 
-| Name | cohort_type | City | forge_start_date | forge_end_date |
-|------|-------------|------|-----------------|----------------|
-| Forge Writing - Edition 5 - Dehradun | FORGE_WRITING | Dehradun | 2026-03-07 | 2026-03-12 |
-| Forge Filmmaking - Edition 16 - Goa | FORGE | Goa | 2026-04-25 | 2026-05-02 |
-| Forge Filmmaking - Edition 17 - Goa | FORGE | Goa | 2026-04-27 | 2026-05-04 |
-| Forge Creators - Edition 5 - Goa | FORGE_CREATORS | Goa | 2026-05-04 | 2026-05-10 |
-| Forge Creators - Edition 6 - Goa | FORGE_CREATORS | Goa | 2026-05-10 | 2026-05-16 |
-| Forge Creators - Edition 7 - Bali | FORGE_CREATORS | Bali | 2026-06-01 | 2026-06-07 |
+### Step 7: Update `AdminCohortSwitcher.tsx`
+- When a cohort is selected, also pick a representative edition for that cohort (latest non-archived) and store its ID in the testing context
+- Add `simulatedEditionId` to `AdminTestingContext` so the effective cohort hook can use it
 
-The `create_cohort_group_for_edition` trigger auto-creates cohort groups.
+## Technical Detail
 
----
+The `AdminTestingContext` gets a new field:
+```
+simulatedEditionId: string | null
+```
 
-## Part 4: Data Operations — Clone Roadmap Templates
+When `setSimulatedCohortType(cohort)` is called in the switcher, it also queries for the latest edition of that cohort and sets `simulatedEditionId`. This way `useEffectiveCohort` can return a full edition object (with city, dates, etc.) for the simulated cohort.
 
-For each new edition, clone all `roadmap_days` rows from the master template of the same cohort type:
+The `useEffectiveCohort` hook:
+```typescript
+export const useEffectiveCohort = () => {
+  const { edition } = useAuth();
+  const { isTestingMode, simulatedCohortType, simulatedEditionId } = useAdminTestingSafe();
+  
+  // If simulating, fetch the simulated edition
+  const { data: simEdition } = useQuery({
+    queryKey: ['simulated-edition', simulatedEditionId],
+    queryFn: /* fetch edition by ID */,
+    enabled: isTestingMode && !!simulatedEditionId,
+  });
+  
+  const effectiveCohortType = (isTestingMode && simulatedCohortType) || edition?.cohort_type;
+  const effectiveEdition = (isTestingMode && simEdition) || edition;
+  
+  return { effectiveCohortType, effectiveEdition, isSimulating: ... };
+};
+```
 
-- **Writing Ed 5 Dehradun** ← Clone 7 days from Writing Ed 5 Goa (`cf2b9fd2-...`, days 0-6)
-- **Filmmaking Ed 16 & 17** ← Clone 15 days each from Filmmaking Ed 15 (`ec048e00-...`, days -7 to 8)
-- **Creators Ed 5, 6, 7** ← Clone 13 days each from Creators Ed 3 (`2fd72d93-...`, days -6 to 6)
+## Files Changed
+1. **New**: `src/hooks/useEffectiveCohort.ts`
+2. **Edit**: `src/contexts/AdminTestingContext.tsx` — add `simulatedEditionId`
+3. **Edit**: `src/components/admin/AdminCohortSwitcher.tsx` — fetch & set edition when switching
+4. **Edit**: `src/hooks/useStudentJourney.ts` — use `useEffectiveCohort`
+5. **Edit**: `src/hooks/useHomepageSections.ts` — use `useEffectiveCohort`
+6. **Edit**: `src/hooks/useTodaysFocus.ts` — use `useEffectiveCohort`
+7. **Edit**: `src/hooks/useRoadmapData.ts` — use `useEffectiveCohort`
+8. **Edit**: `src/pages/Home.tsx` — use `useEffectiveCohort`
 
-All cloned rows get: new UUID, new `edition_id`, `date = NULL`, `is_active = false`. Total: ~72 rows.
-
-For Creators Ed 7 (Bali), the template already has Bali-specific content (e.g., "Cretya Ubud", "Nuanu") since it was built from the Bali brochure.
-
-For Goa editions of Creators (Ed 5 & 6), location-specific content like "Cretya Ubud" will need admin review later — the template is cloned as-is from the Bali-based Ed 3.
-
----
-
-## Part 5: Data Operations — Bali-Specific Prep Items
-
-Insert 3 packing items into `prep_checklist_items` for FORGE_CREATORS with the Bali edition ID:
-- Passport (valid 6+ months)
-- Visa on Arrival / e-VOA
-- Digital Arrival Card (SATUSEHAT)
-
----
-
-## Summary of Changes
-
-- **2 files edited** (RoadmapJourney.tsx, HomeJourneySection.tsx) — dynamic city in toggle/heading
-- **2 journey_tasks updated** — remove FORGE_WRITING from online-only tasks
-- **6 editions inserted** — new upcoming cohorts
-- **~72 roadmap_days cloned** — template content for each new edition
-- **3 prep items inserted** — Bali passport/visa items
-- **No schema changes needed**
+No database changes needed.
 
