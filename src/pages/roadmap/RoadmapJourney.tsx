@@ -29,6 +29,7 @@ const RoadmapJourney: React.FC = () => {
     getDayStatus,
     forgeMode,
     userCohortType,
+    edition,
   } = useRoadmapData();
 
   // Timer to prevent infinite skeleton
@@ -181,14 +182,14 @@ const RoadmapJourney: React.FC = () => {
   // Dynamic heading
   const journeyHeading = (() => {
     if (activeTab === 'bootcamp' && bootcampCount > 0) {
-      return `${bootcampCount} days in Goa`;
+      return `${bootcampCount} days in ${edition?.city || 'Goa'}`;
     }
     if (activeTab === 'online' && onlineCount > 0) {
       return `${onlineCount} online session${onlineCount > 1 ? 's' : ''}`;
     }
     const parts: string[] = [];
     if (onlineCount > 0) parts.push(`${onlineCount} online session${onlineCount > 1 ? 's' : ''}`);
-    if (bootcampCount > 0) parts.push(`${bootcampCount} days in Goa`);
+    if (bootcampCount > 0) parts.push(`${bootcampCount} days in ${edition?.city || 'Goa'}`);
     return parts.join(' + ');
   })();
 
@@ -231,7 +232,7 @@ const RoadmapJourney: React.FC = () => {
                 : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30'
             )}
           >
-            Goa Bootcamp
+            {edition?.city || 'Goa'} Bootcamp
           </button>
         </div>
       )}
