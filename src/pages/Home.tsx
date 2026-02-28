@@ -16,6 +16,7 @@ import TravelStaySection from '@/components/home/TravelStaySection';
 import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
 import { useTodaysFocus } from '@/hooks/useTodaysFocus';
 import { useHomepageSections } from '@/hooks/useHomepageSections';
+import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 import { Users } from 'lucide-react';
 import { promiseWithTimeout, isTimeoutError } from '@/lib/promiseTimeout';
 
@@ -33,7 +34,8 @@ const Home: React.FC = () => {
   const { getSection } = useHomepageSections();
 
   const showDebug = searchParams.get('homeDebug') === '1';
-  const userCohortType = edition?.cohort_type;
+  const { effectiveCohortType } = useEffectiveCohort();
+  const userCohortType = effectiveCohortType;
 
   // Fetch student works with public portfolios
   const studentWorksQuery = useQuery({

@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { CohortType } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
 
 const cohortOptions: { type: CohortType; label: string; shortLabel: string; icon: typeof Film }[] = [
   { type: 'FORGE', label: 'Filmmaking', shortLabel: 'Film', icon: Film },
@@ -16,10 +17,9 @@ const cohortOptions: { type: CohortType; label: string; shortLabel: string; icon
 const AdminCohortSwitcher: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { isAdmin } = useAdminCheck();
-  const { simulatedCohortType, setSimulatedCohortType, isTestingMode } = useAdminTesting();
+  const { simulatedCohortType, setSimulatedCohortType, setSimulatedEditionId, isTestingMode } = useAdminTesting();
   const { edition } = useAuth();
   
-  // Don't render for non-admins
   if (!isAdmin) return null;
   
   const actualCohort = edition?.cohort_type as CohortType | undefined;
@@ -29,18 +29,30 @@ const AdminCohortSwitcher: React.FC = () => {
   const currentOption = cohortOptions.find(o => o.type === displayedCohort) || cohortOptions[0];
   const CurrentIcon = currentOption.icon;
 
-  const handleSelect = (cohort: CohortType) => {
+  const handleSelect = async (cohort: CohortType) => {
     if (cohort === actualCohort) {
-      // Reset to actual cohort
       setSimulatedCohortType(null);
+      setSimulatedEditionId(null);
     } else {
       setSimulatedCohortType(cohort);
+      // Fetch latest non-archived edition for this cohort
+      const { data } = await supabase
+        .from('editions')
+        .select('id')
+        .eq('cohort_type', cohort)
+        .eq('is_archived', false)
+        .order('forge_start_date', { ascending: false })
+        .limit(1);
+      if (data && data.length > 0) {
+        setSimulatedEditionId(data[0].id);
+      }
     }
     setIsOpen(false);
   };
 
   const handleReset = () => {
     setSimulatedCohortType(null);
+    setSimulatedEditionId(null);
     setIsOpen(false);
   };
 
@@ -102,7 +114,6 @@ const AdminCohortSwitcher: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Main Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(

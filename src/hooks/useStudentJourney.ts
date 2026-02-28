@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 import { differenceInDays } from 'date-fns';
 
 export interface JourneyStage {
@@ -48,10 +49,11 @@ interface PrepChecklistItem {
 
 export const useStudentJourney = () => {
   const { user, profile, edition } = useAuth();
+  const { effectiveCohortType, effectiveEdition } = useEffectiveCohort();
   const queryClient = useQueryClient();
 
-  // Get user's cohort type
-  const cohortType = edition?.cohort_type || 'FORGE';
+  // Get effective cohort type (respects admin simulation)
+  const cohortType = effectiveCohortType || 'FORGE';
 
   // Fetch all journey stages
   const { data: allStages, isLoading: stagesLoading } = useQuery({
@@ -165,13 +167,14 @@ export const useStudentJourney = () => {
 
   // Determine current stage based on forge dates (cohort-aware)
   const getCurrentStage = (): string => {
-    if (!edition?.forge_start_date || !edition?.forge_end_date) {
+    const editionToUse = effectiveEdition || edition;
+    if (!editionToUse?.forge_start_date || !editionToUse?.forge_end_date) {
       return 'pre_registration';
     }
 
     const now = new Date();
-    const forgeStart = new Date(edition.forge_start_date);
-    const forgeEnd = new Date(edition.forge_end_date);
+    const forgeStart = new Date(editionToUse.forge_start_date);
+    const forgeEnd = new Date(editionToUse.forge_end_date);
     const daysUntilStart = differenceInDays(forgeStart, now);
     const daysSinceStart = differenceInDays(now, forgeStart);
 

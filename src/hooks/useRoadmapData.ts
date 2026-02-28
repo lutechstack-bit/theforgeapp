@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminTestingSafe } from '@/contexts/AdminTestingContext';
+import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 import { supabase } from '@/integrations/supabase/client';
 import { useMemo } from 'react';
 import type { Database } from '@/integrations/supabase/types';
@@ -24,15 +25,17 @@ const ROADMAP_QUERY_TIMEOUT = 12000;
 
 export const useRoadmapData = () => {
   const { profile, edition, forgeMode, user, userDataLoading, userDataTimedOut } = useAuth();
-  const { isTestingMode, simulatedDayNumber, simulatedForgeMode, simulatedCohortType } = useAdminTestingSafe();
+  const { isTestingMode, simulatedDayNumber, simulatedForgeMode } = useAdminTestingSafe();
+  const { effectiveCohortType, effectiveEdition, isSimulating } = useEffectiveCohort();
   const queryClient = useQueryClient();
   
-  // Use simulated cohort if admin is testing, otherwise use actual edition cohort
-  const actualCohortType = edition?.cohort_type as CohortType | undefined;
-  const userCohortType = (isTestingMode && simulatedCohortType) ? simulatedCohortType : actualCohortType;
+  const userCohortType = effectiveCohortType;
+  // Use effective edition for queries when simulating
+  const editionIdForQuery = isSimulating && effectiveEdition ? effectiveEdition.id : profile?.edition_id;
   
   const cohortName = userCohortType ? cohortDisplayNames[userCohortType] : 'The Forge';
-  const forgeStartDate = edition?.forge_start_date ? new Date(edition.forge_start_date) : null;
+  const effectiveEd = isSimulating && effectiveEdition ? effectiveEdition : edition;
+  const forgeStartDate = effectiveEd?.forge_start_date ? new Date(effectiveEd.forge_start_date) : null;
 
   // Determine if we should enable the query:
   // 1. NOT while user data is still loading (prevents caching empty results)
@@ -44,11 +47,11 @@ export const useRoadmapData = () => {
 
   // Fetch roadmap days - prioritize edition-specific, then cohort-specific, then shared template
   const { data: templateDays, isLoading: isLoadingDays, isError: isErrorDays, error: daysError } = useQuery({
-    queryKey: ['roadmap-days', profile?.edition_id, userCohortType, profileLoaded],
+    queryKey: ['roadmap-days', editionIdForQuery, userCohortType, profileLoaded],
     queryFn: async () => {
-      // If profile is loaded but has no edition, return empty (this is the true state)
-      if (!profile?.edition_id) {
-        console.log('[Roadmap] No edition_id on profile, returning empty days');
+      // If profile is loaded but has no edition (and not simulating), return empty
+      if (!editionIdForQuery) {
+        console.log('[Roadmap] No edition_id available, returning empty days');
         return [];
       }
       
@@ -57,7 +60,7 @@ export const useRoadmapData = () => {
         supabase
           .from('roadmap_days')
           .select('*')
-          .eq('edition_id', profile.edition_id)
+          .eq('edition_id', editionIdForQuery!)
           .order('day_number', { ascending: true })
           .then(res => res),
         ROADMAP_QUERY_TIMEOUT,
@@ -136,7 +139,7 @@ export const useRoadmapData = () => {
     
     return templateDays.map(day => {
       const isOwnEditionOnlineSession = 
-        day.edition_id === profile?.edition_id && 
+        day.edition_id === editionIdForQuery && 
         day.day_number < 0 && 
         day.date;
       
@@ -163,17 +166,17 @@ export const useRoadmapData = () => {
         date: calculatedDate
       };
     });
-  }, [templateDays, forgeStartDate, profile?.edition_id]);
+  }, [templateDays, forgeStartDate, editionIdForQuery]);
 
   // Fetch galleries with timeout
   const { data: galleries } = useQuery({
-    queryKey: ['roadmap-galleries', profile?.edition_id],
+    queryKey: ['roadmap-galleries', editionIdForQuery],
     queryFn: async () => {
       const result = await promiseWithTimeout(
         supabase
           .from('roadmap_galleries')
           .select('*')
-          .eq('edition_id', profile?.edition_id || '')
+          .eq('edition_id', editionIdForQuery || '')
           .order('order_index')
           .then(res => res),
         ROADMAP_QUERY_TIMEOUT,
@@ -182,7 +185,7 @@ export const useRoadmapData = () => {
       if (result.error) throw result.error;
       return result.data;
     },
-    enabled: !!profile?.edition_id,
+    enabled: !!editionIdForQuery,
     staleTime: 5 * 60 * 1000,
     retry: (failureCount, error) => !isTimeoutError(error) && failureCount < 2,
   });
@@ -360,7 +363,7 @@ export const useRoadmapData = () => {
 
   return {
     profile,
-    edition,
+    edition: effectiveEd,
     forgeMode,
     user,
     userCohortType,
