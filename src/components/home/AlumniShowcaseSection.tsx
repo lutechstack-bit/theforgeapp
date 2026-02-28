@@ -87,9 +87,13 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
                     loading="lazy"
                   />
                 ) : (
-                  <div className="w-full h-full bg-muted/80 flex items-center justify-center">
-                    <Film className="h-10 w-10 text-muted-foreground/30" />
-                  </div>
+                  <video
+                    src={`${a.video_url}#t=0.5`}
+                    preload="metadata"
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
                 )}
                 {/* Vignette gradient — bottom half only */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -102,7 +106,7 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
                 {/* Overlay text — bottom-left */}
                 <div className="absolute bottom-0 left-0 right-0 p-3">
                   <h4 className="text-sm font-semibold text-white line-clamp-1">
-                    {a.film || 'Student Film'}
+                    {a.film || a.name}
                   </h4>
                   <p className="text-[11px] text-white/70 line-clamp-1">
                     by {a.name}{a.role ? ` · ${a.role}` : ''}
