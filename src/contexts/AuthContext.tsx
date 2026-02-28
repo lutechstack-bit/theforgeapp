@@ -51,6 +51,7 @@ interface Edition {
   forge_start_date: string | null;
   forge_end_date: string | null;
   cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS';
+  city: string;
 }
 
 interface AuthContextType {
@@ -338,6 +339,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             cohort_type: editionResult.data.cohort_type,
             forge_start_date: editionResult.data.forge_start_date,
             forge_end_date: editionResult.data.forge_end_date,
+            city: editionResult.data.city,
           });
         } else if (editionResult.timedOut || editionResult.error) {
           // Edition fetch failed but profile succeeded - not critical

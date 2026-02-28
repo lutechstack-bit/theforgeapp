@@ -40,6 +40,7 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
     getDayStatus,
     forgeMode,
     userCohortType,
+    edition,
   } = useRoadmapData();
 
   // Timer to prevent infinite skeleton
@@ -203,7 +204,7 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
   const journeySubtitle = subtitle || (() => {
     const parts: string[] = [];
     if (onlineCount > 0) parts.push(`${onlineCount} online session${onlineCount > 1 ? 's' : ''}`);
-    if (bootcampCount > 0) parts.push(`${bootcampCount} days in Goa`);
+    if (bootcampCount > 0) parts.push(`${bootcampCount} days in ${edition?.city || 'Goa'}`);
     return parts.join(' + ');
   })();
 
@@ -247,7 +248,7 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
                 : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30'
             )}
           >
-            Goa Bootcamp
+            {edition?.city || 'Goa'} Bootcamp
           </button>
         </div>
       )}

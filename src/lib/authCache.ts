@@ -25,6 +25,7 @@ interface CachedEdition {
   cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS';
   forge_start_date: string | null;
   forge_end_date: string | null;
+  city?: string;
 }
 
 interface CacheWrapper<T> {
