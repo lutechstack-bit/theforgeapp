@@ -36,36 +36,22 @@ const Home: React.FC = () => {
   const showDebug = searchParams.get('homeDebug') === '1';
   const userCohortType = edition?.cohort_type;
 
-  // Fetch student works for alumni showcase
-  const studentWorksQuery = useQuery({
-    queryKey: ['home_student_works_all'],
+  // Fetch alumni testimonials from admin-managed table
+  const alumniQuery = useQuery({
+    queryKey: ['home_alumni_testimonials', userCohortType],
     queryFn: async () => {
-      const [contentResult, editionsResult] = await Promise.all([
-        promiseWithTimeout(
-          supabase
-            .from('roadmap_sidebar_content')
-            .select('*')
-            .eq('block_type', 'student_work')
-            .eq('is_active', true)
-            .order('order_index', { ascending: true })
-            .then(res => res),
-          QUERY_TIMEOUT,
-          'home_student_works'
-        ),
-        promiseWithTimeout(
-          supabase
-            .from('roadmap_sidebar_content_editions')
-            .select('*')
-            .then(res => res),
-          QUERY_TIMEOUT,
-          'home_student_works_editions'
-        ),
-      ]);
-      if (contentResult.error) throw contentResult.error;
-      return {
-        works: contentResult.data || [],
-        editions: editionsResult.data || [],
-      };
+      const result = await promiseWithTimeout(
+        supabase
+          .from('alumni_testimonials')
+          .select('*')
+          .eq('is_active', true)
+          .order('order_index', { ascending: true })
+          .then(res => res),
+        QUERY_TIMEOUT,
+        'home_alumni_testimonials'
+      );
+      if (result.error) throw result.error;
+      return result.data || [];
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -74,41 +60,37 @@ const Home: React.FC = () => {
   });
 
   const displayAlumni = useMemo(() => {
-    const data = studentWorksQuery.data;
+    const data = alumniQuery.data;
     if (!data) return [];
-    const { works, editions } = data;
 
-    let filtered = works;
-    if (userCohortType && editions.length > 0) {
-      const contentIdsForEdition = new Set(
-        editions
-          .filter((e: any) => true)
-          .map((e: any) => e.content_id)
+    let filtered = data;
+    if (userCohortType) {
+      const cohortFiltered = data.filter((a: any) =>
+        a.cohort_types?.includes(userCohortType)
       );
-      if (contentIdsForEdition.size > 0) {
-        const editionFiltered = works.filter((w: any) => contentIdsForEdition.has(w.id));
-        if (editionFiltered.length > 0) filtered = editionFiltered;
-      }
+      if (cohortFiltered.length > 0) filtered = cohortFiltered;
     }
 
-    return filtered.map((w: any) => {
-      const videoId = extractYouTubeId(w.media_url || '');
-      const thumbnail = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null;
+    return filtered.map((a: any) => {
+      const videoId = extractYouTubeId(a.video_url || '');
+      const thumbnail = a.thumbnail_url || (videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null);
       return {
-        id: w.id,
-        name: w.caption || 'Forge Student',
-        video_url: w.media_url || '',
+        id: a.id,
+        name: a.name,
+        role: a.role,
+        video_url: a.video_url,
         thumbnail_url: thumbnail,
-        film: w.title || 'Student Film',
+        film: a.film,
+        achievement: a.achievement,
       };
     });
-  }, [studentWorksQuery.data, userCohortType]);
+  }, [alumniQuery.data, userCohortType]);
 
-  const isAnyError = studentWorksQuery.isError;
-  const isAnyLoading = studentWorksQuery.isLoading;
+  const isAnyError = alumniQuery.isError;
+  const isAnyLoading = alumniQuery.isLoading;
 
   const failedQueries = [
-    studentWorksQuery.isError && { name: 'Student Works', error: studentWorksQuery.error as Error },
+    alumniQuery.isError && { name: 'Alumni Testimonials', error: alumniQuery.error as Error },
   ].filter(Boolean) as { name: string; error: Error }[];
 
   // Loading timeout
@@ -193,7 +175,7 @@ const Home: React.FC = () => {
           {showDebug && (
             <div className="text-xs font-mono bg-muted/50 border border-border rounded-lg p-4 space-y-2">
               <p className="font-semibold">Home Debug Panel</p>
-              <p>Student Works: {studentWorksQuery.isLoading ? '⏳' : studentWorksQuery.isError ? '❌' : `✅ (${displayAlumni.length})`}</p>
+              <p>Alumni: {alumniQuery.isLoading ? '⏳' : alumniQuery.isError ? '❌' : `✅ (${displayAlumni.length})`}</p>
               <p>Focus Card: {activeFocusCard ? activeFocusCard.title : '(none)'}</p>
               <p>User Cohort: {userCohortType || '(none)'}</p>
             </div>
@@ -214,7 +196,7 @@ const Home: React.FC = () => {
           {alumniSection && !loadingTimedOut && (
             <AlumniShowcaseSection
               alumni={displayAlumni}
-              isLoading={studentWorksQuery.isLoading}
+              isLoading={alumniQuery.isLoading}
               title={alumniSection.title}
               subtitle={alumniSection.subtitle || undefined}
             />
@@ -230,7 +212,7 @@ const Home: React.FC = () => {
 
           {/* Empty State */}
           {!loadingTimedOut &&
-            studentWorksQuery.isFetched &&
+            alumniQuery.isFetched &&
             displayAlumni.length === 0 &&
             !isAnyError && (
               <div className="rounded-2xl p-8 text-center bg-card/50 border border-border/30">
