@@ -1,137 +1,64 @@
 
 
-# Professional Analytics Dashboard + Admin Cleanup
+# Admin Panel Audit: Tab-by-Frontend Connection Status
+
+## All 21 Admin Tabs — Status
+
+### FULLY CONNECTED (Admin manages data → Frontend renders it dynamically)
+
+| # | Tab | Backend Table | Frontend Consumer |
+|---|------|--------------|-------------------|
+| 1 | **Dashboard** | Multiple tables | Admin-only analytics view |
+| 2 | **Homepage** | `homepage_sections` | `Home.tsx` — dynamic section ordering/visibility |
+| 3 | **Today's Focus** | `today_focus_cards` | `TodaysFocusCard.tsx` on Home |
+| 4 | **Users** | `profiles` | Profile pages, community, batchmates |
+| 5 | **Editions** | `editions` | Cohort filtering across entire app |
+| 6 | **KY Forms** | `kyf_responses`, `kyc_responses`, `kyw_responses` | KYF/KYC/KYW form pages |
+| 7 | **Journey Stages** | `journey_stages` | `StageNavigationStrip`, Journey page |
+| 8 | **Journey Tasks** | `journey_tasks` | `JourneyTaskItem`, Journey page |
+| 9 | **Announcements** | `notifications` (hero) | `AnnouncementBanner` on Home via `useSmartAnnouncements` |
+| 10 | **Roadmap** | `roadmap_days` | Roadmap Journey page, day detail modals |
+| 11 | **Roadmap Sidebar** | `roadmap_sidebar_content` | `RoadmapSidebar` carousels |
+| 12 | **Equipment** | `forge_equipment` | `EquipmentSection` on Roadmap |
+| 13 | **Nightly Rituals** | `nightly_rituals` | `NightlyRitualSection` on Roadmap Prep |
+| 14 | **Events** | `events` | Events page, Home upcoming events |
+| 15 | **Learn** | `learn_content`, `learn_programs` | Learn page, course detail |
+| 16 | **Mentors** | `mentors` | Mentor cards on Home + Learn |
+| 17 | **Community Highlights** | `community_highlights` | `CompactHighlights`, `HighlightsCard` in Community |
+| 18 | **Auto Updates** | `notifications` (auto_update=true) | `MasterNotificationCenter` notification feed |
+
+### PARTIALLY CONNECTED — Admin exists, frontend consumer is weak or missing
+
+| # | Tab | Issue |
+|---|------|-------|
+| 19 | **Alumni Testimonials** | Admin manages `alumni_testimonials` table. `AlumniShowcaseSection` on Home exists but pulls from `user_works` (student portfolio), NOT from `alumni_testimonials`. The admin-managed testimonial videos are **never shown** on the frontend. |
+| 20 | **Documentation** | Admin manages `app_doc_versions`. Only consumed by the admin panel itself (`AdminDocs`). No user-facing documentation page exists. This is admin-internal tooling — arguably valid. |
+| 21 | **Changelog** | Admin manages `app_changelog`. Only consumed by `AdminChangelog` itself. The user-facing `Updates.tsx` page uses **hardcoded mock data**, not the `app_changelog` table. |
+
+---
 
 ## Summary
 
-Replace the basic admin dashboard with a professional analytics hub that surfaces real app data (visitors, pageviews, user growth, content stats, page popularity, device/country breakdowns). Also remove 5 orphaned admin pages that exist as files but have no routes and no frontend connections.
+**19 of 21 tabs are fully functional** with real backend-to-frontend connections.
 
-## Orphaned Admin Pages to Delete
+**2 tabs have disconnected frontend:**
 
-These files exist but are **not registered in App.tsx routes** and are not linked from anywhere:
-1. `src/pages/admin/AdminNotifications.tsx` — No route. The "Push Notification" quick action links to `/admin/notifications?action=create` which 404s.
-2. `src/pages/admin/AdminHeroBanners.tsx` — No route. The `hero_banners` table exists but no frontend component renders hero banners.
-3. `src/pages/admin/AdminContent.tsx` — No route. Just a placeholder "coming soon" page with content counts.
-4. `src/pages/admin/AdminPastPrograms.tsx` — No route. Past programs are managed through the Events admin page already.
-5. `src/pages/admin/AdminEventTypes.tsx` — No route. Event types are managed inline on the Events admin page.
+1. **Alumni Testimonials** — Admin CRUD works, but the Home page's "Alumni Showcase" section reads from `user_works` instead of `alumni_testimonials`. Fix: wire `AlumniShowcaseSection` to pull from `alumni_testimonials`.
 
-## Dashboard Rebuild
+2. **Changelog** — Admin CRUD works, but the `/updates` page uses mock notifications. Fix: rewrite `Updates.tsx` to pull from `app_changelog` table.
 
-### `src/pages/admin/AdminDashboard.tsx` — Complete rewrite
+**Documentation** is intentionally admin-internal (version-controlled app docs for the team) — this is valid and does not need a user-facing page.
 
-**Top Row: 5 Stat Cards** (matching the reference screenshot layout)
-- Visitors (last 7 days) — from Lovable analytics API via edge function
-- Pageviews (last 7 days)
-- Views Per Visit
-- Avg Visit Duration (formatted as Xm Ys)
-- Bounce Rate (%)
+---
 
-**Section 2: Visitor Trend Chart**
-- Area chart using Recharts showing daily visitors over the last 7/30 days
-- Period selector dropdown (7 days / 30 days)
-- Uses the existing `ChartContainer` component
+## Proposed Fixes
 
-**Section 3: Platform Stats (from database)**
-- Total Users, Profile Setup Complete, KY Forms Completed, Balance Paid vs Pending
-- Active Editions, Learn Content count, Events count, Community Messages
+### Fix 1: Wire `Updates.tsx` to use `app_changelog`
+Replace the mock notification data with a real query to `app_changelog`. Show version history, categories, and status from the database.
 
-**Section 4: Insights Grid (2 columns)**
-- **Top Pages** — bar list showing page visit counts (/, /learn, /roadmap, etc.)
-- **Devices** — simple donut or bar showing desktop vs mobile split
-- **Countries** — list with flags/counts
-- **Traffic Sources** — direct vs referral breakdown
+### Fix 2: Wire `AlumniShowcaseSection` to use `alumni_testimonials`
+Update the Home page's alumni section to fetch from `alumni_testimonials` (admin-managed video testimonials) instead of or in addition to `user_works`.
 
-**Section 5: Quick Actions** (cleaned up)
-- Create User → `/admin/users?action=create`
-- Create Edition → `/admin/editions?action=create`
-- Manage Roadmap → `/admin/roadmap`
-- Remove the broken "Push Notification" link
-
-### New Edge Function: `supabase/functions/admin-analytics/index.ts`
-
-The Lovable analytics API is only accessible server-side. Create an edge function that:
-- Accepts `period` query param (7 or 30 days)
-- Calls the Lovable analytics read endpoint (using the project analytics tool pattern)
-- Returns JSON with visitors, pageviews, viewsPerVisit, sessionDuration, bounceRate, topPages, devices, countries, sources
-- Requires admin auth (validates JWT, checks `user_roles` for admin)
-
-Actually — on review, the Lovable analytics tool is only available to the AI agent, not callable from edge functions. The analytics data cannot be fetched at runtime from user code.
-
-**Revised approach**: The dashboard will use **database-sourced stats only** (which are real and queryable). The Lovable analytics data (visitors, pageviews, bounce rate) is only accessible through the Lovable platform UI, not via any API the app can call.
-
-### Revised Dashboard Design
-
-**Top Row: 5 Database Stat Cards**
-- Total Users (profiles count)
-- Profiles Completed (profile_setup_completed = true)
-- KY Forms Submitted (kyf_responses count)
-- Balance Paid (payment_status = 'BALANCE_PAID')
-- Active Editions (non-archived editions)
-
-**Section 2: User Growth Chart**
-- Area chart showing user signups over time (profiles.created_at grouped by day/week)
-- Last 30 days of registrations
-
-**Section 3: Platform Health Grid (2x3)**
-- Learn Content items count
-- Events count
-- Community Messages count
-- Mentors count
-- Roadmap Days configured
-- Notifications sent
-
-**Section 4: Breakdown Cards (2 columns)**
-- **Payment Status** — pie/donut chart showing CONFIRMED_15K vs BALANCE_PAID
-- **Forge Mode** — pie/donut chart showing PRE_FORGE vs DURING_FORGE vs POST_FORGE
-- **Cohort Distribution** — bar chart by edition
-- **Profile Completion** — completion rate visual
-
-**Section 5: Quick Actions** (cleaned up, remove broken notification link)
-
-### Admin Sidebar Cleanup
-
-Remove the "Push Notification" quick action from dashboard since there's no route for it.
-
-## Changes
-
-### 1. `src/pages/admin/AdminDashboard.tsx` — Full rewrite
-Professional dashboard with stat cards, Recharts area chart for user growth, platform health grid, breakdown charts, and cleaned quick actions.
-
-### 2. Delete orphaned files (no code changes needed, just remove):
-- `src/pages/admin/AdminNotifications.tsx`
-- `src/pages/admin/AdminHeroBanners.tsx`
-- `src/pages/admin/AdminContent.tsx`
-- `src/pages/admin/AdminPastPrograms.tsx`
-- `src/pages/admin/AdminEventTypes.tsx`
-
-These have no routes in App.tsx, so deleting them has zero impact.
-
-### 3. `src/pages/admin/AdminDashboard.tsx` — Quick Actions fix
-Remove "Push Notification" button that links to non-existent `/admin/notifications` route.
-
-## Technical Details
-
-**Database queries for the dashboard** (all admin-only via RLS):
-```sql
--- User stats
-SELECT count(*) as total,
-       count(*) FILTER (WHERE profile_setup_completed) as completed,
-       count(*) FILTER (WHERE payment_status = 'BALANCE_PAID') as paid
-FROM profiles;
-
--- User growth (last 30 days)
-SELECT date_trunc('day', created_at)::date as day, count(*) 
-FROM profiles 
-WHERE created_at > now() - interval '30 days'
-GROUP BY 1 ORDER BY 1;
-
--- Content counts
-SELECT 
-  (SELECT count(*) FROM learn_content) as learn,
-  (SELECT count(*) FROM events) as events,
-  (SELECT count(*) FROM community_messages) as messages,
-  (SELECT count(*) FROM mentors WHERE is_active) as mentors;
-```
-
-**Chart library**: Uses existing `recharts` dependency + `ChartContainer` from `src/components/ui/chart.tsx`.
+### Fix 3: No tabs need removal
+All 21 tabs manage real database tables with proper RLS policies. None are orphaned.
 
