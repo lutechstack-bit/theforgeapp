@@ -8,6 +8,7 @@ interface AdminTestingState {
   simulatedForgeMode: ForgeMode | null;
   simulatedDayNumber: number | null;
   simulatedCohortType: CohortType | null;
+  simulatedEditionId: string | null;
 }
 
 interface AdminTestingContextType extends AdminTestingState {
@@ -15,6 +16,7 @@ interface AdminTestingContextType extends AdminTestingState {
   setSimulatedForgeMode: (mode: ForgeMode | null) => void;
   setSimulatedDayNumber: (day: number | null) => void;
   setSimulatedCohortType: (cohort: CohortType | null) => void;
+  setSimulatedEditionId: (id: string | null) => void;
   applyPreset: (preset: 'pre' | 'online-1' | 'online-3' | 'physical-5' | 'physical-10' | 'last-day' | 'post') => void;
   resetToRealTime: () => void;
 }
@@ -26,6 +28,7 @@ const defaultState: AdminTestingState = {
   simulatedForgeMode: null,
   simulatedDayNumber: null,
   simulatedCohortType: null,
+  simulatedEditionId: null,
 };
 
 const AdminTestingContext = createContext<AdminTestingContextType | undefined>(undefined);
@@ -56,7 +59,7 @@ export const AdminTestingProvider: React.FC<{ children: React.ReactNode }> = ({ 
       ...prev,
       isTestingMode: enabled,
       // Reset simulations when disabling
-      ...(enabled ? {} : { simulatedForgeMode: null, simulatedDayNumber: null, simulatedCohortType: null }),
+      ...(enabled ? {} : { simulatedForgeMode: null, simulatedDayNumber: null, simulatedCohortType: null, simulatedEditionId: null }),
     }));
   }, []);
 
@@ -81,6 +84,13 @@ export const AdminTestingProvider: React.FC<{ children: React.ReactNode }> = ({ 
       ...prev,
       simulatedCohortType: cohort,
       isTestingMode: cohort !== null ? true : prev.isTestingMode,
+    }));
+  }, []);
+
+  const setSimulatedEditionId = useCallback((id: string | null) => {
+    setState(prev => ({
+      ...prev,
+      simulatedEditionId: id,
     }));
   }, []);
 
@@ -123,6 +133,7 @@ export const AdminTestingProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setSimulatedForgeMode,
         setSimulatedDayNumber,
         setSimulatedCohortType,
+        setSimulatedEditionId,
         applyPreset,
         resetToRealTime,
       }}

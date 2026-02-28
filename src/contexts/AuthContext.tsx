@@ -46,7 +46,7 @@ interface Profile {
   tagline: string | null;
 }
 
-interface Edition {
+export interface Edition {
   id: string;
   forge_start_date: string | null;
   forge_end_date: string | null;

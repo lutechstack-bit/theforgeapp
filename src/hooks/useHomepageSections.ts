@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 import { supabase } from '@/integrations/supabase/client';
 import { useMemo } from 'react';
 import { promiseWithTimeout } from '@/lib/promiseTimeout';
@@ -15,8 +16,9 @@ export interface HomepageSection {
 }
 
 export const useHomepageSections = () => {
-  const { edition, userDataLoading } = useAuth();
-  const userCohortType = edition?.cohort_type;
+  const { userDataLoading } = useAuth();
+  const { effectiveCohortType } = useEffectiveCohort();
+  const userCohortType = effectiveCohortType;
 
   const { data: sections, isLoading } = useQuery({
     queryKey: ['homepage-sections'],
