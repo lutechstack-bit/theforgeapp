@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Eye, Gift, FileText, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, Gift, FileText, Users, Download } from 'lucide-react';
 
 interface Perk {
   id: string;
@@ -51,8 +51,8 @@ const AdminPerks: React.FC = () => {
   const qc = useQueryClient();
   const [editPerk, setEditPerk] = useState<Partial<Perk> | null>(null);
   const [fieldsModal, setFieldsModal] = useState<string | null>(null);
-  const [claimsModal, setClaimsModal] = useState<string | null>(null);
   const [newField, setNewField] = useState({ label: '', field_type: 'text', placeholder: '', is_required: true });
+  const [claimsTab, setClaimsTab] = useState('all');
 
   const { data: perks } = useQuery({
     queryKey: ['admin-perks'],
@@ -74,16 +74,47 @@ const AdminPerks: React.FC = () => {
     enabled: !!fieldsModal,
   });
 
-  const { data: claims } = useQuery({
-    queryKey: ['admin-perk-claims', claimsModal],
+  // Fetch ALL claims for the inline section
+  const { data: allClaims } = useQuery({
+    queryKey: ['admin-all-perk-claims'],
     queryFn: async () => {
-      if (!claimsModal) return [];
-      const { data, error } = await supabase.from('perk_claims').select('*').eq('perk_id', claimsModal).order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('perk_claims').select('*, perks(name)').order('created_at', { ascending: false });
       if (error) throw error;
       return data;
     },
-    enabled: !!claimsModal,
   });
+
+  const filteredClaims = useMemo(() => {
+    if (!allClaims) return [];
+    if (claimsTab === 'all') return allClaims;
+    return allClaims.filter((c: any) => c.perk_id === claimsTab);
+  }, [allClaims, claimsTab]);
+
+  const downloadCSV = () => {
+    if (!filteredClaims.length) return;
+    // Collect all unique form_data keys
+    const allKeys = new Set<string>();
+    filteredClaims.forEach((c: any) => {
+      if (c.form_data) Object.keys(c.form_data).forEach(k => allKeys.add(k));
+    });
+    const keys = Array.from(allKeys);
+    const header = ['Date', 'Perk', ...keys].join(',');
+    const rows = filteredClaims.map((c: any) => {
+      const perkName = (c as any).perks?.name || '';
+      const date = new Date(c.created_at).toLocaleDateString();
+      const fields = keys.map(k => `"${((c.form_data as any)?.[k] || '').toString().replace(/"/g, '""')}"`);
+      return [`"${date}"`, `"${perkName}"`, ...fields].join(',');
+    });
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const label = claimsTab === 'all' ? 'all-perks' : (perks?.find(p => p.id === claimsTab)?.name || 'perk');
+    a.href = url;
+    a.download = `perk-claims-${label.toLowerCase().replace(/\s+/g, '-')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const savePerk = useMutation({
     mutationFn: async (perk: Partial<Perk>) => {
@@ -139,8 +170,9 @@ const AdminPerks: React.FC = () => {
   });
 
   return (
-    <div className="p-4 md:p-6 max-w-6xl">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 md:p-6 max-w-7xl space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Gift className="h-6 w-6 text-primary" />
           <h1 className="text-xl md:text-2xl font-bold">Manage Perks</h1>
@@ -150,6 +182,7 @@ const AdminPerks: React.FC = () => {
         </Button>
       </div>
 
+      {/* Perks Table */}
       <Table>
         <TableHeader>
           <TableRow>
@@ -172,13 +205,71 @@ const AdminPerks: React.FC = () => {
               <TableCell className="text-right space-x-1">
                 <Button size="icon" variant="ghost" onClick={() => setEditPerk(p)}><Pencil className="h-4 w-4" /></Button>
                 <Button size="icon" variant="ghost" onClick={() => setFieldsModal(p.id)}><FileText className="h-4 w-4" /></Button>
-                <Button size="icon" variant="ghost" onClick={() => setClaimsModal(p.id)}><Users className="h-4 w-4" /></Button>
                 <Button size="icon" variant="ghost" className="text-destructive" onClick={() => { if (confirm('Delete this perk?')) deletePerk.mutate(p.id); }}><Trash2 className="h-4 w-4" /></Button>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      {/* Claims Section — Inline with Tabs */}
+      <div className="border border-border/50 rounded-2xl bg-card p-4 md:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-bold">Perk Claims</h2>
+            <Badge variant="secondary" className="ml-1">{filteredClaims.length}</Badge>
+          </div>
+          <Button variant="outline" size="sm" className="gap-2" onClick={downloadCSV} disabled={!filteredClaims.length}>
+            <Download className="h-4 w-4" /> Download CSV
+          </Button>
+        </div>
+
+        <Tabs value={claimsTab} onValueChange={setClaimsTab}>
+          <TabsList className="mb-4 flex-wrap h-auto gap-1">
+            <TabsTrigger value="all">All Claims</TabsTrigger>
+            {perks?.filter(p => !p.is_coming_soon).map(p => (
+              <TabsTrigger key={p.id} value={p.id}>{p.name}</TabsTrigger>
+            ))}
+          </TabsList>
+
+          <div className="overflow-x-auto">
+            {filteredClaims.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    {claimsTab === 'all' && <TableHead>Perk</TableHead>}
+                    <TableHead>Form Data</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredClaims.map((c: any) => (
+                    <TableRow key={c.id}>
+                      <TableCell className="whitespace-nowrap text-sm">{new Date(c.created_at).toLocaleDateString()}</TableCell>
+                      {claimsTab === 'all' && (
+                        <TableCell className="text-sm font-medium">{(c as any).perks?.name || '—'}</TableCell>
+                      )}
+                      <TableCell>
+                        <div className="space-y-0.5">
+                          {c.form_data && Object.entries(c.form_data as Record<string, string>).map(([key, val]) => (
+                            <div key={key} className="text-sm">
+                              <span className="font-medium text-foreground">{key}: </span>
+                              <span className="text-muted-foreground">{val}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">No claims yet</p>
+            )}
+          </div>
+        </Tabs>
+      </div>
 
       {/* Edit/Create Perk Dialog */}
       <Dialog open={!!editPerk} onOpenChange={(o) => !o && setEditPerk(null)}>
@@ -242,30 +333,6 @@ const AdminPerks: React.FC = () => {
             <Input placeholder="Placeholder text" value={newField.placeholder} onChange={e => setNewField({...newField, placeholder: e.target.value})} maxLength={200} />
             <Button className="w-full" onClick={() => addField.mutate()} disabled={addField.isPending || !newField.label.trim()}>Add Field</Button>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Claims Dialog */}
-      <Dialog open={!!claimsModal} onOpenChange={(o) => !o && setClaimsModal(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Claims ({claims?.length || 0})</DialogTitle></DialogHeader>
-          {claims && claims.length > 0 ? (
-            <div className="space-y-3">
-              {claims.map((c: any) => (
-                <div key={c.id} className="p-4 rounded-lg bg-muted/30 border border-border/50">
-                  <p className="text-xs text-muted-foreground mb-2">{new Date(c.created_at).toLocaleDateString()}</p>
-                  {Object.entries(c.form_data as Record<string, string>).map(([key, val]) => (
-                    <div key={key} className="text-sm mb-1">
-                      <span className="font-medium text-foreground">{key}: </span>
-                      <span className="text-muted-foreground">{val}</span>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-6">No claims yet</p>
-          )}
         </DialogContent>
       </Dialog>
     </div>
