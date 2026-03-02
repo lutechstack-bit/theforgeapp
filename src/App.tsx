@@ -61,8 +61,10 @@ import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
 import AdminChangelog from "./pages/admin/AdminChangelog";
 import AdminHomepage from "./pages/admin/AdminHomepage";
 import AdminTodaysFocus from "./pages/admin/AdminTodaysFocus";
+import AdminPerks from "./pages/admin/AdminPerks";
 import DynamicKYForm from "./pages/DynamicKYForm";
 import EventDetail from "./pages/EventDetail";
+import PerkDetail from "./pages/PerkDetail";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -253,6 +255,7 @@ const AppRoutes = () => {
           <Route path="films" element={<RoadmapFilms />} />
         </Route>
         <Route path="/perks" element={<Perks />} />
+        <Route path="/perks/:id" element={<PerkDetail />} />
         <Route path="/updates" element={<Updates />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/my-kyform" element={<MyKYForm />} />
@@ -281,6 +284,7 @@ const AppRoutes = () => {
         <Route path="changelog" element={<AdminChangelog />} />
         <Route path="homepage" element={<AdminHomepage />} />
         <Route path="todays-focus" element={<AdminTodaysFocus />} />
+        <Route path="perks" element={<AdminPerks />} />
       </Route>
       
       {/* Catch-all */}

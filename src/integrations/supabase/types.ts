@@ -1701,36 +1701,136 @@ export type Database = {
           },
         ]
       }
-      perks: {
+      perk_claims: {
         Row: {
-          claim_instructions: string | null
-          created_at: string
-          description: string | null
+          created_at: string | null
+          form_data: Json | null
           id: string
-          is_active: boolean
-          partner_logo_url: string | null
-          partner_name: string | null
-          title: string
+          perk_id: string
+          user_id: string
         }
         Insert: {
-          claim_instructions?: string | null
-          created_at?: string
-          description?: string | null
+          created_at?: string | null
+          form_data?: Json | null
           id?: string
-          is_active?: boolean
-          partner_logo_url?: string | null
-          partner_name?: string | null
-          title: string
+          perk_id: string
+          user_id: string
         }
         Update: {
-          claim_instructions?: string | null
-          created_at?: string
-          description?: string | null
+          created_at?: string | null
+          form_data?: Json | null
           id?: string
-          is_active?: boolean
-          partner_logo_url?: string | null
-          partner_name?: string | null
-          title?: string
+          perk_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perk_claims_perk_id_fkey"
+            columns: ["perk_id"]
+            isOneToOne: false
+            referencedRelation: "perks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      perk_form_fields: {
+        Row: {
+          created_at: string | null
+          field_type: string | null
+          id: string
+          is_required: boolean | null
+          label: string
+          order_index: number | null
+          perk_id: string
+          placeholder: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          field_type?: string | null
+          id?: string
+          is_required?: boolean | null
+          label: string
+          order_index?: number | null
+          perk_id: string
+          placeholder?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          field_type?: string | null
+          id?: string
+          is_required?: boolean | null
+          label?: string
+          order_index?: number | null
+          perk_id?: string
+          placeholder?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perk_form_fields_perk_id_fkey"
+            columns: ["perk_id"]
+            isOneToOne: false
+            referencedRelation: "perks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      perks: {
+        Row: {
+          about: string | null
+          banner_color: string | null
+          banner_url: string | null
+          category: string | null
+          claim_url: string | null
+          cohort_types: string[] | null
+          created_at: string | null
+          headline: string
+          how_to_avail: string | null
+          id: string
+          is_active: boolean | null
+          is_coming_soon: boolean | null
+          logo_url: string | null
+          name: string
+          notes: string | null
+          offer_details: string | null
+          order_index: number | null
+        }
+        Insert: {
+          about?: string | null
+          banner_color?: string | null
+          banner_url?: string | null
+          category?: string | null
+          claim_url?: string | null
+          cohort_types?: string[] | null
+          created_at?: string | null
+          headline: string
+          how_to_avail?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_coming_soon?: boolean | null
+          logo_url?: string | null
+          name: string
+          notes?: string | null
+          offer_details?: string | null
+          order_index?: number | null
+        }
+        Update: {
+          about?: string | null
+          banner_color?: string | null
+          banner_url?: string | null
+          category?: string | null
+          claim_url?: string | null
+          cohort_types?: string[] | null
+          created_at?: string | null
+          headline?: string
+          how_to_avail?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_coming_soon?: boolean | null
+          logo_url?: string | null
+          name?: string
+          notes?: string | null
+          offer_details?: string | null
+          order_index?: number | null
         }
         Relationships: []
       }
