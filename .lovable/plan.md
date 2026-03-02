@@ -1,81 +1,43 @@
 
 
-# Make Admin Cohort Switcher Functional
+# Fix: Show Day 1 Content by Default Instead of Static Pre-Forge Card
 
 ## Problem
-The cohort switcher UI exists but only `useRoadmapData` respects `simulatedCohortType`. All other hooks (`useStudentJourney`, `useHomepageSections`, `useTodaysFocus`) and `Home.tsx` read `edition?.cohort_type` directly from `useAuth()`, so switching cohorts in the admin panel has no effect on most of the app.
+The `HomeJourneySection` auto-selects the "current" day from **all** roadmap days. In PRE_FORGE mode, `day_number === 0` is marked "current" by `getDayStatus`. But day 0 isn't in either tab (online = `day_number < 0`, bootcamp = `day_number > 0`), so the pills show days 1-6 but the card below shows the static "Pre-Forge Preparation" content. This affects Writing and Creators cohorts. Filmmaking works because it has online sessions (negative day numbers) that get selected first.
 
-Additionally, when simulating a different cohort, the system still uses the admin's own `edition_id` for data queries — meaning roadmap days, prep items, etc. won't load for the simulated cohort unless there's a matching edition.
+## Fix — `src/components/home/HomeJourneySection.tsx`
 
-## Approach
-Create a shared hook `useEffectiveCohort()` that centralizes the logic of "simulated cohort or real cohort" and also resolves a representative edition for the simulated cohort (so data queries work). Then update all consumers.
+Two changes to the auto-select logic:
 
-## Implementation Steps
+**1. Initial auto-select (lines 78-83):** Instead of searching all `roadmapDays` for a "current" day, search within the **active tab's days** only. This prevents day 0 from being selected.
 
-### Step 1: Create `src/hooks/useEffectiveCohort.ts`
-A new hook that:
-- Reads `simulatedCohortType` from `useAdminTestingSafe()`
-- Reads `edition` from `useAuth()`
-- If simulating a different cohort, fetches the latest non-archived edition of that cohort type (using a react-query cache) to provide a `simulatedEdition` object
-- Returns `{ effectiveCohortType, effectiveEdition, isSimulating }`
-
-### Step 2: Update `useStudentJourney.ts`
-- Replace `const cohortType = edition?.cohort_type || 'FORGE'` with `useEffectiveCohort()` so journey tasks and stage filtering respect the simulated cohort
-
-### Step 3: Update `useHomepageSections.ts`
-- Replace `const userCohortType = edition?.cohort_type` with `useEffectiveCohort()` so homepage section visibility respects the simulated cohort
-
-### Step 4: Update `useTodaysFocus.ts`
-- Replace `const userCohortType = edition?.cohort_type` with `useEffectiveCohort()` so focus card cohort filtering works
-
-### Step 5: Update `src/pages/Home.tsx`
-- Replace `const userCohortType = edition?.cohort_type` with `useEffectiveCohort()` for the debug display and any cohort-based logic
-
-### Step 6: Update `useRoadmapData.ts`
-- Use `useEffectiveCohort()` instead of its inline logic, so all hooks share the same simulated edition resolution (including the correct `edition_id` for roadmap_days queries)
-
-### Step 7: Update `AdminCohortSwitcher.tsx`
-- When a cohort is selected, also pick a representative edition for that cohort (latest non-archived) and store its ID in the testing context
-- Add `simulatedEditionId` to `AdminTestingContext` so the effective cohort hook can use it
-
-## Technical Detail
-
-The `AdminTestingContext` gets a new field:
-```
-simulatedEditionId: string | null
-```
-
-When `setSimulatedCohortType(cohort)` is called in the switcher, it also queries for the latest edition of that cohort and sets `simulatedEditionId`. This way `useEffectiveCohort` can return a full edition object (with city, dates, etc.) for the simulated cohort.
-
-The `useEffectiveCohort` hook:
 ```typescript
-export const useEffectiveCohort = () => {
-  const { edition } = useAuth();
-  const { isTestingMode, simulatedCohortType, simulatedEditionId } = useAdminTestingSafe();
-  
-  // If simulating, fetch the simulated edition
-  const { data: simEdition } = useQuery({
-    queryKey: ['simulated-edition', simulatedEditionId],
-    queryFn: /* fetch edition by ID */,
-    enabled: isTestingMode && !!simulatedEditionId,
-  });
-  
-  const effectiveCohortType = (isTestingMode && simulatedCohortType) || edition?.cohort_type;
-  const effectiveEdition = (isTestingMode && simEdition) || edition;
-  
-  return { effectiveCohortType, effectiveEdition, isSimulating: ... };
-};
+useEffect(() => {
+  if (!roadmapDays || selectedDayId) return;
+  const days = activeTab === 'online' ? onlineSessions : bootcampDays;
+  const currentDay = days.find(d => getDayStatus(d) === 'current');
+  if (currentDay) setSelectedDayId(currentDay.id);
+  else if (days.length > 0) setSelectedDayId(days[0].id);
+}, [roadmapDays, getDayStatus, selectedDayId, activeTab, onlineSessions, bootcampDays]);
 ```
 
-## Files Changed
-1. **New**: `src/hooks/useEffectiveCohort.ts`
-2. **Edit**: `src/contexts/AdminTestingContext.tsx` — add `simulatedEditionId`
-3. **Edit**: `src/components/admin/AdminCohortSwitcher.tsx` — fetch & set edition when switching
-4. **Edit**: `src/hooks/useStudentJourney.ts` — use `useEffectiveCohort`
-5. **Edit**: `src/hooks/useHomepageSections.ts` — use `useEffectiveCohort`
-6. **Edit**: `src/hooks/useTodaysFocus.ts` — use `useEffectiveCohort`
-7. **Edit**: `src/hooks/useRoadmapData.ts` — use `useEffectiveCohort`
-8. **Edit**: `src/pages/Home.tsx` — use `useEffectiveCohort`
+**2. Tab-change effect (lines 86-89):** Also prefer the "current" day within the new tab, not just the first day.
 
-No database changes needed.
+```typescript
+useEffect(() => {
+  const days = activeTab === 'online' ? onlineSessions : bootcampDays;
+  const currentDay = days.find(d => getDayStatus(d) === 'current');
+  if (currentDay) setSelectedDayId(currentDay.id);
+  else if (days.length > 0) setSelectedDayId(days[0].id);
+}, [activeTab]);
+```
+
+This ensures:
+- Writing (no online sessions) → auto-selects to bootcamp tab → shows Day 1 content
+- Creators → same behavior
+- Filmmaking → has online sessions → shows current online session or Day 1
+- During forge → shows the actual current day
+- All three cohorts show real day content immediately, not the pre-forge placeholder
+
+**One file changed, two small edits. No database changes.**
 
