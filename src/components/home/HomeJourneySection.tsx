@@ -77,15 +77,18 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
   // Auto-select current day on initial load
   useEffect(() => {
     if (!roadmapDays || selectedDayId) return;
-    const currentDay = roadmapDays.find(d => getDayStatus(d) === 'current');
+    const days = activeTab === 'online' ? onlineSessions : bootcampDays;
+    const currentDay = days.find(d => getDayStatus(d) === 'current');
     if (currentDay) setSelectedDayId(currentDay.id);
-    else if (roadmapDays.length > 0) setSelectedDayId(roadmapDays[0].id);
-  }, [roadmapDays, getDayStatus, selectedDayId]);
+    else if (days.length > 0) setSelectedDayId(days[0].id);
+  }, [roadmapDays, getDayStatus, selectedDayId, activeTab, onlineSessions, bootcampDays]);
 
   // When activeTab changes, select first day of that tab
   useEffect(() => {
     const days = activeTab === 'online' ? onlineSessions : bootcampDays;
-    if (days.length > 0) setSelectedDayId(days[0].id);
+    const currentDay = days.find(d => getDayStatus(d) === 'current');
+    if (currentDay) setSelectedDayId(currentDay.id);
+    else if (days.length > 0) setSelectedDayId(days[0].id);
   }, [activeTab]);
 
   const selectedDay = useMemo(() => {
