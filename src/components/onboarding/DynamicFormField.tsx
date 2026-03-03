@@ -1,7 +1,7 @@
 import React from 'react';
-import { Input } from '@/components/ui/input';
+import { FloatingInput } from '@/components/ui/floating-input';
+import { FloatingTextarea } from '@/components/ui/floating-textarea';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioSelectField } from './RadioSelectField';
 import { MultiSelectField } from './MultiSelectField';
@@ -38,14 +38,13 @@ export const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
     case 'email':
     case 'tel':
       return (
-        <div className="space-y-2">
-          <Label>{labelText}</Label>
-          <Input
+        <div className="space-y-1">
+          <FloatingInput
             type={field.field_type}
+            label={labelText}
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={field.placeholder}
-            className="h-12 bg-secondary/50"
+            className="bg-secondary/50"
           />
           {field.helper_text && (
             <p className="text-xs text-muted-foreground">{field.helper_text}</p>
@@ -55,14 +54,13 @@ export const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
 
     case 'number':
       return (
-        <div className="space-y-2">
-          <Label>{labelText}</Label>
-          <Input
+        <div className="space-y-1">
+          <FloatingInput
             type="number"
+            label={labelText}
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={field.placeholder}
-            className="h-12 bg-secondary/50"
+            className="bg-secondary/50"
           />
           {field.helper_text && (
             <p className="text-xs text-muted-foreground">{field.helper_text}</p>
@@ -72,13 +70,13 @@ export const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
 
     case 'date':
       return (
-        <div className="space-y-2">
-          <Label>{labelText}</Label>
-          <Input
+        <div className="space-y-1">
+          <FloatingInput
             type="date"
+            label={labelText}
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
-            className="h-12 bg-secondary/50"
+            className="bg-secondary/50"
           />
           {field.helper_text && (
             <p className="text-xs text-muted-foreground">{field.helper_text}</p>
@@ -88,12 +86,11 @@ export const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
 
     case 'textarea':
       return (
-        <div className="space-y-2">
-          <Label>{labelText}</Label>
-          <Textarea
+        <div className="space-y-1">
+          <FloatingTextarea
+            label={labelText}
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={field.placeholder}
             className="bg-secondary/50"
           />
           {field.helper_text && (
@@ -163,15 +160,12 @@ export const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
 
     default:
       return (
-        <div className="space-y-2">
-          <Label>{labelText}</Label>
-          <Input
-            value={value || ''}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={field.placeholder}
-            className="h-12 bg-secondary/50"
-          />
-        </div>
+        <FloatingInput
+          label={labelText}
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          className="bg-secondary/50"
+        />
       );
   }
 };

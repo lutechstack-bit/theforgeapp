@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Edit2, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { FloatingTextarea } from '@/components/ui/floating-textarea';
 
 interface AboutSectionProps {
   bio: string | null;
@@ -69,10 +69,10 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
       </div>
 
       {isEditing ? (
-        <Textarea
+        <FloatingTextarea
+          label="Your bio"
           value={editedBio}
           onChange={(e) => setEditedBio(e.target.value)}
-          placeholder="Tell the community about your creative journey..."
           className="bg-secondary/50 min-h-[120px] resize-none"
         />
       ) : bio ? (

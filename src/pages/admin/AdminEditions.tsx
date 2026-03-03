@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Edit, Loader2, Calendar, Archive, ArchiveRestore } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { FloatingInput } from '@/components/ui/floating-input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -378,24 +378,18 @@ function EditionDialog({
           <DialogTitle>{edition ? 'Edit Edition' : 'Create Edition'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label>Name *</Label>
-            <Input
-              required
-              placeholder="e.g., Forge Creators - Mumbai Jan 2025"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>City *</Label>
-            <Input
-              required
-              placeholder="e.g., Mumbai"
-              value={formData.city}
-              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-            />
-          </div>
+          <FloatingInput
+            label="Name *"
+            required
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          />
+          <FloatingInput
+            label="City *"
+            required
+            value={formData.city}
+            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+          />
           <div className="space-y-2">
             <Label>Cohort Type *</Label>
             <Select
@@ -413,22 +407,18 @@ function EditionDialog({
             </Select>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Forge Start</Label>
-              <Input
-                type="date"
-                value={formData.forge_start_date}
-                onChange={(e) => setFormData({ ...formData, forge_start_date: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Forge End</Label>
-              <Input
-                type="date"
-                value={formData.forge_end_date}
-                onChange={(e) => setFormData({ ...formData, forge_end_date: e.target.value })}
-              />
-            </div>
+            <FloatingInput
+              label="Forge Start"
+              type="date"
+              value={formData.forge_start_date}
+              onChange={(e) => setFormData({ ...formData, forge_start_date: e.target.value })}
+            />
+            <FloatingInput
+              label="Forge End"
+              type="date"
+              value={formData.forge_end_date}
+              onChange={(e) => setFormData({ ...formData, forge_end_date: e.target.value })}
+            />
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}

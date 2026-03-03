@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { FloatingInput } from '@/components/ui/floating-input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Lock, CheckCircle } from 'lucide-react';
+import { Loader2, Lock } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -29,10 +28,8 @@ const ResetPassword: React.FC = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if we have a valid recovery session
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      // A recovery session will have a user but the session type will be recovery
       setIsValidSession(!!session?.user);
     };
     checkSession();
@@ -126,35 +123,25 @@ const ResetPassword: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="password">New Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="h-12 bg-secondary/50"
-            />
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password}</p>
-            )}
-          </div>
+          <FloatingInput
+            id="password"
+            label="New Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="bg-secondary/50"
+            error={errors.password}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="h-12 bg-secondary/50"
-            />
-            {errors.confirmPassword && (
-              <p className="text-sm text-destructive">{errors.confirmPassword}</p>
-            )}
-          </div>
+          <FloatingInput
+            id="confirmPassword"
+            label="Confirm Password"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="bg-secondary/50"
+            error={errors.confirmPassword}
+          />
 
           <Button
             type="submit"

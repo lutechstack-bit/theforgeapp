@@ -6,9 +6,8 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { FloatingInput } from '@/components/ui/floating-input';
+import { FloatingTextarea } from '@/components/ui/floating-textarea';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -41,11 +40,9 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '');
   
-  // Cropper state
   const [cropperOpen, setCropperOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string>('');
 
-  // Scroll to section when sheet opens with scrollToSection param
   React.useEffect(() => {
     if (open && scrollToSection) {
       const timer = setTimeout(() => {
@@ -95,41 +92,25 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
     const file = e.target.files?.[0];
     if (!file || !user?.id) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast({
-        title: 'Invalid File',
-        description: 'Please select an image file.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Invalid File', description: 'Please select an image file.', variant: 'destructive' });
       return;
     }
 
-    // Validate file size (max 10MB for cropping, will be compressed after)
     if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: 'File Too Large',
-        description: 'Please select an image under 10MB.',
-        variant: 'destructive',
-      });
+      toast({ title: 'File Too Large', description: 'Please select an image under 10MB.', variant: 'destructive' });
       return;
     }
 
     try {
-      // Convert file to base64 for cropper
       const dataUrl = await readFileAsDataURL(file);
       setImageToCrop(dataUrl);
       setCropperOpen(true);
     } catch (error) {
       console.error('Error reading file:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to read image file.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Failed to read image file.', variant: 'destructive' });
     }
 
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -141,26 +122,21 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
     setUploadingAvatar(true);
 
     try {
-      // Create file from blob
       const file = new File([croppedBlob], 'avatar.webp', { type: 'image/webp' });
       const filePath = `${user.id}/avatar.webp`;
 
-      // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // Add timestamp to bust cache
       const newAvatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
 
-      // Update profile with new avatar URL
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: newAvatarUrl })
@@ -169,17 +145,10 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
       if (updateError) throw updateError;
 
       setAvatarUrl(newAvatarUrl);
-      toast({
-        title: 'Photo Updated',
-        description: 'Your profile photo has been updated.',
-      });
+      toast({ title: 'Photo Updated', description: 'Your profile photo has been updated.' });
     } catch (error) {
       console.error('Avatar upload error:', error);
-      toast({
-        title: 'Upload Failed',
-        description: 'Failed to upload photo. Please try again.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Upload Failed', description: 'Failed to upload photo. Please try again.', variant: 'destructive' });
     } finally {
       setUploadingAvatar(false);
     }
@@ -197,18 +166,11 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
     setSaving(false);
 
     if (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update profile. Please try again.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Failed to update profile. Please try again.', variant: 'destructive' });
       return;
     }
 
-    toast({
-      title: 'Profile Updated',
-      description: 'Your changes have been saved.',
-    });
+    toast({ title: 'Profile Updated', description: 'Your changes have been saved.' });
     onSaved();
     onOpenChange(false);
   };
@@ -232,7 +194,6 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                   </AvatarFallback>
                 </Avatar>
                 
-                {/* Camera overlay */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
@@ -282,54 +243,41 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                 Basic Info
               </h3>
               
-              <div className="space-y-2">
-                <Label htmlFor="full_name">Full Name</Label>
-                <Input
-                  id="full_name"
-                  value={formData.full_name}
-                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                />
-              </div>
+              <FloatingInput
+                id="full_name"
+                label="Full Name"
+                value={formData.full_name}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="tagline">Tagline</Label>
-                <Input
-                  id="tagline"
-                  value={formData.tagline}
-                  onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
-                  placeholder="Your creative one-liner..."
-                />
-              </div>
+              <FloatingInput
+                id="tagline"
+                label="Tagline"
+                value={formData.tagline}
+                onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="specialty">Role / Specialty</Label>
-                <Input
-                  id="specialty"
-                  value={formData.specialty}
-                  onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
-                  placeholder="e.g., Filmmaker, Writer, Director"
-                />
-              </div>
+              <FloatingInput
+                id="specialty"
+                label="Role / Specialty"
+                value={formData.specialty}
+                onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input
-                  id="city"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                />
-              </div>
+              <FloatingInput
+                id="city"
+                label="City"
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                  id="bio"
-                  value={formData.bio}
-                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                  placeholder="Tell the community about your creative journey..."
-                  className="min-h-[120px] resize-none"
-                />
-              </div>
+              <FloatingTextarea
+                id="bio"
+                label="Bio"
+                value={formData.bio}
+                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                className="min-h-[120px] resize-none"
+              />
             </div>
 
             {/* Contact Info */}
@@ -338,35 +286,28 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                 Contact Info
               </h3>
               
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+91 12345 67890"
-                />
-              </div>
+              <FloatingInput
+                id="phone"
+                label="Phone"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
 
-              <div ref={instagramSectionRef} className="space-y-2 transition-all duration-500 rounded-lg p-2 -m-2">
-                <Label htmlFor="instagram">Instagram Handle</Label>
-                <Input
+              <div ref={instagramSectionRef} className="transition-all duration-500 rounded-lg p-2 -m-2">
+                <FloatingInput
                   id="instagram"
+                  label="Instagram Handle"
                   value={formData.instagram_handle}
                   onChange={(e) => setFormData({ ...formData, instagram_handle: e.target.value })}
-                  placeholder="@handle"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="twitter">Twitter Handle</Label>
-                <Input
-                  id="twitter"
-                  value={formData.twitter_handle}
-                  onChange={(e) => setFormData({ ...formData, twitter_handle: e.target.value })}
-                  placeholder="@handle"
-                />
-              </div>
+              <FloatingInput
+                id="twitter"
+                label="Twitter Handle"
+                value={formData.twitter_handle}
+                onChange={(e) => setFormData({ ...formData, twitter_handle: e.target.value })}
+              />
             </div>
 
             {/* Actions */}
@@ -390,7 +331,6 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
         </SheetContent>
       </Sheet>
 
-      {/* Image Cropper Modal */}
       <ImageCropperModal
         open={cropperOpen}
         onOpenChange={setCropperOpen}

@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { FloatingInput } from '@/components/ui/floating-input';
+import { FloatingTextarea } from '@/components/ui/floating-textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -266,33 +266,15 @@ const AdminEquipment: React.FC = () => {
               </div>
               <div>
                 <Label>Order Index</Label>
-                <Input type="number" value={formData.order_index} onChange={(e) => setFormData(p => ({ ...p, order_index: parseInt(e.target.value) || 0 }))} />
+                <FloatingInput label="Order" type="number" value={formData.order_index} onChange={(e) => setFormData(p => ({ ...p, order_index: parseInt(e.target.value) || 0 }))} />
               </div>
             </div>
-            <div>
-              <Label>Brand</Label>
-              <Input value={formData.brand} onChange={(e) => setFormData(p => ({ ...p, brand: e.target.value }))} placeholder="Sony" />
-            </div>
-            <div>
-              <Label>Name</Label>
-              <Input value={formData.name} onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))} placeholder="Cinema Line" />
-            </div>
-            <div>
-              <Label>Model</Label>
-              <Input value={formData.model} onChange={(e) => setFormData(p => ({ ...p, model: e.target.value }))} placeholder="FX3" />
-            </div>
-            <div>
-              <Label>Description</Label>
-              <Textarea value={formData.description} onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))} placeholder="Use case description..." />
-            </div>
-            <div>
-              <Label>Specs (comma-separated)</Label>
-              <Input value={formData.specs} onChange={(e) => setFormData(p => ({ ...p, specs: e.target.value }))} placeholder="4K 120fps, S-Log3, Full-Frame" />
-            </div>
-            <div>
-              <Label>Image URL</Label>
-              <Input value={formData.image_url} onChange={(e) => setFormData(p => ({ ...p, image_url: e.target.value }))} placeholder="/images/equipment/sony-fx3.png" />
-            </div>
+            <FloatingInput label="Brand" value={formData.brand} onChange={(e) => setFormData(p => ({ ...p, brand: e.target.value }))} />
+            <FloatingInput label="Name" value={formData.name} onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))} />
+            <FloatingInput label="Model" value={formData.model} onChange={(e) => setFormData(p => ({ ...p, model: e.target.value }))} />
+            <FloatingTextarea label="Description" value={formData.description} onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))} />
+            <FloatingInput label="Specs (comma-separated)" value={formData.specs} onChange={(e) => setFormData(p => ({ ...p, specs: e.target.value }))} />
+            <FloatingInput label="Image URL" value={formData.image_url} onChange={(e) => setFormData(p => ({ ...p, image_url: e.target.value }))} />
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <Switch checked={formData.is_featured} onCheckedChange={(c) => setFormData(p => ({ ...p, is_featured: c }))} />

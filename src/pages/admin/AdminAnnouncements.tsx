@@ -4,8 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { FloatingInput } from '@/components/ui/floating-input';
+import { FloatingTextarea } from '@/components/ui/floating-textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -248,62 +248,46 @@ const AdminAnnouncements: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Title *</Label>
-                    <Input
-                      value={newAnnouncement.title}
-                      onChange={(e) => setNewAnnouncement(prev => ({ ...prev, title: e.target.value }))}
-                      placeholder="Complete your KYF form!"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Icon Emoji</Label>
-                    <Input
-                      value={newAnnouncement.icon_emoji}
-                      onChange={(e) => setNewAnnouncement(prev => ({ ...prev, icon_emoji: e.target.value }))}
-                      placeholder="📢"
-                      className="w-20"
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Message (optional)</Label>
-                  <Textarea
-                    value={newAnnouncement.body}
-                    onChange={(e) => setNewAnnouncement(prev => ({ ...prev, body: e.target.value }))}
-                    placeholder="Additional details..."
-                    rows={2}
+                  <FloatingInput
+                    label="Title *"
+                    value={newAnnouncement.title}
+                    onChange={(e) => setNewAnnouncement(prev => ({ ...prev, title: e.target.value }))}
+                  />
+                  <FloatingInput
+                    label="Icon Emoji"
+                    value={newAnnouncement.icon_emoji}
+                    onChange={(e) => setNewAnnouncement(prev => ({ ...prev, icon_emoji: e.target.value }))}
+                    className="w-20"
                   />
                 </div>
+                
+                <FloatingTextarea
+                  label="Message (optional)"
+                  value={newAnnouncement.body}
+                  onChange={(e) => setNewAnnouncement(prev => ({ ...prev, body: e.target.value }))}
+                  rows={2}
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>Deep Link (optional)</Label>
-                    <Input
-                      value={newAnnouncement.deep_link}
-                      onChange={(e) => setNewAnnouncement(prev => ({ ...prev, deep_link: e.target.value }))}
-                      placeholder="/kyf"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Priority</Label>
-                    <Input
-                      type="number"
-                      value={newAnnouncement.priority}
-                      onChange={(e) => setNewAnnouncement(prev => ({ ...prev, priority: parseInt(e.target.value) || 0 }))}
-                      min={0}
-                      max={100}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Expiry Date (optional)</Label>
-                    <Input
-                      type="datetime-local"
-                      value={newAnnouncement.expiry_at}
-                      onChange={(e) => setNewAnnouncement(prev => ({ ...prev, expiry_at: e.target.value }))}
-                    />
-                  </div>
+                  <FloatingInput
+                    label="Deep Link (optional)"
+                    value={newAnnouncement.deep_link}
+                    onChange={(e) => setNewAnnouncement(prev => ({ ...prev, deep_link: e.target.value }))}
+                  />
+                  <FloatingInput
+                    label="Priority"
+                    type="number"
+                    value={newAnnouncement.priority}
+                    onChange={(e) => setNewAnnouncement(prev => ({ ...prev, priority: parseInt(e.target.value) || 0 }))}
+                    min={0}
+                    max={100}
+                  />
+                  <FloatingInput
+                    label="Expiry Date (optional)"
+                    type="datetime-local"
+                    value={newAnnouncement.expiry_at}
+                    onChange={(e) => setNewAnnouncement(prev => ({ ...prev, expiry_at: e.target.value }))}
+                  />
                 </div>
 
                 <div className="flex gap-2 pt-2">

@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { FloatingInput } from '@/components/ui/floating-input';
+import { FloatingTextarea } from '@/components/ui/floating-textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -205,50 +205,38 @@ export default function AdminChangelog() {
   const FormContent = () => (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="version">Version</Label>
-          <Input
-            id="version"
-            value={formData.version}
-            onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-            placeholder="e.g., 1.5.0"
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="date_added">Date</Label>
-          <Input
-            id="date_added"
-            type="date"
-            value={formData.date_added}
-            onChange={(e) => setFormData({ ...formData, date_added: e.target.value })}
-            required
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="title">Title</Label>
-        <Input
-          id="title"
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          placeholder="Short feature name"
+        <FloatingInput
+          id="version"
+          label="Version"
+          value={formData.version}
+          onChange={(e) => setFormData({ ...formData, version: e.target.value })}
+          required
+        />
+        <FloatingInput
+          id="date_added"
+          label="Date"
+          type="date"
+          value={formData.date_added}
+          onChange={(e) => setFormData({ ...formData, date_added: e.target.value })}
           required
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          placeholder="Detailed description of the change"
-          rows={3}
-          required
-        />
-      </div>
+      <FloatingInput
+        id="title"
+        label="Title"
+        value={formData.title}
+        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+        required
+      />
+
+      <FloatingTextarea
+        id="description"
+        label="Description"
+        value={formData.description}
+        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+        rows={3}
+      />
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -285,15 +273,12 @@ export default function AdminChangelog() {
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="added_by">Added By</Label>
-        <Input
-          id="added_by"
-          value={formData.added_by}
-          onChange={(e) => setFormData({ ...formData, added_by: e.target.value })}
-          placeholder="Team member name"
-        />
-      </div>
+      <FloatingInput
+        id="added_by"
+        label="Added By"
+        value={formData.added_by}
+        onChange={(e) => setFormData({ ...formData, added_by: e.target.value })}
+      />
 
       <div className="flex gap-2 justify-end pt-4">
         <Button

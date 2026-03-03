@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { FloatingInput } from '@/components/ui/floating-input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
@@ -56,7 +56,6 @@ const ProfileSetup: React.FC = () => {
   const { user, profile, refreshProfile } = useAuth();
   const { toast } = useToast();
 
-  // Fetch active editions
   const { data: editions, isLoading: editionsLoading } = useQuery({
     queryKey: ['active-editions'],
     queryFn: async () => {
@@ -70,7 +69,6 @@ const ProfileSetup: React.FC = () => {
     }
   });
 
-  // Pre-fill name and email from auth/profile data
   useEffect(() => {
     if (user) {
       setFormData(prev => ({
@@ -78,7 +76,6 @@ const ProfileSetup: React.FC = () => {
         full_name: user.user_metadata?.full_name || profile?.full_name || prev.full_name,
         email: user.email || prev.email,
         avatar_url: profile?.avatar_url || prev.avatar_url,
-        // Pre-fill edition_id if already assigned by admin
         edition_id: profile?.edition_id || prev.edition_id,
       }));
     }
@@ -121,7 +118,6 @@ const ProfileSetup: React.FC = () => {
   };
 
   const selectedEdition = editions?.find(e => e.id === formData.edition_id);
-  // Check if user already had an edition assigned (by admin)
   const hasPreAssignedEdition = !!profile?.edition_id;
   const preAssignedEdition = editions?.find(e => e.id === profile?.edition_id);
 
@@ -169,7 +165,6 @@ const ProfileSetup: React.FC = () => {
       description: 'Welcome to The Forge!',
     });
     
-    // Navigate to the welcome celebration page
     navigate('/welcome');
   };
 
@@ -226,35 +221,33 @@ const ProfileSetup: React.FC = () => {
 
         {/* Form Fields */}
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="full_name">Full Name *</Label>
-            <Input
-              id="full_name"
-              placeholder="As you want it displayed inside the app"
-              value={formData.full_name}
-              onChange={(e) => updateFormData('full_name', e.target.value)}
-              className="h-12 bg-secondary/50"
-            />
-          </div>
+          <FloatingInput
+            id="full_name"
+            label="Full Name *"
+            value={formData.full_name}
+            onChange={(e) => updateFormData('full_name', e.target.value)}
+            className="bg-secondary/50"
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="email" className="flex items-center gap-2">
-              Your Email ID
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-sm text-muted-foreground">Your Email ID</span>
               <span className="inline-flex items-center gap-1 text-xs text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
                 <CheckCircle2 className="h-3 w-3" />
                 Verified
               </span>
-            </Label>
-            <Input
+            </div>
+            <FloatingInput
               id="email"
+              label="Email"
               type="email"
               value={formData.email}
               disabled
-              className="h-12 bg-secondary/30 text-muted-foreground cursor-not-allowed"
+              className="bg-secondary/30 text-muted-foreground cursor-not-allowed"
             />
           </div>
 
-          <div className="space-y-2">
+          <div>
             <PhoneInput
               label="Your WhatsApp Number"
               value={formData.phone}
@@ -263,16 +256,13 @@ const ProfileSetup: React.FC = () => {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="city">City You're Currently Based In *</Label>
-            <Input
-              id="city"
-              placeholder="Your city"
-              value={formData.city}
-              onChange={(e) => updateFormData('city', e.target.value)}
-              className="h-12 bg-secondary/50"
-            />
-          </div>
+          <FloatingInput
+            id="city"
+            label="City You're Currently Based In *"
+            value={formData.city}
+            onChange={(e) => updateFormData('city', e.target.value)}
+            className="bg-secondary/50"
+          />
         </div>
 
         {/* Edition Selection */}
@@ -293,7 +283,6 @@ const ProfileSetup: React.FC = () => {
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : hasPreAssignedEdition && preAssignedEdition ? (
-            // Locked edition card for admin-assigned users
             (() => {
               const Icon = getCohortIcon(preAssignedEdition.cohort_type);
               return (
@@ -358,14 +347,12 @@ const ProfileSetup: React.FC = () => {
                         : 'border-border/50 bg-card/50 hover:border-primary/40 hover:bg-card/80'}
                     `}
                   >
-                    {/* Selection indicator */}
                     {isSelected && (
                       <div className="absolute top-3 right-3">
                         <CheckCircle2 className="h-5 w-5 text-primary" />
                       </div>
                     )}
                     
-                    {/* Icon */}
                     <div className={`
                       w-14 h-14 rounded-xl flex items-center justify-center shrink-0
                       transition-all duration-300
@@ -376,7 +363,6 @@ const ProfileSetup: React.FC = () => {
                       <Icon className="h-7 w-7" />
                     </div>
                     
-                    {/* Content */}
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-foreground text-lg truncate pr-8">
                         {edition.name}
