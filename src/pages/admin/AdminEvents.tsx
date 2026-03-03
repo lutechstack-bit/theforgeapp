@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { FloatingInput } from '@/components/ui/floating-input';
+import { FloatingTextarea } from '@/components/ui/floating-textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -210,16 +210,13 @@ const AdminEvents: React.FC = () => {
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-              <div>
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="Event title"
-                  required
-                />
-              </div>
+              <FloatingInput
+                id="title"
+                label="Title"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                required
+              />
 
               <div>
                 <Label htmlFor="event_type">Event Type</Label>
@@ -240,16 +237,13 @@ const AdminEvents: React.FC = () => {
                 </Select>
               </div>
 
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="Event description"
-                  rows={3}
-                />
-              </div>
+              <FloatingTextarea
+                id="description"
+                label="Description"
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                rows={3}
+              />
 
               <div>
                 <Label>Date & Time</Label>
@@ -259,15 +253,12 @@ const AdminEvents: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  value={form.location}
-                  onChange={(e) => setForm({ ...form, location: e.target.value })}
-                  placeholder="City or venue"
-                />
-              </div>
+              <FloatingInput
+                id="location"
+                label="Location"
+                value={form.location}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+              />
 
               <div>
                 <Label>Event Image</Label>
@@ -308,26 +299,20 @@ const AdminEvents: React.FC = () => {
                     Archive Content (for past events)
                   </h4>
                   
-                  <div>
-                    <Label htmlFor="recording_url">Recording URL</Label>
-                    <Input
-                      id="recording_url"
-                      value={form.recording_url}
-                      onChange={(e) => setForm({ ...form, recording_url: e.target.value })}
-                      placeholder="YouTube or Vimeo URL"
-                    />
-                  </div>
+                  <FloatingInput
+                    id="recording_url"
+                    label="Recording URL"
+                    value={form.recording_url}
+                    onChange={(e) => setForm({ ...form, recording_url: e.target.value })}
+                  />
 
-                  <div>
-                    <Label htmlFor="notes">Event Notes</Label>
-                    <Textarea
-                      id="notes"
-                      value={form.notes}
-                      onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                      placeholder="Summary, key takeaways, or notes from the event..."
-                      rows={4}
-                    />
-                  </div>
+                  <FloatingTextarea
+                    id="notes"
+                    label="Event Notes"
+                    value={form.notes}
+                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                    rows={4}
+                  />
                 </div>
               )}
 

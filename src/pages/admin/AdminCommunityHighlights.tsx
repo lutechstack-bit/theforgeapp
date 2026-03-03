@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { FloatingInput } from '@/components/ui/floating-input';
+import { FloatingTextarea } from '@/components/ui/floating-textarea';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -229,62 +229,49 @@ const AdminCommunityHighlights = () => {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Title *</Label>
-                <Input
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  placeholder="e.g., 100 Films Created!"
-                  required
-                />
-              </div>
+              <FloatingInput
+                label="Title *"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+                required
+              />
 
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  placeholder="Optional details..."
-                  rows={3}
-                />
-              </div>
+              <FloatingTextarea
+                label="Description"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                rows={3}
+              />
 
-              <div className="space-y-2">
-                <Label>Date</Label>
-                <Input
-                  type="date"
-                  value={formData.highlight_date}
-                  onChange={(e) =>
-                    setFormData({ ...formData, highlight_date: e.target.value })
-                  }
-                />
-              </div>
+              <FloatingInput
+                label="Date"
+                type="date"
+                value={formData.highlight_date}
+                onChange={(e) =>
+                  setFormData({ ...formData, highlight_date: e.target.value })
+                }
+              />
 
-              <div className="space-y-2">
-                <Label>Image URL</Label>
-                <Input
-                  value={formData.image_url}
-                  onChange={(e) =>
-                    setFormData({ ...formData, image_url: e.target.value })
-                  }
-                  placeholder="https://..."
-                />
-              </div>
+              <FloatingInput
+                label="Image URL"
+                value={formData.image_url}
+                onChange={(e) =>
+                  setFormData({ ...formData, image_url: e.target.value })
+                }
+              />
 
-              <div className="space-y-2">
-                <Label>Order Index</Label>
-                <Input
-                  type="number"
-                  value={formData.order_index}
-                  onChange={(e) =>
-                    setFormData({ ...formData, order_index: parseInt(e.target.value) || 0 })
-                  }
-                />
-              </div>
+              <FloatingInput
+                label="Order Index"
+                type="number"
+                value={formData.order_index}
+                onChange={(e) =>
+                  setFormData({ ...formData, order_index: parseInt(e.target.value) || 0 })
+                }
+              />
 
               <div className="flex items-center gap-2">
                 <Switch

@@ -7,8 +7,9 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { FloatingInput } from '@/components/ui/floating-input';
+import { FloatingTextarea } from '@/components/ui/floating-textarea';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -110,6 +111,15 @@ export const AddWorkModal: React.FC<AddWorkModalProps> = ({
     });
   };
 
+  const mediaUrlLabel = (() => {
+    switch (formData.media_type) {
+      case 'video': return 'Video URL (YouTube, Vimeo, etc.)';
+      case 'image': return 'Image URL';
+      case 'pdf': return 'PDF URL';
+      default: return 'External Link';
+    }
+  })();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
@@ -118,17 +128,13 @@ export const AddWorkModal: React.FC<AddWorkModalProps> = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="My Short Film"
-              required
-            />
-          </div>
+          <FloatingInput
+            id="title"
+            label="Title *"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            required
+          />
 
           {/* Type */}
           <div className="space-y-2">
@@ -170,44 +176,27 @@ export const AddWorkModal: React.FC<AddWorkModalProps> = ({
             </Select>
           </div>
 
-          {/* Media URL */}
-          <div className="space-y-2">
-            <Label htmlFor="media_url">
-              {formData.media_type === 'video' && 'Video URL (YouTube, Vimeo, etc.)'}
-              {formData.media_type === 'image' && 'Image URL'}
-              {formData.media_type === 'pdf' && 'PDF URL'}
-              {formData.media_type === 'link' && 'External Link'}
-            </Label>
-            <Input
-              id="media_url"
-              value={formData.media_url}
-              onChange={(e) => setFormData({ ...formData, media_url: e.target.value })}
-              placeholder="https://..."
-            />
-          </div>
+          <FloatingInput
+            id="media_url"
+            label={mediaUrlLabel}
+            value={formData.media_url}
+            onChange={(e) => setFormData({ ...formData, media_url: e.target.value })}
+          />
 
-          {/* Thumbnail URL */}
-          <div className="space-y-2">
-            <Label htmlFor="thumbnail_url">Thumbnail URL (optional)</Label>
-            <Input
-              id="thumbnail_url"
-              value={formData.thumbnail_url}
-              onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
-              placeholder="https://..."
-            />
-          </div>
+          <FloatingInput
+            id="thumbnail_url"
+            label="Thumbnail URL (optional)"
+            value={formData.thumbnail_url}
+            onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
+          />
 
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Tell us about this project..."
-              className="min-h-[80px] resize-none"
-            />
-          </div>
+          <FloatingTextarea
+            id="description"
+            label="Description"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="min-h-[80px] resize-none"
+          />
 
           {/* Award Tags */}
           <div className="space-y-2">

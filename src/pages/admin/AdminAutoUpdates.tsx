@@ -3,8 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Loader2, Bell, Pencil, Trash2, Pin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { FloatingInput } from '@/components/ui/floating-input';
+import { FloatingTextarea } from '@/components/ui/floating-textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -347,62 +347,46 @@ function UpdateFormDialog({
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label>Title *</Label>
-            <Input
-              required
-              placeholder="Update title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            />
-          </div>
+          <FloatingInput
+            label="Title *"
+            required
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          />
           
-          <div className="space-y-2">
-            <Label>Short Message *</Label>
-            <Input
-              required
-              placeholder="Brief message"
-              value={formData.message}
-              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-            />
-          </div>
+          <FloatingInput
+            label="Short Message *"
+            required
+            value={formData.message}
+            onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+          />
 
-          <div className="space-y-2">
-            <Label>Body (extended)</Label>
-            <Textarea
-              placeholder="Optional longer description"
-              value={formData.body}
-              onChange={(e) => setFormData({ ...formData, body: e.target.value })}
-              rows={2}
-            />
-          </div>
+          <FloatingTextarea
+            label="Body (extended)"
+            value={formData.body}
+            onChange={(e) => setFormData({ ...formData, body: e.target.value })}
+            rows={2}
+          />
 
-          <div className="space-y-2">
-            <Label>Deep Link</Label>
-            <Input
-              placeholder="/learn or /events/123"
-              value={formData.deep_link}
-              onChange={(e) => setFormData({ ...formData, deep_link: e.target.value })}
-            />
-          </div>
+          <FloatingInput
+            label="Deep Link"
+            value={formData.deep_link}
+            onChange={(e) => setFormData({ ...formData, deep_link: e.target.value })}
+          />
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Priority</Label>
-              <Input
-                type="number"
-                value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Expiry Date</Label>
-              <Input
-                type="datetime-local"
-                value={formData.expiry_at ? formData.expiry_at.slice(0, 16) : ''}
-                onChange={(e) => setFormData({ ...formData, expiry_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
-              />
-            </div>
+            <FloatingInput
+              label="Priority"
+              type="number"
+              value={formData.priority}
+              onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
+            />
+            <FloatingInput
+              label="Expiry Date"
+              type="datetime-local"
+              value={formData.expiry_at ? formData.expiry_at.slice(0, 16) : ''}
+              onChange={(e) => setFormData({ ...formData, expiry_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
+            />
           </div>
 
           <div className="flex items-center gap-2">

@@ -9,9 +9,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { FloatingInput } from '@/components/ui/floating-input';
+import { FloatingTextarea } from '@/components/ui/floating-textarea';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
 
@@ -119,56 +119,37 @@ export const CreateDocVersionModal: React.FC<CreateDocVersionModalProps> = ({
             </RadioGroup>
           </div>
 
-          {/* Version Number */}
-          <div className="space-y-2">
-            <Label htmlFor="version">Version Number</Label>
-            <div className="relative">
-              <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                id="version"
-                value={version}
-                onChange={(e) => setVersion(e.target.value)}
-                placeholder="1.0.0"
-                className="pl-9 font-mono"
-                required
-              />
-            </div>
-          </div>
+          <FloatingInput
+            id="version"
+            label="Version Number"
+            value={version}
+            onChange={(e) => setVersion(e.target.value)}
+            className="font-mono"
+            required
+          />
 
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Version Title</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Initial Release, Bug Fixes, New Features"
-              required
-            />
-          </div>
+          <FloatingInput
+            id="title"
+            label="Version Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
 
-          {/* Changelog */}
-          <div className="space-y-2">
-            <Label htmlFor="changelog">Changelog (Markdown supported)</Label>
-            <Textarea
-              id="changelog"
-              value={changelog}
-              onChange={(e) => setChangelog(e.target.value)}
-              placeholder="- Added new feature X&#10;- Fixed bug in Y&#10;- Updated documentation for Z"
-              rows={4}
-            />
-          </div>
+          <FloatingTextarea
+            id="changelog"
+            label="Changelog (Markdown supported)"
+            value={changelog}
+            onChange={(e) => setChangelog(e.target.value)}
+            rows={4}
+          />
 
-          {/* Release Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="release-notes">Release Notes (Brief summary)</Label>
-            <Input
-              id="release-notes"
-              value={releaseNotes}
-              onChange={(e) => setReleaseNotes(e.target.value)}
-              placeholder="Brief summary of this release..."
-            />
-          </div>
+          <FloatingInput
+            id="release-notes"
+            label="Release Notes (Brief summary)"
+            value={releaseNotes}
+            onChange={(e) => setReleaseNotes(e.target.value)}
+          />
 
           <DialogFooter>
             <Button

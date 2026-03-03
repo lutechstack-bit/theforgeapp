@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { FloatingInput } from '@/components/ui/floating-input';
+import { FloatingTextarea } from '@/components/ui/floating-textarea';
 import { toast } from 'sonner';
 import { CheckCircle2, Loader2, Send } from 'lucide-react';
 import { z } from 'zod';
@@ -39,7 +38,6 @@ export const PerkClaimForm: React.FC<PerkClaimFormProps> = ({ perkId, perkName, 
     e.preventDefault();
     if (!user) return;
 
-    // Validate required fields
     for (const field of fields) {
       if (field.is_required) {
         const val = formData[field.label]?.trim();
@@ -47,7 +45,6 @@ export const PerkClaimForm: React.FC<PerkClaimFormProps> = ({ perkId, perkName, 
           toast.error(`Please fill in "${field.label}"`);
           return;
         }
-        // Basic email validation
         if (field.field_type === 'email') {
           const emailSchema = z.string().email();
           if (!emailSchema.safeParse(val).success) {
@@ -93,23 +90,19 @@ export const PerkClaimForm: React.FC<PerkClaimFormProps> = ({ perkId, perkName, 
       {fields
         .sort((a, b) => a.order_index - b.order_index)
         .map(field => (
-          <div key={field.id} className="space-y-1.5">
-            <Label className="text-sm font-medium text-foreground">
-              {field.label}
-              {field.is_required && <span className="text-destructive ml-0.5">*</span>}
-            </Label>
+          <div key={field.id}>
             {field.field_type === 'textarea' ? (
-              <Textarea
-                placeholder={field.placeholder || ''}
+              <FloatingTextarea
+                label={`${field.label}${field.is_required ? ' *' : ''}`}
                 value={formData[field.label] || ''}
                 onChange={(e) => handleChange(field.label, e.target.value)}
                 className="bg-background/50 border-border/50 min-h-[80px]"
                 maxLength={2000}
               />
             ) : (
-              <Input
+              <FloatingInput
                 type={field.field_type === 'email' ? 'email' : field.field_type === 'phone' ? 'tel' : 'text'}
-                placeholder={field.placeholder || ''}
+                label={`${field.label}${field.is_required ? ' *' : ''}`}
                 value={formData[field.label] || ''}
                 onChange={(e) => handleChange(field.label, e.target.value)}
                 className="bg-background/50 border-border/50"
