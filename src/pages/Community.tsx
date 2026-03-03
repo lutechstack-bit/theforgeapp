@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CommunityHeader } from '@/components/community/CommunityHeader';
 import { CompactChat } from '@/components/community/CompactChat';
 import { GroupSwitcher } from '@/components/community/GroupSwitcher';
 import { MembersDrawer } from '@/components/community/MembersDrawer';
+import { CollaboratorDirectory } from '@/components/community/CollaboratorDirectory';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { getCityGroupKey } from '@/lib/cityUtils';
+import { cn } from '@/lib/utils';
 
 interface CityGroup {
   id: string;
@@ -30,6 +33,10 @@ interface Stats {
 
 const Community = () => {
   const { user, profile } = useAuth();
+  const [searchParams] = useSearchParams();
+  const [activeView, setActiveView] = useState<'chat' | 'network'>(
+    searchParams.get('tab') === 'network' ? 'network' : 'chat'
+  );
   const [loading, setLoading] = useState(true);
   const [cityGroups, setCityGroups] = useState<CityGroup[]>([]);
   const [cohortGroup, setCohortGroup] = useState<CohortGroup | null>(null);
@@ -179,35 +186,73 @@ const Community = () => {
 
   return (
     <div className="flex flex-col h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] px-4 sm:px-5 md:px-6 gap-2.5 sm:gap-3">
-      {/* Header with Members Button */}
-      <div className="flex items-center justify-between gap-2 sm:gap-3">
-        <CommunityHeader memberCount={stats.totalMembers} onlineCount={onlineUserIds.length} />
-        <MembersDrawer onlineUserIds={onlineUserIds} memberCount={stats.totalMembers} />
+      {/* View Toggle: Chat | Network */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex gap-1 p-0.5 rounded-full bg-muted/30 border border-border/30">
+          <button
+            onClick={() => setActiveView('chat')}
+            className={cn(
+              'px-4 py-1.5 rounded-full text-xs font-medium transition-all',
+              activeView === 'chat'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Chat
+          </button>
+          <button
+            onClick={() => setActiveView('network')}
+            className={cn(
+              'px-4 py-1.5 rounded-full text-xs font-medium transition-all',
+              activeView === 'network'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Network
+          </button>
+        </div>
+        {activeView === 'chat' && (
+          <MembersDrawer onlineUserIds={onlineUserIds} memberCount={stats.totalMembers} />
+        )}
       </div>
 
-      {/* Horizontal Pill Tabs */}
-      <GroupSwitcher
-        cohortGroup={cohortGroup}
-        cityGroups={cityGroups}
-        userCityGroupId={userCityGroupId}
-        activeGroupType={activeGroupType}
-        activeGroupId={activeGroupId}
-        onSelectCohort={handleSelectCohort}
-        onSelectCity={handleSelectCity}
-      />
+      {activeView === 'chat' ? (
+        <>
+          {/* Header */}
+          <div className="flex items-center justify-between gap-2 sm:gap-3">
+            <CommunityHeader memberCount={stats.totalMembers} onlineCount={onlineUserIds.length} />
+          </div>
 
-      {/* Chat Area - Full Width */}
-      <div className="flex-1 min-h-0">
-        <CompactChat
-          groups={cityGroups}
-          cohortGroup={cohortGroup}
-          activeGroupType={activeGroupType}
-          activeGroupId={activeGroupId}
-          onGroupChange={handleSelectCity}
-          onCohortSelect={handleSelectCohort}
-          typingUsers={typingUsers}
-        />
-      </div>
+          {/* Horizontal Pill Tabs */}
+          <GroupSwitcher
+            cohortGroup={cohortGroup}
+            cityGroups={cityGroups}
+            userCityGroupId={userCityGroupId}
+            activeGroupType={activeGroupType}
+            activeGroupId={activeGroupId}
+            onSelectCohort={handleSelectCohort}
+            onSelectCity={handleSelectCity}
+          />
+
+          {/* Chat Area */}
+          <div className="flex-1 min-h-0">
+            <CompactChat
+              groups={cityGroups}
+              cohortGroup={cohortGroup}
+              activeGroupType={activeGroupType}
+              activeGroupId={activeGroupId}
+              onGroupChange={handleSelectCity}
+              onCohortSelect={handleSelectCohort}
+              typingUsers={typingUsers}
+            />
+          </div>
+        </>
+      ) : (
+        <div className="flex-1 min-h-0">
+          <CollaboratorDirectory />
+        </div>
+      )}
     </div>
   );
 };

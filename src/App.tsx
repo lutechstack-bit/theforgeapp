@@ -62,9 +62,11 @@ import AdminChangelog from "./pages/admin/AdminChangelog";
 import AdminHomepage from "./pages/admin/AdminHomepage";
 import AdminTodaysFocus from "./pages/admin/AdminTodaysFocus";
 import AdminPerks from "./pages/admin/AdminPerks";
+import AdminNetwork from "./pages/admin/AdminNetwork";
 import DynamicKYForm from "./pages/DynamicKYForm";
 import EventDetail from "./pages/EventDetail";
 import PerkDetail from "./pages/PerkDetail";
+import CollaboratorSetup from "./pages/CollaboratorSetup";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -228,6 +230,13 @@ const AppRoutes = () => {
           </ProfileSetupRoute>
         </ProtectedRoute>
       } />
+      <Route path="/collaborator-setup" element={
+        <ProtectedRoute>
+          <ProfileSetupCheck>
+            <CollaboratorSetup />
+          </ProfileSetupCheck>
+        </ProtectedRoute>
+      } />
 
 
       {/* App routes with layout */}
@@ -285,6 +294,7 @@ const AppRoutes = () => {
         <Route path="homepage" element={<AdminHomepage />} />
         <Route path="todays-focus" element={<AdminTodaysFocus />} />
         <Route path="perks" element={<AdminPerks />} />
+        <Route path="network" element={<AdminNetwork />} />
       </Route>
       
       {/* Catch-all */}

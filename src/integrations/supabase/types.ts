@@ -231,6 +231,123 @@ export type Database = {
           },
         ]
       }
+      collaboration_requests: {
+        Row: {
+          created_at: string
+          from_user_id: string
+          id: string
+          message: string | null
+          status: string
+          to_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_user_id: string
+          id?: string
+          message?: string | null
+          status?: string
+          to_user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          message?: string | null
+          status?: string
+          to_user_id?: string
+        }
+        Relationships: []
+      }
+      collaborator_occupations: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          order_index: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          order_index?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          order_index?: number | null
+        }
+        Relationships: []
+      }
+      collaborator_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          intro: string | null
+          is_published: boolean | null
+          occupations: string[] | null
+          open_to_remote: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          intro?: string | null
+          is_published?: boolean | null
+          occupations?: string[] | null
+          open_to_remote?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          intro?: string | null
+          is_published?: boolean | null
+          occupations?: string[] | null
+          open_to_remote?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      collaborator_works: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          order_index: number | null
+          title: string
+          user_id: string
+          work_type: string | null
+          year: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_index?: number | null
+          title: string
+          user_id: string
+          work_type?: string | null
+          year?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_index?: number | null
+          title?: string
+          user_id?: string
+          work_type?: string | null
+          year?: string | null
+        }
+        Relationships: []
+      }
       community_highlights: {
         Row: {
           created_at: string

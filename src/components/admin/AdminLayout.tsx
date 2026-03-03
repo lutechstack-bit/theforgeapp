@@ -24,7 +24,8 @@ import {
   PanelLeftClose,
   Home,
   Target,
-  Gift
+  Gift,
+  Handshake
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -52,6 +53,7 @@ const adminNavItems = [
   { to: '/admin/docs', icon: BookOpen, label: 'Documentation' },
   { to: '/admin/changelog', icon: History, label: 'Changelog' },
   { to: '/admin/perks', icon: Gift, label: 'Perks' },
+  { to: '/admin/network', icon: Handshake, label: 'Network' },
 ];
 
 export const AdminLayout: React.FC = () => {
