@@ -1,30 +1,16 @@
 
 
-# PerkDetail Redesign + Admin Claims with Tabs & Download
+# Add Roadmap Summary Cards to Homepage Journey Section
 
-## Issues to Fix
+## What
+Place the existing Journey / Tasks / Prep summary cards inside `HomeJourneySection`, positioned between the section header and the Online/Bootcamp toggle. Clicking each card navigates to its respective roadmap sub-page (`/roadmap`, `/roadmap/tasks`, `/roadmap/prep`).
 
-1. **PerkDetail layout**: `max-w-2xl` is too narrow, leaving large black gaps on desktop. The banner area is an empty colored box that looks bad.
-2. **Mobile responsiveness**: Detail page needs proper mobile padding and sizing.
-3. **Admin claims**: Currently a single modal showing all claims — needs per-brand sub-tabs and CSV download.
+## How
 
-## Changes
+### Edit: `src/components/home/HomeJourneySection.tsx`
+- Import `RoadmapSummaryCards` from `@/components/roadmap/RoadmapSummaryCards`
+- Insert `<RoadmapSummaryCards />` after the header block (after line 229) and before the segmented control toggle (line 232)
+- This reuses the exact same component already used on the Roadmap page — no duplication, same data hooks, same styling
 
-### 1. `src/pages/PerkDetail.tsx` — Redesign layout
-- Change `max-w-2xl` → `max-w-4xl lg:max-w-5xl xl:max-w-6xl` (matching the Perks list page width standard)
-- **Remove the banner** entirely. Replace with a cleaner layout: logo + name + headline in a horizontal hero card (logo on left, text on right, with a subtle gradient background using `banner_color`)
-- This eliminates the empty banner problem
-- Info sections and claim form use a 2-column layout on desktop (info left, form right), single column on mobile
-- Proper `pb-24` on mobile for bottom nav clearance
-
-### 2. `src/pages/admin/AdminPerks.tsx` — Claims tabs + download
-- Replace the single claims modal with an inline tabbed view at the bottom of the page
-- Add tabs: "All Claims" + one tab per perk (Sony, Digitek, etc.)
-- Each tab shows a table of claims with date, form data columns
-- Add "Download CSV" button per tab that exports the visible claims as CSV
-- CSV export: generate in-browser using `Blob` + `URL.createObjectURL`
-
-### Files Changed
-1. **Edit**: `src/pages/PerkDetail.tsx` — new layout, remove banner, responsive widths
-2. **Edit**: `src/pages/admin/AdminPerks.tsx` — add claims section with per-brand tabs + CSV download
+That's it — one import, one line of JSX. The `RoadmapSummaryCards` component already handles all data fetching, responsive grid layout (Journey spans full width on mobile, Tasks + Prep side-by-side), navigation on click, and the amber-bordered card styling matching the uploaded reference.
 
