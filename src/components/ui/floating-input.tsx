@@ -20,7 +20,7 @@ const FloatingInput = React.forwardRef<HTMLInputElement, FloatingInputProps>(
           id={inputId}
           placeholder=" "
           className={cn(
-            'peer pt-5 pb-1.5 h-auto min-h-[3rem]',
+            'peer pt-6 pb-1.5 h-auto min-h-[3.25rem]',
             error && 'border-destructive focus-visible:ring-destructive',
             className,
           )}
@@ -31,8 +31,8 @@ const FloatingInput = React.forwardRef<HTMLInputElement, FloatingInputProps>(
           className={cn(
             'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 origin-[0] text-sm text-muted-foreground',
             'transition-all duration-200 ease-out',
-            'peer-focus:top-2.5 peer-focus:-translate-y-0 peer-focus:scale-75 peer-focus:text-primary',
-            'peer-[:not(:placeholder-shown)]:top-2.5 peer-[:not(:placeholder-shown)]:-translate-y-0 peer-[:not(:placeholder-shown)]:scale-75',
+            'peer-focus:top-1 peer-focus:-translate-y-0 peer-focus:scale-75 peer-focus:text-primary',
+            'peer-[:not(:placeholder-shown)]:top-1 peer-[:not(:placeholder-shown)]:-translate-y-0 peer-[:not(:placeholder-shown)]:scale-75',
             error && 'peer-focus:text-destructive',
           )}
         >

@@ -20,7 +20,7 @@ const FloatingTextarea = React.forwardRef<HTMLTextAreaElement, FloatingTextareaP
           id={textareaId}
           placeholder=" "
           className={cn(
-            'peer pt-6 pb-2',
+            'peer pt-7 pb-2',
             error && 'border-destructive focus-visible:ring-destructive',
             className,
           )}
@@ -31,8 +31,8 @@ const FloatingTextarea = React.forwardRef<HTMLTextAreaElement, FloatingTextareaP
           className={cn(
             'pointer-events-none absolute left-3 top-4 origin-[0] text-sm text-muted-foreground',
             'transition-all duration-200 ease-out',
-            'peer-focus:top-1.5 peer-focus:scale-75 peer-focus:text-primary',
-            'peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:scale-75',
+            'peer-focus:top-1 peer-focus:scale-75 peer-focus:text-primary',
+            'peer-[:not(:placeholder-shown)]:top-1 peer-[:not(:placeholder-shown)]:scale-75',
             error && 'peer-focus:text-destructive',
           )}
         >
