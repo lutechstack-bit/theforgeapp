@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Users, Calendar, CreditCard, Zap, BookOpen, MessageSquare, 
-  UserCheck, GraduationCap, Map, TrendingUp, ArrowUpRight, ArrowDownRight
+  UserCheck, GraduationCap, Map, TrendingUp, ArrowUpRight, ArrowDownRight,
+  Handshake
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -76,7 +77,7 @@ function usePlatformCounts() {
   return useQuery({
     queryKey: ['admin-platform-counts'],
     queryFn: async () => {
-      const [learn, events, messages, mentors, roadmap, editions, kyf] = await Promise.all([
+      const [learn, events, messages, mentors, roadmap, editions, kyf, collabProfiles, collabRequests] = await Promise.all([
         supabase.from('learn_content').select('id', { count: 'exact', head: true }),
         supabase.from('events').select('id', { count: 'exact', head: true }),
         supabase.from('community_messages').select('id', { count: 'exact', head: true }),
@@ -84,6 +85,8 @@ function usePlatformCounts() {
         supabase.from('roadmap_days').select('id', { count: 'exact', head: true }),
         supabase.from('editions').select('id', { count: 'exact', head: true }).eq('is_archived', false),
         supabase.from('kyf_responses').select('id', { count: 'exact', head: true }),
+        supabase.from('collaborator_profiles').select('id', { count: 'exact', head: true }).eq('is_published', true),
+        supabase.from('collaboration_requests').select('id', { count: 'exact', head: true }),
       ]);
       return {
         learnContent: learn.count || 0,
@@ -93,6 +96,8 @@ function usePlatformCounts() {
         roadmapDays: roadmap.count || 0,
         activeEditions: editions.count || 0,
         kyForms: kyf.count || 0,
+        networkProfiles: collabProfiles.count || 0,
+        networkRequests: collabRequests.count || 0,
       };
     },
   });
@@ -281,6 +286,8 @@ export default function AdminDashboard() {
           <PlatformCard title="Mentors" value={platformCounts?.mentors || 0} icon={Users} loading={countsLoading} />
           <PlatformCard title="Roadmap Days" value={platformCounts?.roadmapDays || 0} icon={Map} loading={countsLoading} />
           <PlatformCard title="Active Editions" value={platformCounts?.activeEditions || 0} icon={Zap} loading={countsLoading} />
+          <PlatformCard title="Network Profiles" value={platformCounts?.networkProfiles || 0} icon={Handshake} loading={countsLoading} />
+          <PlatformCard title="Collab Requests" value={platformCounts?.networkRequests || 0} icon={MessageSquare} loading={countsLoading} />
         </div>
       </div>
 
