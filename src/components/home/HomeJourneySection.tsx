@@ -13,6 +13,7 @@ import DayDetailModal from '@/components/roadmap/DayDetailModal';
 import type { JourneyCardDay } from '@/components/roadmap/JourneyCard';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import RoadmapSummaryCards from '@/components/roadmap/RoadmapSummaryCards';
 
 const JOURNEY_LOADING_TIMEOUT_MS = 15000;
 
@@ -227,6 +228,9 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
           <p className="text-sm text-muted-foreground mt-0.5">{journeySubtitle}</p>
         )}
       </div>
+
+      {/* Summary Cards — Journey / Tasks / Prep */}
+      <RoadmapSummaryCards />
 
       {/* Segmented Control -- only when both types exist */}
       {showToggle && (
