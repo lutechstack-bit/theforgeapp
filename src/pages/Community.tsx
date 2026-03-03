@@ -7,6 +7,7 @@ import { CompactChat } from '@/components/community/CompactChat';
 import { GroupSwitcher } from '@/components/community/GroupSwitcher';
 import { MembersDrawer } from '@/components/community/MembersDrawer';
 import { CollaboratorDirectory } from '@/components/community/CollaboratorDirectory';
+import { CollaboratorInbox } from '@/components/community/CollaboratorInbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { getCityGroupKey } from '@/lib/cityUtils';
@@ -188,13 +189,13 @@ const Community = () => {
     <div className="flex flex-col h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] px-4 sm:px-5 md:px-6 gap-2.5 sm:gap-3">
       {/* View Toggle: Chat | Network */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex gap-1 p-0.5 rounded-full bg-muted/30 border border-border/30">
+        <div className="flex gap-1 p-1 rounded-full bg-card border border-border/30">
           <button
             onClick={() => setActiveView('chat')}
             className={cn(
-              'px-4 py-1.5 rounded-full text-xs font-medium transition-all',
+              'px-5 py-2 rounded-full text-sm font-semibold transition-all',
               activeView === 'chat'
-                ? 'bg-primary text-primary-foreground shadow-sm'
+                ? 'bg-[#FFBF00] text-black shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
@@ -203,17 +204,19 @@ const Community = () => {
           <button
             onClick={() => setActiveView('network')}
             className={cn(
-              'px-4 py-1.5 rounded-full text-xs font-medium transition-all',
+              'px-5 py-2 rounded-full text-sm font-semibold transition-all',
               activeView === 'network'
-                ? 'bg-primary text-primary-foreground shadow-sm'
+                ? 'bg-[#FFBF00] text-black shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
             Network
           </button>
         </div>
-        {activeView === 'chat' && (
+        {activeView === 'chat' ? (
           <MembersDrawer onlineUserIds={onlineUserIds} memberCount={stats.totalMembers} />
+        ) : (
+          <CollaboratorInbox />
         )}
       </div>
 
@@ -249,7 +252,7 @@ const Community = () => {
           </div>
         </>
       ) : (
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <CollaboratorDirectory />
         </div>
       )}

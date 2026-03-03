@@ -5,11 +5,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { CollaboratorCard } from './CollaboratorCard';
 import { CollaboratorRequestModal } from './CollaboratorRequestModal';
-import { CollaboratorInbox } from './CollaboratorInbox';
-import { FloatingInput } from '@/components/ui/floating-input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Sparkles, Users } from 'lucide-react';
+import { Search, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const CollaboratorDirectory: React.FC = () => {
@@ -46,7 +44,6 @@ export const CollaboratorDirectory: React.FC = () => {
 
       const userIds = colabProfiles.map(c => c.user_id);
 
-      // Fetch profiles, editions, portfolios, works counts in parallel
       const [profilesRes, portfoliosRes, worksRes] = await Promise.all([
         supabase.from('profiles').select('id, full_name, avatar_url, city, edition_id, last_active_at').in('id', userIds),
         supabase.from('public_portfolios').select('user_id, slug, is_public').in('user_id', userIds).eq('is_public', true),
@@ -56,13 +53,11 @@ export const CollaboratorDirectory: React.FC = () => {
       const profileMap = new Map((profilesRes.data || []).map(p => [p.id, p]));
       const portfolioMap = new Map((portfoliosRes.data || []).map(p => [p.user_id, p.slug]));
       
-      // Count works per user
       const worksCountMap = new Map<string, number>();
       (worksRes.data || []).forEach(w => {
         worksCountMap.set(w.user_id, (worksCountMap.get(w.user_id) || 0) + 1);
       });
 
-      // Fetch editions for users that have edition_id
       const editionIds = [...new Set((profilesRes.data || []).map(p => p.edition_id).filter(Boolean))];
       let editionMap = new Map<string, { name: string; cohort_type: string }>();
       if (editionIds.length > 0) {
@@ -131,92 +126,93 @@ export const CollaboratorDirectory: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full space-y-3">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary" />
-            Creative Network
-          </h2>
-          <p className="text-xs text-muted-foreground">{collaborators.length} creators published</p>
-        </div>
-        <CollaboratorInbox />
-      </div>
+    <div className="flex flex-col gap-3 pb-24">
+      {/* Stats line */}
+      <p className="text-xs text-muted-foreground tracking-wide">
+        {collaborators.length} creators{activeFilter !== 'ALL' ? ` · ${activeFilter}` : ''}
+      </p>
 
       {/* CTA Banner */}
       {!hasProfile && (
-        <div className="flex items-center gap-3 p-3 rounded-xl border border-primary/30 bg-primary/5">
-          <Sparkles className="w-5 h-5 text-primary shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-foreground">Join the network</p>
+        <div className="flex items-center gap-3 p-3.5 rounded-xl border-l-2 border-[#FFBF00]/60 border-y border-r border-border/30 bg-card">
+          <Sparkles className="w-5 h-5 text-[#FFBF00] shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">Join the network</p>
             <p className="text-xs text-muted-foreground">Set up your collaborator profile</p>
           </div>
-          <Button size="sm" onClick={() => navigate('/collaborator-setup')}>Set Up</Button>
+          <Button
+            size="sm"
+            className="bg-[#FFBF00] text-black font-semibold hover:bg-[#FFBF00]/90 shrink-0"
+            onClick={() => navigate('/collaborator-setup')}
+          >
+            Set Up
+          </Button>
         </div>
       )}
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, role, or city..."
-          className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border/50 bg-card/30 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+          className="w-full pl-10 pr-4 py-3 rounded-xl border border-border/30 bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-[#FFBF00]/50 focus:border-[#FFBF00]/30 transition-colors"
         />
       </div>
 
-      {/* Filter Pills */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-        <button
-          onClick={() => setActiveFilter('ALL')}
-          className={cn(
-            'px-3 py-1.5 rounded-full text-xs font-medium transition-all border whitespace-nowrap shrink-0',
-            activeFilter === 'ALL'
-              ? 'bg-primary text-primary-foreground border-primary'
-              : 'bg-muted/30 text-muted-foreground border-border/50'
-          )}
-        >
-          All
-        </button>
-        {occupations.map((occ) => (
+      {/* Filter Pills with fade mask */}
+      <div className="relative">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide pr-8">
           <button
-            key={occ.id}
-            onClick={() => setActiveFilter(occ.name)}
+            onClick={() => setActiveFilter('ALL')}
             className={cn(
-              'px-3 py-1.5 rounded-full text-xs font-medium transition-all border whitespace-nowrap shrink-0',
-              activeFilter === occ.name
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-muted/30 text-muted-foreground border-border/50'
+              'px-3.5 py-2 rounded-full text-xs font-semibold transition-all border whitespace-nowrap shrink-0',
+              activeFilter === 'ALL'
+                ? 'bg-[#FFBF00] text-black border-[#FFBF00]'
+                : 'bg-card text-muted-foreground border-border/30 hover:border-border/60'
             )}
           >
-            {occ.name}
+            All
           </button>
-        ))}
+          {occupations.map((occ) => (
+            <button
+              key={occ.id}
+              onClick={() => setActiveFilter(occ.name)}
+              className={cn(
+                'px-3.5 py-2 rounded-full text-xs font-semibold transition-all border whitespace-nowrap shrink-0',
+                activeFilter === occ.name
+                  ? 'bg-[#FFBF00] text-black border-[#FFBF00]'
+                  : 'bg-card text-muted-foreground border-border/30 hover:border-border/60'
+              )}
+            >
+              {occ.name}
+            </button>
+          ))}
+        </div>
+        {/* Right fade gradient */}
+        <div className="absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-background to-transparent pointer-events-none" />
       </div>
 
       {/* Grid */}
-      <div className="flex-1 overflow-y-auto">
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-52 rounded-xl" />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-sm text-muted-foreground">No collaborators found</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            {filtered.map((c) => (
-              <CollaboratorCard key={c.user_id} profile={c} onContact={handleContact} />
-            ))}
-          </div>
-        )}
-      </div>
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-56 rounded-xl" />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16">
+          <p className="text-sm text-muted-foreground">No collaborators found</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {filtered.map((c) => (
+            <CollaboratorCard key={c.user_id} profile={c} onContact={handleContact} />
+          ))}
+        </div>
+      )}
 
       {/* Request Modal */}
       {contactUserId && (
