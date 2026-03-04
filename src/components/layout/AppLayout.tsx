@@ -15,11 +15,15 @@ const AppLayoutContent: React.FC = () => {
   return (
     <div className="min-h-[100dvh] bg-background safe-area-pt">
       {showNav && <SideNav />}
-      {showNav && <TopProfileDropdown />}
       <main className={cn(
         "relative pb-24 md:pb-0 transition-all duration-300 ease-in-out safe-area-pb",
         showNav && (collapsed ? "md:ml-[72px]" : "md:ml-72")
       )}>
+        {showNav && (
+          <div className="sticky top-0 z-40 flex items-center justify-end h-14 px-4 bg-background">
+            <TopProfileDropdown />
+          </div>
+        )}
         <Outlet />
       </main>
       {showNav && <BottomNav />}

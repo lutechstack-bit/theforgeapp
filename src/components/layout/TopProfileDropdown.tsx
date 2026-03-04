@@ -23,10 +23,7 @@ export const TopProfileDropdown: React.FC = () => {
   const isProfileActive = location.pathname === '/profile';
 
   return (
-    <div className={cn(
-      "fixed top-4 right-4 z-50 transition-all duration-300",
-      // Hide on routes where nav is hidden (handled by parent)
-    )}>
+    <div className="transition-all duration-300">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
