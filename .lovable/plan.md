@@ -1,32 +1,33 @@
 
 
-# Fix: Profile Avatar Overlapping Page Headings
+# Perks Page: Full-Image Banner Cards
 
-## Problem
-The `TopProfileDropdown` uses `fixed top-4 right-4 z-50`, causing it to float over page content and collide with headings. The third reference image shows it should sit in a dedicated top strip/bar area that pages reserve space for.
+## Overview
+Replace the current text-based `PerkCard` blocks with full-image banner cards that display the `banner_url` image at its natural aspect ratio, with no overlay text. The uploaded images (Sony, Digitek, Sandcastles) are reference for the visual style — they will be set as `banner_url` values in the database by the admin, not hardcoded.
 
-## Solution
-Instead of a floating `fixed` position, embed the profile dropdown into a **static top bar row** within the `AppLayout`. Each page's content will naturally flow below it. This avoids overlap on every page without touching individual page files.
+## Changes
 
-### `src/components/layout/AppLayout.tsx`
-- Add a top bar row inside `<main>` that contains the `TopProfileDropdown` aligned right
-- This bar has a fixed height (~`h-14`) and acts as a reserved strip at the top of the content area
-- The profile dropdown becomes `relative` positioned within this bar, not `fixed`
+### `src/components/perks/PerkCard.tsx`
+- Redesign the card to be image-first: when `bannerUrl` is provided, render a full-width rounded image card with no text overlay
+- The image fills the card at its natural aspect ratio (roughly 16:9 based on the uploaded samples)
+- Keep the clickable behavior (navigate to `/perks/{id}`)
+- Keep "Coming Soon" badge overlay in the corner if applicable
+- Fallback to the current text layout when no `bannerUrl` is present
+- Add `bannerUrl` to the component props
 
-### `src/components/layout/TopProfileDropdown.tsx`
-- Remove `fixed top-4 right-4 z-50` positioning
-- Make it a simple flex-end aligned element (the parent bar handles placement)
-- Keep the dropdown menu, avatar, and all existing functionality
+### `src/pages/Perks.tsx`
+- Pass `bannerUrl={perk.banner_url}` to `PerkCard`
+- Change the grid layout from `space-y-3` to a responsive grid or keep vertical stack with appropriate spacing for the larger banner cards
 
-### Result
-- Every page automatically gets the spacing because the bar is in the shared layout
-- No per-page padding hacks needed
-- Profile icon never overlaps headings
-- Works on all viewports (mobile, tablet, desktop)
+### Visual Details
+- Cards: `rounded-2xl overflow-hidden` with subtle border
+- Hover: slight scale + shadow, matching the amber glow style used elsewhere
+- No text overlays on the image — the banner image itself contains the branding
+- Aspect ratio driven by the image itself (using `w-full` with auto height)
 
 ## Files
 | Action | File |
 |--------|------|
-| Edit | `src/components/layout/TopProfileDropdown.tsx` — remove fixed positioning |
-| Edit | `src/components/layout/AppLayout.tsx` — add top bar row containing the dropdown |
+| Edit | `src/components/perks/PerkCard.tsx` — add banner image mode |
+| Edit | `src/pages/Perks.tsx` — pass `bannerUrl`, adjust layout |
 
