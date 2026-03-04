@@ -48,6 +48,7 @@ const Perks: React.FC = () => {
               name={perk.name}
               headline={perk.headline}
               logoUrl={perk.logo_url}
+              bannerUrl={perk.banner_url}
               category={perk.category}
               isComingSoon={perk.is_coming_soon ?? false}
             />
