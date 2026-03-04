@@ -6,7 +6,6 @@ import { useUserWorks, UserWork, CreateWorkInput } from '@/hooks/useUserWorks';
 import { usePublicPortfolio } from '@/hooks/usePublicPortfolio';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -18,7 +17,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
   ProfileHero,
@@ -46,7 +44,7 @@ const ProfileSkeleton = () => (
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, profile, edition, signOut, refreshProfile } = useAuth();
+  const { user, profile, edition, refreshProfile } = useAuth();
   const { data: profileData, isLoading: profileLoading, refetch: refetchProfile } = useProfileData();
   const { works, createWork, updateWork, deleteWork } = useUserWorks();
   const { portfolio, isPublic, getPortfolioUrl, createOrUpdatePortfolio } = usePublicPortfolio();
@@ -72,15 +70,6 @@ const Profile: React.FC = () => {
 
   const isVerified = profile?.ky_form_completed && profile?.payment_status === 'BALANCE_PAID';
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast({ title: 'Signed Out', description: 'You have been successfully signed out.' });
-    } catch (error) {
-      console.error('Sign out error:', error);
-    }
-    navigate('/auth');
-  };
 
   const handleSaveBio = async (bio: string) => {
     if (!user?.id) return;
@@ -191,30 +180,6 @@ const Profile: React.FC = () => {
         isUpdating={createOrUpdatePortfolio.isPending}
       />
 
-      {/* Sign Out with confirmation */}
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Sign out?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to sign out of your account?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSignOut}>Sign Out</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Delete Work confirmation */}
       <AlertDialog open={!!deleteWorkId} onOpenChange={(open) => !open && setDeleteWorkId(null)}>

@@ -8,7 +8,6 @@ import {
   Users, 
   Info, 
   Settings, 
-  LogOut,
   ChevronRight,
   X,
   Shield
@@ -186,15 +185,6 @@ export const MobileMenuSheet = React.forwardRef<
           <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
         </button>
         
-        <button
-          onClick={handleSignOut}
-          className="flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-destructive hover:bg-destructive/10 transition-all duration-200"
-        >
-          <span className="flex items-center gap-3">
-            <LogOut className="h-5 w-5" />
-            <span className="text-[15px]">Sign Out</span>
-          </span>
-        </button>
       </div>
 
       {/* Brand Footer - with safe area bottom padding */}

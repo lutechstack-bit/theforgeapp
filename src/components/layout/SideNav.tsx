@@ -1,10 +1,20 @@
-import React from 'react';
-import { NavLink, useLocation, Link } from 'react-router-dom';
-import { House, Users, BookOpen, Compass, CalendarDays, Gift, Settings, Info, ChevronsLeft, ChevronsRight, ShieldCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { NavLink, useLocation, Link, useNavigate } from 'react-router-dom';
+import { House, Users, BookOpen, Compass, CalendarDays, Gift, Info, ChevronsLeft, ChevronsRight, ShieldCheck, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import forgeLogo from '@/assets/forge-logo.png';
 import forgeIcon from '@/assets/forge-icon.png';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -25,8 +35,19 @@ const bottomItems = [
 export const SideNav: React.FC = () => {
   const { collapsed, toggle } = useSidebar();
   const location = useLocation();
-  const { profile } = useAuth();
+  const navigate = useNavigate();
+  const { profile, signOut } = useAuth();
   const { isAdmin } = useAdminCheck();
+  const [signOutOpen, setSignOutOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+    navigate('/auth');
+  };
 
   const NavItem = ({ to, icon: Icon, label, isActive }: { to: string; icon: React.ElementType; label: string; isActive: boolean }) => {
     const content = (
@@ -132,52 +153,53 @@ export const SideNav: React.FC = () => {
             />
           )}
 
-          {/* User Profile */}
-          <NavLink
-            to="/profile"
-            className={cn(
-              "group flex items-center gap-3 pt-4 pb-2 border-t border-sidebar-border/50 mt-3 rounded-xl transition-colors duration-200 cursor-pointer hover:bg-white/[0.04]",
-              collapsed ? "justify-center px-2" : "px-3",
-              location.pathname === '/profile' && "bg-white/[0.06]"
-            )}
-          >
-            {collapsed ? (
-              <Tooltip delayDuration={0}>
-                <TooltipTrigger asChild>
-                  <span className="block">
-                    <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold text-primary overflow-hidden border-2 border-border/40">
-                      {profile?.avatar_url ? (
-                        <img src={profile.avatar_url} alt={profile?.full_name || 'Profile'} className="w-full h-full object-cover" />
-                      ) : (
-                        profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'
-                      )}
-                    </div>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="bg-popover text-popover-foreground">
-                  Profile
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold text-primary shrink-0 overflow-hidden border-2 border-border/40">
-                    {profile?.avatar_url ? (
-                      <img src={profile.avatar_url} alt={profile?.full_name || 'Profile'} className="w-full h-full object-cover" />
-                    ) : (
-                      profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'
-                    )}
-                  </div>
-                  <span className="text-sm font-medium text-sidebar-foreground truncate max-w-[120px]">
-                    {profile?.full_name || 'User'}
-                  </span>
-                </div>
-                <Settings className="h-4 w-4 text-sidebar-foreground/30 group-hover:text-sidebar-foreground/60 transition-colors" />
-              </div>
-            )}
-          </NavLink>
+          {/* Sign Out */}
+          {(() => {
+            const content = (
+              <button
+                onClick={() => setSignOutOpen(true)}
+                className={cn(
+                  "group flex items-center gap-3.5 rounded-2xl transition-colors duration-200 text-base font-medium w-full",
+                  collapsed ? "justify-center p-3" : "px-4 py-3.5",
+                  "text-sidebar-foreground/50 hover:bg-white/[0.04] hover:text-destructive"
+                )}
+              >
+                <LogOut className="h-5 w-5 shrink-0" strokeWidth={1.75} />
+                {!collapsed && <span>Sign Out</span>}
+              </button>
+            );
+
+            if (collapsed) {
+              return (
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <span className="block w-full">{content}</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={12} className="bg-popover/95 backdrop-blur-sm text-popover-foreground border-border/50">
+                    Sign Out
+                  </TooltipContent>
+                </Tooltip>
+              );
+            }
+            return content;
+          })()}
         </div>
       </aside>
+
+      <AlertDialog open={signOutOpen} onOpenChange={setSignOutOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to sign out of your account?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSignOut}>Sign Out</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TooltipProvider>
   );
 };
