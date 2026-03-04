@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { ContinueWatchingCarousel } from '@/components/learn/ContinueWatchingCarousel';
 import { UpcomingSessionsSection } from '@/components/learn/UpcomingSessionsSection';
@@ -38,9 +39,38 @@ interface WatchProgress {
   completed: boolean;
 }
 
+const forgeResidencies = [
+  {
+    cohortType: 'FORGE',
+    title: 'Forge Filmmaking',
+    description: 'An intensive residential filmmaking program — script to screen in 10 days.',
+    ctaUrl: 'https://www.leveluplearning.in/',
+    gradient: 'linear-gradient(135deg, hsl(20,60%,22%) 0%, hsl(35,50%,28%) 100%)',
+    imageUrl: '/images/programs/forge-filmmaking.png',
+  },
+  {
+    cohortType: 'FORGE_WRITING',
+    title: 'Forge Writing',
+    description: 'A residential writing retreat to sharpen your screenwriting craft.',
+    ctaUrl: 'https://www.leveluplearning.in/',
+    gradient: 'linear-gradient(135deg, hsl(180,40%,20%) 0%, hsl(200,50%,28%) 100%)',
+    imageUrl: undefined,
+  },
+  {
+    cohortType: 'FORGE_CREATORS',
+    title: 'Forge Creators',
+    description: 'A residential program for digital creators to level up content & storytelling.',
+    ctaUrl: 'https://www.leveluplearning.in/',
+    gradient: 'linear-gradient(135deg, hsl(280,50%,22%) 0%, hsl(310,40%,30%) 100%)',
+    imageUrl: undefined,
+  },
+];
+
 const Learn: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { effectiveCohortType } = useEffectiveCohort();
+  const [programTab, setProgramTab] = useState<'online' | 'offline'>('online');
 
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ['learn_content'],
@@ -234,28 +264,66 @@ const Learn: React.FC = () => {
                 <h2 className="text-lg sm:text-xl font-bold text-foreground">Explore Programs</h2>
                 <p className="text-sm text-muted-foreground mt-0.5">Intensive programs to level up your craft</p>
               </div>
+
+              {/* Toggle */}
+              <div className="flex gap-1 p-1 rounded-full bg-card border border-border/30 w-fit">
+                {(['online', 'offline'] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setProgramTab(tab)}
+                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                      programTab === tab
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {tab === 'online' ? 'Online Programs' : 'Offline Residencies'}
+                  </button>
+                ))}
+              </div>
+
               <div className="space-y-4">
-                <ProgramBanner
-                  title="Breakthrough Filmmaking"
-                  description="Comprehensive 12-week program to master filmmaking from script to screen."
-                  ctaUrl="https://www.leveluplearning.in/"
-                  gradient="linear-gradient(135deg, hsl(260,60%,25%) 0%, hsl(230,50%,30%) 100%)"
-                  imageUrl="/images/programs/breakthrough-filmmaking.png"
-                />
-                <ProgramBanner
-                  title="Video Editing Academy"
-                  description="Master professional video editing with industry-standard tools and techniques."
-                  ctaUrl="https://www.leveluplearning.in/"
-                  gradient="linear-gradient(135deg, hsl(210,60%,25%) 0%, hsl(230,50%,35%) 100%)"
-                  imageUrl="/images/programs/video-editing-academy.png"
-                />
-                <ProgramBanner
-                  title="Creator Academy"
-                  description="Learn the art of visual storytelling from award-winning cinematographers."
-                  ctaUrl="https://www.leveluplearning.in/"
-                  gradient="linear-gradient(135deg, hsl(45,40%,20%) 0%, hsl(35,50%,25%) 100%)"
-                  imageUrl="/images/programs/creator-academy.png"
-                />
+                {programTab === 'online' ? (
+                  <>
+                    <ProgramBanner
+                      title="Breakthrough Filmmaking"
+                      description="Comprehensive 12-week program to master filmmaking from script to screen."
+                      ctaUrl="https://www.leveluplearning.in/"
+                      gradient="linear-gradient(135deg, hsl(260,60%,25%) 0%, hsl(230,50%,30%) 100%)"
+                      imageUrl="/images/programs/breakthrough-filmmaking.png"
+                    />
+                    <ProgramBanner
+                      title="Video Editing Academy"
+                      description="Master professional video editing with industry-standard tools and techniques."
+                      ctaUrl="https://www.leveluplearning.in/"
+                      gradient="linear-gradient(135deg, hsl(210,60%,25%) 0%, hsl(230,50%,35%) 100%)"
+                      imageUrl="/images/programs/video-editing-academy.png"
+                    />
+                    <ProgramBanner
+                      title="Creator Academy"
+                      description="Learn the art of visual storytelling from award-winning cinematographers."
+                      ctaUrl="https://www.leveluplearning.in/"
+                      gradient="linear-gradient(135deg, hsl(45,40%,20%) 0%, hsl(35,50%,25%) 100%)"
+                      imageUrl="/images/programs/creator-academy.png"
+                    />
+                  </>
+                ) : (
+                  <>
+                    {forgeResidencies
+                      .filter((r) => r.cohortType !== effectiveCohortType)
+                      .map((r) => (
+                        <ProgramBanner
+                          key={r.cohortType}
+                          label="FORGE RESIDENCY"
+                          title={r.title}
+                          description={r.description}
+                          ctaUrl={r.ctaUrl}
+                          gradient={r.gradient}
+                          imageUrl={r.imageUrl}
+                        />
+                      ))}
+                  </>
+                )}
               </div>
             </section>
           </div>
