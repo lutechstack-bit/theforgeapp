@@ -126,7 +126,7 @@ export const CollaboratorDirectory: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-3 pb-24">
+    <div className="flex flex-col gap-4 pb-24">
       {/* Stats line */}
       <p className="text-xs text-muted-foreground tracking-wide">
         {collaborators.length} creators{activeFilter !== 'ALL' ? ` · ${activeFilter}` : ''}
@@ -197,7 +197,7 @@ export const CollaboratorDirectory: React.FC = () => {
 
       {/* Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-56 rounded-xl" />
           ))}
@@ -207,7 +207,7 @@ export const CollaboratorDirectory: React.FC = () => {
           <p className="text-sm text-muted-foreground">No collaborators found</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((c) => (
             <CollaboratorCard key={c.user_id} profile={c} onContact={handleContact} />
           ))}

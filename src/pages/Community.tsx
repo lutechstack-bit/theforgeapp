@@ -163,7 +163,7 @@ const Community = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] px-4 sm:px-5 md:px-6 gap-2.5 sm:gap-3">
+      <div className="flex flex-col h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] pt-4 sm:pt-5 md:pt-6 px-4 sm:px-5 md:px-6 gap-3 sm:gap-4 max-w-6xl mx-auto w-full">
         <Skeleton className="h-10 w-48 rounded-xl" />
         <div className="flex gap-2">
           <Skeleton className="h-9 w-24 rounded-full" />
@@ -186,7 +186,7 @@ const Community = () => {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] px-4 sm:px-5 md:px-6 gap-2.5 sm:gap-3">
+    <div className="flex flex-col h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] pt-4 sm:pt-5 md:pt-6 px-4 sm:px-5 md:px-6 gap-3 sm:gap-4 max-w-6xl mx-auto w-full">
       {/* View Toggle: Chat | Network */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex gap-1 p-1 rounded-full bg-card border border-border/30">
