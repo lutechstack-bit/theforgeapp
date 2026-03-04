@@ -1,33 +1,37 @@
 
 
-# Perks Page: Full-Image Banner Cards
+# Root Cause & Fix: Perk Banner Images Not Showing
 
-## Overview
-Replace the current text-based `PerkCard` blocks with full-image banner cards that display the `banner_url` image at its natural aspect ratio, with no overlay text. The uploaded images (Sony, Digitek, Sandcastles) are reference for the visual style — they will be set as `banner_url` values in the database by the admin, not hardcoded.
+## Diagnosis
+The `PerkCard` code correctly checks `bannerUrl` and renders the image-only card when present. However, querying the database reveals:
 
-## Changes
+| Perk | banner_url |
+|------|-----------|
+| Sony | `null` |
+| Sandcastles | `null` |
+| Digitek | `null` |
+| Canon | `null` |
 
-### `src/components/perks/PerkCard.tsx`
-- Redesign the card to be image-first: when `bannerUrl` is provided, render a full-width rounded image card with no text overlay
-- The image fills the card at its natural aspect ratio (roughly 16:9 based on the uploaded samples)
-- Keep the clickable behavior (navigate to `/perks/{id}`)
-- Keep "Coming Soon" badge overlay in the corner if applicable
-- Fallback to the current text layout when no `bannerUrl` is present
-- Add `bannerUrl` to the component props
+All `banner_url` values are `null`, so the fallback text layout renders every time. The code is fine — the data is missing.
 
-### `src/pages/Perks.tsx`
-- Pass `bannerUrl={perk.banner_url}` to `PerkCard`
-- Change the grid layout from `space-y-3` to a responsive grid or keep vertical stack with appropriate spacing for the larger banner cards
+## Fix
 
-### Visual Details
-- Cards: `rounded-2xl overflow-hidden` with subtle border
-- Hover: slight scale + shadow, matching the amber glow style used elsewhere
-- No text overlays on the image — the banner image itself contains the branding
-- Aspect ratio driven by the image itself (using `w-full` with auto height)
+### 1. Copy uploaded images to project
+- `user-uploads://01_1.jpg` → `public/images/perks/sony-banner.jpg`
+- `user-uploads://02_1.jpg` → `public/images/perks/digitek-banner.jpg`
+- `user-uploads://03_1.jpg` → `public/images/perks/sandcastles-banner.jpg`
+
+### 2. Update database records
+Run an UPDATE query to set `banner_url` for each perk:
+- Sony → `/images/perks/sony-banner.jpg`
+- Digitek → `/images/perks/digitek-banner.jpg`
+- Sandcastles → `/images/perks/sandcastles-banner.jpg`
+
+No code changes needed — the existing `PerkCard` component will automatically render the banner cards once the data is populated.
 
 ## Files
 | Action | File |
 |--------|------|
-| Edit | `src/components/perks/PerkCard.tsx` — add banner image mode |
-| Edit | `src/pages/Perks.tsx` — pass `bannerUrl`, adjust layout |
+| Copy | 3 uploaded images → `public/images/perks/` |
+| DB Update | Set `banner_url` on 3 perk rows |
 
