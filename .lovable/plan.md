@@ -1,29 +1,41 @@
 
 
-# Explore Programs: Online/Offline Toggle with Cohort-Aware Forge Banners
-
-## Overview
-Add a pill toggle under "Explore Programs" to switch between **Online Programs** (existing LevelUp banners) and **Offline Residencies** (Forge banners). The Offline tab excludes the user's own cohort — e.g., a Filmmaking student sees only Writing and Creators Forge banners.
+# Move Profile to Top-Right Dropdown, Replace with Sign Out in Nav
 
 ## Changes
 
-### `src/pages/Learn.tsx`
-- Add `useState` for `programTab: 'online' | 'offline'` (default `'online'`)
-- Import `useEffectiveCohort` to get `effectiveCohortType`
-- In the "Explore Programs" section, add a pill toggle (same amber style as Chat/Network toggle) above the banners
-- **Online Programs tab**: show the 3 existing LevelUp banners (Breakthrough Filmmaking, Video Editing Academy, Creator Academy) — no changes
-- **Offline Residencies tab**: show Forge banners filtered by cohort:
-  - Define 3 Forge residency entries: Filmmaking (`FORGE`), Writing (`FORGE_WRITING`), Creators (`FORGE_CREATORS`)
-  - Filter out the entry matching `effectiveCohortType`
-  - Forge Filmmaking uses the uploaded banner image (`/images/programs/forge-filmmaking.png`)
-  - Writing and Creators use placeholder `ProgramBanner` with gradient + text (user will add images later)
+### 1. `src/components/layout/TopProfileDropdown.tsx` (NEW)
+- Create a floating top-right avatar button visible on all pages
+- On click, show a small dropdown with: "My Profile" link, "Settings" (goes to `/profile?action=edit`), and divider
+- Position: `fixed top-4 right-4 z-50` (mobile), adjusted for sidebar offset on desktop
+- Avatar with fallback initials, ring styling matching the screenshot's amber ring
 
-### Asset
-- Copy `user-uploads://banners11.jpg` → `public/images/programs/forge-filmmaking.png`
+### 2. `src/components/layout/AppLayout.tsx`
+- Import and render `TopProfileDropdown` when `showNav` is true
+
+### 3. `src/components/layout/BottomNav.tsx`
+- Remove the Profile/Sheet trigger (the 5th tab)
+- Replace it with a **Sign Out** button (LogOut icon) with confirmation dialog
+- Keep 4 nav items + Sign Out as 5th
+
+### 4. `src/components/layout/SideNav.tsx`
+- Remove the user profile `NavLink` at the bottom (lines 136-178)
+- Replace with a Sign Out button styled similarly, with LogOut icon and confirmation
+
+### 5. `src/pages/Profile.tsx`
+- Remove the Sign Out `AlertDialog` section (the button + dialog around lines 196-215)
+
+### 6. `src/components/layout/MobileMenuSheet.tsx`
+- Update: remove the Sign Out button from here too since it moves to the bottom nav
+- Keep Profile link in the sheet menu as-is (it's a secondary access point)
 
 ## Files
 | Action | File |
 |--------|------|
-| Copy | uploaded banner → `public/images/programs/forge-filmmaking.png` |
-| Edit | `src/pages/Learn.tsx` — add toggle + cohort-filtered Offline Residencies tab |
+| Create | `src/components/layout/TopProfileDropdown.tsx` |
+| Edit | `src/components/layout/AppLayout.tsx` |
+| Edit | `src/components/layout/BottomNav.tsx` |
+| Edit | `src/components/layout/SideNav.tsx` |
+| Edit | `src/pages/Profile.tsx` |
+| Edit | `src/components/layout/MobileMenuSheet.tsx` |
 
