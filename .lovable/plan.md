@@ -1,41 +1,32 @@
 
 
-# Move Profile to Top-Right Dropdown, Replace with Sign Out in Nav
+# Fix: Profile Avatar Overlapping Page Headings
 
-## Changes
+## Problem
+The `TopProfileDropdown` uses `fixed top-4 right-4 z-50`, causing it to float over page content and collide with headings. The third reference image shows it should sit in a dedicated top strip/bar area that pages reserve space for.
 
-### 1. `src/components/layout/TopProfileDropdown.tsx` (NEW)
-- Create a floating top-right avatar button visible on all pages
-- On click, show a small dropdown with: "My Profile" link, "Settings" (goes to `/profile?action=edit`), and divider
-- Position: `fixed top-4 right-4 z-50` (mobile), adjusted for sidebar offset on desktop
-- Avatar with fallback initials, ring styling matching the screenshot's amber ring
+## Solution
+Instead of a floating `fixed` position, embed the profile dropdown into a **static top bar row** within the `AppLayout`. Each page's content will naturally flow below it. This avoids overlap on every page without touching individual page files.
 
-### 2. `src/components/layout/AppLayout.tsx`
-- Import and render `TopProfileDropdown` when `showNav` is true
+### `src/components/layout/AppLayout.tsx`
+- Add a top bar row inside `<main>` that contains the `TopProfileDropdown` aligned right
+- This bar has a fixed height (~`h-14`) and acts as a reserved strip at the top of the content area
+- The profile dropdown becomes `relative` positioned within this bar, not `fixed`
 
-### 3. `src/components/layout/BottomNav.tsx`
-- Remove the Profile/Sheet trigger (the 5th tab)
-- Replace it with a **Sign Out** button (LogOut icon) with confirmation dialog
-- Keep 4 nav items + Sign Out as 5th
+### `src/components/layout/TopProfileDropdown.tsx`
+- Remove `fixed top-4 right-4 z-50` positioning
+- Make it a simple flex-end aligned element (the parent bar handles placement)
+- Keep the dropdown menu, avatar, and all existing functionality
 
-### 4. `src/components/layout/SideNav.tsx`
-- Remove the user profile `NavLink` at the bottom (lines 136-178)
-- Replace with a Sign Out button styled similarly, with LogOut icon and confirmation
-
-### 5. `src/pages/Profile.tsx`
-- Remove the Sign Out `AlertDialog` section (the button + dialog around lines 196-215)
-
-### 6. `src/components/layout/MobileMenuSheet.tsx`
-- Update: remove the Sign Out button from here too since it moves to the bottom nav
-- Keep Profile link in the sheet menu as-is (it's a secondary access point)
+### Result
+- Every page automatically gets the spacing because the bar is in the shared layout
+- No per-page padding hacks needed
+- Profile icon never overlaps headings
+- Works on all viewports (mobile, tablet, desktop)
 
 ## Files
 | Action | File |
 |--------|------|
-| Create | `src/components/layout/TopProfileDropdown.tsx` |
-| Edit | `src/components/layout/AppLayout.tsx` |
-| Edit | `src/components/layout/BottomNav.tsx` |
-| Edit | `src/components/layout/SideNav.tsx` |
-| Edit | `src/pages/Profile.tsx` |
-| Edit | `src/components/layout/MobileMenuSheet.tsx` |
+| Edit | `src/components/layout/TopProfileDropdown.tsx` — remove fixed positioning |
+| Edit | `src/components/layout/AppLayout.tsx` — add top bar row containing the dropdown |
 
