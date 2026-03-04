@@ -1,27 +1,29 @@
 
 
-# Fix: Breathing Space & Responsive Polish for Community/Network
+# Explore Programs: Online/Offline Toggle with Cohort-Aware Forge Banners
 
-## Problem
-The Community page's content is pressed tight against the top edge — no padding-top between the app chrome and the Chat/Network toggle. The layout also needs to be consistently comfortable across mobile (320px+), tablet, and desktop.
+## Overview
+Add a pill toggle under "Explore Programs" to switch between **Online Programs** (existing LevelUp banners) and **Offline Residencies** (Forge banners). The Offline tab excludes the user's own cohort — e.g., a Filmmaking student sees only Writing and Creators Forge banners.
 
 ## Changes
 
-### `src/pages/Community.tsx`
-- Add `pt-4 sm:pt-5 md:pt-6` to the main container for top breathing room (both the loading skeleton and the main view)
-- Add `max-w-6xl mx-auto w-full` to center content on wide screens and prevent ultra-wide stretching
-- Increase the gap slightly: `gap-3 sm:gap-4`
+### `src/pages/Learn.tsx`
+- Add `useState` for `programTab: 'online' | 'offline'` (default `'online'`)
+- Import `useEffectiveCohort` to get `effectiveCohortType`
+- In the "Explore Programs" section, add a pill toggle (same amber style as Chat/Network toggle) above the banners
+- **Online Programs tab**: show the 3 existing LevelUp banners (Breakthrough Filmmaking, Video Editing Academy, Creator Academy) — no changes
+- **Offline Residencies tab**: show Forge banners filtered by cohort:
+  - Define 3 Forge residency entries: Filmmaking (`FORGE`), Writing (`FORGE_WRITING`), Creators (`FORGE_CREATORS`)
+  - Filter out the entry matching `effectiveCohortType`
+  - Forge Filmmaking uses the uploaded banner image (`/images/programs/forge-filmmaking.png`)
+  - Writing and Creators use placeholder `ProgramBanner` with gradient + text (user will add images later)
 
-### `src/components/community/CollaboratorDirectory.tsx`
-- Add `gap-4` instead of `gap-3` for more breathing room between sections
-- Grid gap: `gap-4` instead of `gap-3`
-
-### `src/components/community/CollaboratorCard.tsx`
-- No structural changes — already has `p-5` and good spacing
+### Asset
+- Copy `user-uploads://banners11.jpg` → `public/images/programs/forge-filmmaking.png`
 
 ## Files
 | Action | File |
 |--------|------|
-| Edit | `src/pages/Community.tsx` — add top padding + max-width centering |
-| Edit | `src/components/community/CollaboratorDirectory.tsx` — increase gaps |
+| Copy | uploaded banner → `public/images/programs/forge-filmmaking.png` |
+| Edit | `src/pages/Learn.tsx` — add toggle + cohort-filtered Offline Residencies tab |
 
