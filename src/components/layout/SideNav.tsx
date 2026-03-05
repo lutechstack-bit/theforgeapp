@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +39,13 @@ export const SideNav: React.FC = () => {
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
   const { isAdmin } = useAdminCheck();
+  const { isFeatureEnabled } = useFeatureFlags();
   const [signOutOpen, setSignOutOpen] = useState(false);
+
+  const filteredNavItems = navItems.filter(item => {
+    if (item.to === '/events' && !isFeatureEnabled('events_enabled')) return false;
+    return true;
+  });
 
   const handleSignOut = async () => {
     try {
@@ -124,7 +131,7 @@ export const SideNav: React.FC = () => {
 
         {/* Main Navigation */}
         <nav className={cn("flex-1 space-y-2 mt-2", collapsed ? "px-3" : "px-3")}>
-          {navItems.map(({ to, icon, label }) => {
+          {filteredNavItems.map(({ to, icon, label }) => {
             const isActive = to === '/'
               ? location.pathname === '/'
               : location.pathname === to || location.pathname.startsWith(to + '/');
