@@ -34,13 +34,13 @@ const Perks: React.FC = () => {
 
       {/* Perk Cards Grid */}
       {isLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3, 4].map(i => (
-            <Skeleton key={i} className="h-24 w-full rounded-2xl" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <Skeleton key={i} className="aspect-[16/10] w-full rounded-2xl" />
           ))}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {perks?.map(perk => (
             <PerkCard
               key={perk.id}
