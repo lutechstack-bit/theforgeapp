@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
-  Users, Calendar, CreditCard, Zap, BookOpen, MessageSquare, 
+  Users, Calendar, CalendarDays, CreditCard, Zap, BookOpen, MessageSquare, 
   UserCheck, GraduationCap, Map, TrendingUp, ArrowUpRight, ArrowDownRight,
   Handshake
 } from 'lucide-react';
@@ -15,6 +15,9 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, Legend
 } from 'recharts';
 import { format, subDays, parseISO } from 'date-fns';
+import { Switch } from '@/components/ui/switch';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { toast } from 'sonner';
 
 // --- Hooks ---
 
@@ -208,6 +211,7 @@ export default function AdminDashboard() {
   const { data: growthData, isLoading: growthLoading } = useGrowthData();
   const { data: platformCounts, isLoading: countsLoading } = usePlatformCounts();
   const { data: cohortData, isLoading: cohortLoading } = useCohortDistribution();
+  const { isFeatureEnabled, toggleFeature } = useFeatureFlags();
 
   const completionRate = userStats ? Math.round((userStats.completed / Math.max(userStats.total, 1)) * 100) : 0;
 
@@ -372,6 +376,35 @@ export default function AdminDashboard() {
           <div className="flex justify-between mt-2 text-xs text-muted-foreground">
             <span>{userStats?.completed || 0} completed</span>
             <span>{(userStats?.total || 0) - (userStats?.completed || 0)} remaining</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Feature Flags */}
+      <Card className="bg-card/60 border-border/40">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Feature Toggles</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/30">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <CalendarDays className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <div className="text-sm font-medium text-foreground">Events Tab</div>
+                <div className="text-xs text-muted-foreground">Show or hide Events in navigation</div>
+              </div>
+            </div>
+            <Switch
+              checked={isFeatureEnabled('events_enabled')}
+              onCheckedChange={(checked) => {
+                toggleFeature.mutate({ key: 'events_enabled', enabled: checked }, {
+                  onSuccess: () => toast.success(`Events tab ${checked ? 'enabled' : 'disabled'}`),
+                  onError: () => toast.error('Failed to update'),
+                });
+              }}
+            />
           </div>
         </CardContent>
       </Card>

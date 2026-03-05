@@ -178,6 +178,27 @@ export type Database = {
           },
         ]
       }
+      app_feature_flags: {
+        Row: {
+          feature_key: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          feature_key: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          feature_key?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       city_groups: {
         Row: {
           city_key: string
