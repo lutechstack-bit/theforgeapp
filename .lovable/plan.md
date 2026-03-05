@@ -1,28 +1,30 @@
 
 
-# Perks Page: Responsive Grid Layout
+# Redesign Top Profile Icon as a Tab-Style Button
 
-## Problem
-Cards are stacked full-width vertically, making them oversized with no breathing room. The GrowthX reference shows a responsive multi-column grid with consistent card sizing.
+## Current State
+The top-right corner has a circular avatar with a dropdown menu (TopProfileDropdown). It's a simple round avatar with a ring.
+
+## Proposed Design
+Replace the circular avatar with a **pill/tab-shaped button** that shows:
+- User's avatar (small, left side)
+- User's first name
+- Cohort label (e.g. "Forge Writing" or "Forge Creators"), and for POST_FORGE users: "Forge Community Member"
+- Gold (#FFBF00) outline border
+- Glow effect on hover (`shadow-[0_0_15px_hsl(var(--primary)/0.5)]`)
+
+The dropdown menu functionality stays the same.
 
 ## Changes
 
-### `src/pages/Perks.tsx`
-- Replace `space-y-3` vertical stack with a responsive CSS grid:
-  - Mobile (< 640px): 1 column
-  - Tablet (640px+): 2 columns
-  - Desktop (1024px+): 3 columns
-- Add `gap-4` for consistent spacing between cards
-- Update skeleton loading to match the grid layout
+### `src/components/layout/TopProfileDropdown.tsx`
+- Replace the round avatar button trigger with a pill-shaped tab button
+- Import `useEffectiveCohort` to get the cohort type and edition data
+- Import `useAuth` for forge mode calculation
+- Compute the cohort label: map `cohort_type` to display name, override to "Forge Community Member" when `forgeMode === 'POST_FORGE'`
+- Layout: `flex items-center gap-2` with avatar (h-7 w-7), name text, and a smaller cohort subtitle
+- Styling: `rounded-full border border-primary/60 bg-white/5 px-3 py-1.5` with `hover:shadow-[0_0_20px_hsl(var(--primary)/0.5)] hover:border-primary` transition
 
-### `src/components/perks/PerkCard.tsx`
-- For the banner image mode: constrain the card with a fixed aspect ratio (`aspect-[16/10]`) so all cards are uniform height in the grid, using `object-cover` on the image
-- Ensure the card fills its grid cell (`w-full h-full`)
-- For the text fallback mode: add a min-height to keep cards consistent
-
-## Files
-| Action | File |
-|--------|------|
-| Edit | `src/pages/Perks.tsx` — grid layout |
-| Edit | `src/components/perks/PerkCard.tsx` — constrained aspect ratio for grid |
+### `src/components/layout/AppLayout.tsx`
+- No structural changes needed; the sticky header row already accommodates the dropdown
 
