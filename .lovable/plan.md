@@ -1,37 +1,28 @@
 
 
-# Root Cause & Fix: Perk Banner Images Not Showing
+# Perks Page: Responsive Grid Layout
 
-## Diagnosis
-The `PerkCard` code correctly checks `bannerUrl` and renders the image-only card when present. However, querying the database reveals:
+## Problem
+Cards are stacked full-width vertically, making them oversized with no breathing room. The GrowthX reference shows a responsive multi-column grid with consistent card sizing.
 
-| Perk | banner_url |
-|------|-----------|
-| Sony | `null` |
-| Sandcastles | `null` |
-| Digitek | `null` |
-| Canon | `null` |
+## Changes
 
-All `banner_url` values are `null`, so the fallback text layout renders every time. The code is fine — the data is missing.
+### `src/pages/Perks.tsx`
+- Replace `space-y-3` vertical stack with a responsive CSS grid:
+  - Mobile (< 640px): 1 column
+  - Tablet (640px+): 2 columns
+  - Desktop (1024px+): 3 columns
+- Add `gap-4` for consistent spacing between cards
+- Update skeleton loading to match the grid layout
 
-## Fix
-
-### 1. Copy uploaded images to project
-- `user-uploads://01_1.jpg` → `public/images/perks/sony-banner.jpg`
-- `user-uploads://02_1.jpg` → `public/images/perks/digitek-banner.jpg`
-- `user-uploads://03_1.jpg` → `public/images/perks/sandcastles-banner.jpg`
-
-### 2. Update database records
-Run an UPDATE query to set `banner_url` for each perk:
-- Sony → `/images/perks/sony-banner.jpg`
-- Digitek → `/images/perks/digitek-banner.jpg`
-- Sandcastles → `/images/perks/sandcastles-banner.jpg`
-
-No code changes needed — the existing `PerkCard` component will automatically render the banner cards once the data is populated.
+### `src/components/perks/PerkCard.tsx`
+- For the banner image mode: constrain the card with a fixed aspect ratio (`aspect-[16/10]`) so all cards are uniform height in the grid, using `object-cover` on the image
+- Ensure the card fills its grid cell (`w-full h-full`)
+- For the text fallback mode: add a min-height to keep cards consistent
 
 ## Files
 | Action | File |
 |--------|------|
-| Copy | 3 uploaded images → `public/images/perks/` |
-| DB Update | Set `banner_url` on 3 perk rows |
+| Edit | `src/pages/Perks.tsx` — grid layout |
+| Edit | `src/components/perks/PerkCard.tsx` — constrained aspect ratio for grid |
 
