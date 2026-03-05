@@ -22,14 +22,14 @@ export const PerkCard: React.FC<PerkCardProps> = ({ id, name, headline, logoUrl,
       <button
         onClick={() => !isComingSoon && navigate(`/perks/${id}`)}
         disabled={isComingSoon}
-        className={`group relative w-full rounded-2xl overflow-hidden border border-border/50 transition-all duration-300 ${
+        className={`group relative w-full h-full aspect-[16/10] rounded-2xl overflow-hidden border border-border/50 transition-all duration-300 ${
           isComingSoon ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-lg hover:shadow-primary/10 hover:scale-[1.01] active:scale-[0.99]'
         }`}
       >
         <img
           src={bannerUrl}
           alt={name}
-          className="w-full h-auto block"
+          className="absolute inset-0 w-full h-full object-cover"
         />
         {isComingSoon && (
           <Badge className="absolute top-3 right-3 bg-muted/80 backdrop-blur-sm text-muted-foreground border-border/50 gap-1">
