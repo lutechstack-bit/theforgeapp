@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { getCityGroupKey } from '@/lib/cityUtils';
 import { cn } from '@/lib/utils';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 interface CityGroup {
   id: string;
@@ -35,8 +36,10 @@ interface Stats {
 const Community = () => {
   const { user, profile } = useAuth();
   const [searchParams] = useSearchParams();
+  const { isFeatureEnabled, isLoading: flagsLoading } = useFeatureFlags();
+  const chatEnabled = isFeatureEnabled('community_chat_enabled');
   const [activeView, setActiveView] = useState<'chat' | 'network'>(
-    searchParams.get('tab') === 'network' ? 'network' : 'chat'
+    searchParams.get('tab') === 'network' || !chatEnabled ? 'network' : 'chat'
   );
   const [loading, setLoading] = useState(true);
   const [cityGroups, setCityGroups] = useState<CityGroup[]>([]);
@@ -187,74 +190,87 @@ const Community = () => {
 
   return (
     <div className="flex flex-col h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] pt-4 sm:pt-5 md:pt-6 px-4 sm:px-5 md:px-6 gap-3 sm:gap-4 max-w-6xl mx-auto w-full">
-      {/* View Toggle: Chat | Network */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex gap-1 p-1 rounded-full bg-card border border-border/30">
-          <button
-            onClick={() => setActiveView('chat')}
-            className={cn(
-              'px-5 py-2 rounded-full text-sm font-semibold transition-all',
-              activeView === 'chat'
-                ? 'bg-[#FFBF00] text-black shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            Chat
-          </button>
-          <button
-            onClick={() => setActiveView('network')}
-            className={cn(
-              'px-5 py-2 rounded-full text-sm font-semibold transition-all',
-              activeView === 'network'
-                ? 'bg-[#FFBF00] text-black shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            Network
-          </button>
-        </div>
-        {activeView === 'chat' ? (
-          <MembersDrawer onlineUserIds={onlineUserIds} memberCount={stats.totalMembers} />
-        ) : (
-          <CollaboratorInbox />
-        )}
-      </div>
-
-      {activeView === 'chat' ? (
+      {chatEnabled ? (
         <>
-          {/* Header */}
-          <div className="flex items-center justify-between gap-2 sm:gap-3">
-            <CommunityHeader memberCount={stats.totalMembers} onlineCount={onlineUserIds.length} />
+          {/* View Toggle: Chat | Network */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex gap-1 p-1 rounded-full bg-card border border-border/30">
+              <button
+                onClick={() => setActiveView('chat')}
+                className={cn(
+                  'px-5 py-2 rounded-full text-sm font-semibold transition-all',
+                  activeView === 'chat'
+                    ? 'bg-[#FFBF00] text-black shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                Chat
+              </button>
+              <button
+                onClick={() => setActiveView('network')}
+                className={cn(
+                  'px-5 py-2 rounded-full text-sm font-semibold transition-all',
+                  activeView === 'network'
+                    ? 'bg-[#FFBF00] text-black shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                Network
+              </button>
+            </div>
+            {activeView === 'chat' ? (
+              <MembersDrawer onlineUserIds={onlineUserIds} memberCount={stats.totalMembers} />
+            ) : (
+              <CollaboratorInbox />
+            )}
           </div>
 
-          {/* Horizontal Pill Tabs */}
-          <GroupSwitcher
-            cohortGroup={cohortGroup}
-            cityGroups={cityGroups}
-            userCityGroupId={userCityGroupId}
-            activeGroupType={activeGroupType}
-            activeGroupId={activeGroupId}
-            onSelectCohort={handleSelectCohort}
-            onSelectCity={handleSelectCity}
-          />
-
-          {/* Chat Area */}
-          <div className="flex-1 min-h-0">
-            <CompactChat
-              groups={cityGroups}
-              cohortGroup={cohortGroup}
-              activeGroupType={activeGroupType}
-              activeGroupId={activeGroupId}
-              onGroupChange={handleSelectCity}
-              onCohortSelect={handleSelectCohort}
-              typingUsers={typingUsers}
-            />
-          </div>
+          {activeView === 'chat' ? (
+            <>
+              <div className="flex items-center justify-between gap-2 sm:gap-3">
+                <CommunityHeader memberCount={stats.totalMembers} onlineCount={onlineUserIds.length} />
+              </div>
+              <GroupSwitcher
+                cohortGroup={cohortGroup}
+                cityGroups={cityGroups}
+                userCityGroupId={userCityGroupId}
+                activeGroupType={activeGroupType}
+                activeGroupId={activeGroupId}
+                onSelectCohort={handleSelectCohort}
+                onSelectCity={handleSelectCity}
+              />
+              <div className="flex-1 min-h-0">
+                <CompactChat
+                  groups={cityGroups}
+                  cohortGroup={cohortGroup}
+                  activeGroupType={activeGroupType}
+                  activeGroupId={activeGroupId}
+                  onGroupChange={handleSelectCity}
+                  onCohortSelect={handleSelectCohort}
+                  typingUsers={typingUsers}
+                />
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <CollaboratorDirectory />
+            </div>
+          )}
         </>
       ) : (
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          <CollaboratorDirectory />
-        </div>
+        <>
+          {/* Network-only mode (chat disabled) */}
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h1 className="text-lg sm:text-xl font-bold text-foreground">Network</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">Collaborate with like-minded creators</p>
+            </div>
+            <CollaboratorInbox />
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <CollaboratorDirectory />
+          </div>
+        </>
       )}
     </div>
   );
