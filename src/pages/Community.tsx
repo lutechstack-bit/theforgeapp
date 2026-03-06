@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { getCityGroupKey } from '@/lib/cityUtils';
 import { cn } from '@/lib/utils';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 interface CityGroup {
   id: string;
