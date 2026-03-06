@@ -1,0 +1,1 @@
+UPDATE public.homepage_sections SET cohort_types = NULL WHERE section_key = 'batchmates';

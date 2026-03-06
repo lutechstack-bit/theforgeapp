@@ -141,7 +141,12 @@ export const SideNav: React.FC = () => {
 
         {/* Bottom Section */}
         <div className={cn("space-y-2 pb-4", collapsed ? "px-3" : "px-3")}>
-          {bottomItems.map(({ to, icon, label }) => (
+          {bottomItems
+            .filter(item => {
+              if (item.to === '/updates' && !isFeatureEnabled('updates_enabled')) return false;
+              return true;
+            })
+            .map(({ to, icon, label }) => (
             <NavItem
               key={to}
               to={to}

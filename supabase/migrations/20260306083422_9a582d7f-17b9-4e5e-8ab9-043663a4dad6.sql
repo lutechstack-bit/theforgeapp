@@ -1,0 +1,1 @@
+INSERT INTO public.app_feature_flags (feature_key, is_enabled) VALUES ('updates_enabled', true) ON CONFLICT DO NOTHING;
