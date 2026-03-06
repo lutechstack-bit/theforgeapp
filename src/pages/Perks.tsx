@@ -28,7 +28,7 @@ const Perks: React.FC = () => {
         </div>
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-foreground">Perks</h1>
-          <p className="text-xs md:text-sm text-muted-foreground">Exclusive partner discounts for Forge alumni</p>
+          <p className="text-xs md:text-sm text-muted-foreground">We partner with the industry's best so you can focus on your craft</p>
         </div>
       </div>
 

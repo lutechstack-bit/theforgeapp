@@ -69,7 +69,7 @@ export const UpcomingSessionsSection: React.FC = () => {
     <section className="space-y-4">
       <div>
         <h2 className="text-lg sm:text-xl font-bold text-foreground">Upcoming Online Sessions</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">Join live sessions with mentors</p>
+        <p className="text-sm text-muted-foreground mt-0.5">Online sessions before your Forge Offline Experience</p>
       </div>
 
       <ScrollableCardRow>

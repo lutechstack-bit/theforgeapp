@@ -152,7 +152,7 @@ const Learn: React.FC = () => {
         <div className="space-y-1">
           <h1 className="page-title">Learn</h1>
           <p className="text-sm text-muted-foreground">
-            Explore courses, sessions & resources to enhance your filmmaking skills
+            Develop your craft
           </p>
         </div>
 
@@ -189,18 +189,20 @@ const Learn: React.FC = () => {
           />
         ) : (
           <div className="space-y-8 sm:space-y-10">
-            {/* Pre Forge Sessions */}
-            <CourseCarouselSection
-              items={forgeOnlineSessions}
-              title="Pre Forge Sessions"
-              subtitle="Filmmaking fundamentals: For Forge and Beyond"
-              sectionType="bfp_sessions"
-              gridLayout={true}
-              defaultCardLayout="landscape"
-              defaultThumbnail="/images/learn/pre-forge-placeholder.png"
-              onCardClick={handleCardClick}
-              onViewAll={(st) => navigate(`/learn/all?section=${st}`)}
-            />
+            {/* Pre Forge Sessions — only for FORGE cohort */}
+            {(!effectiveCohortType || effectiveCohortType === 'FORGE') && (
+              <CourseCarouselSection
+                items={forgeOnlineSessions}
+                title="Pre Forge Sessions"
+                subtitle="Filmmaking fundamentals: For Forge and Beyond"
+                sectionType="bfp_sessions"
+                gridLayout={true}
+                defaultCardLayout="landscape"
+                defaultThumbnail="/images/learn/pre-forge-placeholder.png"
+                onCardClick={handleCardClick}
+                onViewAll={(st) => navigate(`/learn/all?section=${st}`)}
+              />
+            )}
 
           </div>
         )}
@@ -225,7 +227,7 @@ const Learn: React.FC = () => {
               <section className="space-y-4">
                 <div>
                   <h2 className="text-lg sm:text-xl font-bold text-foreground">Community Sessions</h2>
-                  <p className="text-sm text-muted-foreground mt-0.5">Premium sessions from LevelUp</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">Learn & Network with dreamers like you</p>
                 </div>
                 <ScrollableCardRow>
                   {communitySessions.map((session) => (
@@ -261,8 +263,8 @@ const Learn: React.FC = () => {
             {/* Explore Programs */}
             <section className="space-y-4">
               <div>
-                <h2 className="text-lg sm:text-xl font-bold text-foreground">Explore Programs</h2>
-                <p className="text-sm text-muted-foreground mt-0.5">Intensive programs to level up your craft</p>
+                <h2 className="text-lg sm:text-xl font-bold text-foreground">Explore other programs</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">From the House of LevelUp Learning</p>
               </div>
 
               {/* Toggle */}
