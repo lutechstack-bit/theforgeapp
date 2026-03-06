@@ -1,32 +1,41 @@
 
-## Replace Program Banner Images
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+## Two Changes
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+### 1. Fix "Travel & Stay" Header Copy in Database
+The homepage section title/subtitle is stored in the `homepage_sections` table and currently reads **"Travel & Stay" / "Your accommodation details"**. The component defaults are correct (`"Your Venue"` / `"Where you'll be living..."`) but get overridden by the DB values. 
 
-### Changes
+**Fix:** Update the DB row to match the branded copy.
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+**Migration:**
+```sql
+UPDATE homepage_sections 
+SET title = 'Your Venue', subtitle = 'Where you''ll be living, breathing, eating and creating' 
+WHERE section_key = 'travel_stay';
+```
 
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+### 2. Add Admin Toggle for Community Chat
 
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+Add a `community_chat_enabled` feature flag to `app_feature_flags`. When disabled, the Community page shows only the Network view (no Chat toggle).
 
+**Migration:**
+```sql
+INSERT INTO app_feature_flags (feature_key, is_enabled) 
+VALUES ('community_chat_enabled', true);
+```
+
+**`src/pages/Community.tsx`:**
+- Import `useFeatureFlags`
+- Check `isFeatureEnabled('community_chat_enabled')`
+- If disabled: skip Chat/Network toggle, hide chat-related state/setup, default to Network view
+- Show header: **"Network"** / **"Collaborate with like-minded creators"**
+- Show only `<CollaboratorDirectory />` + `<CollaboratorInbox />`
+
+**Admin panel** (existing feature flags UI will auto-pick up the new row — no admin code changes needed).
+
+### Files Modified
 | File | Change |
 |------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+| DB migration | Update `homepage_sections` row + insert feature flag |
+| `src/pages/Community.tsx` | Conditionally hide chat based on feature flag |
 
