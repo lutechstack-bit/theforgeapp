@@ -290,14 +290,14 @@ const Learn: React.FC = () => {
                       description="Comprehensive 12-week program to master filmmaking from script to screen."
                       ctaUrl="https://www.leveluplearning.live/bfp-2"
                       gradient="linear-gradient(135deg, hsl(260,60%,25%) 0%, hsl(230,50%,30%) 100%)"
-                      imageUrl="/images/programs/breakthrough-filmmaking.png"
+                      imageUrl="/images/programs/breakthrough-filmmaking.jpg"
                     />
                     <ProgramBanner
                       title="Video Editing Academy"
                       description="Master professional video editing with industry-standard tools and techniques."
                       ctaUrl="https://www.leveluplearning.live/ve"
                       gradient="linear-gradient(135deg, hsl(210,60%,25%) 0%, hsl(230,50%,35%) 100%)"
-                      imageUrl="/images/programs/video-editing-academy.png"
+                      imageUrl="/images/programs/video-editing-academy.jpg"
                     />
                     <ProgramBanner
                       title="Creator Academy"
