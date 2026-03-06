@@ -36,8 +36,10 @@ interface Stats {
 const Community = () => {
   const { user, profile } = useAuth();
   const [searchParams] = useSearchParams();
+  const { isFeatureEnabled, isLoading: flagsLoading } = useFeatureFlags();
+  const chatEnabled = isFeatureEnabled('community_chat_enabled');
   const [activeView, setActiveView] = useState<'chat' | 'network'>(
-    searchParams.get('tab') === 'network' ? 'network' : 'chat'
+    searchParams.get('tab') === 'network' || !chatEnabled ? 'network' : 'chat'
   );
   const [loading, setLoading] = useState(true);
   const [cityGroups, setCityGroups] = useState<CityGroup[]>([]);
