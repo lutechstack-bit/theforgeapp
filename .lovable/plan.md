@@ -1,36 +1,32 @@
 
+## Replace Program Banner Images
 
-# Update Section Header Copy Across Pages
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-Update branded copy for section headers on Home, Learn, and Perks pages.
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-## Changes
+### Changes
 
-### 1. Home — `src/components/home/TravelStaySection.tsx`
-- **Title**: Already correct — `"Your Venue"`
-- **Subtitle**: Already correct — `"Where you'll be living, breathing, eating and creating"`
-- No changes needed here (the homepage_sections DB may override these via props — that's fine, defaults are correct).
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-### 2. Learn Page — `src/pages/Learn.tsx`
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-| Section | Current Title / Subtitle | New Title / Subtitle |
-|---------|-------------------------|---------------------|
-| Page header (line 153-156) | "Learn" / "Explore courses, sessions & resources to enhance your filmmaking skills" | **"Learn"** / **"Develop your craft"** |
-| Pre Forge Sessions (line 195-196) | "Pre Forge Sessions" / "Filmmaking fundamentals: For Forge and Beyond" | **"Pre Forge Sessions"** / same — but **hide entire section for FORGE_CREATORS and FORGE_WRITING cohorts** |
-| Community Sessions (line 227-228) | "Community Sessions" / "Premium sessions from LevelUp" | **"Community Sessions"** / **"Learn & Network with dreamers like you"** |
-| Explore Programs (line 264-265) | "Explore Programs" / "Intensive programs to level up your craft" | **"Explore other programs"** / **"From the House of LevelUp Learning"** |
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
-### 3. Learn — `src/components/learn/UpcomingSessionsSection.tsx`
-- Line 71-72: Change subtitle from `"Join live sessions with mentors"` to **"Online sessions before your Forge Offline Experience"**
-
-### 4. Perks Page — `src/pages/Perks.tsx`
-- Line 31: Change subtitle from `"Exclusive partner discounts for Forge alumni"` to **"We partner with the industry's best so you can focus on your craft"**
-
-### 5. Pre Forge Sessions — Cohort Filtering (Learn.tsx)
-- Wrap the `CourseCarouselSection` for `forgeOnlineSessions` (line 193-203) in a condition: only render when `effectiveCohortType === 'FORGE'` (or is undefined/null). This hides it for Creators and Writing cohorts.
-
-## Files Modified
-- `src/pages/Learn.tsx` — 4 copy changes + cohort filter
-- `src/components/learn/UpcomingSessionsSection.tsx` — 1 subtitle change
-- `src/pages/Perks.tsx` — 1 subtitle change
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 
