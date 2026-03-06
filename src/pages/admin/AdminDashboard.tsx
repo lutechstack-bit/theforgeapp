@@ -407,6 +407,28 @@ export default function AdminDashboard() {
             />
           </div>
 
+          {/* Community Chat Toggle */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/30 mt-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <MessageSquare className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <div className="text-sm font-medium text-foreground">Community Chat</div>
+                <div className="text-xs text-muted-foreground">Show or hide Chat in Community</div>
+              </div>
+            </div>
+            <Switch
+              checked={isFeatureEnabled('community_chat_enabled')}
+              onCheckedChange={(checked) => {
+                toggleFeature.mutate({ key: 'community_chat_enabled', enabled: checked }, {
+                  onSuccess: () => toast.success(`Community Chat ${checked ? 'enabled' : 'disabled'}`),
+                  onError: () => toast.error('Failed to update'),
+                });
+              }}
+            />
+          </div>
+
           {/* Updates Toggle */}
           <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/30 mt-3">
             <div className="flex items-center gap-3">
