@@ -44,7 +44,7 @@ const forgeResidencies = [
     cohortType: 'FORGE',
     title: 'Forge Filmmaking',
     description: 'An intensive residential filmmaking program — script to screen in 10 days.',
-    ctaUrl: 'https://www.leveluplearning.in/',
+    ctaUrl: 'https://www.forgebylevelup.com/',
     gradient: 'linear-gradient(135deg, hsl(20,60%,22%) 0%, hsl(35,50%,28%) 100%)',
     imageUrl: '/images/programs/forge-filmmaking.png',
   },
@@ -52,7 +52,7 @@ const forgeResidencies = [
     cohortType: 'FORGE_WRITING',
     title: 'Forge Writing',
     description: 'A residential writing retreat to sharpen your screenwriting craft.',
-    ctaUrl: 'https://www.leveluplearning.in/',
+    ctaUrl: 'https://www.forgebylevelup.com/writingresidency',
     gradient: 'linear-gradient(135deg, hsl(180,40%,20%) 0%, hsl(200,50%,28%) 100%)',
     imageUrl: undefined,
   },
@@ -60,7 +60,7 @@ const forgeResidencies = [
     cohortType: 'FORGE_CREATORS',
     title: 'Forge Creators',
     description: 'A residential program for digital creators to level up content & storytelling.',
-    ctaUrl: 'https://www.leveluplearning.in/',
+    ctaUrl: 'https://creators.forgebylevelup.com/',
     gradient: 'linear-gradient(135deg, hsl(280,50%,22%) 0%, hsl(310,40%,30%) 100%)',
     imageUrl: undefined,
   },
@@ -288,14 +288,14 @@ const Learn: React.FC = () => {
                     <ProgramBanner
                       title="Breakthrough Filmmaking"
                       description="Comprehensive 12-week program to master filmmaking from script to screen."
-                      ctaUrl="https://www.leveluplearning.in/"
+                      ctaUrl="https://www.leveluplearning.live/bfp-2"
                       gradient="linear-gradient(135deg, hsl(260,60%,25%) 0%, hsl(230,50%,30%) 100%)"
                       imageUrl="/images/programs/breakthrough-filmmaking.png"
                     />
                     <ProgramBanner
                       title="Video Editing Academy"
                       description="Master professional video editing with industry-standard tools and techniques."
-                      ctaUrl="https://www.leveluplearning.in/"
+                      ctaUrl="https://www.leveluplearning.live/ve"
                       gradient="linear-gradient(135deg, hsl(210,60%,25%) 0%, hsl(230,50%,35%) 100%)"
                       imageUrl="/images/programs/video-editing-academy.png"
                     />

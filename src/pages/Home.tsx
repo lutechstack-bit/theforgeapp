@@ -124,8 +124,8 @@ const Home: React.FC = () => {
         <div className="space-y-6 sm:space-y-8 pb-24 md:pb-8 max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto">
           {/* Personalized Welcome */}
           <div>
-            <h1 className="page-title">Hi {firstName}</h1>
-            <p className="text-muted-foreground text-sm">Let's make today count</p>
+            <h1 className="page-title">Hey {firstName}</h1>
+            <p className="text-muted-foreground text-sm">Time to Learn, Do, and Become.</p>
           </div>
 
           {/* 1. Countdown Timer */}

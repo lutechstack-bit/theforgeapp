@@ -93,6 +93,7 @@ const CountdownContent = ({
 
 export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ edition }) => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [isExpired, setIsExpired] = useState(false);
 
   // Calculate progress based on days remaining (30-day visual scale)
   // IMPORTANT: All hooks must be called unconditionally (before any early returns)
@@ -133,6 +134,8 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
           minutes: Math.floor((difference / (1000 * 60)) % 60),
           seconds: Math.floor((difference / 1000) % 60),
         });
+      } else {
+        setIsExpired(true);
       }
     };
 
@@ -140,6 +143,9 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
     const timer = setInterval(calculateTimeLeft, 1000);
     return () => clearInterval(timer);
   }, [edition?.forge_start_date]);
+
+  // Hide when expired
+  if (isExpired) return null;
 
   // Show loading placeholder when edition is not yet available
   // This early return is AFTER all hooks, so React's rules are satisfied

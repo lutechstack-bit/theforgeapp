@@ -29,8 +29,8 @@ interface TravelStaySectionProps {
 }
 
 const TravelStaySection: React.FC<TravelStaySectionProps> = ({
-  title = 'Travel & Stay',
-  subtitle,
+  title = 'Your Venue',
+  subtitle = 'Where you\'ll be living, breathing, eating and creating',
 }) => {
   const navigate = useNavigate();
   const { edition } = useAuth();

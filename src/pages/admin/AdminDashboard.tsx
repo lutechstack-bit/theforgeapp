@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { 
   Users, Calendar, CalendarDays, CreditCard, Zap, BookOpen, MessageSquare, 
   UserCheck, GraduationCap, Map, TrendingUp, ArrowUpRight, ArrowDownRight,
-  Handshake
+  Handshake, Info
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -401,6 +401,28 @@ export default function AdminDashboard() {
               onCheckedChange={(checked) => {
                 toggleFeature.mutate({ key: 'events_enabled', enabled: checked }, {
                   onSuccess: () => toast.success(`Events tab ${checked ? 'enabled' : 'disabled'}`),
+                  onError: () => toast.error('Failed to update'),
+                });
+              }}
+            />
+          </div>
+
+          {/* Updates Toggle */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/30 mt-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Info className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <div className="text-sm font-medium text-foreground">Updates Tab</div>
+                <div className="text-xs text-muted-foreground">Show or hide Updates in navigation</div>
+              </div>
+            </div>
+            <Switch
+              checked={isFeatureEnabled('updates_enabled')}
+              onCheckedChange={(checked) => {
+                toggleFeature.mutate({ key: 'updates_enabled', enabled: checked }, {
+                  onSuccess: () => toast.success(`Updates tab ${checked ? 'enabled' : 'disabled'}`),
                   onError: () => toast.error('Failed to update'),
                 });
               }}
