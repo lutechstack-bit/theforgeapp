@@ -46,7 +46,7 @@ export const TopProfileDropdown: React.FC = () => {
           <button
             aria-label="Profile menu"
             className={cn(
-              "flex items-center gap-2 rounded-lg border border-primary/60 bg-white/5 px-3 py-1.5",
+              "flex items-center gap-2 rounded-lg border border-primary bg-white/10 px-3 py-1.5 shadow-[0_0_8px_hsl(var(--primary)/0.3)]",
               "transition-all duration-300 focus:outline-none",
               "hover:border-primary hover:shadow-[0_0_20px_hsl(var(--primary)/0.5)]",
               isProfileActive && "border-primary shadow-[0_0_15px_hsl(var(--primary)/0.4)]"
