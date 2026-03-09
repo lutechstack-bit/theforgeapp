@@ -90,7 +90,7 @@ const Home: React.FC = () => {
 
   const handleRetry = () => {
     setLoadingTimedOut(false);
-    queryClient.invalidateQueries({ queryKey: ['home_student_works_all'] });
+    queryClient.invalidateQueries({ queryKey: ['alumni-showcase'] });
   };
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there';
