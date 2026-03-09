@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      alumni_showcase: {
+        Row: {
+          author_name: string
+          cohort_type: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          media_type: string
+          media_url: string | null
+          order_index: number
+          redirect_url: string | null
+          thumbnail_url: string | null
+          title: string
+        }
+        Insert: {
+          author_name: string
+          cohort_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          media_type?: string
+          media_url?: string | null
+          order_index?: number
+          redirect_url?: string | null
+          thumbnail_url?: string | null
+          title: string
+        }
+        Update: {
+          author_name?: string
+          cohort_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          media_type?: string
+          media_url?: string | null
+          order_index?: number
+          redirect_url?: string | null
+          thumbnail_url?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       alumni_testimonials: {
         Row: {
           achievement: string | null

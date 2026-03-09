@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,8 +17,7 @@ import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
 import { useTodaysFocus } from '@/hooks/useTodaysFocus';
 import { useHomepageSections } from '@/hooks/useHomepageSections';
 import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
-import { Users } from 'lucide-react';
-import { promiseWithTimeout, isTimeoutError } from '@/lib/promiseTimeout';
+import {  promiseWithTimeout, isTimeoutError } from '@/lib/promiseTimeout';
 
 const QUERY_TIMEOUT = 12000;
 
@@ -37,20 +36,21 @@ const Home: React.FC = () => {
   const { effectiveCohortType } = useEffectiveCohort();
   const userCohortType = effectiveCohortType;
 
-  // Fetch student works with public portfolios
-  const studentWorksQuery = useQuery({
-    queryKey: ['home_student_works'],
+  // Fetch alumni showcase
+  const alumniShowcaseQuery = useQuery({
+    queryKey: ['alumni-showcase', userCohortType],
     queryFn: async () => {
       const result = await promiseWithTimeout(
         supabase
-          .from('user_works')
-          .select('*, profiles!inner(full_name)')
-          .not('media_url', 'is', null)
+          .from('alumni_showcase')
+          .select('*')
+          .eq('cohort_type', userCohortType || 'FORGE')
+          .eq('is_active', true)
           .order('order_index', { ascending: true })
           .limit(12)
           .then(res => res),
         QUERY_TIMEOUT,
-        'home_student_works'
+        'alumni_showcase'
       );
       if (result.error) throw result.error;
       return result.data || [];
@@ -61,26 +61,11 @@ const Home: React.FC = () => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  const displayAlumni = useMemo(() => {
-    const data = studentWorksQuery.data;
-    if (!data) return [];
-
-    return data.map((w: any) => ({
-      id: w.id,
-      name: w.profiles?.full_name || 'Student',
-      role: w.type === 'personal' ? null : w.type,
-      video_url: w.media_url,
-      thumbnail_url: w.thumbnail_url,
-      film: w.title,
-      achievement: w.description,
-    }));
-  }, [studentWorksQuery.data]);
-
-  const isAnyError = studentWorksQuery.isError;
-  const isAnyLoading = studentWorksQuery.isLoading;
+  const isAnyError = alumniShowcaseQuery.isError;
+  const isAnyLoading = alumniShowcaseQuery.isLoading;
 
   const failedQueries = [
-    studentWorksQuery.isError && { name: 'Student Works', error: studentWorksQuery.error as Error },
+    alumniShowcaseQuery.isError && { name: 'Alumni Showcase', error: alumniShowcaseQuery.error as Error },
   ].filter(Boolean) as { name: string; error: Error }[];
 
   // Loading timeout
@@ -104,7 +89,7 @@ const Home: React.FC = () => {
 
   const handleRetry = () => {
     setLoadingTimedOut(false);
-    queryClient.invalidateQueries({ queryKey: ['home_student_works_all'] });
+    queryClient.invalidateQueries({ queryKey: ['alumni-showcase'] });
   };
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there';
@@ -165,7 +150,7 @@ const Home: React.FC = () => {
           {showDebug && (
             <div className="text-xs font-mono bg-muted/50 border border-border rounded-lg p-4 space-y-2">
               <p className="font-semibold">Home Debug Panel</p>
-              <p>Student Works: {studentWorksQuery.isLoading ? '⏳' : studentWorksQuery.isError ? '❌' : `✅ (${displayAlumni.length})`}</p>
+              <p>Alumni Showcase: {alumniShowcaseQuery.isLoading ? '⏳' : alumniShowcaseQuery.isError ? '❌' : `✅ (${alumniShowcaseQuery.data?.length || 0})`}</p>
               <p>Focus Card: {activeFocusCard ? activeFocusCard.title : '(none)'}</p>
               <p>User Cohort: {userCohortType || '(none)'}</p>
             </div>
@@ -185,8 +170,9 @@ const Home: React.FC = () => {
           {/* 6. Alumni Showcase */}
           {alumniSection && !loadingTimedOut && (
             <AlumniShowcaseSection
-              alumni={displayAlumni}
-              isLoading={studentWorksQuery.isLoading}
+              alumni={alumniShowcaseQuery.data || []}
+              isLoading={alumniShowcaseQuery.isLoading}
+              cohortType={userCohortType || 'FORGE'}
               title={alumniSection.title}
               subtitle={alumniSection.subtitle || undefined}
             />
@@ -199,20 +185,6 @@ const Home: React.FC = () => {
               subtitle={travelStaySection.subtitle || undefined}
             />
           )}
-
-          {/* Empty State */}
-          {alumniSection && !loadingTimedOut &&
-            studentWorksQuery.isFetched &&
-            displayAlumni.length === 0 &&
-            !isAnyError && (
-              <div className="rounded-2xl p-8 text-center bg-card/50 border border-border/30">
-                <Users className="h-12 w-12 text-primary/50 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">Content Coming Soon</h3>
-                <p className="text-muted-foreground">
-                  Check back soon for alumni stories and more!
-                </p>
-              </div>
-            )}
         </div>
       </div>
 
