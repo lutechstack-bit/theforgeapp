@@ -72,6 +72,19 @@ const Learn: React.FC = () => {
     },
   });
 
+  const { data: explorePrograms = [] } = useQuery({
+    queryKey: ['explore-programs'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('explore_programs')
+        .select('*')
+        .eq('is_active', true)
+        .order('order_index', { ascending: true });
+      if (error) throw error;
+      return (data || []) as ExploreProgram[];
+    },
+  });
+
   const { data: watchProgress = [] } = useQuery({
     queryKey: ['learn_watch_progress', user?.id],
     queryFn: async () => {
