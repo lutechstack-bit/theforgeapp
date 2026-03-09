@@ -151,7 +151,7 @@ const Home: React.FC = () => {
           {showDebug && (
             <div className="text-xs font-mono bg-muted/50 border border-border rounded-lg p-4 space-y-2">
               <p className="font-semibold">Home Debug Panel</p>
-              <p>Student Works: {studentWorksQuery.isLoading ? '⏳' : studentWorksQuery.isError ? '❌' : `✅ (${displayAlumni.length})`}</p>
+              <p>Alumni Showcase: {alumniShowcaseQuery.isLoading ? '⏳' : alumniShowcaseQuery.isError ? '❌' : `✅ (${alumniShowcaseQuery.data?.length || 0})`}</p>
               <p>Focus Card: {activeFocusCard ? activeFocusCard.title : '(none)'}</p>
               <p>User Cohort: {userCohortType || '(none)'}</p>
             </div>
