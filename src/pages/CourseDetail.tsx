@@ -65,10 +65,9 @@ const CourseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { isFullAccess, user } = useAuth();
+  const { user } = useAuth();
   const isMobile = useIsMobile();
   const [showPlayer, setShowPlayer] = useState(false);
-  const [showUnlockModal, setShowUnlockModal] = useState(false);
 
   // Fetch course details
   const { data: course, isLoading } = useQuery({
