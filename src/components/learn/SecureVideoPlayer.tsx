@@ -63,6 +63,273 @@ const parseVimeoUrl = (input: string): { videoId: string; hash?: string } | null
   return null;
 };
 
+// Vimeo embed sub-component with custom controls
+const VimeoEmbedPlayer: React.FC<{
+  vimeoData: { videoId: string; hash?: string };
+  title: string;
+  thumbnailUrl?: string;
+  className?: string;
+  currentTimeRef: React.MutableRefObject<number>;
+  durationRef: React.MutableRefObject<number>;
+  isPlayingRef: React.MutableRefObject<boolean>;
+  watchTimeRef: React.MutableRefObject<number>;
+  onVideoEnd?: () => void;
+}> = ({ vimeoData, title, thumbnailUrl, className, currentTimeRef, durationRef, isPlayingRef, watchTimeRef, onVideoEnd }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const playerRef = useRef<VimeoPlayer | null>(null);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+
+  const [vIsPlaying, setVIsPlaying] = useState(false);
+  const [vCurrentTime, setVCurrentTime] = useState(0);
+  const [vDuration, setVDuration] = useState(0);
+  const [vVolume, setVVolume] = useState(1);
+  const [vIsMuted, setVIsMuted] = useState(false);
+  const [vIsFullscreen, setVIsFullscreen] = useState(false);
+  const [vShowControls, setVShowControls] = useState(true);
+  const [vIsLoading, setVIsLoading] = useState(true);
+  const [vPlaybackSpeed, setVPlaybackSpeed] = useState(1);
+
+  const playbackSpeeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+  // Build embed URL with controls hidden
+  let embedUrl = `https://player.vimeo.com/video/${vimeoData.videoId}?autoplay=0&controls=0&title=0&byline=0&portrait=0&pip=1&dnt=1`;
+  if (vimeoData.hash) {
+    embedUrl += `&h=${vimeoData.hash}`;
+  }
+
+  // Initialize Vimeo Player SDK
+  useEffect(() => {
+    if (!iframeRef.current) return;
+    const player = new VimeoPlayer(iframeRef.current);
+    playerRef.current = player;
+
+    player.on('loaded', async () => {
+      const dur = await player.getDuration();
+      setVDuration(dur);
+      durationRef.current = dur;
+      setVIsLoading(false);
+    });
+
+    player.on('timeupdate', (data: { seconds: number; duration: number }) => {
+      setVCurrentTime(data.seconds);
+      currentTimeRef.current = data.seconds;
+      watchTimeRef.current = data.seconds;
+      if (data.duration && data.duration !== durationRef.current) {
+        setVDuration(data.duration);
+        durationRef.current = data.duration;
+      }
+    });
+
+    player.on('play', () => { setVIsPlaying(true); isPlayingRef.current = true; });
+    player.on('pause', () => { setVIsPlaying(false); isPlayingRef.current = false; });
+    player.on('ended', () => { setVIsPlaying(false); isPlayingRef.current = false; onVideoEnd?.(); });
+
+    return () => {
+      player.off('loaded');
+      player.off('timeupdate');
+      player.off('play');
+      player.off('pause');
+      player.off('ended');
+      playerRef.current = null;
+    };
+  }, []);
+
+  const handlePlayPause = useCallback(() => {
+    if (!playerRef.current) return;
+    if (vIsPlaying) playerRef.current.pause(); else playerRef.current.play();
+  }, [vIsPlaying]);
+
+  const handleSeek = useCallback((value: number[]) => {
+    playerRef.current?.setCurrentTime(value[0]);
+    setVCurrentTime(value[0]);
+  }, []);
+
+  const handleVolumeChange = useCallback((value: number[]) => {
+    const v = value[0];
+    playerRef.current?.setVolume(v);
+    setVVolume(v);
+    setVIsMuted(v === 0);
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    if (vIsMuted) {
+      playerRef.current?.setVolume(vVolume || 1);
+      setVIsMuted(false);
+    } else {
+      playerRef.current?.setVolume(0);
+      setVIsMuted(true);
+    }
+  }, [vIsMuted, vVolume]);
+
+  const handleSkipForward = useCallback(() => {
+    playerRef.current?.setCurrentTime(Math.min(vDuration, vCurrentTime + 10));
+  }, [vCurrentTime, vDuration]);
+
+  const handleSkipBackward = useCallback(() => {
+    playerRef.current?.setCurrentTime(Math.max(0, vCurrentTime - 10));
+  }, [vCurrentTime]);
+
+  const handlePlaybackSpeedChange = useCallback((speed: number) => {
+    playerRef.current?.setPlaybackRate(speed);
+    setVPlaybackSpeed(speed);
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return;
+      }
+      const container = containerRef.current;
+      if (container?.requestFullscreen) {
+        await container.requestFullscreen();
+      } else if ((container as any)?.webkitRequestFullscreen) {
+        (container as any).webkitRequestFullscreen();
+      }
+    } catch (err) {
+      toast.error("Fullscreen isn't available in this browser.");
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleFsChange = () => setVIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  const handleMouseMove = useCallback(() => {
+    setVShowControls(true);
+    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    controlsTimeoutRef.current = setTimeout(() => {
+      if (isPlayingRef.current) setVShowControls(false);
+    }, 3000);
+  }, []);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className={cn("relative bg-black rounded-2xl overflow-hidden select-none group aspect-video", className)}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => vIsPlaying && setVShowControls(false)}
+      onDoubleClick={toggleFullscreen}
+    >
+      <iframe
+        ref={iframeRef}
+        src={embedUrl}
+        className="absolute inset-0 w-full h-full"
+        frameBorder="0"
+        allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+        allowFullScreen
+        // @ts-ignore
+        webkitallowfullscreen="true"
+        mozallowfullscreen="true"
+        title={title}
+      />
+
+      {/* Loading Overlay */}
+      {vIsLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
+          {thumbnailUrl && <img src={thumbnailUrl} alt={title} className="absolute inset-0 w-full h-full object-cover opacity-30" />}
+          <Loader2 className="w-12 h-12 text-primary animate-spin relative z-10" />
+        </div>
+      )}
+
+      {/* Play/Pause Overlay */}
+      {!vIsPlaying && !vIsLoading && (
+        <button
+          onClick={handlePlayPause}
+          className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors cursor-pointer z-10"
+        >
+          <div className="w-20 h-20 rounded-full bg-primary/90 flex items-center justify-center shadow-[0_0_40px_hsl(var(--primary)/0.5)] transform hover:scale-105 transition-transform">
+            <Play className="w-10 h-10 text-primary-foreground ml-1" fill="currentColor" />
+          </div>
+        </button>
+      )}
+
+      {/* Custom Controls */}
+      <div
+        className={cn(
+          "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 pt-12 transition-opacity duration-300 z-20",
+          vShowControls ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+      >
+        {/* Progress Bar */}
+        <div className="mb-3">
+          <Slider
+            value={[vCurrentTime]}
+            min={0}
+            max={vDuration || 100}
+            step={0.1}
+            onValueChange={handleSeek}
+            className="cursor-pointer [&>span:first-child]:h-1.5 [&>span:first-child]:bg-white/30 [&_[role=slider]]:bg-primary [&_[role=slider]]:w-4 [&_[role=slider]]:h-4 [&_[role=slider]]:border-0 [&>span:first-child_>span]:bg-primary"
+          />
+        </div>
+
+        {/* Control Buttons */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button onClick={handlePlayPause} className="p-2 hover:bg-white/20 rounded-full transition-colors">
+              {vIsPlaying ? <Pause className="w-6 h-6 text-white" fill="currentColor" /> : <Play className="w-6 h-6 text-white" fill="currentColor" />}
+            </button>
+            <button onClick={handleSkipBackward} className="p-2 hover:bg-white/20 rounded-full transition-colors" title="Rewind 10s">
+              <SkipBack className="w-5 h-5 text-white" />
+            </button>
+            <button onClick={handleSkipForward} className="p-2 hover:bg-white/20 rounded-full transition-colors" title="Forward 10s">
+              <SkipForward className="w-5 h-5 text-white" />
+            </button>
+            <div className="flex items-center gap-2 group/volume">
+              <button onClick={toggleMute} className="p-2 hover:bg-white/20 rounded-full transition-colors" title="Mute">
+                {vIsMuted || vVolume === 0 ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
+              </button>
+              <div className="w-0 overflow-hidden group-hover/volume:w-20 transition-all duration-200">
+                <Slider
+                  value={[vIsMuted ? 0 : vVolume]}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  onValueChange={handleVolumeChange}
+                  className="cursor-pointer [&>span:first-child]:h-1 [&>span:first-child]:bg-white/30 [&_[role=slider]]:bg-white [&_[role=slider]]:w-3 [&_[role=slider]]:h-3 [&_[role=slider]]:border-0 [&>span:first-child_>span]:bg-white"
+                />
+              </div>
+            </div>
+            <span className="text-white text-sm font-medium ml-2">
+              {formatTime(vCurrentTime)} / {formatTime(vDuration)}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="px-2 py-1 hover:bg-white/20 rounded transition-colors text-white text-sm font-medium flex items-center gap-1" title="Playback Speed">
+                  <Settings className="w-4 h-4" />
+                  {vPlaybackSpeed}x
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur">
+                {playbackSpeeds.map((speed) => (
+                  <DropdownMenuItem key={speed} onClick={() => handlePlaybackSpeedChange(speed)} className={vPlaybackSpeed === speed ? 'bg-primary/20' : ''}>
+                    {speed}x
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <button onClick={toggleFullscreen} className="p-2 hover:bg-white/20 rounded-full transition-colors" title="Fullscreen">
+              {vIsFullscreen ? <Minimize className="w-5 h-5 text-white" /> : <Maximize className="w-5 h-5 text-white" />}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   videoUrl,
   contentId,
