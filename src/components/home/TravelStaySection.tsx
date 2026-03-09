@@ -37,13 +37,32 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
 
   const { data: locations, isLoading } = useQuery({
-    queryKey: ['home_stay_locations'],
+    queryKey: ['home_stay_locations', edition?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let locationIds: string[] | null = null;
+
+      // If user has an edition, filter by stay_location_editions
+      if (edition?.id) {
+        const { data: editionLocations, error: elError } = await supabase
+          .from('stay_location_editions')
+          .select('stay_location_id')
+          .eq('edition_id', edition.id);
+        if (!elError && editionLocations && editionLocations.length > 0) {
+          locationIds = editionLocations.map((el: any) => el.stay_location_id);
+        }
+      }
+
+      let query = supabase
         .from('stay_locations')
         .select('*')
         .eq('is_active', true)
         .order('order_index', { ascending: true });
+
+      if (locationIds) {
+        query = query.in('id', locationIds);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data || []).map((d: any) => ({
         id: d.id,

@@ -201,7 +201,7 @@ const Home: React.FC = () => {
           )}
 
           {/* Empty State */}
-          {!loadingTimedOut &&
+          {alumniSection && !loadingTimedOut &&
             studentWorksQuery.isFetched &&
             displayAlumni.length === 0 &&
             !isAnyError && (
