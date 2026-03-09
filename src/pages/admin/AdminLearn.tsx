@@ -75,6 +75,19 @@ interface ExploreProgramForm {
   is_active: boolean;
 }
 
+interface AlumniShowcaseForm {
+  title: string;
+  author_name: string;
+  cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS';
+  media_type: 'video' | 'image' | 'reel';
+  media_url: string;
+  thumbnail_url: string;
+  redirect_url: string;
+  description: string;
+  order_index: number;
+  is_active: boolean;
+}
+
 const initialForm: LearnContentForm = {
   title: '',
   description: '',
