@@ -171,34 +171,13 @@ const Home: React.FC = () => {
           {/* 6. Alumni Showcase */}
           {alumniSection && !loadingTimedOut && (
             <AlumniShowcaseSection
-              alumni={displayAlumni}
-              isLoading={studentWorksQuery.isLoading}
+              alumni={alumniShowcaseQuery.data || []}
+              isLoading={alumniShowcaseQuery.isLoading}
+              cohortType={userCohortType || 'FORGE'}
               title={alumniSection.title}
               subtitle={alumniSection.subtitle || undefined}
             />
-          )}
-
-          {/* 7. Travel & Stay */}
-          {travelStaySection && !loadingTimedOut && (
-            <TravelStaySection
-              title={travelStaySection.title}
-              subtitle={travelStaySection.subtitle || undefined}
-            />
-          )}
-
-          {/* Empty State */}
-          {alumniSection && !loadingTimedOut &&
-            studentWorksQuery.isFetched &&
-            displayAlumni.length === 0 &&
-            !isAnyError && (
-              <div className="rounded-2xl p-8 text-center bg-card/50 border border-border/30">
-                <Users className="h-12 w-12 text-primary/50 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">Content Coming Soon</h3>
-                <p className="text-muted-foreground">
-                  Check back soon for alumni stories and more!
-                </p>
-              </div>
-            )}
+          )
         </div>
       </div>
 
