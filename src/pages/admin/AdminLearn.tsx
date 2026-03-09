@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, BookOpen, Sparkles, FileUp, Download, Play, Users, AlertTriangle, Link, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, BookOpen, Sparkles, FileUp, Download, Play, Users, AlertTriangle, Link, Upload, GripVertical } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileUpload } from '@/components/admin/FileUpload';
 
@@ -136,6 +136,42 @@ const AdminLearn: React.FC = () => {
   const [form, setForm] = useState<LearnContentForm>(initialForm);
   const [resourceForm, setResourceForm] = useState<ResourceForm>(initialResourceForm);
   const [activeTab, setActiveTab] = useState('community_sessions');
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  // Reorder mutation
+  const reorderMutation = useMutation({
+    mutationFn: async (reordered: { id: string; order_index: number }[]) => {
+      await Promise.all(
+        reordered.map((item) =>
+          supabase.from('learn_content').update({ order_index: item.order_index }).eq('id', item.id)
+        )
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-learn-content'] });
+      queryClient.invalidateQueries({ queryKey: ['learn_content'] });
+      toast.success('Order updated');
+    },
+    onError: (error) => {
+      toast.error('Failed to reorder: ' + error.message);
+    },
+  });
+
+  const handleDrop = (dropIdx: number) => {
+    if (dragIndex === null || dragIndex === dropIdx) {
+      setDragIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+    const items = [...filteredContent];
+    const [moved] = items.splice(dragIndex, 1);
+    items.splice(dropIdx, 0, moved);
+    const updates = items.map((item, idx) => ({ id: item.id, order_index: idx }));
+    reorderMutation.mutate(updates);
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
 
   // Fetch learn content
   const { data: content, isLoading } = useQuery({
@@ -613,8 +649,14 @@ const AdminLearn: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredContent.map((item) => (
-                    <TableRow key={item.id}>
+                  {filteredContent.map((item, idx) => (
+                    <TableRow
+                      key={item.id}
+                      className={dragOverIndex === idx ? 'border-t-2 border-t-primary' : ''}
+                      onDragOver={(e) => { e.preventDefault(); setDragOverIndex(idx); }}
+                      onDragLeave={() => setDragOverIndex(null)}
+                      onDrop={(e) => { e.preventDefault(); handleDrop(idx); }}
+                    >
                       <TableCell>
                         <div className="flex items-center gap-3">
                           {item.thumbnail_url ? (
@@ -684,7 +726,7 @@ const AdminLearn: React.FC = () => {
                         </Button>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -703,6 +745,14 @@ const AdminLearn: React.FC = () => {
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
+                          <div
+                            draggable
+                            onDragStart={() => setDragIndex(idx)}
+                            onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                            className="cursor-grab active:cursor-grabbing p-1.5 rounded hover:bg-muted transition-colors"
+                          >
+                            <GripVertical className="h-4 w-4 text-muted-foreground" />
+                          </div>
                         </div>
                       </TableCell>
                     </TableRow>

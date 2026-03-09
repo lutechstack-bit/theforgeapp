@@ -1,30 +1,32 @@
 
+## Replace Program Banner Images
 
-# Add Drag-and-Drop Reordering to Admin Learn Table
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## What we're building
-A drag handle (`GripVertical` icon) in the Actions column of the Learn content table. Press-and-hold the handle to drag rows and reorder them. The new `order_index` values persist to the database so the order reflects on both the user-facing Learn page and the ContentSidebar (Workshop panel on course detail).
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-## Changes: `src/pages/admin/AdminLearn.tsx`
+### Changes
 
-1. **Import `GripVertical`** from lucide-react (line 34).
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-2. **Add drag state** — two `useState` values: `dragIndex` and `dragOverIndex` (both `number | null`).
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-3. **Add reorder mutation** — on drop, recompute `order_index` for all items in the current tab's filtered list, then batch-update via `Promise.all` of individual `.update({ order_index })` calls. Invalidate both `admin-learn-content` and `learn_content` query keys so the user-facing Learn page + ContentSidebar pick up the new order immediately.
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
-4. **Make each `TableRow` a drag target** — add `onDragOver` (prevent default + set `dragOverIndex`) and `onDrop` handlers. Add a visual indicator (e.g. `border-t-2 border-primary`) when `dragOverIndex` matches the row.
-
-5. **Add `GripVertical` button in Actions column** (line ~687, next to Pencil and Trash2):
-   - `draggable` on the button
-   - `onDragStart` sets `dragIndex`
-   - `onDragEnd` clears state
-   - `cursor-grab` styling
-
-6. **ContentSidebar already reads `order_index`** — the sibling query in `CourseDetail.tsx` (line 91) orders by `order_index`, so reordering in admin automatically updates the Workshop sidebar order. No changes needed there.
-
-## Why no other files change
-- The Learn page fetches content ordered by `order_index`.
-- ContentSidebar receives siblings already sorted by `order_index`.
-- Both reflect the new order without code changes.
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 
