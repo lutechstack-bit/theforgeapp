@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock } from 'lucide-react';
+import { formatDurationFromMinutes } from '@/lib/utils';
 
 interface LearnCourseCardProps {
   id: string;
