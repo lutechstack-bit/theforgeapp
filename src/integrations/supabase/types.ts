@@ -618,6 +618,48 @@ export type Database = {
           },
         ]
       }
+      explore_programs: {
+        Row: {
+          created_at: string
+          description: string | null
+          gradient: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          label: string | null
+          order_index: number
+          program_tab: string
+          redirect_url: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          gradient?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          label?: string | null
+          order_index?: number
+          program_tab?: string
+          redirect_url?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          gradient?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          label?: string | null
+          order_index?: number
+          program_tab?: string
+          redirect_url?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       forge_equipment: {
         Row: {
           brand: string
