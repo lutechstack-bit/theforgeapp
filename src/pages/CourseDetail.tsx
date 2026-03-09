@@ -20,6 +20,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDurationFromMinutes } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface LearnContent {

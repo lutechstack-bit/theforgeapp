@@ -56,7 +56,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         {/* Duration Badge - Top Right */}
         {durationMinutes && (
           <div className="absolute top-3 right-3 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-md text-xs font-medium text-white">
-            {formatDuration(durationMinutes)}
+            {formatDurationFromMinutes(durationMinutes)}
           </div>
         )}
 

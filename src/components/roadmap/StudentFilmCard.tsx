@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDurationFromMinutes } from '@/lib/utils';
 import { Play, Clock, ExternalLink, Award } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 

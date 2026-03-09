@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDurationFromMinutes } from '@/lib/utils';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { SecureVideoPlayer } from './SecureVideoPlayer';
 import { Download, FileText, ExternalLink } from 'lucide-react';
