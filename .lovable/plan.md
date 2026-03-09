@@ -1,29 +1,32 @@
 
+## Replace Program Banner Images
 
-# Duration Picker with Arrow Controls
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## Change
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-Replace the single text input for duration (lines 561-587 in `AdminLearn.tsx`) with a three-field picker showing **Hours**, **Minutes**, and **Seconds** side by side, each with up/down arrow buttons.
+### Changes
 
-### File: `src/pages/admin/AdminLearn.tsx` (lines 561-587)
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-Replace the current duration input block with:
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-- Three inline segments: **H**, **M**, **S** — each with a numeric input and `ChevronUp` / `ChevronDown` buttons
-- Derive `h`, `m`, `s` from `form.duration_minutes * 60` (total seconds)
-- Each arrow click increments/decrements by 1, clamped: hours 0–60, minutes 0–59, seconds 0–59
-- On any change, recompute `totalMins = h * 60 + m + (s >= 30 ? 1 : 0)` and update `form.duration_minutes`
-- Styled compactly to fit in the existing grid column with labels "H", "M", "S" below each segment
-- Import `ChevronUp`, `ChevronDown` from `lucide-react` (likely already imported)
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
-Visual layout per segment:
-```text
-  [▲]
- [ 05 ]
-  [▼]
-   M
-```
-
-All three segments sit horizontally under the "Duration" label.
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 

@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, BookOpen, Sparkles, FileUp, Download, Play, Users, AlertTriangle, Link, Upload, GripVertical } from 'lucide-react';
+import { Plus, Pencil, Trash2, BookOpen, Sparkles, FileUp, Download, Play, Users, AlertTriangle, Link, Upload, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileUpload } from '@/components/admin/FileUpload';
 
@@ -559,32 +559,49 @@ const AdminLearn: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="duration_minutes">Duration (H:MM:SS)</Label>
-                    <Input
-                      id="duration_minutes"
-                      type="text"
-                      placeholder="0:05:30"
-                      value={(() => {
-                        const totalSecs = (form.duration_minutes || 0) * 60;
-                        const h = Math.floor(totalSecs / 3600);
-                        const m = Math.floor((totalSecs % 3600) / 60);
-                        const s = totalSecs % 60;
-                        return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-                      })()}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/[^0-9:]/g, '');
-                        const parts = val.split(':').map(p => parseInt(p) || 0);
-                        let totalMins = 0;
-                        if (parts.length === 3) {
-                          totalMins = parts[0] * 60 + parts[1] + (parts[2] >= 30 ? 1 : 0);
-                        } else if (parts.length === 2) {
-                          totalMins = parts[0] * 60 + parts[1];
-                        } else if (parts.length === 1) {
-                          totalMins = parts[0];
-                        }
+                    <Label>Duration</Label>
+                    {(() => {
+                      const totalSecs = (form.duration_minutes || 0) * 60;
+                      const h = Math.floor(totalSecs / 3600);
+                      const m = Math.floor((totalSecs % 3600) / 60);
+                      const s = totalSecs % 60;
+                      const updateDuration = (newH: number, newM: number, newS: number) => {
+                        const clampedH = Math.max(0, Math.min(60, newH));
+                        const clampedM = Math.max(0, Math.min(59, newM));
+                        const clampedS = Math.max(0, Math.min(59, newS));
+                        const totalMins = clampedH * 60 + clampedM + (clampedS >= 30 ? 1 : 0);
                         setForm({ ...form, duration_minutes: totalMins });
-                      }}
-                    />
+                      };
+                      const Segment = ({ value, label, max, onChange }: { value: number; label: string; max: number; onChange: (v: number) => void }) => (
+                        <div className="flex flex-col items-center gap-0.5">
+                          <button type="button" className="p-0.5 rounded hover:bg-muted transition-colors" onClick={() => onChange(Math.min(max, value + 1))}>
+                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                          </button>
+                          <Input
+                            type="text"
+                            className="w-12 h-9 text-center px-1 text-sm font-mono"
+                            value={value.toString().padStart(2, '0')}
+                            onChange={(e) => {
+                              const v = parseInt(e.target.value) || 0;
+                              onChange(Math.max(0, Math.min(max, v)));
+                            }}
+                          />
+                          <button type="button" className="p-0.5 rounded hover:bg-muted transition-colors" onClick={() => onChange(Math.max(0, value - 1))}>
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          </button>
+                          <span className="text-[10px] text-muted-foreground font-medium">{label}</span>
+                        </div>
+                      );
+                      return (
+                        <div className="flex items-center gap-1 mt-1">
+                          <Segment value={h} label="H" max={60} onChange={(v) => updateDuration(v, m, s)} />
+                          <span className="text-muted-foreground font-bold mt-[-18px]">:</span>
+                          <Segment value={m} label="M" max={59} onChange={(v) => updateDuration(h, v, s)} />
+                          <span className="text-muted-foreground font-bold mt-[-18px]">:</span>
+                          <Segment value={s} label="S" max={59} onChange={(v) => updateDuration(h, m, v)} />
+                        </div>
+                      );
+                    })()}
                   </div>
                   <div>
                     <Label htmlFor="order_index">Display Order</Label>
