@@ -23,6 +23,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['OpenSauceOne', 'sans-serif'],
+        serif: ['Cormorant Garamond', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",

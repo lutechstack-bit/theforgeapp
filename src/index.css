@@ -1009,3 +1009,19 @@
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Bento Profile Animations */
+@keyframes heroShift {
+  0% { filter: brightness(1) saturate(1); }
+  100% { filter: brightness(1.08) saturate(1.15); }
+}
+
+@keyframes tileIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bento-tile-animate {
+  opacity: 0;
+  animation: tileIn 0.45s ease forwards;
+}
