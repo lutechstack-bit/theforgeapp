@@ -1,32 +1,50 @@
 
-## Replace Program Banner Images
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+# Add "Explore Other Programs" Admin Tab
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+## What we're building
+A new **"Explore Other Programs"** tab in the Admin Learn page that lets you manage program banners (both Online and Offline) with image upload and redirect URL fields. This replaces the currently hardcoded program data on the Learn page.
 
-### Changes
+## Database
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+### New table: `explore_programs`
+| Column | Type | Purpose |
+|--------|------|---------|
+| id | uuid PK | |
+| title | text | Program name (e.g. "Forge Writing") |
+| description | text | Short description |
+| label | text | Top label (e.g. "FORGE RESIDENCY") |
+| image_url | text | Uploaded banner image |
+| redirect_url | text | External link |
+| gradient | text | Fallback CSS gradient if no image |
+| program_tab | text | `'online'` or `'offline'` |
+| order_index | int | Sort order |
+| is_active | boolean | Show/hide toggle |
+| created_at | timestamptz | |
 
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+RLS: Read for authenticated, write for admins (using `has_role`).
 
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+## Admin Changes (`src/pages/admin/AdminLearn.tsx`)
 
-| File | Change |
-|------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+Add a third tab **"Explore Programs"** next to Community Sessions and Pre Forge Sessions.
+
+The tab content shows:
+- Sub-toggle: **Online Programs** / **Offline Residencies** (filters by `program_tab`)
+- A simple card list showing each program with thumbnail, title, redirect URL
+- **Add Program** button opens a dialog with:
+  - Title, Description, Label inputs
+  - Image upload (using existing `FileUpload` component to `learn-thumbnails` bucket)
+  - Redirect URL input
+  - Online/Offline select
+  - Order index
+- Edit/Delete actions per card
+
+## Frontend Changes (`src/pages/Learn.tsx`)
+
+Replace the hardcoded `forgeResidencies` array and hardcoded `ProgramBanner` components with a query to `explore_programs` table, filtered by `program_tab` matching the current toggle state and `is_active = true`.
+
+## Files changed
+1. **Migration SQL** — create `explore_programs` table + RLS policies
+2. **`src/pages/admin/AdminLearn.tsx`** — add "Explore Programs" tab with CRUD UI
+3. **`src/pages/Learn.tsx`** — replace hardcoded programs with DB query
 
