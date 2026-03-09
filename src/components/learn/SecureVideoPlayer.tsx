@@ -14,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import VimeoPlayer from '@vimeo/player';
 
 interface SecureVideoPlayerProps {
   videoUrl: string;
