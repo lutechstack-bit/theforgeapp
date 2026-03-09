@@ -62,11 +62,11 @@ const Home: React.FC = () => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  const isAnyError = studentWorksQuery.isError;
-  const isAnyLoading = studentWorksQuery.isLoading;
+  const isAnyError = alumniShowcaseQuery.isError;
+  const isAnyLoading = alumniShowcaseQuery.isLoading;
 
   const failedQueries = [
-    studentWorksQuery.isError && { name: 'Student Works', error: studentWorksQuery.error as Error },
+    alumniShowcaseQuery.isError && { name: 'Alumni Showcase', error: alumniShowcaseQuery.error as Error },
   ].filter(Boolean) as { name: string; error: Error }[];
 
   // Loading timeout
