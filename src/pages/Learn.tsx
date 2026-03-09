@@ -52,32 +52,7 @@ interface WatchProgress {
   completed: boolean;
 }
 
-const forgeResidencies = [
-  {
-    cohortType: 'FORGE',
-    title: 'Forge Filmmaking',
-    description: 'An intensive residential filmmaking program — script to screen in 10 days.',
-    ctaUrl: 'https://www.forgebylevelup.com/',
-    gradient: 'linear-gradient(135deg, hsl(20,60%,22%) 0%, hsl(35,50%,28%) 100%)',
-    imageUrl: '/images/programs/forge-filmmaking.png',
-  },
-  {
-    cohortType: 'FORGE_WRITING',
-    title: 'Forge Writing',
-    description: 'A residential writing retreat to sharpen your screenwriting craft.',
-    ctaUrl: 'https://www.forgebylevelup.com/writingresidency',
-    gradient: 'linear-gradient(135deg, hsl(180,40%,20%) 0%, hsl(200,50%,28%) 100%)',
-    imageUrl: undefined,
-  },
-  {
-    cohortType: 'FORGE_CREATORS',
-    title: 'Forge Creators',
-    description: 'A residential program for digital creators to level up content & storytelling.',
-    ctaUrl: 'https://creators.forgebylevelup.com/',
-    gradient: 'linear-gradient(135deg, hsl(280,50%,22%) 0%, hsl(310,40%,30%) 100%)',
-    imageUrl: undefined,
-  },
-];
+// forgeResidencies removed — now fetched from explore_programs table
 
 const Learn: React.FC = () => {
   const navigate = useNavigate();
