@@ -286,6 +286,19 @@ const AdminLearn: React.FC = () => {
     },
   });
 
+  // Fetch alumni showcase
+  const { data: showcaseItems = [], isLoading: isShowcaseLoading } = useQuery({
+    queryKey: ['admin-alumni-showcase'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('alumni_showcase')
+        .select('*')
+        .order('order_index', { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Create/Update content mutation
   const saveMutation = useMutation({
     mutationFn: async (data: LearnContentForm) => {
