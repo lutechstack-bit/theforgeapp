@@ -1,32 +1,24 @@
 
-## Replace Program Banner Images
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+# Fix Venue Edition Filtering & Empty State
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+## Changes
 
-### Changes
+### 1. `src/components/home/TravelStaySection.tsx` — Filter by user's edition
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+Update the query to first check `stay_location_editions` for the user's edition, then fetch only matching `stay_locations`. Follow the same pattern already used in `RoadmapSidebar.tsx` (lines 147-151).
 
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+- Add `edition?.id` to the query key: `['home_stay_locations', edition?.id]`
+- If `edition?.id` exists: query `stay_location_editions` filtered by `edition_id`, get the `stay_location_id` list, then fetch those from `stay_locations`
+- If no edition or no edition-specific mappings: fall back to fetching all active locations (current behavior)
 
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+### 2. `src/pages/Home.tsx` (line 207) — Gate empty state on alumni section
 
-| File | Change |
-|------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+Add `alumniSection &&` to the condition so "Content Coming Soon" only renders when the alumni section is enabled:
+
+```
+{alumniSection && !loadingTimedOut && studentWorksQuery.isFetched && displayAlumni.length === 0 && !isAnyError && (
+```
+
+No database or backend changes needed.
 
