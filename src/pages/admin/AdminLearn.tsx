@@ -559,13 +559,31 @@ const AdminLearn: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="duration_minutes">Duration (minutes)</Label>
+                    <Label htmlFor="duration_minutes">Duration (H:MM:SS)</Label>
                     <Input
                       id="duration_minutes"
-                      type="number"
-                      value={form.duration_minutes}
-                      onChange={(e) => setForm({ ...form, duration_minutes: parseInt(e.target.value) || 0 })}
-                      min={0}
+                      type="text"
+                      placeholder="0:05:30"
+                      value={(() => {
+                        const totalSecs = (form.duration_minutes || 0) * 60;
+                        const h = Math.floor(totalSecs / 3600);
+                        const m = Math.floor((totalSecs % 3600) / 60);
+                        const s = totalSecs % 60;
+                        return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                      })()}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9:]/g, '');
+                        const parts = val.split(':').map(p => parseInt(p) || 0);
+                        let totalMins = 0;
+                        if (parts.length === 3) {
+                          totalMins = parts[0] * 60 + parts[1] + (parts[2] >= 30 ? 1 : 0);
+                        } else if (parts.length === 2) {
+                          totalMins = parts[0] * 60 + parts[1];
+                        } else if (parts.length === 1) {
+                          totalMins = parts[0];
+                        }
+                        setForm({ ...form, duration_minutes: totalMins });
+                      }}
                     />
                   </div>
                   <div>
@@ -701,7 +719,11 @@ const AdminLearn: React.FC = () => {
                         </span>
                       </TableCell>
                       <TableCell>
-                        {item.duration_minutes ? `${item.duration_minutes} min` : '-'}
+                        {item.duration_minutes ? (() => {
+                          const h = Math.floor(item.duration_minutes / 60);
+                          const m = item.duration_minutes % 60;
+                          return h > 0 ? `${h}h ${m}m` : `${m}m`;
+                        })() : '-'}
                       </TableCell>
                       <TableCell>
                         {item.is_premium ? (
