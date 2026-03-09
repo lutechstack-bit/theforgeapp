@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -745,14 +746,23 @@ const AdminLearn: React.FC = () => {
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
-                          <div
-                            draggable
-                            onDragStart={() => setDragIndex(idx)}
-                            onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
-                            className="cursor-grab active:cursor-grabbing p-1.5 rounded hover:bg-muted transition-colors"
-                          >
-                            <GripVertical className="h-4 w-4 text-muted-foreground" />
-                          </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div
+                                  draggable
+                                  onDragStart={() => setDragIndex(idx)}
+                                  onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                                  className="cursor-grab active:cursor-grabbing p-1.5 rounded hover:bg-muted transition-colors"
+                                >
+                                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">
+                                <p>Drag to reorder</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       </TableCell>
                     </TableRow>

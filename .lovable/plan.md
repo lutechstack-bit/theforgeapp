@@ -1,15 +1,32 @@
 
+## Replace Program Banner Images
 
-# Add Tooltip to Reorder Button in Admin Learn
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## Change
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-Wrap the `GripVertical` drag handle div in `AdminLearn.tsx` (line 748-755) with a `Tooltip` component showing "Drag to reorder" on hover.
+### Changes
 
-**File: `src/pages/admin/AdminLearn.tsx`**
-- Import `Tooltip, TooltipTrigger, TooltipContent, TooltipProvider` from `@/components/ui/tooltip`
-- Wrap the existing drag handle `<div>` with `<Tooltip>` + `<TooltipTrigger asChild>` and add a `<TooltipContent>` with text "Drag to reorder"
-- Ensure the parent or page has a `<TooltipProvider>` wrapping the content
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-Single file, ~5 lines changed.
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 
