@@ -35,7 +35,7 @@ export const BentoWorksTile: React.FC<BentoWorksTileProps> = ({
               onClick={() => isOwner && onEditWork(work)}
             >
               <div className="text-[10px] font-mono uppercase text-muted-foreground tracking-wider mb-1">
-                {work.work_type || 'Project'} · {work.status || 'In Progress'}
+                {work.type || 'Project'}
               </div>
               <div className="text-sm font-medium text-foreground mb-1 truncate">{work.title}</div>
               {work.description && (
