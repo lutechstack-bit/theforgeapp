@@ -412,6 +412,46 @@ const AdminLearn: React.FC = () => {
     },
   });
 
+  // Alumni Showcase mutations
+  const saveShowcaseMutation = useMutation({
+    mutationFn: async (data: AlumniShowcaseForm) => {
+      if (editingShowcaseId) {
+        const { error } = await supabase
+          .from('alumni_showcase')
+          .update(data)
+          .eq('id', editingShowcaseId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('alumni_showcase').insert(data);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-alumni-showcase'] });
+      queryClient.invalidateQueries({ queryKey: ['alumni-showcase'] });
+      toast.success(editingShowcaseId ? 'Showcase updated' : 'Showcase item created');
+      resetShowcaseForm();
+    },
+    onError: (error) => {
+      toast.error('Failed to save showcase: ' + error.message);
+    },
+  });
+
+  const deleteShowcaseMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('alumni_showcase').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-alumni-showcase'] });
+      queryClient.invalidateQueries({ queryKey: ['alumni-showcase'] });
+      toast.success('Showcase item deleted');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete showcase: ' + error.message);
+    },
+  });
+
   const resetForm = () => {
     setForm(initialForm);
     videoUrlRef.current = '';
