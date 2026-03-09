@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Edit2 } from 'lucide-react';
+import { Edit2 } from 'lucide-react';
 
 interface BentoProfileHeroProps {
   profile: any;
@@ -7,13 +7,6 @@ interface BentoProfileHeroProps {
   isOwner?: boolean;
   onEdit?: () => void;
 }
-
-const MBTI_NAMES: Record<string, string> = {
-  INFJ: 'The Advocate', INFP: 'The Mediator', INTJ: 'The Architect', INTP: 'The Logician',
-  ISFJ: 'The Defender', ISFP: 'The Adventurer', ISTJ: 'The Logistician', ISTP: 'The Virtuoso',
-  ENFJ: 'The Protagonist', ENFP: 'The Campaigner', ENTJ: 'The Commander', ENTP: 'The Debater',
-  ESFJ: 'The Consul', ESFP: 'The Entertainer', ESTJ: 'The Executive', ESTP: 'The Entrepreneur',
-};
 
 const getCohortLabel = (edition: any) => {
   if (!edition) return null;
@@ -43,7 +36,7 @@ export const BentoProfileHero: React.FC<BentoProfileHeroProps> = ({
   const restName = nameParts.slice(1).join(' ');
 
   return (
-    <div className="relative h-[420px] sm:h-[480px] lg:h-[520px] overflow-hidden rounded-none -mx-4 sm:-mx-6 md:mx-0 md:rounded-2xl">
+    <div className="relative h-[320px] sm:h-[360px] lg:h-[400px] overflow-hidden rounded-none -mx-4 sm:-mx-6 md:mx-0 md:rounded-2xl">
       {/* Animated layered background */}
       <div
         className="absolute inset-0 animate-[heroShift_12s_ease-in-out_infinite_alternate]"
@@ -110,7 +103,7 @@ export const BentoProfileHero: React.FC<BentoProfileHeroProps> = ({
               className="w-full h-full object-cover rounded-full"
             />
           ) : (
-            <span className="font-serif text-4xl sm:text-5xl font-semibold text-primary">
+            <span className="text-4xl sm:text-5xl font-semibold text-primary">
               {getInitials(fullName)}
             </span>
           )}
@@ -124,19 +117,19 @@ export const BentoProfileHero: React.FC<BentoProfileHeroProps> = ({
         {/* Identity */}
         <div className="flex flex-col items-center gap-2.5">
           {cohortLabel && (
-            <div className="flex items-center gap-2 font-mono text-[9px] tracking-[3px] uppercase text-primary">
+            <div className="flex items-center gap-2 text-[10px] tracking-[2px] uppercase text-primary font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               {cohortLabel}
             </div>
           )}
 
-          <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl font-light leading-[0.9] tracking-tighter text-foreground">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[0.95] tracking-tight text-foreground">
             {firstName}
-            {restName && <em className="text-primary"> {restName}</em>}
+            {restName && <span className="text-primary"> {restName}</span>}
           </h1>
 
           {profile?.tagline && (
-            <p className="text-sm text-muted-foreground italic max-w-md">
+            <p className="text-sm text-muted-foreground max-w-md">
               "{profile.tagline}"
             </p>
           )}

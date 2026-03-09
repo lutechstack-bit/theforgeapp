@@ -27,20 +27,20 @@ export const BentoMBTITile: React.FC<BentoMBTITileProps> = ({ mbtiType, onEdit }
     <BentoTile
       label="Personality"
       icon="◬"
-      className="col-span-full md:col-span-5 row-span-4"
+      className="col-span-full md:col-span-5"
       onEdit={onEdit}
       animationDelay={0.16}
     >
       {type ? (
         <div>
-          <div className="font-serif text-5xl sm:text-6xl font-bold text-primary tracking-tighter leading-none mb-2">
+          <div className="text-4xl sm:text-5xl font-bold text-primary tracking-tighter leading-none mb-2">
             {type}
           </div>
           {name && <div className="text-sm text-foreground mb-1">{name}</div>}
           {traits && <div className="text-xs text-muted-foreground">{traits}</div>}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground/50 italic">MBTI type not set</p>
+        <p className="text-sm text-muted-foreground/50">MBTI type not set</p>
       )}
     </BentoTile>
   );

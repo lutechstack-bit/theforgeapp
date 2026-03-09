@@ -25,14 +25,14 @@ export const BentoInfluencesTile: React.FC<BentoInfluencesTileProps> = ({
     <BentoTile
       label="Influences"
       icon="◻"
-      className="col-span-full md:col-span-5 row-span-3"
+      className="col-span-full md:col-span-5"
       onEdit={onEdit}
       animationDelay={0.24}
     >
       <div className="space-y-4">
         {items && items.length > 0 && (
           <div>
-            <div className="font-mono text-[8px] tracking-[2px] uppercase text-muted-foreground mb-2">
+            <div className="text-[10px] tracking-[1.5px] uppercase text-muted-foreground font-medium mb-2">
               {isFilmmaking ? 'Top 3 Movies' : 'Top 3 Writers / Books'}
             </div>
             <div className="flex flex-wrap gap-2">
@@ -50,7 +50,7 @@ export const BentoInfluencesTile: React.FC<BentoInfluencesTileProps> = ({
 
         {chronotype && (
           <div className="flex flex-col gap-0.5">
-            <span className="font-mono text-[8px] tracking-[2px] uppercase text-muted-foreground">Chronotype</span>
+            <span className="text-[10px] tracking-[1.5px] uppercase text-muted-foreground font-medium">Chronotype</span>
             <span className="text-[13px] text-foreground">
               {chronotype.toLowerCase().includes('night') ? '🌙' : '☀️'} {chronotype}
             </span>
@@ -58,7 +58,7 @@ export const BentoInfluencesTile: React.FC<BentoInfluencesTileProps> = ({
         )}
 
         {!items?.length && !chronotype && (
-          <p className="text-sm text-muted-foreground/50 italic">Complete your KY form to see influences</p>
+          <p className="text-sm text-muted-foreground/50">Complete your KY form to see influences</p>
         )}
       </div>
     </BentoTile>
