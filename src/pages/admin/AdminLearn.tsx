@@ -590,6 +590,7 @@ const AdminLearn: React.FC = () => {
 
   const filteredContent = content?.filter(c => c.section_type === activeTab) || [];
   const filteredPrograms = explorePrograms.filter(p => p.program_tab === programSubTab);
+  const filteredShowcase = showcaseItems.filter((s: any) => s.cohort_type === showcaseSubTab);
 
   return (
     <div className="p-8">
