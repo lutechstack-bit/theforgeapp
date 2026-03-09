@@ -1,5 +1,6 @@
 import React from 'react';
 import { Play, Lock } from 'lucide-react';
+import { formatDurationFromMinutes } from '@/lib/utils';
 import { VideoProgressBar } from './VideoProgressBar';
 
 interface CourseCardProps {
