@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useseRef } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,8 +17,7 @@ import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
 import { useTodaysFocus } from '@/hooks/useTodaysFocus';
 import { useHomepageSections } from '@/hooks/useHomepageSections';
 import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
-import { Users } from 'lucide-react';
-import { promiseWithTimeout, isTimeoutError } from '@/lib/promiseTimeout';
+import {  promiseWithTimeout, isTimeoutError } from '@/lib/promiseTimeout';
 
 const QUERY_TIMEOUT = 12000;
 
