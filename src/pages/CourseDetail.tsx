@@ -446,13 +446,6 @@ const CourseDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Unlock Modal */}
-      <UnlockModal
-        open={showUnlockModal}
-        onOpenChange={setShowUnlockModal}
-        title="Unlock Premium Content"
-        description="This content is available to fully onboarded members. Complete your balance payment to access all exclusive videos, sessions, and resources."
-      />
     </div>
   );
 };
