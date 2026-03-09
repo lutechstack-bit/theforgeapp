@@ -177,7 +177,15 @@ const Home: React.FC = () => {
               title={alumniSection.title}
               subtitle={alumniSection.subtitle || undefined}
             />
-          )
+          )}
+
+          {/* 7. Travel & Stay */}
+          {travelStaySection && !loadingTimedOut && (
+            <TravelStaySection
+              title={travelStaySection.title}
+              subtitle={travelStaySection.subtitle || undefined}
+            />
+          )}
         </div>
       </div>
 
