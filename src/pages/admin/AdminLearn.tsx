@@ -136,6 +136,42 @@ const AdminLearn: React.FC = () => {
   const [form, setForm] = useState<LearnContentForm>(initialForm);
   const [resourceForm, setResourceForm] = useState<ResourceForm>(initialResourceForm);
   const [activeTab, setActiveTab] = useState('community_sessions');
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  // Reorder mutation
+  const reorderMutation = useMutation({
+    mutationFn: async (reordered: { id: string; order_index: number }[]) => {
+      await Promise.all(
+        reordered.map((item) =>
+          supabase.from('learn_content').update({ order_index: item.order_index }).eq('id', item.id)
+        )
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-learn-content'] });
+      queryClient.invalidateQueries({ queryKey: ['learn_content'] });
+      toast.success('Order updated');
+    },
+    onError: (error) => {
+      toast.error('Failed to reorder: ' + error.message);
+    },
+  });
+
+  const handleDrop = (dropIdx: number) => {
+    if (dragIndex === null || dragIndex === dropIdx) {
+      setDragIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+    const items = [...filteredContent];
+    const [moved] = items.splice(dragIndex, 1);
+    items.splice(dropIdx, 0, moved);
+    const updates = items.map((item, idx) => ({ id: item.id, order_index: idx }));
+    reorderMutation.mutate(updates);
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
 
   // Fetch learn content
   const { data: content, isLoading } = useQuery({
