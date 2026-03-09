@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SecureVideoPlayer } from '@/components/learn/SecureVideoPlayer';
 import { ContentSidebar } from '@/components/learn/ContentSidebar';
-import { UnlockModal } from '@/components/shared/UnlockModal';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   ArrowLeft, 
