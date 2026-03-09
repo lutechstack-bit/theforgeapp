@@ -1045,9 +1045,270 @@ const AdminLearn: React.FC = () => {
             )}
           </div>
         </TabsContent>
+
+        {/* Alumni Showcase Tab */}
+        <TabsContent value="alumni_showcase">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex gap-1 p-1 rounded-full bg-card border border-border/30 w-fit">
+                {(['FORGE', 'FORGE_WRITING', 'FORGE_CREATORS'] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setShowcaseSubTab(tab)}
+                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                      showcaseSubTab === tab
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {tab === 'FORGE' ? 'Filmmaking' : tab === 'FORGE_WRITING' ? 'Writing' : 'Creators'}
+                  </button>
+                ))}
+              </div>
+              <Button onClick={() => {
+                resetShowcaseForm();
+                setShowcaseForm({
+                  ...initialShowcaseForm,
+                  cohort_type: showcaseSubTab,
+                  media_type: cohortMediaDefaults[showcaseSubTab],
+                });
+                setIsShowcaseDialogOpen(true);
+              }}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Item
+              </Button>
+            </div>
+
+            {isShowcaseLoading ? (
+              <div className="text-center py-12 text-muted-foreground">Loading showcase...</div>
+            ) : filteredShowcase.length === 0 ? (
+              <div className="text-center py-12 glass-card rounded-xl">
+                <Film className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">No showcase items yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Add {showcaseSubTab === 'FORGE' ? 'videos' : showcaseSubTab === 'FORGE_WRITING' ? 'images' : 'reels'} for this cohort
+                </p>
+                <Button onClick={() => {
+                  resetShowcaseForm();
+                  setShowcaseForm({
+                    ...initialShowcaseForm,
+                    cohort_type: showcaseSubTab,
+                    media_type: cohortMediaDefaults[showcaseSubTab],
+                  });
+                  setIsShowcaseDialogOpen(true);
+                }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Item
+                </Button>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {filteredShowcase.map((item: any) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-card/50"
+                  >
+                    {item.media_url || item.thumbnail_url ? (
+                      <img
+                        src={item.thumbnail_url || item.media_url}
+                        alt={item.title}
+                        className={`rounded-lg object-cover flex-shrink-0 ${
+                          item.media_type === 'image' ? 'w-16 h-24' : item.media_type === 'reel' ? 'w-14 h-24' : 'w-32 h-20'
+                        }`}
+                      />
+                    ) : (
+                      <div className="w-32 h-20 rounded-lg flex-shrink-0 flex items-center justify-center bg-secondary">
+                        {item.media_type === 'image' ? <Image className="h-6 w-6 text-muted-foreground" /> : <Play className="h-6 w-6 text-muted-foreground" />}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-foreground truncate">{item.title}</h3>
+                        {!item.is_active && (
+                          <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-xs">Hidden</span>
+                        )}
+                        <span className="px-2 py-0.5 rounded-full bg-secondary text-foreground text-xs capitalize">{item.media_type}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-0.5">by {item.author_name}</p>
+                      {item.description && <p className="text-xs text-muted-foreground truncate mt-1">{item.description}</p>}
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Button variant="ghost" size="icon" onClick={() => handleEditShowcase(item)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          if (confirm('Delete this showcase item?')) deleteShowcaseMutation.mutate(item.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </TabsContent>
       </Tabs>
 
-      {/* Explore Program Dialog */}
+      {/* Alumni Showcase Dialog */}
+      <Dialog open={isShowcaseDialogOpen} onOpenChange={setIsShowcaseDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>{editingShowcaseId ? 'Edit Showcase Item' : 'Add Showcase Item'}</DialogTitle>
+            <DialogDescription>
+              {showcaseForm.media_type === 'image' ? 'Upload an image for the writing showcase' : 'Add a video/reel for the showcase'}
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[70vh] pr-4">
+            <form onSubmit={handleShowcaseSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="sc_title">Title *</Label>
+                <Input
+                  id="sc_title"
+                  value={showcaseForm.title}
+                  onChange={(e) => setShowcaseForm({ ...showcaseForm, title: e.target.value })}
+                  placeholder="e.g. Ocean Eyes, Starry Skies"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="sc_author">Author Name *</Label>
+                <Input
+                  id="sc_author"
+                  value={showcaseForm.author_name}
+                  onChange={(e) => setShowcaseForm({ ...showcaseForm, author_name: e.target.value })}
+                  placeholder="e.g. Ishwariya"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="sc_description">Description</Label>
+                <Input
+                  id="sc_description"
+                  value={showcaseForm.description}
+                  onChange={(e) => setShowcaseForm({ ...showcaseForm, description: e.target.value })}
+                  placeholder="Optional subtitle or achievement"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Cohort Type</Label>
+                  <Select
+                    value={showcaseForm.cohort_type}
+                    onValueChange={(v) => {
+                      const ct = v as 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS';
+                      setShowcaseForm({
+                        ...showcaseForm,
+                        cohort_type: ct,
+                        media_type: cohortMediaDefaults[ct],
+                      });
+                    }}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="FORGE">Filmmaking</SelectItem>
+                      <SelectItem value="FORGE_WRITING">Writing</SelectItem>
+                      <SelectItem value="FORGE_CREATORS">Creators</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Media Type</Label>
+                  <Select
+                    value={showcaseForm.media_type}
+                    onValueChange={(v) => setShowcaseForm({ ...showcaseForm, media_type: v as 'video' | 'image' | 'reel' })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="video">Video (Landscape)</SelectItem>
+                      <SelectItem value="image">Image (Portrait)</SelectItem>
+                      <SelectItem value="reel">Reel (Vertical Video)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Media Upload */}
+              <FileUpload
+                bucket="learn-thumbnails"
+                accept={showcaseForm.media_type === 'image' ? 'image/*' : 'image/*,video/*'}
+                maxSizeMB={showcaseForm.media_type === 'image' ? 10 : 100}
+                label={showcaseForm.media_type === 'image' ? 'Image' : 'Media / Thumbnail'}
+                helperText={
+                  showcaseForm.media_type === 'image'
+                    ? 'Upload a portrait image (book cover style)'
+                    : 'Upload a thumbnail image for the video'
+                }
+                currentUrl={showcaseForm.media_type === 'image' ? showcaseForm.media_url : showcaseForm.thumbnail_url}
+                onUploadComplete={(url) => {
+                  if (showcaseForm.media_type === 'image') {
+                    setShowcaseForm(prev => ({ ...prev, media_url: url }));
+                  } else {
+                    setShowcaseForm(prev => ({ ...prev, thumbnail_url: url }));
+                  }
+                }}
+              />
+
+              {showcaseForm.media_type !== 'image' && (
+                <div>
+                  <Label htmlFor="sc_media_url">Video URL (YouTube/Vimeo embed)</Label>
+                  <Input
+                    id="sc_media_url"
+                    value={showcaseForm.media_url}
+                    onChange={(e) => setShowcaseForm({ ...showcaseForm, media_url: e.target.value })}
+                    placeholder="https://www.youtube.com/embed/..."
+                  />
+                </div>
+              )}
+
+              <div>
+                <Label htmlFor="sc_redirect">Redirect URL (optional)</Label>
+                <Input
+                  id="sc_redirect"
+                  value={showcaseForm.redirect_url}
+                  onChange={(e) => setShowcaseForm({ ...showcaseForm, redirect_url: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="sc_order">Display Order</Label>
+                  <Input
+                    id="sc_order"
+                    type="number"
+                    value={showcaseForm.order_index}
+                    onChange={(e) => setShowcaseForm({ ...showcaseForm, order_index: parseInt(e.target.value) || 0 })}
+                    min={0}
+                  />
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                  <Switch
+                    id="sc_active"
+                    checked={showcaseForm.is_active}
+                    onCheckedChange={(checked) => setShowcaseForm({ ...showcaseForm, is_active: checked })}
+                  />
+                  <Label htmlFor="sc_active" className="font-medium">Active</Label>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                <Button type="button" variant="outline" onClick={resetShowcaseForm}>Cancel</Button>
+                <Button type="submit" disabled={saveShowcaseMutation.isPending}>
+                  {saveShowcaseMutation.isPending ? 'Saving...' : editingShowcaseId ? 'Update' : 'Create'}
+                </Button>
+              </div>
+            </form>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
       <Dialog open={isProgramDialogOpen} onOpenChange={setIsProgramDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh]">
           <DialogHeader>
