@@ -492,82 +492,18 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
       );
     }
 
-    // Build Vimeo embed URL with full controls (title=0 to hide video name)
-    let embedUrl = `https://player.vimeo.com/video/${vimeoData.videoId}?autoplay=0&controls=1&title=0&byline=0&portrait=0&pip=1&dnt=1`;
-    if (vimeoData.hash) {
-      embedUrl += `&h=${vimeoData.hash}`;
-    }
-
-    const handleVimeoFullscreen = async () => {
-      try {
-        // If already in fullscreen, exit
-        if (document.fullscreenElement) {
-          await document.exitFullscreen();
-          return;
-        }
-        
-        const iframe = vimeoIframeRef.current;
-        const container = vimeoContainerRef.current;
-        
-        // Try iframe fullscreen first (preferred for Vimeo)
-        if (iframe) {
-          if (iframe.requestFullscreen) {
-            await iframe.requestFullscreen();
-            return;
-          }
-          // iOS Safari / WebView fallback
-          if ((iframe as any).webkitRequestFullscreen) {
-            (iframe as any).webkitRequestFullscreen();
-            return;
-          }
-        }
-        
-        // Fallback to container fullscreen
-        if (container) {
-          if (container.requestFullscreen) {
-            await container.requestFullscreen();
-            return;
-          }
-          // iOS Safari / WebView fallback for container
-          if ((container as any).webkitRequestFullscreen) {
-            (container as any).webkitRequestFullscreen();
-            return;
-          }
-        }
-        
-        // If we get here, no fullscreen method worked
-        toast.error("Fullscreen isn't available. Try opening in Safari or Chrome.");
-      } catch (err) {
-        console.warn('[SecureVideoPlayer] Vimeo fullscreen failed:', err);
-        toast.error("Fullscreen isn't available in this browser. Try opening in Safari or Chrome.");
-      }
-    };
-
     return (
-      <div 
-        ref={vimeoContainerRef}
-        className={cn("vimeo-container relative bg-black rounded-2xl overflow-hidden aspect-video group", className)}
-      >
-        <iframe
-          ref={vimeoIframeRef}
-          src={embedUrl}
-          className="absolute inset-0 w-full h-full"
-          frameBorder="0"
-          allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
-          allowFullScreen
-          // @ts-ignore - Legacy attributes for iOS Safari and WebViews
-          webkitallowfullscreen="true"
-          mozallowfullscreen="true"
-          title={title}
-        />
-        <button
-          onClick={handleVimeoFullscreen}
-          className="absolute bottom-4 right-4 p-2.5 md:p-2 bg-black/50 md:bg-black/60 hover:bg-black/80 rounded-lg text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10"
-          title="Toggle Fullscreen"
-        >
-          <Maximize className="w-5 h-5" />
-        </button>
-      </div>
+      <VimeoEmbedPlayer
+        vimeoData={vimeoData}
+        title={title}
+        thumbnailUrl={thumbnailUrl}
+        className={className}
+        currentTimeRef={currentTimeRef}
+        durationRef={durationRef}
+        isPlayingRef={isPlayingRef}
+        watchTimeRef={watchTimeRef}
+        onVideoEnd={onVideoEnd}
+      />
     );
   }
 
