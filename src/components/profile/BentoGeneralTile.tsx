@@ -9,8 +9,8 @@ interface BentoGeneralTileProps {
 
 const InfoRow: React.FC<{ label: string; value?: string | null; gold?: boolean }> = ({ label, value, gold }) => (
   <div className="flex flex-col gap-0.5 mb-3 last:mb-0">
-    <span className="font-mono text-[8px] tracking-[2px] uppercase text-muted-foreground">{label}</span>
-    <span className={`text-[13.5px] font-normal ${value ? (gold ? 'text-primary font-medium' : 'text-foreground') : 'text-muted-foreground/50 italic'}`}>
+    <span className="text-[10px] tracking-[1.5px] uppercase text-muted-foreground font-medium">{label}</span>
+    <span className={`text-[13.5px] ${value ? (gold ? 'text-primary font-medium' : 'text-foreground') : 'text-muted-foreground/50'}`}>
       {value || 'Not set'}
     </span>
   </div>
@@ -21,7 +21,7 @@ export const BentoGeneralTile: React.FC<BentoGeneralTileProps> = ({ kyData, coho
     <BentoTile
       label="General Details"
       icon="◎"
-      className="col-span-full md:col-span-4 row-span-3"
+      className="col-span-full md:col-span-4"
       onEdit={onEdit}
       animationDelay={0.08}
     >

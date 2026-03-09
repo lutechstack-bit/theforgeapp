@@ -169,7 +169,7 @@ const Profile: React.FC = () => {
       </div>
 
       {/* Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-12 auto-rows-[80px] gap-3.5 px-4 sm:px-6 md:px-0">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 px-4 sm:px-6 md:px-0">
         <BentoAboutTile
           bio={profile?.bio}
           isOwner={true}

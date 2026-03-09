@@ -22,10 +22,10 @@ export const BentoShareTile: React.FC<BentoShareTileProps> = ({
     <BentoTile
       label="Share Portfolio"
       icon="⎘"
-      className="col-span-full row-span-2"
+      className="col-span-full"
       animationDelay={0.40}
     >
-      <div className="flex items-center justify-between h-full gap-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
           <div className="w-9 h-9 rounded-[10px] bg-secondary border border-primary/10 flex items-center justify-center text-base">
             {isPublic ? <Globe className="h-4 w-4 text-primary" /> : <Lock className="h-4 w-4 text-muted-foreground" />}

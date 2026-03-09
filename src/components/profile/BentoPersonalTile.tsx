@@ -9,8 +9,8 @@ interface BentoPersonalTileProps {
 
 const InfoRow: React.FC<{ label: string; value?: string | null }> = ({ label, value }) => (
   <div className="flex flex-col gap-0.5">
-    <span className="font-mono text-[8px] tracking-[2px] uppercase text-muted-foreground">{label}</span>
-    <span className={`text-[13px] ${value ? 'text-foreground' : 'text-muted-foreground/50 italic'}`}>
+    <span className="text-[10px] tracking-[1.5px] uppercase text-muted-foreground font-medium">{label}</span>
+    <span className={`text-[13px] ${value ? 'text-foreground' : 'text-muted-foreground/50'}`}>
       {value || 'Not set'}
     </span>
   </div>
@@ -25,7 +25,7 @@ export const BentoPersonalTile: React.FC<BentoPersonalTileProps> = ({ kyData, ky
     <BentoTile
       label="Personal Details"
       icon="◐"
-      className="col-span-full md:col-span-5 row-span-2"
+      className="col-span-full md:col-span-5"
       onEdit={onEdit}
       animationDelay={0.36}
     >

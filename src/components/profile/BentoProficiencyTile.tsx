@@ -24,7 +24,7 @@ const ProfRow: React.FC<{ name: string; level: string | null }> = ({ name, level
     <div>
       <div className="flex justify-between mb-1.5">
         <span className="text-[13px] text-muted-foreground">{name}</span>
-        <span className="font-mono text-[9px] text-primary">{config.label}</span>
+        <span className="text-[10px] text-primary font-medium">{config.label}</span>
       </div>
       <div className="h-[3px] bg-secondary rounded-full overflow-hidden">
         <div
@@ -52,7 +52,7 @@ export const BentoProficiencyTile: React.FC<BentoProficiencyTileProps> = ({
     <BentoTile
       label="Craft Proficiency"
       icon="◈"
-      className="col-span-full md:col-span-7 row-span-4"
+      className="col-span-full md:col-span-7"
       onEdit={onEdit}
       animationDelay={0.12}
     >
@@ -79,7 +79,7 @@ export const BentoProficiencyTile: React.FC<BentoProficiencyTileProps> = ({
           </>
         )}
         {!kyfResponse && !kywResponse && !kycResponse && (
-          <p className="text-sm text-muted-foreground/50 italic">Complete your KY form to see proficiency data</p>
+          <p className="text-sm text-muted-foreground/50">Complete your KY form to see proficiency data</p>
         )}
       </div>
     </BentoTile>

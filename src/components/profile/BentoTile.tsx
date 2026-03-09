@@ -29,8 +29,8 @@ export const BentoTile: React.FC<BentoTileProps> = ({
       style={{ animationDelay: `${animationDelay}s` }}
     >
       {/* Header */}
-      <div className="px-4 sm:px-5 py-3 sm:py-4 flex items-center justify-between border-b border-primary/10 flex-shrink-0">
-        <span className="font-mono text-[8.5px] tracking-[2.5px] uppercase text-muted-foreground flex items-center gap-2">
+      <div className="px-4 sm:px-5 py-3 flex items-center justify-between border-b border-primary/10 flex-shrink-0">
+        <span className="text-[10px] tracking-[1.5px] uppercase text-muted-foreground font-medium flex items-center gap-2">
           <span className="text-primary text-[11px]">{icon}</span>
           {label}
         </span>
@@ -45,7 +45,7 @@ export const BentoTile: React.FC<BentoTileProps> = ({
       </div>
 
       {/* Body */}
-      <div className="px-4 sm:px-5 py-3 sm:py-4 flex-1 overflow-hidden flex flex-col justify-center">
+      <div className="px-4 sm:px-5 py-4 flex-1 overflow-hidden flex flex-col justify-center">
         {children}
       </div>
     </div>

@@ -12,16 +12,16 @@ export const BentoAboutTile: React.FC<BentoAboutTileProps> = ({ bio, isOwner, on
     <BentoTile
       label="About"
       icon="✦"
-      className="col-span-full md:col-span-8 row-span-3"
+      className="col-span-full md:col-span-8"
       onEdit={isOwner ? onEdit : undefined}
       animationDelay={0.04}
     >
       {bio ? (
-        <p className="font-serif text-base sm:text-lg font-light leading-relaxed text-muted-foreground italic">
+        <p className="text-sm sm:text-base leading-relaxed text-muted-foreground">
           {bio}
         </p>
       ) : (
-        <p className="font-serif text-sm text-muted-foreground/60 italic">
+        <p className="text-sm text-muted-foreground/60">
           Add a bio to tell your story...
         </p>
       )}
