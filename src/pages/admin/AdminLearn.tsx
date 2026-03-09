@@ -726,7 +726,7 @@ const AdminLearn: React.FC = () => {
                         </Button>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -745,6 +745,14 @@ const AdminLearn: React.FC = () => {
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
+                          <div
+                            draggable
+                            onDragStart={() => setDragIndex(idx)}
+                            onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                            className="cursor-grab active:cursor-grabbing p-1.5 rounded hover:bg-muted transition-colors"
+                          >
+                            <GripVertical className="h-4 w-4 text-muted-foreground" />
+                          </div>
                         </div>
                       </TableCell>
                     </TableRow>
