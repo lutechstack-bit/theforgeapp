@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { cn, formatDurationFromMinutes } from '@/lib/utils';
 import { Play, Clock, CheckCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { VideoProgressBar } from './VideoProgressBar';
