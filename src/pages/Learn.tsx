@@ -4,6 +4,19 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
+
+interface ExploreProgram {
+  id: string;
+  title: string;
+  description: string | null;
+  label: string | null;
+  image_url: string | null;
+  redirect_url: string | null;
+  gradient: string | null;
+  program_tab: string;
+  order_index: number;
+  is_active: boolean;
+}
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { ContinueWatchingCarousel } from '@/components/learn/ContinueWatchingCarousel';
 import { UpcomingSessionsSection } from '@/components/learn/UpcomingSessionsSection';
