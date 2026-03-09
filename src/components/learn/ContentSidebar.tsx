@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { cn, formatDurationFromMinutes } from '@/lib/utils';
 import { CheckCircle2, Play, FileText } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
