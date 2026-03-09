@@ -127,6 +127,25 @@ const initialProgramForm: ExploreProgramForm = {
   is_active: true,
 };
 
+const initialShowcaseForm: AlumniShowcaseForm = {
+  title: '',
+  author_name: '',
+  cohort_type: 'FORGE',
+  media_type: 'video',
+  media_url: '',
+  thumbnail_url: '',
+  redirect_url: '',
+  description: '',
+  order_index: 0,
+  is_active: true,
+};
+
+const cohortMediaDefaults: Record<string, 'video' | 'image' | 'reel'> = {
+  FORGE: 'video',
+  FORGE_WRITING: 'image',
+  FORGE_CREATORS: 'reel',
+};
+
 const sectionTypes = [
   { value: 'community_sessions', label: 'Community Sessions' },
   { value: 'bfp_sessions', label: 'Pre Forge Sessions' },
