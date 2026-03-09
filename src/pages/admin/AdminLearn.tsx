@@ -466,6 +466,38 @@ const AdminLearn: React.FC = () => {
     setIsProgramDialogOpen(false);
   };
 
+  const resetShowcaseForm = () => {
+    setShowcaseForm(initialShowcaseForm);
+    setEditingShowcaseId(null);
+    setIsShowcaseDialogOpen(false);
+  };
+
+  const handleEditShowcase = (item: any) => {
+    setShowcaseForm({
+      title: item.title || '',
+      author_name: item.author_name || '',
+      cohort_type: item.cohort_type || 'FORGE',
+      media_type: item.media_type || 'video',
+      media_url: item.media_url || '',
+      thumbnail_url: item.thumbnail_url || '',
+      redirect_url: item.redirect_url || '',
+      description: item.description || '',
+      order_index: item.order_index || 0,
+      is_active: item.is_active ?? true,
+    });
+    setEditingShowcaseId(item.id);
+    setIsShowcaseDialogOpen(true);
+  };
+
+  const handleShowcaseSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!showcaseForm.title.trim() || !showcaseForm.author_name.trim()) {
+      toast.error('Title and Author Name are required');
+      return;
+    }
+    saveShowcaseMutation.mutate(showcaseForm);
+  };
+
   const handleEdit = (item: typeof content[0]) => {
     const nextVideoUrl = item.video_url || '';
     const sourceType = (item.video_source_type as 'upload' | 'embed') || 'upload';
