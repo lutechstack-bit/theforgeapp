@@ -1,20 +1,32 @@
 
+## Replace Program Banner Images
 
-# Fix Sidebar Count + Remove Payment Restrictions
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## 1. Show all items in ContentSidebar
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-**`src/pages/CourseDetail.tsx`** (lines 105–119):
-- Remove `.eq('category', course.category)` from the siblings query
-- Update `queryKey` to remove `course?.category`
+### Changes
 
-## 2. Remove premium/payment restrictions
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-**`src/pages/CourseDetail.tsx`**:
-- Remove the `isFullAccess` check in `handlePlayVideo` (lines 202–205) — let all users play any video
-- Remove the `isFullAccess` check in `handleDownloadResource` (lines 214–217) — let all users download any resource
-- Remove `showUnlockModal` state and the `<UnlockModal>` component at the bottom
-- Remove the `UnlockModal` import and `isFullAccess` from `useAuth()` destructure
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-This makes all content (premium or not) freely accessible to any authenticated user. The `is_premium` flag and badge will still display visually but won't block access.
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 

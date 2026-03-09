@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SecureVideoPlayer } from '@/components/learn/SecureVideoPlayer';
 import { ContentSidebar } from '@/components/learn/ContentSidebar';
-import { UnlockModal } from '@/components/shared/UnlockModal';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   ArrowLeft, 
@@ -65,10 +65,9 @@ const CourseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { isFullAccess, user } = useAuth();
+  const { user } = useAuth();
   const isMobile = useIsMobile();
   const [showPlayer, setShowPlayer] = useState(false);
-  const [showUnlockModal, setShowUnlockModal] = useState(false);
 
   // Fetch course details
   const { data: course, isLoading } = useQuery({
@@ -104,14 +103,13 @@ const CourseDetail: React.FC = () => {
 
   // Fetch sibling content (same section_type + category)
   const { data: siblings } = useQuery({
-    queryKey: ['learn_siblings', course?.section_type, course?.category],
+    queryKey: ['learn_siblings', course?.section_type],
     queryFn: async () => {
       if (!course) return [];
       const { data, error } = await supabase
         .from('learn_content')
         .select('id, title, duration_minutes, order_index, video_url')
         .eq('section_type', course.section_type)
-        .eq('category', course.category)
         .order('order_index');
       if (error) throw error;
       return data || [];
@@ -199,10 +197,6 @@ const CourseDetail: React.FC = () => {
 
   const handlePlayVideo = () => {
     if (!course) return;
-    if (course.is_premium && !isFullAccess) {
-      setShowUnlockModal(true);
-      return;
-    }
     if (!course.video_url) {
       toast.error('Video not available');
       return;
@@ -211,10 +205,6 @@ const CourseDetail: React.FC = () => {
   };
 
   const handleDownloadResource = (resource: LearnResource) => {
-    if (resource.is_premium && !isFullAccess) {
-      setShowUnlockModal(true);
-      return;
-    }
     window.open(resource.file_url, '_blank');
   };
 
@@ -456,13 +446,6 @@ const CourseDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Unlock Modal */}
-      <UnlockModal
-        open={showUnlockModal}
-        onOpenChange={setShowUnlockModal}
-        title="Unlock Premium Content"
-        description="This content is available to fully onboarded members. Complete your balance payment to access all exclusive videos, sessions, and resources."
-      />
     </div>
   );
 };
