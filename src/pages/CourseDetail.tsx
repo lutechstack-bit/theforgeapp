@@ -103,14 +103,13 @@ const CourseDetail: React.FC = () => {
 
   // Fetch sibling content (same section_type + category)
   const { data: siblings } = useQuery({
-    queryKey: ['learn_siblings', course?.section_type, course?.category],
+    queryKey: ['learn_siblings', course?.section_type],
     queryFn: async () => {
       if (!course) return [];
       const { data, error } = await supabase
         .from('learn_content')
         .select('id, title, duration_minutes, order_index, video_url')
         .eq('section_type', course.section_type)
-        .eq('category', course.category)
         .order('order_index');
       if (error) throw error;
       return data || [];
