@@ -1,14 +1,32 @@
 
+## Replace Program Banner Images
 
-# Add Gold Hover Outline to Perk Cards
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-Add `hover:border-[#FFBF00]/60` effect to PerkCard, matching the amber border hover seen on event cards in the Learn page.
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-## Change: `src/components/perks/PerkCard.tsx`
+### Changes
 
-**Banner mode (line 25-26):** Change border from `border-border/50` with `hover:shadow-lg` to static `border-[#FFBF00]/20` with `hover:border-[#FFBF00]/60` on hover (matching the project's section-ui-standard pattern).
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-**Fallback text mode (line 49-50):** Same treatment -- `border-[#FFBF00]/20` static, `hover:border-[#FFBF00]/60` on hover.
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-This aligns with the existing amber border convention used across all section cards (events, roadmap, home).
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 
