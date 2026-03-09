@@ -100,7 +100,7 @@ export const ContentSidebar: React.FC<ContentSidebarProps> = ({
                     )}
                     {(item.duration_minutes ?? 0) > 0 && (
                       <span className="text-[10px] text-muted-foreground">
-                        {item.duration_minutes} min
+                        {formatDurationFromMinutes(item.duration_minutes)}
                       </span>
                     )}
                   </div>

@@ -29,15 +29,6 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   isCompleted = false,
   onClick,
 }) => {
-  const formatDuration = (minutes?: number) => {
-    if (!minutes) return '';
-    if (minutes >= 60) {
-      const hours = Math.floor(minutes / 60);
-      const mins = minutes % 60;
-      return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-    }
-    return `${minutes} min`;
-  };
 
   return (
     <div

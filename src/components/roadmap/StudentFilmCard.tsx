@@ -73,7 +73,7 @@ const StudentFilmCard: React.FC<StudentFilmCardProps> = ({ film }) => {
           <div className="absolute bottom-3 right-3">
             <span className="text-xs text-white bg-black/60 px-2 py-1 rounded flex items-center gap-1">
               <Clock className="w-3 h-3" />
-              {film.duration_minutes} min
+              {formatDurationFromMinutes(film.duration_minutes)}
             </span>
           </div>
         )}
