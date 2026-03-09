@@ -286,46 +286,21 @@ const Learn: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                {programTab === 'online' ? (
-                  <>
+                {explorePrograms
+                  .filter(p => p.program_tab === programTab)
+                  .map((p) => (
                     <ProgramBanner
-                      title="Breakthrough Filmmaking"
-                      description="Comprehensive 12-week program to master filmmaking from script to screen."
-                      ctaUrl="https://www.leveluplearning.live/bfp-2"
-                      gradient="linear-gradient(135deg, hsl(260,60%,25%) 0%, hsl(230,50%,30%) 100%)"
-                      imageUrl="/images/programs/breakthrough-filmmaking.jpg"
+                      key={p.id}
+                      label={p.label || undefined}
+                      title={p.title}
+                      description={p.description || ''}
+                      ctaUrl={p.redirect_url || '#'}
+                      gradient={p.gradient || 'linear-gradient(135deg, hsl(260,60%,25%) 0%, hsl(230,50%,30%) 100%)'}
+                      imageUrl={p.image_url || undefined}
                     />
-                    <ProgramBanner
-                      title="Video Editing Academy"
-                      description="Master professional video editing with industry-standard tools and techniques."
-                      ctaUrl="https://www.leveluplearning.live/ve"
-                      gradient="linear-gradient(135deg, hsl(210,60%,25%) 0%, hsl(230,50%,35%) 100%)"
-                      imageUrl="/images/programs/video-editing-academy.jpg"
-                    />
-                    <ProgramBanner
-                      title="Creator Academy"
-                      description="Learn the art of visual storytelling from award-winning cinematographers."
-                      ctaUrl="https://www.leveluplearning.in/"
-                      gradient="linear-gradient(135deg, hsl(45,40%,20%) 0%, hsl(35,50%,25%) 100%)"
-                      imageUrl="/images/programs/creator-academy.png"
-                    />
-                  </>
-                ) : (
-                  <>
-                    {forgeResidencies
-                      .filter((r) => r.cohortType !== effectiveCohortType)
-                      .map((r) => (
-                        <ProgramBanner
-                          key={r.cohortType}
-                          label="FORGE RESIDENCY"
-                          title={r.title}
-                          description={r.description}
-                          ctaUrl={r.ctaUrl}
-                          gradient={r.gradient}
-                          imageUrl={r.imageUrl}
-                        />
-                      ))}
-                  </>
+                  ))}
+                {explorePrograms.filter(p => p.program_tab === programTab).length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-8">No programs available yet</p>
                 )}
               </div>
             </section>
