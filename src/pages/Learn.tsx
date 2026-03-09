@@ -4,6 +4,19 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
+
+interface ExploreProgram {
+  id: string;
+  title: string;
+  description: string | null;
+  label: string | null;
+  image_url: string | null;
+  redirect_url: string | null;
+  gradient: string | null;
+  program_tab: string;
+  order_index: number;
+  is_active: boolean;
+}
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { ContinueWatchingCarousel } from '@/components/learn/ContinueWatchingCarousel';
 import { UpcomingSessionsSection } from '@/components/learn/UpcomingSessionsSection';
@@ -39,32 +52,7 @@ interface WatchProgress {
   completed: boolean;
 }
 
-const forgeResidencies = [
-  {
-    cohortType: 'FORGE',
-    title: 'Forge Filmmaking',
-    description: 'An intensive residential filmmaking program — script to screen in 10 days.',
-    ctaUrl: 'https://www.forgebylevelup.com/',
-    gradient: 'linear-gradient(135deg, hsl(20,60%,22%) 0%, hsl(35,50%,28%) 100%)',
-    imageUrl: '/images/programs/forge-filmmaking.png',
-  },
-  {
-    cohortType: 'FORGE_WRITING',
-    title: 'Forge Writing',
-    description: 'A residential writing retreat to sharpen your screenwriting craft.',
-    ctaUrl: 'https://www.forgebylevelup.com/writingresidency',
-    gradient: 'linear-gradient(135deg, hsl(180,40%,20%) 0%, hsl(200,50%,28%) 100%)',
-    imageUrl: undefined,
-  },
-  {
-    cohortType: 'FORGE_CREATORS',
-    title: 'Forge Creators',
-    description: 'A residential program for digital creators to level up content & storytelling.',
-    ctaUrl: 'https://creators.forgebylevelup.com/',
-    gradient: 'linear-gradient(135deg, hsl(280,50%,22%) 0%, hsl(310,40%,30%) 100%)',
-    imageUrl: undefined,
-  },
-];
+// forgeResidencies removed — now fetched from explore_programs table
 
 const Learn: React.FC = () => {
   const navigate = useNavigate();
@@ -81,6 +69,19 @@ const Learn: React.FC = () => {
         .order('order_index', { ascending: true });
       if (error) throw error;
       return (data || []) as (LearnContent & { card_layout?: string })[];
+    },
+  });
+
+  const { data: explorePrograms = [] } = useQuery({
+    queryKey: ['explore-programs'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('explore_programs')
+        .select('*')
+        .eq('is_active', true)
+        .order('order_index', { ascending: true });
+      if (error) throw error;
+      return (data || []) as ExploreProgram[];
     },
   });
 
@@ -285,46 +286,21 @@ const Learn: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                {programTab === 'online' ? (
-                  <>
+                {explorePrograms
+                  .filter(p => p.program_tab === programTab)
+                  .map((p) => (
                     <ProgramBanner
-                      title="Breakthrough Filmmaking"
-                      description="Comprehensive 12-week program to master filmmaking from script to screen."
-                      ctaUrl="https://www.leveluplearning.live/bfp-2"
-                      gradient="linear-gradient(135deg, hsl(260,60%,25%) 0%, hsl(230,50%,30%) 100%)"
-                      imageUrl="/images/programs/breakthrough-filmmaking.jpg"
+                      key={p.id}
+                      label={p.label || undefined}
+                      title={p.title}
+                      description={p.description || ''}
+                      ctaUrl={p.redirect_url || '#'}
+                      gradient={p.gradient || 'linear-gradient(135deg, hsl(260,60%,25%) 0%, hsl(230,50%,30%) 100%)'}
+                      imageUrl={p.image_url || undefined}
                     />
-                    <ProgramBanner
-                      title="Video Editing Academy"
-                      description="Master professional video editing with industry-standard tools and techniques."
-                      ctaUrl="https://www.leveluplearning.live/ve"
-                      gradient="linear-gradient(135deg, hsl(210,60%,25%) 0%, hsl(230,50%,35%) 100%)"
-                      imageUrl="/images/programs/video-editing-academy.jpg"
-                    />
-                    <ProgramBanner
-                      title="Creator Academy"
-                      description="Learn the art of visual storytelling from award-winning cinematographers."
-                      ctaUrl="https://www.leveluplearning.in/"
-                      gradient="linear-gradient(135deg, hsl(45,40%,20%) 0%, hsl(35,50%,25%) 100%)"
-                      imageUrl="/images/programs/creator-academy.png"
-                    />
-                  </>
-                ) : (
-                  <>
-                    {forgeResidencies
-                      .filter((r) => r.cohortType !== effectiveCohortType)
-                      .map((r) => (
-                        <ProgramBanner
-                          key={r.cohortType}
-                          label="FORGE RESIDENCY"
-                          title={r.title}
-                          description={r.description}
-                          ctaUrl={r.ctaUrl}
-                          gradient={r.gradient}
-                          imageUrl={r.imageUrl}
-                        />
-                      ))}
-                  </>
+                  ))}
+                {explorePrograms.filter(p => p.program_tab === programTab).length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-8">No programs available yet</p>
                 )}
               </div>
             </section>
