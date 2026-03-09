@@ -746,14 +746,23 @@ const AdminLearn: React.FC = () => {
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
-                          <div
-                            draggable
-                            onDragStart={() => setDragIndex(idx)}
-                            onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
-                            className="cursor-grab active:cursor-grabbing p-1.5 rounded hover:bg-muted transition-colors"
-                          >
-                            <GripVertical className="h-4 w-4 text-muted-foreground" />
-                          </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div
+                                  draggable
+                                  onDragStart={() => setDragIndex(idx)}
+                                  onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                                  className="cursor-grab active:cursor-grabbing p-1.5 rounded hover:bg-muted transition-colors"
+                                >
+                                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">
+                                <p>Drag to reorder</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       </TableCell>
                     </TableRow>
