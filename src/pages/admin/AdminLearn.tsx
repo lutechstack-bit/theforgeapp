@@ -649,8 +649,14 @@ const AdminLearn: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredContent.map((item) => (
-                    <TableRow key={item.id}>
+                  {filteredContent.map((item, idx) => (
+                    <TableRow
+                      key={item.id}
+                      className={dragOverIndex === idx ? 'border-t-2 border-t-primary' : ''}
+                      onDragOver={(e) => { e.preventDefault(); setDragOverIndex(idx); }}
+                      onDragLeave={() => setDragOverIndex(null)}
+                      onDrop={(e) => { e.preventDefault(); handleDrop(idx); }}
+                    >
                       <TableCell>
                         <div className="flex items-center gap-3">
                           {item.thumbnail_url ? (
