@@ -197,10 +197,6 @@ const CourseDetail: React.FC = () => {
 
   const handlePlayVideo = () => {
     if (!course) return;
-    if (course.is_premium && !isFullAccess) {
-      setShowUnlockModal(true);
-      return;
-    }
     if (!course.video_url) {
       toast.error('Video not available');
       return;
@@ -209,10 +205,6 @@ const CourseDetail: React.FC = () => {
   };
 
   const handleDownloadResource = (resource: LearnResource) => {
-    if (resource.is_premium && !isFullAccess) {
-      setShowUnlockModal(true);
-      return;
-    }
     window.open(resource.file_url, '_blank');
   };
 
