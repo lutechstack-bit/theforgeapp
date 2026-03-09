@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { cn, formatDurationFromMinutes } from '@/lib/utils';
 import { Play, Clock, CheckCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { VideoProgressBar } from './VideoProgressBar';
@@ -44,12 +44,6 @@ export const PremiumVideoCard: React.FC<PremiumVideoCardProps> = ({
     }
   };
 
-  const formatDuration = (minutes: number) => {
-    if (minutes < 60) return `${minutes}m`;
-    const hrs = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
-  };
 
   return (
     <div className={cn("rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300", className)}>
@@ -85,7 +79,7 @@ export const PremiumVideoCard: React.FC<PremiumVideoCardProps> = ({
         {(durationMinutes ?? 0) > 0 && (
           <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-sm text-white text-xs font-medium flex items-center gap-1.5">
             <Clock className="h-3 w-3" />
-            {formatDuration(durationMinutes)}
+            {formatDurationFromMinutes(durationMinutes)}
           </div>
         )}
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDurationFromMinutes } from '@/lib/utils';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { SecureVideoPlayer } from './SecureVideoPlayer';
 import { Download, FileText, ExternalLink } from 'lucide-react';
@@ -112,7 +113,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
                 {(content.duration_minutes ?? 0) > 0 && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <span className="px-2 py-0.5 rounded-full bg-secondary text-xs">
-                      {content.duration_minutes} min
+                      {formatDurationFromMinutes(content.duration_minutes)}
                     </span>
                   </div>
                 )}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Play, Lock } from 'lucide-react';
+import { formatDurationFromMinutes } from '@/lib/utils';
 import { VideoProgressBar } from './VideoProgressBar';
 
 interface CourseCardProps {
@@ -28,15 +29,6 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   isCompleted = false,
   onClick,
 }) => {
-  const formatDuration = (minutes?: number) => {
-    if (!minutes) return '';
-    if (minutes >= 60) {
-      const hours = Math.floor(minutes / 60);
-      const mins = minutes % 60;
-      return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-    }
-    return `${minutes} min`;
-  };
 
   return (
     <div
@@ -64,7 +56,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         {/* Duration Badge - Top Right */}
         {durationMinutes && (
           <div className="absolute top-3 right-3 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-md text-xs font-medium text-white">
-            {formatDuration(durationMinutes)}
+            {formatDurationFromMinutes(durationMinutes)}
           </div>
         )}
 

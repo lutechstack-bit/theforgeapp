@@ -1,37 +1,32 @@
 
+## Replace Program Banner Images
 
-# Unify Duration Display Format
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## Summary
-Add a shared `formatDurationFromMinutes` utility and replace all local/inline duration formatting across 7 files.
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-## Changes
+### Changes
 
-### 1. `src/lib/utils.ts` — Add shared formatter
-```typescript
-export const formatDurationFromMinutes = (minutes?: number | null): string | null => {
-  if (!minutes || minutes <= 0) return null;
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h > 0) return m > 0 ? `${h}h ${m}m` : `${h}h`;
-  return `${m}m`;
-};
-```
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-### 2. Components using raw `{duration_minutes} min` — switch to shared function
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-| File | Line | Current | After |
-|------|------|---------|-------|
-| `ContentSidebar.tsx` | 103 | `{item.duration_minutes} min` | `{formatDurationFromMinutes(item.duration_minutes)}` |
-| `VideoPlayerModal.tsx` | 115 | `{content.duration_minutes} min` | `{formatDurationFromMinutes(content.duration_minutes)}` |
-| `StudentFilmCard.tsx` | 76 | `{film.duration_minutes} min` | `{formatDurationFromMinutes(film.duration_minutes)}` |
-| `CourseDetail.tsx` | 310 | `{course.duration_minutes}m` | `{formatDurationFromMinutes(course.duration_minutes)}` |
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
-### 3. Components with local `formatDuration` — remove and use shared import
-
-- `LearnCourseCard.tsx` — remove lines 38-44 local function, import shared
-- `CourseCard.tsx` — remove lines 31-39 local function, import shared  
-- `PremiumVideoCard.tsx` — remove lines 47-52 local function, import shared
-
-No data changes. Pure display formatting unification.
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock } from 'lucide-react';
+import { formatDurationFromMinutes } from '@/lib/utils';
 
 interface LearnCourseCardProps {
   id: string;
@@ -35,13 +36,6 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
     }
   };
 
-  const formatDuration = (minutes?: number) => {
-    if (!minutes) return null;
-    if (minutes < 60) return `${minutes}m`;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-  };
 
   if (cardLayout === 'landscape') {
     return (
@@ -61,7 +55,7 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
   }
 
   // Portrait layout (default)
-  const duration = formatDuration(durationMinutes);
+  const duration = formatDurationFromMinutes(durationMinutes);
 
   return (
     <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300 w-full flex-shrink-0">
