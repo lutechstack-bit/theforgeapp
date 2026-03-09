@@ -23,7 +23,7 @@ export const PerkCard: React.FC<PerkCardProps> = ({ id, name, headline, logoUrl,
         onClick={() => !isComingSoon && navigate(`/perks/${id}`)}
         disabled={isComingSoon}
         className={`group relative w-full h-full aspect-[16/10] rounded-2xl overflow-hidden border border-[#FFBF00]/20 transition-all duration-300 ${
-          isComingSoon ? 'opacity-60 cursor-not-allowed' : 'hover:border-[#FFBF00]/60 hover:scale-[1.01] active:scale-[0.99]'
+          isComingSoon ? 'opacity-60 cursor-not-allowed' : 'hover-gold-glow hover:border-[#FFBF00]/60 hover:scale-[1.01] active:scale-[0.99]'
         }`}
       >
         <img
@@ -47,7 +47,7 @@ export const PerkCard: React.FC<PerkCardProps> = ({ id, name, headline, logoUrl,
       onClick={() => !isComingSoon && navigate(`/perks/${id}`)}
       disabled={isComingSoon}
       className={`group relative w-full text-left rounded-2xl border border-[#FFBF00]/20 bg-card overflow-hidden transition-all duration-300 ${
-        isComingSoon ? 'opacity-60 cursor-not-allowed' : 'hover:border-[#FFBF00]/60 active:scale-[0.98]'
+        isComingSoon ? 'opacity-60 cursor-not-allowed' : 'hover-gold-glow hover:border-[#FFBF00]/60 active:scale-[0.98]'
       }`}
     >
       <div className="p-5 md:p-6 flex items-center gap-4 md:gap-5">
