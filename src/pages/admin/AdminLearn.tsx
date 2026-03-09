@@ -900,6 +900,10 @@ const AdminLearn: React.FC = () => {
             <ExternalLink className="h-4 w-4 mr-2" />
             Explore Programs
           </TabsTrigger>
+          <TabsTrigger value="alumni_showcase" className="rounded-md px-4 py-2">
+            <Film className="h-4 w-4 mr-2" />
+            Alumni Showcase
+          </TabsTrigger>
         </TabsList>
 
         {/* Learn Content Tabs */}
