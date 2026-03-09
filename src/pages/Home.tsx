@@ -37,20 +37,21 @@ const Home: React.FC = () => {
   const { effectiveCohortType } = useEffectiveCohort();
   const userCohortType = effectiveCohortType;
 
-  // Fetch student works with public portfolios
-  const studentWorksQuery = useQuery({
-    queryKey: ['home_student_works'],
+  // Fetch alumni showcase
+  const alumniShowcaseQuery = useQuery({
+    queryKey: ['alumni-showcase', userCohortType],
     queryFn: async () => {
       const result = await promiseWithTimeout(
         supabase
-          .from('user_works')
-          .select('*, profiles!inner(full_name)')
-          .not('media_url', 'is', null)
+          .from('alumni_showcase')
+          .select('*')
+          .eq('cohort_type', userCohortType || 'FORGE')
+          .eq('is_active', true)
           .order('order_index', { ascending: true })
           .limit(12)
           .then(res => res),
         QUERY_TIMEOUT,
-        'home_student_works'
+        'alumni_showcase'
       );
       if (result.error) throw result.error;
       return result.data || [];
@@ -60,21 +61,6 @@ const Home: React.FC = () => {
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
-
-  const displayAlumni = useMemo(() => {
-    const data = studentWorksQuery.data;
-    if (!data) return [];
-
-    return data.map((w: any) => ({
-      id: w.id,
-      name: w.profiles?.full_name || 'Student',
-      role: w.type === 'personal' ? null : w.type,
-      video_url: w.media_url,
-      thumbnail_url: w.thumbnail_url,
-      film: w.title,
-      achievement: w.description,
-    }));
-  }, [studentWorksQuery.data]);
 
   const isAnyError = studentWorksQuery.isError;
   const isAnyLoading = studentWorksQuery.isLoading;
