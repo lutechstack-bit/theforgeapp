@@ -99,7 +99,6 @@ const RoadmapLayout: React.FC = () => {
       <RoadmapHero
         cohortName={cohortName}
         forgeMode={forgeMode}
-        forgeStartDate={forgeStartDate}
       />
 
       {/* Summary Cards */}
