@@ -1,33 +1,32 @@
 
+## Replace Program Banner Images
 
-# Fix Upcoming Online Sessions — Cohort-Aware Filtering + Uniform Cards
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## Problem
-1. **No cohort filtering** — the query fetches ALL `roadmap_days` where `is_virtual=true` regardless of cohort. Writing cohort users (who have NO online sessions) still see Filmmaking/Creators sessions.
-2. **Unequal card heights** — variable description lengths cause inconsistent card sizes in the scroll row.
-3. **Calendar button only supports Google** — the Roadmap's `SessionDetailModal` already supports 4 providers (Google, Apple, Outlook, Yahoo) but the card's calendar icon only does Google.
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-## Changes — `src/components/learn/UpcomingSessionsSection.tsx`
+### Changes
 
-### 1. Add cohort-aware filtering
-- Import `useEffectiveCohort` hook to get the user's `effectiveEdition`
-- Filter the `roadmap_days` query by `edition_id` (matching how `useRoadmapData` does it)
-- Include the query key with `edition_id` so it re-fetches on cohort switch
-- If no `edition_id` is available, return empty (section hides itself via `sessions.length === 0`)
-- **Writing cohort**: Since Writing editions have no virtual `roadmap_days`, the query returns empty and the entire section auto-hides
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-### 2. Fix card height consistency
-- Remove the conditional `{session.description && ...}` block from the card face (description stays in the detail modal)
-- Set `min-h-[160px]` on the inner card container with `flex flex-col`
-- Pin action row to bottom with `mt-auto`
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-### 3. Keep SessionDetailModal (already has full features)
-- The existing modal already has: Join Zoom button, Meeting ID/Passcode display, 4-provider calendar sync
-- This matches the Roadmap's online session functionality exactly
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
-### 4. Upgrade card calendar button to 4-provider popover
-- Replace the single Google Calendar `onClick` with a `Popover` containing Google, Apple, Outlook, Yahoo options (same pattern as `SessionDetailModal`)
-
-## File
-`src/components/learn/UpcomingSessionsSection.tsx` — single file edit
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 
