@@ -1,28 +1,28 @@
 
 
-# Online Session Cards — Current Status & Fixes
+# Reset KY Forms for Admin Account
 
-## Analysis
+## What needs to be reset
 
-After reviewing the code and screenshot, the cards **are functional**. The `UpcomingSessionsSection` correctly:
-- Filters by `edition_id` (cohort-aware, hides for Writing)
-- Opens `SessionDetailModal` with Zoom link, Meeting ID/Passcode, and 4-provider calendar sync
-- Has uniform card heights (`min-h-[160px]`)
+The admin account (`admin@admin.in`, ID: `69ada39f-cbd8-4d02-b653-d60355ca9764`) currently has:
+- `ky_form_completed: true`
+- `ky_section_progress: {casting_form: true, filmmaker_profile: true, hospitality: true}`
+- Existing KYF response (1 row)
+- Existing KYC response (1 row)
+- No KYW response
 
-## One Issue Found
+## Plan
 
-The day labels show "D7", "D6", "D5" instead of actual weekday names (Mon, Tue, etc.) because the `date` field is `null` for these sessions in the database. The `getDayName` fallback produces `D${Math.abs(dayNum)}`.
+Create a small edge function `reset-ky-forms` (admin-only) that:
 
-**This is a data issue, not a code issue.** Once dates are set in the admin panel for these sessions, the weekday names will appear automatically.
+1. **Resets the profile flags** — sets `ky_form_completed = false` and `ky_section_progress = {}` for the calling admin user
+2. **Deletes all KY responses** — removes rows from `kyf_responses`, `kyc_responses`, and `kyw_responses` for that user
+3. Returns a success message
 
-## No Code Changes Needed
+Then call it immediately to perform the reset.
 
-The implementation already has full feature parity with the Roadmap's online session system:
-- **Join Session** → opens modal with session details
-- **Modal** → shows date, time, duration, description, Meeting ID (copyable), Passcode, "Join Zoom Meeting" button
-- **Calendar** → 4-provider popover (Google, Apple, Outlook, Yahoo)
-- **Cohort filtering** → Writing cohort sees nothing (no virtual sessions)
-- **Responsive** → Drawer on mobile, Dialog on desktop
+## File
+- `supabase/functions/reset-ky-forms/index.ts` — new edge function (deploy + call)
 
-If the buttons aren't responding when you tap them, you likely need to **log in first** in the preview — the `editionId` comes from the authenticated user's cohort assignment. Without login, the query is disabled and no sessions load.
+After the reset, you can use the Cohort Switcher to change cohorts and test each form (KYF for Filmmaking, KYC for Creators, KYW for Writing).
 
