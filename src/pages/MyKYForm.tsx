@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import forgeIcon from '@/assets/forge-icon.png';
+import { getKYFormSectionRoute } from '@/lib/kyFormRoutes';
 
 const MyKYForm: React.FC = () => {
   const navigate = useNavigate();
@@ -27,13 +28,7 @@ const MyKYForm: React.FC = () => {
   const isWriting = cohortType === 'FORGE_WRITING';
   const isCreator = cohortType === 'FORGE_CREATORS';
   
-  const getFormRoute = () => {
-    switch (cohortType) {
-      case 'FORGE_WRITING': return '/kyw-form';
-      case 'FORGE_CREATORS': return '/kyc-form';
-      default: return '/kyf-form';
-    }
-  };
+  const getFormRoute = () => getKYFormSectionRoute(cohortType);
   
   const getFormTitle = () => {
     switch (cohortType) {

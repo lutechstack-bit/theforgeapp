@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { FileText, Map, CheckCircle, ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { getKYFormSectionRoute, getKYFormShortName } from '@/lib/kyFormRoutes';
 
 interface ProgressCardProps {
   number: string;
@@ -165,21 +166,8 @@ export const ProgressHeroSection: React.FC = () => {
   }, [daysUntilForge, profile?.ky_form_completed]);
 
   // Get form name and route based on cohort type
-  const getFormName = (cohortType: string | undefined) => {
-    switch (cohortType) {
-      case 'FORGE_CREATORS': return 'KYC Form';
-      case 'FORGE_WRITING': return 'KYW Form';
-      default: return 'KYF Form';
-    }
-  };
-
-  const getFormRoute = (cohortType: string | undefined) => {
-    switch (cohortType) {
-      case 'FORGE_CREATORS': return '/kyc-form';
-      case 'FORGE_WRITING': return '/kyw-form';
-      default: return '/kyf-form';
-    }
-  };
+  const getFormName = (cohortType: string | undefined) => getKYFormShortName(cohortType);
+  const getFormRoute = (cohortType: string | undefined) => getKYFormSectionRoute(cohortType);
 
   const kyfStatus = profile?.ky_form_completed ? '100% done' : 'Pending';
   const roadmapStatus = daysUntilForge !== null ? `${daysUntilForge} days` : 'Explore now';
