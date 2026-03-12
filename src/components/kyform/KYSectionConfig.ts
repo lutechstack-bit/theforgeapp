@@ -333,23 +333,17 @@ const KYC_SECTIONS: KYSection[] = [
         title: 'Proficiency Level',
         subtitle: 'Your content creation skills',
         fields: [
-          { key: 'proficiency_content_creation', type: 'proficiency', label: 'Content Creation', options: [
-            { value: 'professional', label: 'I create content professionally (brand deals, full-time)' },
-            { value: 'growing', label: 'I have a growing audience and post regularly' },
-            { value: 'hobby', label: 'I create content as a hobby' },
-            { value: 'just_starting', label: 'I am just getting started' },
-          ] },
-          { key: 'proficiency_storytelling', type: 'proficiency', label: 'Storytelling', options: [
-            { value: 'expert', label: 'I craft compelling narratives for my content' },
-            { value: 'learning', label: 'I am learning to tell better stories' },
-            { value: 'just_starting', label: 'I am just getting started with storytelling' },
-          ] },
-          { key: 'proficiency_video_production', type: 'proficiency', label: 'Video Production', options: [
-            { value: 'professional', label: 'I use professional gear and editing software' },
-            { value: 'intermediate', label: 'I am comfortable with basic gear and editing' },
-            { value: 'phone_only', label: 'I mostly shoot and edit on my phone' },
-            { value: 'just_starting', label: 'I am just getting started' },
-          ] },
+          {
+            key: 'proficiency_grid',
+            type: 'proficiency-grid',
+            label: 'Rate your proficiency',
+            skills: [
+              { key: 'proficiency_content_creation', label: 'Content Creation' },
+              { key: 'proficiency_storytelling', label: 'Storytelling' },
+              { key: 'proficiency_video_production', label: 'Video Production' },
+            ],
+            levels: ['Beginner', 'Amateur', 'Ok', 'Good', 'Pro'],
+          },
         ],
       },
       {
