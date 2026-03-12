@@ -27,7 +27,7 @@ const Home: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { profile, edition, userDataLoading } = useAuth();
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { activeFocusCard } = useTodaysFocus();
   const { getSection } = useHomepageSections();
