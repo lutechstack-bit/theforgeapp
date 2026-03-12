@@ -1,69 +1,32 @@
 
+## Replace Program Banner Images
 
-# Fix KYC & KYW Proficiency + Scroll Issues
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## Problem
-1. **KYC and KYW proficiency steps** use `type: 'proficiency'` (long vertical radio lists) instead of `type: 'proficiency-grid'` (compact matrix) like KYF.
-2. **Scroll is broken** — the card content overflows the viewport instead of scrolling internally because the height chain (`h-full` / `min-h-0`) is missing between `KYSectionForm` → `KYFormCardStack` → `KYFormCard`.
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-## Changes
+### Changes
 
-### 1. `src/components/kyform/KYSectionConfig.ts`
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-**KYC proficiency step (lines 331-353)** — replace three `proficiency` fields with one `proficiency-grid`:
-```ts
-fields: [
-  {
-    key: 'proficiency_grid',
-    type: 'proficiency-grid',
-    label: 'Rate your proficiency',
-    skills: [
-      { key: 'proficiency_content_creation', label: 'Content Creation' },
-      { key: 'proficiency_storytelling', label: 'Storytelling' },
-      { key: 'proficiency_video_production', label: 'Video Production' },
-    ],
-    levels: ['Beginner', 'Amateur', 'Ok', 'Good', 'Pro'],
-  },
-],
-```
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-**KYW proficiency step (lines 461-474)** — replace two `proficiency` fields with one `proficiency-grid`:
-```ts
-fields: [
-  {
-    key: 'proficiency_grid',
-    type: 'proficiency-grid',
-    label: 'Rate your proficiency',
-    skills: [
-      { key: 'proficiency_writing', label: 'Writing' },
-      { key: 'proficiency_story_voice', label: 'Story & Voice' },
-    ],
-    levels: ['Beginner', 'Amateur', 'Ok', 'Good', 'Pro'],
-  },
-],
-```
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
-### 2. Scroll fix — `src/pages/KYSectionForm.tsx` (line 284)
-
-Change card area from `flex items-center` to `flex flex-col` with full height constraint:
-```
-- flex-1 flex items-center px-4 pb-16
-+ flex-1 flex flex-col px-4 pb-24 min-h-0
-```
-
-### 3. Scroll fix — `src/components/kyform/KYFormCardStack.tsx`
-
-- Line 43: `relative w-full max-h-full` → `relative w-full h-full min-h-0`
-- Line 75: `relative z-10 h-auto max-h-full` → `relative z-10 h-full min-h-0`
-- Line 87: `absolute inset-0 z-20 h-auto max-h-full` → `absolute inset-0 z-20 h-full min-h-0`
-
-### 4. Scroll fix — `src/components/kyform/KYFormCard.tsx` (line 27)
-
-Add `h-full min-h-0` to root container so `overflow-y-auto` on inner content actually triggers:
-```
-- relative rounded-3xl overflow-hidden flex flex-col max-h-full
-+ relative rounded-3xl overflow-hidden flex flex-col h-full min-h-0
-```
-
-These four file changes make all three cohort proficiency steps use the same compact grid UI and fix the scroll so no form content is cut off.
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 
