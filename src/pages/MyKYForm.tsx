@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 import { useProfileData } from '@/hooks/useProfileData';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
