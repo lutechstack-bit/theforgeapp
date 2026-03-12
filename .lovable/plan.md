@@ -1,28 +1,32 @@
 
+## Replace Program Banner Images
 
-# Reset KY Forms for Admin Account
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## What needs to be reset
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-The admin account (`admin@admin.in`, ID: `69ada39f-cbd8-4d02-b653-d60355ca9764`) currently has:
-- `ky_form_completed: true`
-- `ky_section_progress: {casting_form: true, filmmaker_profile: true, hospitality: true}`
-- Existing KYF response (1 row)
-- Existing KYC response (1 row)
-- No KYW response
+### Changes
 
-## Plan
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-Create a small edge function `reset-ky-forms` (admin-only) that:
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-1. **Resets the profile flags** — sets `ky_form_completed = false` and `ky_section_progress = {}` for the calling admin user
-2. **Deletes all KY responses** — removes rows from `kyf_responses`, `kyc_responses`, and `kyw_responses` for that user
-3. Returns a success message
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
-Then call it immediately to perform the reset.
-
-## File
-- `supabase/functions/reset-ky-forms/index.ts` — new edge function (deploy + call)
-
-After the reset, you can use the Cohort Switcher to change cohorts and test each form (KYF for Filmmaking, KYC for Creators, KYW for Writing).
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 
