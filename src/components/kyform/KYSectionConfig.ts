@@ -453,18 +453,16 @@ const KYW_SECTIONS: KYSection[] = [
         title: 'Proficiency Level',
         subtitle: 'Your writing skills',
         fields: [
-          { key: 'proficiency_writing', type: 'proficiency', label: 'Writing', options: [
-            { value: 'published', label: 'I have published work (books, scripts, articles)' },
-            { value: 'completed_works', label: 'I have completed multiple pieces of writing' },
-            { value: 'learning', label: 'I write regularly but am still learning' },
-            { value: 'just_starting', label: 'I am just getting started' },
-          ] },
-          { key: 'proficiency_story_voice', type: 'proficiency', label: 'Story & Voice', options: [
-            { value: 'distinctive', label: 'I have a distinctive writing voice' },
-            { value: 'developing', label: 'I am developing my voice' },
-            { value: 'exploring', label: 'I am still exploring different styles' },
-            { value: 'just_starting', label: 'I am just getting started' },
-          ] },
+          {
+            key: 'proficiency_grid',
+            type: 'proficiency-grid',
+            label: 'Rate your proficiency',
+            skills: [
+              { key: 'proficiency_writing', label: 'Writing' },
+              { key: 'proficiency_story_voice', label: 'Story & Voice' },
+            ],
+            levels: ['Beginner', 'Amateur', 'Ok', 'Good', 'Pro'],
+          },
         ],
       },
       {

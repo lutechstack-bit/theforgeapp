@@ -84,7 +84,7 @@ export const KYFormCardStack: React.FC<KYFormCardStackProps> = ({
         {isAnimating && (
           <div
             className={cn(
-              'absolute inset-0 z-20 h-auto max-h-full',
+              'absolute inset-0 z-20 h-full min-h-0',
               isAnimating === 'forward' && 'animate-stack-pop-in',
               isAnimating === 'backward' && 'animate-stack-backward-in'
             )}
