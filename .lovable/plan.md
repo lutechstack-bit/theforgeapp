@@ -1,26 +1,32 @@
 
+## Replace Program Banner Images
 
-# Make KY Forms Cohort-Switcher Aware
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## Problem
-The KY form components (`KYProfileCard`, `KYSectionForm`, `MyKYForm`, `useProfileData`) all read `edition?.cohort_type` directly from `useAuth()`. When an admin switches cohorts via the Cohort Switcher, the KY forms still show the admin's real cohort — not the simulated one.
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-## Changes
+### Changes
 
-### 1. `src/components/home/KYProfileCard.tsx`
-- Replace `useAuth()` edition with `useEffectiveCohort()` for `cohortType`
-- Use `effectiveCohortType` instead of `edition?.cohort_type`
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-### 2. `src/pages/KYSectionForm.tsx`
-- Import and use `useEffectiveCohort()` for `cohortType` (line 38)
-- Replace `edition?.cohort_type` with `effectiveCohortType`
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-### 3. `src/pages/MyKYForm.tsx`
-- Import and use `useEffectiveCohort()` for `cohortType` (line 22)
-- Replace `edition?.cohort_type` with `effectiveCohortType`
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
-### 4. `src/components/home/OnboardingStepsSection.tsx`
-- Currently hides the KY card when `ky_form_completed` is true — this is correct behavior but means after a reset, the card should reappear. No changes needed here (the reset already clears that flag).
-
-All four changes follow the same pattern already used in `Home.tsx` and `UpcomingSessionsSection.tsx`: import `useEffectiveCohort`, destructure `effectiveCohortType`, and use it wherever `edition?.cohort_type` was hardcoded.
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 

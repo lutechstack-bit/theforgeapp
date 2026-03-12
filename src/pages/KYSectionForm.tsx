@@ -12,6 +12,7 @@ import { KYSectionFields } from '@/components/kyform/KYSectionFields';
 import { KYFormProgressBar } from '@/components/kyform/KYFormProgressBar';
 import { ArrowLeft, Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +27,8 @@ import {
 const KYSectionForm: React.FC = () => {
   const { sectionKey } = useParams<{ sectionKey: string }>();
   const navigate = useNavigate();
-  const { user, profile, edition, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
+  const { effectiveCohortType } = useEffectiveCohort();
   const { toast } = useToast();
 
   const [currentStep, setCurrentStep] = useState(0); // 0 = intro
@@ -35,7 +37,7 @@ const KYSectionForm: React.FC = () => {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [exitDialogOpen, setExitDialogOpen] = useState(false);
 
-  const cohortType = edition?.cohort_type || 'FORGE';
+  const cohortType = effectiveCohortType || 'FORGE';
   const sections = useMemo(() => getSectionsForCohort(cohortType), [cohortType]);
   const section = useMemo(() => sections.find(s => s.key === sectionKey), [sections, sectionKey]);
   const sectionIndex = useMemo(() => sections.findIndex(s => s.key === sectionKey), [sections, sectionKey]);

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 import { useProfileData } from '@/hooks/useProfileData';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,10 +17,11 @@ import forgeIcon from '@/assets/forge-icon.png';
 
 const MyKYForm: React.FC = () => {
   const navigate = useNavigate();
-  const { profile, edition } = useAuth();
+  const { profile } = useAuth();
+  const { effectiveCohortType } = useEffectiveCohort();
   const { data: profileData, isLoading } = useProfileData();
   
-  const cohortType = edition?.cohort_type;
+  const cohortType = effectiveCohortType;
   const kyData = profileData?.kyfResponse || profileData?.kywResponse || profileData?.kycResponse;
   const isFilmmaking = cohortType === 'FORGE';
   const isWriting = cohortType === 'FORGE_WRITING';

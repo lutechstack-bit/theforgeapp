@@ -1,16 +1,18 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 import { CheckCircle2, Lock, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { KYFormProgressBar } from '@/components/kyform/KYFormProgressBar';
 import { getSectionsForCohort } from '@/components/kyform/KYSectionConfig';
 
 const KYProfileCard: React.FC = () => {
-  const { profile, edition } = useAuth();
+  const { profile } = useAuth();
+  const { effectiveCohortType } = useEffectiveCohort();
   const navigate = useNavigate();
 
-  const cohortType = edition?.cohort_type || 'FORGE';
+  const cohortType = effectiveCohortType || 'FORGE';
   const sections = useMemo(() => getSectionsForCohort(cohortType), [cohortType]);
 
   const sectionProgress = (profile as any)?.ky_section_progress as Record<string, boolean> | null;
