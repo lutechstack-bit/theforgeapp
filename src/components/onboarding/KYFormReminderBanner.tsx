@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { AlertCircle, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getKYFormSectionRoute, getKYFormName } from '@/lib/kyFormRoutes';
 
 export const KYFormReminderBanner: React.FC = () => {
   const { profile, edition } = useAuth();
@@ -15,32 +16,6 @@ export const KYFormReminderBanner: React.FC = () => {
     return null;
   }
 
-  const getFormRoute = () => {
-    switch (edition?.cohort_type) {
-      case 'FORGE':
-        return '/kyf-form';
-      case 'FORGE_CREATORS':
-        return '/kyc-form';
-      case 'FORGE_WRITING':
-        return '/kyw-form';
-      default:
-        return '/kyf-form';
-    }
-  };
-
-  const getFormName = () => {
-    switch (edition?.cohort_type) {
-      case 'FORGE':
-        return 'Know Your Filmmaker';
-      case 'FORGE_CREATORS':
-        return 'Know Your Creator';
-      case 'FORGE_WRITING':
-        return 'Know Your Writer';
-      default:
-        return 'Know Your Form';
-    }
-  };
-
   return (
     <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 md:p-5 mb-6 animate-pulse-slow">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -49,12 +24,12 @@ export const KYFormReminderBanner: React.FC = () => {
             <AlertCircle className="h-5 w-5 md:h-6 md:w-6 text-primary" />
           </div>
           <div>
-            <h3 className="font-semibold text-foreground text-base md:text-lg">Complete Your {getFormName()} Form</h3>
+            <h3 className="font-semibold text-foreground text-base md:text-lg">Complete Your {getKYFormName(edition?.cohort_type)} Form</h3>
             <p className="text-sm md:text-base text-muted-foreground">Help us personalize your Forge experience</p>
           </div>
         </div>
         <Button 
-          onClick={() => navigate(getFormRoute())}
+          onClick={() => navigate(getKYFormSectionRoute(edition?.cohort_type))}
           className="shrink-0 w-full sm:w-auto"
           size="lg"
         >

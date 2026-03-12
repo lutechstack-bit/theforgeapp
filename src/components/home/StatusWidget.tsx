@@ -31,23 +31,8 @@ export const StatusWidget: React.FC<StatusWidgetProps> = ({ variant, className }
 
   const showKYForm = profile?.profile_setup_completed && !profile?.ky_form_completed;
   
-  const getKYFormRoute = () => {
-    switch (edition?.cohort_type) {
-      case 'FORGE': return '/kyf-form';
-      case 'FORGE_CREATORS': return '/kyc-form';
-      case 'FORGE_WRITING': return '/kyw-form';
-      default: return '/kyf-form';
-    }
-  };
-  
-  const getKYFormLabel = () => {
-    switch (edition?.cohort_type) {
-      case 'FORGE': return 'Know Your Filmmaker';
-      case 'FORGE_CREATORS': return 'Know Your Creator';
-      case 'FORGE_WRITING': return 'Know Your Writer';
-      default: return 'Complete KY Form';
-    }
-  };
+  const getKYFormRoute = () => getKYFormSectionRoute(edition?.cohort_type);
+  const getKYFormLabel = () => getKYFormName(edition?.cohort_type);
 
   const currentAnnouncement = announcements[currentAnnouncementIndex];
 

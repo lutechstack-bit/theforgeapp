@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClipboardCheck, ClipboardList, ChevronRight, Sparkles } from 'lucide-react';
+import { getKYFormSectionRoute, getKYFormName } from '@/lib/kyFormRoutes';
 
 interface KYFormQuickAccessProps {
   isCompleted: boolean;
@@ -10,27 +11,11 @@ interface KYFormQuickAccessProps {
 export const KYFormQuickAccess: React.FC<KYFormQuickAccessProps> = ({ isCompleted, cohortType }) => {
   const navigate = useNavigate();
   
-  const getFormRoute = () => {
-    switch (cohortType) {
-      case 'FORGE_WRITING': return '/kyw-form';
-      case 'FORGE_CREATORS': return '/kyc-form';
-      default: return '/kyf-form';
-    }
-  };
-  
-  const getFormLabel = () => {
-    switch (cohortType) {
-      case 'FORGE_WRITING': return 'Know Your Writer';
-      case 'FORGE_CREATORS': return 'Know Your Creator';
-      default: return 'Know Your Filmmaker';
-    }
-  };
-  
   const handleClick = () => {
     if (isCompleted) {
       navigate('/my-kyform');
     } else {
-      navigate(getFormRoute());
+      navigate(getKYFormSectionRoute(cohortType));
     }
   };
   
@@ -50,7 +35,7 @@ export const KYFormQuickAccess: React.FC<KYFormQuickAccessProps> = ({ isComplete
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-foreground text-sm">{getFormLabel()}</h3>
+          <h3 className="font-semibold text-foreground text-sm">{getKYFormName(cohortType)}</h3>
           <p className="text-xs text-muted-foreground">
             {isCompleted ? 'View your submitted details' : 'Complete your form to unlock access'}
           </p>

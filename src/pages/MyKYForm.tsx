@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import forgeIcon from '@/assets/forge-icon.png';
+import { getKYFormSectionRoute } from '@/lib/kyFormRoutes';
 
 const MyKYForm: React.FC = () => {
   const navigate = useNavigate();

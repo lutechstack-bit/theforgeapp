@@ -297,6 +297,11 @@ const AppRoutes = () => {
         <Route path="network" element={<AdminNetwork />} />
       </Route>
       
+      {/* Legacy KY form redirects */}
+      <Route path="/kyf-form" element={<Navigate to="/ky-section/filmmaker_profile" replace />} />
+      <Route path="/kyc-form" element={<Navigate to="/ky-section/creator_profile" replace />} />
+      <Route path="/kyw-form" element={<Navigate to="/ky-section/writer_profile" replace />} />
+      
       {/* Catch-all */}
       <Route path="*" element={<NotFound />} />
     </Routes>

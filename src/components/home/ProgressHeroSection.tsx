@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { FileText, Map, CheckCircle, ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { getKYFormSectionRoute, getKYFormShortName } from '@/lib/kyFormRoutes';
 
 interface ProgressCardProps {
   number: string;

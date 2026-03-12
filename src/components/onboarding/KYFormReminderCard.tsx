@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { ClipboardList, ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { getKYFormSectionRoute, getKYFormName } from '@/lib/kyFormRoutes';
 
 export const KYFormReminderCard: React.FC = () => {
   const { profile, edition } = useAuth();
@@ -13,36 +14,10 @@ export const KYFormReminderCard: React.FC = () => {
     return null;
   }
 
-  const getFormRoute = () => {
-    switch (edition?.cohort_type) {
-      case 'FORGE':
-        return '/kyf-form';
-      case 'FORGE_CREATORS':
-        return '/kyc-form';
-      case 'FORGE_WRITING':
-        return '/kyw-form';
-      default:
-        return '/kyf-form';
-    }
-  };
-
-  const getFormName = () => {
-    switch (edition?.cohort_type) {
-      case 'FORGE':
-        return 'Know Your Filmmaker';
-      case 'FORGE_CREATORS':
-        return 'Know Your Creator';
-      case 'FORGE_WRITING':
-        return 'Know Your Writer';
-      default:
-        return 'Complete Form';
-    }
-  };
-
   return (
     <Card 
       className="glass-card border-primary/30 cursor-pointer hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_20px_hsl(var(--primary)/0.2)]"
-      onClick={() => navigate(getFormRoute())}
+      onClick={() => navigate(getKYFormSectionRoute(edition?.cohort_type))}
     >
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
@@ -50,7 +25,7 @@ export const KYFormReminderCard: React.FC = () => {
             <ClipboardList className="h-6 w-6 text-primary" />
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-foreground">{getFormName()}</h3>
+            <h3 className="font-semibold text-foreground">{getKYFormName(edition?.cohort_type)}</h3>
             <p className="text-sm text-muted-foreground">Required to unlock full access</p>
           </div>
           <ArrowRight className="h-5 w-5 text-primary" />
