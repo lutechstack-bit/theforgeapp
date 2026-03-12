@@ -12,6 +12,7 @@ import { KYSectionFields } from '@/components/kyform/KYSectionFields';
 import { KYFormProgressBar } from '@/components/kyform/KYFormProgressBar';
 import { ArrowLeft, Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 import {
   AlertDialog,
   AlertDialogAction,
