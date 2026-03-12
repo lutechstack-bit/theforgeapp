@@ -347,7 +347,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   const { user } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+  const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const accessLogIdRef = useRef<string | null>(null);
   const watchTimeRef = useRef<number>(0);
   

@@ -27,7 +27,7 @@ export const PersonalNoteCard: React.FC<PersonalNoteCardProps> = ({
   
   const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Focus textarea when entering edit mode
   useEffect(() => {

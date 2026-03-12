@@ -52,7 +52,7 @@ const Community = () => {
   const [stats, setStats] = useState<Stats>({ totalMembers: 0, totalCities: 0, totalFilms: 0 });
   
   const presenceChannelRef = useRef<RealtimeChannel | null>(null);
-  const typingTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
+  const typingTimeoutRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => {
     if (user) {
