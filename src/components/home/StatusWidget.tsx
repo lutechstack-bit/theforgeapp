@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSmartAnnouncements } from '@/hooks/useSmartAnnouncements';
 import { ClipboardList, ChevronRight, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getKYFormSectionRoute, getKYFormName } from '@/lib/kyFormRoutes';
 
 interface StatusWidgetProps {
   variant: 'desktop' | 'mobile';
