@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.calendar-event]
 verify_jwt = false
+
+[functions.reset-ky-forms]
+verify_jwt = false
