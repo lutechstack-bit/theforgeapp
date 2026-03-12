@@ -40,7 +40,7 @@ export const KYFormCardStack: React.FC<KYFormCardStackProps> = ({
   return (
     <div className="relative h-full w-full flex items-center">
       {/* Card stack visual - rotation-based depth effect */}
-      <div className="relative w-full max-h-full">
+      <div className="relative w-full h-full min-h-0">
         {/* Third card (behind) - more rotation and offset */}
         {displayStep < totalSteps - 2 && (
           <div
