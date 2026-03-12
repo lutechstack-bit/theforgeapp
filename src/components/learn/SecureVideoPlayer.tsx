@@ -78,7 +78,7 @@ const VimeoEmbedPlayer: React.FC<{
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const playerRef = useRef<VimeoPlayer | null>(null);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+  const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const [vIsPlaying, setVIsPlaying] = useState(false);
   const [vCurrentTime, setVCurrentTime] = useState(0);
