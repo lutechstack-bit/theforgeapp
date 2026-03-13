@@ -262,7 +262,7 @@ const KYSectionForm: React.FC = () => {
       </div>
 
       {/* Top bar - compact on short screens */}
-      <div className="relative z-10 flex items-center justify-between px-4 pt-2 pb-1 short:pt-4 short:pb-2">
+      <div className="relative z-10 flex items-center justify-between px-4 pt-2 pb-1">
         <button
           onClick={handleBack}
           className="p-2.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/50 hover:border-forge-gold/30 hover:bg-secondary/80 transition-all"
