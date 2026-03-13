@@ -38,12 +38,12 @@ export const KYFormCard: React.FC<KYFormCardProps> = ({
       <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-forge-gold/40 to-transparent" />
 
       {showProgress && (
-        <div className="px-3 pt-3 md:px-5 md:pt-4">
+        <div className="px-3 pt-2 md:px-5 md:pt-3">
           <KYFormProgressBar currentStep={currentStep} totalSteps={totalSteps} />
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar p-3 md:p-5">
+      <div className="flex-1 overflow-y-auto hide-scrollbar p-3 md:p-4">
         {children}
       </div>
     </div>

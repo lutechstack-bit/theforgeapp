@@ -261,8 +261,8 @@ const KYSectionForm: React.FC = () => {
         <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-forge-orange/5 blur-[120px]" />
       </div>
 
-      {/* Top bar */}
-      <div className="relative z-10 flex items-center justify-between px-4 pt-4 pb-2">
+      {/* Top bar - compact on short screens */}
+      <div className="relative z-10 flex items-center justify-between px-4 pt-2 pb-1">
         <button
           onClick={handleBack}
           className="p-2.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/50 hover:border-forge-gold/30 hover:bg-secondary/80 transition-all"
@@ -281,7 +281,7 @@ const KYSectionForm: React.FC = () => {
       </div>
 
       {/* Card stack area - fills viewport between top bar and bottom nav */}
-      <div className="relative z-10 flex-1 flex flex-col px-4 pb-24 max-w-xl mx-auto w-full min-h-0">
+      <div className="relative z-10 flex-1 flex flex-col px-4 pb-20 max-w-xl mx-auto w-full min-h-0">
         <KYFormCardStack currentStep={currentStep} totalSteps={totalSteps}>
           {/* Intro card */}
           <KYFormCard currentStep={currentStep + 1} totalSteps={totalSteps}>
@@ -302,7 +302,7 @@ const KYSectionForm: React.FC = () => {
       </div>
 
       {/* Compact centered bottom navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-background via-background/95 to-transparent pt-4 pb-5 px-4 safe-area-pb">
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-background via-background/95 to-transparent pt-3 pb-4 px-4 safe-area-pb">
         <div className="max-w-lg mx-auto flex items-center justify-center gap-4">
           {currentStep > 0 && (
             <button
