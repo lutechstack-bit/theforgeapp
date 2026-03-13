@@ -72,7 +72,7 @@ export const KYFormCardStack: React.FC<KYFormCardStackProps> = ({
         <div
           key={displayStep}
           className={cn(
-            'relative z-10 h-full min-h-0',
+            'relative z-10 max-h-full',
             isAnimating === 'forward' && 'animate-stack-pop-out',
             isAnimating === 'backward' && 'animate-stack-backward-out'
           )}
