@@ -1,32 +1,41 @@
 
-## Replace Program Banner Images
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+# Fix Missing Database Columns Across All KY Form Tables
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+## Problem
+Multiple KY form tables are missing columns that their form configurations reference, causing errors when users try to save responses.
 
-### Changes
+## Column Audit Results
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+| Table | Missing Column | Type | Referenced In Config |
+|-------|---------------|------|---------------------|
+| `kyf_responses` | `country` | text | Line 157 — `countryKey: 'country'` in address step |
+| `kyc_responses` | `food_allergies` | text | Line 397 — Hospitality section |
+| `kyc_responses` | `medication_support` | text | Line 398 — Hospitality section |
+| `kyc_responses` | `tshirt_size` | text | Line 406 — Hospitality section |
+| `kyw_responses` | `date_of_birth` | date | Line 439 — General Details step |
+| `kyw_responses` | `country` | text | Line 447 — `countryKey: 'country'` in location step |
 
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+## Fix
 
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+Single database migration adding all 6 missing columns:
 
-| File | Change |
-|------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+```sql
+-- KYF: missing country for country-state field
+ALTER TABLE public.kyf_responses
+  ADD COLUMN IF NOT EXISTS country text;
+
+-- KYC: missing hospitality fields
+ALTER TABLE public.kyc_responses
+  ADD COLUMN IF NOT EXISTS food_allergies text,
+  ADD COLUMN IF NOT EXISTS medication_support text,
+  ADD COLUMN IF NOT EXISTS tshirt_size text;
+
+-- KYW: missing general + location fields
+ALTER TABLE public.kyw_responses
+  ADD COLUMN IF NOT EXISTS date_of_birth date,
+  ADD COLUMN IF NOT EXISTS country text;
+```
+
+No frontend code changes needed. The form configs are already correct — only the database schemas need to catch up.
 
