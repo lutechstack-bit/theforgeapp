@@ -24,7 +24,9 @@ export const RadioSelectField: React.FC<RadioSelectFieldProps> = ({
   required = false,
   columns = 1,
 }) => {
-  const gridCols = columns === 1 ? 'grid-cols-1' : columns === 2 ? 'grid-cols-2' : 'grid-cols-3';
+  // Auto-use 2 columns for 4+ options when no explicit column count given
+  const effectiveCols = columns || (options.length >= 4 ? 2 : 1);
+  const gridCols = effectiveCols === 1 ? 'grid-cols-1' : effectiveCols === 2 ? 'grid-cols-2' : 'grid-cols-3';
 
   return (
     <div className="space-y-1.5">

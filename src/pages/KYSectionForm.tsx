@@ -302,7 +302,7 @@ const KYSectionForm: React.FC = () => {
       </div>
 
       {/* Compact centered bottom navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-background via-background/95 to-transparent pt-4 pb-5 px-4 safe-area-pb">
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-background via-background/95 to-transparent pt-3 pb-4 px-4 safe-area-pb">
         <div className="max-w-lg mx-auto flex items-center justify-center gap-4">
           {currentStep > 0 && (
             <button

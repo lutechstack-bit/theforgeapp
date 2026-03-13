@@ -309,7 +309,14 @@ const KYC_SECTIONS: KYSection[] = [
             { value: 'working', label: 'Working Professional' },
             { value: 'freelancer', label: 'Freelancer' },
             { value: 'full_time_creator', label: 'Full-time Creator' },
-          ], required: true },
+          ], columns: 2, required: true },
+        ],
+      },
+      {
+        key: 'contact_details',
+        title: 'Contact & Identity',
+        subtitle: 'How we reach you',
+        fields: [
           { key: 'instagram_id', type: 'text', label: 'Instagram ID', placeholder: '@yourhandle', required: true },
           { key: 'date_of_birth', type: 'date', label: 'Date of Birth', required: true },
         ],
