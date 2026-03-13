@@ -1161,12 +1161,14 @@ export type Database = {
           email: string | null
           emergency_contact_name: string | null
           emergency_contact_number: string | null
+          food_allergies: string | null
           forge_intent: string | null
           forge_intent_other: string | null
           id: string
           instagram_id: string | null
           mbti_type: string | null
           meal_preference: string | null
+          medication_support: string | null
           primary_platform: string | null
           proficiency_content_creation: string | null
           proficiency_storytelling: string | null
@@ -1175,6 +1177,7 @@ export type Database = {
           terms_accepted: boolean | null
           terms_accepted_at: string | null
           top_3_creators: string[] | null
+          tshirt_size: string | null
           updated_at: string
           user_id: string
           whatsapp_number: string | null
@@ -1191,12 +1194,14 @@ export type Database = {
           email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_number?: string | null
+          food_allergies?: string | null
           forge_intent?: string | null
           forge_intent_other?: string | null
           id?: string
           instagram_id?: string | null
           mbti_type?: string | null
           meal_preference?: string | null
+          medication_support?: string | null
           primary_platform?: string | null
           proficiency_content_creation?: string | null
           proficiency_storytelling?: string | null
@@ -1205,6 +1210,7 @@ export type Database = {
           terms_accepted?: boolean | null
           terms_accepted_at?: string | null
           top_3_creators?: string[] | null
+          tshirt_size?: string | null
           updated_at?: string
           user_id: string
           whatsapp_number?: string | null
@@ -1221,12 +1227,14 @@ export type Database = {
           email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_number?: string | null
+          food_allergies?: string | null
           forge_intent?: string | null
           forge_intent_other?: string | null
           id?: string
           instagram_id?: string | null
           mbti_type?: string | null
           meal_preference?: string | null
+          medication_support?: string | null
           primary_platform?: string | null
           proficiency_content_creation?: string | null
           proficiency_storytelling?: string | null
@@ -1235,6 +1243,7 @@ export type Database = {
           terms_accepted?: boolean | null
           terms_accepted_at?: string | null
           top_3_creators?: string[] | null
+          tshirt_size?: string | null
           updated_at?: string
           user_id?: string
           whatsapp_number?: string | null
@@ -1249,6 +1258,7 @@ export type Database = {
           certificate_name: string | null
           chronotype: string | null
           city: string | null
+          country: string | null
           created_at: string
           current_occupation: string | null
           date_of_birth: string | null
@@ -1293,6 +1303,7 @@ export type Database = {
           certificate_name?: string | null
           chronotype?: string | null
           city?: string | null
+          country?: string | null
           created_at?: string
           current_occupation?: string | null
           date_of_birth?: string | null
@@ -1337,6 +1348,7 @@ export type Database = {
           certificate_name?: string | null
           chronotype?: string | null
           city?: string | null
+          country?: string | null
           created_at?: string
           current_occupation?: string | null
           date_of_birth?: string | null
@@ -1382,8 +1394,10 @@ export type Database = {
           certificate_name: string | null
           chronotype: string | null
           city: string | null
+          country: string | null
           created_at: string
           current_occupation: string | null
+          date_of_birth: string | null
           email: string | null
           emergency_contact_name: string | null
           emergency_contact_number: string | null
@@ -1407,8 +1421,10 @@ export type Database = {
           certificate_name?: string | null
           chronotype?: string | null
           city?: string | null
+          country?: string | null
           created_at?: string
           current_occupation?: string | null
+          date_of_birth?: string | null
           email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_number?: string | null
@@ -1432,8 +1448,10 @@ export type Database = {
           certificate_name?: string | null
           chronotype?: string | null
           city?: string | null
+          country?: string | null
           created_at?: string
           current_occupation?: string | null
+          date_of_birth?: string | null
           email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_number?: string | null
