@@ -43,7 +43,7 @@ export const KYFormCard: React.FC<KYFormCardProps> = ({
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar p-3 md:p-4">
+      <div className="flex-1 overflow-y-auto hide-scrollbar min-h-0 p-3 md:p-4">
         {children}
       </div>
     </div>
