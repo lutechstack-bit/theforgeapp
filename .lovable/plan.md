@@ -1,27 +1,32 @@
 
+## Replace Program Banner Images
 
-# Fix Empty Space in KY Form Cards
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## Problem
-The cards stretch to fill the entire viewport height due to `h-full` being applied throughout the height chain. This creates massive empty space below short-content steps (like "Name + Status" or "Instagram + DOB"). The cards should **fit their content** naturally and only scroll if content genuinely overflows.
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-## Root Cause
-The previous scroll fix overcorrected: changing from `max-h-full` to `h-full` forces every card to expand to the full container height, even when content is small.
+### Changes
 
-## Fix (3 files)
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-### 1. `src/components/kyform/KYFormCardStack.tsx`
-- Line 41: Change outer wrapper from `flex items-center` to `flex items-center justify-center` (keeps vertical centering)
-- Line 43: `h-full min-h-0` → `max-h-full` (don't force full height, just cap it)
-- Line 75: `h-full min-h-0` → `max-h-full` (current card sizes to content)
-- Line 87: `h-full min-h-0` → `max-h-full` (incoming card sizes to content)
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-### 2. `src/components/kyform/KYFormCard.tsx`
-- Line 27: `h-full min-h-0` → `max-h-full` (card wraps content, doesn't stretch)
-- Line 46: Keep `flex-1 overflow-y-auto` but add `min-h-0` so scroll only activates when needed
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
-### 3. `src/pages/KYSectionForm.tsx`
-- Line 284: Change `flex-1 flex flex-col` → `flex-1 flex items-center` so cards are vertically centered in the available space rather than pushed to the top with empty stretch below
-
-This restores content-hugging behavior: cards are as tall as their fields, centered in the viewport, with scroll as a safety fallback only when content exceeds available height.
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 

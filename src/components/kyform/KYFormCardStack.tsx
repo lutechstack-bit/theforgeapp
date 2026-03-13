@@ -38,9 +38,9 @@ export const KYFormCardStack: React.FC<KYFormCardStackProps> = ({
   const childArray = React.Children.toArray(children);
 
   return (
-    <div className="relative h-full w-full flex items-center">
+    <div className="relative w-full max-h-full flex items-center justify-center">
       {/* Card stack visual - rotation-based depth effect */}
-      <div className="relative w-full h-full min-h-0">
+      <div className="relative w-full max-h-full">
         {/* Third card (behind) - more rotation and offset */}
         {displayStep < totalSteps - 2 && (
           <div
@@ -72,7 +72,7 @@ export const KYFormCardStack: React.FC<KYFormCardStackProps> = ({
         <div
           key={displayStep}
           className={cn(
-            'relative z-10 h-full min-h-0',
+            'relative z-10 max-h-full',
             isAnimating === 'forward' && 'animate-stack-pop-out',
             isAnimating === 'backward' && 'animate-stack-backward-out'
           )}
@@ -84,7 +84,7 @@ export const KYFormCardStack: React.FC<KYFormCardStackProps> = ({
         {isAnimating && (
           <div
             className={cn(
-              'absolute inset-0 z-20 h-full min-h-0',
+              'absolute inset-0 z-20 max-h-full',
               isAnimating === 'forward' && 'animate-stack-pop-in',
               isAnimating === 'backward' && 'animate-stack-backward-in'
             )}
