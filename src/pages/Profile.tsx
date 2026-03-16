@@ -142,7 +142,7 @@ const Profile: React.FC = () => {
       />
 
       {/* Action Strip */}
-      <div className="flex gap-2.5 items-center px-4 sm:px-6 md:px-0 py-3 border-b border-primary/10 mb-6">
+      <div className="flex flex-wrap gap-2 sm:gap-2.5 items-center px-4 sm:px-6 md:px-0 py-3 border-b border-primary/10 mb-6">
         <Link
           to="/kyf"
           className={`flex items-center gap-2 px-3.5 py-2 border rounded-lg text-xs transition-all cursor-pointer ${

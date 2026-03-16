@@ -88,7 +88,7 @@ export const BatchmatesDirectory: React.FC = () => {
         {filtered.length} batchmate{filtered.length !== 1 ? 's' : ''}
       </p>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
         {filtered.map(member => (
           <button
             key={member.id}

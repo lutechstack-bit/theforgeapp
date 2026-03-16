@@ -250,7 +250,7 @@ const CourseDetail: React.FC = () => {
     <div className="min-h-screen bg-background">
       {/* Sticky Header */}
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border/50">
-        <div className="container py-2 flex items-center gap-3">
+        <div className="max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 py-2 flex items-center gap-3">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -265,7 +265,7 @@ const CourseDetail: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="container py-4 pb-24">
+      <div className="max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 py-4 pb-24">
         <div className="flex flex-col lg:grid lg:grid-cols-[1fr_320px] gap-4">
 
           {/* Left Column: Video + Tabs */}

@@ -168,7 +168,7 @@ export const CollaboratorDirectory: React.FC = () => {
           <button
             onClick={() => setActiveFilter('ALL')}
             className={cn(
-              'px-3.5 py-2 rounded-full text-xs font-semibold transition-all border whitespace-nowrap shrink-0',
+              'px-3.5 py-2 rounded-full text-xs font-semibold transition-all border whitespace-nowrap shrink-0 active:scale-95',
               activeFilter === 'ALL'
                 ? 'bg-[#FFBF00] text-black border-[#FFBF00]'
                 : 'bg-card text-muted-foreground border-border/30 hover:border-border/60'
@@ -181,7 +181,7 @@ export const CollaboratorDirectory: React.FC = () => {
               key={occ.id}
               onClick={() => setActiveFilter(occ.name)}
               className={cn(
-                'px-3.5 py-2 rounded-full text-xs font-semibold transition-all border whitespace-nowrap shrink-0',
+                'px-3.5 py-2 rounded-full text-xs font-semibold transition-all border whitespace-nowrap shrink-0 active:scale-95',
                 activeFilter === occ.name
                   ? 'bg-[#FFBF00] text-black border-[#FFBF00]'
                   : 'bg-card text-muted-foreground border-border/30 hover:border-border/60'

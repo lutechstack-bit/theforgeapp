@@ -85,8 +85,8 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 
           {/* Sidebar with description and resources */}
           <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-border bg-card/50">
-            <ScrollArea className="h-full max-h-[40vh] lg:max-h-[70vh]">
-              <div className="p-4 space-y-6">
+            <ScrollArea className="h-full max-h-[30vh] lg:max-h-[70vh]">
+              <div className="p-3 sm:p-4 space-y-4 sm:space-y-6">
                 {/* Instructor Info with Avatar */}
                 {(content.instructor_name || content.company_name) && (
                   <div className="flex items-center gap-3">
