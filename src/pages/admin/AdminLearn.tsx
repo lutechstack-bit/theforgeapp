@@ -196,17 +196,7 @@ const AdminLearn: React.FC = () => {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
-  // Explore Programs state
-  const [isProgramDialogOpen, setIsProgramDialogOpen] = useState(false);
-  const [editingProgramId, setEditingProgramId] = useState<string | null>(null);
-  const [programForm, setProgramForm] = useState<ExploreProgramForm>(initialProgramForm);
-  const [programSubTab, setProgramSubTab] = useState<'online' | 'offline'>('online');
-
-  // Alumni Showcase state
-  const [isShowcaseDialogOpen, setIsShowcaseDialogOpen] = useState(false);
-  const [editingShowcaseId, setEditingShowcaseId] = useState<string | null>(null);
-  const [showcaseForm, setShowcaseForm] = useState<AlumniShowcaseForm>(initialShowcaseForm);
-  const [showcaseSubTab, setShowcaseSubTab] = useState<'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS'>('FORGE');
+  
 
   // Reorder mutation
   const reorderMutation = useMutation({
