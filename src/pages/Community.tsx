@@ -8,6 +8,7 @@ import { GroupSwitcher } from '@/components/community/GroupSwitcher';
 import { MembersDrawer } from '@/components/community/MembersDrawer';
 import { CollaboratorDirectory } from '@/components/community/CollaboratorDirectory';
 import { CollaboratorInbox } from '@/components/community/CollaboratorInbox';
+import { BatchmatesDirectory } from '@/components/community/BatchmatesDirectory';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { getCityGroupKey } from '@/lib/cityUtils';
@@ -38,9 +39,12 @@ const Community = () => {
   const [searchParams] = useSearchParams();
   const { isFeatureEnabled, isLoading: flagsLoading } = useFeatureFlags();
   const chatEnabled = isFeatureEnabled('community_chat_enabled');
-  const [activeView, setActiveView] = useState<'chat' | 'network'>(
-    searchParams.get('tab') === 'network' || !chatEnabled ? 'network' : 'chat'
-  );
+  const [activeView, setActiveView] = useState<'chat' | 'batchmates' | 'network'>(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'batchmates') return 'batchmates';
+    if (tab === 'network' || !chatEnabled) return 'network';
+    return 'chat';
+  });
   const [loading, setLoading] = useState(true);
   const [cityGroups, setCityGroups] = useState<CityGroup[]>([]);
   const [cohortGroup, setCohortGroup] = useState<CohortGroup | null>(null);
@@ -207,6 +211,17 @@ const Community = () => {
                 Chat
               </button>
               <button
+                onClick={() => setActiveView('batchmates')}
+                className={cn(
+                  'px-5 py-2 rounded-full text-sm font-semibold transition-all',
+                  activeView === 'batchmates'
+                    ? 'bg-[#FFBF00] text-black shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                Batchmates
+              </button>
+              <button
                 onClick={() => setActiveView('network')}
                 className={cn(
                   'px-5 py-2 rounded-full text-sm font-semibold transition-all',
@@ -251,6 +266,10 @@ const Community = () => {
                 />
               </div>
             </>
+          ) : activeView === 'batchmates' ? (
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <BatchmatesDirectory />
+            </div>
           ) : (
             <div className="flex-1 min-h-0 overflow-y-auto">
               <CollaboratorDirectory />

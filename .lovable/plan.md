@@ -1,46 +1,32 @@
 
+## Replace Program Banner Images
 
-# Add Batchmates as a Tab in the Community Page
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## Approach
-Instead of creating a separate `/batchmates` route, integrate the Batchmates directory as a third tab within the existing Community page. The toggle becomes **Chat | Batchmates | Network** (or **Batchmates | Network** when chat is disabled). This keeps everything under the Community nav item users already know.
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-## Changes
+### Changes
 
-### 1. Community Page (`src/pages/Community.tsx`)
-- Add `'batchmates'` to the `activeView` state type
-- Add a third pill button "Batchmates" in the toggle row
-- When `activeView === 'batchmates'`, render a new `<BatchmatesDirectory />` component
-- Support URL param `?tab=batchmates` for deep-linking from the homepage
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-### 2. New Component: `src/components/community/BatchmatesDirectory.tsx`
-Full directory view showing all same-edition members in a searchable grid:
-- Search bar (filter by name/city)
-- Responsive card grid (2 cols mobile, 3-4 cols desktop)
-- Each card: avatar, name, city, specialty, MBTI badge
-- Clicking a card opens the detail modal
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-### 3. New Component: `src/components/community/BatchmateDetailSheet.tsx`
-Bottom sheet (mobile) / dialog (desktop) showing rich KY form data:
-- Header: avatar, full name, city, Instagram
-- Sections pulled from the correct KY table based on cohort:
-  - **KYF** (Filmmakers): occupation, proficiencies, top 3 films, MBTI, chronotype
-  - **KYC** (Creators): content type, platforms, proficiencies, favorites
-  - **KYW** (Writers): writing types, genres, proficiencies, favorites
-- Proficiency bars component for visual display
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
-### 4. Update `src/components/home/BatchmatesSection.tsx`
-- Change "View All" and "+N more" navigation from `/community` to `/community?tab=batchmates`
-
-### 5. No Database Changes
-All data already exists in `profiles`, `kyf_responses`, `kyc_responses`, `kyw_responses`.
-
-## File Summary
-
-| Action | File |
-|--------|------|
-| Create | `src/components/community/BatchmatesDirectory.tsx` |
-| Create | `src/components/community/BatchmateDetailSheet.tsx` |
-| Edit | `src/pages/Community.tsx` — add batchmates tab |
-| Edit | `src/components/home/BatchmatesSection.tsx` — update nav targets |
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 
