@@ -25,7 +25,9 @@ import {
   Home,
   Target,
   Gift,
-  Handshake
+  Handshake,
+  ExternalLink,
+  Film
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
