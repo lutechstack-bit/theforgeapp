@@ -279,6 +279,8 @@ const AppRoutes = () => {
         <Route path="editions" element={<AdminEditions />} />
         <Route path="events" element={<AdminEvents />} />
         <Route path="learn" element={<AdminLearn />} />
+        <Route path="explore-programs" element={<AdminExplorePrograms />} />
+        <Route path="alumni-showcase" element={<AdminAlumniShowcase />} />
         <Route path="auto-updates" element={<AdminAutoUpdates />} />
         <Route path="roadmap" element={<AdminRoadmap />} />
         <Route path="roadmap-sidebar" element={<AdminRoadmapSidebar />} />
