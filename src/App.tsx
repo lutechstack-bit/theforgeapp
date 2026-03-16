@@ -45,6 +45,8 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminEditions from "./pages/admin/AdminEditions";
 import AdminEvents from "./pages/admin/AdminEvents";
 import AdminLearn from "./pages/admin/AdminLearn";
+import AdminExplorePrograms from "./pages/admin/AdminExplorePrograms";
+import AdminAlumniShowcase from "./pages/admin/AdminAlumniShowcase";
 import AdminAutoUpdates from "./pages/admin/AdminAutoUpdates";
 import AdminRoadmap from "./pages/admin/AdminRoadmap";
 import AdminRoadmapSidebar from "./pages/admin/AdminRoadmapSidebar";
