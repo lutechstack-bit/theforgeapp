@@ -133,9 +133,16 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
               >
                 {/* Image / Thumbnail */}
                 <div className={`relative ${getAspectClass()} rounded-xl overflow-hidden bg-secondary`}>
-                  {(a.thumbnail_url || a.media_url) ? (
+                  {getAutoThumbnail(a) ? (
                     <img
-                      src={a.thumbnail_url || a.media_url || ''}
+                      src={getAutoThumbnail(a)!}
+                      alt={a.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                  ) : (a.media_url) ? (
+                    <img
+                      src={a.media_url}
                       alt={a.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
