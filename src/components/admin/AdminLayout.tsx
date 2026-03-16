@@ -50,6 +50,7 @@ const adminNavItems = [
   { to: '/admin/learn', icon: FileText, label: 'Learn' },
   { to: '/admin/explore-programs', icon: ExternalLink, label: 'Explore Programs' },
   { to: '/admin/alumni-showcase', icon: Film, label: 'Alumni Showcase' },
+  { to: '/admin/mentors', icon: UserCircle, label: 'Mentors' },
   { to: '/admin/community-highlights', icon: Star, label: 'Community Highlights' },
   { to: '/admin/auto-updates', icon: Sparkles, label: 'Auto Updates' },
   { to: '/admin/docs', icon: BookOpen, label: 'Documentation' },
