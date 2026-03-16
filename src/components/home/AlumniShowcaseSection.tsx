@@ -41,7 +41,6 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
   title = 'Alumni Showcase',
   subtitle,
 }) => {
-  const navigate = useNavigate();
   const [playingVideo, setPlayingVideo] = useState<{ url: string; title: string; isVertical: boolean } | null>(null);
   const [viewingImage, setViewingImage] = useState<{ url: string; title: string; author: string } | null>(null);
 
