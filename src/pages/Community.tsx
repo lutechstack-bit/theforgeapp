@@ -8,6 +8,7 @@ import { GroupSwitcher } from '@/components/community/GroupSwitcher';
 import { MembersDrawer } from '@/components/community/MembersDrawer';
 import { CollaboratorDirectory } from '@/components/community/CollaboratorDirectory';
 import { CollaboratorInbox } from '@/components/community/CollaboratorInbox';
+import { BatchmatesDirectory } from '@/components/community/BatchmatesDirectory';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { getCityGroupKey } from '@/lib/cityUtils';
