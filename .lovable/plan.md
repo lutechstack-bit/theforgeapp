@@ -1,42 +1,32 @@
 
+## Replace Program Banner Images
 
-# Clean Up Coming Soon Card in Perks
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## The Issue
-The current "Coming Soon" fallback card (shown when no banner image exists) is cluttered with:
-- Large letter avatar box
-- Category badge
-- Name + headline text layout
-- "Soon" badge on the right
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-This creates a collapsed, awkward appearance.
+### Changes
 
-## Solution
-Replace the text-layout fallback with a clean, minimal "Coming Soon" card that matches the visual style of banner cards:
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-- Same 16/10 aspect ratio for grid consistency
-- Subtle dark background with gold border accent
-- Simple, centered "Coming Soon" text with clock icon
-- No attempt to render placeholder content
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-## Changes
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
-### Update `src/components/perks/PerkCard.tsx`
-- When `isComingSoon` is true and no banner exists, render a clean minimal card
-- Keep banner mode unchanged (already handles coming soon gracefully with overlay)
-- Simplify the fallback layout to be a centered, aspect-ratio card instead of text-heavy layout
-
-### Visual Result
-```
-┌─────────────────────────────┐
-│      ┌─────────┐            │
-│      │  Clock  │            │
-│      └─────────┘            │
-│                             │
-│    Coming Soon              │
-│    More perks on the way    │
-└─────────────────────────────┘
-```
-
-Clean, minimal, matches the grid, no collapsed text.
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 
