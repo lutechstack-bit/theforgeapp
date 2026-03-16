@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Play, ChevronRight } from 'lucide-react';
+import { Play } from 'lucide-react';
 import forgeIcon from '@/assets/forge-icon.png';
 import { HomeCarouselSkeleton } from '@/components/home/HomeCarouselSkeleton';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
