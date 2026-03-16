@@ -45,6 +45,8 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminEditions from "./pages/admin/AdminEditions";
 import AdminEvents from "./pages/admin/AdminEvents";
 import AdminLearn from "./pages/admin/AdminLearn";
+import AdminExplorePrograms from "./pages/admin/AdminExplorePrograms";
+import AdminAlumniShowcase from "./pages/admin/AdminAlumniShowcase";
 import AdminAutoUpdates from "./pages/admin/AdminAutoUpdates";
 import AdminRoadmap from "./pages/admin/AdminRoadmap";
 import AdminRoadmapSidebar from "./pages/admin/AdminRoadmapSidebar";
@@ -277,6 +279,8 @@ const AppRoutes = () => {
         <Route path="editions" element={<AdminEditions />} />
         <Route path="events" element={<AdminEvents />} />
         <Route path="learn" element={<AdminLearn />} />
+        <Route path="explore-programs" element={<AdminExplorePrograms />} />
+        <Route path="alumni-showcase" element={<AdminAlumniShowcase />} />
         <Route path="auto-updates" element={<AdminAutoUpdates />} />
         <Route path="roadmap" element={<AdminRoadmap />} />
         <Route path="roadmap-sidebar" element={<AdminRoadmapSidebar />} />
