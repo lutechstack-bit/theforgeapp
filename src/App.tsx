@@ -320,7 +320,7 @@ function App() {
                 <Sonner />
                 <BrowserRouter>
                   <ScrollToTop />
-                  <MarkerProvider />
+                  
                   <AppRoutes />
                 </BrowserRouter>
               </TooltipProvider>
