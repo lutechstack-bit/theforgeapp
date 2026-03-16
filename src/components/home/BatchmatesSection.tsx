@@ -130,7 +130,7 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
         {/* +N more */}
         {remaining > 0 && (
           <button
-            onClick={() => navigate('/community')}
+            onClick={() => navigate('/community?tab=batchmates')}
             className="flex flex-col items-center gap-1.5 flex-shrink-0 min-w-[64px] group"
           >
             <div className="w-14 h-14 rounded-full bg-secondary border-2 border-border/30 flex items-center justify-center group-hover:border-primary/30 transition-colors">

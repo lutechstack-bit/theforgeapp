@@ -266,6 +266,10 @@ const Community = () => {
                 />
               </div>
             </>
+          ) : activeView === 'batchmates' ? (
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <BatchmatesDirectory />
+            </div>
           ) : (
             <div className="flex-1 min-h-0 overflow-y-auto">
               <CollaboratorDirectory />
