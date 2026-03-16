@@ -211,6 +211,17 @@ const Community = () => {
                 Chat
               </button>
               <button
+                onClick={() => setActiveView('batchmates')}
+                className={cn(
+                  'px-5 py-2 rounded-full text-sm font-semibold transition-all',
+                  activeView === 'batchmates'
+                    ? 'bg-[#FFBF00] text-black shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                Batchmates
+              </button>
+              <button
                 onClick={() => setActiveView('network')}
                 className={cn(
                   'px-5 py-2 rounded-full text-sm font-semibold transition-all',
