@@ -94,7 +94,7 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate('/community')}
+          onClick={() => navigate('/community?tab=batchmates')}
           className="text-primary hover:text-primary hover:bg-primary/10"
         >
           View All
