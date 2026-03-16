@@ -50,6 +50,17 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
 
   if (alumni.length === 0) return null;
 
+  const getAutoThumbnail = (item: AlumniShowcaseItem): string | null => {
+    if (item.thumbnail_url) return item.thumbnail_url;
+    if (item.media_url) {
+      const vimeoId = extractVimeoId(item.media_url);
+      if (vimeoId) return `https://vumbnail.com/${vimeoId}.jpg`;
+      const ytId = extractYouTubeId(item.media_url);
+      if (ytId) return `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+    }
+    return null;
+  };
+
   const getEmbedUrl = (url: string) => {
     const vimeoId = extractVimeoId(url);
     if (vimeoId) {
