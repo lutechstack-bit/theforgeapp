@@ -14,24 +14,28 @@ const getInitials = (name: string | null) => {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 };
 
+interface Batchmate {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  city: string | null;
+  specialty: string | null;
+  instagram_handle: string | null;
+}
+
 export const BatchmatesDirectory: React.FC = () => {
-  const { profile, user } = useAuth();
+  const { profile } = useAuth();
   const [search, setSearch] = useState('');
-  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [selectedMember, setSelectedMember] = useState<Batchmate | null>(null);
 
   const { data: batchmates, isLoading } = useQuery({
     queryKey: ['batchmates-directory', profile?.edition_id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url, city, specialty, instagram_handle')
-        .eq('edition_id', profile!.edition_id!)
-        .neq('id', user!.id)
-        .order('full_name');
+      const { data, error } = await supabase.rpc('get_batchmates_for_my_edition');
       if (error) throw error;
-      return data || [];
+      return (data || []) as Batchmate[];
     },
-    enabled: !!profile?.edition_id && !!user?.id,
+    enabled: !!profile?.edition_id,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -70,7 +74,6 @@ export const BatchmatesDirectory: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
@@ -81,20 +84,18 @@ export const BatchmatesDirectory: React.FC = () => {
         />
       </div>
 
-      {/* Count */}
       <p className="text-xs text-muted-foreground">
         {filtered.length} batchmate{filtered.length !== 1 ? 's' : ''}
       </p>
 
-      {/* Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {filtered.map(member => (
           <button
             key={member.id}
             onClick={() => setSelectedMember(member)}
-            className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-border/30 bg-card hover:border-[#FFBF00]/30 hover:bg-[#FFBF00]/5 transition-all text-center group"
+            className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-border/30 bg-card hover:border-primary/30 hover:bg-primary/5 transition-all text-center group"
           >
-            <Avatar className="w-14 h-14 border-2 border-border/30 group-hover:border-[#FFBF00]/40 transition-colors">
+            <Avatar className="w-14 h-14 border-2 border-border/30 group-hover:border-primary/40 transition-colors">
               <AvatarImage src={member.avatar_url || undefined} alt={member.full_name || ''} />
               <AvatarFallback className="bg-primary/15 text-primary text-sm font-bold">
                 {getInitials(member.full_name)}

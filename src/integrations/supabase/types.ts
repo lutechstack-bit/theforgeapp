@@ -2933,6 +2933,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_batchmate_details: { Args: { member_id: string }; Returns: Json }
+      get_batchmates_for_my_edition: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          city: string
+          full_name: string
+          id: string
+          instagram_handle: string
+          specialty: string
+        }[]
+      }
+      get_my_edition_id: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

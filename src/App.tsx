@@ -10,7 +10,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { AdminRoute } from "@/components/admin/AdminRoute";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { MarkerProvider } from "@/components/feedback/MarkerProvider";
+
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { LoadingScreen } from "@/components/shared/LoadingScreen";
 import { UserDataRecovery } from "@/components/shared/UserDataRecovery";
@@ -320,7 +320,7 @@ function App() {
                 <Sonner />
                 <BrowserRouter>
                   <ScrollToTop />
-                  <MarkerProvider />
+                  
                   <AppRoutes />
                 </BrowserRouter>
               </TooltipProvider>
