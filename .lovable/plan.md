@@ -1,32 +1,44 @@
 
-## Replace Program Banner Images
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+# Fix Creators Thumbnails + Remove View All + Seed Filmmaking
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+## Issues
 
-### Changes
+1. **Creators broken thumbnails**: The 4 Vimeo items have `thumbnail_url = null`. Vimeo embed URLs can't be used as image `src`. The component needs to auto-generate Vimeo thumbnail URLs when no `thumbnail_url` is set.
+2. **"View all" button**: Should be removed for all three cohorts.
+3. **Filmmaking content**: Still not seeded — need to insert the 4 YouTube videos provided earlier.
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+## Changes
 
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+### 1. Edit `AlumniShowcaseSection.tsx`
 
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+- **Add Vimeo thumbnail helper**: When `thumbnail_url` is null and `media_url` contains a Vimeo ID, generate a thumbnail using `https://vumbnail.com/{vimeoId}.jpg` (a free Vimeo thumbnail service).
+- **Remove the "View all" button** and the `ChevronRight` import / `useNavigate` (no longer needed).
 
-| File | Change |
-|------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+The thumbnail resolution logic becomes:
+```
+thumbnail_url → if null, check media_url for Vimeo ID → vumbnail.com/{id}.jpg
+                                    or YouTube ID → img.youtube.com/vi/{id}/hqdefault.jpg
+                                    fallback → Play icon placeholder
+```
+
+### 2. Seed Filmmaking (FORGE) rows
+
+Insert 4 rows into `alumni_showcase`:
+
+| Title | YouTube ID | thumbnail_url |
+|-------|-----------|---------------|
+| Student Film 1 | cxA5eMxwtDU | auto from YouTube |
+| Student Film 2 | mGcbPPpldBI | auto from YouTube |
+| Student Film 3 | mGcbPPpldBI | (same as #2) |
+| Student Film 4 | Slqg1Lpinqs | auto from YouTube |
+
+With `media_type = 'video'`, `cohort_type = 'FORGE'`, and YouTube thumbnail URLs pre-populated.
+
+## Files
+
+| Action | File |
+|--------|------|
+| Edit | `src/components/home/AlumniShowcaseSection.tsx` — auto-generate thumbnails, remove View All |
+| Migration | Insert 4 FORGE rows into `alumni_showcase` with YouTube thumbnail URLs |
 
