@@ -1,48 +1,32 @@
 
+## Replace Program Banner Images
 
-# Alumni Showcase: Seed Data + Minimalistic Redesign
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## Summary
-Seed the `alumni_showcase` table with Writing (4 book covers) and Creators (4 Vimeo reels) content, redesign the card component to be minimalistic (no overlay text), add Vimeo embed support, and ensure the cohort simulator drives the query so admins can test all three views.
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-## Changes
+### Changes
 
-### 1. Copy uploaded book cover images
-Save the 4 uploaded images to `public/images/alumni/`:
-- `Ishwariya_1.png`, `Neelima_1.png`, `Sunny_1.png`, `Yuvraj_1.png`
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-### 2. Seed database with 8 rows
-Insert into `alumni_showcase`:
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-**Writing (media_type='image'):**
-- "Ocean Eyes, Starry Skies" by Ishwariya — thumbnail: `/images/alumni/Ishwariya_1.png`, redirect: Amazon link
-- Book by Neelima — thumbnail: `/images/alumni/Neelima_1.png`
-- Book by Sunny — thumbnail: `/images/alumni/Sunny_1.png`
-- Book by Yuvraj — thumbnail: `/images/alumni/Yuvraj_1.png`
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
-**Creators (media_type='reel'):**
-- "The Joy of Being" — media_url: `https://player.vimeo.com/video/1173914736`
-- "Bhringraj Hair Oil" — media_url: `https://player.vimeo.com/video/1173914672`
-- "Project Goa" — media_url: `https://player.vimeo.com/video/1173914637`
-- "Vaksana Farms" — media_url: `https://player.vimeo.com/video/1173914704`
-
-### 3. Redesign `AlumniShowcaseSection.tsx`
-- **Remove** dark vignette gradient overlay and overlay text from cards
-- **Place** title + author **below** the card image as clean text
-- **Add Vimeo support** to `getEmbedUrl` — detect `vimeo.com` URLs and append `?autoplay=1`
-- **Vertical video dialog** for Creators reels — use `aspect-[9/16] max-h-[80vh]` instead of `aspect-video`
-- **Writing click** — open `redirect_url` in new tab, or lightbox if none
-- **Play icon** — subtle centered play button only for video/reel types, no overlay gradient
-- Clean rounded cards, subtle hover scale, mobile-responsive snap carousel
-
-### 4. Cohort simulator compatibility
-Already works: `Home.tsx` uses `useEffectiveCohort()` to get `effectiveCohortType`, which the alumni query filters on. When an admin switches cohort via the floating switcher, the query key `['alumni-showcase', userCohortType]` changes, triggering a refetch for the simulated cohort. No additional wiring needed.
-
-## Files
-
-| Action | File |
-|--------|------|
-| Copy | 4 images → `public/images/alumni/` |
-| Migration | Insert 8 rows into `alumni_showcase` |
-| Edit | `src/components/home/AlumniShowcaseSection.tsx` — minimalistic redesign + Vimeo support |
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 

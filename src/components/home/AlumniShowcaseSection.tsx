@@ -10,6 +10,11 @@ export function extractYouTubeId(input: string): string | null {
   return match ? match[1] : null;
 }
 
+function extractVimeoId(input: string): string | null {
+  const match = input.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  return match ? match[1] : null;
+}
+
 interface AlumniShowcaseItem {
   id: string;
   title: string;
@@ -38,7 +43,7 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
   subtitle,
 }) => {
   const navigate = useNavigate();
-  const [playingVideo, setPlayingVideo] = useState<{ url: string; title: string } | null>(null);
+  const [playingVideo, setPlayingVideo] = useState<{ url: string; title: string; isVertical: boolean } | null>(null);
   const [viewingImage, setViewingImage] = useState<{ url: string; title: string; author: string } | null>(null);
 
   if (isLoading) {
@@ -48,40 +53,56 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
   if (alumni.length === 0) return null;
 
   const getEmbedUrl = (url: string) => {
-    const id = extractYouTubeId(url);
-    return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : url;
+    const vimeoId = extractVimeoId(url);
+    if (vimeoId) {
+      return `https://player.vimeo.com/video/${vimeoId}?autoplay=1&title=0&byline=0&portrait=0`;
+    }
+    const ytId = extractYouTubeId(url);
+    if (ytId) {
+      return `https://www.youtube.com/embed/${ytId}?autoplay=1`;
+    }
+    return url;
   };
 
   const handleItemClick = (item: AlumniShowcaseItem) => {
+    // Writing: open redirect or lightbox
     if (item.media_type === 'image') {
       if (item.redirect_url) {
         window.open(item.redirect_url, '_blank');
-      } else if (item.media_url) {
-        setViewingImage({ url: item.media_url, title: item.title, author: item.author_name });
+      } else if (item.thumbnail_url || item.media_url) {
+        setViewingImage({
+          url: item.thumbnail_url || item.media_url || '',
+          title: item.title,
+          author: item.author_name,
+        });
       }
-    } else {
-      if (item.media_url) {
-        setPlayingVideo({ url: item.media_url, title: item.title });
-      }
+      return;
+    }
+
+    // Reel or video: play in modal
+    const videoUrl = item.media_url || item.thumbnail_url;
+    if (videoUrl) {
+      const isVertical = item.media_type === 'reel';
+      setPlayingVideo({ url: videoUrl, title: item.title, isVertical });
     }
   };
 
-  // Determine card aspect ratio based on cohort
-  const getCardClass = () => {
-    if (cohortType === 'FORGE_WRITING') return 'aspect-[2/3]'; // portrait book covers
-    if (cohortType === 'FORGE_CREATORS') return 'aspect-[9/16]'; // vertical reels
-    return 'aspect-video'; // landscape 16:9
-  };
-
+  // Card sizing per cohort
   const getCardWidth = () => {
-    if (cohortType === 'FORGE_WRITING') return 'w-[160px] sm:w-[180px]';
+    if (cohortType === 'FORGE_WRITING') return 'w-[140px] sm:w-[160px]';
     if (cohortType === 'FORGE_CREATORS') return 'w-[150px] sm:w-[170px]';
     return 'w-[calc(100vw-72px)] sm:w-[280px]';
   };
 
+  const getAspectClass = () => {
+    if (cohortType === 'FORGE_WRITING') return 'aspect-[2/3]';
+    if (cohortType === 'FORGE_CREATORS') return 'aspect-[9/16]';
+    return 'aspect-video';
+  };
+
   return (
     <>
-      <div className="rounded-2xl border border-[#FFBF00]/20 bg-card/30 p-4 sm:p-5">
+      <div className="rounded-2xl border border-primary/20 bg-card/30 p-4 sm:p-5">
         {/* Header */}
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
@@ -96,7 +117,7 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
           </button>
         </div>
         <p className="text-xs text-muted-foreground mb-4">
-          {subtitle || 'Click to watch films from past Forgers'}
+          {subtitle || 'Work created by past Forgers'}
         </p>
 
         {/* Carousel */}
@@ -110,7 +131,8 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
                 onClick={() => handleItemClick(a)}
                 className="cursor-pointer group"
               >
-                <div className={`relative ${getCardClass()} rounded-2xl overflow-hidden bg-black`}>
+                {/* Image / Thumbnail */}
+                <div className={`relative ${getAspectClass()} rounded-xl overflow-hidden bg-secondary`}>
                   {(a.thumbnail_url || a.media_url) ? (
                     <img
                       src={a.thumbnail_url || a.media_url || ''}
@@ -119,32 +141,25 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full h-full bg-secondary flex items-center justify-center">
+                    <div className="w-full h-full flex items-center justify-center">
                       <Play className="h-8 w-8 text-muted-foreground" />
                     </div>
                   )}
 
-                  {/* Vignette gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-
-                  {/* Play button for video/reel types */}
+                  {/* Play icon for video/reel — no gradient overlay */}
                   {a.media_type !== 'image' && (
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="h-8 w-8 rounded-full bg-foreground/20 backdrop-blur-sm flex items-center justify-center opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300">
-                        <Play className="h-3.5 w-3.5 text-white fill-current ml-0.5" />
+                      <div className="h-9 w-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300">
+                        <Play className="h-4 w-4 text-white fill-current ml-0.5" />
                       </div>
                     </div>
                   )}
+                </div>
 
-                  {/* Overlay text */}
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <h4 className="text-sm font-semibold text-white line-clamp-1">
-                      {a.title}
-                    </h4>
-                    <p className="text-[11px] text-white/70 line-clamp-1">
-                      by {a.author_name}
-                    </p>
-                  </div>
+                {/* Text below card */}
+                <div className="mt-2 px-0.5">
+                  <h4 className="text-sm font-medium text-foreground line-clamp-1">{a.title}</h4>
+                  <p className="text-xs text-muted-foreground line-clamp-1">{a.author_name}</p>
                 </div>
               </div>
             </div>
@@ -152,12 +167,24 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
         </div>
       </div>
 
-      {/* Video Dialog */}
+      {/* Video Dialog — supports vertical (reels) and horizontal */}
       <Dialog open={!!playingVideo} onOpenChange={() => setPlayingVideo(null)}>
-        <DialogContent className="max-w-2xl p-0 overflow-hidden bg-black border-border/50">
+        <DialogContent
+          className={`p-0 overflow-hidden bg-black border-border/50 ${
+            playingVideo?.isVertical
+              ? 'max-w-sm'
+              : 'max-w-2xl'
+          }`}
+        >
           <DialogTitle className="sr-only">{playingVideo?.title}</DialogTitle>
           {playingVideo && (
-            <div className="aspect-video">
+            <div
+              className={
+                playingVideo.isVertical
+                  ? 'aspect-[9/16] max-h-[80vh]'
+                  : 'aspect-video'
+              }
+            >
               <iframe
                 src={getEmbedUrl(playingVideo.url)}
                 className="w-full h-full"
@@ -170,20 +197,20 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
         </DialogContent>
       </Dialog>
 
-      {/* Image Lightbox Dialog */}
+      {/* Image Lightbox */}
       <Dialog open={!!viewingImage} onOpenChange={() => setViewingImage(null)}>
-        <DialogContent className="max-w-lg p-0 overflow-hidden bg-black border-border/50">
+        <DialogContent className="max-w-lg p-2 overflow-hidden bg-card border-border/50">
           <DialogTitle className="sr-only">{viewingImage?.title}</DialogTitle>
           {viewingImage && (
-            <div className="relative">
+            <div className="space-y-3">
               <img
                 src={viewingImage.url}
                 alt={viewingImage.title}
-                className="w-full h-auto"
+                className="w-full h-auto rounded-lg"
               />
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-                <h4 className="text-base font-semibold text-white">{viewingImage.title}</h4>
-                <p className="text-sm text-white/70">by {viewingImage.author}</p>
+              <div className="px-1 pb-1">
+                <h4 className="text-base font-semibold text-foreground">{viewingImage.title}</h4>
+                <p className="text-sm text-muted-foreground">by {viewingImage.author}</p>
               </div>
             </div>
           )}
