@@ -101,18 +101,9 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
   return (
     <>
       <div className="rounded-2xl border border-primary/20 bg-card/30 p-4 sm:p-5">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-2">
-            <img src={forgeIcon} alt="" className="w-4 h-4 opacity-60" />
-            <h2 className="text-base sm:text-lg font-bold text-foreground">{title}</h2>
-          </div>
-          <button
-            onClick={() => navigate('/learn')}
-            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-medium"
-          >
-            View all <ChevronRight className="h-3 w-3" />
-          </button>
+        <div className="flex items-center gap-2 mb-1">
+          <img src={forgeIcon} alt="" className="w-4 h-4 opacity-60" />
+          <h2 className="text-base sm:text-lg font-bold text-foreground">{title}</h2>
         </div>
         <p className="text-xs text-muted-foreground mb-4">
           {subtitle || 'Work created by past Forgers'}
