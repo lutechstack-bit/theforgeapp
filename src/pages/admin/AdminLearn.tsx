@@ -490,21 +490,7 @@ const AdminLearn: React.FC = () => {
     setIsDialogOpen(true);
   };
 
-  const handleEditProgram = (item: any) => {
-    setProgramForm({
-      title: item.title || '',
-      description: item.description || '',
-      label: item.label || '',
-      image_url: item.image_url || '',
-      redirect_url: item.redirect_url || '',
-      gradient: item.gradient || '',
-      program_tab: item.program_tab || 'online',
-      order_index: item.order_index || 0,
-      is_active: item.is_active ?? true,
-    });
-    setEditingProgramId(item.id);
-    setIsProgramDialogOpen(true);
-  };
+  
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
