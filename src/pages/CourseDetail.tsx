@@ -265,7 +265,7 @@ const CourseDetail: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="container py-4 pb-24">
+      <div className="max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 py-4 pb-24">
         <div className="flex flex-col lg:grid lg:grid-cols-[1fr_320px] gap-4">
 
           {/* Left Column: Video + Tabs */}

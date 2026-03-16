@@ -67,11 +67,11 @@ const Updates: React.FC = () => {
       </div>
 
       <Tabs value={filter} onValueChange={setFilter} className="space-y-4">
-        <TabsList className="w-full bg-secondary/50 flex-wrap h-auto p-1">
-          <TabsTrigger value="all" className="flex-1">All</TabsTrigger>
-          <TabsTrigger value="Feature" className="flex-1">Features</TabsTrigger>
-          <TabsTrigger value="Bug Fix" className="flex-1">Bug Fixes</TabsTrigger>
-          <TabsTrigger value="Improvement" className="flex-1">Improvements</TabsTrigger>
+        <TabsList className="w-full bg-secondary/50 h-auto p-1 overflow-x-auto scrollbar-hide flex-nowrap">
+          <TabsTrigger value="all" className="flex-1 shrink-0 text-xs sm:text-sm active:scale-95">All</TabsTrigger>
+          <TabsTrigger value="Feature" className="flex-1 shrink-0 text-xs sm:text-sm active:scale-95">Features</TabsTrigger>
+          <TabsTrigger value="Bug Fix" className="flex-1 shrink-0 text-xs sm:text-sm active:scale-95">Bug Fixes</TabsTrigger>
+          <TabsTrigger value="Improvement" className="flex-1 shrink-0 text-xs sm:text-sm active:scale-95">Improvements</TabsTrigger>
         </TabsList>
 
         {isLoading ? (
