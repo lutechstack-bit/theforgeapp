@@ -1,32 +1,46 @@
 
-## Replace Program Banner Images
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+# Fix Writers Click Behavior + Thumbnails + Admin Restructuring
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+## Issues Found
 
-### Changes
+1. **Writers lightbox popup**: Only 1 of 4 Writing items ("Ocean Eyes, Starry Skies") has a `redirect_url`. The other 3 (Neelima, Sunny, Yuvraj) have `null`, so clicking them opens the image in a popup lightbox. You want all clicks to redirect externally — not open a popup.
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+2. **Creators broken thumbnails**: Vimeo items missing `thumbnail_url` show placeholders. Need auto-derive from video URL.
 
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+3. **Admin restructuring**: Move "Explore Programs" and "Alumni Showcase" out of Learn into separate admin pages.
 
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+## Plan
 
-| File | Change |
-|------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+### 1. Fix Writers click behavior (`AlumniShowcaseSection.tsx`)
+- For `media_type === 'image'`: if `redirect_url` exists, open it. If not, **do nothing** (no lightbox popup). Remove the image lightbox dialog entirely.
+- Alternatively, if you want all 4 books to redirect, you'll need to add `redirect_url` values for the other 3 books via the admin panel.
+
+### 2. Fix thumbnail auto-derivation (`AlumniShowcaseSection.tsx`)
+- Update `getAutoThumbnail` to skip empty/null `thumbnail_url` and derive from `media_url` (Vimeo → vumbnail.com, YouTube → img.youtube.com).
+
+### 3. Seed Filmmaking content (migration)
+- Insert 4 FORGE rows with the YouTube URLs provided earlier.
+
+### 4. Extract admin pages
+- **Create** `src/pages/admin/AdminExplorePrograms.tsx` — extract Explore Programs tab from AdminLearn
+- **Create** `src/pages/admin/AdminAlumniShowcase.tsx` — extract Alumni Showcase tab from AdminLearn  
+- **Edit** `src/pages/admin/AdminLearn.tsx` — remove those two tabs
+- **Edit** `src/components/admin/AdminLayout.tsx` — add sidebar entries
+- **Edit** `src/App.tsx` — add routes
+
+### 5. Admin form: auto-clear thumbnail on URL change
+- In the Alumni Showcase admin form, when `media_url` changes, auto-clear `thumbnail_url` so fresh thumbnails are derived.
+
+## Files
+
+| Action | File |
+|--------|------|
+| Edit | `src/components/home/AlumniShowcaseSection.tsx` — remove image lightbox, fix thumbnails |
+| Create | `src/pages/admin/AdminExplorePrograms.tsx` |
+| Create | `src/pages/admin/AdminAlumniShowcase.tsx` |
+| Edit | `src/pages/admin/AdminLearn.tsx` — remove extracted tabs |
+| Edit | `src/components/admin/AdminLayout.tsx` — add nav items |
+| Edit | `src/App.tsx` — add routes |
+| Migration | Insert 4 FORGE rows into `alumni_showcase` |
 
