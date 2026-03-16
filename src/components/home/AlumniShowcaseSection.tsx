@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Play, ChevronRight } from 'lucide-react';
+import { Play } from 'lucide-react';
 import forgeIcon from '@/assets/forge-icon.png';
 import { HomeCarouselSkeleton } from '@/components/home/HomeCarouselSkeleton';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -42,7 +41,6 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
   title = 'Alumni Showcase',
   subtitle,
 }) => {
-  const navigate = useNavigate();
   const [playingVideo, setPlayingVideo] = useState<{ url: string; title: string; isVertical: boolean } | null>(null);
   const [viewingImage, setViewingImage] = useState<{ url: string; title: string; author: string } | null>(null);
 
@@ -51,6 +49,17 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
   }
 
   if (alumni.length === 0) return null;
+
+  const getAutoThumbnail = (item: AlumniShowcaseItem): string | null => {
+    if (item.thumbnail_url) return item.thumbnail_url;
+    if (item.media_url) {
+      const vimeoId = extractVimeoId(item.media_url);
+      if (vimeoId) return `https://vumbnail.com/${vimeoId}.jpg`;
+      const ytId = extractYouTubeId(item.media_url);
+      if (ytId) return `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+    }
+    return null;
+  };
 
   const getEmbedUrl = (url: string) => {
     const vimeoId = extractVimeoId(url);
@@ -103,18 +112,9 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
   return (
     <>
       <div className="rounded-2xl border border-primary/20 bg-card/30 p-4 sm:p-5">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-2">
-            <img src={forgeIcon} alt="" className="w-4 h-4 opacity-60" />
-            <h2 className="text-base sm:text-lg font-bold text-foreground">{title}</h2>
-          </div>
-          <button
-            onClick={() => navigate('/learn')}
-            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-medium"
-          >
-            View all <ChevronRight className="h-3 w-3" />
-          </button>
+        <div className="flex items-center gap-2 mb-1">
+          <img src={forgeIcon} alt="" className="w-4 h-4 opacity-60" />
+          <h2 className="text-base sm:text-lg font-bold text-foreground">{title}</h2>
         </div>
         <p className="text-xs text-muted-foreground mb-4">
           {subtitle || 'Work created by past Forgers'}
@@ -133,9 +133,16 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
               >
                 {/* Image / Thumbnail */}
                 <div className={`relative ${getAspectClass()} rounded-xl overflow-hidden bg-secondary`}>
-                  {(a.thumbnail_url || a.media_url) ? (
+                  {getAutoThumbnail(a) ? (
                     <img
-                      src={a.thumbnail_url || a.media_url || ''}
+                      src={getAutoThumbnail(a)!}
+                      alt={a.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                  ) : (a.media_url) ? (
+                    <img
+                      src={a.media_url}
                       alt={a.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
