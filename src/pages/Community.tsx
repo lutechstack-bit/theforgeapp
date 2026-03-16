@@ -39,9 +39,12 @@ const Community = () => {
   const [searchParams] = useSearchParams();
   const { isFeatureEnabled, isLoading: flagsLoading } = useFeatureFlags();
   const chatEnabled = isFeatureEnabled('community_chat_enabled');
-  const [activeView, setActiveView] = useState<'chat' | 'network'>(
-    searchParams.get('tab') === 'network' || !chatEnabled ? 'network' : 'chat'
-  );
+  const [activeView, setActiveView] = useState<'chat' | 'batchmates' | 'network'>(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'batchmates') return 'batchmates';
+    if (tab === 'network' || !chatEnabled) return 'network';
+    return 'chat';
+  });
   const [loading, setLoading] = useState(true);
   const [cityGroups, setCityGroups] = useState<CityGroup[]>([]);
   const [cohortGroup, setCohortGroup] = useState<CohortGroup | null>(null);
