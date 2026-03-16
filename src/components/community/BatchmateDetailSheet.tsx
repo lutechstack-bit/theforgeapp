@@ -1,6 +1,5 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -40,7 +39,7 @@ const ProficiencyBar = ({ label, level }: { label: string; level: string | null 
       </div>
       <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
         <div
-          className="h-full rounded-full bg-[#FFBF00] transition-all duration-500"
+          className="h-full rounded-full bg-primary transition-all duration-500"
           style={{ width: `${info.value}%` }}
         />
       </div>
@@ -55,40 +54,16 @@ const getInitials = (name: string | null) => {
 
 export const BatchmateDetailSheet: React.FC<BatchmateDetailSheetProps> = ({ member, onClose }) => {
   const isMobile = useIsMobile();
-  const { profile } = useAuth();
 
-  // Get cohort type from the viewer's edition
-  const { data: edition } = useQuery({
-    queryKey: ['edition-type', profile?.edition_id],
+  // Fetch full details via secure RPC
+  const { data: details } = useQuery({
+    queryKey: ['batchmate-details', member?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('editions')
-        .select('cohort_type')
-        .eq('id', profile!.edition_id!)
-        .single();
-      return data;
-    },
-    enabled: !!profile?.edition_id,
-    staleTime: Infinity,
-  });
-
-  const cohortType = edition?.cohort_type || 'FORGE';
-
-  // Fetch KY data for the selected member
-  const { data: kyData } = useQuery({
-    queryKey: ['batchmate-ky', member?.id, cohortType],
-    queryFn: async () => {
-      const table =
-        cohortType === 'FORGE' ? 'kyf_responses' :
-        cohortType === 'FORGE_CREATORS' ? 'kyc_responses' :
-        'kyw_responses';
-
-      const { data } = await supabase
-        .from(table)
-        .select('*')
-        .eq('user_id', member!.id)
-        .maybeSingle();
-      return { ...data, _table: table };
+      const { data, error } = await supabase.rpc('get_batchmate_details', {
+        member_id: member!.id,
+      });
+      if (error) throw error;
+      return data as Record<string, any> | null;
     },
     enabled: !!member?.id,
     staleTime: 5 * 60 * 1000,
@@ -96,11 +71,14 @@ export const BatchmateDetailSheet: React.FC<BatchmateDetailSheetProps> = ({ memb
 
   if (!member) return null;
 
+  const ky = details?.ky_data || {};
+  const cohortType = details?.cohort_type || 'FORGE';
+
   const content = (
     <div className="space-y-5 pb-6 px-1">
       {/* Hero */}
       <div className="flex items-center gap-4">
-        <Avatar className="w-16 h-16 border-2 border-[#FFBF00]/30">
+        <Avatar className="w-16 h-16 border-2 border-primary/30">
           <AvatarImage src={member.avatar_url || undefined} />
           <AvatarFallback className="bg-primary/15 text-primary text-lg font-bold">
             {getInitials(member.full_name)}
@@ -132,23 +110,22 @@ export const BatchmateDetailSheet: React.FC<BatchmateDetailSheetProps> = ({ memb
         </a>
       )}
 
-      {kyData && kyData._table && (
+      {details && ky && (
         <>
           <Separator />
 
           {/* General Info */}
           {(() => {
-            const occupation = (kyData as any).current_occupation || (kyData as any).current_status;
-            const mbti = (kyData as any).mbti_type;
-            const chronotype = (kyData as any).chronotype;
-            const intent = (kyData as any).forge_intent;
+            const occupation = ky.current_occupation || ky.current_status;
+            const mbti = ky.mbti_type;
+            const chronotype = ky.chronotype;
 
-            if (!occupation && !mbti && !chronotype && !intent) return null;
+            if (!occupation && !mbti && !chronotype) return null;
 
             return (
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-[#FFBF00]" /> About
+                  <Briefcase className="w-4 h-4 text-primary" /> About
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {occupation && <Badge variant="outline" className="text-xs">{occupation}</Badge>}
@@ -162,11 +139,6 @@ export const BatchmateDetailSheet: React.FC<BatchmateDetailSheetProps> = ({ memb
                       <Moon className="w-3 h-3 mr-1" /> {chronotype}
                     </Badge>
                   )}
-                  {intent && intent !== 'other' && (
-                    <Badge className="bg-[#FFBF00]/15 text-[#FFBF00] border-[#FFBF00]/30 text-xs">
-                      <Star className="w-3 h-3 mr-1" /> {intent}
-                    </Badge>
-                  )}
                 </div>
               </div>
             );
@@ -174,52 +146,36 @@ export const BatchmateDetailSheet: React.FC<BatchmateDetailSheetProps> = ({ memb
 
           {/* Proficiencies */}
           {(() => {
+            let profs: { label: string; level: string | null }[] = [];
+            let icon = <Film className="w-4 h-4 text-primary" />;
+
             if (cohortType === 'FORGE') {
-              const d = kyData as any;
-              const profs = [
-                { label: 'Screenwriting', level: d.proficiency_screenwriting },
-                { label: 'Direction', level: d.proficiency_direction },
-                { label: 'Cinematography', level: d.proficiency_cinematography },
-                { label: 'Editing', level: d.proficiency_editing },
+              profs = [
+                { label: 'Screenwriting', level: ky.proficiency_screenwriting },
+                { label: 'Direction', level: ky.proficiency_direction },
+                { label: 'Cinematography', level: ky.proficiency_cinematography },
+                { label: 'Editing', level: ky.proficiency_editing },
               ].filter(p => p.level);
-              if (!profs.length) return null;
-              return (
-                <div className="space-y-3">
-                  <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Film className="w-4 h-4 text-[#FFBF00]" /> Proficiencies
-                  </h4>
-                  <div className="space-y-2.5">{profs.map(p => <ProficiencyBar key={p.label} {...p} />)}</div>
-                </div>
-              );
-            }
-            if (cohortType === 'FORGE_CREATORS') {
-              const d = kyData as any;
-              const profs = [
-                { label: 'Content Creation', level: d.proficiency_content_creation },
-                { label: 'Storytelling', level: d.proficiency_storytelling },
-                { label: 'Video Production', level: d.proficiency_video_production },
+            } else if (cohortType === 'FORGE_CREATORS') {
+              icon = <Palette className="w-4 h-4 text-primary" />;
+              profs = [
+                { label: 'Content Creation', level: ky.proficiency_content_creation },
+                { label: 'Storytelling', level: ky.proficiency_storytelling },
+                { label: 'Video Production', level: ky.proficiency_video_production },
               ].filter(p => p.level);
-              if (!profs.length) return null;
-              return (
-                <div className="space-y-3">
-                  <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-[#FFBF00]" /> Proficiencies
-                  </h4>
-                  <div className="space-y-2.5">{profs.map(p => <ProficiencyBar key={p.label} {...p} />)}</div>
-                </div>
-              );
+            } else {
+              icon = <Pen className="w-4 h-4 text-primary" />;
+              profs = [
+                { label: 'Writing', level: ky.proficiency_writing },
+                { label: 'Story & Voice', level: ky.proficiency_story_voice },
+              ].filter(p => p.level);
             }
-            // FORGE_WRITING
-            const d = kyData as any;
-            const profs = [
-              { label: 'Writing', level: d.proficiency_writing },
-              { label: 'Story & Voice', level: d.proficiency_story_voice },
-            ].filter(p => p.level);
+
             if (!profs.length) return null;
             return (
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Pen className="w-4 h-4 text-[#FFBF00]" /> Proficiencies
+                  {icon} Proficiencies
                 </h4>
                 <div className="space-y-2.5">{profs.map(p => <ProficiencyBar key={p.label} {...p} />)}</div>
               </div>
@@ -228,9 +184,8 @@ export const BatchmateDetailSheet: React.FC<BatchmateDetailSheetProps> = ({ memb
 
           {/* Favorites */}
           {(() => {
-            const d = kyData as any;
             const favs: string[] =
-              d.top_3_movies || d.top_3_creators || d.top_3_writers_books || [];
+              ky.top_3_movies || ky.top_3_creators || ky.top_3_writers_books || [];
             const label =
               cohortType === 'FORGE' ? 'Favorite Films' :
               cohortType === 'FORGE_CREATORS' ? 'Favorite Creators' :
@@ -239,7 +194,7 @@ export const BatchmateDetailSheet: React.FC<BatchmateDetailSheetProps> = ({ memb
             return (
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Star className="w-4 h-4 text-[#FFBF00]" /> {label}
+                  <Star className="w-4 h-4 text-primary" /> {label}
                 </h4>
                 <div className="flex flex-wrap gap-1.5">
                   {favs.map((f, i) => (
@@ -251,13 +206,13 @@ export const BatchmateDetailSheet: React.FC<BatchmateDetailSheetProps> = ({ memb
           })()}
 
           {/* Writing types (writers only) */}
-          {cohortType === 'FORGE_WRITING' && (kyData as any).writing_types?.length > 0 && (
+          {cohortType === 'FORGE_WRITING' && ky.writing_types?.length > 0 && (
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Pen className="w-4 h-4 text-[#FFBF00]" /> Writing Types
+                <Pen className="w-4 h-4 text-primary" /> Writing Types
               </h4>
               <div className="flex flex-wrap gap-1.5">
-                {((kyData as any).writing_types as string[]).map((t, i) => (
+                {(ky.writing_types as string[]).map((t: string, i: number) => (
                   <Badge key={i} variant="outline" className="text-xs">{t}</Badge>
                 ))}
               </div>
@@ -265,12 +220,12 @@ export const BatchmateDetailSheet: React.FC<BatchmateDetailSheetProps> = ({ memb
           )}
 
           {/* Creators: platform */}
-          {cohortType === 'FORGE_CREATORS' && (kyData as any).primary_platform && (
+          {cohortType === 'FORGE_CREATORS' && ky.primary_platform && (
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Palette className="w-4 h-4 text-[#FFBF00]" /> Primary Platform
+                <Palette className="w-4 h-4 text-primary" /> Primary Platform
               </h4>
-              <Badge variant="secondary" className="text-xs">{(kyData as any).primary_platform}</Badge>
+              <Badge variant="secondary" className="text-xs">{ky.primary_platform}</Badge>
             </div>
           )}
         </>
