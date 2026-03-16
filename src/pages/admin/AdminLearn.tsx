@@ -263,31 +263,7 @@ const AdminLearn: React.FC = () => {
     enabled: !!selectedContentId,
   });
 
-  // Fetch explore programs
-  const { data: explorePrograms = [], isLoading: isProgramsLoading } = useQuery({
-    queryKey: ['admin-explore-programs'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('explore_programs')
-        .select('*')
-        .order('order_index', { ascending: true });
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Fetch alumni showcase
-  const { data: showcaseItems = [], isLoading: isShowcaseLoading } = useQuery({
-    queryKey: ['admin-alumni-showcase'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('alumni_showcase')
-        .select('*')
-        .order('order_index', { ascending: true });
-      if (error) throw error;
-      return data;
-    },
-  });
+  
 
   // Create/Update content mutation
   const saveMutation = useMutation({
