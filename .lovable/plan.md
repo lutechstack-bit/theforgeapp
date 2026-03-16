@@ -1,32 +1,80 @@
 
-## Replace Program Banner Images
+What’s actually blocking login
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+- Your email/password login is succeeding. The backend returns `200` for the `/token` request.
+- The app breaks immediately after that when it tries to load the signed-in user’s `profiles` row.
+- The exact failure is: `42P17 infinite recursion detected in policy for relation "profiles"`.
+- This started because the recent batchmates migration added a `profiles` SELECT policy that queries `public.profiles` from inside a policy on `public.profiles`:
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+```sql
+edition_id in (
+  select p.edition_id
+  from public.profiles p
+  where p.id = auth.uid()
+)
+```
 
-### Changes
+Why the app shows “Connection Issue”
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+- `AuthContext` signs the user in, then calls `fetchProfile()`.
+- That `profiles` query now returns `500` because of the recursive RLS policy.
+- Since `ProfileSetupCheck` depends on profile data, it falls into the recovery screen, so it feels like “login failed” even though authentication itself worked.
 
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+Marker.io status
 
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+- Marker.io is not the login blocker.
+- It is separately loaded from `index.html` and mounted globally through `MarkerProvider` in `src/App.tsx`.
+- Right now it also logs `MarkerProvider: Marker.io did not load within expected time`, so removing it is a good cleanup.
 
-| File | Change |
-|------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+Implementation plan
 
+1. Restore login first
+- Add a database hotfix migration to remove the recursive same-edition policies from:
+  - `profiles`
+  - `kyf_responses`
+  - `kyc_responses`
+  - `kyw_responses`
+- Keep only safe existing policies for:
+  - own profile / own KY rows
+  - admin access
+
+2. Rebuild batchmates access safely
+- Do not re-add direct same-edition `SELECT` policies on base tables.
+- Instead, create secure backend functions for batchmates:
+  - `get_batchmates_for_my_edition()`
+  - `get_batchmate_details(member_id uuid)`
+- These functions will:
+  - validate same-edition access server-side
+  - avoid recursive RLS
+  - return only intentionally allowed fields
+- This is safer than exposing raw `profiles`/KY tables, which currently risks leaking private fields like email/phone and other sensitive data.
+
+3. Update the batchmates UI to use the safe data source
+- Change `BatchmatesDirectory.tsx` to load members from the new function instead of querying `profiles` directly.
+- Change `BatchmateDetailSheet.tsx` to load the selected member’s approved details from the new function instead of querying raw KY tables.
+
+4. Remove Marker.io completely
+- Remove the Marker snippet from `index.html`
+- Remove `MarkerProvider` from `src/App.tsx`
+- Delete or stop using `src/components/feedback/MarkerProvider.tsx`
+- Search once more for any leftover `Marker`, `markerConfig`, or Marker.io references
+
+5. Cleanup pass
+- Re-test login flow after the RLS hotfix
+- Confirm `/auth -> /welcome` or `/` works again
+- If still needed, separately clean up the non-blocking React ref warning around `UserDataRecovery`
+
+Files / areas involved
+
+- `supabase/migrations/...` — hotfix + secure batchmates backend functions
+- `src/components/community/BatchmatesDirectory.tsx`
+- `src/components/community/BatchmateDetailSheet.tsx`
+- `src/App.tsx`
+- `index.html`
+- `src/components/feedback/MarkerProvider.tsx`
+
+Technical note
+
+- I do not think the main issue is session restoration timing here, because the logs clearly show successful token issuance followed by a failing `profiles` read.
+- So the first fix should be the database policy rollback/hardening, not auth boot refactoring.
+- If you want, I’d keep the batchmates feature but reintroduce it through safe backend functions rather than direct table policies.
