@@ -42,7 +42,6 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
   subtitle,
 }) => {
   const [playingVideo, setPlayingVideo] = useState<{ url: string; title: string; isVertical: boolean } | null>(null);
-  const [viewingImage, setViewingImage] = useState<{ url: string; title: string; author: string } | null>(null);
 
   if (isLoading) {
     return <HomeCarouselSkeleton title={title} />;
@@ -51,13 +50,15 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
   if (alumni.length === 0) return null;
 
   const getAutoThumbnail = (item: AlumniShowcaseItem): string | null => {
-    if (item.thumbnail_url) return item.thumbnail_url;
+    // Try to auto-derive from media_url first (always fresh)
     if (item.media_url) {
       const vimeoId = extractVimeoId(item.media_url);
       if (vimeoId) return `https://vumbnail.com/${vimeoId}.jpg`;
       const ytId = extractYouTubeId(item.media_url);
       if (ytId) return `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
     }
+    // Fall back to explicit thumbnail_url only if it's a real URL
+    if (item.thumbnail_url && item.thumbnail_url.startsWith('http')) return item.thumbnail_url;
     return null;
   };
 
@@ -74,16 +75,10 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
   };
 
   const handleItemClick = (item: AlumniShowcaseItem) => {
-    // Writing: open redirect or lightbox
+    // For images (Writing cohort): only redirect, never lightbox
     if (item.media_type === 'image') {
       if (item.redirect_url) {
         window.open(item.redirect_url, '_blank');
-      } else if (item.thumbnail_url || item.media_url) {
-        setViewingImage({
-          url: item.thumbnail_url || item.media_url || '',
-          title: item.title,
-          author: item.author_name,
-        });
       }
       return;
     }
@@ -133,27 +128,26 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
               >
                 {/* Image / Thumbnail */}
                 <div className={`relative ${getAspectClass()} rounded-xl overflow-hidden bg-secondary`}>
-                  {getAutoThumbnail(a) ? (
-                    <img
-                      src={getAutoThumbnail(a)!}
-                      alt={a.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
-                    />
-                  ) : (a.media_url) ? (
-                    <img
-                      src={a.media_url}
-                      alt={a.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Play className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                  )}
+                  {(() => {
+                    const thumb = a.media_type === 'image' ? (a.media_url || a.thumbnail_url) : getAutoThumbnail(a);
+                    if (thumb) {
+                      return (
+                        <img
+                          src={thumb}
+                          alt={a.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                      );
+                    }
+                    return (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Play className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                    );
+                  })()}
 
-                  {/* Play icon for video/reel — no gradient overlay */}
+                  {/* Play icon for video/reel */}
                   {a.media_type !== 'image' && (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="h-9 w-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300">
@@ -199,26 +193,6 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
                 allowFullScreen
                 title={playingVideo.title}
               />
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Image Lightbox */}
-      <Dialog open={!!viewingImage} onOpenChange={() => setViewingImage(null)}>
-        <DialogContent className="max-w-lg p-2 overflow-hidden bg-card border-border/50">
-          <DialogTitle className="sr-only">{viewingImage?.title}</DialogTitle>
-          {viewingImage && (
-            <div className="space-y-3">
-              <img
-                src={viewingImage.url}
-                alt={viewingImage.title}
-                className="w-full h-auto rounded-lg"
-              />
-              <div className="px-1 pb-1">
-                <h4 className="text-base font-semibold text-foreground">{viewingImage.title}</h4>
-                <p className="text-sm text-muted-foreground">by {viewingImage.author}</p>
-              </div>
             </div>
           )}
         </DialogContent>
