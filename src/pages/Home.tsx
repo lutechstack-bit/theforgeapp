@@ -12,7 +12,7 @@ import TodaysFocusCard from '@/components/home/TodaysFocusCard';
 import OnboardingStepsSection from '@/components/home/OnboardingStepsSection';
 import BatchmatesSection from '@/components/home/BatchmatesSection';
 import AlumniShowcaseSection from '@/components/home/AlumniShowcaseSection';
-import PaymentDueCard from '@/components/home/PaymentDueCard';
+import PaymentFocusCard from '@/components/home/PaymentFocusCard';
 import TravelStaySection from '@/components/home/TravelStaySection';
 import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
 import { useTodaysFocus } from '@/hooks/useTodaysFocus';
