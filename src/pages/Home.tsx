@@ -15,7 +15,7 @@ import AlumniShowcaseSection from '@/components/home/AlumniShowcaseSection';
 import PaymentFocusCard from '@/components/home/PaymentFocusCard';
 import TravelStaySection from '@/components/home/TravelStaySection';
 import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
-import { useTodaysFocus } from '@/hooks/useTodaysFocus';
+
 import { useHomepageSections } from '@/hooks/useHomepageSections';
 import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 import {  promiseWithTimeout, isTimeoutError } from '@/lib/promiseTimeout';
