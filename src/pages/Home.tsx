@@ -134,7 +134,10 @@ const Home: React.FC = () => {
             />
           )}
 
-          {/* 4. Journey Timeline */}
+          {/* 4. Payment Focus Card */}
+          {paymentSection !== null && <PaymentFocusCard />}
+
+          {/* 5. Journey Timeline */}
           {journeySection && (
             <HomeJourneySection
               title={journeySection.title}
