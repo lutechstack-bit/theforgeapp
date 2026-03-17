@@ -182,37 +182,65 @@ function HeroSlidesManager() {
         </div>
 
         {/* Add new slide */}
-        <div className="flex items-end gap-3 p-4 rounded-lg border border-dashed border-border/50 bg-muted/10">
-          <div className="flex-1 space-y-1">
-            <label className="text-xs text-muted-foreground">Image URL</label>
-            <Input
-              value={newImageUrl}
-              onChange={e => setNewImageUrl(e.target.value)}
-              placeholder="https://... (recommended: 1200×800px)"
-              className="h-9"
-            />
+        <div className="p-4 rounded-lg border border-dashed border-border/50 bg-muted/10 space-y-3">
+          {/* Mode toggle */}
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant={inputMode === 'upload' ? 'default' : 'outline'} onClick={() => setInputMode('upload')} className="text-xs">
+              Upload from Device
+            </Button>
+            <Button size="sm" variant={inputMode === 'url' ? 'default' : 'outline'} onClick={() => setInputMode('url')} className="text-xs">
+              Paste URL
+            </Button>
           </div>
-          <div className="w-40 space-y-1">
-            <label className="text-xs text-muted-foreground">Cohort</label>
-            <Select value={newCohortType} onValueChange={setNewCohortType}>
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="FORGE">Filmmaking</SelectItem>
-                <SelectItem value="FORGE_WRITING">Writing</SelectItem>
-                <SelectItem value="FORGE_CREATORS">Creators</SelectItem>
-              </SelectContent>
-            </Select>
+
+          <div className="flex items-end gap-3">
+            {inputMode === 'upload' ? (
+              <div className="flex-1 space-y-1">
+                <label className="text-xs text-muted-foreground">Choose Image (recommended: 1200×800px)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                  className="block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:cursor-pointer disabled:opacity-50"
+                />
+              </div>
+            ) : (
+              <div className="flex-1 space-y-1">
+                <label className="text-xs text-muted-foreground">Image URL</label>
+                <Input
+                  value={newImageUrl}
+                  onChange={e => setNewImageUrl(e.target.value)}
+                  placeholder="https://... (recommended: 1200×800px)"
+                  className="h-9"
+                />
+              </div>
+            )}
+            <div className="w-40 space-y-1">
+              <label className="text-xs text-muted-foreground">Cohort</label>
+              <Select value={newCohortType} onValueChange={setNewCohortType}>
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="FORGE">Filmmaking</SelectItem>
+                  <SelectItem value="FORGE_WRITING">Writing</SelectItem>
+                  <SelectItem value="FORGE_CREATORS">Creators</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {inputMode === 'url' && (
+              <Button
+                size="sm"
+                onClick={() => addMutation.mutate()}
+                disabled={!newImageUrl.trim() || addMutation.isPending}
+                className="gap-1"
+              >
+                <Plus className="w-4 h-4" /> Add
+              </Button>
+            )}
+            {isUploading && <span className="text-xs text-muted-foreground animate-pulse">Uploading…</span>}
           </div>
-          <Button
-            size="sm"
-            onClick={() => addMutation.mutate()}
-            disabled={!newImageUrl.trim() || addMutation.isPending}
-            className="gap-1"
-          >
-            <Plus className="w-4 h-4" /> Add
-          </Button>
         </div>
 
         {/* Slides list */}
