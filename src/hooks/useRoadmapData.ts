@@ -36,6 +36,7 @@ export const useRoadmapData = () => {
   const cohortName = userCohortType ? cohortDisplayNames[userCohortType] : 'The Forge';
   const effectiveEd = isSimulating && effectiveEdition ? effectiveEdition : edition;
   const forgeStartDate = effectiveEd?.forge_start_date ? new Date(effectiveEd.forge_start_date) : null;
+  const onlineStartDate = (effectiveEd as any)?.online_start_date ? new Date((effectiveEd as any).online_start_date) : null;
 
   // Determine if we should enable the query:
   // 1. NOT while user data is still loading (prevents caching empty results)
@@ -149,15 +150,30 @@ export const useRoadmapData = () => {
       
       let calculatedDate: string | null = null;
       
-      if (forgeStartDate) {
-        if (day.day_number > 0) {
-          const dayDate = new Date(forgeStartDate);
-          dayDate.setDate(dayDate.getDate() + (day.day_number - 1));
-          calculatedDate = dayDate.toISOString().split('T')[0];
-        } else if (day.day_number < 0) {
-          const dayDate = new Date(forgeStartDate);
-          dayDate.setDate(dayDate.getDate() + day.day_number);
-          calculatedDate = dayDate.toISOString().split('T')[0];
+      if (day.day_number > 0 && forgeStartDate) {
+        const dayDate = new Date(forgeStartDate);
+        dayDate.setDate(dayDate.getDate() + (day.day_number - 1));
+        calculatedDate = dayDate.toISOString().split('T')[0];
+      } else if (day.day_number < 0) {
+        // Use online_start_date for online sessions if available, else fall back to forge_start_date
+        const baseDate = onlineStartDate || forgeStartDate;
+        if (baseDate) {
+          // day_number is negative, e.g. -5 means 5th day before bootcamp
+          // With online_start_date: calculate forward from online start (day -5 = online day 1, day -4 = online day 2, etc.)
+          if (onlineStartDate) {
+            // Find how many online days total (the most negative day_number)
+            const allNegativeDays = templateDays?.filter(d => d.day_number < 0) || [];
+            const minDayNum = Math.min(...allNegativeDays.map(d => d.day_number));
+            // day_number -5 with min -5 => offset 0 (first day), day_number -4 => offset 1, etc.
+            const offset = day.day_number - minDayNum;
+            const dayDate = new Date(onlineStartDate);
+            dayDate.setDate(dayDate.getDate() + offset);
+            calculatedDate = dayDate.toISOString().split('T')[0];
+          } else {
+            const dayDate = new Date(forgeStartDate!);
+            dayDate.setDate(dayDate.getDate() + day.day_number);
+            calculatedDate = dayDate.toISOString().split('T')[0];
+          }
         }
       }
       
@@ -166,7 +182,7 @@ export const useRoadmapData = () => {
         date: calculatedDate
       };
     });
-  }, [templateDays, forgeStartDate, editionIdForQuery]);
+  }, [templateDays, forgeStartDate, onlineStartDate, editionIdForQuery]);
 
   // Fetch galleries with timeout
   const { data: galleries } = useQuery({

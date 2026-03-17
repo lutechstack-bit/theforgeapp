@@ -75,7 +75,7 @@ export default function AdminEditions() {
 
   // Create edition mutation
   const createMutation = useMutation({
-    mutationFn: async (data: { name: string; city: string; cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS'; forge_start_date?: string; forge_end_date?: string }) => {
+    mutationFn: async (data: { name: string; city: string; cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS'; forge_start_date?: string; forge_end_date?: string; online_start_date?: string }) => {
       const { error } = await supabase.from('editions').insert(data);
       if (error) throw error;
     },
@@ -92,7 +92,7 @@ export default function AdminEditions() {
 
   // Update edition mutation
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; name: string; city: string; cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS'; forge_start_date?: string; forge_end_date?: string }) => {
+    mutationFn: async ({ id, ...data }: { id: string; name: string; city: string; cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS'; forge_start_date?: string; forge_end_date?: string; online_start_date?: string }) => {
       const { error } = await supabase.from('editions').update(data).eq('id', id);
       if (error) throw error;
     },
@@ -227,11 +227,17 @@ export default function AdminEditions() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 text-sm">
+                  {(edition as any).online_start_date && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Calendar className="w-4 h-4" />
+                      <span>Online: {format(new Date((edition as any).online_start_date), 'MMM d, yyyy')}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar className="w-4 h-4" />
                     {edition.forge_start_date ? (
                       <span>
-                        {format(new Date(edition.forge_start_date), 'MMM d')} - {' '}
+                        Bootcamp: {format(new Date(edition.forge_start_date), 'MMM d')} - {' '}
                         {edition.forge_end_date ? format(new Date(edition.forge_end_date), 'MMM d, yyyy') : 'TBD'}
                       </span>
                     ) : (
@@ -335,7 +341,7 @@ function EditionDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   edition: Edition | null;
-  onSubmit: (data: { name: string; city: string; cohort_type: CohortType; forge_start_date?: string; forge_end_date?: string }) => void;
+  onSubmit: (data: { name: string; city: string; cohort_type: CohortType; forge_start_date?: string; forge_end_date?: string; online_start_date?: string }) => void;
   isLoading: boolean;
 }) {
   const [formData, setFormData] = useState({
@@ -343,8 +349,11 @@ function EditionDialog({
     city: '',
     cohort_type: 'FORGE',
     forge_start_date: '',
-    forge_end_date: ''
+    forge_end_date: '',
+    online_start_date: ''
   });
+
+  const showOnlineDate = formData.cohort_type === 'FORGE' || formData.cohort_type === 'FORGE_CREATORS';
 
   React.useEffect(() => {
     if (edition) {
@@ -353,10 +362,11 @@ function EditionDialog({
         city: edition.city,
         cohort_type: edition.cohort_type || 'FORGE',
         forge_start_date: edition.forge_start_date ? format(new Date(edition.forge_start_date), 'yyyy-MM-dd') : '',
-        forge_end_date: edition.forge_end_date ? format(new Date(edition.forge_end_date), 'yyyy-MM-dd') : ''
+        forge_end_date: edition.forge_end_date ? format(new Date(edition.forge_end_date), 'yyyy-MM-dd') : '',
+        online_start_date: (edition as any).online_start_date ? format(new Date((edition as any).online_start_date), 'yyyy-MM-dd') : ''
       });
     } else {
-      setFormData({ name: '', city: '', cohort_type: 'FORGE', forge_start_date: '', forge_end_date: '' });
+      setFormData({ name: '', city: '', cohort_type: 'FORGE', forge_start_date: '', forge_end_date: '', online_start_date: '' });
     }
   }, [edition, open]);
 
@@ -367,7 +377,8 @@ function EditionDialog({
       city: formData.city,
       cohort_type: formData.cohort_type as 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS',
       forge_start_date: formData.forge_start_date || undefined,
-      forge_end_date: formData.forge_end_date || undefined
+      forge_end_date: formData.forge_end_date || undefined,
+      online_start_date: showOnlineDate && formData.online_start_date ? formData.online_start_date : undefined
     });
   };
 
@@ -406,15 +417,23 @@ function EditionDialog({
               </SelectContent>
             </Select>
           </div>
+          {showOnlineDate && (
+            <FloatingInput
+              label="Online Start Date"
+              type="date"
+              value={formData.online_start_date}
+              onChange={(e) => setFormData({ ...formData, online_start_date: e.target.value })}
+            />
+          )}
           <div className="grid grid-cols-2 gap-4">
             <FloatingInput
-              label="Forge Start"
+              label="Bootcamp Start"
               type="date"
               value={formData.forge_start_date}
               onChange={(e) => setFormData({ ...formData, forge_start_date: e.target.value })}
             />
             <FloatingInput
-              label="Forge End"
+              label="Bootcamp End"
               type="date"
               value={formData.forge_end_date}
               onChange={(e) => setFormData({ ...formData, forge_end_date: e.target.value })}
