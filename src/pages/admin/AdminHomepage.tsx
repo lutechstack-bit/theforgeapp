@@ -36,6 +36,8 @@ function HeroSlidesManager() {
   const [selectedCohort, setSelectedCohort] = useState<string>('FORGE');
   const [newImageUrl, setNewImageUrl] = useState('');
   const [newCohortType, setNewCohortType] = useState<string>('FORGE');
+  const [inputMode, setInputMode] = useState<'upload' | 'url'>('upload');
+  const [isUploading, setIsUploading] = useState(false);
 
   const { data: slides, isLoading } = useQuery({
     queryKey: ['admin-hero-slides'],
@@ -53,18 +55,47 @@ function HeroSlidesManager() {
     selectedCohort === 'ALL' ? true : s.cohort_type === selectedCohort
   );
 
+  const insertSlide = async (imageUrl: string) => {
+    const maxOrder = slides?.reduce((max, s) => Math.max(max, s.order_index || 0), -1) ?? -1;
+    const { error } = await supabase
+      .from('homepage_hero_slides')
+      .insert({
+        image_url: imageUrl,
+        cohort_type: newCohortType,
+        order_index: maxOrder + 1,
+      });
+    if (error) throw error;
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const filePath = `hero-slides/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('event-images')
+        .upload(filePath, file, { upsert: false });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage
+        .from('event-images')
+        .getPublicUrl(filePath);
+      await insertSlide(urlData.publicUrl);
+      queryClient.invalidateQueries({ queryKey: ['admin-hero-slides'] });
+      queryClient.invalidateQueries({ queryKey: ['hero-slides'] });
+      toast.success('Slide uploaded & added');
+    } catch (err: any) {
+      toast.error(err.message || 'Upload failed');
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  };
+
   const addMutation = useMutation({
     mutationFn: async () => {
       if (!newImageUrl.trim()) throw new Error('Image URL is required');
-      const maxOrder = slides?.reduce((max, s) => Math.max(max, s.order_index || 0), -1) ?? -1;
-      const { error } = await supabase
-        .from('homepage_hero_slides')
-        .insert({
-          image_url: newImageUrl.trim(),
-          cohort_type: newCohortType,
-          order_index: maxOrder + 1,
-        });
-      if (error) throw error;
+      await insertSlide(newImageUrl.trim());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-hero-slides'] });
