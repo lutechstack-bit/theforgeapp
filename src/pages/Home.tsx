@@ -30,7 +30,7 @@ const Home: React.FC = () => {
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { activeFocusCard } = useTodaysFocus();
+  
   const { getSection } = useHomepageSections();
 
   const showDebug = searchParams.get('homeDebug') === '1';
