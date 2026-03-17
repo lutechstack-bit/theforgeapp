@@ -48,9 +48,35 @@ const AllCourses: React.FC = () => {
     ? courses
     : courses.filter(c => c.section_type === activeFilter);
 
+  const communityCourses = courses.filter(c => c.section_type === 'community_sessions');
+  const preForgeCourses = courses.filter(c => c.section_type === 'bfp_sessions');
+
   const handleCardClick = (content: LearnContent) => {
     navigate(`/learn/${content.id}`);
   };
+
+  const renderGrid = (items: LearnContent[], layout: 'portrait' | 'landscape' = 'portrait') => (
+    <div className="grid gap-4 grid-cols-2 lg:grid-cols-3">
+      {items.map((course) => (
+        <LearnCourseCard
+          key={course.id}
+          id={course.id}
+          title={course.title}
+          thumbnailUrl={course.thumbnail_url}
+          durationMinutes={course.duration_minutes}
+          cardLayout={layout}
+          onClick={() => handleCardClick(course)}
+        />
+      ))}
+    </div>
+  );
+
+  const renderSectionHeader = (label: string) => (
+    <div className="flex items-center gap-2 mb-3">
+      <div className="w-1 h-5 rounded-full bg-primary" />
+      <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">{label}</h2>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -90,37 +116,41 @@ const AllCourses: React.FC = () => {
       {/* Content */}
       <div className="p-4">
         {isLoading ? (
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 grid-cols-2 lg:grid-cols-3">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="aspect-[16/10] rounded-2xl bg-card animate-pulse" />
             ))}
           </div>
+        ) : activeFilter === 'all' ? (
+          <div className="space-y-8">
+            {communityCourses.length > 0 && (
+              <div>
+                {renderSectionHeader('Community Sessions')}
+                {renderGrid(communityCourses, 'portrait')}
+              </div>
+            )}
+            {preForgeCourses.length > 0 && (
+              <div>
+                {renderSectionHeader('Pre Forge Sessions')}
+                {renderGrid(preForgeCourses, 'landscape')}
+              </div>
+            )}
+            {communityCourses.length === 0 && preForgeCourses.length === 0 && (
+              <div className="text-center py-16">
+                <Sparkles className="h-12 w-12 text-primary/50 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">No courses found</h3>
+                <p className="text-muted-foreground">Check back soon for new content</p>
+              </div>
+            )}
+          </div>
         ) : filteredCourses.length === 0 ? (
           <div className="text-center py-16">
             <Sparkles className="h-12 w-12 text-primary/50 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              No courses found
-            </h3>
-            <p className="text-muted-foreground">
-              {activeFilter === 'all' 
-                ? 'Check back soon for new content'
-                : 'No courses in this category yet'}
-            </p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">No courses found</h3>
+            <p className="text-muted-foreground">No courses in this category yet</p>
           </div>
         ) : (
-          <div className="grid gap-4 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredCourses.map((course) => (
-              <LearnCourseCard
-                key={course.id}
-                id={course.id}
-                title={course.title}
-                thumbnailUrl={course.thumbnail_url}
-                durationMinutes={course.duration_minutes}
-                cardLayout={course.section_type === 'community_sessions' ? 'portrait' : 'landscape'}
-                onClick={() => handleCardClick(course)}
-              />
-            ))}
-          </div>
+          renderGrid(filteredCourses, activeFilter === 'community_sessions' ? 'portrait' : 'landscape')
         )}
       </div>
 
