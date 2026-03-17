@@ -350,7 +350,8 @@ function EditionDialog({
     cohort_type: 'FORGE',
     forge_start_date: '',
     forge_end_date: '',
-    online_start_date: ''
+    online_start_date: '',
+    online_end_date: ''
   });
 
   const showOnlineDate = formData.cohort_type === 'FORGE' || formData.cohort_type === 'FORGE_CREATORS';
