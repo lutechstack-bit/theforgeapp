@@ -11,6 +11,7 @@ const AppLayoutContent: React.FC = () => {
   const { collapsed } = useSidebar();
   const hideNavRoutes = ['/auth', '/welcome', '/kyf'];
   const showNav = !hideNavRoutes.includes(location.pathname);
+  const isHome = location.pathname === '/';
 
   return (
     <div className="min-h-[100dvh] bg-background safe-area-pt">
@@ -20,7 +21,10 @@ const AppLayoutContent: React.FC = () => {
         showNav && (collapsed ? "md:ml-[72px]" : "md:ml-72")
       )}>
         {showNav && (
-          <div className="sticky top-0 z-40 flex items-center justify-end h-14 px-4 bg-background">
+          <div className={cn(
+            "z-40 flex items-center justify-end h-14 px-4",
+            isHome ? "absolute top-0 left-0 right-0" : "sticky top-0 bg-background"
+          )}>
             <TopProfileDropdown />
           </div>
         )}
