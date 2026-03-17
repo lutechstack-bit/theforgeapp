@@ -119,8 +119,7 @@ const Home: React.FC = () => {
           {countdownSection && <CompactCountdownTimer edition={edition} />}
           {!countdownSection && userDataLoading && <Skeleton className="h-24 rounded-2xl" />}
 
-          {/* Payment Due Card */}
-          {paymentSection !== null && <PaymentDueCard />}
+          {/* Payment Due Card - removed from here, moved below onboarding */}
 
           {/* 2. Today's Focus */}
           {focusSection && activeFocusCard && (
