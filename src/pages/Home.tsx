@@ -8,7 +8,7 @@ import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
 import { HomeCarouselSkeleton } from '@/components/home/HomeCarouselSkeleton';
 import { HomeErrorState } from '@/components/home/HomeErrorState';
 import HomeJourneySection from '@/components/home/HomeJourneySection';
-import TodaysFocusCard from '@/components/home/TodaysFocusCard';
+
 import OnboardingStepsSection from '@/components/home/OnboardingStepsSection';
 import BatchmatesSection from '@/components/home/BatchmatesSection';
 import AlumniShowcaseSection from '@/components/home/AlumniShowcaseSection';
