@@ -73,8 +73,8 @@ export const TopProfileDropdown: React.FC = () => {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => navigate('/profile?action=edit')} className="cursor-pointer">
-            <Settings className="h-4 w-4 mr-2" />
-            Settings
+            <Edit className="h-4 w-4 mr-2" />
+            Edit Profile
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
