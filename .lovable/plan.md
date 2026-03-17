@@ -1,32 +1,87 @@
 
-## Replace Program Banner Images
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+# Payment System: Admin Management + User-Facing Payment Card
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+## What We're Building
 
-### Changes
+A complete payment tracking system with:
+1. **A dedicated Admin Payments page** for detailed per-user payment management, edition defaults, and Razorpay link configuration
+2. **A payment summary badge in the Users table** (already partially exists — will enhance it to link to the Payments page)
+3. **A user-facing "Payment Due" card** on the homepage matching your screenshot design exactly
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+## Database Changes
 
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+### 1. `payment_config` table — per-user payment details (admin-managed)
 
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+| Column | Type | Purpose |
+|--------|------|---------|
+| `user_id` | uuid (unique, FK → profiles) | One record per user |
+| `programme_total` | numeric (default 50000) | Total programme fee |
+| `deposit_paid` | numeric (default 15000) | Amount already paid |
+| `deposit_label` | text (default 'Slot confirmation fee') | Label for the deposit line |
+| `balance_due` | numeric (generated: total - deposit) | Auto-calculated |
+| `payment_deadline` | date | Deadline shown in red |
+| `payment_link` | text | Razorpay "Pay now" redirect URL |
+| `installment_link` | text | Optional "Pay in instalments" URL |
+| `is_deposit_verified` | boolean (default true) | Admin verification flag |
+| `notes` | text | Admin notes |
 
-| File | Change |
+RLS: Admins can manage all; users can SELECT their own row.
+
+### 2. `payment_defaults` table — edition-level templates for bulk setup
+
+| Column | Type | Purpose |
+|--------|------|---------|
+| `edition_id` | uuid (unique, FK → editions) | One default per edition |
+| `programme_total` | numeric | Default total for this edition |
+| `default_deposit` | numeric | Default deposit amount |
+| `deposit_label` | text | Default label |
+| `default_deadline` | date | Default deadline |
+| `payment_link` | text | Default Razorpay link |
+| `installment_link` | text | Default installments link |
+
+RLS: Admins full access; authenticated users can SELECT.
+
+## Admin Panel: New Payments Page (`/admin/payments`)
+
+### Top section — Edition Defaults
+- Dropdown to select an edition
+- Form to set default values (programme_total, deposit, deadline, payment_link, installment_link)
+- "Apply defaults to all users in this edition" bulk action button
+
+### Main section — Per-User Payment Table
+- Filter by edition, payment status (paid/pending/partial)
+- Columns: Name, Email, Edition, Programme Total, Deposit Paid, Balance Due, Deadline, Status, Actions
+- Click "Edit" to open dialog with all payment fields including the Razorpay payment_link and installment_link
+- Auto-update `profiles.payment_status` to `BALANCE_PAID` when deposit_paid >= programme_total
+
+## Users Table Enhancement
+- The existing Payment badge column already shows "Full" or "₹15K"
+- Add a small "₹" icon/link on hover that navigates to `/admin/payments?user={id}` for quick access to that user's payment details
+
+## User-Facing: PaymentDueCard Component
+
+Recreates the exact design from your screenshots:
+- **Left column**: "PAYMENT DUE" red badge, "Complete your programme fees" heading, edition name + dates, payment progress bar, line items (Programme total, deposit paid with checkmark, Balance due in bold, Payment deadline in red)
+- **Right column**: Circular progress ring (% paid), balance amount, "Pay ₹X now →" button (opens payment_link), "Pay in instalments" link (opens installment_link), due date badge
+- Only visible when `payment_status === 'CONFIRMED_15K'` (balance still due)
+- Hidden when fully paid
+
+### Homepage Integration
+- Insert `PaymentDueCard` after the countdown timer, before Today's Focus
+- Add a `payment` section key to `homepage_sections` for admin toggle control
+- Fetches `payment_config` for the logged-in user
+
+## Files to Create/Modify
+
+| File | Action |
 |------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+| DB migration | Create `payment_config` + `payment_defaults` tables with RLS |
+| `src/pages/admin/AdminPayments.tsx` | New: full payment management page |
+| `src/components/home/PaymentDueCard.tsx` | New: user-facing payment card |
+| `src/pages/Home.tsx` | Add PaymentDueCard between countdown and focus |
+| `src/App.tsx` | Add `/admin/payments` route + import |
+| `src/components/admin/AdminLayout.tsx` | Add "Payments" nav item with CreditCard icon |
+| `src/pages/admin/AdminUsers.tsx` | Add clickable payment badge linking to payments page |
+| `homepage_sections` data | Insert `payment` section row |
 
