@@ -1584,7 +1584,13 @@ function EditUserDialog({
         edition_id: user.edition_id,
         specialty: user.specialty,
         payment_status: user.payment_status,
-        kyf_completed: user.kyf_completed
+        kyf_completed: user.kyf_completed,
+        bio: user.bio,
+        tagline: user.tagline,
+        instagram_handle: user.instagram_handle,
+        twitter_handle: user.twitter_handle,
+        profile_setup_completed: user.profile_setup_completed,
+        ky_form_completed: user.ky_form_completed,
       });
     }
   }, [user]);
@@ -1599,7 +1605,7 @@ function EditUserDialog({
 
   return (
     <Dialog open={!!user} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit User</DialogTitle>
         </DialogHeader>
@@ -1615,6 +1621,14 @@ function EditUserDialog({
               onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
             />
           </div>
+          <div className="space-y-2">
+            <Label>Tagline</Label>
+            <Input
+              value={formData.tagline || ''}
+              onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+              placeholder="e.g. Filmmaker | Storyteller"
+            />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Phone</Label>
@@ -1628,6 +1642,33 @@ function EditUserDialog({
               <Input
                 value={formData.city || ''}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Bio</Label>
+            <textarea
+              value={formData.bio || ''}
+              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
+              placeholder="User bio..."
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Instagram</Label>
+              <Input
+                value={formData.instagram_handle || ''}
+                onChange={(e) => setFormData({ ...formData, instagram_handle: e.target.value })}
+                placeholder="@handle"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Twitter</Label>
+              <Input
+                value={formData.twitter_handle || ''}
+                onChange={(e) => setFormData({ ...formData, twitter_handle: e.target.value })}
+                placeholder="@handle"
               />
             </div>
           </div>
@@ -1670,6 +1711,24 @@ function EditUserDialog({
                 <SelectItem value="BALANCE_PAID">Balance Paid</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="profile_setup"
+                checked={formData.profile_setup_completed || false}
+                onCheckedChange={(checked) => setFormData({ ...formData, profile_setup_completed: !!checked })}
+              />
+              <Label htmlFor="profile_setup" className="text-sm">Profile Setup Done</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="ky_form"
+                checked={formData.ky_form_completed || false}
+                onCheckedChange={(checked) => setFormData({ ...formData, ky_form_completed: !!checked })}
+              />
+              <Label htmlFor="ky_form" className="text-sm">KY Form Done</Label>
+            </div>
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
