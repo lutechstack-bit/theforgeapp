@@ -36,6 +36,7 @@ export const useRoadmapData = () => {
   const cohortName = userCohortType ? cohortDisplayNames[userCohortType] : 'The Forge';
   const effectiveEd = isSimulating && effectiveEdition ? effectiveEdition : edition;
   const forgeStartDate = effectiveEd?.forge_start_date ? new Date(effectiveEd.forge_start_date) : null;
+  const onlineStartDate = (effectiveEd as any)?.online_start_date ? new Date((effectiveEd as any).online_start_date) : null;
 
   // Determine if we should enable the query:
   // 1. NOT while user data is still loading (prevents caching empty results)
