@@ -417,15 +417,23 @@ function EditionDialog({
               </SelectContent>
             </Select>
           </div>
+          {showOnlineDate && (
+            <FloatingInput
+              label="Online Start Date"
+              type="date"
+              value={formData.online_start_date}
+              onChange={(e) => setFormData({ ...formData, online_start_date: e.target.value })}
+            />
+          )}
           <div className="grid grid-cols-2 gap-4">
             <FloatingInput
-              label="Forge Start"
+              label="Bootcamp Start"
               type="date"
               value={formData.forge_start_date}
               onChange={(e) => setFormData({ ...formData, forge_start_date: e.target.value })}
             />
             <FloatingInput
-              label="Forge End"
+              label="Bootcamp End"
               type="date"
               value={formData.forge_end_date}
               onChange={(e) => setFormData({ ...formData, forge_end_date: e.target.value })}
