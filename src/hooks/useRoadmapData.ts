@@ -182,7 +182,7 @@ export const useRoadmapData = () => {
         date: calculatedDate
       };
     });
-  }, [templateDays, forgeStartDate, editionIdForQuery]);
+  }, [templateDays, forgeStartDate, onlineStartDate, editionIdForQuery]);
 
   // Fetch galleries with timeout
   const { data: galleries } = useQuery({
