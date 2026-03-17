@@ -1166,9 +1166,14 @@ export default function AdminUsers() {
                       <TableCell>{user.city || '-'}</TableCell>
                       <TableCell>{getEditionName(user.edition_id)}</TableCell>
                       <TableCell>
-                        <Badge variant={user.payment_status === 'BALANCE_PAID' ? 'default' : 'secondary'}>
-                          {user.payment_status === 'BALANCE_PAID' ? 'Full' : '₹15K'}
-                        </Badge>
+                        <a href={`/admin/payments?user=${user.id}`} className="inline-block">
+                          <Badge 
+                            variant={user.payment_status === 'BALANCE_PAID' ? 'default' : 'secondary'}
+                            className="cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all"
+                          >
+                            {user.payment_status === 'BALANCE_PAID' ? 'Full' : '₹15K'}
+                          </Badge>
+                        </a>
                       </TableCell>
                       <TableCell>
                         <Badge variant={user.kyf_completed ? 'default' : 'outline'}>
