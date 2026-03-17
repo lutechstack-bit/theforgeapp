@@ -1,21 +1,32 @@
 
+## Replace Program Banner Images
 
-# Add Device Image Upload to Hero Carousel Admin
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## Change
-Add a file upload option (from device) alongside the existing URL input in the Hero Carousel Slides manager. No restriction on slide count.
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-## File Changes
+### Changes
+
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
 | File | Change |
 |------|--------|
-| `src/pages/admin/AdminHomepage.tsx` | Add a tab toggle between "Upload Image" and "Paste URL" modes. In upload mode, show a file input that uploads to the `event-images` storage bucket under `hero-slides/` prefix, gets the public URL, and inserts the slide. Add upload loading state. |
-
-## Implementation Details
-
-1. **Two input modes** via a simple toggle: "Upload from Device" / "Paste URL"
-2. **Upload flow**: `<input type="file" accept="image/*">` → upload to `event-images` bucket at `hero-slides/{timestamp}-{filename}` → get public URL → insert into `homepage_hero_slides`
-3. **No count restriction** — current code already has none; just ensure unlimited adds work
-4. **Loading indicator** on the Add button during upload
-5. Uses the existing public `event-images` bucket (already has admin RLS)
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 

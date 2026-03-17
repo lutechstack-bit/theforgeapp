@@ -36,6 +36,8 @@ function HeroSlidesManager() {
   const [selectedCohort, setSelectedCohort] = useState<string>('FORGE');
   const [newImageUrl, setNewImageUrl] = useState('');
   const [newCohortType, setNewCohortType] = useState<string>('FORGE');
+  const [inputMode, setInputMode] = useState<'upload' | 'url'>('upload');
+  const [isUploading, setIsUploading] = useState(false);
 
   const { data: slides, isLoading } = useQuery({
     queryKey: ['admin-hero-slides'],
@@ -53,18 +55,47 @@ function HeroSlidesManager() {
     selectedCohort === 'ALL' ? true : s.cohort_type === selectedCohort
   );
 
+  const insertSlide = async (imageUrl: string) => {
+    const maxOrder = slides?.reduce((max, s) => Math.max(max, s.order_index || 0), -1) ?? -1;
+    const { error } = await supabase
+      .from('homepage_hero_slides')
+      .insert({
+        image_url: imageUrl,
+        cohort_type: newCohortType,
+        order_index: maxOrder + 1,
+      });
+    if (error) throw error;
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const filePath = `hero-slides/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('event-images')
+        .upload(filePath, file, { upsert: false });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage
+        .from('event-images')
+        .getPublicUrl(filePath);
+      await insertSlide(urlData.publicUrl);
+      queryClient.invalidateQueries({ queryKey: ['admin-hero-slides'] });
+      queryClient.invalidateQueries({ queryKey: ['hero-slides'] });
+      toast.success('Slide uploaded & added');
+    } catch (err: any) {
+      toast.error(err.message || 'Upload failed');
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  };
+
   const addMutation = useMutation({
     mutationFn: async () => {
       if (!newImageUrl.trim()) throw new Error('Image URL is required');
-      const maxOrder = slides?.reduce((max, s) => Math.max(max, s.order_index || 0), -1) ?? -1;
-      const { error } = await supabase
-        .from('homepage_hero_slides')
-        .insert({
-          image_url: newImageUrl.trim(),
-          cohort_type: newCohortType,
-          order_index: maxOrder + 1,
-        });
-      if (error) throw error;
+      await insertSlide(newImageUrl.trim());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-hero-slides'] });
@@ -151,37 +182,65 @@ function HeroSlidesManager() {
         </div>
 
         {/* Add new slide */}
-        <div className="flex items-end gap-3 p-4 rounded-lg border border-dashed border-border/50 bg-muted/10">
-          <div className="flex-1 space-y-1">
-            <label className="text-xs text-muted-foreground">Image URL</label>
-            <Input
-              value={newImageUrl}
-              onChange={e => setNewImageUrl(e.target.value)}
-              placeholder="https://... (recommended: 1200×800px)"
-              className="h-9"
-            />
+        <div className="p-4 rounded-lg border border-dashed border-border/50 bg-muted/10 space-y-3">
+          {/* Mode toggle */}
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant={inputMode === 'upload' ? 'default' : 'outline'} onClick={() => setInputMode('upload')} className="text-xs">
+              Upload from Device
+            </Button>
+            <Button size="sm" variant={inputMode === 'url' ? 'default' : 'outline'} onClick={() => setInputMode('url')} className="text-xs">
+              Paste URL
+            </Button>
           </div>
-          <div className="w-40 space-y-1">
-            <label className="text-xs text-muted-foreground">Cohort</label>
-            <Select value={newCohortType} onValueChange={setNewCohortType}>
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="FORGE">Filmmaking</SelectItem>
-                <SelectItem value="FORGE_WRITING">Writing</SelectItem>
-                <SelectItem value="FORGE_CREATORS">Creators</SelectItem>
-              </SelectContent>
-            </Select>
+
+          <div className="flex items-end gap-3">
+            {inputMode === 'upload' ? (
+              <div className="flex-1 space-y-1">
+                <label className="text-xs text-muted-foreground">Choose Image (recommended: 1200×800px)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                  className="block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:cursor-pointer disabled:opacity-50"
+                />
+              </div>
+            ) : (
+              <div className="flex-1 space-y-1">
+                <label className="text-xs text-muted-foreground">Image URL</label>
+                <Input
+                  value={newImageUrl}
+                  onChange={e => setNewImageUrl(e.target.value)}
+                  placeholder="https://... (recommended: 1200×800px)"
+                  className="h-9"
+                />
+              </div>
+            )}
+            <div className="w-40 space-y-1">
+              <label className="text-xs text-muted-foreground">Cohort</label>
+              <Select value={newCohortType} onValueChange={setNewCohortType}>
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="FORGE">Filmmaking</SelectItem>
+                  <SelectItem value="FORGE_WRITING">Writing</SelectItem>
+                  <SelectItem value="FORGE_CREATORS">Creators</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {inputMode === 'url' && (
+              <Button
+                size="sm"
+                onClick={() => addMutation.mutate()}
+                disabled={!newImageUrl.trim() || addMutation.isPending}
+                className="gap-1"
+              >
+                <Plus className="w-4 h-4" /> Add
+              </Button>
+            )}
+            {isUploading && <span className="text-xs text-muted-foreground animate-pulse">Uploading…</span>}
           </div>
-          <Button
-            size="sm"
-            onClick={() => addMutation.mutate()}
-            disabled={!newImageUrl.trim() || addMutation.isPending}
-            className="gap-1"
-          >
-            <Plus className="w-4 h-4" /> Add
-          </Button>
         </div>
 
         {/* Slides list */}
