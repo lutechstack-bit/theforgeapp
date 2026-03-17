@@ -52,7 +52,7 @@ const HeroBanner: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl" style={{ aspectRatio: '2.4/1' }}>
+    <div className="relative w-full overflow-hidden rounded-2xl" style={{ aspectRatio: '3/2' }}>
       {/* Background images with crossfade */}
       {images.map((src, i) => (
         <img
