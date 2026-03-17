@@ -46,8 +46,8 @@ const PaymentDueCard: React.FC = () => {
     ? new Date(payment_deadline).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
 
-  // Edition info
-  const editionName = edition?.name || 'Programme';
+  // Edition info - use city + cohort_type since Edition interface doesn't have name
+  const editionLabel = edition ? `Forge ${edition.cohort_type === 'FORGE' ? 'Filmmaking' : edition.cohort_type === 'FORGE_WRITING' ? 'Writing' : 'Creators'} - ${edition.city}` : 'Programme';
   const editionDates = edition?.forge_start_date && edition?.forge_end_date
     ? `${new Date(edition.forge_start_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}-${new Date(edition.forge_end_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`
     : '';
