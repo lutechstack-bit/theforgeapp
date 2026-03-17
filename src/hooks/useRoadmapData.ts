@@ -69,58 +69,33 @@ export const useRoadmapData = () => {
       );
       
       if (!editionResult.error && editionResult.data && editionResult.data.length > 0) {
+        console.log(`[Roadmap] Found ${editionResult.data.length} days for edition ${editionIdForQuery}`);
         return editionResult.data as RoadmapDay[];
       }
       
-      // Step 2: Find another edition of SAME cohort type with roadmap days
+      // Step 2: Fall back to master template for cohort type
       if (userCohortType) {
-        const sameTypeResult = await promiseWithTimeout(
+        console.log(`[Roadmap] No days for edition ${editionIdForQuery}, falling back to ${userCohortType} template`);
+        const templateResult = await promiseWithTimeout(
           supabase
-            .from('editions')
-            .select('id')
+            .from('roadmap_days')
+            .select('*')
             .eq('cohort_type', userCohortType)
+            .eq('is_template', true)
+            .order('day_number', { ascending: true })
             .then(res => res),
           ROADMAP_QUERY_TIMEOUT,
-          'editions_same_type'
+          'roadmap_days_template'
         );
         
-        if (sameTypeResult.data && sameTypeResult.data.length > 0) {
-          const editionIds = sameTypeResult.data.map(e => e.id);
-          
-          // Loop through editions individually to avoid duplicates
-          for (const eid of editionIds) {
-            const cohortResult = await promiseWithTimeout(
-              supabase
-                .from('roadmap_days')
-                .select('*')
-                .eq('edition_id', eid)
-                .order('day_number', { ascending: true })
-                .then(res => res),
-              ROADMAP_QUERY_TIMEOUT,
-              'roadmap_days_cohort_single'
-            );
-            
-            if (cohortResult.data && cohortResult.data.length > 0) {
-              return cohortResult.data as RoadmapDay[];
-            }
-          }
+        if (!templateResult.error && templateResult.data && templateResult.data.length > 0) {
+          console.log(`[Roadmap] Found ${templateResult.data.length} template days for ${userCohortType}`);
+          return templateResult.data as RoadmapDay[];
         }
       }
       
-      // Step 3: Last resort - shared template
-      const sharedResult = await promiseWithTimeout(
-        supabase
-          .from('roadmap_days')
-          .select('*')
-          .is('edition_id', null)
-          .order('day_number', { ascending: true })
-          .then(res => res),
-        ROADMAP_QUERY_TIMEOUT,
-        'roadmap_days_shared'
-      );
-      
-      if (sharedResult.error) throw sharedResult.error;
-      return sharedResult.data as RoadmapDay[];
+      console.warn('[Roadmap] No roadmap days found for edition or cohort template');
+      return [];
     },
     // CRITICAL: Only enable when profile loading is complete
     enabled: queryEnabled,

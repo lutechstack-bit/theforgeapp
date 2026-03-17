@@ -75,7 +75,7 @@ export default function AdminEditions() {
 
   // Create edition mutation
   const createMutation = useMutation({
-    mutationFn: async (data: { name: string; city: string; cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS'; forge_start_date?: string; forge_end_date?: string; online_start_date?: string }) => {
+    mutationFn: async (data: { name: string; city: string; cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS'; forge_start_date?: string; forge_end_date?: string; online_start_date?: string; online_end_date?: string }) => {
       const { error } = await supabase.from('editions').insert(data);
       if (error) throw error;
     },
@@ -92,7 +92,7 @@ export default function AdminEditions() {
 
   // Update edition mutation
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; name: string; city: string; cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS'; forge_start_date?: string; forge_end_date?: string; online_start_date?: string }) => {
+    mutationFn: async ({ id, ...data }: { id: string; name: string; city: string; cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS'; forge_start_date?: string; forge_end_date?: string; online_start_date?: string; online_end_date?: string }) => {
       const { error } = await supabase.from('editions').update(data).eq('id', id);
       if (error) throw error;
     },
@@ -341,7 +341,7 @@ function EditionDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   edition: Edition | null;
-  onSubmit: (data: { name: string; city: string; cohort_type: CohortType; forge_start_date?: string; forge_end_date?: string; online_start_date?: string }) => void;
+  onSubmit: (data: { name: string; city: string; cohort_type: CohortType; forge_start_date?: string; forge_end_date?: string; online_start_date?: string; online_end_date?: string }) => void;
   isLoading: boolean;
 }) {
   const [formData, setFormData] = useState({
@@ -350,7 +350,8 @@ function EditionDialog({
     cohort_type: 'FORGE',
     forge_start_date: '',
     forge_end_date: '',
-    online_start_date: ''
+    online_start_date: '',
+    online_end_date: ''
   });
 
   const showOnlineDate = formData.cohort_type === 'FORGE' || formData.cohort_type === 'FORGE_CREATORS';
@@ -363,10 +364,11 @@ function EditionDialog({
         cohort_type: edition.cohort_type || 'FORGE',
         forge_start_date: edition.forge_start_date ? format(new Date(edition.forge_start_date), 'yyyy-MM-dd') : '',
         forge_end_date: edition.forge_end_date ? format(new Date(edition.forge_end_date), 'yyyy-MM-dd') : '',
-        online_start_date: (edition as any).online_start_date ? format(new Date((edition as any).online_start_date), 'yyyy-MM-dd') : ''
+        online_start_date: (edition as any).online_start_date ? format(new Date((edition as any).online_start_date), 'yyyy-MM-dd') : '',
+        online_end_date: (edition as any).online_end_date ? format(new Date((edition as any).online_end_date), 'yyyy-MM-dd') : ''
       });
     } else {
-      setFormData({ name: '', city: '', cohort_type: 'FORGE', forge_start_date: '', forge_end_date: '', online_start_date: '' });
+      setFormData({ name: '', city: '', cohort_type: 'FORGE', forge_start_date: '', forge_end_date: '', online_start_date: '', online_end_date: '' });
     }
   }, [edition, open]);
 
@@ -378,7 +380,8 @@ function EditionDialog({
       cohort_type: formData.cohort_type as 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS',
       forge_start_date: formData.forge_start_date || undefined,
       forge_end_date: formData.forge_end_date || undefined,
-      online_start_date: showOnlineDate && formData.online_start_date ? formData.online_start_date : undefined
+      online_start_date: showOnlineDate && formData.online_start_date ? formData.online_start_date : undefined,
+      online_end_date: showOnlineDate && formData.online_end_date ? formData.online_end_date : undefined
     });
   };
 
@@ -418,12 +421,20 @@ function EditionDialog({
             </Select>
           </div>
           {showOnlineDate && (
-            <FloatingInput
-              label="Online Start Date"
-              type="date"
-              value={formData.online_start_date}
-              onChange={(e) => setFormData({ ...formData, online_start_date: e.target.value })}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FloatingInput
+                label="Online Start Date"
+                type="date"
+                value={formData.online_start_date}
+                onChange={(e) => setFormData({ ...formData, online_start_date: e.target.value })}
+              />
+              <FloatingInput
+                label="Online End Date"
+                type="date"
+                value={formData.online_end_date}
+                onChange={(e) => setFormData({ ...formData, online_end_date: e.target.value })}
+              />
+            </div>
           )}
           <div className="grid grid-cols-2 gap-4">
             <FloatingInput
