@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { User, Settings } from 'lucide-react';
+import { User, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
