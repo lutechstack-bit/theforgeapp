@@ -120,6 +120,9 @@ const Home: React.FC = () => {
           {countdownSection && <CompactCountdownTimer edition={edition} />}
           {!countdownSection && userDataLoading && <Skeleton className="h-24 rounded-2xl" />}
 
+          {/* 2. Hero Banner */}
+          <HeroBanner />
+
           {/* Payment Due Card - removed from here, moved below onboarding */}
 
 
