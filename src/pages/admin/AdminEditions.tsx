@@ -75,7 +75,7 @@ export default function AdminEditions() {
 
   // Create edition mutation
   const createMutation = useMutation({
-    mutationFn: async (data: { name: string; city: string; cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS'; forge_start_date?: string; forge_end_date?: string }) => {
+    mutationFn: async (data: { name: string; city: string; cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS'; forge_start_date?: string; forge_end_date?: string; online_start_date?: string }) => {
       const { error } = await supabase.from('editions').insert(data);
       if (error) throw error;
     },
