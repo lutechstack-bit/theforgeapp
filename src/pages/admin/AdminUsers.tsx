@@ -208,6 +208,47 @@ const WRITING_E4_STUDENTS = [
 
 const WRITING_E4_ID = "9a4b17e1-3d5c-4f9d-9e21-2ac694bc196c";
 
+// Edition 16/17 Filmmaking Students (from spreadsheet import)
+const EDITION_16_ID = "cafb3143-964b-42e8-a8d1-80ee1da86827";
+const EDITION_17_ID = "fada9b20-b56e-4d8e-b67c-7c2313e7ed9e";
+
+const EDITION_16_17_STUDENTS = [
+  { full_name: "Aadish Kadam", email: "aadish1304@gmail.com", phone: "8951117911", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
+  { full_name: "Aryan Pratap Srivastava", email: "aryanpsrivastava@gmail.com", phone: "8861609993", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
+  { full_name: "Sunny Bagde", email: "sunny.bagde.scholar@gmail.com", phone: "8459575725", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
+  { full_name: "Sanchi Shah", email: "sanchi.shah.04.25@gmail.com", phone: "9321569311", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
+  { full_name: "Girish Reddy Veluru", email: "girishreddy.veluru@gmail.com", phone: "9703106944", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: EDITION_17_ID },
+  { full_name: "Suraj Kumar", email: "suraj.kr2317@gmail.com", phone: "919903077955", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
+  { full_name: "Sanjeev", email: "sanjeevmattoo@gmail.com", phone: "6304871155", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/T0kUgAOh", balance_due: 65000, edition_id: EDITION_17_ID },
+  { full_name: "Laxmi Bhushan Jha", email: "laxmibhushan@gmail.com", phone: "9968666669", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: EDITION_17_ID },
+  { full_name: "Durugu Vijay Kumar", email: "drykdvizag@gmail.com", phone: "9550736196", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/T0kUgAOh", balance_due: 65000, edition_id: EDITION_16_ID },
+  { full_name: "Rajesh", email: "rajeshmishra.og@gmail.com", phone: "410882258", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: EDITION_16_ID },
+  { full_name: "Pavan Subhash RaoMaddula", email: "pavankirkliston@gmail.com", phone: "447484755666", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: EDITION_17_ID },
+  { full_name: "Madhukar", email: "madhukar.tbps@gmail.com", phone: "9945060174", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: EDITION_16_ID },
+  { full_name: "Bharadwaj Indrala", email: "bharadwaj.indrala7@gmail.com", phone: "15157104706", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
+  { full_name: "Nilesh Yadav", email: "nileshyadav68664511@gmail.com", phone: "7631835412", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/T0kUgAOh", balance_due: 65000, edition_id: EDITION_17_ID },
+  { full_name: "Sheshank Naldhega", email: "sheshank23adithya@gmail.com", phone: "8247765639", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: EDITION_17_ID },
+  { full_name: "Raj Vudali", email: "raj.vudali@gmail.com", phone: "9731000795", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
+  { full_name: "Bindu", email: "reddysbindu@gmail.com", phone: "9930937174", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
+  { full_name: "Manoj Kinger", email: "manoj.kinger@outlook.com", phone: "9971369702", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/T0kUgAOh", balance_due: 65000, edition_id: EDITION_17_ID },
+  { full_name: "Anshul Karasi", email: "anshulkarasi009@gmail.com", phone: "7406654816", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
+  { full_name: "Mukul Das", email: "mukuldas77@gmail.com", phone: "8553849837", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
+  { full_name: "Akash Sky Sebastian", email: "akash.sebastian@gmail.com", phone: "8291212948", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/T0kUgAOh", balance_due: 65000, edition_id: EDITION_17_ID },
+  { full_name: "Marutie PV", email: "pvmarutie@gmail.com", phone: "9008573737", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: EDITION_17_ID },
+  { full_name: "Hrithik Sharma", email: "hrithik.sh28@gmail.com", phone: "9960471659", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
+  { full_name: "Lakhinana Sai Gowtham", email: "gowthamlakhinana99@gmail.com", phone: "9515631049", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
+  { full_name: "Nivas", email: "nvsneo@gmail.com", phone: "7840022308", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
+  { full_name: "Princeton Lewis", email: "lewisprincejr@gmail.com", phone: "9686034462", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
+  { full_name: "Priyadarshan TC", email: "priyadarshanlaltc@gmail.com", phone: "919447739577", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
+  { full_name: "Sreekesh Reddy Madadi", email: "sreekeshreddymadadi@gmail.com", phone: "14702330907", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
+  { full_name: "Siddhardha S", email: "surojusiddhardha@gmail.com", phone: "8106220035", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: EDITION_16_ID },
+  { full_name: "Aryan Matta", email: "aryan.ceo@gsfmoney.org", phone: "7033445558", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: EDITION_16_ID },
+  { full_name: "Baasit Ali Marjaan", email: "aliquadri007@gmail.com", phone: "8657078017", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/T0kUgAOh", balance_due: 65000, edition_id: EDITION_16_ID },
+  { full_name: "Ketan Gupta", email: "ketan@movedproduction.com", phone: "9148765836", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: EDITION_16_ID },
+  { full_name: "Rabindra Sah", email: "rsah9118@gmail.com", phone: "917488173678", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/T0kUgAOh", balance_due: 65000, edition_id: EDITION_16_ID },
+  { full_name: "Goda Prabhakar", email: "godaprabhu@gmail.com", phone: "7327093222", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: EDITION_16_ID },
+];
+
 // Cohort Card Component
 function CohortCard({ 
   edition, 
@@ -815,7 +856,89 @@ export default function AdminUsers() {
     }
   });
 
-  // Filter users by search and edition
+  // Bulk import Edition 16/17 students with payment config
+  const importEdition16_17Mutation = useMutation({
+    mutationFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const results = { success: 0, failed: 0, errors: [] as { name: string; error: string }[] };
+      
+      for (let i = 0; i < EDITION_16_17_STUDENTS.length; i++) {
+        const student = EDITION_16_17_STUDENTS[i];
+        setImportProgress({ current: i + 1, total: EDITION_16_17_STUDENTS.length });
+        
+        const firstName = student.full_name.split(' ')[0];
+        const password = `${firstName}@Forge!`;
+        
+        try {
+          const response = await supabase.functions.invoke('create-user', {
+            body: {
+              email: student.email,
+              password,
+              full_name: student.full_name,
+              phone: student.phone,
+              city: "Goa",
+              edition_id: student.edition_id,
+              payment_status: student.payment_status
+            }
+          });
+
+          if (response.error || response.data?.error) {
+            results.failed++;
+            results.errors.push({ 
+              name: student.full_name, 
+              error: response.error?.message || response.data?.error || 'Unknown error' 
+            });
+          } else {
+            results.success++;
+            
+            // If 15k user, insert payment_config with their link and balance
+            if (student.payment_status === 'CONFIRMED_15K' && student.payment_link && student.balance_due && response.data?.user_id) {
+              const programmeTotal = student.balance_due + 15000;
+              const { error: paymentError } = await supabase
+                .from('payment_config')
+                .insert({
+                  user_id: response.data.user_id,
+                  programme_total: programmeTotal,
+                  deposit_paid: 15000,
+                  balance_due: student.balance_due,
+                  payment_link: student.payment_link,
+                  is_deposit_verified: true
+                });
+              if (paymentError) {
+                console.error(`Payment config error for ${student.full_name}:`, paymentError);
+              }
+            }
+          }
+        } catch (err) {
+          results.failed++;
+          results.errors.push({ 
+            name: student.full_name, 
+            error: err instanceof Error ? err.message : 'Unknown error' 
+          });
+        }
+      }
+      
+      return results;
+    },
+    onSuccess: (data) => {
+      setImportProgress(null);
+      if (data.failed > 0) {
+        toast.error(`Imported ${data.success} students, ${data.failed} failed`, {
+          description: data.errors.slice(0, 3).map(e => `${e.name}: ${e.error}`).join('\n')
+        });
+      } else {
+        toast.success(`Successfully imported all ${data.success} E16/E17 students!`);
+      }
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+    onError: (error: Error) => {
+      setImportProgress(null);
+      toast.error(error.message);
+    }
+  });
+
   const filteredUsers = useMemo(() => {
     return users?.filter(user => {
       const matchesSearch = 
@@ -1005,6 +1128,24 @@ export default function AdminUsers() {
               <>
                 <Upload className="w-4 h-4" />
                 Import Writing E4 (24)
+              </>
+            )}
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => importEdition16_17Mutation.mutate()} 
+            className="gap-2"
+            disabled={importEdition16_17Mutation.isPending || importWritingE4Mutation.isPending || importWritingE5Mutation.isPending || importCreatorsE2GoaMutation.isPending || importCreatorsE1Mutation.isPending || importEdition15Mutation.isPending || importEdition14Mutation.isPending}
+          >
+            {importEdition16_17Mutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Importing {importProgress?.current}/{importProgress?.total}...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                Import E16/E17 (34)
               </>
             )}
           </Button>

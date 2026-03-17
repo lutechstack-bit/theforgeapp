@@ -113,7 +113,8 @@ serve(async (req) => {
         edition_id,
         specialty,
         payment_status,
-        unlock_level: payment_status === 'BALANCE_PAID' ? 'FULL' : 'PREVIEW'
+        unlock_level: payment_status === 'BALANCE_PAID' ? 'FULL' : 'PREVIEW',
+        profile_setup_completed: true
       })
       .eq('id', newUserId);
 

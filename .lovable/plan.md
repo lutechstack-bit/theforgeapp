@@ -1,39 +1,32 @@
 
+## Replace Program Banner Images
 
-# Bulk Import E16/E17 Students from Spreadsheet
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## What Changes
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-### 1. Edge Function: `supabase/functions/create-user/index.ts`
-Add `profile_setup_completed: true` to the profile update so imported users skip the profile setup and welcome pages entirely.
+### Changes
 
-### 2. Admin Users Page: `src/pages/admin/AdminUsers.tsx`
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-**Add student data array** (`EDITION_16_STUDENTS`) extracted from the spreadsheet screenshot. Each entry includes: `full_name`, `email`, `phone`, `payment_status`, `payment_link`, `balance_due`, `edition_id`.
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-**Password rule**: `{FirstName}@Forge!` — just the first name, no dot, no last name.
-Examples: `Aadish@Forge!`, `Aryan@Forge!`, `Manaswini@Forge!`
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
-**Edition assignment**:
-- Rows with "E16" in the Edition column → `cafb3143-964b-42e8-a8d1-80ee1da86827` (E16)
-- Blank Edition column → `fada9b20-b56e-4d8e-b67c-7c2313e7ed9e` (E17)
-
-**Payment handling for "Only 15k" users**:
-- `payment_status: "CONFIRMED_15K"`
-- After user creation, insert into `payment_config` with their Razorpay payment link and balance amount (65,000 or 70,000)
-
-**Full payment users**: `payment_status: "BALANCE_PAID"`
-
-**Add import mutation** (`importEdition16Mutation`) following the exact same pattern as the existing `importEdition14Mutation` / `importEdition15Mutation`, but:
-- Uses first-name-only password
-- After each successful user creation, if `payment_status === "CONFIRMED_15K"`, also inserts a `payment_config` row with the payment link and balance
-
-**Add import button** in the admin UI alongside the existing cohort import buttons.
-
-### Student Data (from screenshot)
-
-~34 students will be hard-coded. I'll extract names, emails, phones, payment status, payment links, balance amounts, and edition assignments from the uploaded spreadsheet image.
-
-### Profile Setup Skip
-The `create-user` edge function update ensures `profile_setup_completed: true` is set on the profile, so `App.tsx` line 147 won't redirect these users to `/profile-setup`.
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 
