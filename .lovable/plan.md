@@ -1,32 +1,38 @@
 
-## Replace Program Banner Images
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+# Compact Payment Card with Detail Modal
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+## What changes
 
-### Changes
+### 1. Create `PaymentFocusCard` — compact card matching TodaysFocusCard style
+A small card with the same border/badge pattern as the "Today's Focus" card:
+- Badge: "PAYMENT DUE" (red-tinted, like the current badge)
+- Title: "Complete your programme fees"
+- Subtitle: shows balance amount (e.g., "₹70,000 remaining")
+- CTA button: "Pay Balance →" which opens a modal
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+### 2. Create `PaymentDetailModal` — popup with the full payment breakdown
+Move all the existing PaymentDueCard content (progress ring, line items, pay links) into a Dialog modal that opens when the CTA is clicked.
 
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+### 3. Update Home.tsx layout order
+- Remove `PaymentDueCard` from its current position (line 123, below countdown)
+- Add the new compact `PaymentFocusCard` between Onboarding Steps and Journey Timeline
 
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+New section order:
+1. Countdown Timer
+2. Today's Focus
+3. Onboarding Steps (creator profile)
+4. **Payment Focus Card** (new position)
+5. Journey Timeline
+6. Batchmates
+7. Alumni
+8. Travel & Stay
+
+## Files
 
 | File | Change |
 |------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+| `src/components/home/PaymentFocusCard.tsx` | New — compact card with modal trigger |
+| `src/components/home/PaymentDetailModal.tsx` | New — modal with full payment breakdown (existing PaymentDueCard content) |
+| `src/pages/Home.tsx` | Move payment section below onboarding, swap to new component |
 
