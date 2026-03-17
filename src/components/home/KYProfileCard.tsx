@@ -1,18 +1,18 @@
-import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
-import { CheckCircle2, Lock, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { KYFormProgressBar } from '@/components/kyform/KYFormProgressBar';
-import { getSectionsForCohort } from '@/components/kyform/KYSectionConfig';
+import React, { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveCohort } from "@/hooks/useEffectiveCohort";
+import { CheckCircle2, Lock, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { KYFormProgressBar } from "@/components/kyform/KYFormProgressBar";
+import { getSectionsForCohort } from "@/components/kyform/KYSectionConfig";
 
 const KYProfileCard: React.FC = () => {
   const { profile } = useAuth();
   const { effectiveCohortType } = useEffectiveCohort();
   const navigate = useNavigate();
 
-  const cohortType = effectiveCohortType || 'FORGE';
+  const cohortType = effectiveCohortType || "FORGE";
   const sections = useMemo(() => getSectionsForCohort(cohortType), [cohortType]);
 
   const sectionProgress = (profile as any)?.ky_section_progress as Record<string, boolean> | null;
@@ -35,7 +35,7 @@ const KYProfileCard: React.FC = () => {
         {/* Header */}
         <div className="p-5 pb-3">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="text-base font-bold text-foreground">Creator Profile</h3>
+            <h3 className="text-base font-bold text-foreground">Filmmaking Profile</h3>
             <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
               {completedCount} of {totalCount}
             </span>
@@ -57,19 +57,19 @@ const KYProfileCard: React.FC = () => {
                 disabled={isLocked || completed}
                 onClick={() => isActive && handleOpenSection(section.key)}
                 className={cn(
-                  'w-full flex items-center gap-4 px-5 py-4 text-left transition-all',
-                  isActive && 'hover:bg-primary/5 cursor-pointer',
-                  completed && 'bg-primary/5',
-                  isLocked && 'opacity-40 cursor-not-allowed'
+                  "w-full flex items-center gap-4 px-5 py-4 text-left transition-all",
+                  isActive && "hover:bg-primary/5 cursor-pointer",
+                  completed && "bg-primary/5",
+                  isLocked && "opacity-40 cursor-not-allowed",
                 )}
               >
                 {/* Section icon */}
                 <div
                   className={cn(
-                    'w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0',
-                    completed && 'bg-primary/15',
-                    isActive && 'bg-primary/10 border border-primary/20',
-                    isLocked && 'bg-secondary'
+                    "w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0",
+                    completed && "bg-primary/15",
+                    isActive && "bg-primary/10 border border-primary/20",
+                    isLocked && "bg-secondary",
                   )}
                 >
                   {completed ? (
@@ -83,23 +83,16 @@ const KYProfileCard: React.FC = () => {
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <p
-                    className={cn(
-                      'text-sm font-semibold',
-                      completed ? 'text-primary' : 'text-foreground'
-                    )}
-                  >
+                  <p className={cn("text-sm font-semibold", completed ? "text-primary" : "text-foreground")}>
                     {index + 1}. {section.title}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                    {section.subtitle}
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{section.subtitle}</p>
                 </div>
 
                 {/* Action */}
                 {isActive && (
                   <span className="text-xs font-bold text-primary flex items-center gap-0.5 shrink-0">
-                    {completedCount > 0 && index === completedCount ? 'Continue' : 'Start now'}
+                    {completedCount > 0 && index === completedCount ? "Continue" : "Start now"}
                     <ChevronRight className="w-3.5 h-3.5" />
                   </span>
                 )}
