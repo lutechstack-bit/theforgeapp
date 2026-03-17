@@ -35,7 +35,9 @@ const KYProfileCard: React.FC = () => {
         {/* Header */}
         <div className="p-5 pb-3">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="text-base font-bold text-foreground">Filmmaking Profile</h3>
+            <h3 className="text-base font-bold text-foreground">
+              {{ FORGE: "Filmmaking Profile", FORGE_WRITING: "Writers Profile", FORGE_CREATORS: "Creator Profile" }[cohortType] || "Filmmaking Profile"}
+            </h3>
             <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
               {completedCount} of {totalCount}
             </span>
