@@ -121,10 +121,7 @@ const Home: React.FC = () => {
 
           {/* Payment Due Card - removed from here, moved below onboarding */}
 
-          {/* 2. Today's Focus */}
-          {focusSection && activeFocusCard && (
-            <TodaysFocusCard card={activeFocusCard} />
-          )}
+
 
           {/* 3. Onboarding Steps */}
           {onboardingSection && (
