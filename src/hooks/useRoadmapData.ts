@@ -87,19 +87,22 @@ export const useRoadmapData = () => {
         if (sameTypeResult.data && sameTypeResult.data.length > 0) {
           const editionIds = sameTypeResult.data.map(e => e.id);
           
-          const cohortResult = await promiseWithTimeout(
-            supabase
-              .from('roadmap_days')
-              .select('*')
-              .in('edition_id', editionIds)
-              .order('day_number', { ascending: true })
-              .then(res => res),
-            ROADMAP_QUERY_TIMEOUT,
-            'roadmap_days_cohort'
-          );
-          
-          if (cohortResult.data && cohortResult.data.length > 0) {
-            return cohortResult.data as RoadmapDay[];
+          // Loop through editions individually to avoid duplicates
+          for (const eid of editionIds) {
+            const cohortResult = await promiseWithTimeout(
+              supabase
+                .from('roadmap_days')
+                .select('*')
+                .eq('edition_id', eid)
+                .order('day_number', { ascending: true })
+                .then(res => res),
+              ROADMAP_QUERY_TIMEOUT,
+              'roadmap_days_cohort_single'
+            );
+            
+            if (cohortResult.data && cohortResult.data.length > 0) {
+              return cohortResult.data as RoadmapDay[];
+            }
           }
         }
       }

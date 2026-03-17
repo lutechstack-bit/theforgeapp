@@ -108,12 +108,7 @@ const AllCourses: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className={cn(
-            "grid gap-4",
-            activeFilter === 'community_sessions'
-              ? "grid-cols-1"
-              : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-          )}>
+          <div className="grid gap-4 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3">
             {filteredCourses.map((course) => (
               <LearnCourseCard
                 key={course.id}
