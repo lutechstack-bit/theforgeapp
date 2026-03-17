@@ -377,7 +377,8 @@ function EditionDialog({
       city: formData.city,
       cohort_type: formData.cohort_type as 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS',
       forge_start_date: formData.forge_start_date || undefined,
-      forge_end_date: formData.forge_end_date || undefined
+      forge_end_date: formData.forge_end_date || undefined,
+      online_start_date: showOnlineDate && formData.online_start_date ? formData.online_start_date : undefined
     });
   };
 
