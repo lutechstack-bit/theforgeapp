@@ -92,7 +92,7 @@ export default function AdminEditions() {
 
   // Update edition mutation
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; name: string; city: string; cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS'; forge_start_date?: string; forge_end_date?: string; online_start_date?: string }) => {
+    mutationFn: async ({ id, ...data }: { id: string; name: string; city: string; cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS'; forge_start_date?: string; forge_end_date?: string; online_start_date?: string; online_end_date?: string }) => {
       const { error } = await supabase.from('editions').update(data).eq('id', id);
       if (error) throw error;
     },
