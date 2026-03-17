@@ -849,6 +849,33 @@ export type Database = {
         }
         Relationships: []
       }
+      homepage_hero_slides: {
+        Row: {
+          cohort_type: string | null
+          created_at: string | null
+          id: string
+          image_url: string
+          is_active: boolean | null
+          order_index: number | null
+        }
+        Insert: {
+          cohort_type?: string | null
+          created_at?: string | null
+          id?: string
+          image_url: string
+          is_active?: boolean | null
+          order_index?: number | null
+        }
+        Update: {
+          cohort_type?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          is_active?: boolean | null
+          order_index?: number | null
+        }
+        Relationships: []
+      }
       homepage_sections: {
         Row: {
           cohort_types: string[] | null
