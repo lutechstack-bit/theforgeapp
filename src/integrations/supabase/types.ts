@@ -1947,6 +1947,106 @@ export type Database = {
           },
         ]
       }
+      payment_config: {
+        Row: {
+          balance_due: number | null
+          created_at: string | null
+          deposit_label: string
+          deposit_paid: number
+          id: string
+          installment_link: string | null
+          is_deposit_verified: boolean
+          notes: string | null
+          payment_deadline: string | null
+          payment_link: string | null
+          programme_total: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance_due?: number | null
+          created_at?: string | null
+          deposit_label?: string
+          deposit_paid?: number
+          id?: string
+          installment_link?: string | null
+          is_deposit_verified?: boolean
+          notes?: string | null
+          payment_deadline?: string | null
+          payment_link?: string | null
+          programme_total?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance_due?: number | null
+          created_at?: string | null
+          deposit_label?: string
+          deposit_paid?: number
+          id?: string
+          installment_link?: string | null
+          is_deposit_verified?: boolean
+          notes?: string | null
+          payment_deadline?: string | null
+          payment_link?: string | null
+          programme_total?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_config_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_defaults: {
+        Row: {
+          created_at: string | null
+          default_deadline: string | null
+          default_deposit: number
+          deposit_label: string
+          edition_id: string
+          id: string
+          installment_link: string | null
+          payment_link: string | null
+          programme_total: number
+        }
+        Insert: {
+          created_at?: string | null
+          default_deadline?: string | null
+          default_deposit?: number
+          deposit_label?: string
+          edition_id: string
+          id?: string
+          installment_link?: string | null
+          payment_link?: string | null
+          programme_total?: number
+        }
+        Update: {
+          created_at?: string | null
+          default_deadline?: string | null
+          default_deposit?: number
+          deposit_label?: string
+          edition_id?: string
+          id?: string
+          installment_link?: string | null
+          payment_link?: string | null
+          programme_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_defaults_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: true
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perk_claims: {
         Row: {
           created_at: string | null

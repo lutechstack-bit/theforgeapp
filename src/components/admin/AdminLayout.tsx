@@ -27,7 +27,8 @@ import {
   Gift,
   Handshake,
   ExternalLink,
-  Film
+  Film,
+  CreditCard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -57,6 +58,7 @@ const adminNavItems = [
   { to: '/admin/changelog', icon: History, label: 'Changelog' },
   { to: '/admin/perks', icon: Gift, label: 'Perks' },
   { to: '/admin/network', icon: Handshake, label: 'Network' },
+  { to: '/admin/payments', icon: CreditCard, label: 'Payments' },
 ];
 
 export const AdminLayout: React.FC = () => {

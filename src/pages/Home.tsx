@@ -12,6 +12,7 @@ import TodaysFocusCard from '@/components/home/TodaysFocusCard';
 import OnboardingStepsSection from '@/components/home/OnboardingStepsSection';
 import BatchmatesSection from '@/components/home/BatchmatesSection';
 import AlumniShowcaseSection from '@/components/home/AlumniShowcaseSection';
+import PaymentDueCard from '@/components/home/PaymentDueCard';
 import TravelStaySection from '@/components/home/TravelStaySection';
 import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
 import { useTodaysFocus } from '@/hooks/useTodaysFocus';
@@ -96,6 +97,7 @@ const Home: React.FC = () => {
 
   // Get section configs
   const countdownSection = getSection('countdown');
+  const paymentSection = getSection('payment');
   const focusSection = getSection('todays_focus');
   const onboardingSection = getSection('onboarding');
   const journeySection = getSection('journey');
@@ -116,6 +118,9 @@ const Home: React.FC = () => {
           {/* 1. Countdown Timer */}
           {countdownSection && <CompactCountdownTimer edition={edition} />}
           {!countdownSection && userDataLoading && <Skeleton className="h-24 rounded-2xl" />}
+
+          {/* Payment Due Card */}
+          {paymentSection !== null && <PaymentDueCard />}
 
           {/* 2. Today's Focus */}
           {focusSection && activeFocusCard && (
