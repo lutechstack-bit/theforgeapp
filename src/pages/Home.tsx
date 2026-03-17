@@ -97,6 +97,7 @@ const Home: React.FC = () => {
 
   // Get section configs
   const countdownSection = getSection('countdown');
+  const paymentSection = getSection('payment');
   const focusSection = getSection('todays_focus');
   const onboardingSection = getSection('onboarding');
   const journeySection = getSection('journey');
