@@ -27,7 +27,8 @@ import {
   Gift,
   Handshake,
   ExternalLink,
-  Film
+  Film,
+  CreditCard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
