@@ -1,0 +1,1 @@
+ALTER TABLE public.editions ADD COLUMN online_start_date timestamp with time zone;

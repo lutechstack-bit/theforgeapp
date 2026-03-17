@@ -520,6 +520,7 @@ export type Database = {
           id: string
           is_archived: boolean
           name: string
+          online_start_date: string | null
           show_batchmates: boolean
         }
         Insert: {
@@ -532,6 +533,7 @@ export type Database = {
           id?: string
           is_archived?: boolean
           name: string
+          online_start_date?: string | null
           show_batchmates?: boolean
         }
         Update: {
@@ -544,6 +546,7 @@ export type Database = {
           id?: string
           is_archived?: boolean
           name?: string
+          online_start_date?: string | null
           show_batchmates?: boolean
         }
         Relationships: []
