@@ -364,10 +364,11 @@ function EditionDialog({
         cohort_type: edition.cohort_type || 'FORGE',
         forge_start_date: edition.forge_start_date ? format(new Date(edition.forge_start_date), 'yyyy-MM-dd') : '',
         forge_end_date: edition.forge_end_date ? format(new Date(edition.forge_end_date), 'yyyy-MM-dd') : '',
-        online_start_date: (edition as any).online_start_date ? format(new Date((edition as any).online_start_date), 'yyyy-MM-dd') : ''
+        online_start_date: (edition as any).online_start_date ? format(new Date((edition as any).online_start_date), 'yyyy-MM-dd') : '',
+        online_end_date: (edition as any).online_end_date ? format(new Date((edition as any).online_end_date), 'yyyy-MM-dd') : ''
       });
     } else {
-      setFormData({ name: '', city: '', cohort_type: 'FORGE', forge_start_date: '', forge_end_date: '', online_start_date: '' });
+      setFormData({ name: '', city: '', cohort_type: 'FORGE', forge_start_date: '', forge_end_date: '', online_start_date: '', online_end_date: '' });
     }
   }, [edition, open]);
 
