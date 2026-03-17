@@ -9,6 +9,7 @@ import { HomeCarouselSkeleton } from '@/components/home/HomeCarouselSkeleton';
 import { HomeErrorState } from '@/components/home/HomeErrorState';
 import HomeJourneySection from '@/components/home/HomeJourneySection';
 
+import HeroBanner from '@/components/home/HeroBanner';
 import OnboardingStepsSection from '@/components/home/OnboardingStepsSection';
 import BatchmatesSection from '@/components/home/BatchmatesSection';
 import AlumniShowcaseSection from '@/components/home/AlumniShowcaseSection';

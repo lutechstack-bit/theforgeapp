@@ -1025,3 +1025,19 @@
   opacity: 0;
   animation: tileIn 0.45s ease forwards;
 }
+
+/* Hero Banner Gradient Text */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.hero-gradient-text {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24, #f97316, #eab308, #f59e0b);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-shift 4s ease infinite;
+}
