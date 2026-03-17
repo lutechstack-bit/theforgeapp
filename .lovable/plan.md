@@ -1,32 +1,54 @@
 
-## Replace Program Banner Images
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+# Fix: Duplicate Roadmap Days + Clean Up All Courses Grid
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+## Problem 1: Duplicate Roadmap Days
 
-### Changes
+**Root cause** (lines 87-103 in `useRoadmapData.ts`): When the user's edition has no roadmap days, the Step 2 fallback fetches days from ALL editions of the same cohort type using `.in('edition_id', editionIds)`. If 7 FORGE editions have roadmap data, it returns 7 copies of every day.
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+**The user's point**: Roadmap days should come from the user's assigned edition. If their edition has no days, the fallback should grab from ONE other edition of the same cohort type — not all of them.
 
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+**Fix**: Replace the `.in()` bulk query with a loop that tries each edition individually and returns the first one with data.
 
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+### Code change — `src/hooks/useRoadmapData.ts` (lines 87-103)
+
+Replace the `.in('edition_id', editionIds)` block with:
+```typescript
+for (const eid of editionIds) {
+  const cohortResult = await promiseWithTimeout(
+    supabase
+      .from('roadmap_days')
+      .select('*')
+      .eq('edition_id', eid)
+      .order('day_number', { ascending: true })
+      .then(res => res),
+    ROADMAP_QUERY_TIMEOUT,
+    'roadmap_days_cohort_single'
+  );
+  if (cohortResult.data && cohortResult.data.length > 0) {
+    return cohortResult.data as RoadmapDay[];
+  }
+}
+```
+
+## Problem 2: Community Cards Too Large on All Courses Page
+
+**Root cause** (line 113-114): Community sessions use `grid-cols-1`, making portrait cards span full width.
+
+**Fix**: Use `grid-cols-2 sm:grid-cols-2 lg:grid-cols-3` for all filters uniformly.
+
+### Code change — `src/pages/AllCourses.tsx` (lines 111-116)
+
+```typescript
+<div className="grid gap-4 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3">
+```
+
+Remove the conditional grid logic entirely.
+
+## Summary
 
 | File | Change |
 |------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+| `src/hooks/useRoadmapData.ts` | Fix Step 2 fallback: loop editions individually, return first with data |
+| `src/pages/AllCourses.tsx` | Remove conditional grid, use uniform multi-column layout |
 
