@@ -421,12 +421,20 @@ function EditionDialog({
             </Select>
           </div>
           {showOnlineDate && (
-            <FloatingInput
-              label="Online Start Date"
-              type="date"
-              value={formData.online_start_date}
-              onChange={(e) => setFormData({ ...formData, online_start_date: e.target.value })}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FloatingInput
+                label="Online Start Date"
+                type="date"
+                value={formData.online_start_date}
+                onChange={(e) => setFormData({ ...formData, online_start_date: e.target.value })}
+              />
+              <FloatingInput
+                label="Online End Date"
+                type="date"
+                value={formData.online_end_date}
+                onChange={(e) => setFormData({ ...formData, online_end_date: e.target.value })}
+              />
+            </div>
           )}
           <div className="grid grid-cols-2 gap-4">
             <FloatingInput
