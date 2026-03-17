@@ -266,7 +266,7 @@ const Profile: React.FC = () => {
         profile={profile}
         onSaved={handleProfileSaved}
         scrollToSection={sectionParam}
-        profileData={profileData?.data || null}
+        profileData={profileData || null}
       />
 
       <AddWorkModal
