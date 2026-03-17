@@ -341,7 +341,7 @@ function EditionDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   edition: Edition | null;
-  onSubmit: (data: { name: string; city: string; cohort_type: CohortType; forge_start_date?: string; forge_end_date?: string }) => void;
+  onSubmit: (data: { name: string; city: string; cohort_type: CohortType; forge_start_date?: string; forge_end_date?: string; online_start_date?: string }) => void;
   isLoading: boolean;
 }) {
   const [formData, setFormData] = useState({
