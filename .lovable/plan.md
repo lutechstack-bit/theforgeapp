@@ -1,35 +1,32 @@
 
+## Replace Program Banner Images
 
-# Group Courses by Section Type on "All" Tab
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## Problem
-When "All" filter is active, community sessions and pre-forge sessions are mixed together in a flat grid sorted only by `order_index`. This looks messy — different card aspect ratios (portrait vs landscape) are interleaved.
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-## Solution
-When `activeFilter === 'all'`, render two grouped sections with section headers instead of one flat grid:
+### Changes
 
-1. **Community Sessions** section — portrait cards in a 3-col grid
-2. **Pre Forge Sessions** section — landscape cards in a 3-col grid
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-When a specific filter is active (Pre Forge or Community), show just that section's cards in a flat grid as before.
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-## File Changes
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
 | File | Change |
 |------|--------|
-| `src/pages/AllCourses.tsx` | Split "all" view into two grouped sections with headers |
-
-### Implementation Detail
-
-```tsx
-// When activeFilter === 'all', split into groups:
-const communityCourses = courses.filter(c => c.section_type === 'community_sessions');
-const preForgeCourses = courses.filter(c => c.section_type === 'bfp_sessions');
-
-// Render two sections with headers:
-// "Community Sessions" header + grid of portrait cards
-// "Pre Forge Sessions" header + grid of landscape cards
-```
-
-Each section gets a small heading label (e.g., styled like the existing `border-l-3 border-primary pl-3` pattern) and its own grid. When a specific tab is selected, it remains a single flat grid.
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 
