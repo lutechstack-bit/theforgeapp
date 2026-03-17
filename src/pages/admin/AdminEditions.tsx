@@ -227,11 +227,17 @@ export default function AdminEditions() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 text-sm">
+                  {(edition as any).online_start_date && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Calendar className="w-4 h-4" />
+                      <span>Online: {format(new Date((edition as any).online_start_date), 'MMM d, yyyy')}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar className="w-4 h-4" />
                     {edition.forge_start_date ? (
                       <span>
-                        {format(new Date(edition.forge_start_date), 'MMM d')} - {' '}
+                        Bootcamp: {format(new Date(edition.forge_start_date), 'MMM d')} - {' '}
                         {edition.forge_end_date ? format(new Date(edition.forge_end_date), 'MMM d, yyyy') : 'TBD'}
                       </span>
                     ) : (
