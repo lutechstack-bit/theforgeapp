@@ -52,7 +52,7 @@ const HeroBanner: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl" style={{ aspectRatio: '3/2' }}>
+    <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/9' }}>
       {/* Background images with crossfade */}
       {images.map((src, i) => (
         <img
@@ -66,10 +66,10 @@ const HeroBanner: React.FC = () => {
       ))}
 
       {/* Dark gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
 
       {/* Content */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 gap-4">
+      <div className="absolute inset-0 flex flex-col items-center justify-end text-center px-4 pb-10 gap-4">
         <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
           Welcome to{' '}
           <span className="hero-gradient-text">the Forge</span>

@@ -1,29 +1,32 @@
 
+## Replace Program Banner Images
 
-# Move Hero Carousel to Top with Profile Overlay
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## What Changes
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-### 1. Home page layout reorder (`src/pages/Home.tsx`)
-- Remove the "Hey {firstName}" greeting block (or move it below the carousel as a small inline text)
-- Move `<HeroBanner />` to be the **first element** in the page, before countdown
-- Place `<CompactCountdownTimer />` **after** the hero banner
+### Changes
 
-### 2. Hero Banner full-width styling (`src/components/home/HeroBanner.tsx`)
-- Remove `rounded-2xl` so it stretches edge-to-edge within the content area
-- Use negative margins (`-mx-4 sm:-mx-6 md:-mx-8`) to break out of the page container padding, making it feel "full bleed"
-- Optionally reduce aspect ratio slightly for a more cinematic top banner feel
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-### 3. Profile overlay on carousel (`src/components/layout/AppLayout.tsx` + `src/pages/Home.tsx`)
-- On the **Home route only**, make the sticky top bar transparent/overlay so the profile button sits on top of the carousel image
-- Add a route check: when on `/`, render the TopProfileDropdown with `absolute` positioning and transparent background instead of the solid background bar
-- This gives the effect of the profile avatar floating over the hero image
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-### Files to change
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
 | File | Change |
 |------|--------|
-| `src/pages/Home.tsx` | Reorder: HeroBanner first → CountdownTimer → rest. Remove "Hey {firstName}" block. |
-| `src/components/home/HeroBanner.tsx` | Remove rounded corners, add negative margins for full-bleed look. |
-| `src/components/layout/AppLayout.tsx` | On home route (`/`), make the top profile bar transparent/absolute so it overlays the carousel. |
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 
