@@ -8,14 +8,14 @@ import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
 import { HomeCarouselSkeleton } from '@/components/home/HomeCarouselSkeleton';
 import { HomeErrorState } from '@/components/home/HomeErrorState';
 import HomeJourneySection from '@/components/home/HomeJourneySection';
-import TodaysFocusCard from '@/components/home/TodaysFocusCard';
+
 import OnboardingStepsSection from '@/components/home/OnboardingStepsSection';
 import BatchmatesSection from '@/components/home/BatchmatesSection';
 import AlumniShowcaseSection from '@/components/home/AlumniShowcaseSection';
 import PaymentFocusCard from '@/components/home/PaymentFocusCard';
 import TravelStaySection from '@/components/home/TravelStaySection';
 import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
-import { useTodaysFocus } from '@/hooks/useTodaysFocus';
+
 import { useHomepageSections } from '@/hooks/useHomepageSections';
 import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 import {  promiseWithTimeout, isTimeoutError } from '@/lib/promiseTimeout';
@@ -30,7 +30,7 @@ const Home: React.FC = () => {
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { activeFocusCard } = useTodaysFocus();
+  
   const { getSection } = useHomepageSections();
 
   const showDebug = searchParams.get('homeDebug') === '1';
@@ -98,7 +98,7 @@ const Home: React.FC = () => {
   // Get section configs
   const countdownSection = getSection('countdown');
   const paymentSection = getSection('payment');
-  const focusSection = getSection('todays_focus');
+  
   const onboardingSection = getSection('onboarding');
   const journeySection = getSection('journey');
   const batchmatesSection = getSection('batchmates');
@@ -121,10 +121,7 @@ const Home: React.FC = () => {
 
           {/* Payment Due Card - removed from here, moved below onboarding */}
 
-          {/* 2. Today's Focus */}
-          {focusSection && activeFocusCard && (
-            <TodaysFocusCard card={activeFocusCard} />
-          )}
+
 
           {/* 3. Onboarding Steps */}
           {onboardingSection && (
@@ -158,7 +155,6 @@ const Home: React.FC = () => {
             <div className="text-xs font-mono bg-muted/50 border border-border rounded-lg p-4 space-y-2">
               <p className="font-semibold">Home Debug Panel</p>
               <p>Alumni Showcase: {alumniShowcaseQuery.isLoading ? '⏳' : alumniShowcaseQuery.isError ? '❌' : `✅ (${alumniShowcaseQuery.data?.length || 0})`}</p>
-              <p>Focus Card: {activeFocusCard ? activeFocusCard.title : '(none)'}</p>
               <p>User Cohort: {userCohortType || '(none)'}</p>
             </div>
           )}
