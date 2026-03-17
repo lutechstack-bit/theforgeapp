@@ -75,6 +75,7 @@ serve(async (req) => {
 
     // 6. Delete related data (order matters for foreign keys)
     const tablesToClean = [
+      { table: 'payment_config', column: 'user_id' },
       { table: 'user_nightly_progress', column: 'user_id' },
       { table: 'user_prep_progress', column: 'user_id' },
       { table: 'learn_watch_progress', column: 'user_id' },

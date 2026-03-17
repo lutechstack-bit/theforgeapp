@@ -82,6 +82,7 @@ serve(async (req) => {
 
     // Tables to clean up user data from
     const tablesToClean = [
+      "payment_config",
       "user_roles",
       "profiles",
       "kyf_responses",

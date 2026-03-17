@@ -1,19 +1,32 @@
 
+## Replace Program Banner Images
 
-# Fix: Delete User Failing Due to Missing `payment_config` Cleanup
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## Problem
-The `delete-user` edge function returns 400 because the new `payment_config` table has a foreign key referencing `profiles(id)`. The function tries to delete the profile row, but `payment_config` still has a row pointing to it.
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-## Fix
-Add `payment_config` to the `tablesToClean` array in `supabase/functions/delete-user/index.ts`, **before** the `profiles` entry.
+### Changes
 
-Also add it to `supabase/functions/bulk-delete-users/index.ts` if it has a similar cleanup list.
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
 | File | Change |
 |------|--------|
-| `supabase/functions/delete-user/index.ts` | Add `{ table: 'payment_config', column: 'user_id' }` before `user_roles` |
-| `supabase/functions/bulk-delete-users/index.ts` | Same addition if applicable |
-
-One-line fix per file. No database migration needed.
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 
