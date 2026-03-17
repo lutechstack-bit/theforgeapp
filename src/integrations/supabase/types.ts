@@ -520,6 +520,7 @@ export type Database = {
           id: string
           is_archived: boolean
           name: string
+          online_end_date: string | null
           online_start_date: string | null
           show_batchmates: boolean
         }
@@ -533,6 +534,7 @@ export type Database = {
           id?: string
           is_archived?: boolean
           name: string
+          online_end_date?: string | null
           online_start_date?: string | null
           show_batchmates?: boolean
         }
@@ -546,6 +548,7 @@ export type Database = {
           id?: string
           is_archived?: boolean
           name?: string
+          online_end_date?: string | null
           online_start_date?: string | null
           show_batchmates?: boolean
         }
@@ -2350,6 +2353,7 @@ export type Database = {
           activity_type: string | null
           call_time: string | null
           checklist: Json | null
+          cohort_type: Database["public"]["Enums"]["cohort_type"] | null
           created_at: string
           date: string | null
           day_number: number
@@ -2361,6 +2365,7 @@ export type Database = {
           id: string
           intensity_level: string | null
           is_active: boolean
+          is_template: boolean | null
           is_virtual: boolean | null
           key_learnings: string[] | null
           location: string | null
@@ -2386,6 +2391,7 @@ export type Database = {
           activity_type?: string | null
           call_time?: string | null
           checklist?: Json | null
+          cohort_type?: Database["public"]["Enums"]["cohort_type"] | null
           created_at?: string
           date?: string | null
           day_number: number
@@ -2397,6 +2403,7 @@ export type Database = {
           id?: string
           intensity_level?: string | null
           is_active?: boolean
+          is_template?: boolean | null
           is_virtual?: boolean | null
           key_learnings?: string[] | null
           location?: string | null
@@ -2422,6 +2429,7 @@ export type Database = {
           activity_type?: string | null
           call_time?: string | null
           checklist?: Json | null
+          cohort_type?: Database["public"]["Enums"]["cohort_type"] | null
           created_at?: string
           date?: string | null
           day_number?: number
@@ -2433,6 +2441,7 @@ export type Database = {
           id?: string
           intensity_level?: string | null
           is_active?: boolean
+          is_template?: boolean | null
           is_virtual?: boolean | null
           key_learnings?: string[] | null
           location?: string | null
