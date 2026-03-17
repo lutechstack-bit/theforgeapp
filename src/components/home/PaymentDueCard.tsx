@@ -72,7 +72,7 @@ const PaymentDueCard: React.FC = () => {
           <div>
             <h3 className="text-lg font-bold text-foreground">Complete your programme fees</h3>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {editionName} {editionDates && `· ${editionDates}`}
+              {editionLabel} {editionDates && `· ${editionDates}`}
             </p>
           </div>
 

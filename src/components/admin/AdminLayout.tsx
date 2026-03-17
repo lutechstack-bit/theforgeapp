@@ -58,6 +58,7 @@ const adminNavItems = [
   { to: '/admin/changelog', icon: History, label: 'Changelog' },
   { to: '/admin/perks', icon: Gift, label: 'Perks' },
   { to: '/admin/network', icon: Handshake, label: 'Network' },
+  { to: '/admin/payments', icon: CreditCard, label: 'Payments' },
 ];
 
 export const AdminLayout: React.FC = () => {

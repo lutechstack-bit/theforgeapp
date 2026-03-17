@@ -300,6 +300,7 @@ const AppRoutes = () => {
         <Route path="todays-focus" element={<AdminTodaysFocus />} />
         <Route path="perks" element={<AdminPerks />} />
         <Route path="network" element={<AdminNetwork />} />
+        <Route path="payments" element={<AdminPayments />} />
       </Route>
       
       {/* Legacy KY form redirects */}
