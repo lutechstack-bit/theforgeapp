@@ -50,18 +50,6 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
           </p>
         </div>
 
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Payment progress</span>
-            <span className="font-medium text-foreground">{percentPaid}% paid</span>
-          </div>
-          <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full transition-all duration-700"
-              style={{ width: `${percentPaid}%` }}
-            />
-          </div>
-        </div>
 
         <div className="space-y-2.5 text-sm">
           <div className="flex justify-between">
