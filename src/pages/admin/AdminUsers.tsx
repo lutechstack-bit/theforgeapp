@@ -1131,6 +1131,24 @@ export default function AdminUsers() {
               </>
             )}
           </Button>
+          <Button 
+            variant="outline"
+            onClick={() => importEdition16_17Mutation.mutate()} 
+            className="gap-2"
+            disabled={importEdition16_17Mutation.isPending || importWritingE4Mutation.isPending || importWritingE5Mutation.isPending || importCreatorsE2GoaMutation.isPending || importCreatorsE1Mutation.isPending || importEdition15Mutation.isPending || importEdition14Mutation.isPending}
+          >
+            {importEdition16_17Mutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Importing {importProgress?.current}/{importProgress?.total}...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                Import E16/E17 (34)
+              </>
+            )}
+          </Button>
           <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
             <Plus className="w-4 h-4" />
             Create User
