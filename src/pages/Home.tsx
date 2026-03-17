@@ -140,10 +140,12 @@ const Home: React.FC = () => {
 
           {/* 5. Journey Timeline */}
           {journeySection && (
-            <HomeJourneySection
-              title={journeySection.title}
-              subtitle={journeySection.subtitle || undefined}
-            />
+            <div id="journey-section">
+              <HomeJourneySection
+                title={journeySection.title}
+                subtitle={journeySection.subtitle || undefined}
+              />
+            </div>
           )}
 
           {/* 5. Batchmates */}
