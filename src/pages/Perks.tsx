@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { PerkCard } from '@/components/perks/PerkCard';
 import { CinematicHero } from '@/components/shared/CinematicHero';
 import { Gift } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
