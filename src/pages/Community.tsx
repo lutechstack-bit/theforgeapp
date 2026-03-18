@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CommunityHeader } from '@/components/community/CommunityHeader';
 import { CompactChat } from '@/components/community/CompactChat';
 import { GroupSwitcher } from '@/components/community/GroupSwitcher';
 import { MembersDrawer } from '@/components/community/MembersDrawer';
-import { CollaboratorDirectory } from '@/components/community/CollaboratorDirectory';
+import { CreativesDirectory } from '@/components/community/CreativesDirectory';
+import { GigsBoard } from '@/components/community/GigsBoard';
 import { CollaboratorInbox } from '@/components/community/CollaboratorInbox';
 import { BatchmatesDirectory } from '@/components/community/BatchmatesDirectory';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -28,23 +29,20 @@ interface CohortGroup {
   name: string;
 }
 
-interface Stats {
-  totalMembers: number;
-  totalCities: number;
-  totalFilms: number;
-}
-
 const Community = () => {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isFeatureEnabled, isLoading: flagsLoading } = useFeatureFlags();
+  const { isFeatureEnabled } = useFeatureFlags();
   const chatEnabled = isFeatureEnabled('community_chat_enabled');
-  const [activeView, setActiveView] = useState<'chat' | 'batchmates' | 'network'>(() => {
+
+  const [activeTab, setActiveTab] = useState<'creatives' | 'gigs' | 'chat'>(() => {
     const tab = searchParams.get('tab');
-    if (tab === 'batchmates') return 'batchmates';
-    if (tab === 'network' || !chatEnabled) return 'network';
-    return 'chat';
+    if (tab === 'gigs') return 'gigs';
+    if (tab === 'chat' && chatEnabled) return 'chat';
+    return 'creatives';
   });
+
   const [loading, setLoading] = useState(true);
   const [cityGroups, setCityGroups] = useState<CityGroup[]>([]);
   const [cohortGroup, setCohortGroup] = useState<CohortGroup | null>(null);
@@ -53,15 +51,14 @@ const Community = () => {
   const [userCityGroupId, setUserCityGroupId] = useState<string | null>(null);
   const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
-  const [stats, setStats] = useState<Stats>({ totalMembers: 0, totalCities: 0, totalFilms: 0 });
-  
+
   const presenceChannelRef = useRef<RealtimeChannel | null>(null);
   const typingTimeoutRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => {
     if (user) {
       initializeCommunity();
-      setupPresenceChannel();
+      if (chatEnabled) setupPresenceChannel();
     }
     return () => {
       if (presenceChannelRef.current) supabase.removeChannel(presenceChannelRef.current);
@@ -71,7 +68,7 @@ const Community = () => {
 
   const initializeCommunity = async () => {
     setLoading(true);
-    await Promise.all([fetchCityGroups(), fetchCohortGroup(), fetchStats()]);
+    await Promise.all([fetchCityGroups(), fetchCohortGroup()]);
     setLoading(false);
   };
 
@@ -86,10 +83,10 @@ const Community = () => {
       })
       .on('broadcast', { event: 'typing' }, ({ payload }) => {
         if (payload.user_id === user.id) return;
-        setTypingUsers((prev) => prev.includes(payload.user_name) ? prev : [...prev, payload.user_name]);
+        setTypingUsers(prev => prev.includes(payload.user_name) ? prev : [...prev, payload.user_name]);
         if (typingTimeoutRef.current[payload.user_id]) clearTimeout(typingTimeoutRef.current[payload.user_id]);
         typingTimeoutRef.current[payload.user_id] = setTimeout(() => {
-          setTypingUsers((prev) => prev.filter((name) => name !== payload.user_name));
+          setTypingUsers(prev => prev.filter(name => name !== payload.user_name));
         }, 3000);
       })
       .subscribe(async (status) => {
@@ -102,70 +99,25 @@ const Community = () => {
   const fetchCityGroups = async () => {
     const { data } = await supabase.from('city_groups').select('*').order('is_main', { ascending: false });
     setCityGroups(data || []);
-    
     if (data?.length && profile?.city) {
       const userCityKey = getCityGroupKey(profile.city);
-      const matchingGroup = data.find((g) => g.city_key === userCityKey);
-      if (matchingGroup) {
-        setUserCityGroupId(matchingGroup.id);
-      }
+      const matchingGroup = data.find(g => g.city_key === userCityKey);
+      if (matchingGroup) setUserCityGroupId(matchingGroup.id);
     }
   };
 
   const fetchCohortGroup = async () => {
-    // Allow community to load even without edition - user can still use city groups
-    if (!profile?.edition_id) {
-      // Default to first city group if available
-      if (cityGroups.length > 0) {
-        setActiveGroupId(cityGroups[0].id);
-        setActiveGroupType('city');
-      }
-      return;
-    }
-    
+    if (!profile?.edition_id) return;
     const { data } = await supabase
       .from('cohort_groups')
       .select('*')
       .eq('edition_id', profile.edition_id)
-      .maybeSingle(); // Use maybeSingle to prevent error if not found
-    
+      .maybeSingle();
     if (data) {
       setCohortGroup(data);
       setActiveGroupId(data.id);
       setActiveGroupType('cohort');
-    } else {
-      // No cohort group found - default to first city group
-      if (cityGroups.length > 0) {
-        setActiveGroupId(cityGroups[0].id);
-        setActiveGroupType('city');
-      }
     }
-  };
-
-  const fetchStats = async () => {
-    const [{ count: members }, { data: cities }, { count: films }] = await Promise.all([
-      supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('profile_setup_completed', true),
-      supabase.from('profiles').select('city').eq('profile_setup_completed', true).not('city', 'is', null),
-      supabase.from('student_films').select('*', { count: 'exact', head: true }),
-    ]);
-    setStats({ totalMembers: members || 0, totalCities: new Set(cities?.map((p) => p.city).filter(Boolean)).size, totalFilms: films || 0 });
-  };
-
-  useEffect(() => {
-    const channel = supabase.channel('stats-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, fetchStats).subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, []);
-
-  const handleSelectCohort = () => {
-    if (cohortGroup) {
-      setActiveGroupType('cohort');
-      setActiveGroupId(cohortGroup.id);
-    }
-  };
-
-  const handleSelectCity = (groupId: string) => {
-    setActiveGroupType('city');
-    setActiveGroupId(groupId);
   };
 
   if (loading) {
@@ -175,17 +127,10 @@ const Community = () => {
         <div className="flex gap-2">
           <Skeleton className="h-9 w-24 rounded-full" />
           <Skeleton className="h-9 w-20 rounded-full" />
-          <Skeleton className="h-9 w-28 rounded-full" />
         </div>
         <div className="flex-1 space-y-3">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex gap-3 items-start">
-              <Skeleton className="h-8 w-8 rounded-full shrink-0" />
-              <div className="space-y-1.5 flex-1">
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-4 w-3/4" />
-              </div>
-            </div>
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-48 rounded-xl" />
           ))}
         </div>
       </div>
@@ -194,100 +139,85 @@ const Community = () => {
 
   return (
     <div className="flex flex-col h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] pt-4 sm:pt-5 md:pt-6 px-4 sm:px-5 md:px-6 gap-3 sm:gap-4 max-w-6xl mx-auto w-full">
-      {chatEnabled ? (
-        <>
-          {/* View Toggle: Chat | Network */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex gap-1 p-1 rounded-full bg-card border border-border/30 overflow-x-auto scrollbar-hide">
-              <button
-                onClick={() => setActiveView('chat')}
-                className={cn(
-                  'px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95',
-                  activeView === 'chat'
-                    ? 'bg-[#FFBF00] text-black shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                Chat
-              </button>
-              <button
-                onClick={() => setActiveView('batchmates')}
-                className={cn(
-                  'px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95',
-                  activeView === 'batchmates'
-                    ? 'bg-[#FFBF00] text-black shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                Batchmates
-              </button>
-              <button
-                onClick={() => setActiveView('network')}
-                className={cn(
-                  'px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95',
-                  activeView === 'network'
-                    ? 'bg-[#FFBF00] text-black shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                Network
-              </button>
-            </div>
-            {activeView === 'chat' ? (
-              <MembersDrawer onlineUserIds={onlineUserIds} memberCount={stats.totalMembers} />
-            ) : (
-              <CollaboratorInbox />
+      {/* Top row: pills + inbox */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex gap-1 p-1 rounded-full bg-card border border-border/30 overflow-x-auto scrollbar-hide">
+          <button
+            onClick={() => setActiveTab('creatives')}
+            className={cn(
+              'px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95',
+              activeTab === 'creatives' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
             )}
-          </div>
-
-          {activeView === 'chat' ? (
-            <>
-              <div className="flex items-center justify-between gap-2 sm:gap-3">
-                <CommunityHeader memberCount={stats.totalMembers} onlineCount={onlineUserIds.length} />
-              </div>
-              <GroupSwitcher
-                cohortGroup={cohortGroup}
-                cityGroups={cityGroups}
-                userCityGroupId={userCityGroupId}
-                activeGroupType={activeGroupType}
-                activeGroupId={activeGroupId}
-                onSelectCohort={handleSelectCohort}
-                onSelectCity={handleSelectCity}
-              />
-              <div className="flex-1 min-h-0">
-                <CompactChat
-                  groups={cityGroups}
-                  cohortGroup={cohortGroup}
-                  activeGroupType={activeGroupType}
-                  activeGroupId={activeGroupId}
-                  onGroupChange={handleSelectCity}
-                  onCohortSelect={handleSelectCohort}
-                  typingUsers={typingUsers}
-                />
-              </div>
-            </>
-          ) : activeView === 'batchmates' ? (
-            <div className="flex-1 min-h-0 overflow-y-auto">
-              <BatchmatesDirectory />
-            </div>
-          ) : (
-            <div className="flex-1 min-h-0 overflow-y-auto">
-              <CollaboratorDirectory />
-            </div>
+          >
+            Creatives
+          </button>
+          <button
+            onClick={() => setActiveTab('gigs')}
+            className={cn(
+              'px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95',
+              activeTab === 'gigs' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Gigs
+          </button>
+          {chatEnabled && (
+            <button
+              onClick={() => setActiveTab('chat')}
+              className={cn(
+                'px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all shrink-0 active:scale-95',
+                activeTab === 'chat' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              Chat
+            </button>
           )}
-        </>
-      ) : (
+        </div>
+        {activeTab === 'chat' ? (
+          <MembersDrawer onlineUserIds={onlineUserIds} memberCount={onlineUserIds.length} />
+        ) : (
+          <CollaboratorInbox />
+        )}
+      </div>
+
+      {/* Content */}
+      {activeTab === 'creatives' && (
+        <div className="flex-1 min-h-0 overflow-y-auto pb-24">
+          <CreativesDirectory onSetupProfile={() => navigate('/community-profile')} />
+        </div>
+      )}
+
+      {activeTab === 'gigs' && (
+        <div className="flex-1 min-h-0 overflow-y-auto pb-24">
+          <GigsBoard />
+        </div>
+      )}
+
+      {activeTab === 'chat' && chatEnabled && (
         <>
-          {/* Network-only mode (chat disabled) */}
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <h1 className="text-lg sm:text-xl font-bold text-foreground">Network</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground">Collaborate with like-minded creators</p>
-            </div>
-            <CollaboratorInbox />
-          </div>
-          <div className="flex-1 min-h-0 overflow-y-auto">
-            <CollaboratorDirectory />
+          <CommunityHeader memberCount={onlineUserIds.length} onlineCount={onlineUserIds.length} />
+          <GroupSwitcher
+            cohortGroup={cohortGroup}
+            cityGroups={cityGroups}
+            userCityGroupId={userCityGroupId}
+            activeGroupType={activeGroupType}
+            activeGroupId={activeGroupId}
+            onSelectCohort={() => {
+              if (cohortGroup) { setActiveGroupType('cohort'); setActiveGroupId(cohortGroup.id); }
+            }}
+            onSelectCity={(id) => { setActiveGroupType('city'); setActiveGroupId(id); }}
+          />
+          <div className="flex-1 min-h-0">
+            <CompactChat
+              groups={cityGroups}
+              cohortGroup={cohortGroup}
+              activeGroupType={activeGroupType}
+              activeGroupId={activeGroupId}
+              onGroupChange={(id) => { setActiveGroupType('city'); setActiveGroupId(id); }}
+              onCohortSelect={() => {
+                if (cohortGroup) { setActiveGroupType('cohort'); setActiveGroupId(cohortGroup.id); }
+              }}
+              typingUsers={typingUsers}
+            />
           </div>
         </>
       )}
