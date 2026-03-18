@@ -64,8 +64,8 @@ const PaymentFocusCard: React.FC = () => {
 
         <div className="flex items-start gap-4">
           {/* Icon */}
-          <div className="flex-shrink-0 p-3 rounded-xl bg-destructive/15 border border-destructive/20">
-            <IndianRupee className="w-6 h-6 text-destructive" />
+          <div className="flex-shrink-0 p-3 rounded-xl bg-primary/15 border border-primary/20">
+            <IndianRupee className="w-6 h-6 text-primary" />
           </div>
 
           {/* Content */}
