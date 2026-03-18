@@ -1,32 +1,29 @@
 
-## Replace Program Banner Images
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+# Fix: "Post a Gig" — Switch from Sidebar Sheet to Dialog Popup + Fix Field Overlap
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+## Problems Identified
 
-### Changes
+1. **Sidebar Sheet instead of Dialog**: The form uses `Sheet` (slides in from right) instead of a centered `Dialog` popup.
+2. **Field overlap**: The floating-label inputs inside the narrow Sheet cause label/placeholder text to collide with each other, especially for the Budget/Duration 2-column grid.
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+## Changes
 
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+### 1. Rewrite `src/components/community/GigPostForm.tsx`
 
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+- Replace `Sheet`/`SheetContent`/`SheetHeader`/`SheetTitle` imports with `Dialog`/`DialogContent`/`DialogHeader`/`DialogTitle` from `@/components/ui/dialog`.
+- Use `DialogContent` with `className="sm:max-w-xl max-h-[85vh] overflow-y-auto"` for a centered, scrollable popup.
+- Add proper spacing (`space-y-5`) and padding (`p-6`) to prevent field collapse.
+- For the Budget/Duration grid row, use `gap-4` instead of `gap-3` to give breathing room.
+- Ensure all `FloatingInput` and `FloatingTextarea` fields have consistent `bg-secondary/50` and no extra `placeholder` prop that conflicts with the floating label's `placeholder=" "` mechanism (the `placeholder` on FloatingInput is passed through to the underlying Input which already uses `placeholder=" "` — the extra placeholder props on Budget/Duration/Location/Contact are being ignored by the floating label but could cause confusion).
 
-| File | Change |
-|------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+### 2. Specific field fixes
+
+- Remove `placeholder` props from `FloatingInput` calls (the floating label handles the hint text via the `label` prop — the extra placeholder creates a double-text effect when the field is empty but not focused).
+- Instead, put hint text into the `label` itself, e.g. `label="Budget (e.g. ₹5,000/day)"` or keep labels clean and rely on the floating pattern.
+
+### Files Modified
+- `src/components/community/GigPostForm.tsx` — rewrite Sheet → Dialog, fix spacing
+
+No database changes needed. No new files.
 
