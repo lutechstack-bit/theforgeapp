@@ -24,7 +24,15 @@ const Welcome: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
       <div className="max-w-md w-full space-y-8 animate-slide-up">
-        <div className="text-center space-y-3">
+        <div className="text-center space-y-4">
+          <div className="relative mx-auto w-20 h-20 sm:w-24 sm:h-24">
+            <div className="absolute inset-0 bg-primary/30 rounded-2xl blur-xl" />
+            <img 
+              src={forgeLogo} 
+              alt="Forge" 
+              className="relative w-full h-full object-contain drop-shadow-lg"
+            />
+          </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
             Welcome to Forge! 🎬
           </h1>
