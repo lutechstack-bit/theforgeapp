@@ -42,7 +42,8 @@ export interface KYSection {
   introTitle: string;
   introDescription: string;
   steps: SectionStep[];
-  responseTable: 'kyf_responses' | 'kyc_responses' | 'kyw_responses';
+  responseTable: 'kyf_responses' | 'kyc_responses' | 'kyw_responses' | 'collaborator_profiles';
+  isOptional?: boolean;
 }
 
 // Shared options
