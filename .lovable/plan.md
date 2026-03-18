@@ -1,33 +1,32 @@
 
+## Replace Program Banner Images
 
-# Extend Hero Carousel Height & Reposition CTA — Responsive
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## Changes
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-### `src/components/home/HeroBanner.tsx`
+### Changes
 
-1. **Replace `aspectRatio: '16/9'`** with responsive fixed heights:
-   - Mobile: `h-[45vh]` (shorter on small screens)
-   - Tablet: `sm:h-[50vh]`
-   - Desktop: `md:h-[55vh] lg:h-[60vh]`
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-2. **Move the CTA button outside the carousel container** into a separate `div` below it with responsive padding (`py-5 sm:py-6 md:py-8`) for breathing space, centered horizontally.
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-3. **Keep the "Welcome to the Forge" heading** overlaid at the bottom of the carousel image with the gradient — only the button moves out.
-
-4. **Wrap both sections** (carousel + CTA) in a parent fragment so they remain semantically together.
-
-```text
-┌──────────────────────────┐
-│   Carousel images        │  ← h-[45vh] to h-[60vh] responsive
-│                          │
-│   "Welcome to the Forge" │  ← overlaid with gradient
-└──────────────────────────┘
-         py-5 to py-8         ← breathing space
-   [ Start your Journey ↓ ]   ← separate centered div
-```
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
 | File | Change |
 |------|--------|
-| `src/components/home/HeroBanner.tsx` | Replace aspect-ratio with responsive vh heights; extract CTA button below carousel with responsive padding |
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 

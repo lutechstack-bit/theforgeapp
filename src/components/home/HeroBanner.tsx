@@ -52,40 +52,44 @@ const HeroBanner: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/9' }}>
-      {/* Background images with crossfade */}
-      {images.map((src, i) => (
-        <img
-          key={src}
-          src={src}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out"
-          style={{ opacity: i === currentIndex ? 1 : 0 }}
-          loading={i === 0 ? 'eager' : 'lazy'}
-        />
-      ))}
+    <>
+      <div className="relative w-full overflow-hidden h-[45vh] sm:h-[50vh] md:h-[55vh] lg:h-[60vh]">
+        {/* Background images with crossfade */}
+        {images.map((src, i) => (
+          <img
+            key={src}
+            src={src}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out"
+            style={{ opacity: i === currentIndex ? 1 : 0 }}
+            loading={i === 0 ? 'eager' : 'lazy'}
+          />
+        ))}
 
-      {/* Dark gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
+        {/* Dark gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
 
-      {/* Content */}
-      <div className="absolute inset-0 flex flex-col items-center justify-end text-center px-4 pb-10 gap-4">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
-          Welcome to{' '}
-          <span className="hero-gradient-text">the Forge</span>
-        </h2>
+        {/* Overlaid heading */}
+        <div className="absolute inset-0 flex flex-col items-center justify-end text-center px-4 pb-8 sm:pb-10">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
+            Welcome to{' '}
+            <span className="hero-gradient-text">the Forge</span>
+          </h2>
+        </div>
+      </div>
 
+      {/* CTA below carousel with breathing space */}
+      <div className="flex justify-center py-5 sm:py-6 md:py-8">
         <Button
           onClick={handleScrollToJourney}
           variant="outline"
-          className="mt-2 border-amber-400/60 text-white hover:bg-amber-500/20 hover:text-white backdrop-blur-sm gap-2"
+          className="border-primary/60 text-foreground hover:bg-primary/20 hover:text-foreground backdrop-blur-sm gap-2 px-6 py-2.5 rounded-full"
         >
           Start your Journey
           <ChevronDown className="h-4 w-4 animate-bounce" />
         </Button>
       </div>
-
-    </div>
+    </>
   );
 };
 
