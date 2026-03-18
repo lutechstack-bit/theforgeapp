@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import { SideNav } from './SideNav';
@@ -12,6 +12,15 @@ const AppLayoutContent: React.FC = () => {
   const hideNavRoutes = ['/auth', '/welcome', '/kyf'];
   const showNav = !hideNavRoutes.includes(location.pathname);
   const isHome = location.pathname === '/';
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    if (!isHome) return;
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isHome]);
 
   return (
     <div className="min-h-[100dvh] bg-background safe-area-pt">
@@ -22,8 +31,8 @@ const AppLayoutContent: React.FC = () => {
       )}>
         {showNav && (
           <div className={cn(
-            "z-40 flex items-center justify-end h-14 px-4",
-            isHome ? "absolute top-0 left-0 right-0" : "sticky top-0 bg-background"
+            "sticky top-0 z-40 flex items-center justify-end h-14 px-4 transition-colors duration-200",
+            isHome && !isScrolled ? "bg-transparent" : "bg-background"
           )}>
             <TopProfileDropdown />
           </div>

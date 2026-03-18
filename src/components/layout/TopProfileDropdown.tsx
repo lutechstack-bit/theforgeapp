@@ -46,23 +46,23 @@ export const TopProfileDropdown: React.FC = () => {
           <button
             aria-label="Profile menu"
             className={cn(
-              "flex items-center gap-2 rounded-lg border border-primary bg-white/10 px-3 py-1.5 shadow-[0_0_8px_hsl(var(--primary)/0.3)]",
+              "flex items-center gap-2 rounded-lg border border-white/20 bg-black/40 backdrop-blur-md px-3 py-1.5",
               "transition-all duration-300 focus:outline-none",
-              "hover:border-primary hover:shadow-[0_0_20px_hsl(var(--primary)/0.5)]",
-              isProfileActive && "border-primary shadow-[0_0_15px_hsl(var(--primary)/0.4)]"
+              "hover:bg-black/50 hover:border-white/30",
+              isProfileActive && "border-white/40"
             )}
           >
             <Avatar className="h-7 w-7">
               {profile?.avatar_url ? (
                 <AvatarImage src={profile.avatar_url} alt={profile?.full_name || 'Profile'} />
               ) : null}
-              <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-semibold">
+              <AvatarFallback className="bg-white/20 text-white text-[10px] font-semibold">
                 {initials}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col items-start leading-none">
-              <span className="text-sm font-semibold text-foreground">{firstName}</span>
-              <span className="text-[10px] text-muted-foreground">{cohortLabel}</span>
+              <span className="text-sm font-semibold text-white">{firstName}</span>
+              <span className="text-[10px] text-white/70">{cohortLabel}</span>
             </div>
           </button>
         </DropdownMenuTrigger>
