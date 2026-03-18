@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PerkCard } from '@/components/perks/PerkCard';
+import { CinematicHero } from '@/components/shared/CinematicHero';
 import { Gift } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -21,16 +22,13 @@ const Perks: React.FC = () => {
 
   return (
     <div className="page-container max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto pb-safe">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6 md:mb-8">
-        <div className="p-2 rounded-lg bg-primary/10">
-          <Gift className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-foreground">Perks</h1>
-          <p className="text-xs md:text-sm text-muted-foreground">We partner with the industry's best so you can focus on your craft</p>
-        </div>
-      </div>
+      {/* Hero */}
+      <CinematicHero
+        icon={Gift}
+        title={<>Your <span>Perks</span></>}
+        subtitle="We partner with the industry's best so you can focus on your craft"
+        badge="Exclusive Access"
+      />
 
       {/* Perk Cards Grid */}
       {isLoading ? (

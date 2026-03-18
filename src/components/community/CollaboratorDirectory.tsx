@@ -7,8 +7,9 @@ import { CollaboratorCard } from './CollaboratorCard';
 import { CollaboratorRequestModal } from './CollaboratorRequestModal';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Sparkles } from 'lucide-react';
+import { Search, Sparkles, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CinematicHero } from '@/components/shared/CinematicHero';
 
 export const CollaboratorDirectory: React.FC = () => {
   const { user } = useAuth();
@@ -127,6 +128,14 @@ export const CollaboratorDirectory: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4 pb-24">
+      {/* Hero */}
+      <CinematicHero
+        icon={Users}
+        title={<>Find Your <span>Collaborators</span></>}
+        subtitle="Connect with creators who share your vision"
+        badge="Creative Network"
+      />
+
       {/* Stats line */}
       <p className="text-xs text-muted-foreground tracking-wide">
         {collaborators.length} creators{activeFilter !== 'ALL' ? ` · ${activeFilter}` : ''}

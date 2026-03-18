@@ -1,17 +1,32 @@
 
+## Replace Program Banner Images
 
-# Add Cinematic Hero Banners to Network, Perks, and Learn Pages
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-Extend the cinematic hero treatment (from `RoadmapHero`) to three more pages using a shared reusable component.
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-## Changes
+### Changes
+
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
 | File | Change |
 |------|--------|
-| `src/components/shared/CinematicHero.tsx` | **New** — Reusable hero with layered radial gradients, grain texture, geometric accent lines, icon glow ring. Props: `icon`, `title` (ReactNode for highlighting), `subtitle`, `badge?` |
-| `src/pages/Learn.tsx` | Replace the plain `<h1>Learn</h1>` header (~line 153) with `<CinematicHero icon={BookOpen} title={<>Develop Your <span>Craft</span></>} subtitle="Sessions, masterclasses & more" badge="Learning" />` |
-| `src/pages/Perks.tsx` | Replace the flat icon+text header (~line 25-33) with `<CinematicHero icon={Gift} title={<>Your <span>Perks</span></>} subtitle="We partner with the industry's best..." badge="Exclusive Access" />` |
-| `src/components/community/CollaboratorDirectory.tsx` | Add `<CinematicHero icon={Users} title={<>Find Your <span>Collaborators</span></>} subtitle="Connect with creators who share your vision" badge="Creative Network" />` at the top of the directory |
-
-The `CinematicHero` component will mirror `RoadmapHero`'s visual DNA: amber radial gradients, grain overlay, 4px primary left border, and a glowing icon — but in a compact, props-driven package.
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 
