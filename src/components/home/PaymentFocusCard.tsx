@@ -79,7 +79,6 @@ const PaymentFocusCard: React.FC = () => {
             <Button
               onClick={() => setModalOpen(true)}
               size="sm"
-              variant="destructive"
               className="gap-2"
             >
               Pay Balance
