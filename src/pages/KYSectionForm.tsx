@@ -237,7 +237,7 @@ const KYSectionForm: React.FC = () => {
         queryClient.invalidateQueries({ queryKey: ['has-collaborator-profile'] });
         toast({
           title: '✨ Creative profile published!',
-          description: 'You're now visible in the creative network.',
+          description: "You're now visible in the creative network.",
         });
       } else {
         toast({
