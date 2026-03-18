@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import forgeLogo from '@/assets/forge-logo.png';
 import { KYFormCompletion } from '@/components/kyform/KYFormCompletion';
 import { Button } from '@/components/ui/button';
 import { Map, UserCircle, MessageCircle, ArrowRight } from 'lucide-react';
