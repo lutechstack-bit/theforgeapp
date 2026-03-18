@@ -559,14 +559,19 @@ const KYW_SECTIONS: KYSection[] = [
 export function getSectionsForCohort(cohortType: string): KYSection[] {
   switch (cohortType) {
     case 'FORGE':
-      return KYF_SECTIONS;
+      return [...KYF_SECTIONS, COMMUNITY_PROFILE_SECTION];
     case 'FORGE_CREATORS':
-      return KYC_SECTIONS;
+      return [...KYC_SECTIONS, COMMUNITY_PROFILE_SECTION];
     case 'FORGE_WRITING':
-      return KYW_SECTIONS;
+      return [...KYW_SECTIONS, COMMUNITY_PROFILE_SECTION];
     default:
-      return KYF_SECTIONS;
+      return [...KYF_SECTIONS, COMMUNITY_PROFILE_SECTION];
   }
+}
+
+// Get required (non-optional) sections for completion tracking
+export function getRequiredSections(cohortType: string): KYSection[] {
+  return getSectionsForCohort(cohortType).filter(s => !s.isOptional);
 }
 
 // Get total step count for a section (intro + form steps)
