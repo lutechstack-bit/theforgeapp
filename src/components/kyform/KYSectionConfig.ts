@@ -282,6 +282,28 @@ const KYF_SECTIONS: KYSection[] = [
   },
 ];
 
+const COMMUNITY_PROFILE_SECTION: KYSection = {
+  key: 'community_profile',
+  title: 'Creative Profile',
+  subtitle: 'Join the creative network',
+  icon: '✨',
+  isOptional: true,
+  introTitle: 'Set up your creative profile',
+  introDescription: 'Let the community know who you are, what you do, and how to collaborate with you. This is optional but recommended!',
+  keepHandy: [
+    { emoji: '✨', text: 'Your tagline and intro' },
+    { emoji: '🎬', text: 'Your roles and skills' },
+    { emoji: '🔗', text: 'Portfolio and availability' },
+  ],
+  timeEstimate: '~2 minutes',
+  responseTable: 'collaborator_profiles',
+  steps: [
+    { key: 'basics', title: 'The Basics', subtitle: 'Your cinematic elevator pitch', fields: [] },
+    { key: 'professional', title: 'Your Professional Soul', subtitle: 'Select what you do', fields: [] },
+    { key: 'connect', title: 'Connect & Share', subtitle: 'Let people know how to reach you', fields: [] },
+  ],
+};
+
 // ===================== KYC (Creators) =====================
 const KYC_SECTIONS: KYSection[] = [
   {
