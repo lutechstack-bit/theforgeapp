@@ -182,7 +182,7 @@ export const CreativesDirectory: React.FC<CreativesDirectoryProps> = ({ onSetupP
       {cohortFilter === 'cohort' && edition && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Star className="w-3 h-3 text-primary" />
-          <span>{edition.name} · {edition.city} · {cohortCount} members</span>
+          <span>{edition.city} · {edition.cohort_type.replace(/_/g, ' ')} · {cohortCount} members</span>
         </div>
       )}
 

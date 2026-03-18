@@ -233,10 +233,10 @@ const AppRoutes = () => {
           </ProfileSetupRoute>
         </ProtectedRoute>
       } />
-      <Route path="/collaborator-setup" element={
+      <Route path="/community-profile" element={
         <ProtectedRoute>
           <ProfileSetupCheck>
-            <CollaboratorSetup />
+            <CommunityProfileForm />
           </ProfileSetupCheck>
         </ProtectedRoute>
       } />

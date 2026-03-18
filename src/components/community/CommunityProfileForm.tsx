@@ -199,7 +199,7 @@ const CommunityProfileForm: React.FC = () => {
               {edition && (
                 <div className="flex items-center gap-2 p-3 rounded-xl border border-border/30 bg-card/50">
                   <Briefcase className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm text-foreground">{edition.name}</span>
+                  <span className="text-sm text-foreground">{edition.cohort_type.replace(/_/g, ' ')}</span>
                   <span className="text-[10px] text-muted-foreground ml-auto">{edition.city}</span>
                 </div>
               )}
