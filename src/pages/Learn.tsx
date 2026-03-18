@@ -25,7 +25,8 @@ import { ProgramBanner } from '@/components/learn/ProgramBanner';
 import { ScrollableCardRow } from '@/components/learn/ScrollableCardRow';
 import { EmptyState } from '@/components/shared/EmptyState';
 import LevelUpCourseCard from '@/components/learn/LevelUpCourseCard';
-import { Sparkles, ChevronRight } from 'lucide-react';
+import { Sparkles, ChevronRight, BookOpen } from 'lucide-react';
+import { CinematicHero } from '@/components/shared/CinematicHero';
 import levelUpLogo from '@/assets/levelup-logo.png';
 
 interface LearnContent {

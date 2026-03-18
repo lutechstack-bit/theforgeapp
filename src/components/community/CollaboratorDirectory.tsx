@@ -7,8 +7,9 @@ import { CollaboratorCard } from './CollaboratorCard';
 import { CollaboratorRequestModal } from './CollaboratorRequestModal';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Sparkles } from 'lucide-react';
+import { Search, Sparkles, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CinematicHero } from '@/components/shared/CinematicHero';
 
 export const CollaboratorDirectory: React.FC = () => {
   const { user } = useAuth();
