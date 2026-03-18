@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { FloatingInput } from '@/components/ui/floating-input';
 import { FloatingTextarea } from '@/components/ui/floating-textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
 import { OccupationPillSelector } from './OccupationPillSelector';
 import { toast } from 'sonner';
 import { Loader2, Eye, Lock } from 'lucide-react';
@@ -54,7 +53,6 @@ export const GigPostForm: React.FC<GigPostFormProps> = ({ open, onOpenChange, on
       if (error) throw error;
       toast.success('Gig published!');
       onSuccess();
-      // Reset form
       setTitle(''); setCategory(''); setDescription(''); setRolesNeeded([]);
       setBudget(''); setDuration(''); setLocation(''); setContactInfo('');
     } catch (err: any) {
@@ -77,15 +75,15 @@ export const GigPostForm: React.FC<GigPostFormProps> = ({ open, onOpenChange, on
   ];
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="text-base">Post a Gig</SheetTitle>
-        </SheetHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-base">Post a Gig</DialogTitle>
+        </DialogHeader>
 
-        <div className="space-y-4 mt-4 pb-6">
+        <div className="space-y-5 pt-2 pb-2">
           <FloatingInput label="Title *" value={title} onChange={(e) => setTitle(e.target.value)} className="bg-secondary/50" />
-          <FloatingInput label="Category" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Cinematography, Editing" className="bg-secondary/50" />
+          <FloatingInput label="Category (e.g. Cinematography)" value={category} onChange={(e) => setCategory(e.target.value)} className="bg-secondary/50" />
 
           {/* Gig Type */}
           <div className="space-y-1.5">
@@ -125,12 +123,12 @@ export const GigPostForm: React.FC<GigPostFormProps> = ({ open, onOpenChange, on
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <FloatingInput label="Budget" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="e.g. ₹5,000/day" className="bg-secondary/50" />
-            <FloatingInput label="Duration" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="e.g. 3 days" className="bg-secondary/50" />
+          <div className="grid grid-cols-2 gap-4">
+            <FloatingInput label="Budget (e.g. ₹5k/day)" value={budget} onChange={(e) => setBudget(e.target.value)} className="bg-secondary/50" />
+            <FloatingInput label="Duration (e.g. 3 days)" value={duration} onChange={(e) => setDuration(e.target.value)} className="bg-secondary/50" />
           </div>
-          <FloatingInput label="Location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Mumbai, Remote" className="bg-secondary/50" />
-          <FloatingInput label="Contact Info" value={contactInfo} onChange={(e) => setContactInfo(e.target.value)} placeholder="Email or phone" className="bg-secondary/50" />
+          <FloatingInput label="Location (e.g. Mumbai, Remote)" value={location} onChange={(e) => setLocation(e.target.value)} className="bg-secondary/50" />
+          <FloatingInput label="Contact (email or phone)" value={contactInfo} onChange={(e) => setContactInfo(e.target.value)} className="bg-secondary/50" />
 
           {/* Visibility */}
           <div className="space-y-1.5">
@@ -151,12 +149,12 @@ export const GigPostForm: React.FC<GigPostFormProps> = ({ open, onOpenChange, on
             </div>
           </div>
 
-          <Button onClick={handlePublish} disabled={publishing || !title.trim()} className="w-full gap-2 mt-4">
+          <Button onClick={handlePublish} disabled={publishing || !title.trim()} className="w-full gap-2">
             {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             Publish Gig
           </Button>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 };
