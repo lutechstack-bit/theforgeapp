@@ -127,6 +127,14 @@ export const CollaboratorDirectory: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4 pb-24">
+      {/* Hero */}
+      <CinematicHero
+        icon={Users}
+        title={<>Find Your <span>Collaborators</span></>}
+        subtitle="Connect with creators who share your vision"
+        badge="Creative Network"
+      />
+
       {/* Stats line */}
       <p className="text-xs text-muted-foreground tracking-wide">
         {collaborators.length} creators{activeFilter !== 'ALL' ? ` · ${activeFilter}` : ''}
