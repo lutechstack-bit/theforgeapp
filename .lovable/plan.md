@@ -1,32 +1,45 @@
 
-## Replace Program Banner Images
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+# Fix Blank PDF Download
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+## Problem
+The PDF is blank because the `PrintableProfile` div is positioned at `left: -9999px`. `html2canvas` (used by `html2pdf.js`) cannot properly render elements that are off-screen — it captures a blank area.
 
-### Changes
+## Solution
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+### `src/pages/Profile.tsx` — Fix `handleDownloadPDF`
+Before capturing, temporarily move the printable div on-screen (but visually hidden behind an overlay or with `opacity: 0` and `position: fixed`), generate the PDF, then move it back off-screen.
 
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+```typescript
+const handleDownloadPDF = async () => {
+  const element = document.getElementById('printable-profile');
+  if (!element) return;
+  
+  // Temporarily bring on-screen for html2canvas
+  element.style.position = 'fixed';
+  element.style.left = '0';
+  element.style.top = '0';
+  element.style.zIndex = '-1';
+  
+  const html2pdf = (await import('html2pdf.js')).default;
+  await html2pdf()
+    .set({ ... })
+    .from(element)
+    .save();
+  
+  // Move back off-screen
+  element.style.position = 'absolute';
+  element.style.left = '-9999px';
+  element.style.zIndex = '';
+};
+```
 
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+This is the minimal fix — the element stays behind everything (`z-index: -1`) so the user never sees it, but `html2canvas` can now render it.
+
+### No other files need changes
+The `PrintableProfile` layout and design are already correct — the only issue is the off-screen positioning preventing capture.
 
 | File | Change |
 |------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+| `Profile.tsx` | Temporarily reposition printable div on-screen during PDF generation |
 
