@@ -29,11 +29,13 @@ const AppLayoutContent: React.FC = () => {
         "relative pb-24 md:pb-0 transition-all duration-300 ease-in-out safe-area-pb",
         showNav && (collapsed ? "md:ml-[72px]" : "md:ml-72")
       )}>
-        {showNav && (
-          <div className={cn(
-            "sticky top-0 z-40 flex items-center justify-end h-14 px-4 transition-colors duration-200",
-            isHome && !isScrolled ? "bg-transparent" : "bg-background"
-          )}>
+        {showNav && isHome && !isScrolled && (
+          <div className="absolute top-4 right-4 z-40">
+            <TopProfileDropdown />
+          </div>
+        )}
+        {showNav && !(isHome && !isScrolled) && (
+          <div className="sticky top-0 z-40 flex items-center justify-end h-14 px-4 bg-background">
             <TopProfileDropdown />
           </div>
         )}
