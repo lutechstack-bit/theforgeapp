@@ -22,11 +22,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 const navItems = [
   { to: '/', icon: House, label: 'Home' },
-  { to: '/roadmap', icon: Compass, label: 'Roadmap' },
-  { to: '/perks', icon: Gift, label: 'Perks' },
-  { to: '/learn', icon: BookOpen, label: 'Learn' },
-  { to: '/events', icon: CalendarDays, label: 'Events' },
   { to: '/community', icon: Users, label: 'Community' },
+  { to: '/roadmap', icon: Compass, label: 'Roadmap' },
+  { to: '/learn', icon: BookOpen, label: 'Learn' },
+  { to: '/perks', icon: Gift, label: 'Perks' },
+  { to: '/events', icon: CalendarDays, label: 'Events' },
 ];
 
 const bottomItems = [

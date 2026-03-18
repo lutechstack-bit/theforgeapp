@@ -16,9 +16,9 @@ import {
 
 const navItems = [
   { to: '/', icon: Home, label: 'Home' },
+  { to: '/community', icon: MessageCircle, label: 'Community' },
   { to: '/roadmap', icon: Map, label: 'Roadmap' },
   { to: '/learn', icon: BookOpen, label: 'Learn' },
-  { to: '/community', icon: MessageCircle, label: 'Community' },
 ];
 
 export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
