@@ -1,32 +1,32 @@
 
-## Replace Program Banner Images
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+# Floating Profile Button on Home — No Top Bar
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+## Problem
+The sticky top bar on the Home page creates a visible strip that blocks the carousel from reaching the top. The user wants: no bar at all on Home — just the profile button floating over the carousel. When scrolled past the hero, the full top bar should appear.
 
-### Changes
+## Changes
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+### `src/components/layout/AppLayout.tsx`
+- On the Home route (`/`), **don't render the top bar div at all** when not scrolled. Instead, render the `TopProfileDropdown` as an **absolutely positioned element** in the top-right corner (inside `<main>`), outside any bar container.
+- When scrolled past 50px, switch to the normal sticky top bar with `bg-background`.
+- This eliminates the invisible `h-14` bar that pushes the carousel down.
 
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+**Logic:**
+```
+if (isHome && !isScrolled):
+  → render TopProfileDropdown as absolute, top-right, no bar wrapper
+else:
+  → render normal sticky top bar with bg-background
+```
 
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+### `src/components/layout/TopProfileDropdown.tsx`
+- No changes needed — already has `bg-black/40 backdrop-blur-md` styling which works well floating over images.
+
+### `src/pages/Home.tsx`
+- Add negative top margin (`-mt-14`) on the `HeroBanner` wrapper to pull it up behind where the top bar would be, OR better: since the bar won't render on home when not scrolled, the carousel will naturally sit at the top.
 
 | File | Change |
 |------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+| `AppLayout.tsx` | Conditionally render floating profile (absolute) vs sticky bar based on home + scroll state |
 
