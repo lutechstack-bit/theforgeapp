@@ -350,32 +350,47 @@ export type Database = {
       }
       collaborator_profiles: {
         Row: {
+          about: string | null
+          available_for_hire: boolean | null
           created_at: string
           id: string
           intro: string | null
           is_published: boolean | null
           occupations: string[] | null
           open_to_remote: boolean | null
+          portfolio_type: string | null
+          portfolio_url: string | null
+          tagline: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          about?: string | null
+          available_for_hire?: boolean | null
           created_at?: string
           id?: string
           intro?: string | null
           is_published?: boolean | null
           occupations?: string[] | null
           open_to_remote?: boolean | null
+          portfolio_type?: string | null
+          portfolio_url?: string | null
+          tagline?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          about?: string | null
+          available_for_hire?: boolean | null
           created_at?: string
           id?: string
           intro?: string | null
           is_published?: boolean | null
           occupations?: string[] | null
           open_to_remote?: boolean | null
+          portfolio_type?: string | null
+          portfolio_url?: string | null
+          tagline?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -756,6 +771,63 @@ export type Database = {
           name?: string
           order_index?: number
           specs?: Json | null
+        }
+        Relationships: []
+      }
+      gigs: {
+        Row: {
+          budget: string | null
+          category: string | null
+          contact_info: string | null
+          created_at: string | null
+          description: string | null
+          duration: string | null
+          gig_type: string | null
+          id: string
+          location: string | null
+          pay_type: string | null
+          roles_needed: string[] | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+          visibility: string | null
+        }
+        Insert: {
+          budget?: string | null
+          category?: string | null
+          contact_info?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          gig_type?: string | null
+          id?: string
+          location?: string | null
+          pay_type?: string | null
+          roles_needed?: string[] | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+          visibility?: string | null
+        }
+        Update: {
+          budget?: string | null
+          category?: string | null
+          contact_info?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          gig_type?: string | null
+          id?: string
+          location?: string | null
+          pay_type?: string | null
+          roles_needed?: string[] | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          visibility?: string | null
         }
         Relationships: []
       }
@@ -2629,6 +2701,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      saved_profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          saved_user_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          saved_user_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          saved_user_id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       stay_location_editions: {
         Row: {

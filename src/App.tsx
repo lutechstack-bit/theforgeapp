@@ -69,7 +69,7 @@ import AdminPayments from "./pages/admin/AdminPayments";
 
 import EventDetail from "./pages/EventDetail";
 import PerkDetail from "./pages/PerkDetail";
-import CollaboratorSetup from "./pages/CollaboratorSetup";
+import CommunityProfileForm from "./components/community/CommunityProfileForm";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -233,10 +233,10 @@ const AppRoutes = () => {
           </ProfileSetupRoute>
         </ProtectedRoute>
       } />
-      <Route path="/collaborator-setup" element={
+      <Route path="/community-profile" element={
         <ProtectedRoute>
           <ProfileSetupCheck>
-            <CollaboratorSetup />
+            <CommunityProfileForm />
           </ProfileSetupCheck>
         </ProtectedRoute>
       } />
