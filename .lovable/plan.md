@@ -1,32 +1,37 @@
 
-## Replace Program Banner Images
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+# Fix: Make Creative Profile Required + Fix Form Access
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+## Problems
 
-### Changes
+1. **Creative Profile is marked optional** — user wants it mandatory as the final KY section
+2. **Can't access the Creative Profile form** — after completing the 3rd required section, `ky_form_completed` is set to `true` which may cause the KY card to behave unexpectedly, and the "isLastRequiredSection" logic explicitly excludes community_profile
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+## Changes
 
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+### 1. `src/components/kyform/KYSectionConfig.ts`
+- Remove `isOptional: true` from `COMMUNITY_PROFILE_SECTION`
+- Update `introDescription` to remove "This is optional but recommended!"
 
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+### 2. `src/pages/KYSectionForm.tsx`
+- Remove the `!isCommunityProfile &&` guard from `isLastRequiredSection` — now the community_profile IS the last required section, so completing it should set `ky_form_completed = true`
+- Keep all the special rendering and save logic for community_profile (custom steps, collaborator_profiles upsert)
 
+### 3. `src/components/home/KYProfileCard.tsx`
+- Remove the optional/required split — all sections are now required
+- Remove the `optionalSections` rendering block and the "Optional" badge
+- Remove the `Sparkles` import (no longer needed)
+- Show all sections in a single unified list with sequential numbering and locking
+
+### 4. `src/components/kyform/KYSectionConfig.ts` — `getRequiredSections`
+- This function filters out optional sections. With `isOptional` removed, it will naturally include community_profile — no code change needed here.
+
+### Files Modified
 | File | Change |
 |------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+| `src/components/kyform/KYSectionConfig.ts` | Remove `isOptional: true`, update intro text |
+| `src/pages/KYSectionForm.tsx` | Remove `!isCommunityProfile` guard on `isLastRequiredSection` |
+| `src/components/home/KYProfileCard.tsx` | Remove optional/required split, unified list |
+
+No database changes needed.
 
