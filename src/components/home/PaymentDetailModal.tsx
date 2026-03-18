@@ -72,7 +72,7 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
           {formattedDeadline && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Payment deadline</span>
-              <span className="font-medium text-destructive">{formattedDeadline}</span>
+              <span className="font-medium text-primary">{formattedDeadline}</span>
             </div>
           )}
         </div>
@@ -120,7 +120,7 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
           </a>
         )}
         {formattedDeadline && (
-          <span className="inline-block px-3 py-1 text-xs rounded-full bg-destructive/10 text-destructive border border-destructive/20">
+          <span className="inline-block px-3 py-1 text-xs rounded-full bg-primary/10 text-primary border border-primary/20">
             Due {formattedDeadline}
           </span>
         )}

@@ -51,10 +51,10 @@ const PaymentFocusCard: React.FC = () => {
 
   return (
     <>
-      <div className="relative overflow-hidden rounded-2xl border border-destructive/20 bg-gradient-to-br from-destructive/10 via-card to-card p-5">
+      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card p-5">
         {/* Badge */}
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-destructive bg-destructive/15 px-2.5 py-1 rounded-md">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-primary bg-primary/15 px-2.5 py-1 rounded-md">
             Payment Due
           </span>
           <span className="text-[10px] font-semibold text-muted-foreground bg-secondary px-2 py-1 rounded-md">
@@ -64,8 +64,8 @@ const PaymentFocusCard: React.FC = () => {
 
         <div className="flex items-start gap-4">
           {/* Icon */}
-          <div className="flex-shrink-0 p-3 rounded-xl bg-destructive/15 border border-destructive/20">
-            <IndianRupee className="w-6 h-6 text-destructive" />
+          <div className="flex-shrink-0 p-3 rounded-xl bg-primary/15 border border-primary/20">
+            <IndianRupee className="w-6 h-6 text-primary" />
           </div>
 
           {/* Content */}
@@ -79,7 +79,6 @@ const PaymentFocusCard: React.FC = () => {
             <Button
               onClick={() => setModalOpen(true)}
               size="sm"
-              variant="destructive"
               className="gap-2"
             >
               Pay Balance
@@ -89,7 +88,7 @@ const PaymentFocusCard: React.FC = () => {
         </div>
 
         {/* Decorative accent */}
-        <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-destructive/5 blur-xl" />
+        <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-primary/5 blur-xl" />
       </div>
 
       <PaymentDetailModal
