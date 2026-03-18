@@ -69,7 +69,7 @@ import AdminPayments from "./pages/admin/AdminPayments";
 
 import EventDetail from "./pages/EventDetail";
 import PerkDetail from "./pages/PerkDetail";
-import CommunityProfileForm from "./components/community/CommunityProfileForm";
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -233,13 +233,7 @@ const AppRoutes = () => {
           </ProfileSetupRoute>
         </ProtectedRoute>
       } />
-      <Route path="/community-profile" element={
-        <ProtectedRoute>
-          <ProfileSetupCheck>
-            <CommunityProfileForm />
-          </ProfileSetupCheck>
-        </ProtectedRoute>
-      } />
+      <Route path="/community-profile" element={<Navigate to="/ky-section/community_profile" replace />} />
 
 
       {/* App routes with layout */}

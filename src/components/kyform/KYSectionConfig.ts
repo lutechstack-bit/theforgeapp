@@ -42,7 +42,8 @@ export interface KYSection {
   introTitle: string;
   introDescription: string;
   steps: SectionStep[];
-  responseTable: 'kyf_responses' | 'kyc_responses' | 'kyw_responses';
+  responseTable: 'kyf_responses' | 'kyc_responses' | 'kyw_responses' | 'collaborator_profiles';
+  isOptional?: boolean;
 }
 
 // Shared options
@@ -280,6 +281,28 @@ const KYF_SECTIONS: KYSection[] = [
     ],
   },
 ];
+
+const COMMUNITY_PROFILE_SECTION: KYSection = {
+  key: 'community_profile',
+  title: 'Creative Profile',
+  subtitle: 'Join the creative network',
+  icon: '✨',
+  isOptional: true,
+  introTitle: 'Set up your creative profile',
+  introDescription: 'Let the community know who you are, what you do, and how to collaborate with you. This is optional but recommended!',
+  keepHandy: [
+    { emoji: '✨', text: 'Your tagline and intro' },
+    { emoji: '🎬', text: 'Your roles and skills' },
+    { emoji: '🔗', text: 'Portfolio and availability' },
+  ],
+  timeEstimate: '~2 minutes',
+  responseTable: 'collaborator_profiles',
+  steps: [
+    { key: 'basics', title: 'The Basics', subtitle: 'Your cinematic elevator pitch', fields: [] },
+    { key: 'professional', title: 'Your Professional Soul', subtitle: 'Select what you do', fields: [] },
+    { key: 'connect', title: 'Connect & Share', subtitle: 'Let people know how to reach you', fields: [] },
+  ],
+};
 
 // ===================== KYC (Creators) =====================
 const KYC_SECTIONS: KYSection[] = [
@@ -536,14 +559,19 @@ const KYW_SECTIONS: KYSection[] = [
 export function getSectionsForCohort(cohortType: string): KYSection[] {
   switch (cohortType) {
     case 'FORGE':
-      return KYF_SECTIONS;
+      return [...KYF_SECTIONS, COMMUNITY_PROFILE_SECTION];
     case 'FORGE_CREATORS':
-      return KYC_SECTIONS;
+      return [...KYC_SECTIONS, COMMUNITY_PROFILE_SECTION];
     case 'FORGE_WRITING':
-      return KYW_SECTIONS;
+      return [...KYW_SECTIONS, COMMUNITY_PROFILE_SECTION];
     default:
-      return KYF_SECTIONS;
+      return [...KYF_SECTIONS, COMMUNITY_PROFILE_SECTION];
   }
+}
+
+// Get required (non-optional) sections for completion tracking
+export function getRequiredSections(cohortType: string): KYSection[] {
+  return getSectionsForCohort(cohortType).filter(s => !s.isOptional);
 }
 
 // Get total step count for a section (intro + form steps)

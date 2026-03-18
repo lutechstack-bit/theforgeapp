@@ -182,7 +182,7 @@ const Community = () => {
       {/* Content */}
       {activeTab === 'creatives' && (
         <div className="flex-1 min-h-0 overflow-y-auto pb-24">
-          <CreativesDirectory onSetupProfile={() => navigate('/community-profile')} />
+          <CreativesDirectory onSetupProfile={() => navigate('/ky-section/community_profile')} />
         </div>
       )}
 

@@ -3,13 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { getSectionsForCohort, getSectionTotalSteps, calculateAge } from '@/components/kyform/KYSectionConfig';
+import { useQueryClient } from '@tanstack/react-query';
+import { getSectionsForCohort, getRequiredSections, getSectionTotalSteps, calculateAge } from '@/components/kyform/KYSectionConfig';
 import type { KYSection } from '@/components/kyform/KYSectionConfig';
 import { KYFormCard } from '@/components/kyform/KYFormCard';
 import { KYFormCardStack } from '@/components/kyform/KYFormCardStack';
 import { KYSectionIntro } from '@/components/kyform/KYSectionIntro';
 import { KYSectionFields } from '@/components/kyform/KYSectionFields';
-import { KYFormProgressBar } from '@/components/kyform/KYFormProgressBar';
+import { CommunityProfileStep1, CommunityProfileStep2, CommunityProfileStep3 } from '@/components/community/CommunityProfileSteps';
 import { ArrowLeft, Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
@@ -30,6 +31,7 @@ const KYSectionForm: React.FC = () => {
   const { user, profile, refreshProfile } = useAuth();
   const { effectiveCohortType } = useEffectiveCohort();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const [currentStep, setCurrentStep] = useState(0); // 0 = intro
   const [formData, setFormData] = useState<Record<string, any>>({});
@@ -39,9 +41,12 @@ const KYSectionForm: React.FC = () => {
 
   const cohortType = effectiveCohortType || 'FORGE';
   const sections = useMemo(() => getSectionsForCohort(cohortType), [cohortType]);
+  const requiredSections = useMemo(() => getRequiredSections(cohortType), [cohortType]);
   const section = useMemo(() => sections.find(s => s.key === sectionKey), [sections, sectionKey]);
   const sectionIndex = useMemo(() => sections.findIndex(s => s.key === sectionKey), [sections, sectionKey]);
-  const isLastSection = sectionIndex === sections.length - 1;
+  const isCommunityProfile = section?.key === 'community_profile';
+  // "Last section" for KY completion purposes is the last *required* section
+  const isLastRequiredSection = !isCommunityProfile && sectionIndex === requiredSections.length - 1;
 
   const totalSteps = section ? getSectionTotalSteps(section) : 0;
 
@@ -50,39 +55,60 @@ const KYSectionForm: React.FC = () => {
     if (!section || !user || dataLoaded) return;
 
     const loadData = async () => {
-      const { data } = await supabase
-        .from(section.responseTable)
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (data) {
-        const mapped: Record<string, any> = {};
-        section.steps.forEach((step) => {
-          step.fields.forEach((field) => {
-            if (field.type === 'proficiency-grid' && field.skills) {
-              field.skills.forEach((skill) => {
-                mapped[skill.key] = (data as any)[skill.key] ?? '';
-              });
-            } else {
-              const rawVal = (data as any)[field.key];
-              if (field.key === 'has_editing_laptop') {
-                mapped[field.key] = rawVal === true ? 'yes' : rawVal === false ? 'no' : '';
-              } else if (field.type === 'multi-select' || field.type === 'tags') {
-                mapped[field.key] = rawVal || [];
-              } else {
-                mapped[field.key] = rawVal ?? '';
-              }
-            }
+      if (isCommunityProfile) {
+        // Load from collaborator_profiles
+        const { data } = await supabase
+          .from('collaborator_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (data) {
+          setFormData({
+            tagline: data.tagline || '',
+            about: data.about || '',
+            intro: data.intro || '',
+            occupations: data.occupations || [],
+            open_to_remote: data.open_to_remote || false,
+            available_for_hire: data.available_for_hire || false,
+            portfolio_url: data.portfolio_url || '',
+            portfolio_type: data.portfolio_type || 'Portfolio',
           });
-        });
-        setFormData(mapped);
+        }
+      } else {
+        const { data } = await supabase
+          .from(section.responseTable as 'kyf_responses' | 'kyc_responses' | 'kyw_responses')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (data) {
+          const mapped: Record<string, any> = {};
+          section.steps.forEach((step) => {
+            step.fields.forEach((field) => {
+              if (field.type === 'proficiency-grid' && field.skills) {
+                field.skills.forEach((skill) => {
+                  mapped[skill.key] = (data as any)[skill.key] ?? '';
+                });
+              } else {
+                const rawVal = (data as any)[field.key];
+                if (field.key === 'has_editing_laptop') {
+                  mapped[field.key] = rawVal === true ? 'yes' : rawVal === false ? 'no' : '';
+                } else if (field.type === 'multi-select' || field.type === 'tags') {
+                  mapped[field.key] = rawVal || [];
+                } else {
+                  mapped[field.key] = rawVal ?? '';
+                }
+              }
+            });
+          });
+          setFormData(mapped);
+        }
       }
       setDataLoaded(true);
     };
 
     loadData();
-  }, [section, user, dataLoaded]);
+  }, [section, user, dataLoaded, isCommunityProfile]);
 
   // Reset on section change
   useEffect(() => {
@@ -97,8 +123,23 @@ const KYSectionForm: React.FC = () => {
 
   const buildUpsertPayload = useCallback(() => {
     if (!user || !section) return null;
-    const payload: Record<string, any> = { user_id: user.id };
 
+    if (isCommunityProfile) {
+      return {
+        user_id: user.id,
+        tagline: (formData.tagline || '').trim() || null,
+        about: (formData.about || '').trim() || null,
+        intro: (formData.intro || '').trim() || null,
+        occupations: formData.occupations || [],
+        open_to_remote: formData.open_to_remote || false,
+        available_for_hire: formData.available_for_hire || false,
+        portfolio_url: (formData.portfolio_url || '').trim() || null,
+        portfolio_type: formData.portfolio_type || null,
+        is_published: true,
+      };
+    }
+
+    const payload: Record<string, any> = { user_id: user.id };
     section.steps.forEach((step) => {
       step.fields.forEach((field) => {
         if (field.type === 'proficiency-grid' && field.skills) {
@@ -125,18 +166,22 @@ const KYSectionForm: React.FC = () => {
     });
 
     return payload;
-  }, [user, section, formData]);
+  }, [user, section, formData, isCommunityProfile]);
 
   const saveProgress = useCallback(async () => {
     if (!section) return;
     const payload = buildUpsertPayload();
     if (!payload) return;
     try {
-      await supabase.from(section.responseTable).upsert(payload as any, { onConflict: 'user_id' });
+      if (isCommunityProfile) {
+        await supabase.from('collaborator_profiles').upsert(payload as any, { onConflict: 'user_id' });
+      } else {
+        await supabase.from(section.responseTable as 'kyf_responses' | 'kyc_responses' | 'kyw_responses').upsert(payload as any, { onConflict: 'user_id' });
+      }
     } catch (e) {
       console.error('Error saving section progress:', e);
     }
-  }, [section, buildUpsertPayload]);
+  }, [section, buildUpsertPayload, isCommunityProfile]);
 
   const handleComplete = async () => {
     if (!user || !section) return;
@@ -145,8 +190,13 @@ const KYSectionForm: React.FC = () => {
     try {
       const payload = buildUpsertPayload();
       if (payload) {
-        const { error } = await supabase.from(section.responseTable).upsert(payload as any, { onConflict: 'user_id' });
-        if (error) throw error;
+        if (isCommunityProfile) {
+          const { error } = await supabase.from('collaborator_profiles').upsert(payload as any, { onConflict: 'user_id' });
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from(section.responseTable as 'kyf_responses' | 'kyc_responses' | 'kyw_responses').upsert(payload as any, { onConflict: 'user_id' });
+          if (error) throw error;
+        }
       }
 
       // Update section progress
@@ -163,7 +213,8 @@ const KYSectionForm: React.FC = () => {
         ky_section_progress: newProgress,
       };
 
-      if (isLastSection) {
+      // Only set ky_form_completed when the last *required* section is done
+      if (isLastRequiredSection) {
         updatePayload.ky_form_completed = true;
         updatePayload.kyf_completed = true;
       }
@@ -181,12 +232,21 @@ const KYSectionForm: React.FC = () => {
 
       await refreshProfile();
 
-      toast({
-        title: isLastSection ? '🎉 All sections complete!' : '✅ Section completed!',
-        description: isLastSection
-          ? 'Your KY Form is now fully submitted.'
-          : `${section.title} has been saved.`,
-      });
+      if (isCommunityProfile) {
+        queryClient.invalidateQueries({ queryKey: ['creatives-directory'] });
+        queryClient.invalidateQueries({ queryKey: ['has-collaborator-profile'] });
+        toast({
+          title: '✨ Creative profile published!',
+          description: "You're now visible in the creative network.",
+        });
+      } else {
+        toast({
+          title: isLastRequiredSection ? '🎉 All sections complete!' : '✅ Section completed!',
+          description: isLastRequiredSection
+            ? 'Your KY Form is now fully submitted.'
+            : `${section.title} has been saved.`,
+        });
+      }
 
       navigate('/', { replace: true });
     } catch (error: any) {
@@ -221,6 +281,14 @@ const KYSectionForm: React.FC = () => {
   const canProceed = (): boolean => {
     if (currentStep === 0) return true;
     if (!section) return false;
+
+    if (isCommunityProfile) {
+      const stepIdx = currentStep - 1;
+      if (stepIdx === 0) return (formData.tagline || '').trim().length > 0;
+      if (stepIdx === 1) return (formData.occupations || []).length > 0;
+      return true;
+    }
+
     const stepDef = section.steps[currentStep - 1];
     if (!stepDef) return true;
     return stepDef.fields
@@ -244,14 +312,15 @@ const KYSectionForm: React.FC = () => {
   const isIntro = currentStep === 0;
   const isLastStep = currentStep === totalSteps - 1;
 
-  // Calculate question number across all steps
-  let questionNumber = 0;
-  if (!isIntro) {
-    for (let i = 0; i < currentStep - 1; i++) {
-      questionNumber += section.steps[i]?.fields.length || 0;
+  const renderCommunityStep = (stepIdx: number) => {
+    const props = { formData, updateField };
+    switch (stepIdx) {
+      case 0: return <CommunityProfileStep1 {...props} />;
+      case 1: return <CommunityProfileStep2 {...props} />;
+      case 2: return <CommunityProfileStep3 {...props} />;
+      default: return null;
     }
-    questionNumber += 1; // Current step starts at this number
-  }
+  };
 
   return (
     <div className="h-[100dvh] flex flex-col bg-background relative overflow-hidden">
@@ -261,7 +330,7 @@ const KYSectionForm: React.FC = () => {
         <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-forge-orange/5 blur-[120px]" />
       </div>
 
-      {/* Top bar - compact on short screens */}
+      {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between px-4 pt-2 pb-1">
         <button
           onClick={handleBack}
@@ -280,7 +349,7 @@ const KYSectionForm: React.FC = () => {
         </button>
       </div>
 
-      {/* Card stack area - fills viewport between top bar and bottom nav */}
+      {/* Card stack area */}
       <div className="relative z-10 flex-1 flex items-center px-4 pb-20 max-w-xl mx-auto w-full min-h-0">
         <KYFormCardStack currentStep={currentStep} totalSteps={totalSteps}>
           {/* Intro card */}
@@ -291,17 +360,21 @@ const KYSectionForm: React.FC = () => {
           {/* Step cards */}
           {section.steps.map((step, idx) => (
             <KYFormCard key={step.key} currentStep={currentStep + 1} totalSteps={totalSteps}>
-              <KYSectionFields
-                step={step}
-                formData={formData}
-                updateField={updateField}
-              />
+              {isCommunityProfile ? (
+                renderCommunityStep(idx)
+              ) : (
+                <KYSectionFields
+                  step={step}
+                  formData={formData}
+                  updateField={updateField}
+                />
+              )}
             </KYFormCard>
           ))}
         </KYFormCardStack>
       </div>
 
-      {/* Compact centered bottom navigation */}
+      {/* Bottom navigation */}
       <div className="fixed bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-background via-background/95 to-transparent pt-3 pb-4 px-4 safe-area-pb">
         <div className="max-w-lg mx-auto flex items-center justify-center gap-4">
           {currentStep > 0 && (
@@ -327,7 +400,7 @@ const KYSectionForm: React.FC = () => {
             ) : isIntro ? (
               "Let's go →"
             ) : isLastStep ? (
-              'Complete ✓'
+              isCommunityProfile ? 'Publish ✓' : 'Complete ✓'
             ) : (
               'Next →'
             )}
