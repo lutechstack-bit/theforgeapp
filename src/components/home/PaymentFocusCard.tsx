@@ -89,7 +89,7 @@ const PaymentFocusCard: React.FC = () => {
         </div>
 
         {/* Decorative accent */}
-        <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-destructive/5 blur-xl" />
+        <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-primary/5 blur-xl" />
       </div>
 
       <PaymentDetailModal
