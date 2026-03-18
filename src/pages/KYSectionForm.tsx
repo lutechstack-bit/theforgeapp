@@ -45,8 +45,7 @@ const KYSectionForm: React.FC = () => {
   const section = useMemo(() => sections.find(s => s.key === sectionKey), [sections, sectionKey]);
   const sectionIndex = useMemo(() => sections.findIndex(s => s.key === sectionKey), [sections, sectionKey]);
   const isCommunityProfile = section?.key === 'community_profile';
-  // "Last section" for KY completion purposes is the last *required* section
-  const isLastRequiredSection = !isCommunityProfile && sectionIndex === requiredSections.length - 1;
+  const isLastRequiredSection = sectionIndex === requiredSections.length - 1;
 
   const totalSteps = section ? getSectionTotalSteps(section) : 0;
 

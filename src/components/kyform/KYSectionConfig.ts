@@ -287,9 +287,8 @@ const COMMUNITY_PROFILE_SECTION: KYSection = {
   title: 'Creative Profile',
   subtitle: 'Join the creative network',
   icon: '✨',
-  isOptional: true,
   introTitle: 'Set up your creative profile',
-  introDescription: 'Let the community know who you are, what you do, and how to collaborate with you. This is optional but recommended!',
+  introDescription: 'Let the community know who you are, what you do, and how to collaborate with you.',
   keepHandy: [
     { emoji: '✨', text: 'Your tagline and intro' },
     { emoji: '🎬', text: 'Your roles and skills' },
