@@ -233,13 +233,7 @@ const AppRoutes = () => {
           </ProfileSetupRoute>
         </ProtectedRoute>
       } />
-      <Route path="/community-profile" element={
-        <ProtectedRoute>
-          <ProfileSetupCheck>
-            <CommunityProfileForm />
-          </ProfileSetupCheck>
-        </ProtectedRoute>
-      } />
+      <Route path="/community-profile" element={<Navigate to="/ky-section/community_profile" replace />} />
 
 
       {/* App routes with layout */}
