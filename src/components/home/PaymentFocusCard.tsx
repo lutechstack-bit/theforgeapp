@@ -54,7 +54,7 @@ const PaymentFocusCard: React.FC = () => {
       <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card p-5">
         {/* Badge */}
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-destructive bg-destructive/15 px-2.5 py-1 rounded-md">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-primary bg-primary/15 px-2.5 py-1 rounded-md">
             Payment Due
           </span>
           <span className="text-[10px] font-semibold text-muted-foreground bg-secondary px-2 py-1 rounded-md">
