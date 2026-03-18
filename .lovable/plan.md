@@ -1,32 +1,27 @@
 
-## Replace Program Banner Images
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+# Redesign RoadmapHero — Cinematic Look
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+## Problem
+The current hero is a plain card with basic text — looks flat and uninspiring, especially the POST_FORGE state ("Your The Forge Legacy").
 
-### Changes
+## Design
+Replace with a cinematic, full-width hero similar to the BentoProfileHero style:
+- **Layered radial gradients** (amber/gold tones) with grain texture overlay
+- **Geometric accent lines** for depth
+- **Bottom fade** into the page background
+- Taller height (~200px) with centered content
+- Trophy icon with a subtle glow ring for POST_FORGE
+- Star with pulse animation for DURING_FORGE
+- Rocket with floating animation for PRE_FORGE
+- Bigger, bolder typography with the cohort name using the primary accent color
+- Fix the awkward "Your The Forge Legacy" text — just show `{cohortName} Legacy`
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
-
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
-
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+## Changes
 
 | File | Change |
 |------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+| `src/components/roadmap/RoadmapHero.tsx` | Full redesign with layered gradients, grain overlay, geometric lines, larger typography, icon glow effects |
+
+Single file change — no other dependencies needed.
 
