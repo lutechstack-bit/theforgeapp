@@ -69,7 +69,7 @@ import AdminPayments from "./pages/admin/AdminPayments";
 
 import EventDetail from "./pages/EventDetail";
 import PerkDetail from "./pages/PerkDetail";
-import CommunityProfileForm from "./components/community/CommunityProfileForm";
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
