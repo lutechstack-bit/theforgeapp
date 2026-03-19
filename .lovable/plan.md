@@ -1,32 +1,19 @@
 
-## Replace Program Banner Images
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+# Remove Sign-Up Option from Auth Page
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+## Change
+Remove the "New here? Apply for the Circle" toggle and all sign-up related UI/logic from `src/pages/Auth.tsx`. The page becomes login-only.
 
-### Changes
+## What to remove
+- The `isSignUp` state and all conditional branches for sign-up
+- `fullName`, `confirmPassword`, `showConfirmPassword` states
+- `signUpSchema` import/usage
+- The sign-up form fields (Full Name, Confirm Password)
+- The bottom "New here? Apply for the Circle" toggle button
+- The `toggleMode` and `resetForm` functions
+- The `signUp` import from `useAuth`
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
-
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
-
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
-
-| File | Change |
-|------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+## File
+`src/pages/Auth.tsx` — simplify to login-only form
 
