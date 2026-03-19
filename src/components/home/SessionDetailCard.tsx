@@ -13,9 +13,10 @@ interface SessionDetailCardProps {
   day: JourneyCardDay;
   status: 'completed' | 'current' | 'upcoming' | 'locked';
   onViewDetail?: () => void;
+  sessionNumber?: number;
 }
 
-const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onViewDetail }) => {
+const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onViewDetail, sessionNumber }) => {
   const dayDate = day.date ? new Date(day.date) : null;
   const isVirtual = day.is_virtual;
   const isBootcamp = day.day_number > 0 && !isVirtual;
@@ -25,7 +26,7 @@ const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onVi
 
   // Day badge label
   const dayBadgeLabel = day.day_number < 0
-    ? `SESSION ${Math.abs(day.day_number)}`
+    ? `SESSION ${sessionNumber ?? Math.abs(day.day_number)}`
     : day.day_number === 0
       ? 'PRE-FORGE'
       : `DAY ${day.day_number}`;

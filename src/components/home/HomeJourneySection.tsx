@@ -99,11 +99,11 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
 
   // Build pill data
   const onlinePills = useMemo(() => {
-    return onlineSessions.map(day => {
+    return onlineSessions.map((day, index) => {
       const date = day.date ? new Date(day.date) : null;
       return {
         id: day.id, date, dayNumber: day.day_number,
-        label: date ? format(date, 'd') : `S${Math.abs(day.day_number)}`,
+        label: date ? format(date, 'd') : `S${index + 1}`,
         subLabel: date ? format(date, 'EEE') : undefined,
         status: getDayStatus(day),
       };
@@ -274,6 +274,7 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
           day={selectedCardDay}
           status={getDayStatus(selectedDay)}
           onViewDetail={() => setIsDetailModalOpen(true)}
+          sessionNumber={selectedDay.day_number < 0 ? onlineSessions.length + selectedDay.day_number + 1 : undefined}
         />
       )}
 

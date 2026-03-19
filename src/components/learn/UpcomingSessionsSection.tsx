@@ -27,7 +27,7 @@ interface VirtualSession {
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export const UpcomingSessionsSection: React.FC = () => {
-  const [selectedSession, setSelectedSession] = useState<VirtualSession | null>(null);
+  const [selectedSession, setSelectedSession] = useState<{ session: VirtualSession; number: number } | null>(null);
   const { effectiveEdition } = useEffectiveCohort();
 
   const editionId = effectiveEdition?.id;
@@ -96,7 +96,7 @@ export const UpcomingSessionsSection: React.FC = () => {
       </div>
 
       <ScrollableCardRow>
-          {sessions.map((session) => (
+          {sessions.map((session, index) => (
             <div key={session.id} className="snap-start flex-shrink-0">
               <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[hsl(var(--primary))]/15 via-[hsl(var(--primary))]/5 to-[hsl(var(--primary))]/15 hover:from-[hsl(var(--primary))]/50 hover:via-[hsl(var(--primary))]/25 hover:to-[hsl(var(--primary))]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300">
               <div className="w-[270px] sm:w-[300px] bg-card rounded-[13px] p-4 flex flex-col min-h-[160px]">
@@ -104,7 +104,7 @@ export const UpcomingSessionsSection: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-12 h-14 rounded-xl bg-primary/15 flex flex-col items-center justify-center">
                     <span className="text-lg font-bold text-primary leading-none">
-                      {Math.abs(session.day_number)}
+                      {index + 1}
                     </span>
                     <span className="text-[10px] font-medium text-primary/80 uppercase">
                       {getDayName(session.date, session.day_number)}
@@ -130,7 +130,7 @@ export const UpcomingSessionsSection: React.FC = () => {
                   <Button
                     size="sm"
                     className="flex-1 h-9 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg gap-1.5"
-                    onClick={() => setSelectedSession(session)}
+                    onClick={() => setSelectedSession({ session, number: index + 1 })}
                   >
                     <Video className="w-3.5 h-3.5" />
                     Join Session
@@ -196,9 +196,10 @@ export const UpcomingSessionsSection: React.FC = () => {
 
       {/* Session detail modal */}
       <SessionDetailModal
-        session={selectedSession}
+        session={selectedSession?.session ?? null}
         open={!!selectedSession}
         onOpenChange={(open) => !open && setSelectedSession(null)}
+        sessionNumber={selectedSession?.number}
       />
     </section>
   );

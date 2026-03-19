@@ -25,12 +25,14 @@ interface SessionDetailModalProps {
   session: SessionData | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  sessionNumber?: number;
 }
 
 export const SessionDetailModal: React.FC<SessionDetailModalProps> = ({
   session,
   open,
   onOpenChange,
+  sessionNumber,
 }) => {
   const isMobile = useIsMobile();
 
@@ -84,12 +86,12 @@ export const SessionDetailModal: React.FC<SessionDetailModalProps> = ({
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 w-14 h-16 rounded-xl bg-primary/15 flex flex-col items-center justify-center">
           <span className="text-xl font-bold text-primary leading-none">
-            {Math.abs(session.day_number)}
+            {sessionNumber ?? Math.abs(session.day_number)}
           </span>
           <span className="text-[10px] font-medium text-primary/80 uppercase">
             {session.date
               ? new Date(session.date).toLocaleDateString('en', { weekday: 'short' })
-              : `D${Math.abs(session.day_number)}`}
+              : `S${sessionNumber ?? Math.abs(session.day_number)}`}
           </span>
         </div>
         <div className="flex-1">
