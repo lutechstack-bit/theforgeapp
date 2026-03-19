@@ -16,6 +16,7 @@ interface CompactCountdownTimerProps {
     forge_end_date?: string | null;
     cohort_type?: string;
   } | null | undefined;
+  variant?: 'default' | 'overlay';
 }
 
 // Simple TimeUnit - no split logic, just renders value + label
