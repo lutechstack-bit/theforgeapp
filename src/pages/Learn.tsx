@@ -27,6 +27,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import LevelUpCourseCard from '@/components/learn/LevelUpCourseCard';
 import { Sparkles, ChevronRight, BookOpen } from 'lucide-react';
 import { CinematicHero } from '@/components/shared/CinematicHero';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import levelUpLogo from '@/assets/levelup-logo.png';
 
 interface LearnContent {
