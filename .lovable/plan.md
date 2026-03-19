@@ -1,32 +1,54 @@
 
-## Replace Program Banner Images
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+# Community Section — Premium Redesign
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+The Refero MCP subscription has expired (needs renewal at [refero.design/mcp/upgrade](https://refero.design/mcp/upgrade)). I used Contra's talent directory as the primary design reference instead.
 
-### Changes
+## Design Reference: Contra Discover
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+Contra uses a horizontal card layout with: portfolio thumbnail on the left, avatar + name + availability badge + location inline, skill tags as removable chips, "Get in touch" CTA button, and generous whitespace. Key takeaway: each card feels like a mini-portfolio, not a data row.
 
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+## Changes
 
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
+### 1. CreativeCard — Premium Upgrade (`CreativeCard.tsx`)
+- Increase padding from `p-4` to `p-5`
+- Larger avatar: `w-14 h-14` (from 12)
+- Add subtle `hover:shadow-lg hover:shadow-primary/5 hover:border-primary/40` glow on hover
+- Occupation pills: slightly higher contrast with `bg-primary/8 text-primary border-primary/20`
+- Intro text in italic for visual distinction
+- Add works count badge if > 0 (e.g., "3 works")
+- Increase gap between sections from `space-y-3` to `space-y-3.5`
 
-| File | Change |
-|------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+### 2. GigCard — Premium Upgrade (`GigCard.tsx`)
+- Add a 3px colored left border strip based on pay type (emerald = paid, amber = revenue share, muted = credit)
+- Show poster avatar + name at the bottom (data already available but not rendered)
+- Increase padding to `p-5`
+- Add hover glow matching CreativeCard
+- Make role pills use the same styling as occupation pills for consistency
+
+### 3. GigsBoard — CTA & Empty State (`GigsBoard.tsx`)
+- Replace dashed-border "Post a Gig" CTA with a solid card style matching the "Join the creative network" banner pattern (left accent border, icon, description text)
+- Taller search bar: `py-3` with inner shadow `shadow-inner`
+- Better empty state: larger icon, two-line copy with more personality
+
+### 4. CreativesDirectory — Search & Spacing (`CreativesDirectory.tsx`)
+- Taller search bar matching GigsBoard (`py-3`)
+- Add subtle inner shadow for depth
+- Better empty state with illustration-style messaging
+
+### 5. Community Page — Tab Polish (`Community.tsx`)
+- Add count badges to tab pills (e.g., "Creatives (12)", "Gigs (3)") by passing counts from child components or querying totals
+- Slightly larger tab pill padding for better touch targets on mobile
+
+## Files to Edit
+1. `src/components/community/CreativeCard.tsx`
+2. `src/components/community/GigCard.tsx`
+3. `src/components/community/GigsBoard.tsx`
+4. `src/components/community/CreativesDirectory.tsx`
+5. `src/pages/Community.tsx`
+
+## What Won't Change
+- All data fetching, filtering, and functional logic stays identical
+- No database changes
+- No new components
 
