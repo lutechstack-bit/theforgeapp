@@ -47,28 +47,29 @@ const Separator = ({ textClass }: { textClass: string }) => (
 );
 
 // CountdownContent - renders the full layout with a specific tone
-// Used twice: once for filled (white text), once for remaining (dark text)
 const CountdownContent = ({ 
   timeLeft, 
   city,
   tone,
-  showBorder
+  showBorder,
+  isOverlay
 }: { 
   timeLeft: TimeLeft;
   city: string;
   tone: 'fill' | 'base';
   showBorder: boolean;
+  isOverlay?: boolean;
 }) => {
-  const textClass = 'text-black';
-  const labelClass = 'text-black/70';
-  const borderClass = showBorder ? 'border-r border-white/10' : '';
+  const textClass = isOverlay ? 'text-white' : 'text-black';
+  const labelClass = isOverlay ? 'text-white/60' : 'text-black/70';
+  const borderColor = isOverlay ? 'border-white/20' : 'border-white/10';
 
   return (
     <div className="flex flex-row w-full items-center">
       {/* Left: City section - compact inline */}
       <div className={cn(
         "flex-shrink-0 w-20 sm:w-28 md:w-32 flex flex-col justify-center px-2 sm:px-3 py-2 sm:py-3",
-        showBorder ? "border-r border-white/10" : ""
+        showBorder ? `border-r ${borderColor}` : ""
       )}>
         <span className={cn("text-[7px] sm:text-[9px] uppercase tracking-widest hidden sm:block", labelClass)}>
           See you in
