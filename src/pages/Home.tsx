@@ -111,6 +111,9 @@ const Home: React.FC = () => {
       {/* Hero Banner — full bleed, with overlaid countdown */}
       <HeroBanner edition={edition} showCountdown={!!countdownSection} />
 
+      <div className="page-container">
+        <div className="space-y-6 sm:space-y-8 pb-24 md:pb-8 max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto">
+
           {/* Payment Due Card - removed from here, moved below onboarding */}
 
 
