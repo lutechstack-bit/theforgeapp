@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { MapPin, Globe, Briefcase } from 'lucide-react';
+import { MapPin, Globe, Briefcase, Layers } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export interface CreativeProfile {
@@ -38,6 +38,15 @@ const getCohortRing = (type: string | null) => {
   }
 };
 
+const getCohortAccent = (type: string | null) => {
+  switch (type) {
+    case 'FORGE': return 'border-l-primary/60';
+    case 'FORGE_CREATORS': return 'border-l-pink-400/60';
+    case 'FORGE_WRITING': return 'border-l-emerald-400/60';
+    default: return 'border-l-border/40';
+  }
+};
+
 const getCohortBadge = (type: string | null) => {
   switch (type) {
     case 'FORGE': return 'bg-primary/10 text-primary border-primary/20';
@@ -59,28 +68,39 @@ export const CreativeCard: React.FC<CreativeCardProps> = ({ profile, onClick }) 
   return (
     <button
       onClick={onClick}
-      className="w-full text-left rounded-xl border border-border/30 bg-card p-4 space-y-3 hover:border-primary/30 transition-all duration-200 active:scale-[0.98]"
+      className={cn(
+        'w-full text-left rounded-xl border border-border/30 border-l-[3px] bg-card p-5 space-y-3.5 transition-all duration-200 active:scale-[0.98]',
+        'hover:shadow-lg hover:shadow-primary/5 hover:border-primary/40',
+        getCohortAccent(profile.cohort_type)
+      )}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3.5">
         <div className="relative">
-          <Avatar className={cn('w-12 h-12 ring-2 ring-offset-2 ring-offset-background', getCohortRing(profile.cohort_type))}>
+          <Avatar className={cn('w-14 h-14 ring-2 ring-offset-2 ring-offset-background', getCohortRing(profile.cohort_type))}>
             <AvatarImage src={profile.avatar_url || undefined} alt={profile.full_name || ''} />
-            <AvatarFallback className="text-xs font-bold bg-muted">{initials}</AvatarFallback>
+            <AvatarFallback className="text-sm font-bold bg-muted">{initials}</AvatarFallback>
           </Avatar>
-          {active && <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-background" />}
+          {active && <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-background" />}
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-foreground text-sm truncate">{profile.full_name || 'Unknown'}</h3>
           {profile.tagline && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{profile.tagline}</p>}
-          {profile.city && (
-            <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-1">
-              <MapPin className="w-3 h-3 shrink-0" />{profile.city}
-            </p>
-          )}
+          <div className="flex items-center gap-3 mt-1.5">
+            {profile.city && (
+              <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                <MapPin className="w-3 h-3 shrink-0" />{profile.city}
+              </p>
+            )}
+            {profile.works_count > 0 && (
+              <p className="text-[11px] text-primary/70 flex items-center gap-1">
+                <Layers className="w-3 h-3 shrink-0" />{profile.works_count} work{profile.works_count !== 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
         </div>
-        <div className="flex flex-col gap-1 items-end shrink-0">
+        <div className="flex flex-col gap-1.5 items-end shrink-0">
           {profile.available_for_hire && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">
               Hiring
             </span>
           )}
@@ -93,12 +113,12 @@ export const CreativeCard: React.FC<CreativeCardProps> = ({ profile, onClick }) 
       </div>
 
       {profile.intro && (
-        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">"{profile.intro}"</p>
+        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 italic">"{profile.intro}"</p>
       )}
 
       <div className="flex flex-wrap gap-1.5">
         {profile.occupations.slice(0, 3).map((occ) => (
-          <span key={occ} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/5 text-primary/80 border border-primary/15">
+          <span key={occ} className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/8 text-primary border border-primary/20">
             {occ}
           </span>
         ))}

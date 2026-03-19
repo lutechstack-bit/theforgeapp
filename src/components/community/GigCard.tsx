@@ -1,6 +1,8 @@
 import React from 'react';
 import { MapPin, Clock, DollarSign, Users } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
 export interface GigData {
   id: string;
@@ -28,27 +30,32 @@ interface GigCardProps {
 
 const payLabel = (type: string | null) => {
   switch (type) {
-    case 'paid': return { text: 'Paid', cls: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20' };
-    case 'revenue_share': return { text: 'Revenue Share', cls: 'bg-primary/10 text-primary border-primary/20' };
-    case 'credit_only': return { text: 'Credit Only', cls: 'bg-muted text-muted-foreground border-border/30' };
-    default: return { text: 'Paid', cls: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20' };
+    case 'paid': return { text: 'Paid', cls: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20', accent: 'border-l-emerald-400/60' };
+    case 'revenue_share': return { text: 'Revenue Share', cls: 'bg-primary/10 text-primary border-primary/20', accent: 'border-l-primary/60' };
+    case 'credit_only': return { text: 'Credit Only', cls: 'bg-muted text-muted-foreground border-border/30', accent: 'border-l-muted-foreground/40' };
+    default: return { text: 'Paid', cls: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20', accent: 'border-l-emerald-400/60' };
   }
 };
 
 export const GigCard: React.FC<GigCardProps> = ({ gig, onClick }) => {
   const pay = payLabel(gig.pay_type);
+  const posterInitials = (gig.poster_name || '?').split(' ').map(n => n[0]).join('').slice(0, 2);
 
   return (
     <button
       onClick={onClick}
-      className="w-full text-left rounded-xl border border-border/30 bg-card p-4 space-y-3 hover:border-primary/30 transition-all active:scale-[0.98]"
+      className={cn(
+        'w-full text-left rounded-xl border border-border/30 border-l-[3px] bg-card p-5 space-y-3 transition-all duration-200 active:scale-[0.98]',
+        'hover:shadow-lg hover:shadow-primary/5 hover:border-primary/40',
+        pay.accent
+      )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-foreground text-sm line-clamp-2">{gig.title}</h3>
           {gig.category && <p className="text-[11px] text-primary/70 mt-0.5">{gig.category}</p>}
         </div>
-        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border shrink-0 ${pay.cls}`}>
+        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold border shrink-0 ${pay.cls}`}>
           {pay.text}
         </span>
       </div>
@@ -58,16 +65,25 @@ export const GigCard: React.FC<GigCardProps> = ({ gig, onClick }) => {
       )}
 
       {gig.roles_needed.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1.5">
           {gig.roles_needed.slice(0, 3).map((role) => (
-            <span key={role} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-secondary text-secondary-foreground">
+            <span key={role} className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/8 text-primary border border-primary/20">
               {role}
             </span>
           ))}
         </div>
       )}
 
-      <div className="flex items-center gap-3 text-[11px] text-muted-foreground pt-1 border-t border-border/20">
+      <div className="flex items-center gap-3 text-[11px] text-muted-foreground pt-2 border-t border-border/20">
+        {gig.poster_name && (
+          <span className="flex items-center gap-1.5">
+            <Avatar className="w-4 h-4">
+              <AvatarImage src={gig.poster_avatar || undefined} />
+              <AvatarFallback className="text-[7px] bg-muted">{posterInitials}</AvatarFallback>
+            </Avatar>
+            {gig.poster_name}
+          </span>
+        )}
         {gig.location && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{gig.location}</span>}
         {gig.budget && <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />{gig.budget}</span>}
         <span className="flex items-center gap-1 ml-auto">
