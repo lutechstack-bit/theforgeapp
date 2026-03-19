@@ -194,7 +194,7 @@ export const CreativesDirectory: React.FC<CreativesDirectoryProps> = ({ onSetupP
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, role, or city..."
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border/30 bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/30 transition-colors"
+          className="w-full pl-10 pr-4 py-3 rounded-xl border border-border/30 bg-card text-sm text-foreground placeholder:text-muted-foreground shadow-inner shadow-black/5 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/30 transition-colors"
         />
       </div>
 
