@@ -27,7 +27,7 @@ interface VirtualSession {
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export const UpcomingSessionsSection: React.FC = () => {
-  const [selectedSession, setSelectedSession] = useState<VirtualSession | null>(null);
+  const [selectedSession, setSelectedSession] = useState<{ session: VirtualSession; number: number } | null>(null);
   const { effectiveEdition } = useEffectiveCohort();
 
   const editionId = effectiveEdition?.id;
