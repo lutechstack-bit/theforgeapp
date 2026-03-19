@@ -136,7 +136,7 @@ const AllCourses: React.FC = () => {
                 {renderGrid(communityCourses, 'portrait')}
               </div>
             )}
-            {preForgeCourses.length > 0 && (
+            {preForgeEnabled && preForgeCourses.length > 0 && (
               <div>
                 {renderSectionHeader('Pre Forge Sessions')}
                 {renderGrid(preForgeCourses, 'landscape')}

@@ -450,6 +450,28 @@ export default function AdminDashboard() {
               }}
             />
           </div>
+
+          {/* Pre Forge Sessions Toggle */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/30 mt-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <BookOpen className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <div className="text-sm font-medium text-foreground">Pre Forge Sessions</div>
+                <div className="text-xs text-muted-foreground">Show or hide Pre Forge Sessions on Learn tab</div>
+              </div>
+            </div>
+            <Switch
+              checked={isFeatureEnabled('pre_forge_sessions_enabled')}
+              onCheckedChange={(checked) => {
+                toggleFeature.mutate({ key: 'pre_forge_sessions_enabled', enabled: checked }, {
+                  onSuccess: () => toast.success(`Pre Forge Sessions ${checked ? 'enabled' : 'disabled'}`),
+                  onError: () => toast.error('Failed to update'),
+                });
+              }}
+            />
+          </div>
         </CardContent>
       </Card>
 
