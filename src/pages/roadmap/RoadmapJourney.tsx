@@ -246,6 +246,7 @@ const RoadmapJourney: React.FC = () => {
           day={selectedCardDay}
           status={getDayStatus(selectedDay)}
           onViewDetail={() => setIsDetailModalOpen(true)}
+          sessionNumber={selectedDay.day_number < 0 ? onlineSessions.length + selectedDay.day_number + 1 : undefined}
         />
       )}
 
