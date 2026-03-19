@@ -19,7 +19,7 @@ interface LearnContent {
   order_index: number;
 }
 
-const FILTER_OPTIONS = [
+const ALL_FILTER_OPTIONS = [
   { id: 'all', label: 'All' },
   { id: 'bfp_sessions', label: 'Pre Forge' },
   { id: 'community_sessions', label: 'Community' },
@@ -30,6 +30,12 @@ const AllCourses: React.FC = () => {
   const [searchParams] = useSearchParams();
   const initialSection = searchParams.get('section') || 'all';
   const [activeFilter, setActiveFilter] = useState(initialSection);
+  const { isFeatureEnabled } = useFeatureFlags();
+
+  const preForgeEnabled = isFeatureEnabled('pre_forge_sessions_enabled');
+  const FILTER_OPTIONS = preForgeEnabled
+    ? ALL_FILTER_OPTIONS
+    : ALL_FILTER_OPTIONS.filter(f => f.id !== 'bfp_sessions');
 
   // Fetch all courses
   const { data: courses = [], isLoading } = useQuery({
