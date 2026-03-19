@@ -60,6 +60,7 @@ const Learn: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { effectiveCohortType } = useEffectiveCohort();
+  const { isFeatureEnabled } = useFeatureFlags();
   const [programTab, setProgramTab] = useState<'online' | 'offline'>('online');
 
   const { data: courses = [], isLoading } = useQuery({
