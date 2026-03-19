@@ -92,7 +92,7 @@ const CountdownContent = ({
   );
 };
 
-export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ edition }) => {
+export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ edition, variant = 'default' }) => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isExpired, setIsExpired] = useState(false);
 
