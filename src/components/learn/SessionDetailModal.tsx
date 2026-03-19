@@ -32,6 +32,7 @@ export const SessionDetailModal: React.FC<SessionDetailModalProps> = ({
   session,
   open,
   onOpenChange,
+  sessionNumber,
 }) => {
   const isMobile = useIsMobile();
 
