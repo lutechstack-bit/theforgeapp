@@ -194,7 +194,7 @@ export const CreativesDirectory: React.FC<CreativesDirectoryProps> = ({ onSetupP
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, role, or city..."
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border/30 bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/30 transition-colors"
+          className="w-full pl-10 pr-4 py-3 rounded-xl border border-border/30 bg-card text-sm text-foreground placeholder:text-muted-foreground shadow-inner shadow-black/5 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/30 transition-colors"
         />
       </div>
 
@@ -238,8 +238,12 @@ export const CreativesDirectory: React.FC<CreativesDirectoryProps> = ({ onSetupP
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-sm text-muted-foreground">No creatives found</p>
+        <div className="text-center py-20">
+          <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
+            <Sparkles className="w-6 h-6 text-muted-foreground/50" />
+          </div>
+          <p className="text-sm font-medium text-muted-foreground">No creatives found</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">Try a different search or filter</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
