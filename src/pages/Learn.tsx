@@ -27,6 +27,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import LevelUpCourseCard from '@/components/learn/LevelUpCourseCard';
 import { Sparkles, ChevronRight, BookOpen } from 'lucide-react';
 import { CinematicHero } from '@/components/shared/CinematicHero';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import levelUpLogo from '@/assets/levelup-logo.png';
 
 interface LearnContent {
@@ -59,6 +60,7 @@ const Learn: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { effectiveCohortType } = useEffectiveCohort();
+  const { isFeatureEnabled } = useFeatureFlags();
   const [programTab, setProgramTab] = useState<'online' | 'offline'>('online');
 
   const { data: courses = [], isLoading } = useQuery({
@@ -191,8 +193,8 @@ const Learn: React.FC = () => {
           />
         ) : (
           <div className="space-y-8 sm:space-y-10">
-            {/* Pre Forge Sessions — only for FORGE cohort */}
-            {(!effectiveCohortType || effectiveCohortType === 'FORGE') && (
+            {/* Pre Forge Sessions — only for FORGE cohort, gated by feature flag */}
+            {isFeatureEnabled('pre_forge_sessions_enabled') && (!effectiveCohortType || effectiveCohortType === 'FORGE') && (
               <CourseCarouselSection
                 items={forgeOnlineSessions}
                 title="Pre Forge Sessions"

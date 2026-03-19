@@ -1,25 +1,32 @@
 
+## Replace Program Banner Images
 
-# Add "Pre Forge Sessions" Feature Toggle
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## What Changes
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-### 1. Database — Insert new feature flag
-Add a `pre_forge_sessions_enabled` row to `app_feature_flags` via migration.
+### Changes
 
-### 2. Admin Dashboard — Add toggle switch
-In `src/pages/admin/AdminDashboard.tsx`, add a new toggle row (identical pattern to the existing Events/Chat/Updates toggles) after the Updates toggle, using a `BookOpen` icon with label "Pre Forge Sessions" and description "Show or hide Pre Forge Sessions on Learn tab".
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-### 3. Learn page — Conditionally hide Pre Forge section
-In `src/pages/Learn.tsx`, wrap the Pre Forge Sessions `CourseCarouselSection` block with an additional `isFeatureEnabled('pre_forge_sessions_enabled')` check.
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-### 4. All Courses page — Conditionally hide Pre Forge filter and content
-In `src/pages/AllCourses.tsx`, use `useFeatureFlags` to:
-- Remove the "Pre Forge" filter option when the flag is disabled
-- Hide the "Pre Forge Sessions" grouped section when the flag is disabled
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
-## Technical Details
-- Reuses the existing `useFeatureFlags` hook (`isFeatureEnabled`, `toggleFeature`)
-- Default: enabled (flag defaults to `true` so existing behavior is preserved)
-- No new components or hooks needed — just one migration + three file edits
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 

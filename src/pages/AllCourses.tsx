@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 interface LearnContent {
   id: string;
@@ -18,7 +19,7 @@ interface LearnContent {
   order_index: number;
 }
 
-const FILTER_OPTIONS = [
+const ALL_FILTER_OPTIONS = [
   { id: 'all', label: 'All' },
   { id: 'bfp_sessions', label: 'Pre Forge' },
   { id: 'community_sessions', label: 'Community' },
@@ -29,6 +30,12 @@ const AllCourses: React.FC = () => {
   const [searchParams] = useSearchParams();
   const initialSection = searchParams.get('section') || 'all';
   const [activeFilter, setActiveFilter] = useState(initialSection);
+  const { isFeatureEnabled } = useFeatureFlags();
+
+  const preForgeEnabled = isFeatureEnabled('pre_forge_sessions_enabled');
+  const FILTER_OPTIONS = preForgeEnabled
+    ? ALL_FILTER_OPTIONS
+    : ALL_FILTER_OPTIONS.filter(f => f.id !== 'bfp_sessions');
 
   // Fetch all courses
   const { data: courses = [], isLoading } = useQuery({
@@ -129,7 +136,7 @@ const AllCourses: React.FC = () => {
                 {renderGrid(communityCourses, 'portrait')}
               </div>
             )}
-            {preForgeCourses.length > 0 && (
+            {preForgeEnabled && preForgeCourses.length > 0 && (
               <div>
                 {renderSectionHeader('Pre Forge Sessions')}
                 {renderGrid(preForgeCourses, 'landscape')}
