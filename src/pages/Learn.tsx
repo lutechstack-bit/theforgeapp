@@ -214,7 +214,7 @@ const Learn: React.FC = () => {
         {/* LevelUp Zone */}
         <div className="bg-white/[0.03] -mx-4 sm:-mx-5 px-4 sm:px-5 pt-5 pb-4 rounded-t-3xl mt-2">
           {/* Zone header */}
-          <div className="mb-8 flex items-center gap-4 w-full">
+          <div className="mb-5 flex items-center gap-4 w-full">
             <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#FFBF00]/40 to-transparent" />
             <div className="flex items-center gap-3">
               <span className="text-base font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
