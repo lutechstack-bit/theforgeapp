@@ -130,7 +130,7 @@ export const UpcomingSessionsSection: React.FC = () => {
                   <Button
                     size="sm"
                     className="flex-1 h-9 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg gap-1.5"
-                    onClick={() => setSelectedSession(session)}
+                    onClick={() => setSelectedSession({ session, number: index + 1 })}
                   >
                     <Video className="w-3.5 h-3.5" />
                     Join Session
