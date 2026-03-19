@@ -151,7 +151,7 @@ const Learn: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 overflow-x-clip">
-      <div className="page-container space-y-8 sm:space-y-10 max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto">
+      <div className="page-container space-y-5 sm:space-y-6 max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto">
         {/* Hero */}
         <CinematicHero
           icon={BookOpen}
