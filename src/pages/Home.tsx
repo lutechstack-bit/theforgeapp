@@ -108,15 +108,8 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Banner — full bleed, before page-container */}
-      <HeroBanner />
-
-      <div className="page-container">
-        <div className="space-y-6 sm:space-y-8 pb-24 md:pb-8 max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto">
-
-          {/* 1. Countdown Timer */}
-          {countdownSection && <CompactCountdownTimer edition={edition} />}
-          {!countdownSection && userDataLoading && <Skeleton className="h-24 rounded-2xl" />}
+      {/* Hero Banner — full bleed, with overlaid countdown */}
+      <HeroBanner edition={edition} showCountdown={!!countdownSection} />
 
           {/* Payment Due Card - removed from here, moved below onboarding */}
 
