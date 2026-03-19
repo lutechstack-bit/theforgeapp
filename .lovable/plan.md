@@ -1,19 +1,10 @@
 
 
-# Remove Sign-Up Option from Auth Page
+# Add Microsoft Clarity to index.html
 
 ## Change
-Remove the "New here? Apply for the Circle" toggle and all sign-up related UI/logic from `src/pages/Auth.tsx`. The page becomes login-only.
-
-## What to remove
-- The `isSignUp` state and all conditional branches for sign-up
-- `fullName`, `confirmPassword`, `showConfirmPassword` states
-- `signUpSchema` import/usage
-- The sign-up form fields (Full Name, Confirm Password)
-- The bottom "New here? Apply for the Circle" toggle button
-- The `toggleMode` and `resetForm` functions
-- The `signUp` import from `useAuth`
+Insert the Clarity tracking script into `index.html` `<head>`, right after the PWA meta tags block (after line 17).
 
 ## File
-`src/pages/Auth.tsx` — simplify to login-only form
+`index.html` — add the script block with project ID `vy7k77lwgg`
 
