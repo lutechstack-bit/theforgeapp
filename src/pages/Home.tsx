@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
+
 import { HomeCarouselSkeleton } from '@/components/home/HomeCarouselSkeleton';
 import { HomeErrorState } from '@/components/home/HomeErrorState';
 import HomeJourneySection from '@/components/home/HomeJourneySection';
