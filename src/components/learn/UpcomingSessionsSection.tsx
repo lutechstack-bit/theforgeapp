@@ -196,9 +196,10 @@ export const UpcomingSessionsSection: React.FC = () => {
 
       {/* Session detail modal */}
       <SessionDetailModal
-        session={selectedSession}
+        session={selectedSession?.session ?? null}
         open={!!selectedSession}
         onOpenChange={(open) => !open && setSelectedSession(null)}
+        sessionNumber={selectedSession?.number}
       />
     </section>
   );
