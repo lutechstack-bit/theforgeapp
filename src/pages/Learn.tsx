@@ -225,7 +225,7 @@ const Learn: React.FC = () => {
             <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#FFBF00]/40 to-transparent" />
           </div>
 
-          <div className="space-y-8 sm:space-y-10">
+          <div className="space-y-6 sm:space-y-8">
             {/* LevelUp Courses */}
             {communitySessions.length > 0 && (
               <section className="space-y-4">
