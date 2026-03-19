@@ -26,7 +26,7 @@ const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onVi
 
   // Day badge label
   const dayBadgeLabel = day.day_number < 0
-    ? `SESSION ${Math.abs(day.day_number)}`
+    ? `SESSION ${sessionNumber ?? Math.abs(day.day_number)}`
     : day.day_number === 0
       ? 'PRE-FORGE'
       : `DAY ${day.day_number}`;
