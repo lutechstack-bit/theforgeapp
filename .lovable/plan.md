@@ -1,32 +1,23 @@
 
-## Replace Program Banner Images
 
-The user wants to swap the banner images for two online programs on the Learn page:
-1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
-2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
+# Reduce Spacing on Learn Page
 
-### Current Setup
-- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
-- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
-- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
+## Problem
+Too much vertical gap between the CinematicHero header and the "More from LevelUp" zone. The `page-container` adds top padding, the hero has `mb-6 md:mb-8`, and the content wrapper uses `space-y-8 sm:space-y-10`, all compounding into excessive whitespace.
 
-### Changes
+## Changes
 
-**1. Copy Assets**
-- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
-- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
+### 1. CinematicHero (`src/components/shared/CinematicHero.tsx`)
+- Reduce bottom margin from `mb-6 md:mb-8` to `mb-2 md:mb-3`
 
-**2. Update File References in `Learn.tsx`**
-- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
-- Line 300: Change `.png` to `.jpg` for Video Editing Academy
+### 2. Learn page (`src/pages/Learn.tsx`)
+- Reduce outer `space-y-8 sm:space-y-10` to `space-y-5 sm:space-y-6` (line 154)
+- Reduce inner content `space-y-8 sm:space-y-10` to `space-y-5 sm:space-y-6` (line 195)
+- Reduce LevelUp zone top padding from `pt-8` to `pt-5` and header margin from `mb-8` to `mb-5` (lines 215-217)
+- Reduce LevelUp zone inner spacing from `space-y-8 sm:space-y-10` to `space-y-6 sm:space-y-8` (line 228)
+- Reduce `mt-4` on the LevelUp zone wrapper to `mt-2`
 
-### Why
-The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
-
-| File | Change |
-|------|--------|
-| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
-| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
-| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
-| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
+## Files to Edit
+1. `src/components/shared/CinematicHero.tsx` — reduce bottom margin
+2. `src/pages/Learn.tsx` — tighten all section spacing
 
