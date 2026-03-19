@@ -157,6 +157,23 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
     );
   }
 
+  const isOverlay = variant === 'overlay';
+
+  if (isOverlay) {
+    return (
+      <div className="relative overflow-hidden rounded-xl border border-white/20 backdrop-blur-md bg-white/10
+                      shadow-[0_0_15px_rgba(255,188,59,0.3)]">
+        <CountdownContent 
+          timeLeft={timeLeft} 
+          city={edition?.city || ''} 
+          tone="base"
+          showBorder={true}
+          isOverlay={true}
+        />
+      </div>
+    );
+  }
+
   return (
     <div 
       className="relative overflow-hidden rounded-xl border-2 border-forge-gold/60 

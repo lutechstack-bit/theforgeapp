@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
+import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
 
 const FALLBACK_IMAGES = [
   '/images/levelup/01.jpg',
@@ -14,7 +15,18 @@ const FALLBACK_IMAGES = [
 
 const SLIDE_INTERVAL = 5000;
 
-const HeroBanner: React.FC = () => {
+interface HeroBannerProps {
+  edition?: {
+    name?: string;
+    city?: string;
+    forge_start_date?: string | null;
+    forge_end_date?: string | null;
+    cohort_type?: string;
+  } | null;
+  showCountdown?: boolean;
+}
+
+const HeroBanner: React.FC<HeroBannerProps> = ({ edition, showCountdown }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { effectiveCohortType } = useEffectiveCohort();
 
@@ -52,44 +64,45 @@ const HeroBanner: React.FC = () => {
   }, []);
 
   return (
-    <>
-      <div className="relative w-full overflow-hidden h-[45vh] sm:h-[50vh] md:h-[55vh] lg:h-[60vh]">
-        {/* Background images with crossfade */}
-        {images.map((src, i) => (
-          <img
-            key={src}
-            src={src}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out"
-            style={{ opacity: i === currentIndex ? 1 : 0 }}
-            loading={i === 0 ? 'eager' : 'lazy'}
-          />
-        ))}
+    <div className="relative w-full overflow-hidden h-[65vh] sm:h-[70vh] md:h-[75vh] lg:h-[80vh]">
+      {/* Background images with crossfade */}
+      {images.map((src, i) => (
+        <img
+          key={src}
+          src={src}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out"
+          style={{ opacity: i === currentIndex ? 1 : 0 }}
+          loading={i === 0 ? 'eager' : 'lazy'}
+        />
+      ))}
 
-        {/* Dark gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
+      {/* Stronger dark gradient overlay for readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/10" />
 
-        {/* Overlaid heading */}
-        <div className="absolute inset-0 flex flex-col items-center justify-end text-center px-4 pb-8 sm:pb-10">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
-            Welcome to{' '}
-            <span className="hero-gradient-text">the Forge</span>
-          </h2>
-        </div>
-      </div>
+      {/* Overlaid content */}
+      <div className="absolute inset-0 flex flex-col items-center justify-end text-center px-4 pb-6 sm:pb-8">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight mb-4 sm:mb-5">
+          Welcome to{' '}
+          <span className="hero-gradient-text">the Forge</span>
+        </h2>
 
-      {/* CTA below carousel with breathing space */}
-      <div className="flex justify-center py-5 sm:py-6 md:py-8">
         <Button
           onClick={handleScrollToJourney}
           variant="outline"
-          className="border-primary/60 text-foreground hover:bg-primary/20 hover:text-foreground backdrop-blur-sm gap-2 px-6 py-2.5 rounded-full"
+          className="border-white/40 text-white hover:bg-white/20 hover:text-white backdrop-blur-sm gap-2 px-6 py-2.5 rounded-full mb-4 sm:mb-5"
         >
           Start your Journey
           <ChevronDown className="h-4 w-4 animate-bounce" />
         </Button>
+
+        {showCountdown && (
+          <div className="w-full max-w-lg sm:max-w-xl md:max-w-2xl">
+            <CompactCountdownTimer edition={edition} variant="overlay" />
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 };
 
