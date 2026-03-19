@@ -25,6 +25,7 @@ interface SessionDetailModalProps {
   session: SessionData | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  sessionNumber?: number;
 }
 
 export const SessionDetailModal: React.FC<SessionDetailModalProps> = ({
