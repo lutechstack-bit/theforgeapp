@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { CompactCountdownTimer } from '@/components/home/CompactCountdownTimer';
+
 import { HomeCarouselSkeleton } from '@/components/home/HomeCarouselSkeleton';
 import { HomeErrorState } from '@/components/home/HomeErrorState';
 import HomeJourneySection from '@/components/home/HomeJourneySection';
@@ -108,15 +108,11 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Banner — full bleed, before page-container */}
-      <HeroBanner />
+      {/* Hero Banner — full bleed, with overlaid countdown */}
+      <HeroBanner edition={edition} showCountdown={!!countdownSection} />
 
       <div className="page-container">
         <div className="space-y-6 sm:space-y-8 pb-24 md:pb-8 max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto">
-
-          {/* 1. Countdown Timer */}
-          {countdownSection && <CompactCountdownTimer edition={edition} />}
-          {!countdownSection && userDataLoading && <Skeleton className="h-24 rounded-2xl" />}
 
           {/* Payment Due Card - removed from here, moved below onboarding */}
 

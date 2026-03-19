@@ -1,47 +1,32 @@
 
+## Replace Program Banner Images
 
-# Extend Hero Carousel with Overlay CTA + Countdown
+The user wants to swap the banner images for two online programs on the Learn page:
+1. **Breakthrough Filmmaking** — replace with `user-uploads://banner_filmamking.jpg`
+2. **Video Editing Academy** — replace with `user-uploads://02_copy.jpg`
 
-## What Changes
+### Current Setup
+- `Learn.tsx` lines 288–308 define online programs with `ProgramBanner` components
+- Breakthrough Filmmaking: `imageUrl="/images/programs/breakthrough-filmmaking.png"` (line 293)
+- Video Editing Academy: `imageUrl="/images/programs/video-editing-academy.png"` (line 300)
 
-The hero carousel currently ends, then the "Start your Journey" button sits in its own section, and the countdown timer is a separate card below. The goal: make the carousel taller to encompass all three elements, with the CTA button and countdown timer overlaid on top of the carousel image.
+### Changes
 
-## Approach
+**1. Copy Assets**
+- `user-uploads://banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg`
+- `user-uploads://02_copy.jpg` → `public/images/programs/video-editing-academy.jpg`
 
-### 1. HeroBanner — Accept `edition` prop, render countdown inside
-- Accept `edition` and `countdownVisible` props
-- Increase carousel height: `h-[65vh] sm:h-[70vh] md:h-[75vh] lg:h-[80vh]` to accommodate the extra overlaid content
-- Move the "Start your Journey" button back inside the overlay (positioned above the countdown)
-- Render `CompactCountdownTimer` inside the overlay at the bottom, with adjusted styling (transparent/glass background instead of the gold fill, or keep the gold card but floating over the image)
-- Strengthen the bottom gradient to ensure readability over the image
+**2. Update File References in `Learn.tsx`**
+- Line 293: Change `.png` to `.jpg` for Breakthrough Filmmaking
+- Line 300: Change `.png` to `.jpg` for Video Editing Academy
 
-### 2. Home.tsx — Remove standalone countdown + CTA
-- Pass `edition` and `countdownSection` to `HeroBanner`
-- Remove the standalone `<CompactCountdownTimer>` and its skeleton from the page-container section
+### Why
+The uploaded files are `.jpg` format. Overwriting the existing `.png` paths would require conversion. Instead, we update the extension references in the code to match the new asset format.
 
-### 3. CompactCountdownTimer — Add overlay-friendly variant
-- Add an optional `variant="overlay"` prop
-- When overlay: use `backdrop-blur-md bg-black/30` background instead of `bg-forge-cream`, use white text instead of black, keep the gold glow border
-
-## Layout (inside HeroBanner)
-
-```text
-┌─────────────────────────────┐
-│                             │
-│      Carousel Image         │
-│                             │
-│   "Welcome to the Forge"    │
-│                             │
-│   [Start your Journey ▼]    │
-│                             │
-│  ┌───────────────────────┐  │
-│  │  Countdown Timer      │  │
-│  └───────────────────────┘  │
-└─────────────────────────────┘
-```
-
-## Files to Edit
-1. `src/components/home/HeroBanner.tsx` — taller carousel, overlay CTA + countdown
-2. `src/components/home/CompactCountdownTimer.tsx` — add `variant` prop for overlay styling
-3. `src/pages/Home.tsx` — pass edition to HeroBanner, remove standalone countdown
+| File | Change |
+|------|--------|
+| Asset copy | `banner_filmamking.jpg` → `public/images/programs/breakthrough-filmmaking.jpg` |
+| Asset copy | `02_copy.jpg` → `public/images/programs/video-editing-academy.jpg` |
+| `Learn.tsx` line 293 | Change `.png` to `.jpg` |
+| `Learn.tsx` line 300 | Change `.png` to `.jpg` |
 

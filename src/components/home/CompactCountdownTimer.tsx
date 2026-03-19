@@ -16,6 +16,7 @@ interface CompactCountdownTimerProps {
     forge_end_date?: string | null;
     cohort_type?: string;
   } | null | undefined;
+  variant?: 'default' | 'overlay';
 }
 
 // Simple TimeUnit - no split logic, just renders value + label
@@ -46,28 +47,29 @@ const Separator = ({ textClass }: { textClass: string }) => (
 );
 
 // CountdownContent - renders the full layout with a specific tone
-// Used twice: once for filled (white text), once for remaining (dark text)
 const CountdownContent = ({ 
   timeLeft, 
   city,
   tone,
-  showBorder
+  showBorder,
+  isOverlay
 }: { 
   timeLeft: TimeLeft;
   city: string;
   tone: 'fill' | 'base';
   showBorder: boolean;
+  isOverlay?: boolean;
 }) => {
-  const textClass = 'text-black';
-  const labelClass = 'text-black/70';
-  const borderClass = showBorder ? 'border-r border-white/10' : '';
+  const textClass = isOverlay ? 'text-white' : 'text-black';
+  const labelClass = isOverlay ? 'text-white/60' : 'text-black/70';
+  const borderColor = isOverlay ? 'border-white/20' : 'border-white/10';
 
   return (
     <div className="flex flex-row w-full items-center">
       {/* Left: City section - compact inline */}
       <div className={cn(
         "flex-shrink-0 w-20 sm:w-28 md:w-32 flex flex-col justify-center px-2 sm:px-3 py-2 sm:py-3",
-        showBorder ? "border-r border-white/10" : ""
+        showBorder ? `border-r ${borderColor}` : ""
       )}>
         <span className={cn("text-[7px] sm:text-[9px] uppercase tracking-widest hidden sm:block", labelClass)}>
           See you in
@@ -91,7 +93,7 @@ const CountdownContent = ({
   );
 };
 
-export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ edition }) => {
+export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ edition, variant = 'default' }) => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isExpired, setIsExpired] = useState(false);
 
@@ -152,6 +154,23 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
   if (!edition) {
     return (
       <div className="h-14 sm:h-16 rounded-xl bg-muted/30 animate-pulse border border-muted/50" />
+    );
+  }
+
+  const isOverlay = variant === 'overlay';
+
+  if (isOverlay) {
+    return (
+      <div className="relative overflow-hidden rounded-xl border border-white/20 backdrop-blur-md bg-white/10
+                      shadow-[0_0_15px_rgba(255,188,59,0.3)]">
+        <CountdownContent 
+          timeLeft={timeLeft} 
+          city={edition?.city || ''} 
+          tone="base"
+          showBorder={true}
+          isOverlay={true}
+        />
+      </div>
     );
   }
 
