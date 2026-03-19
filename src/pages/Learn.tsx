@@ -192,7 +192,7 @@ const Learn: React.FC = () => {
             description="Check back soon for new content"
           />
         ) : (
-          <div className="space-y-8 sm:space-y-10">
+          <div className="space-y-5 sm:space-y-6">
             {/* Pre Forge Sessions — only for FORGE cohort, gated by feature flag */}
             {isFeatureEnabled('pre_forge_sessions_enabled') && (!effectiveCohortType || effectiveCohortType === 'FORGE') && (
               <CourseCarouselSection
