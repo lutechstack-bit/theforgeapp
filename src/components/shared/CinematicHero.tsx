@@ -10,7 +10,7 @@ interface CinematicHeroProps {
 
 export const CinematicHero: React.FC<CinematicHeroProps> = ({ icon: Icon, title, subtitle, badge }) => {
   return (
-    <div className="relative mb-6 md:mb-8">
+    <div className="relative mb-2 md:mb-3">
       <div className="relative overflow-hidden rounded-2xl h-[180px] sm:h-[200px]">
         {/* Layered radial gradients */}
         <div

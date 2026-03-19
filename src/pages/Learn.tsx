@@ -151,7 +151,7 @@ const Learn: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 overflow-x-clip">
-      <div className="page-container space-y-8 sm:space-y-10 max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto">
+      <div className="page-container space-y-5 sm:space-y-6 max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto">
         {/* Hero */}
         <CinematicHero
           icon={BookOpen}
@@ -192,7 +192,7 @@ const Learn: React.FC = () => {
             description="Check back soon for new content"
           />
         ) : (
-          <div className="space-y-8 sm:space-y-10">
+          <div className="space-y-5 sm:space-y-6">
             {/* Pre Forge Sessions — only for FORGE cohort, gated by feature flag */}
             {isFeatureEnabled('pre_forge_sessions_enabled') && (!effectiveCohortType || effectiveCohortType === 'FORGE') && (
               <CourseCarouselSection
@@ -212,9 +212,9 @@ const Learn: React.FC = () => {
         )}
 
         {/* LevelUp Zone */}
-        <div className="bg-white/[0.03] -mx-4 sm:-mx-5 px-4 sm:px-5 pt-8 pb-4 rounded-t-3xl mt-4">
+        <div className="bg-white/[0.03] -mx-4 sm:-mx-5 px-4 sm:px-5 pt-5 pb-4 rounded-t-3xl mt-2">
           {/* Zone header */}
-          <div className="mb-8 flex items-center gap-4 w-full">
+          <div className="mb-5 flex items-center gap-4 w-full">
             <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#FFBF00]/40 to-transparent" />
             <div className="flex items-center gap-3">
               <span className="text-base font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
@@ -225,7 +225,7 @@ const Learn: React.FC = () => {
             <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#FFBF00]/40 to-transparent" />
           </div>
 
-          <div className="space-y-8 sm:space-y-10">
+          <div className="space-y-6 sm:space-y-8">
             {/* LevelUp Courses */}
             {communitySessions.length > 0 && (
               <section className="space-y-4">
