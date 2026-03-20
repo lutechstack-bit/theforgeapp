@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Plus, Trash2, GripVertical, Save, Copy, Settings } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Save, Copy, Settings, Download } from 'lucide-react';
+import { format } from 'date-fns';
 
 const FIELD_TYPES = [
   { value: 'text', label: 'Text Input' },
@@ -367,6 +368,66 @@ const AdminKYForms: React.FC = () => {
     setSelectedForm(duplicated);
   };
 
+  const downloadResponses = async (cohortType: string) => {
+    const tableMap: Record<string, string> = {
+      'FORGE': 'kyf_responses',
+      'FORGE_CREATORS': 'kyc_responses',
+      'FORGE_WRITING': 'kyw_responses',
+    };
+    const tableName = tableMap[cohortType];
+    if (!tableName) return;
+
+    try {
+      toast({ title: 'Preparing CSV...' });
+
+      // Fetch responses and profiles in parallel
+      const [responsesRes, profilesRes] = await Promise.all([
+        supabase.from(tableName as any).select('*'),
+        supabase.from('profiles').select('id, full_name, email'),
+      ]);
+
+      if (responsesRes.error) throw responsesRes.error;
+      const responses = responsesRes.data || [];
+      if (responses.length === 0) {
+        toast({ title: 'No responses found', variant: 'destructive' });
+        return;
+      }
+
+      // Build user lookup
+      const profileMap = new Map<string, { full_name: string; email: string }>();
+      (profilesRes.data || []).forEach((p: any) => {
+        profileMap.set(p.id, { full_name: p.full_name || '', email: p.email || '' });
+      });
+
+      // Build CSV
+      const allKeys = Object.keys(responses[0]).filter(k => k !== 'id');
+      const headers = ['user_name', 'user_email', ...allKeys];
+
+      const escapeCSV = (val: any): string => {
+        if (val === null || val === undefined) return '';
+        const str = Array.isArray(val) ? val.join('; ') : typeof val === 'object' ? JSON.stringify(val) : String(val);
+        return str.includes(',') || str.includes('"') || str.includes('\n') ? `"${str.replace(/"/g, '""')}"` : str;
+      };
+
+      const rows = responses.map((row: any) => {
+        const profile = profileMap.get(row.user_id) || { full_name: '', email: '' };
+        return [escapeCSV(profile.full_name), escapeCSV(profile.email), ...allKeys.map(k => escapeCSV(row[k]))].join(',');
+      });
+
+      const csvContent = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `ky-responses-${cohortType.toLowerCase()}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast({ title: 'CSV downloaded!' });
+    } catch (error: any) {
+      toast({ title: 'Download failed', description: error.message, variant: 'destructive' });
+    }
+  };
+
   if (loading) {
     return <div className="p-6">Loading...</div>;
   }
@@ -402,6 +463,14 @@ const AdminKYForms: React.FC = () => {
                         <Button onClick={() => setSelectedForm(existingForm)} className="flex-1">
                           <Settings className="h-4 w-4 mr-2" />
                           Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => downloadResponses(cohort.value)}
+                          title="Download Responses CSV"
+                        >
+                          <Download className="h-4 w-4" />
                         </Button>
                         <Dialog>
                           <DialogTrigger asChild>
