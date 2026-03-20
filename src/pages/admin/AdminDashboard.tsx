@@ -139,7 +139,128 @@ function useCohortDistribution() {
   });
 }
 
-// --- Chart Colors ---
+// --- Engagement Hooks ---
+
+function useLoginStats() {
+  return useQuery({
+    queryKey: ['admin-login-stats'],
+    queryFn: async () => {
+      const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
+      const { data, error } = await supabase
+        .from('user_activity_logs')
+        .select('created_at')
+        .eq('event_type', 'login')
+        .gte('created_at', thirtyDaysAgo);
+      if (error) throw error;
+      const logs = data || [];
+      
+      const todayCount = logs.filter(l => isToday(parseISO(l.created_at))).length;
+      const yesterdayCount = logs.filter(l => isYesterday(parseISO(l.created_at))).length;
+      const trend = yesterdayCount > 0 ? Math.round(((todayCount - yesterdayCount) / yesterdayCount) * 100) : todayCount > 0 ? 100 : 0;
+
+      // Group by day for chart
+      const grouped: Record<string, number> = {};
+      for (let i = 0; i < 30; i++) {
+        grouped[format(subDays(new Date(), 29 - i), 'yyyy-MM-dd')] = 0;
+      }
+      logs.forEach(l => {
+        const day = format(parseISO(l.created_at), 'yyyy-MM-dd');
+        if (grouped[day] !== undefined) grouped[day]++;
+      });
+      const dailyData = Object.entries(grouped).map(([date, count]) => ({
+        date,
+        label: format(parseISO(date), 'MMM d'),
+        logins: count,
+      }));
+
+      return { total: logs.length, todayCount, yesterdayCount, trend, dailyData };
+    },
+  });
+}
+
+function useEngagementFunnel() {
+  return useQuery({
+    queryKey: ['admin-engagement-funnel'],
+    queryFn: async () => {
+      const [loginRes, profileRes, collabRes, watchRes] = await Promise.all([
+        supabase.from('user_activity_logs').select('user_id', { count: 'exact' }).eq('event_type', 'login'),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('profile_setup_completed', true),
+        supabase.from('collaborator_profiles').select('id', { count: 'exact', head: true }),
+        supabase.from('learn_watch_progress').select('user_id'),
+      ]);
+
+      // Unique login users
+      const uniqueLogins = new Set((loginRes.data || []).map((l: any) => l.user_id)).size;
+      const uniqueWatchers = new Set((watchRes.data || []).map((w: any) => w.user_id)).size;
+
+      return [
+        { step: 'Logged In', count: uniqueLogins, fill: 'hsl(var(--primary))' },
+        { step: 'Onboarding Done', count: profileRes.count || 0, fill: 'hsl(152, 69%, 40%)' },
+        { step: 'Profile Created', count: collabRes.count || 0, fill: 'hsl(217, 91%, 60%)' },
+        { step: 'Video Watched', count: uniqueWatchers, fill: 'hsl(36, 88%, 50%)' },
+      ];
+    },
+  });
+}
+
+function useRecentActivity() {
+  return useQuery({
+    queryKey: ['admin-recent-activity'],
+    queryFn: async () => {
+      // Get recent login logs
+      const { data: logs, error } = await supabase
+        .from('user_activity_logs')
+        .select('user_id, created_at, event_type')
+        .eq('event_type', 'login')
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (error) throw error;
+
+      // Unique user IDs from logs
+      const userIds = [...new Set((logs || []).map(l => l.user_id))];
+      if (!userIds.length) return [];
+
+      // Fetch profiles
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, avatar_url, profile_setup_completed');
+      const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+
+      // Fetch collab profiles
+      const { data: collabs } = await supabase
+        .from('collaborator_profiles')
+        .select('user_id');
+      const collabSet = new Set((collabs || []).map(c => c.user_id));
+
+      // Fetch watch progress
+      const { data: watches } = await supabase
+        .from('learn_watch_progress')
+        .select('user_id');
+      const watchSet = new Set((watches || []).map(w => w.user_id));
+
+      // Dedupe by user, keep latest login
+      const seen = new Set<string>();
+      const rows: any[] = [];
+      for (const log of (logs || [])) {
+        if (seen.has(log.user_id)) continue;
+        seen.add(log.user_id);
+        const profile = profileMap.get(log.user_id);
+        rows.push({
+          userId: log.user_id,
+          name: profile?.full_name || 'Unknown',
+          email: profile?.email || '—',
+          avatarUrl: profile?.avatar_url,
+          loginDate: log.created_at,
+          onboarding: profile?.profile_setup_completed || false,
+          profileCreated: collabSet.has(log.user_id),
+          videoWatched: watchSet.has(log.user_id),
+        });
+      }
+      return rows;
+    },
+  });
+}
+
 const CHART_COLORS = {
   primary: 'hsl(var(--primary))',
   amber: 'hsl(36, 88%, 50%)',
