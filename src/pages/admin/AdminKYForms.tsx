@@ -464,6 +464,14 @@ const AdminKYForms: React.FC = () => {
                           <Settings className="h-4 w-4 mr-2" />
                           Edit
                         </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => downloadResponses(cohort.value)}
+                          title="Download Responses CSV"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button variant="outline" size="icon">
