@@ -224,8 +224,8 @@ function useRecentActivity() {
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name, email, avatar_url, profile_setup_completed');
-      const profileMap = new Map<string, any>();
-      (profiles || []).forEach(p => profileMap.set(p.id, p));
+      const profileLookup: Record<string, any> = {};
+      (profiles || []).forEach(p => { profileLookup[p.id] = p; });
 
       // Fetch collab profiles
       const { data: collabs } = await supabase
