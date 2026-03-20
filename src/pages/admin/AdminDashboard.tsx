@@ -245,7 +245,7 @@ function useRecentActivity() {
       for (const log of (logs || [])) {
         if (seen.has(log.user_id)) continue;
         seen.add(log.user_id);
-        const profile = profileMap.get(log.user_id);
+        const profile = profileLookup[log.user_id];
         rows.push({
           userId: log.user_id,
           name: profile?.full_name || 'Unknown',
