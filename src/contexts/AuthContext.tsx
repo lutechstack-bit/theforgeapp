@@ -12,6 +12,7 @@ import {
   getCachedEdition,
   clearAllAuthCaches 
 } from '@/lib/authCache';
+import { logLoginEvent } from '@/hooks/useActivityTracker';
 
 // Session initialization timeout (3 seconds) - just for determining if user is logged in
 const SESSION_INIT_TIMEOUT_MS = 3000;
@@ -633,7 +634,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []); // Empty dependency array - runs ONCE
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error && data?.user) {
+      logLoginEvent(data.user.id);
+    }
     return { error };
   };
 

@@ -28,7 +28,8 @@ import {
   Handshake,
   ExternalLink,
   Film,
-  CreditCard
+  CreditCard,
+  Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -59,6 +60,7 @@ const adminNavItems = [
   { to: '/admin/perks', icon: Gift, label: 'Perks' },
   { to: '/admin/network', icon: Handshake, label: 'Network' },
   { to: '/admin/payments', icon: CreditCard, label: 'Payments' },
+  { to: '/admin/activity', icon: Activity, label: 'User Activity' },
 ];
 
 export const AdminLayout: React.FC = () => {

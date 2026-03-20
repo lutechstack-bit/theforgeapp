@@ -66,6 +66,7 @@ import AdminTodaysFocus from "./pages/admin/AdminTodaysFocus";
 import AdminPerks from "./pages/admin/AdminPerks";
 import AdminNetwork from "./pages/admin/AdminNetwork";
 import AdminPayments from "./pages/admin/AdminPayments";
+import AdminActivity from "./pages/admin/AdminActivity";
 
 import EventDetail from "./pages/EventDetail";
 import PerkDetail from "./pages/PerkDetail";
@@ -295,6 +296,7 @@ const AppRoutes = () => {
         <Route path="perks" element={<AdminPerks />} />
         <Route path="network" element={<AdminNetwork />} />
         <Route path="payments" element={<AdminPayments />} />
+        <Route path="activity" element={<AdminActivity />} />
       </Route>
       
       {/* Legacy KY form redirects */}
