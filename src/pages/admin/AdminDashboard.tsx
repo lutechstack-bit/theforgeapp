@@ -1,20 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Users, Calendar, CalendarDays, CreditCard, Zap, BookOpen, MessageSquare, 
   UserCheck, GraduationCap, Map, TrendingUp, ArrowUpRight, ArrowDownRight,
-  Handshake, Info
+  Handshake, Info, LogIn, ClipboardCheck, Palette, PlayCircle, RefreshCw,
+  Check, X
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, BarChart, Bar, Legend
+  PieChart, Pie, Cell, BarChart, Bar, Legend, LineChart, Line
 } from 'recharts';
-import { format, subDays, parseISO } from 'date-fns';
+import { format, subDays, parseISO, startOfDay, isToday, isYesterday } from 'date-fns';
 import { Switch } from '@/components/ui/switch';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { toast } from 'sonner';
