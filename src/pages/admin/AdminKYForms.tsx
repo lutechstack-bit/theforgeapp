@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Plus, Trash2, GripVertical, Save, Copy, Settings } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Save, Copy, Settings, Download } from 'lucide-react';
+import { format } from 'date-fns';
 
 const FIELD_TYPES = [
   { value: 'text', label: 'Text Input' },
