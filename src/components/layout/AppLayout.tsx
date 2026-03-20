@@ -5,6 +5,7 @@ import { SideNav } from './SideNav';
 import { TopProfileDropdown } from './TopProfileDropdown';
 import { SidebarProvider, useSidebar } from '@/contexts/SidebarContext';
 import { cn } from '@/lib/utils';
+import { useActivityTracker } from '@/hooks/useActivityTracker';
 
 const AppLayoutContent: React.FC = () => {
   const location = useLocation();
