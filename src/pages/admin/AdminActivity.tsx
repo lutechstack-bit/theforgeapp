@@ -39,7 +39,7 @@ const AdminActivity: React.FC = () => {
     queryFn: async () => {
       let query = supabase
         .from('user_activity_logs')
-        .select('*, profiles!inner(full_name, avatar_url)')
+        .select('*')
         .gte('created_at', sinceDate)
         .order('created_at', { ascending: false })
         .limit(200);
@@ -50,7 +50,19 @@ const AdminActivity: React.FC = () => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []) as unknown as ActivityLog[];
+      
+      // Fetch profiles for unique user IDs
+      const userIds = [...new Set((data || []).map(a => a.user_id))];
+      const { data: profiles } = userIds.length > 0
+        ? await supabase.from('profiles').select('id, full_name, avatar_url').in('id', userIds)
+        : { data: [] };
+      
+      const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+      
+      return (data || []).map(a => ({
+        ...a,
+        profiles: profileMap.get(a.user_id) || null,
+      })) as ActivityLog[];
     },
   });
 
