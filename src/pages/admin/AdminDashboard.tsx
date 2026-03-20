@@ -522,7 +522,197 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* Feature Flags */}
+      {/* Engagement KPI Cards */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">User Engagement</h2>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground">Updated {format(lastRefreshed, 'h:mm a')}</span>
+            <Button size="sm" variant="outline" onClick={handleRefreshEngagement} className="gap-1.5 h-7 text-xs">
+              <RefreshCw className="w-3 h-3" />
+              Refresh
+            </Button>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="bg-card/60 border-border/40">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Logins (30d)</CardTitle>
+              <div className="p-2 rounded-xl bg-primary/15"><LogIn className="w-4 h-4 text-primary" /></div>
+            </CardHeader>
+            <CardContent>
+              {loginLoading ? <Skeleton className="h-8 w-20" /> : (
+                <>
+                  <div className="text-3xl font-bold text-foreground tracking-tight">{loginStats?.total || 0}</div>
+                  <div className="flex items-center gap-1 mt-1">
+                    {(loginStats?.trend || 0) >= 0 ? (
+                      <Badge variant="secondary" className="text-emerald-600 bg-emerald-500/10 text-[10px] px-1.5 py-0">
+                        <ArrowUpRight className="w-3 h-3 mr-0.5" />{loginStats?.trend || 0}%
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-rose-600 bg-rose-500/10 text-[10px] px-1.5 py-0">
+                        <ArrowDownRight className="w-3 h-3 mr-0.5" />{Math.abs(loginStats?.trend || 0)}%
+                      </Badge>
+                    )}
+                    <span className="text-[10px] text-muted-foreground">vs yesterday</span>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/60 border-border/40">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Onboarding Done</CardTitle>
+              <div className="p-2 rounded-xl bg-emerald-500/15"><ClipboardCheck className="w-4 h-4 text-emerald-500" /></div>
+            </CardHeader>
+            <CardContent>
+              {funnelLoading ? <Skeleton className="h-8 w-20" /> : (
+                <div className="text-3xl font-bold text-foreground tracking-tight">{funnelData?.[1]?.count || 0}</div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/60 border-border/40">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Creative Profiles</CardTitle>
+              <div className="p-2 rounded-xl bg-blue-500/15"><Palette className="w-4 h-4 text-blue-500" /></div>
+            </CardHeader>
+            <CardContent>
+              {funnelLoading ? <Skeleton className="h-8 w-20" /> : (
+                <div className="text-3xl font-bold text-foreground tracking-tight">{funnelData?.[2]?.count || 0}</div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/60 border-border/40">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Videos Watched</CardTitle>
+              <div className="p-2 rounded-xl bg-amber-500/15"><PlayCircle className="w-4 h-4 text-amber-500" /></div>
+            </CardHeader>
+            <CardContent>
+              {funnelLoading ? <Skeleton className="h-8 w-20" /> : (
+                <div className="text-3xl font-bold text-foreground tracking-tight">{funnelData?.[3]?.count || 0}</div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Login Chart & Funnel */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-card/60 border-border/40">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Daily Logins</CardTitle>
+            <p className="text-xs text-muted-foreground">Last 30 days</p>
+          </CardHeader>
+          <CardContent>
+            {loginLoading ? <Skeleton className="h-[220px] w-full" /> : (
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={loginStats?.dailyData || []} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                  <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Line type="monotone" dataKey="logins" name="Logins" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0, fill: 'hsl(var(--primary))' }} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/60 border-border/40">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Engagement Funnel</CardTitle>
+            <p className="text-xs text-muted-foreground">Drop-off across key milestones</p>
+          </CardHeader>
+          <CardContent>
+            {funnelLoading ? <Skeleton className="h-[220px] w-full" /> : (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={funnelData || []} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
+                  <YAxis type="category" dataKey="step" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} width={110} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="count" name="Users" radius={[0, 6, 6, 0]}>
+                    {(funnelData || []).map((entry: any, i: number) => (
+                      <Cell key={i} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent User Activity Table */}
+      <Card className="bg-card/60 border-border/40">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Recent User Activity</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">{(activityData || []).length} unique users with login activity</p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {activityLoading ? <Skeleton className="h-[300px] w-full" /> : (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Last Login</TableHead>
+                      <TableHead className="text-center">Onboarding</TableHead>
+                      <TableHead className="text-center">Profile</TableHead>
+                      <TableHead className="text-center">Video</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedActivity.map((row: any) => (
+                      <TableRow key={row.userId}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-7 w-7">
+                              <AvatarImage src={row.avatarUrl} />
+                              <AvatarFallback className="text-[10px]">{(row.name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm font-medium truncate max-w-[120px]">{row.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground truncate max-w-[160px]">{row.email}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{format(parseISO(row.loginDate), 'MMM d, h:mm a')}</TableCell>
+                        <TableCell className="text-center">{row.onboarding ? <Check className="w-4 h-4 text-emerald-500 mx-auto" /> : <X className="w-4 h-4 text-muted-foreground/40 mx-auto" />}</TableCell>
+                        <TableCell className="text-center">{row.profileCreated ? <Check className="w-4 h-4 text-emerald-500 mx-auto" /> : <X className="w-4 h-4 text-muted-foreground/40 mx-auto" />}</TableCell>
+                        <TableCell className="text-center">{row.videoWatched ? <Check className="w-4 h-4 text-emerald-500 mx-auto" /> : <X className="w-4 h-4 text-muted-foreground/40 mx-auto" />}</TableCell>
+                      </TableRow>
+                    ))}
+                    {paginatedActivity.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">No login activity yet</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4">
+                  <span className="text-xs text-muted-foreground">Page {activityPage + 1} of {totalPages}</span>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" disabled={activityPage === 0} onClick={() => setActivityPage(p => p - 1)} className="h-7 text-xs">Previous</Button>
+                    <Button size="sm" variant="outline" disabled={activityPage >= totalPages - 1} onClick={() => setActivityPage(p => p + 1)} className="h-7 text-xs">Next</Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+
       <Card className="bg-card/60 border-border/40">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Feature Toggles</CardTitle>
