@@ -10,6 +10,7 @@ import { useActivityTracker } from '@/hooks/useActivityTracker';
 const AppLayoutContent: React.FC = () => {
   const location = useLocation();
   const { collapsed } = useSidebar();
+  useActivityTracker();
   const hideNavRoutes = ['/auth', '/welcome', '/kyf'];
   const showNav = !hideNavRoutes.includes(location.pathname);
   const isHome = location.pathname === '/';
