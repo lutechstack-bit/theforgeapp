@@ -338,6 +338,19 @@ export default function AdminDashboard() {
   const { data: platformCounts, isLoading: countsLoading } = usePlatformCounts();
   const { data: cohortData, isLoading: cohortLoading } = useCohortDistribution();
   const { isFeatureEnabled, toggleFeature } = useFeatureFlags();
+  const { data: loginStats, isLoading: loginLoading, refetch: refetchLogins } = useLoginStats();
+  const { data: funnelData, isLoading: funnelLoading, refetch: refetchFunnel } = useEngagementFunnel();
+  const { data: activityData, isLoading: activityLoading, refetch: refetchActivity } = useRecentActivity();
+  const [activityPage, setActivityPage] = useState(0);
+  const [lastRefreshed, setLastRefreshed] = useState(new Date());
+
+  const handleRefreshEngagement = () => {
+    refetchLogins();
+    refetchFunnel();
+    refetchActivity();
+    setLastRefreshed(new Date());
+    toast.success('Dashboard refreshed');
+  };
 
   const completionRate = userStats ? Math.round((userStats.completed / Math.max(userStats.total, 1)) * 100) : 0;
 
@@ -351,6 +364,9 @@ export default function AdminDashboard() {
     { name: 'During Forge', value: userStats.duringForge },
     { name: 'Post Forge', value: userStats.postForge },
   ].filter(d => d.value > 0) : [];
+
+  const paginatedActivity = (activityData || []).slice(activityPage * 10, (activityPage + 1) * 10);
+  const totalPages = Math.ceil((activityData || []).length / 10);
 
   return (
     <div className="p-4 md:p-8 space-y-8 max-w-[1400px] mx-auto">
