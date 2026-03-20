@@ -12,6 +12,7 @@ import {
   getCachedEdition,
   clearAllAuthCaches 
 } from '@/lib/authCache';
+import { logLoginEvent } from '@/hooks/useActivityTracker';
 
 // Session initialization timeout (3 seconds) - just for determining if user is logged in
 const SESSION_INIT_TIMEOUT_MS = 3000;
