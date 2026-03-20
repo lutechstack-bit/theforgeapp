@@ -1,20 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Users, Calendar, CalendarDays, CreditCard, Zap, BookOpen, MessageSquare, 
   UserCheck, GraduationCap, Map, TrendingUp, ArrowUpRight, ArrowDownRight,
-  Handshake, Info
+  Handshake, Info, LogIn, ClipboardCheck, Palette, PlayCircle, RefreshCw,
+  Check, X
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, BarChart, Bar, Legend
+  PieChart, Pie, Cell, BarChart, Bar, Legend, LineChart, Line
 } from 'recharts';
-import { format, subDays, parseISO } from 'date-fns';
+import { format, subDays, parseISO, startOfDay, isToday, isYesterday } from 'date-fns';
 import { Switch } from '@/components/ui/switch';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { toast } from 'sonner';
@@ -135,7 +139,129 @@ function useCohortDistribution() {
   });
 }
 
-// --- Chart Colors ---
+// --- Engagement Hooks ---
+
+function useLoginStats() {
+  return useQuery({
+    queryKey: ['admin-login-stats'],
+    queryFn: async () => {
+      const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
+      const { data, error } = await supabase
+        .from('user_activity_logs')
+        .select('created_at')
+        .eq('event_type', 'login')
+        .gte('created_at', thirtyDaysAgo);
+      if (error) throw error;
+      const logs = data || [];
+      
+      const todayCount = logs.filter(l => isToday(parseISO(l.created_at))).length;
+      const yesterdayCount = logs.filter(l => isYesterday(parseISO(l.created_at))).length;
+      const trend = yesterdayCount > 0 ? Math.round(((todayCount - yesterdayCount) / yesterdayCount) * 100) : todayCount > 0 ? 100 : 0;
+
+      // Group by day for chart
+      const grouped: Record<string, number> = {};
+      for (let i = 0; i < 30; i++) {
+        grouped[format(subDays(new Date(), 29 - i), 'yyyy-MM-dd')] = 0;
+      }
+      logs.forEach(l => {
+        const day = format(parseISO(l.created_at), 'yyyy-MM-dd');
+        if (grouped[day] !== undefined) grouped[day]++;
+      });
+      const dailyData = Object.entries(grouped).map(([date, count]) => ({
+        date,
+        label: format(parseISO(date), 'MMM d'),
+        logins: count,
+      }));
+
+      return { total: logs.length, todayCount, yesterdayCount, trend, dailyData };
+    },
+  });
+}
+
+function useEngagementFunnel() {
+  return useQuery({
+    queryKey: ['admin-engagement-funnel'],
+    queryFn: async () => {
+      const [loginRes, profileRes, collabRes, watchRes] = await Promise.all([
+        supabase.from('user_activity_logs').select('user_id', { count: 'exact' }).eq('event_type', 'login'),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('profile_setup_completed', true),
+        supabase.from('collaborator_profiles').select('id', { count: 'exact', head: true }),
+        supabase.from('learn_watch_progress').select('user_id'),
+      ]);
+
+      // Unique login users
+      const uniqueLogins = new Set((loginRes.data || []).map((l: any) => l.user_id)).size;
+      const uniqueWatchers = new Set((watchRes.data || []).map((w: any) => w.user_id)).size;
+
+      return [
+        { step: 'Logged In', count: uniqueLogins, fill: 'hsl(var(--primary))' },
+        { step: 'Onboarding Done', count: profileRes.count || 0, fill: 'hsl(152, 69%, 40%)' },
+        { step: 'Profile Created', count: collabRes.count || 0, fill: 'hsl(217, 91%, 60%)' },
+        { step: 'Video Watched', count: uniqueWatchers, fill: 'hsl(36, 88%, 50%)' },
+      ];
+    },
+  });
+}
+
+function useRecentActivity() {
+  return useQuery({
+    queryKey: ['admin-recent-activity'],
+    queryFn: async () => {
+      // Get recent login logs
+      const { data: logs, error } = await supabase
+        .from('user_activity_logs')
+        .select('user_id, created_at, event_type')
+        .eq('event_type', 'login')
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (error) throw error;
+
+      // Unique user IDs from logs
+      const userIds = [...new Set((logs || []).map(l => l.user_id))];
+      if (!userIds.length) return [];
+
+      // Fetch profiles
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, avatar_url, profile_setup_completed');
+      const profileLookup: Record<string, any> = {};
+      (profiles || []).forEach(p => { profileLookup[p.id] = p; });
+
+      // Fetch collab profiles
+      const { data: collabs } = await supabase
+        .from('collaborator_profiles')
+        .select('user_id');
+      const collabSet = new Set((collabs || []).map(c => c.user_id));
+
+      // Fetch watch progress
+      const { data: watches } = await supabase
+        .from('learn_watch_progress')
+        .select('user_id');
+      const watchSet = new Set((watches || []).map(w => w.user_id));
+
+      // Dedupe by user, keep latest login
+      const seen = new Set<string>();
+      const rows: any[] = [];
+      for (const log of (logs || [])) {
+        if (seen.has(log.user_id)) continue;
+        seen.add(log.user_id);
+        const profile = profileLookup[log.user_id];
+        rows.push({
+          userId: log.user_id,
+          name: profile?.full_name || 'Unknown',
+          email: profile?.email || '—',
+          avatarUrl: profile?.avatar_url,
+          loginDate: log.created_at,
+          onboarding: profile?.profile_setup_completed || false,
+          profileCreated: collabSet.has(log.user_id),
+          videoWatched: watchSet.has(log.user_id),
+        });
+      }
+      return rows;
+    },
+  });
+}
+
 const CHART_COLORS = {
   primary: 'hsl(var(--primary))',
   amber: 'hsl(36, 88%, 50%)',
@@ -212,6 +338,19 @@ export default function AdminDashboard() {
   const { data: platformCounts, isLoading: countsLoading } = usePlatformCounts();
   const { data: cohortData, isLoading: cohortLoading } = useCohortDistribution();
   const { isFeatureEnabled, toggleFeature } = useFeatureFlags();
+  const { data: loginStats, isLoading: loginLoading, refetch: refetchLogins } = useLoginStats();
+  const { data: funnelData, isLoading: funnelLoading, refetch: refetchFunnel } = useEngagementFunnel();
+  const { data: activityData, isLoading: activityLoading, refetch: refetchActivity } = useRecentActivity();
+  const [activityPage, setActivityPage] = useState(0);
+  const [lastRefreshed, setLastRefreshed] = useState(new Date());
+
+  const handleRefreshEngagement = () => {
+    refetchLogins();
+    refetchFunnel();
+    refetchActivity();
+    setLastRefreshed(new Date());
+    toast.success('Dashboard refreshed');
+  };
 
   const completionRate = userStats ? Math.round((userStats.completed / Math.max(userStats.total, 1)) * 100) : 0;
 
@@ -225,6 +364,9 @@ export default function AdminDashboard() {
     { name: 'During Forge', value: userStats.duringForge },
     { name: 'Post Forge', value: userStats.postForge },
   ].filter(d => d.value > 0) : [];
+
+  const paginatedActivity = (activityData || []).slice(activityPage * 10, (activityPage + 1) * 10);
+  const totalPages = Math.ceil((activityData || []).length / 10);
 
   return (
     <div className="p-4 md:p-8 space-y-8 max-w-[1400px] mx-auto">
@@ -380,7 +522,197 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* Feature Flags */}
+      {/* Engagement KPI Cards */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">User Engagement</h2>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground">Updated {format(lastRefreshed, 'h:mm a')}</span>
+            <Button size="sm" variant="outline" onClick={handleRefreshEngagement} className="gap-1.5 h-7 text-xs">
+              <RefreshCw className="w-3 h-3" />
+              Refresh
+            </Button>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="bg-card/60 border-border/40">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Logins (30d)</CardTitle>
+              <div className="p-2 rounded-xl bg-primary/15"><LogIn className="w-4 h-4 text-primary" /></div>
+            </CardHeader>
+            <CardContent>
+              {loginLoading ? <Skeleton className="h-8 w-20" /> : (
+                <>
+                  <div className="text-3xl font-bold text-foreground tracking-tight">{loginStats?.total || 0}</div>
+                  <div className="flex items-center gap-1 mt-1">
+                    {(loginStats?.trend || 0) >= 0 ? (
+                      <Badge variant="secondary" className="text-emerald-600 bg-emerald-500/10 text-[10px] px-1.5 py-0">
+                        <ArrowUpRight className="w-3 h-3 mr-0.5" />{loginStats?.trend || 0}%
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-rose-600 bg-rose-500/10 text-[10px] px-1.5 py-0">
+                        <ArrowDownRight className="w-3 h-3 mr-0.5" />{Math.abs(loginStats?.trend || 0)}%
+                      </Badge>
+                    )}
+                    <span className="text-[10px] text-muted-foreground">vs yesterday</span>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/60 border-border/40">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Onboarding Done</CardTitle>
+              <div className="p-2 rounded-xl bg-emerald-500/15"><ClipboardCheck className="w-4 h-4 text-emerald-500" /></div>
+            </CardHeader>
+            <CardContent>
+              {funnelLoading ? <Skeleton className="h-8 w-20" /> : (
+                <div className="text-3xl font-bold text-foreground tracking-tight">{funnelData?.[1]?.count || 0}</div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/60 border-border/40">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Creative Profiles</CardTitle>
+              <div className="p-2 rounded-xl bg-blue-500/15"><Palette className="w-4 h-4 text-blue-500" /></div>
+            </CardHeader>
+            <CardContent>
+              {funnelLoading ? <Skeleton className="h-8 w-20" /> : (
+                <div className="text-3xl font-bold text-foreground tracking-tight">{funnelData?.[2]?.count || 0}</div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/60 border-border/40">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Videos Watched</CardTitle>
+              <div className="p-2 rounded-xl bg-amber-500/15"><PlayCircle className="w-4 h-4 text-amber-500" /></div>
+            </CardHeader>
+            <CardContent>
+              {funnelLoading ? <Skeleton className="h-8 w-20" /> : (
+                <div className="text-3xl font-bold text-foreground tracking-tight">{funnelData?.[3]?.count || 0}</div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Login Chart & Funnel */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-card/60 border-border/40">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Daily Logins</CardTitle>
+            <p className="text-xs text-muted-foreground">Last 30 days</p>
+          </CardHeader>
+          <CardContent>
+            {loginLoading ? <Skeleton className="h-[220px] w-full" /> : (
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={loginStats?.dailyData || []} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                  <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Line type="monotone" dataKey="logins" name="Logins" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0, fill: 'hsl(var(--primary))' }} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/60 border-border/40">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Engagement Funnel</CardTitle>
+            <p className="text-xs text-muted-foreground">Drop-off across key milestones</p>
+          </CardHeader>
+          <CardContent>
+            {funnelLoading ? <Skeleton className="h-[220px] w-full" /> : (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={funnelData || []} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
+                  <YAxis type="category" dataKey="step" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} width={110} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="count" name="Users" radius={[0, 6, 6, 0]}>
+                    {(funnelData || []).map((entry: any, i: number) => (
+                      <Cell key={i} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent User Activity Table */}
+      <Card className="bg-card/60 border-border/40">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Recent User Activity</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">{(activityData || []).length} unique users with login activity</p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {activityLoading ? <Skeleton className="h-[300px] w-full" /> : (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Last Login</TableHead>
+                      <TableHead className="text-center">Onboarding</TableHead>
+                      <TableHead className="text-center">Profile</TableHead>
+                      <TableHead className="text-center">Video</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedActivity.map((row: any) => (
+                      <TableRow key={row.userId}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-7 w-7">
+                              <AvatarImage src={row.avatarUrl} />
+                              <AvatarFallback className="text-[10px]">{(row.name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm font-medium truncate max-w-[120px]">{row.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground truncate max-w-[160px]">{row.email}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{format(parseISO(row.loginDate), 'MMM d, h:mm a')}</TableCell>
+                        <TableCell className="text-center">{row.onboarding ? <Check className="w-4 h-4 text-emerald-500 mx-auto" /> : <X className="w-4 h-4 text-muted-foreground/40 mx-auto" />}</TableCell>
+                        <TableCell className="text-center">{row.profileCreated ? <Check className="w-4 h-4 text-emerald-500 mx-auto" /> : <X className="w-4 h-4 text-muted-foreground/40 mx-auto" />}</TableCell>
+                        <TableCell className="text-center">{row.videoWatched ? <Check className="w-4 h-4 text-emerald-500 mx-auto" /> : <X className="w-4 h-4 text-muted-foreground/40 mx-auto" />}</TableCell>
+                      </TableRow>
+                    ))}
+                    {paginatedActivity.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">No login activity yet</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4">
+                  <span className="text-xs text-muted-foreground">Page {activityPage + 1} of {totalPages}</span>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" disabled={activityPage === 0} onClick={() => setActivityPage(p => p - 1)} className="h-7 text-xs">Previous</Button>
+                    <Button size="sm" variant="outline" disabled={activityPage >= totalPages - 1} onClick={() => setActivityPage(p => p + 1)} className="h-7 text-xs">Next</Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+
       <Card className="bg-card/60 border-border/40">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Feature Toggles</CardTitle>
