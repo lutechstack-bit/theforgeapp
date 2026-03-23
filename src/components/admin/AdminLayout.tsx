@@ -5,11 +5,16 @@ import {
   ClipboardList, Moon, Package, PanelRight, UserCircle, Star, BookOpen, Route,
   ListTodo, Megaphone, History, PanelLeft, PanelLeftClose, Home, Target, Gift,
   Handshake, ExternalLink, Film, CreditCard, Activity, ChevronRight, BarChart3,
-  Settings, Users2, MonitorSmartphone, GraduationCap
+  Settings, Users2, MonitorSmartphone, GraduationCap, Search, Plus, RefreshCw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
+import { AdminCommandPalette } from './AdminCommandPalette';
+import { AdminNotifications } from './AdminNotifications';
+import { AdminActivityFeed } from './AdminActivityFeed';
+import { format } from 'date-fns';
 
 interface NavItem {
   to: string;
