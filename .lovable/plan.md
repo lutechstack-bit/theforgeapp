@@ -1,40 +1,51 @@
 
 
-# Enhanced Admin Dashboard with Login & Engagement Tracking
+# Add Advanced Date/Time & User Filters to Admin Activity
 
-## What Changes
+## Overview
+Replace the simple date range dropdown with a full date/time picker system and add a user filter, so admins can drill into exact time windows and individual users.
 
-Enhance the existing `AdminDashboard.tsx` at `/admin` to add real user engagement metrics using data from existing tables. No new pages or routes needed.
+## Changes — `src/pages/admin/AdminActivity.tsx`
 
-## New Sections Added to AdminDashboard
+### 1. New Filter Controls (replace current date range dropdown)
+- **Quick presets row**: Today, Yesterday, Last 7 days, Last 30 days, Custom (toggle buttons)
+- **Custom date range**: Two date pickers (From / To) using the existing `Calendar` popover pattern, shown only when "Custom" is selected
+- **Hour selector**: Two time dropdowns (From hour / To hour) to narrow within a day or range — e.g. "9:00 AM to 5:00 PM"
+- **User filter**: A `Select` dropdown populated from the unique users in `profiles`, allowing filtering to a single user's activity
 
-### 1. Engagement KPI Cards (new row, inserted after existing stat cards)
-Four cards with trend indicators:
-- **Total Logins** — count from `user_activity_logs` where `event_type = 'login'` (today vs yesterday for trend)
-- **Onboarding Completed** — count from `profiles` where `profile_setup_completed = true`
-- **Creative Profiles Created** — count from `collaborator_profiles`
-- **Videos Watched** — distinct users in `learn_watch_progress`
+### 2. Query Logic Update
+- When preset selected: compute `sinceDate` / `untilDate` from the preset
+- When custom: use the picked from/to dates + hour values to build precise ISO timestamps
+- Add `.lte('created_at', untilDate)` to the query alongside the existing `.gte`
+- When a user is selected: add `.eq('user_id', selectedUserId)` to the query
+- Increase limit from 200 to 500 for custom ranges
 
-### 2. Daily Logins Line Chart (new chart below engagement cards)
-- Query `user_activity_logs` grouped by day for last 30 days where `event_type = 'login'`
-- Recharts `LineChart` showing daily login count
+### 3. User List Fetch
+- Add a separate query to fetch all profiles (`id, full_name, avatar_url`) for the user filter dropdown
+- Show avatar + name in the dropdown items
 
-### 3. Engagement Funnel Bar Chart (alongside logins chart)
-- Horizontal bar chart showing drop-off: Logged In → Onboarding Done → Profile Created → Video Watched
-- All from real data counts
+### 4. UI Layout
+```text
+┌──────────────────────────────────────────────────┐
+│ User Activity                                     │
+│ Track logins & page visits                        │
+├──────────────────────────────────────────────────┤
+│ [Today] [Yesterday] [7 days] [30 days] [Custom]  │
+│                                                    │
+│ (if Custom):                                      │
+│ From: [📅 Mar 15] [9:00 AM ▼]                    │
+│ To:   [📅 Mar 20] [6:00 PM ▼]                    │
+│                                                    │
+│ User: [All Users ▼]  Event: [All Events ▼]       │
+└──────────────────────────────────────────────────┘
+```
 
-### 4. Recent User Activity Table (bottom section)
-- Query last 50 activity logs joined with `profiles` for name/email
-- Columns: User (avatar + name), Email, Login Date, Onboarding (check/x badge), Profile Created (check/x), Video Watched (check/x)
-- Pagination (10 rows per page)
-- "Last updated" timestamp + Refresh button
+### 5. Hour Slots
+- Reuse the same time slot generation pattern from `DateTimePicker.tsx` (hourly increments for simplicity: 12AM through 11PM)
 
-## Data Approach
-All metrics use **real data** from existing tables — no mock data needed since the tables already exist. Each metric gets its own query hook for clean separation.
-
-## File Changes
-- **`src/pages/admin/AdminDashboard.tsx`** — Add new hooks (`useLoginStats`, `useEngagementFunnel`, `useRecentUserActivity`) and new UI sections
+## Files to Edit
+1. `src/pages/admin/AdminActivity.tsx` — all changes in this single file
 
 ## No Database Changes
-All required tables already exist: `user_activity_logs`, `profiles`, `collaborator_profiles`, `learn_watch_progress`.
+Existing `user_activity_logs` table and RLS policies are sufficient.
 
