@@ -383,17 +383,6 @@ function useSmartAlerts() {
   });
 }
 
-// --- Draggable Widget ---
-const DEFAULT_WIDGET_ORDER = ['stats', 'growth', 'platform', 'charts', 'completion', 'engagement', 'login-charts', 'activity', 'toggles', 'quick-actions'];
-
-function getStoredOrder(): string[] {
-  try {
-    const stored = localStorage.getItem('admin-dashboard-order');
-    if (stored) return JSON.parse(stored);
-  } catch {}
-  return DEFAULT_WIDGET_ORDER;
-}
-
 // --- Main Dashboard ---
 
 export default function AdminDashboard() {
@@ -409,8 +398,6 @@ export default function AdminDashboard() {
   const { data: alerts } = useSmartAlerts();
   const [activityPage, setActivityPage] = useState(0);
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
-  const [widgetOrder, setWidgetOrder] = useState<string[]>(getStoredOrder);
-  const [draggedWidget, setDraggedWidget] = useState<string | null>(null);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(() => {
     try {
       const stored = localStorage.getItem('admin-dismissed-alerts');
@@ -427,25 +414,6 @@ export default function AdminDashboard() {
     next.add(id);
     setDismissedAlerts(next);
     localStorage.setItem('admin-dismissed-alerts', JSON.stringify({ date: format(new Date(), 'yyyy-MM-dd'), ids: Array.from(next) }));
-  };
-
-  const handleDragStart = (widgetId: string) => setDraggedWidget(widgetId);
-  const handleDragOver = (e: React.DragEvent) => e.preventDefault();
-  const handleDrop = (targetId: string) => {
-    if (!draggedWidget || draggedWidget === targetId) return;
-    const newOrder = [...widgetOrder];
-    const fromIdx = newOrder.indexOf(draggedWidget);
-    const toIdx = newOrder.indexOf(targetId);
-    newOrder.splice(fromIdx, 1);
-    newOrder.splice(toIdx, 0, draggedWidget);
-    setWidgetOrder(newOrder);
-    localStorage.setItem('admin-dashboard-order', JSON.stringify(newOrder));
-    setDraggedWidget(null);
-  };
-
-  const resetLayout = () => {
-    setWidgetOrder(DEFAULT_WIDGET_ORDER);
-    localStorage.removeItem('admin-dashboard-order');
   };
 
   const handleRefreshEngagement = () => {
@@ -474,71 +442,41 @@ export default function AdminDashboard() {
 
   const visibleAlerts = (alerts || []).filter(a => !dismissedAlerts.has(a.id));
 
-  // Widget render map
-  const DragHandle = () => (
-    <GripVertical className="w-4 h-4 text-muted-foreground/30 cursor-grab active:cursor-grabbing shrink-0" />
-  );
+  return (
+    <div className="p-4 md:p-8 space-y-8 max-w-[1400px] mx-auto">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Analytics Dashboard</h1>
+        <p className="text-muted-foreground text-sm mt-1">Real-time overview of your LevelUp community</p>
+      </div>
 
-  const WidgetWrapper = ({ id, children }: { id: string; children: React.ReactNode }) => (
-    <div
-      draggable
-      onDragStart={() => handleDragStart(id)}
-      onDragOver={handleDragOver}
-      onDrop={() => handleDrop(id)}
-      className={cn(
-        "transition-opacity",
-        draggedWidget === id && "opacity-50"
-      )}
-    >
-      {children}
-    </div>
-  );
-
-  const widgets: Record<string, React.ReactNode> = {
-    stats: (
-      <WidgetWrapper id="stats">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <DragHandle />
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Analytics Dashboard</h1>
-              <p className="text-muted-foreground text-sm mt-1">Real-time overview of your LevelUp community</p>
-            </div>
-          </div>
-          <Button size="sm" variant="ghost" onClick={resetLayout} className="gap-1.5 text-xs text-muted-foreground">
-            <RotateCcw className="w-3 h-3" />
-            Reset Layout
-          </Button>
-        </div>
-
-        {/* Smart Alerts */}
-        {visibleAlerts.length > 0 && (
-          <div className="space-y-2 mt-4">
-            {visibleAlerts.map(alert => (
-              <div key={alert.id} className={cn(
-                "flex items-center justify-between px-4 py-3 rounded-lg border",
-                alert.type === 'warning' ? "bg-amber-500/5 border-amber-500/20" : "bg-blue-500/5 border-blue-500/20"
-              )}>
-                <div className="flex items-center gap-3">
-                  <AlertTriangle className={cn("w-4 h-4", alert.type === 'warning' ? "text-amber-500" : "text-blue-500")} />
-                  <span className="text-sm text-foreground">{alert.message}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => navigate(alert.link)}>
-                    <Eye className="w-3 h-3" /> View
-                  </Button>
-                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => dismissAlert(alert.id)}>
-                    <X className="w-3 h-3" />
-                  </Button>
-                </div>
+      {/* Smart Alerts */}
+      {visibleAlerts.length > 0 && (
+        <div className="space-y-2">
+          {visibleAlerts.map(alert => (
+            <div key={alert.id} className={cn(
+              "flex items-center justify-between px-4 py-3 rounded-lg border",
+              alert.type === 'warning' ? "bg-amber-500/5 border-amber-500/20" : "bg-blue-500/5 border-blue-500/20"
+            )}>
+              <div className="flex items-center gap-3">
+                <AlertTriangle className={cn("w-4 h-4", alert.type === 'warning' ? "text-amber-500" : "text-blue-500")} />
+                <span className="text-sm text-foreground">{alert.message}</span>
               </div>
-            ))}
-          </div>
-        )}
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => navigate(alert.link)}>
+                  <Eye className="w-3 h-3" /> View
+                </Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => dismissAlert(alert.id)}>
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
-        {/* Top Stat Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-4">
+      {/* Top Stat Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <StatCard title="Total Users" value={userStats?.total || 0} icon={Users} color="text-primary" bg="bg-primary/15" loading={statsLoading} />
         <StatCard title="Profiles Done" value={`${completionRate}%`} icon={UserCheck} color="text-emerald-500" bg="bg-emerald-500/15" subtitle={`${userStats?.completed || 0} of ${userStats?.total || 0}`} loading={statsLoading} />
         <StatCard title="KY Forms" value={platformCounts?.kyForms || 0} icon={GraduationCap} color="text-blue-500" bg="bg-blue-500/15" loading={countsLoading} />
