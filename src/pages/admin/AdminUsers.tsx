@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload, Users, LayoutGrid, List } from 'lucide-react';
+import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload, Users, LayoutGrid, List, Download, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -1307,14 +1307,22 @@ export default function AdminUsers() {
                       <TableCell>{user.city || '-'}</TableCell>
                       <TableCell>{getEditionName(user.edition_id)}</TableCell>
                       <TableCell>
-                        <a href={`/admin/payments?user=${user.id}`} className="inline-block">
-                          <Badge 
-                            variant={user.payment_status === 'BALANCE_PAID' ? 'default' : 'secondary'}
-                            className="cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all"
-                          >
-                            {user.payment_status === 'BALANCE_PAID' ? 'Full' : '₹15K'}
-                          </Badge>
-                        </a>
+                        <Select
+                          value={user.payment_status}
+                          onValueChange={(value: PaymentStatus) => {
+                            updateUserMutation.mutate({ id: user.id, payment_status: value });
+                          }}
+                        >
+                          <SelectTrigger className="h-7 w-[90px] text-xs border-none bg-transparent hover:bg-muted/50 p-1">
+                            <Badge variant={user.payment_status === 'BALANCE_PAID' ? 'default' : 'secondary'} className="text-[10px]">
+                              {user.payment_status === 'BALANCE_PAID' ? 'Full' : '₹15K'}
+                            </Badge>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="CONFIRMED_15K">₹15K Confirmed</SelectItem>
+                            <SelectItem value="BALANCE_PAID">Balance Paid</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell>
                         <Badge variant={user.kyf_completed ? 'default' : 'outline'}>
@@ -1419,6 +1427,33 @@ export default function AdminUsers() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Floating Bulk Actions Toolbar */}
+      {selectedUserIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-xl bg-card border border-border shadow-2xl animate-in slide-in-from-bottom-4">
+          <span className="text-sm font-medium text-foreground">{selectedUserIds.size} selected</span>
+          <div className="w-px h-6 bg-border" />
+          <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={() => {
+            const selected = (users || []).filter(u => selectedUserIds.has(u.id));
+            const csv = ['Name,Email,City,Payment,KYF'].concat(
+              selected.map(u => `"${u.full_name || ''}","${u.email || ''}","${u.city || ''}","${u.payment_status}","${u.kyf_completed}"`)
+            ).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'selected-users.csv'; a.click();
+            URL.revokeObjectURL(url);
+            toast.success(`Exported ${selected.length} users`);
+          }}>
+            <Download className="w-3.5 h-3.5" /> Export CSV
+          </Button>
+          <Button size="sm" variant="destructive" className="gap-1.5 h-8 text-xs" onClick={() => setShowBulkDeleteConfirm(true)}>
+            <Trash2 className="w-3.5 h-3.5" /> Delete
+          </Button>
+          <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setSelectedUserIds(new Set())}>
+            Cancel
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
