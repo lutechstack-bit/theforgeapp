@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Plus, Trash2, GripVertical, Save, Copy, Settings, Download } from 'lucide-react';
 import { format } from 'date-fns';
+import { getSectionsForCohort, type SectionStepField } from '@/components/kyform/KYSectionConfig';
 
 const FIELD_TYPES = [
   { value: 'text', label: 'Text Input' },
@@ -74,6 +75,8 @@ const AdminKYForms: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+
+  const hasSeeded = useRef(false);
 
   useEffect(() => {
     fetchForms();
@@ -142,8 +145,124 @@ const AdminKYForms: React.FC = () => {
       })
     );
 
+    // Auto-seed if no forms exist
+    if ((formsData || []).length === 0 && !hasSeeded.current) {
+      hasSeeded.current = true;
+      await seedFormsFromConfig();
+      return; // seedFormsFromConfig calls fetchForms again
+    }
+
     setForms(formsWithSteps);
     setLoading(false);
+  };
+
+  const mapFieldType = (type: string): string => {
+    const typeMap: Record<string, string> = {
+      'proficiency-grid': 'proficiency',
+      'tags': 'multi_select',
+      'mbti': 'select',
+      'chronotype': 'radio',
+      'meal-preference': 'radio',
+      'tshirt-size': 'select',
+      'pill-select': 'radio',
+      'country-state': 'text',
+      'multi-select': 'multi_select',
+      'phone': 'tel',
+      'photo': 'photo_upload',
+    };
+    return typeMap[type] || type;
+  };
+
+  const getOptionsForSpecialType = (field: SectionStepField): { value: string; label: string }[] => {
+    if (field.options && field.options.length > 0) return field.options.map(o => ({ value: o.value, label: o.label }));
+    
+    switch (field.type) {
+      case 'mbti':
+        return ['ISTJ','ISFJ','INFJ','INTJ','ISTP','ISFP','INFP','INTP','ESTP','ESFP','ENFP','ENTP','ESTJ','ESFJ','ENFJ','ENTJ'].map(t => ({ value: t, label: t }));
+      case 'meal-preference':
+        return [{ value: 'veg', label: 'Vegetarian' }, { value: 'non_veg', label: 'Non-Vegetarian' }, { value: 'vegan', label: 'Vegan' }, { value: 'eggetarian', label: 'Eggetarian' }];
+      case 'tshirt-size':
+        return ['XS','S','M','L','XL','XXL'].map(s => ({ value: s.toLowerCase(), label: s }));
+      case 'proficiency-grid':
+        return (field.levels || []).map(l => ({ value: l.toLowerCase(), label: l }));
+      default:
+        return [];
+    }
+  };
+
+  const seedFormsFromConfig = async () => {
+    const cohortTypes: Array<'FORGE' | 'FORGE_CREATORS' | 'FORGE_WRITING'> = ['FORGE', 'FORGE_CREATORS', 'FORGE_WRITING'];
+    
+    for (const cohortType of cohortTypes) {
+      const sections = getSectionsForCohort(cohortType);
+      // Skip community_profile as it's a special section
+      const kySections = sections.filter(s => s.key !== 'community_profile');
+      
+      const formName = cohortType === 'FORGE' ? 'Know Your Filmmaker' : cohortType === 'FORGE_CREATORS' ? 'Know Your Creator' : 'Know Your Writer';
+      
+      const { data: newForm, error: formError } = await supabase
+        .from('ky_forms')
+        .insert({ cohort_type: cohortType, name: formName, description: kySections.map(s => s.title).join(', '), is_active: true })
+        .select()
+        .single();
+
+      if (formError || !newForm) {
+        console.error('Error seeding form:', formError);
+        continue;
+      }
+
+      let stepIndex = 0;
+      for (const section of kySections) {
+        for (const step of section.steps) {
+          const { data: newStep, error: stepError } = await supabase
+            .from('ky_form_steps')
+            .insert({ form_id: newForm.id, title: `${section.title} — ${step.title}`, description: step.subtitle || '', icon: 'Sparkles', order_index: stepIndex })
+            .select()
+            .single();
+
+          if (stepError || !newStep) { console.error('Error seeding step:', stepError); continue; }
+
+          for (let fi = 0; fi < step.fields.length; fi++) {
+            const field = step.fields[fi];
+            // For proficiency-grid, expand into individual fields
+            if (field.type === 'proficiency-grid' && field.skills) {
+              for (let si = 0; si < field.skills.length; si++) {
+                const skill = field.skills[si];
+                await supabase.from('ky_form_fields').insert({
+                  step_id: newStep.id,
+                  field_key: skill.key,
+                  label: skill.label,
+                  field_type: 'proficiency' as any,
+                  placeholder: '',
+                  helper_text: '',
+                  is_required: false,
+                  options: (field.levels || []).map(l => ({ value: l.toLowerCase(), label: l })),
+                  order_index: fi * 10 + si,
+                  grid_cols: 1,
+                });
+              }
+            } else {
+              await supabase.from('ky_form_fields').insert({
+                step_id: newStep.id,
+                field_key: field.key,
+                label: field.label,
+                field_type: mapFieldType(field.type) as any,
+                placeholder: field.placeholder || '',
+                helper_text: field.helperText || '',
+                is_required: field.required || false,
+                options: getOptionsForSpecialType(field),
+                order_index: fi,
+                grid_cols: field.columns || 1,
+              });
+            }
+          }
+          stepIndex++;
+        }
+      }
+    }
+
+    toast({ title: 'Forms auto-populated from existing definitions!' });
+    await fetchForms();
   };
 
   const createNewForm = (cohortType: string) => {
