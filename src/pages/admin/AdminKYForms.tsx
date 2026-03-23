@@ -439,6 +439,10 @@ const AdminKYForms: React.FC = () => {
           <h1 className="text-2xl font-bold">KY Form Builder</h1>
           <p className="text-muted-foreground">Configure dynamic forms for each cohort type</p>
         </div>
+        <Button onClick={downloadAllStudentData} variant="outline">
+          <Download className="h-4 w-4 mr-2" />
+          Download All Student Data
+        </Button>
       </div>
 
       {!selectedForm ? (
