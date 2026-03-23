@@ -1,32 +1,63 @@
 
 
-# Download All Student Data as CSV
+# Consolidate Admin Sidebar into Grouped Navigation
 
-## Problem
-The existing "Download Responses" button only exports KY form responses (kyf/kyc/kyw tables). You want a single CSV that combines **everything**: profile info, creative profile data, and KY form responses for all students.
+## Current State
+27 flat navigation items in the admin sidebar — overwhelming and hard to scan.
 
-## Changes — `src/pages/admin/AdminKYForms.tsx`
+## Proposed Grouping (27 items → 6 collapsible groups)
 
-### 1. Add "Download All Student Data" button
-Place a prominent button at the top of the page (next to the heading) that exports a comprehensive CSV.
+```text
+📊 Overview
+   ├─ Dashboard
+   └─ User Activity
 
-### 2. New `downloadAllStudentData` function
-Fetches and merges data from multiple tables:
+👥 Users & Data
+   ├─ Users
+   ├─ Editions
+   ├─ KY Forms
+   └─ Payments
 
-- **`profiles`** — full_name, email, city, phone, payment_status, edition_id, profile_setup_completed, ky_form_completed
-- **`editions`** — edition name, cohort_type, city (joined via edition_id)
-- **`collaborator_profiles`** — tagline, intro, about, occupations, available_for_hire, open_to_remote, portfolio_url, portfolio_type
-- **`kyf_responses`** / **`kyc_responses`** / **`kyw_responses`** — all KY form fields, matched per user based on their cohort type
+📱 App Content
+   ├─ Homepage
+   ├─ Today's Focus
+   ├─ Announcements
+   ├─ Perks
+   └─ Events
 
-### 3. CSV structure
-One row per student, columns include:
-- Profile: full_name, email, city, phone, payment_status, edition_name, cohort_type
-- Creative profile: tagline, intro, about, occupations, available_for_hire, open_to_remote, portfolio_url, portfolio_type
-- KY form fields: all columns from their cohort-specific response table (flattened)
+🎓 Curriculum
+   ├─ Roadmap
+   ├─ Roadmap Sidebar
+   ├─ Equipment
+   ├─ Nightly Rituals
+   ├─ Journey Stages
+   ├─ Journey Tasks
+   └─ Learn
 
-### 4. No database changes needed
-Admin already has SELECT access to all tables.
+🤝 Community
+   ├─ Network
+   ├─ Community Highlights
+   ├─ Alumni Showcase
+   ├─ Mentors
+   └─ Explore Programs
 
-## File
-`src/pages/admin/AdminKYForms.tsx` — add button + download function
+⚙️ System
+   ├─ Auto Updates
+   ├─ Documentation
+   └─ Changelog
+```
+
+## Implementation
+
+### File: `src/components/admin/AdminLayout.tsx`
+- Replace the flat `adminNavItems` array with a grouped structure: `{ label, icon, items[] }`
+- Use the existing `Collapsible` component from `@radix-ui/react-collapsible` (already in the project)
+- Each group header shows icon + label + chevron toggle
+- Clicking a group expands/collapses its children
+- Auto-expand the group containing the current active route
+- When sidebar is collapsed (icon-only mode), groups flatten — show only group icons with tooltip, and sub-items appear in a flyout tooltip on hover
+- Store open/closed state in `localStorage` so it persists across sessions
+
+### No other file changes
+Routes and pages remain exactly the same — this is purely a sidebar UI reorganization.
 
