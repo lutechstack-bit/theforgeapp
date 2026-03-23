@@ -1,11 +1,11 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Users, Calendar, CalendarDays, CreditCard, Zap, BookOpen, MessageSquare, 
   UserCheck, GraduationCap, Map, TrendingUp, ArrowUpRight, ArrowDownRight,
   Handshake, Info, LogIn, ClipboardCheck, Palette, PlayCircle, RefreshCw,
-  Check, X, AlertTriangle, Eye, GripVertical, RotateCcw
+  Check, X, AlertTriangle, Eye
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
