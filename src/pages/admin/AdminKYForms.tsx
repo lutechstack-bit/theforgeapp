@@ -76,6 +76,8 @@ const AdminKYForms: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
+  const hasSeeded = useRef(false);
+
   useEffect(() => {
     fetchForms();
   }, []);
