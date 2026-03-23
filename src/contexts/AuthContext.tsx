@@ -45,6 +45,7 @@ interface Profile {
   twitter_handle: string | null;
   specialty: string | null;
   tagline: string | null;
+  has_seen_tour: boolean;
 }
 
 export interface Edition {

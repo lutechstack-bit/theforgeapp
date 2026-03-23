@@ -56,10 +56,14 @@ export const SideNav: React.FC = () => {
     navigate('/auth');
   };
 
+  const tourKeyMap: Record<string, string> = { '/': 'home', '/community': 'community', '/roadmap': 'roadmap', '/learn': 'learn' };
+
   const NavItem = ({ to, icon: Icon, label, isActive }: { to: string; icon: React.ElementType; label: string; isActive: boolean }) => {
+    const tourKey = tourKeyMap[to];
     const content = (
       <NavLink
         to={to}
+        data-tour={tourKey ? `${tourKey}-nav` : undefined}
         className={cn(
           "group flex items-center gap-3.5 rounded-2xl transition-colors duration-200 text-base font-medium",
           collapsed ? "justify-center p-3" : "px-4 py-3.5",
