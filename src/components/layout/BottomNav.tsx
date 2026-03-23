@@ -47,10 +47,11 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
         <nav ref={ref} className="fixed bottom-0 left-0 right-0 z-50 glass-nav md:hidden safe-area-pb" {...props}>
           <div className="container">
             <div className="flex items-center justify-around h-[68px]">
-              {navItems.map(({ to, icon: Icon, label }) => {
+              {navItems.map(({ to, icon: Icon, label, tourKey }) => {
                 const isActive = isNavActive(to);
                 return (
                   <NavLink
+                    data-tour={`${tourKey}-nav-mobile`}
                     key={to}
                     to={to}
                     className={cn(
