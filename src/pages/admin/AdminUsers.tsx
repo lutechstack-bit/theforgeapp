@@ -1427,6 +1427,33 @@ export default function AdminUsers() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Floating Bulk Actions Toolbar */}
+      {selectedUserIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-xl bg-card border border-border shadow-2xl animate-in slide-in-from-bottom-4">
+          <span className="text-sm font-medium text-foreground">{selectedUserIds.size} selected</span>
+          <div className="w-px h-6 bg-border" />
+          <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={() => {
+            const selected = (users || []).filter(u => selectedUserIds.has(u.id));
+            const csv = ['Name,Email,City,Payment,KYF'].concat(
+              selected.map(u => `"${u.full_name || ''}","${u.email || ''}","${u.city || ''}","${u.payment_status}","${u.kyf_completed}"`)
+            ).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'selected-users.csv'; a.click();
+            URL.revokeObjectURL(url);
+            toast.success(`Exported ${selected.length} users`);
+          }}>
+            <Download className="w-3.5 h-3.5" /> Export CSV
+          </Button>
+          <Button size="sm" variant="destructive" className="gap-1.5 h-8 text-xs" onClick={() => setShowBulkDeleteConfirm(true)}>
+            <Trash2 className="w-3.5 h-3.5" /> Delete
+          </Button>
+          <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setSelectedUserIds(new Set())}>
+            Cancel
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
