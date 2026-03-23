@@ -1307,14 +1307,22 @@ export default function AdminUsers() {
                       <TableCell>{user.city || '-'}</TableCell>
                       <TableCell>{getEditionName(user.edition_id)}</TableCell>
                       <TableCell>
-                        <a href={`/admin/payments?user=${user.id}`} className="inline-block">
-                          <Badge 
-                            variant={user.payment_status === 'BALANCE_PAID' ? 'default' : 'secondary'}
-                            className="cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all"
-                          >
-                            {user.payment_status === 'BALANCE_PAID' ? 'Full' : '₹15K'}
-                          </Badge>
-                        </a>
+                        <Select
+                          value={user.payment_status}
+                          onValueChange={(value: PaymentStatus) => {
+                            updateUserMutation.mutate({ id: user.id, payment_status: value });
+                          }}
+                        >
+                          <SelectTrigger className="h-7 w-[90px] text-xs border-none bg-transparent hover:bg-muted/50 p-1">
+                            <Badge variant={user.payment_status === 'BALANCE_PAID' ? 'default' : 'secondary'} className="text-[10px]">
+                              {user.payment_status === 'BALANCE_PAID' ? 'Full' : '₹15K'}
+                            </Badge>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="CONFIRMED_15K">₹15K Confirmed</SelectItem>
+                            <SelectItem value="BALANCE_PAID">Balance Paid</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell>
                         <Badge variant={user.kyf_completed ? 'default' : 'outline'}>
