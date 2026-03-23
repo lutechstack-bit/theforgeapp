@@ -1,113 +1,155 @@
-import React, { useState } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { 
-  LayoutDashboard, 
-  Users, 
-  Calendar, 
-  FileText, 
-  ArrowLeft,
-  Shield,
-  Sparkles,
-  Map,
-  ClipboardList,
-  Moon,
-  Package,
-  PanelRight,
-  UserCircle,
-  Star,
-  BookOpen,
-  Route,
-  ListTodo,
-  Megaphone,
-  History,
-  PanelLeft,
-  PanelLeftClose,
-  Home,
-  Target,
-  Gift,
-  Handshake,
-  ExternalLink,
-  Film,
-  CreditCard,
-  Activity
+  LayoutDashboard, Users, Calendar, FileText, ArrowLeft, Shield, Sparkles, Map,
+  ClipboardList, Moon, Package, PanelRight, UserCircle, Star, BookOpen, Route,
+  ListTodo, Megaphone, History, PanelLeft, PanelLeftClose, Home, Target, Gift,
+  Handshake, ExternalLink, Film, CreditCard, Activity, ChevronRight, BarChart3,
+  Settings, Users2, MonitorSmartphone, GraduationCap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
-const adminNavItems = [
-  { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
-  { to: '/admin/homepage', icon: Home, label: 'Homepage' },
-  { to: '/admin/todays-focus', icon: Target, label: 'Today\'s Focus' },
-  { to: '/admin/users', icon: Users, label: 'Users' },
-  { to: '/admin/editions', icon: Calendar, label: 'Editions' },
-  { to: '/admin/ky-forms', icon: ClipboardList, label: 'KY Forms' },
-  { to: '/admin/journey-stages', icon: Route, label: 'Journey Stages' },
-  { to: '/admin/journey-tasks', icon: ListTodo, label: 'Journey Tasks' },
-  { to: '/admin/announcements', icon: Megaphone, label: 'Announcements' },
-  { to: '/admin/roadmap', icon: Map, label: 'Roadmap' },
-  { to: '/admin/roadmap-sidebar', icon: PanelRight, label: 'Roadmap Sidebar' },
-  { to: '/admin/equipment', icon: Package, label: 'Equipment' },
-  { to: '/admin/nightly-rituals', icon: Moon, label: 'Nightly Rituals' },
-  { to: '/admin/events', icon: Calendar, label: 'Events' },
-  { to: '/admin/learn', icon: FileText, label: 'Learn' },
-  { to: '/admin/explore-programs', icon: ExternalLink, label: 'Explore Programs' },
-  { to: '/admin/alumni-showcase', icon: Film, label: 'Alumni Showcase' },
-  { to: '/admin/mentors', icon: UserCircle, label: 'Mentors' },
-  { to: '/admin/community-highlights', icon: Star, label: 'Community Highlights' },
-  { to: '/admin/auto-updates', icon: Sparkles, label: 'Auto Updates' },
-  { to: '/admin/docs', icon: BookOpen, label: 'Documentation' },
-  { to: '/admin/changelog', icon: History, label: 'Changelog' },
-  { to: '/admin/perks', icon: Gift, label: 'Perks' },
-  { to: '/admin/network', icon: Handshake, label: 'Network' },
-  { to: '/admin/payments', icon: CreditCard, label: 'Payments' },
-  { to: '/admin/activity', icon: Activity, label: 'User Activity' },
+interface NavItem {
+  to: string;
+  icon: React.ElementType;
+  label: string;
+  end?: boolean;
+}
+
+interface NavGroup {
+  label: string;
+  icon: React.ElementType;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: 'Overview',
+    icon: BarChart3,
+    items: [
+      { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
+      { to: '/admin/activity', icon: Activity, label: 'User Activity' },
+    ],
+  },
+  {
+    label: 'Users & Data',
+    icon: Users2,
+    items: [
+      { to: '/admin/users', icon: Users, label: 'Users' },
+      { to: '/admin/editions', icon: Calendar, label: 'Editions' },
+      { to: '/admin/ky-forms', icon: ClipboardList, label: 'KY Forms' },
+      { to: '/admin/payments', icon: CreditCard, label: 'Payments' },
+    ],
+  },
+  {
+    label: 'App Content',
+    icon: MonitorSmartphone,
+    items: [
+      { to: '/admin/homepage', icon: Home, label: 'Homepage' },
+      { to: '/admin/todays-focus', icon: Target, label: "Today's Focus" },
+      { to: '/admin/announcements', icon: Megaphone, label: 'Announcements' },
+      { to: '/admin/perks', icon: Gift, label: 'Perks' },
+      { to: '/admin/events', icon: Calendar, label: 'Events' },
+    ],
+  },
+  {
+    label: 'Curriculum',
+    icon: GraduationCap,
+    items: [
+      { to: '/admin/roadmap', icon: Map, label: 'Roadmap' },
+      { to: '/admin/roadmap-sidebar', icon: PanelRight, label: 'Roadmap Sidebar' },
+      { to: '/admin/equipment', icon: Package, label: 'Equipment' },
+      { to: '/admin/nightly-rituals', icon: Moon, label: 'Nightly Rituals' },
+      { to: '/admin/journey-stages', icon: Route, label: 'Journey Stages' },
+      { to: '/admin/journey-tasks', icon: ListTodo, label: 'Journey Tasks' },
+      { to: '/admin/learn', icon: FileText, label: 'Learn' },
+    ],
+  },
+  {
+    label: 'Community',
+    icon: Handshake,
+    items: [
+      { to: '/admin/network', icon: Handshake, label: 'Network' },
+      { to: '/admin/community-highlights', icon: Star, label: 'Highlights' },
+      { to: '/admin/alumni-showcase', icon: Film, label: 'Alumni Showcase' },
+      { to: '/admin/mentors', icon: UserCircle, label: 'Mentors' },
+      { to: '/admin/explore-programs', icon: ExternalLink, label: 'Explore Programs' },
+    ],
+  },
+  {
+    label: 'System',
+    icon: Settings,
+    items: [
+      { to: '/admin/auto-updates', icon: Sparkles, label: 'Auto Updates' },
+      { to: '/admin/docs', icon: BookOpen, label: 'Documentation' },
+      { to: '/admin/changelog', icon: History, label: 'Changelog' },
+    ],
+  },
 ];
+
+const STORAGE_KEY = 'admin-sidebar-groups';
 
 export const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
-  const NavItem = ({ item }: { item: typeof adminNavItems[0] }) => {
-    const content = (
-      <NavLink
-        to={item.to}
-        end={item.end}
-        className={({ isActive }) =>
-          cn(
-            'flex items-center gap-3 rounded-lg transition-all duration-200',
-            'hover:bg-primary/10',
-            collapsed ? 'justify-center px-3 py-3' : 'px-4 py-3',
-            isActive
-              ? 'bg-primary/20 text-primary font-medium'
-              : 'text-muted-foreground'
-          )
-        }
-      >
-        <item.icon className="w-5 h-5 shrink-0" />
-        {!collapsed && <span>{item.label}</span>}
-      </NavLink>
-    );
-
-    if (collapsed) {
-      return (
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>
-            <span className="block">{content}</span>
-          </TooltipTrigger>
-          <TooltipContent side="right" sideOffset={12} className="bg-popover/95 backdrop-blur-sm text-popover-foreground border-border/50 shadow-xl">
-            {item.label}
-          </TooltipContent>
-        </Tooltip>
+  const getDefaultOpen = (): Record<string, boolean> => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+    // Auto-expand group containing active route
+    const result: Record<string, boolean> = {};
+    navGroups.forEach(g => {
+      result[g.label] = g.items.some(i => 
+        i.end ? location.pathname === i.to : location.pathname.startsWith(i.to)
       );
-    }
-
-    return content;
+    });
+    return result;
   };
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(getDefaultOpen);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(openGroups));
+  }, [openGroups]);
+
+  // Auto-expand group when navigating
+  useEffect(() => {
+    const activeGroup = navGroups.find(g =>
+      g.items.some(i => i.end ? location.pathname === i.to : location.pathname.startsWith(i.to))
+    );
+    if (activeGroup && !openGroups[activeGroup.label]) {
+      setOpenGroups(prev => ({ ...prev, [activeGroup.label]: true }));
+    }
+  }, [location.pathname]);
+
+  const toggleGroup = (label: string) => {
+    setOpenGroups(prev => ({ ...prev, [label]: !prev[label] }));
+  };
+
+  const NavItemLink = ({ item }: { item: NavItem }) => (
+    <NavLink
+      to={item.to}
+      end={item.end}
+      className={({ isActive }) =>
+        cn(
+          'flex items-center gap-3 rounded-lg transition-all duration-200 text-sm',
+          'hover:bg-primary/10',
+          collapsed ? 'justify-center px-3 py-2.5' : 'px-3 py-2.5 pl-10',
+          isActive ? 'bg-primary/20 text-primary font-medium' : 'text-muted-foreground'
+        )
+      }
+    >
+      <item.icon className="w-4 h-4 shrink-0" />
+      {!collapsed && <span>{item.label}</span>}
+    </NavLink>
+  );
 
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background flex">
-        {/* Sidebar */}
         <aside className={cn(
           "border-r border-border/50 bg-card/30 backdrop-blur-sm flex flex-col transition-all duration-300",
           collapsed ? "w-[72px]" : "w-64"
@@ -117,10 +159,7 @@ export const AdminLayout: React.FC = () => {
             "p-4 border-b border-border/50",
             collapsed ? "flex flex-col items-center gap-3" : "flex items-center justify-between"
           )}>
-            <div className={cn(
-              "flex items-center gap-3",
-              collapsed && "flex-col"
-            )}>
+            <div className={cn("flex items-center gap-3", collapsed && "flex-col")}>
               <div className="p-2 rounded-lg bg-primary/20 shrink-0">
                 <Shield className="w-5 h-5 text-primary" />
               </div>
@@ -131,8 +170,6 @@ export const AdminLayout: React.FC = () => {
                 </div>
               )}
             </div>
-            
-            {/* Toggle Button */}
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <button
@@ -151,20 +188,79 @@ export const AdminLayout: React.FC = () => {
           </div>
 
           {/* Navigation */}
-          <nav className={cn(
-            "flex-1 space-y-1 overflow-y-auto",
-            collapsed ? "p-2" : "p-4"
-          )}>
-            {adminNavItems.map((item) => (
-              <NavItem key={item.to} item={item} />
-            ))}
+          <nav className={cn("flex-1 overflow-y-auto", collapsed ? "p-2" : "p-3")}>
+            {navGroups.map((group) => {
+              const isOpen = openGroups[group.label] ?? false;
+              const hasActive = group.items.some(i =>
+                i.end ? location.pathname === i.to : location.pathname.startsWith(i.to)
+              );
+
+              if (collapsed) {
+                // Collapsed: show group icon, tooltip with sub-items
+                return (
+                  <div key={group.label} className="mb-1">
+                    <Tooltip delayDuration={0}>
+                      <TooltipTrigger asChild>
+                        <div className={cn(
+                          "flex items-center justify-center p-3 rounded-lg cursor-default",
+                          hasActive ? "text-primary" : "text-muted-foreground"
+                        )}>
+                          <group.icon className="w-5 h-5" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" sideOffset={12} className="bg-popover/95 backdrop-blur-sm text-popover-foreground border-border/50 shadow-xl p-0">
+                        <div className="py-1 min-w-[160px]">
+                          <p className="px-3 py-1.5 text-xs font-semibold text-muted-foreground">{group.label}</p>
+                          {group.items.map(item => (
+                            <NavLink
+                              key={item.to}
+                              to={item.to}
+                              end={item.end}
+                              className={({ isActive }) =>
+                                cn(
+                                  "flex items-center gap-2 px-3 py-2 text-sm transition-colors",
+                                  isActive ? "text-primary font-medium bg-primary/10" : "text-foreground hover:bg-muted/50"
+                                )
+                              }
+                            >
+                              <item.icon className="w-4 h-4" />
+                              <span>{item.label}</span>
+                            </NavLink>
+                          ))}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                );
+              }
+
+              // Expanded: collapsible group
+              return (
+                <Collapsible key={group.label} open={isOpen} onOpenChange={() => toggleGroup(group.label)}>
+                  <CollapsibleTrigger className={cn(
+                    "flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    "hover:bg-primary/5",
+                    hasActive ? "text-foreground" : "text-muted-foreground"
+                  )}>
+                    <group.icon className="w-4.5 h-4.5 shrink-0" />
+                    <span className="flex-1 text-left">{group.label}</span>
+                    <ChevronRight className={cn(
+                      "w-4 h-4 transition-transform duration-200",
+                      isOpen && "rotate-90"
+                    )} />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-0.5 mt-0.5">
+                    {group.items.map(item => (
+                      <NavItemLink key={item.to} item={item} />
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            })}
           </nav>
 
           {/* Back to App */}
-          <div className={cn(
-            "border-t border-border/50",
-            collapsed ? "p-2" : "p-4"
-          )}>
+          <div className={cn("border-t border-border/50", collapsed ? "p-2" : "p-3")}>
             {collapsed ? (
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
@@ -191,7 +287,6 @@ export const AdminLayout: React.FC = () => {
           </div>
         </aside>
 
-        {/* Main Content */}
         <main className="flex-1 overflow-auto">
           <Outlet />
         </main>
