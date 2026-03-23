@@ -305,9 +305,42 @@ export const AdminLayout: React.FC = () => {
           </div>
         </aside>
 
-        <main className="flex-1 overflow-auto">
-          <Outlet />
-        </main>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Quick Actions Bar */}
+          <div className="flex items-center justify-between px-4 py-2 border-b border-border/40 bg-card/20 backdrop-blur-sm shrink-0">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCmdOpen(true)}
+                className="gap-2 h-8 text-xs text-muted-foreground"
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Search...</span>
+                <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border border-border/50 bg-muted/50 px-1.5 text-[10px] font-mono text-muted-foreground">
+                  ⌘K
+                </kbd>
+              </Button>
+              <Button size="sm" variant="ghost" className="gap-1.5 h-8 text-xs" onClick={() => navigate('/admin/users?action=create')}>
+                <Plus className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Create User</span>
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-muted-foreground hidden sm:inline">
+                {format(new Date(), 'MMM d, h:mm a')}
+              </span>
+              <AdminNotifications />
+              <AdminActivityFeed />
+            </div>
+          </div>
+
+          <main className="flex-1 overflow-auto">
+            <Outlet />
+          </main>
+        </div>
+
+        <AdminCommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
       </div>
     </TooltipProvider>
   );
