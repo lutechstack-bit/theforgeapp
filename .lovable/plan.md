@@ -1,51 +1,32 @@
 
 
-# Add Advanced Date/Time & User Filters to Admin Activity
+# Download All Student Data as CSV
 
-## Overview
-Replace the simple date range dropdown with a full date/time picker system and add a user filter, so admins can drill into exact time windows and individual users.
+## Problem
+The existing "Download Responses" button only exports KY form responses (kyf/kyc/kyw tables). You want a single CSV that combines **everything**: profile info, creative profile data, and KY form responses for all students.
 
-## Changes — `src/pages/admin/AdminActivity.tsx`
+## Changes — `src/pages/admin/AdminKYForms.tsx`
 
-### 1. New Filter Controls (replace current date range dropdown)
-- **Quick presets row**: Today, Yesterday, Last 7 days, Last 30 days, Custom (toggle buttons)
-- **Custom date range**: Two date pickers (From / To) using the existing `Calendar` popover pattern, shown only when "Custom" is selected
-- **Hour selector**: Two time dropdowns (From hour / To hour) to narrow within a day or range — e.g. "9:00 AM to 5:00 PM"
-- **User filter**: A `Select` dropdown populated from the unique users in `profiles`, allowing filtering to a single user's activity
+### 1. Add "Download All Student Data" button
+Place a prominent button at the top of the page (next to the heading) that exports a comprehensive CSV.
 
-### 2. Query Logic Update
-- When preset selected: compute `sinceDate` / `untilDate` from the preset
-- When custom: use the picked from/to dates + hour values to build precise ISO timestamps
-- Add `.lte('created_at', untilDate)` to the query alongside the existing `.gte`
-- When a user is selected: add `.eq('user_id', selectedUserId)` to the query
-- Increase limit from 200 to 500 for custom ranges
+### 2. New `downloadAllStudentData` function
+Fetches and merges data from multiple tables:
 
-### 3. User List Fetch
-- Add a separate query to fetch all profiles (`id, full_name, avatar_url`) for the user filter dropdown
-- Show avatar + name in the dropdown items
+- **`profiles`** — full_name, email, city, phone, payment_status, edition_id, profile_setup_completed, ky_form_completed
+- **`editions`** — edition name, cohort_type, city (joined via edition_id)
+- **`collaborator_profiles`** — tagline, intro, about, occupations, available_for_hire, open_to_remote, portfolio_url, portfolio_type
+- **`kyf_responses`** / **`kyc_responses`** / **`kyw_responses`** — all KY form fields, matched per user based on their cohort type
 
-### 4. UI Layout
-```text
-┌──────────────────────────────────────────────────┐
-│ User Activity                                     │
-│ Track logins & page visits                        │
-├──────────────────────────────────────────────────┤
-│ [Today] [Yesterday] [7 days] [30 days] [Custom]  │
-│                                                    │
-│ (if Custom):                                      │
-│ From: [📅 Mar 15] [9:00 AM ▼]                    │
-│ To:   [📅 Mar 20] [6:00 PM ▼]                    │
-│                                                    │
-│ User: [All Users ▼]  Event: [All Events ▼]       │
-└──────────────────────────────────────────────────┘
-```
+### 3. CSV structure
+One row per student, columns include:
+- Profile: full_name, email, city, phone, payment_status, edition_name, cohort_type
+- Creative profile: tagline, intro, about, occupations, available_for_hire, open_to_remote, portfolio_url, portfolio_type
+- KY form fields: all columns from their cohort-specific response table (flattened)
 
-### 5. Hour Slots
-- Reuse the same time slot generation pattern from `DateTimePicker.tsx` (hourly increments for simplicity: 12AM through 11PM)
+### 4. No database changes needed
+Admin already has SELECT access to all tables.
 
-## Files to Edit
-1. `src/pages/admin/AdminActivity.tsx` — all changes in this single file
-
-## No Database Changes
-Existing `user_activity_logs` table and RLS policies are sufficient.
+## File
+`src/pages/admin/AdminKYForms.tsx` — add button + download function
 
