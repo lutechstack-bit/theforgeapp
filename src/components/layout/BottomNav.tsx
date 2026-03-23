@@ -15,10 +15,10 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const navItems = [
-  { to: '/', icon: Home, label: 'Home' },
-  { to: '/community', icon: MessageCircle, label: 'Community' },
-  { to: '/roadmap', icon: Map, label: 'Roadmap' },
-  { to: '/learn', icon: BookOpen, label: 'Learn' },
+  { to: '/', icon: Home, label: 'Home', tourKey: 'home' },
+  { to: '/community', icon: MessageCircle, label: 'Community', tourKey: 'community' },
+  { to: '/roadmap', icon: Map, label: 'Roadmap', tourKey: 'roadmap' },
+  { to: '/learn', icon: BookOpen, label: 'Learn', tourKey: 'learn' },
 ];
 
 export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
