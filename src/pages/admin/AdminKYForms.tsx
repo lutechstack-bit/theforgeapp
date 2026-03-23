@@ -428,6 +428,87 @@ const AdminKYForms: React.FC = () => {
     }
   };
 
+  const downloadAllStudentData = async () => {
+    try {
+      toast({ title: 'Preparing comprehensive CSV...' });
+
+      const [profilesRes, editionsRes, collabRes, kyfRes, kycRes, kywRes] = await Promise.all([
+        supabase.from('profiles').select('id, full_name, email, city, phone, payment_status, edition_id, profile_setup_completed, ky_form_completed'),
+        supabase.from('editions').select('id, name, cohort_type, city'),
+        supabase.from('collaborator_profiles').select('user_id, tagline, intro, about, occupations, available_for_hire, open_to_remote, portfolio_url, portfolio_type'),
+        supabase.from('kyf_responses').select('*'),
+        supabase.from('kyc_responses').select('*'),
+        supabase.from('kyw_responses').select('*'),
+      ]);
+
+      if (profilesRes.error) throw profilesRes.error;
+      const profiles = profilesRes.data || [];
+      if (profiles.length === 0) {
+        toast({ title: 'No student data found', variant: 'destructive' });
+        return;
+      }
+
+      const editionMap = new Map((editionsRes.data || []).map((e: any) => [e.id, e]));
+      const collabMap = new Map((collabRes.data || []).map((c: any) => [c.user_id, c]));
+      const kyfMap = new Map((kyfRes.data || []).map((r: any) => [r.user_id, r]));
+      const kycMap = new Map((kycRes.data || []).map((r: any) => [r.user_id, r]));
+      const kywMap = new Map((kywRes.data || []).map((r: any) => [r.user_id, r]));
+
+      const kyFieldKeys = new Set<string>();
+      const skipKeys = new Set(['id', 'user_id', 'created_at', 'updated_at']);
+      [kyfRes.data, kycRes.data, kywRes.data].forEach(data => {
+        (data || []).forEach((row: any) => {
+          Object.keys(row).forEach(k => { if (!skipKeys.has(k)) kyFieldKeys.add(k); });
+        });
+      });
+      const sortedKyFields = Array.from(kyFieldKeys).sort();
+
+      const escapeCSV = (val: any): string => {
+        if (val === null || val === undefined) return '';
+        const str = Array.isArray(val) ? val.join('; ') : typeof val === 'object' ? JSON.stringify(val) : String(val);
+        return str.includes(',') || str.includes('"') || str.includes('\n') ? `"${str.replace(/"/g, '""')}"` : str;
+      };
+
+      const headers = [
+        'full_name', 'email', 'city', 'phone', 'payment_status', 'edition_name', 'cohort_type', 'profile_setup_completed', 'ky_form_completed',
+        'creative_tagline', 'creative_intro', 'creative_about', 'creative_occupations', 'available_for_hire', 'open_to_remote', 'portfolio_url', 'portfolio_type',
+        ...sortedKyFields,
+      ];
+
+      const rows = profiles.map((p: any) => {
+        const edition = editionMap.get(p.edition_id) as any;
+        const collab = collabMap.get(p.id) as any;
+        const cohortType = edition?.cohort_type || '';
+        let kyData: any = null;
+        if (cohortType === 'FORGE') kyData = kyfMap.get(p.id);
+        else if (cohortType === 'FORGE_CREATORS') kyData = kycMap.get(p.id);
+        else if (cohortType === 'FORGE_WRITING') kyData = kywMap.get(p.id);
+
+        return [
+          escapeCSV(p.full_name), escapeCSV(p.email), escapeCSV(p.city), escapeCSV(p.phone),
+          escapeCSV(p.payment_status), escapeCSV(edition?.name), escapeCSV(cohortType),
+          escapeCSV(p.profile_setup_completed), escapeCSV(p.ky_form_completed),
+          escapeCSV(collab?.tagline), escapeCSV(collab?.intro), escapeCSV(collab?.about),
+          escapeCSV(collab?.occupations), escapeCSV(collab?.available_for_hire),
+          escapeCSV(collab?.open_to_remote), escapeCSV(collab?.portfolio_url), escapeCSV(collab?.portfolio_type),
+          ...sortedKyFields.map(k => escapeCSV(kyData?.[k])),
+        ].join(',');
+      });
+
+      const csvContent = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `all-student-data-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast({ title: 'CSV downloaded!' });
+    } catch (error: any) {
+      toast({ title: 'Download failed', description: error.message, variant: 'destructive' });
+    }
+  };
+
   if (loading) {
     return <div className="p-6">Loading...</div>;
   }
@@ -439,6 +520,10 @@ const AdminKYForms: React.FC = () => {
           <h1 className="text-2xl font-bold">KY Form Builder</h1>
           <p className="text-muted-foreground">Configure dynamic forms for each cohort type</p>
         </div>
+        <Button onClick={downloadAllStudentData} variant="outline">
+          <Download className="h-4 w-4 mr-2" />
+          Download All Student Data
+        </Button>
       </div>
 
       {!selectedForm ? (

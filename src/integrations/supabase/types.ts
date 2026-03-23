@@ -2339,6 +2339,7 @@ export type Database = {
           email: string | null
           forge_mode: Database["public"]["Enums"]["forge_mode"]
           full_name: string | null
+          has_seen_tour: boolean | null
           id: string
           instagram_handle: string | null
           ky_form_completed: boolean
@@ -2363,6 +2364,7 @@ export type Database = {
           email?: string | null
           forge_mode?: Database["public"]["Enums"]["forge_mode"]
           full_name?: string | null
+          has_seen_tour?: boolean | null
           id: string
           instagram_handle?: string | null
           ky_form_completed?: boolean
@@ -2387,6 +2389,7 @@ export type Database = {
           email?: string | null
           forge_mode?: Database["public"]["Enums"]["forge_mode"]
           full_name?: string | null
+          has_seen_tour?: boolean | null
           id?: string
           instagram_handle?: string | null
           ky_form_completed?: boolean
