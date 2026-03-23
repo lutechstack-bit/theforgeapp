@@ -44,7 +44,6 @@ export const TopProfileDropdown: React.FC = () => {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            data-tour="profile-dropdown"
             aria-label="Profile menu"
             className={cn(
               "flex items-center gap-2 rounded-lg border border-white/20 bg-black/40 backdrop-blur-md px-3 py-1.5",

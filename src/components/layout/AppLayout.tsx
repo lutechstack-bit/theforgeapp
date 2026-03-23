@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import { SideNav } from './SideNav';
@@ -6,25 +6,15 @@ import { TopProfileDropdown } from './TopProfileDropdown';
 import { SidebarProvider, useSidebar } from '@/contexts/SidebarContext';
 import { cn } from '@/lib/utils';
 import { useActivityTracker } from '@/hooks/useActivityTracker';
-import { useAuth } from '@/contexts/AuthContext';
-import { AppTour } from '@/components/tour/AppTour';
 
 const AppLayoutContent: React.FC = () => {
   const location = useLocation();
   const { collapsed } = useSidebar();
-  const { profile } = useAuth();
   useActivityTracker();
   const hideNavRoutes = ['/auth', '/welcome', '/kyf'];
   const showNav = !hideNavRoutes.includes(location.pathname);
   const isHome = location.pathname === '/';
   const [isScrolled, setIsScrolled] = useState(false);
-  const [showTour, setShowTour] = useState(false);
-
-  useEffect(() => {
-    if (profile && profile.has_seen_tour === false) {
-      setShowTour(true);
-    }
-  }, [profile]);
 
   useEffect(() => {
     if (!isHome) return;
@@ -33,10 +23,6 @@ const AppLayoutContent: React.FC = () => {
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isHome]);
-
-  const handleTourComplete = useCallback(() => {
-    setShowTour(false);
-  }, []);
 
   return (
     <div className="min-h-[100dvh] bg-background safe-area-pt">
@@ -58,9 +44,6 @@ const AppLayoutContent: React.FC = () => {
         <Outlet />
       </main>
       {showNav && <BottomNav />}
-      {showTour && profile?.id && (
-        <AppTour userId={profile.id} onComplete={handleTourComplete} />
-      )}
     </div>
   );
 };

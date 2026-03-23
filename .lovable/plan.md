@@ -1,52 +1,51 @@
 
 
-# In-App Product Tour for Students
+# Add Advanced Date/Time & User Filters to Admin Activity
 
 ## Overview
-Build a guided product tour that highlights key app features when a student first logs in — similar to what you see in tools like Notion, Slack, or mobile apps. Tooltips will step through the main navigation areas (Home, Community, Roadmap, Learn, Profile) with descriptions.
+Replace the simple date range dropdown with a full date/time picker system and add a user filter, so admins can drill into exact time windows and individual users.
 
-## Approach: Custom Tour Component (no external library)
-Since the app already uses shadcn/ui and has a clean component architecture, I'll build a lightweight custom tour system using Popover-style tooltips with a backdrop overlay — no heavy dependencies needed.
+## Changes — `src/pages/admin/AdminActivity.tsx`
 
-## Database Change
-Add a `has_seen_tour` boolean column (default `false`) to the `profiles` table. Once the user completes or dismisses the tour, it's set to `true` so they never see it again.
+### 1. New Filter Controls (replace current date range dropdown)
+- **Quick presets row**: Today, Yesterday, Last 7 days, Last 30 days, Custom (toggle buttons)
+- **Custom date range**: Two date pickers (From / To) using the existing `Calendar` popover pattern, shown only when "Custom" is selected
+- **Hour selector**: Two time dropdowns (From hour / To hour) to narrow within a day or range — e.g. "9:00 AM to 5:00 PM"
+- **User filter**: A `Select` dropdown populated from the unique users in `profiles`, allowing filtering to a single user's activity
 
-## New Files
+### 2. Query Logic Update
+- When preset selected: compute `sinceDate` / `untilDate` from the preset
+- When custom: use the picked from/to dates + hour values to build precise ISO timestamps
+- Add `.lte('created_at', untilDate)` to the query alongside the existing `.gte`
+- When a user is selected: add `.eq('user_id', selectedUserId)` to the query
+- Increase limit from 200 to 500 for custom ranges
 
-### 1. `src/components/tour/AppTour.tsx`
-- Full-screen semi-transparent backdrop overlay (`bg-black/50 z-[100]`)
-- Spotlight cutout around the current target element (using `getBoundingClientRect`)
-- Tooltip card positioned near the spotlight with: title, description, step indicator (1/5), Next/Skip buttons
-- Steps config array targeting:
-  1. **Home tab** (bottom nav / side nav) — "This is your Home base"
-  2. **Community tab** — "Connect with your batchmates"
-  3. **Roadmap tab** — "Track your journey & tasks"
-  4. **Learn tab** — "Watch sessions & courses"
-  5. **Profile dropdown** — "Manage your profile here"
-- Auto-scrolls to each element, applies a `z-[101]` highlight ring
-- On finish/skip: calls `supabase.from('profiles').update({ has_seen_tour: true })`
+### 3. User List Fetch
+- Add a separate query to fetch all profiles (`id, full_name, avatar_url`) for the user filter dropdown
+- Show avatar + name in the dropdown items
 
-### 2. `src/components/tour/tourSteps.ts`
-- Array of step definitions: `{ targetSelector, title, description, position }`
+### 4. UI Layout
+```text
+┌──────────────────────────────────────────────────┐
+│ User Activity                                     │
+│ Track logins & page visits                        │
+├──────────────────────────────────────────────────┤
+│ [Today] [Yesterday] [7 days] [30 days] [Custom]  │
+│                                                    │
+│ (if Custom):                                      │
+│ From: [📅 Mar 15] [9:00 AM ▼]                    │
+│ To:   [📅 Mar 20] [6:00 PM ▼]                    │
+│                                                    │
+│ User: [All Users ▼]  Event: [All Events ▼]       │
+└──────────────────────────────────────────────────┘
+```
 
-## Modified Files
+### 5. Hour Slots
+- Reuse the same time slot generation pattern from `DateTimePicker.tsx` (hourly increments for simplicity: 12AM through 11PM)
 
-### 3. `src/components/layout/AppLayout.tsx`
-- Import and render `<AppTour />` conditionally when `profile?.has_seen_tour === false`
-- Pass profile and a callback to mark tour complete
+## Files to Edit
+1. `src/pages/admin/AdminActivity.tsx` — all changes in this single file
 
-### 4. Database migration
-- `ALTER TABLE profiles ADD COLUMN has_seen_tour boolean DEFAULT false;`
-
-## Tour UX
-- Appears only on first login after profile setup is complete
-- Glass-morphism tooltip card matching the app's dark aesthetic
-- "Skip Tour" always visible, "Next" advances, final step shows "Got it!"
-- Mobile: targets bottom nav items; Desktop: targets side nav items (responsive targeting)
-
-## Files Summary
-1. **New:** `src/components/tour/AppTour.tsx`
-2. **New:** `src/components/tour/tourSteps.ts`
-3. **Edit:** `src/components/layout/AppLayout.tsx`
-4. **Migration:** Add `has_seen_tour` column to `profiles`
+## No Database Changes
+Existing `user_activity_logs` table and RLS policies are sufficient.
 
