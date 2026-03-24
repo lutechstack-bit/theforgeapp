@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronLeft, Home, ExternalLink } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Home, ExternalLink, X, MapPin } from 'lucide-react';
 import forgeIcon from '@/assets/forge-icon.png';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 interface GalleryImage {
   url: string;
@@ -35,6 +36,9 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
   const navigate = useNavigate();
   const { edition } = useAuth();
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
+  const [showDetail, setShowDetail] = useState(false);
+  const [modalImageIdx, setModalImageIdx] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
 
   const { data: locations, isLoading } = useQuery({
     queryKey: ['home_stay_locations', edition?.id],
@@ -77,6 +81,20 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
     staleTime: 5 * 60 * 1000,
   });
 
+  const location = (!isLoading && locations && locations.length > 0) ? locations[0] : null;
+  const images: GalleryImage[] = location ? ((location.gallery_images as GalleryImage[]) || []) : [];
+  const featuredImg = location?.featured_image_url;
+  const allImages = featuredImg ? [{ url: featuredImg }, ...images] : images;
+
+  // Autoplay for modal carousel
+  useEffect(() => {
+    if (!showDetail || isHovering || allImages.length <= 1) return;
+    const timer = setInterval(() => {
+      setModalImageIdx((prev) => (prev + 1) % allImages.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [showDetail, isHovering, allImages.length]);
+
   if (isLoading) {
     return (
       <div className="rounded-2xl border border-border/40 bg-card/30 p-4 sm:p-5">
@@ -93,15 +111,15 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
     );
   }
 
-  if (!locations || locations.length === 0) return null;
-
-  const location = locations[0];
-  const images: GalleryImage[] = (location.gallery_images as GalleryImage[]) || [];
-  const featuredImg = location.featured_image_url;
-  const allImages = featuredImg ? [{ url: featuredImg }, ...images] : images;
+  if (!location) return null;
 
   const handlePrev = () => setCurrentImageIdx((i) => (i === 0 ? allImages.length - 1 : i - 1));
   const handleNext = () => setCurrentImageIdx((i) => (i === allImages.length - 1 ? 0 : i + 1));
+
+  const handleOpenDetail = () => {
+    setModalImageIdx(0);
+    setShowDetail(true);
+  };
 
   return (
     <div className="rounded-2xl border border-[#FFBF00]/20 bg-card/30 p-4 sm:p-5">
@@ -112,7 +130,7 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
           <h2 className="text-base sm:text-lg font-bold text-foreground">{title}</h2>
         </div>
         <button
-          onClick={() => navigate('/roadmap')}
+          onClick={handleOpenDetail}
           className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-medium"
         >
           Details <ChevronRight className="h-3 w-3" />
@@ -186,6 +204,94 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
           )}
         </div>
       </div>
+      {/* Detail Dialog */}
+      <Dialog open={showDetail} onOpenChange={setShowDetail}>
+        <DialogContent className="max-w-lg p-0 bg-card border-border/50 overflow-hidden gap-0 [&>button]:hidden">
+          {/* Carousel */}
+          {allImages.length > 0 && (
+            <div
+              className="relative w-full aspect-[16/10] bg-muted"
+              onMouseEnter={() => setIsHovering(true)}
+              onMouseLeave={() => setIsHovering(false)}
+            >
+              <img
+                src={allImages[modalImageIdx]?.url}
+                alt={location.name}
+                className="w-full h-full object-cover transition-opacity duration-500"
+              />
+              {/* Counter */}
+              <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full font-medium">
+                {modalImageIdx + 1} / {allImages.length}
+              </div>
+              {/* Close */}
+              <button
+                onClick={() => setShowDetail(false)}
+                className="absolute top-3 left-3 h-8 w-8 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              {/* Nav arrows */}
+              {allImages.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setModalImageIdx((i) => (i === 0 ? allImages.length - 1 : i - 1))}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => setModalImageIdx((i) => (i === allImages.length - 1 ? 0 : i + 1))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </>
+              )}
+              {/* Dots */}
+              {allImages.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                  {allImages.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setModalImageIdx(i)}
+                      className={`h-2 rounded-full transition-all ${
+                        i === modalImageIdx ? 'w-5 bg-primary' : 'w-2 bg-white/50 hover:bg-white/70'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Info */}
+          <div className="p-5 space-y-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <Home className="h-5 w-5 text-primary flex-shrink-0" />
+                <h3 className="text-lg font-bold text-foreground">{location.name}</h3>
+              </div>
+              {location.full_address && (
+                <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                  <p>{location.full_address}</p>
+                </div>
+              )}
+            </div>
+
+            {location.google_maps_url && (
+              <Button
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                size="lg"
+                onClick={() => window.open(location.google_maps_url!, '_blank')}
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Open in Google Maps
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
