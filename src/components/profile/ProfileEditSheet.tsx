@@ -264,6 +264,31 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
     }
   };
 
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      toast({ title: 'Too Short', description: 'Password must be at least 6 characters.', variant: 'destructive' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: 'Mismatch', description: 'Passwords do not match.', variant: 'destructive' });
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: 'Password Updated', description: 'Your password has been changed successfully.' });
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPasswordSection(false);
+    } catch (error: any) {
+      console.error('Password change error:', error);
+      toast({ title: 'Error', description: error.message || 'Failed to update password.', variant: 'destructive' });
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   const renderSelectField = (label: string, value: string, options: string[], onChange: (val: string) => void) => (
     <div className="space-y-1.5">
       <Label className="text-xs text-muted-foreground">{label}</Label>
