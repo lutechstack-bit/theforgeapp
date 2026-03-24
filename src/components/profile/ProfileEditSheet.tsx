@@ -74,8 +74,6 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
   const [changingPassword, setChangingPassword] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
-  const [cropperOpen, setCropperOpen] = useState(false);
-  const [imageToCrop, setImageToCrop] = useState<string>('');
 
   const cohortType = profileData?.cohortType || null;
   const kyData = profileData?.kyfResponse || profileData?.kywResponse || profileData?.kycResponse;
