@@ -623,6 +623,78 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
               </>
             )}
 
+            {/* Change Password */}
+            <div className="border-t border-border pt-4">
+              <button
+                type="button"
+                onClick={() => setShowPasswordSection(!showPasswordSection)}
+                className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors w-full"
+              >
+                <Lock className="h-4 w-4" />
+                Change Password
+                {showPasswordSection ? <ChevronUp className="h-4 w-4 ml-auto" /> : <ChevronDown className="h-4 w-4 ml-auto" />}
+              </button>
+
+              {showPasswordSection && (
+                <div className="space-y-3 mt-3 animate-in slide-in-from-top-2">
+                  <div className="relative">
+                    <FloatingInput
+                      id="new_password"
+                      label="New Password"
+                      type={showNewPw ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPw(!showNewPw)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <FloatingInput
+                      id="confirm_password"
+                      label="Confirm Password"
+                      type={showConfirmPw ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPw(!showConfirmPw)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showConfirmPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+
+                  {newPassword && newPassword.length < 6 && (
+                    <p className="text-xs text-destructive">Minimum 6 characters</p>
+                  )}
+                  {confirmPassword && newPassword !== confirmPassword && (
+                    <p className="text-xs text-destructive">Passwords don't match</p>
+                  )}
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleChangePassword}
+                    disabled={changingPassword || newPassword.length < 6 || newPassword !== confirmPassword}
+                    className="w-full"
+                  >
+                    {changingPassword ? (
+                      <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Updating...</>
+                    ) : (
+                      'Update Password'
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+
             {/* Actions */}
             <div className="flex gap-3 pt-4">
               <Button
