@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronLeft, Home, ExternalLink } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Home, ExternalLink, X, MapPin } from 'lucide-react';
 import forgeIcon from '@/assets/forge-icon.png';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
