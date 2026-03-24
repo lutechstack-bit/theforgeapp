@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { 
   Users, Calendar, CalendarDays, CreditCard, BookOpen, MessageSquare, 
   TrendingUp, ArrowUpRight, ArrowDownRight, LogIn, Palette, RefreshCw,
-  Check, X, AlertTriangle, Eye, Info, Map
+  Check, X, AlertTriangle, Eye, Info, Map, UserX, ChevronDown
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -192,6 +192,22 @@ function useSmartAlerts() {
   });
 }
 
+function useNeverLoggedIn() {
+  return useQuery({
+    queryKey: ['admin-never-logged-in'],
+    queryFn: async () => {
+      const [profilesRes, loginsRes] = await Promise.all([
+        supabase.from('profiles').select('id, full_name, email, avatar_url, created_at'),
+        supabase.from('user_activity_logs').select('user_id').eq('event_type', 'login'),
+      ]);
+      if (profilesRes.error) throw profilesRes.error;
+      const loggedInIds = new Set((loginsRes.data || []).map((l: any) => l.user_id));
+      const neverLogged = (profilesRes.data || []).filter(p => !loggedInIds.has(p.id));
+      return neverLogged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    },
+  });
+}
+
 const CHART_COLORS = {
   primary: 'hsl(var(--primary))',
   amber: 'hsl(36, 88%, 50%)',
@@ -232,8 +248,10 @@ export default function AdminDashboard() {
   const { data: funnelData, isLoading: funnelLoading, refetch: refetchFunnel } = useEngagementFunnel();
   const { data: activityData, isLoading: activityLoading, refetch: refetchActivity } = useRecentActivity();
   const { data: alerts } = useSmartAlerts();
+  const { data: neverLoggedIn, isLoading: neverLoggedLoading } = useNeverLoggedIn();
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
   const [showAllActivity, setShowAllActivity] = useState(false);
+  const [showNeverLogged, setShowNeverLogged] = useState(false);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(() => {
     try {
       const stored = localStorage.getItem('admin-dismissed-alerts');
@@ -272,6 +290,7 @@ export default function AdminDashboard() {
     { label: 'Onboarded', value: `${completionRate}%`, subtitle: `${userStats?.completed || 0} of ${userStats?.total || 0}`, icon: Check, color: 'text-emerald-500', bg: 'bg-emerald-500/15', link: '/admin/users' },
     { label: 'Profiles', value: funnelData?.[2]?.count || 0, subtitle: 'creative profiles', icon: Palette, color: 'text-blue-500', bg: 'bg-blue-500/15', link: '/admin/network' },
     { label: 'Logins Today', value: loginStats?.todayCount || 0, subtitle: undefined, icon: LogIn, color: 'text-primary', bg: 'bg-primary/15', link: '/admin/activity', trend: loginStats?.trend },
+    { label: 'Never Logged In', value: neverLoggedIn?.length || 0, subtitle: 'since signup', icon: UserX, color: 'text-amber-500', bg: 'bg-amber-500/15', link: '', isToggle: true },
   ];
 
   return (
@@ -313,12 +332,15 @@ export default function AdminDashboard() {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {kpiCards.map(kpi => (
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {kpiCards.map((kpi: any) => (
           <Card
             key={kpi.label}
-            className="bg-card/60 border-border/40 cursor-pointer hover:scale-[1.02] hover:border-primary/30 transition-all"
-            onClick={() => navigate(kpi.link)}
+            className={cn(
+              "bg-card/60 border-border/40 cursor-pointer hover:scale-[1.02] hover:border-primary/30 transition-all",
+              kpi.isToggle && showNeverLogged && "border-amber-500/40 bg-amber-500/5"
+            )}
+            onClick={() => kpi.isToggle ? setShowNeverLogged(!showNeverLogged) : navigate(kpi.link)}
           >
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
@@ -328,7 +350,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="text-2xl font-bold text-foreground tracking-tight">
-                {statsLoading || loginLoading || funnelLoading ? <Skeleton className="h-7 w-14" /> : kpi.value}
+                {statsLoading || loginLoading || funnelLoading || neverLoggedLoading ? <Skeleton className="h-7 w-14" /> : kpi.value}
               </div>
               <div className="flex items-center gap-1.5 mt-1">
                 {kpi.trend !== undefined && !loginLoading && (
@@ -341,11 +363,66 @@ export default function AdminDashboard() {
                   </Badge>
                 )}
                 {kpi.subtitle && <span className="text-[10px] text-muted-foreground">{kpi.subtitle}</span>}
+                {kpi.isToggle && (
+                  <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform ml-auto", showNeverLogged && "rotate-180")} />
+                )}
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {/* Never Logged In Panel */}
+      {showNeverLogged && (
+        <Card className="bg-card/60 border-amber-500/20 animate-in slide-in-from-top-2 duration-200">
+          <CardHeader className="pb-1 pt-4 px-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <UserX className="w-4 h-4 text-amber-500" />
+                Users who never logged in ({neverLoggedIn?.length || 0})
+              </CardTitle>
+              <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => setShowNeverLogged(false)}>
+                <X className="w-3 h-3" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="px-4 pb-3">
+            {neverLoggedLoading ? <Skeleton className="h-[120px] w-full" /> : (
+              <div className="overflow-x-auto max-h-[300px] overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-[10px]">User</TableHead>
+                      <TableHead className="text-[10px]">Email</TableHead>
+                      <TableHead className="text-[10px]">Signed Up</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(neverLoggedIn || []).map((user: any) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="py-2">
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={user.avatar_url} />
+                              <AvatarFallback className="text-[8px]">{(user.full_name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs font-medium truncate max-w-[120px]">{user.full_name || 'Unknown'}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-[10px] text-muted-foreground truncate max-w-[160px]">{user.email || '—'}</TableCell>
+                        <TableCell className="text-[10px] text-muted-foreground whitespace-nowrap">{format(parseISO(user.created_at), 'MMM d, yyyy')}</TableCell>
+                      </TableRow>
+                    ))}
+                    {(neverLoggedIn || []).length === 0 && (
+                      <TableRow><TableCell colSpan={3} className="text-center text-xs text-muted-foreground py-6">Everyone has logged in! 🎉</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tabbed Content */}
       <Tabs defaultValue="overview" className="space-y-4">
