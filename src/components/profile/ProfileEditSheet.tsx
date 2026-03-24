@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { Camera, Loader2, User } from 'lucide-react';
+import { Camera, Loader2, User, Lock, Eye, EyeOff, ChevronDown, ChevronUp } from 'lucide-react';
 import { ImageCropperModal } from './ImageCropperModal';
 import { readFileAsDataURL } from '@/lib/cropImage';
 import type { ProfileData } from '@/hooks/useProfileData';
