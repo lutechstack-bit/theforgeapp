@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { Camera, Loader2, User } from 'lucide-react';
+import { Camera, Loader2, User, Lock, Eye, EyeOff, ChevronDown, ChevronUp } from 'lucide-react';
 import { ImageCropperModal } from './ImageCropperModal';
 import { readFileAsDataURL } from '@/lib/cropImage';
 import type { ProfileData } from '@/hooks/useProfileData';
@@ -66,6 +66,14 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '');
   const [cropperOpen, setCropperOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string>('');
+
+  // Password change state
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
 
   const cohortType = profileData?.cohortType || null;
   const kyData = profileData?.kyfResponse || profileData?.kywResponse || profileData?.kycResponse;
@@ -253,6 +261,31 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
       toast({ title: 'Error', description: 'Failed to update profile. Please try again.', variant: 'destructive' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      toast({ title: 'Too Short', description: 'Password must be at least 6 characters.', variant: 'destructive' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: 'Mismatch', description: 'Passwords do not match.', variant: 'destructive' });
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: 'Password Updated', description: 'Your password has been changed successfully.' });
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPasswordSection(false);
+    } catch (error: any) {
+      console.error('Password change error:', error);
+      toast({ title: 'Error', description: error.message || 'Failed to update password.', variant: 'destructive' });
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -589,6 +622,78 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                 </div>
               </>
             )}
+
+            {/* Change Password */}
+            <div className="border-t border-border pt-4">
+              <button
+                type="button"
+                onClick={() => setShowPasswordSection(!showPasswordSection)}
+                className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors w-full"
+              >
+                <Lock className="h-4 w-4" />
+                Change Password
+                {showPasswordSection ? <ChevronUp className="h-4 w-4 ml-auto" /> : <ChevronDown className="h-4 w-4 ml-auto" />}
+              </button>
+
+              {showPasswordSection && (
+                <div className="space-y-3 mt-3 animate-in slide-in-from-top-2">
+                  <div className="relative">
+                    <FloatingInput
+                      id="new_password"
+                      label="New Password"
+                      type={showNewPw ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPw(!showNewPw)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <FloatingInput
+                      id="confirm_password"
+                      label="Confirm Password"
+                      type={showConfirmPw ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPw(!showConfirmPw)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showConfirmPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+
+                  {newPassword && newPassword.length < 6 && (
+                    <p className="text-xs text-destructive">Minimum 6 characters</p>
+                  )}
+                  {confirmPassword && newPassword !== confirmPassword && (
+                    <p className="text-xs text-destructive">Passwords don't match</p>
+                  )}
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleChangePassword}
+                    disabled={changingPassword || newPassword.length < 6 || newPassword !== confirmPassword}
+                    className="w-full"
+                  >
+                    {changingPassword ? (
+                      <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Updating...</>
+                    ) : (
+                      'Update Password'
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
 
             {/* Actions */}
             <div className="flex gap-3 pt-4">
