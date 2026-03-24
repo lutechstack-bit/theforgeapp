@@ -1,29 +1,23 @@
 
 
-# Add "Never Logged In" KPI Card with User List
+# Add Venue Detail Popup with Autoplay Carousel
 
 ## What
-Add a 5th interactive KPI card to the dashboard showing how many users have **never logged in** (signed up but zero activity logs). Clicking it opens an inline expandable list of those users with name, email, and signup date.
+When clicking "Details" on the Your Venue card, open a fullscreen dialog with an autoplay image carousel and a Google Maps CTA button — instead of navigating to `/roadmap`.
 
-## Changes — `src/pages/admin/AdminDashboard.tsx`
+## Changes — `src/components/home/TravelStaySection.tsx`
 
-### 1. New hook: `useNeverLoggedIn`
-- Query `profiles` for all user IDs, full_name, email, avatar_url, created_at
-- Query `user_activity_logs` for distinct user_ids where event_type = 'login'
-- Diff: users in profiles but NOT in login logs = never logged in
-- Return the list + count
+1. **Add state**: `showDetail` boolean to control dialog open/close
+2. **Change "Details" button**: Instead of `navigate('/roadmap')`, set `showDetail = true`
+3. **Add Dialog** with:
+   - Dark background (`bg-black/95 border-none`)
+   - Full-width autoplay carousel using `useEffect` + `setInterval` (3s per slide) cycling through `allImages`
+   - Pause autoplay on hover
+   - Image counter ("2 / 5") overlay
+   - Location name + address below the carousel
+   - Large "Open in Maps" CTA button at the bottom
+4. **Autoplay logic**: `useEffect` with interval that advances `modalImageIdx`, clears on unmount or when dialog closes
 
-### 2. Add 5th KPI card
-- Label: "Never Logged In"
-- Value: count of users who never logged in
-- Icon: `AlertTriangle` (amber themed)
-- On click: instead of navigating, toggle a collapsible panel below the KPI row showing the list
-
-### 3. Collapsible user list panel
-- Appears below KPI row when the card is clicked (toggle state)
-- Simple table: Avatar, Name, Email, Signed Up (relative date)
-- "Close" button to collapse
-- Grid changes from `grid-cols-4` to `grid-cols-5` to fit the new card
-
-### No database changes needed
+### No new files or dependencies needed
+Uses existing `Dialog`/`DialogContent` from the UI library. Manual autoplay via `setInterval` — no need for Embla carousel.
 
