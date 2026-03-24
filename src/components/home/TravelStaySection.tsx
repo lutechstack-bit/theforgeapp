@@ -81,6 +81,20 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
     staleTime: 5 * 60 * 1000,
   });
 
+  const location = (!isLoading && locations && locations.length > 0) ? locations[0] : null;
+  const images: GalleryImage[] = location ? ((location.gallery_images as GalleryImage[]) || []) : [];
+  const featuredImg = location?.featured_image_url;
+  const allImages = featuredImg ? [{ url: featuredImg }, ...images] : images;
+
+  // Autoplay for modal carousel
+  useEffect(() => {
+    if (!showDetail || isHovering || allImages.length <= 1) return;
+    const timer = setInterval(() => {
+      setModalImageIdx((prev) => (prev + 1) % allImages.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [showDetail, isHovering, allImages.length]);
+
   if (isLoading) {
     return (
       <div className="rounded-2xl border border-border/40 bg-card/30 p-4 sm:p-5">
@@ -97,24 +111,10 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
     );
   }
 
-  if (!locations || locations.length === 0) return null;
-
-  const location = locations[0];
-  const images: GalleryImage[] = (location.gallery_images as GalleryImage[]) || [];
-  const featuredImg = location.featured_image_url;
-  const allImages = featuredImg ? [{ url: featuredImg }, ...images] : images;
+  if (!location) return null;
 
   const handlePrev = () => setCurrentImageIdx((i) => (i === 0 ? allImages.length - 1 : i - 1));
   const handleNext = () => setCurrentImageIdx((i) => (i === allImages.length - 1 ? 0 : i + 1));
-
-  // Autoplay for modal carousel
-  useEffect(() => {
-    if (!showDetail || isHovering || allImages.length <= 1) return;
-    const timer = setInterval(() => {
-      setModalImageIdx((prev) => (prev + 1) % allImages.length);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [showDetail, isHovering, allImages.length]);
 
   const handleOpenDetail = () => {
     setModalImageIdx(0);
