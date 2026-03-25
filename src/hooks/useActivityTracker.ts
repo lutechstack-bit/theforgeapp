@@ -35,7 +35,6 @@ function getPageName(path: string): string {
 }
 
 function logActivity(userId: string, eventType: string, pagePath?: string, pageName?: string) {
-  // Fire-and-forget — don't block UI
   supabase
     .from('user_activity_logs')
     .insert({
@@ -49,7 +48,7 @@ function logActivity(userId: string, eventType: string, pagePath?: string, pageN
       },
     })
     .then(({ error }) => {
-      if (error) console.warn('[ActivityTracker] Insert error:', error.message);
+      if (error) console.error('[ActivityTracker] Insert failed:', error.message, error.details);
     });
 }
 
@@ -57,28 +56,32 @@ export function useActivityTracker() {
   const { user } = useAuth();
   const location = useLocation();
   const lastPathRef = useRef<string | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
-    // Skip admin routes
+    if (!user) {
+      // Reset tracking state when user logs out
+      lastPathRef.current = null;
+      lastUserIdRef.current = null;
+      return;
+    }
+
+    // Reset path tracking if user changed (re-login)
+    if (lastUserIdRef.current !== user.id) {
+      lastPathRef.current = null;
+      lastUserIdRef.current = user.id;
+    }
+
+    // Skip admin & auth routes
     if (location.pathname.startsWith('/admin')) return;
-    // Skip auth routes
-    if (location.pathname === '/auth' || location.pathname === '/forgot-password' || location.pathname === '/reset-password') return;
-    // Deduplicate
+    if (['/auth', '/forgot-password', '/reset-password'].includes(location.pathname)) return;
+
+    // Deduplicate same path
     if (lastPathRef.current === location.pathname) return;
 
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    debounceRef.current = setTimeout(() => {
-      lastPathRef.current = location.pathname;
-      const pageName = getPageName(location.pathname);
-      logActivity(user.id, 'page_view', location.pathname, pageName);
-    }, 300);
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
+    lastPathRef.current = location.pathname;
+    const pageName = getPageName(location.pathname);
+    logActivity(user.id, 'page_view', location.pathname, pageName);
   }, [user, location.pathname]);
 }
 
