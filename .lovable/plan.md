@@ -1,21 +1,30 @@
 
 
-# Add Change Password to Profile Edit Sheet
+# Fix Page View Tracking & Show All Active Users
 
-## What
-Add a "Change Password" section at the bottom of the ProfileEditSheet, before the Save/Cancel buttons. Uses Supabase's `updateUser({ password })` — no database changes needed.
+## Problem
+The admin activity page shows 0 page views despite users actively using the app (filling forms, posting profiles). Only login events are being recorded. The `useActivityTracker` hook code looks correct, but page_view inserts are likely failing silently or the tracker isn't firing properly.
 
-## Changes — `src/components/profile/ProfileEditSheet.tsx`
+## Root Cause (likely)
+The `useActivityTracker` hook depends on `user` from `useAuth()`. During the initial app load, the auth state resolves asynchronously. The React effect fires with dependencies `[user, location.pathname]`. When `user` transitions from `null` to the actual user object, the effect re-runs — but there may be a race condition where the debounce timeout gets cleared by a subsequent render before it fires. Additionally, the 300ms debounce combined with React strict mode double-mounting could cause issues.
 
-1. **Add state**: `currentPassword`, `newPassword`, `confirmPassword`, `showPasswordSection` (toggle), `changingPassword`
-2. **Add collapsible section** before the Actions div (~line 593):
-   - A button/link "Change Password" that toggles `showPasswordSection`
-   - When expanded: current password field (optional, for UX confidence), new password + confirm password fields with show/hide toggles
-   - "Update Password" button that calls `supabase.auth.updateUser({ password: newPassword })`
-   - Validation: min 6 chars, passwords must match
-   - Success toast + collapse section on success
-3. **Styling**: Uses existing `FloatingInput`, `Button`, icons (`Lock`, `Eye`, `EyeOff`) — consistent with the auth page pattern
+## Changes
 
-### No database changes, no new files
-All within the existing ProfileEditSheet component using `supabase.auth.updateUser()`.
+### 1. Fix `src/hooks/useActivityTracker.ts` — Make page_view tracking more robust
+- Remove the 300ms debounce — it's unnecessary for page navigations and causes missed events
+- Add error logging with more detail to catch silent insert failures
+- Reset `lastPathRef` when user changes (handles re-login scenarios)
+- Add a `sessionStart` flag to log the landing page on first load
+
+### 2. Enhance `src/pages/admin/AdminActivity.tsx` — Show all registered users with their activity status
+- Add a new section/tab: "All Users" showing every registered user from `profiles` with columns:
+  - Name, Avatar, Email
+  - Last Login (from activity logs, or "Never")
+  - Total Page Views (count)
+  - Last Seen (most recent activity timestamp)
+  - Status badge: "Active" / "Inactive" / "Never Logged In"
+- This gives the admin a complete picture of who's using the app regardless of whether page_view tracking was working before
+
+### No database changes needed
+Existing `user_activity_logs` table and RLS policies are correct.
 
