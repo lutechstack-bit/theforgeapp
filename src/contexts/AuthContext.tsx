@@ -581,6 +581,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             bootLog('Using locally stored session despite timeout');
             completeSessionInit(false);
             startUserDataFetch(storedSession.user.id);
+            logSessionStart(storedSession.user.id);
           } else if (!hasInitializedRef.current) {
             completeSessionInit(true);
           }
