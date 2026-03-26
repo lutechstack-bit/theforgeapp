@@ -1,31 +1,28 @@
 
 
-# Make KPI Cards Clickable with User Profile Popups
+# Fix Misleading "Logins" KPI — Track Session Restores
 
-## What
-Make each of the 3 KPI cards (Logins, Page Views, Active Users) clickable. On click, open a small Dialog/popup showing the unique users behind that metric — avatar, name, and their count for that metric.
+## Problem
+The "Logins" KPI only counts explicit `signInWithPassword` calls. Users like Nilesh and Priyadarshan who return to the app with a persisted session (auto-refreshed token) are never counted as "logged in" — even though they actively used the app. This makes the Logins card misleading.
 
-## Changes — `src/pages/admin/AdminActivity.tsx`
+## Root Cause
+`logLoginEvent()` is only called inside `signIn()` in AuthContext. When a user opens the app and their session is automatically restored by Supabase, no login event is recorded.
 
-### 1. Add state
-- `kpiPopup: 'logins' | 'pageviews' | 'active' | null` — controls which popup is open
+## Fix — `src/contexts/AuthContext.tsx`
 
-### 2. Compute user lists per KPI
-From existing `activities` data, derive:
-- **Logins**: unique users with login events, show login count per user
-- **Page Views**: unique users with page_view events, show view count per user  
-- **Active Users**: all unique users in the period, show total activity count
+Log a `session_start` event when a user's session is successfully restored on app initialization (inside `initializeAuth`). This captures returning users who didn't explicitly sign in.
 
-Each list uses the already-fetched `profiles` data (name + avatar) attached to each activity.
+- After the existing session is detected and user data is loaded, call `logLoginEvent(session.user.id)` (or a new `logSessionStart` variant)
+- This fires once per app open, not on every tab focus
 
-### 3. Make KPI cards clickable
-Add `cursor-pointer hover:border-primary/50 transition-colors` and `onClick={() => setKpiPopup('logins')}` etc. to each card.
+## Fix — `src/hooks/useActivityTracker.ts`
 
-### 4. Add Dialog popup
-- Title: "Users with Logins" / "Users with Page Views" / "Active Users"
-- Content: scrollable list of user rows — Avatar (small), Name, Count badge
-- Uses existing `Dialog`/`DialogContent` components
-- Max height with scroll for many users
+Add a `logSessionStart` export that logs event_type `login` with a metadata flag `{ type: 'session_restore' }` to distinguish from explicit logins if needed.
 
-### No new files or database changes
+## Fix — `src/pages/admin/AdminActivity.tsx`
+
+No changes needed — `session_restore` events use `event_type: 'login'` so the existing KPI card and popup will automatically include them.
+
+## Result
+The Logins KPI will now show all users who opened the app in a given period, whether they typed their password or had a restored session.
 
