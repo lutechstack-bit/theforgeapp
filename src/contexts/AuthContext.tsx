@@ -12,7 +12,7 @@ import {
   getCachedEdition,
   clearAllAuthCaches 
 } from '@/lib/authCache';
-import { logLoginEvent } from '@/hooks/useActivityTracker';
+import { logLoginEvent, logSessionStart } from '@/hooks/useActivityTracker';
 
 // Session initialization timeout (3 seconds) - just for determining if user is logged in
 const SESSION_INIT_TIMEOUT_MS = 3000;
@@ -581,6 +581,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             bootLog('Using locally stored session despite timeout');
             completeSessionInit(false);
             startUserDataFetch(storedSession.user.id);
+            logSessionStart(storedSession.user.id);
           } else if (!hasInitializedRef.current) {
             completeSessionInit(true);
           }
@@ -610,6 +611,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           if (initialSession?.user) {
             startUserDataFetch(initialSession.user.id);
+            logSessionStart(initialSession.user.id);
           }
         }
       } catch (error) {

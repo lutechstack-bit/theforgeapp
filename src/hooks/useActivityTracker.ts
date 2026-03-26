@@ -88,3 +88,22 @@ export function useActivityTracker() {
 export function logLoginEvent(userId: string) {
   logActivity(userId, 'login', '/auth', 'Login');
 }
+
+export function logSessionStart(userId: string) {
+  supabase
+    .from('user_activity_logs')
+    .insert({
+      user_id: userId,
+      event_type: 'login',
+      page_path: '/session-restore',
+      page_name: 'Session Restore',
+      metadata: {
+        type: 'session_restore',
+        user_agent: navigator.userAgent,
+        screen_width: window.innerWidth,
+      },
+    })
+    .then(({ error }) => {
+      if (error) console.error('[ActivityTracker] Session start insert failed:', error.message);
+    });
+}
