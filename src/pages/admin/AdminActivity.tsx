@@ -89,7 +89,7 @@ const AdminActivity: React.FC = () => {
         .gte('created_at', sinceDate)
         .lte('created_at', untilDate)
         .order('created_at', { ascending: false })
-        .limit(preset === 'custom' ? 500 : 200);
+        .limit(2000);
 
       if (eventFilter !== 'all') query = query.eq('event_type', eventFilter);
       if (userFilter !== 'all') query = query.eq('user_id', userFilter);
