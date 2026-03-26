@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Activity, Users, LogIn, Eye, TrendingUp, CalendarIcon, Clock } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay, startOfYesterday, endOfYesterday } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
@@ -37,6 +38,7 @@ const HOUR_SLOTS = Array.from({ length: 24 }, (_, i) => {
 
 const AdminActivity: React.FC = () => {
   const [preset, setPreset] = useState<Preset>('7');
+  const [kpiPopup, setKpiPopup] = useState<'logins' | 'pageviews' | 'active' | null>(null);
   const [eventFilter, setEventFilter] = useState('all');
   const [userFilter, setUserFilter] = useState('all');
   const [fromDate, setFromDate] = useState<Date | undefined>(subDays(new Date(), 7));
@@ -114,6 +116,32 @@ const AdminActivity: React.FC = () => {
   const totalLogins = activities.filter(a => a.event_type === 'login').length;
   const totalPageViews = activities.filter(a => a.event_type === 'page_view').length;
   const uniqueUsers = new Set(activities.map(a => a.user_id)).size;
+
+  const kpiUsers = useMemo(() => {
+    if (!kpiPopup) return [];
+    const userMap = new Map<string, { name: string; avatar: string; count: number }>();
+    const filtered = kpiPopup === 'logins'
+      ? activities.filter(a => a.event_type === 'login')
+      : kpiPopup === 'pageviews'
+        ? activities.filter(a => a.event_type === 'page_view')
+        : activities;
+    filtered.forEach(a => {
+      const existing = userMap.get(a.user_id);
+      if (existing) {
+        existing.count++;
+      } else {
+        userMap.set(a.user_id, {
+          name: a.profiles?.full_name || 'Unknown',
+          avatar: a.profiles?.avatar_url || '',
+          count: 1,
+        });
+      }
+    });
+    return Array.from(userMap.values()).sort((a, b) => b.count - a.count);
+  }, [activities, kpiPopup]);
+
+  const kpiPopupTitle = kpiPopup === 'logins' ? 'Users with Logins' : kpiPopup === 'pageviews' ? 'Users with Page Views' : 'Active Users';
+  const kpiCountLabel = kpiPopup === 'logins' ? 'logins' : kpiPopup === 'pageviews' ? 'views' : 'events';
 
   const pageDistribution = activities
     .filter(a => a.event_type === 'page_view' && a.page_name)
@@ -223,9 +251,9 @@ const AdminActivity: React.FC = () => {
           </Card>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card><CardContent className="flex items-center gap-4 p-5"><div className="p-3 rounded-xl bg-primary/10"><LogIn className="w-5 h-5 text-primary" /></div><div><p className="text-2xl font-bold text-foreground">{totalLogins}</p><p className="text-xs text-muted-foreground">Logins</p></div></CardContent></Card>
-            <Card><CardContent className="flex items-center gap-4 p-5"><div className="p-3 rounded-xl bg-primary/10"><Eye className="w-5 h-5 text-primary" /></div><div><p className="text-2xl font-bold text-foreground">{totalPageViews}</p><p className="text-xs text-muted-foreground">Page Views</p></div></CardContent></Card>
-            <Card><CardContent className="flex items-center gap-4 p-5"><div className="p-3 rounded-xl bg-primary/10"><Users className="w-5 h-5 text-primary" /></div><div><p className="text-2xl font-bold text-foreground">{uniqueUsers}</p><p className="text-xs text-muted-foreground">Active Users</p></div></CardContent></Card>
+            <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => setKpiPopup('logins')}><CardContent className="flex items-center gap-4 p-5"><div className="p-3 rounded-xl bg-primary/10"><LogIn className="w-5 h-5 text-primary" /></div><div><p className="text-2xl font-bold text-foreground">{totalLogins}</p><p className="text-xs text-muted-foreground">Logins</p></div></CardContent></Card>
+            <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => setKpiPopup('pageviews')}><CardContent className="flex items-center gap-4 p-5"><div className="p-3 rounded-xl bg-primary/10"><Eye className="w-5 h-5 text-primary" /></div><div><p className="text-2xl font-bold text-foreground">{totalPageViews}</p><p className="text-xs text-muted-foreground">Page Views</p></div></CardContent></Card>
+            <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => setKpiPopup('active')}><CardContent className="flex items-center gap-4 p-5"><div className="p-3 rounded-xl bg-primary/10"><Users className="w-5 h-5 text-primary" /></div><div><p className="text-2xl font-bold text-foreground">{uniqueUsers}</p><p className="text-xs text-muted-foreground">Active Users</p></div></CardContent></Card>
           </div>
 
           {chartData.length > 0 && (
@@ -277,6 +305,30 @@ const AdminActivity: React.FC = () => {
           <AllUsersActivity />
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!kpiPopup} onOpenChange={(open) => !open && setKpiPopup(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base">{kpiPopupTitle}</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[360px] overflow-y-auto space-y-2">
+            {kpiUsers.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No users found</p>
+            ) : (
+              kpiUsers.map((u, i) => (
+                <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={u.avatar} />
+                    <AvatarFallback className="text-xs">{(u.name || '?')[0]}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium text-foreground flex-1 truncate">{u.name}</span>
+                  <Badge variant="secondary" className="text-xs">{u.count} {kpiCountLabel}</Badge>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
