@@ -610,6 +610,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           if (initialSession?.user) {
             startUserDataFetch(initialSession.user.id);
+            logSessionStart(initialSession.user.id);
           }
         }
       } catch (error) {
