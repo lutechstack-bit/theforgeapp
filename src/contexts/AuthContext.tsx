@@ -636,6 +636,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []); // Empty dependency array - runs ONCE
 
   const signIn = async (email: string, password: string) => {
+    sessionStorage.removeItem('forge-splash-shown');
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (!error && data?.user) {
       logLoginEvent(data.user.id);

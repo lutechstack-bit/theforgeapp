@@ -13,8 +13,9 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { LoadingScreen } from "@/components/shared/LoadingScreen";
+import { SplashScreen } from "@/components/shared/SplashScreen";
 import { UserDataRecovery } from "@/components/shared/UserDataRecovery";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 // Pages
 import Auth from "./pages/Auth";
@@ -198,6 +199,18 @@ const ProfileSetupRoute: React.FC<{ children: React.ReactNode }> = ({ children }
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
+  const [showSplash, setShowSplash] = useState(false);
+  const prevUserRef = useRef<typeof user>(undefined);
+
+  const handleSplashComplete = useCallback(() => setShowSplash(false), []);
+
+  useEffect(() => {
+    if (prevUserRef.current === undefined && user && !sessionStorage.getItem('forge-splash-shown')) {
+      setShowSplash(true);
+      sessionStorage.setItem('forge-splash-shown', 'true');
+    }
+    prevUserRef.current = user;
+  }, [user]);
 
   // Only block on session initialization
   if (loading) {
@@ -205,6 +218,8 @@ const AppRoutes = () => {
   }
 
   return (
+    <>
+    {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
     <Routes>
       {/* Public routes */}
       <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
@@ -307,6 +322,7 @@ const AppRoutes = () => {
       {/* Catch-all */}
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </>
   );
 };
 
