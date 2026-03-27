@@ -199,6 +199,18 @@ const ProfileSetupRoute: React.FC<{ children: React.ReactNode }> = ({ children }
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
+  const [showSplash, setShowSplash] = useState(false);
+  const prevUserRef = useRef<typeof user>(undefined);
+
+  const handleSplashComplete = useCallback(() => setShowSplash(false), []);
+
+  useEffect(() => {
+    if (prevUserRef.current === undefined && user && !sessionStorage.getItem('forge-splash-shown')) {
+      setShowSplash(true);
+      sessionStorage.setItem('forge-splash-shown', 'true');
+    }
+    prevUserRef.current = user;
+  }, [user]);
 
   // Only block on session initialization
   if (loading) {
@@ -206,6 +218,8 @@ const AppRoutes = () => {
   }
 
   return (
+    <>
+    {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
     <Routes>
       {/* Public routes */}
       <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
