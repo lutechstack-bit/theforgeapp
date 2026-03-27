@@ -13,8 +13,9 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { LoadingScreen } from "@/components/shared/LoadingScreen";
+import { SplashScreen } from "@/components/shared/SplashScreen";
 import { UserDataRecovery } from "@/components/shared/UserDataRecovery";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 // Pages
 import Auth from "./pages/Auth";
