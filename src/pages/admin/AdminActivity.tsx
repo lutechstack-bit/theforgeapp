@@ -16,6 +16,7 @@ import { format, subDays, startOfDay, endOfDay, startOfYesterday, endOfYesterday
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { cn } from '@/lib/utils';
 import AllUsersActivity from '@/components/admin/AllUsersActivity';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type ActivityLog = {
   id: string;
@@ -311,22 +312,24 @@ const AdminActivity: React.FC = () => {
           <DialogHeader>
             <DialogTitle className="text-base">{kpiPopupTitle}</DialogTitle>
           </DialogHeader>
-          <div className="max-h-[360px] overflow-y-auto space-y-2">
-            {kpiUsers.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">No users found</p>
-            ) : (
-              kpiUsers.map((u, i) => (
-                <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={u.avatar} />
-                    <AvatarFallback className="text-xs">{(u.name || '?')[0]}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium text-foreground flex-1 truncate">{u.name}</span>
-                  <Badge variant="secondary" className="text-xs">{u.count} {kpiCountLabel}</Badge>
-                </div>
-              ))
-            )}
-          </div>
+          <ScrollArea className="max-h-[60vh]">
+            <div className="space-y-2 pr-3">
+              {kpiUsers.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">No users found</p>
+              ) : (
+                kpiUsers.map((u, i) => (
+                  <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={u.avatar} />
+                      <AvatarFallback className="text-xs">{(u.name || '?')[0]}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium text-foreground flex-1 truncate">{u.name}</span>
+                    <Badge variant="secondary" className="text-xs">{u.count} {kpiCountLabel}</Badge>
+                  </div>
+                ))
+              )}
+            </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </div>
