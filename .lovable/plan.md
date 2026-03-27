@@ -1,31 +1,34 @@
 
 
-# Fix KPI Popup Not Scrolling — Shows Only 5 of 8 Users
+# Add 2-Second Branded Splash Animation on Login
 
-## Problem
-The popup dialog's inner `div` has `max-h-[360px] overflow-y-auto`, but the `DialogContent` (from shadcn) applies its own max-height (`max-h-[85vh]`) and internal padding that limits visible space. The overflow-y-auto on a plain div can also fail to create a proper scroll container in some dialog layouts.
+## What
+After every login (explicit or session restore), show a full-screen cinematic splash animation for 2 seconds — dark background, Forge logo centered, "Where **Dreamers** Become **Doers**" tagline below, then fade out into the app.
 
-## Fix — `src/pages/admin/AdminActivity.tsx`
+## Design
+- Full-screen dark overlay (`bg-[#1a1a1a]`)
+- Forge logo (`forge-logo.png`) fades + scales in
+- Tagline fades in with slight delay — "Where" and "Become" in white, "Dreamers" and "Doers" in primary/amber
+- After 2s, the entire screen fades out and unmounts
+- Uses CSS keyframe animations (no extra libraries)
 
-**Replace the plain scrollable div with the `ScrollArea` component** and increase the max-height to adapt to viewport:
+## Changes
 
-### Line 314 change:
-```tsx
-// Before
-<div className="max-h-[360px] overflow-y-auto space-y-2">
-  {kpiUsers.map(...)}
-</div>
+### 1. New component: `src/components/shared/SplashScreen.tsx`
+- Full-screen fixed overlay with z-50
+- Logo + tagline with staggered fade-in animations
+- After 2s, triggers fade-out animation, then calls `onComplete` callback
+- Self-contained, no external state needed
 
-// After
-<ScrollArea className="max-h-[60vh]">
-  <div className="space-y-2 pr-3">
-    {kpiUsers.map(...)}
-  </div>
-</ScrollArea>
-```
+### 2. `src/App.tsx` — Show splash after login
+- Add `showSplash` state to `AppRoutes`
+- Listen for auth state: when user transitions from `null` to authenticated, set `showSplash = true`
+- Render `<SplashScreen onComplete={() => setShowSplash(false)} />` on top of everything
+- Splash plays for 2s then disappears, revealing the app underneath
 
-### Add import:
-Add `ScrollArea` to imports from `@/components/ui/scroll-area`.
+### 3. Skip on page refresh with existing session
+- Use a sessionStorage flag `forge-splash-shown` so the splash only plays once per browser session (not on every tab refresh)
+- On explicit `signIn()`, clear the flag so it plays again
 
-**Single file, two-line change. No database changes.**
+No database changes needed.
 
