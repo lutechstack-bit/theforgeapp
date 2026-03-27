@@ -322,6 +322,7 @@ const AppRoutes = () => {
       {/* Catch-all */}
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </>
   );
 };
 
