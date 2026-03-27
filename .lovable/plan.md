@@ -1,28 +1,31 @@
 
 
-# Fix Misleading "Logins" KPI — Track Session Restores
+# Fix KPI Popup Not Scrolling — Shows Only 5 of 8 Users
 
 ## Problem
-The "Logins" KPI only counts explicit `signInWithPassword` calls. Users like Nilesh and Priyadarshan who return to the app with a persisted session (auto-refreshed token) are never counted as "logged in" — even though they actively used the app. This makes the Logins card misleading.
-
-## Root Cause
-`logLoginEvent()` is only called inside `signIn()` in AuthContext. When a user opens the app and their session is automatically restored by Supabase, no login event is recorded.
-
-## Fix — `src/contexts/AuthContext.tsx`
-
-Log a `session_start` event when a user's session is successfully restored on app initialization (inside `initializeAuth`). This captures returning users who didn't explicitly sign in.
-
-- After the existing session is detected and user data is loaded, call `logLoginEvent(session.user.id)` (or a new `logSessionStart` variant)
-- This fires once per app open, not on every tab focus
-
-## Fix — `src/hooks/useActivityTracker.ts`
-
-Add a `logSessionStart` export that logs event_type `login` with a metadata flag `{ type: 'session_restore' }` to distinguish from explicit logins if needed.
+The popup dialog's inner `div` has `max-h-[360px] overflow-y-auto`, but the `DialogContent` (from shadcn) applies its own max-height (`max-h-[85vh]`) and internal padding that limits visible space. The overflow-y-auto on a plain div can also fail to create a proper scroll container in some dialog layouts.
 
 ## Fix — `src/pages/admin/AdminActivity.tsx`
 
-No changes needed — `session_restore` events use `event_type: 'login'` so the existing KPI card and popup will automatically include them.
+**Replace the plain scrollable div with the `ScrollArea` component** and increase the max-height to adapt to viewport:
 
-## Result
-The Logins KPI will now show all users who opened the app in a given period, whether they typed their password or had a restored session.
+### Line 314 change:
+```tsx
+// Before
+<div className="max-h-[360px] overflow-y-auto space-y-2">
+  {kpiUsers.map(...)}
+</div>
+
+// After
+<ScrollArea className="max-h-[60vh]">
+  <div className="space-y-2 pr-3">
+    {kpiUsers.map(...)}
+  </div>
+</ScrollArea>
+```
+
+### Add import:
+Add `ScrollArea` to imports from `@/components/ui/scroll-area`.
+
+**Single file, two-line change. No database changes.**
 
