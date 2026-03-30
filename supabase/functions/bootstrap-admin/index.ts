@@ -6,8 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -16,12 +17,10 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Create admin client with service role
     const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
-    // Parse the request body
     const { email, password } = await req.json();
 
     // Check if any admin already exists — no bypass allowed
@@ -42,16 +41,32 @@ serve(async (req) => {
       );
     }
 
-    if (!email || !password) {
+    // Validate inputs
+    if (!email || typeof email !== 'string' || !EMAIL_REGEX.test(email)) {
       return new Response(
-        JSON.stringify({ error: 'Email and password are required' }),
+        JSON.stringify({ error: 'A valid email is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (email.length > 255) {
+      return new Response(
+        JSON.stringify({ error: 'Email too long' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (!password || typeof password !== 'string' || password.length < 8) {
+      return new Response(
+        JSON.stringify({ error: 'Password must be at least 8 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (password.length > 128) {
+      return new Response(
+        JSON.stringify({ error: 'Password too long' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Creating bootstrap admin user:', email);
-
-    // Create the auth user
     const { data: authData, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password,
@@ -60,17 +75,14 @@ serve(async (req) => {
     });
 
     if (createError) {
-      console.error('Error creating auth user:', createError);
       return new Response(
-        JSON.stringify({ error: createError.message }),
+        JSON.stringify({ error: 'Failed to create user' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const newUserId = authData.user.id;
-    console.log('Auth user created:', newUserId);
 
-    // Update the profile (auto-created by trigger)
     const { error: profileError } = await adminClient
       .from('profiles')
       .update({
@@ -85,20 +97,16 @@ serve(async (req) => {
       console.error('Error updating profile:', profileError);
     }
 
-    // Assign admin role
     const { error: roleError } = await adminClient
       .from('user_roles')
       .insert({ user_id: newUserId, role: 'admin' });
 
     if (roleError) {
-      console.error('Error assigning admin role:', roleError);
       return new Response(
-        JSON.stringify({ error: 'User created but failed to assign admin role: ' + roleError.message }),
+        JSON.stringify({ error: 'User created but failed to assign admin role' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    console.log('Bootstrap admin created successfully:', email);
 
     return new Response(
       JSON.stringify({ 
@@ -111,9 +119,8 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Unexpected error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
