@@ -34,6 +34,7 @@ export const CleanEventCard: React.FC<CleanEventCardProps> = ({
   isPastEvent,
   hostName,
   hostAvatar,
+  hostDesignation,
   onClick,
   className,
 }) => {
