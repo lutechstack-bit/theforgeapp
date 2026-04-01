@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Lock, Check } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+import { DynamicIcon } from '@/lib/dynamicIcon';
 
 interface StickyNoteCardProps {
   title: string;
