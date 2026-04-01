@@ -30,14 +30,17 @@ function useUserStats() {
   return useQuery({
     queryKey: ['admin-user-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, payment_status, forge_mode, profile_setup_completed, created_at');
-      if (error) throw error;
-      const profiles = data || [];
+      const [profilesRes, collabRes] = await Promise.all([
+        supabase.from('profiles').select('id, payment_status, forge_mode, profile_setup_completed, ky_form_completed, created_at'),
+        supabase.from('collaborator_profiles').select('id', { count: 'exact', head: true }),
+      ]);
+      if (profilesRes.error) throw profilesRes.error;
+      const profiles = profilesRes.data || [];
       return {
         total: profiles.length,
         completed: profiles.filter(p => p.profile_setup_completed).length,
+        kyFormsCompleted: profiles.filter(p => p.ky_form_completed).length,
+        communityProfiles: collabRes.count || 0,
         balancePaid: profiles.filter(p => p.payment_status === 'BALANCE_PAID').length,
         balancePending: profiles.filter(p => p.payment_status === 'CONFIRMED_15K').length,
         preForge: profiles.filter(p => p.forge_mode === 'PRE_FORGE').length,
