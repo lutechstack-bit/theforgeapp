@@ -1,31 +1,36 @@
 
 
-# Fix Payment Links for Sanjeev & Rajesh
+# Add Grant Metrics & Filters to Admin Payments
 
-## Confirmed Current State
+## Context
+The standard programme fee is ₹85,000, but some students receive grants that lower their `programme_total` (e.g., ₹80,000 = ₹5K grant). Currently the admin panel has no visibility into who has grants vs who doesn't. We'll derive grant status by comparing each user's `programme_total` against their edition's default total from `payment_defaults`.
 
-| User | Current Link | Current Total | Current Balance |
-|------|-------------|---------------|-----------------|
-| Sanjeev (`69f82f8a-67ff-4bb7-b444-f5d2d3606f15`) | `T0kUgAOh` | 80,000 | 65,000 |
-| Rajesh (`cf7a97f0-db03-4069-8761-17a2545f4838`) | `T0kUgAOh` | 85,000 | 70,000 |
+## Changes (single file: `AdminPayments.tsx`)
 
-## Updates
+### 1. New Stats Cards
+Replace the current 4-card stats row with 6 cards:
+- **Total Users** (existing)
+- **Configured** (existing)
+- **Balance Pending** (existing)
+- **Fully Paid** (existing)
+- **With Grant** — count of users whose `programme_total` < their edition's default total
+- **No Grant** — count of users at the standard edition total
 
-### 1. Sanjeev — fix link, total, and balance
-```sql
-UPDATE payment_config 
-SET payment_link = 'https://rzp.io/rzp/lqegb1u',
-    programme_total = 85000,
-    balance_due = 70000
-WHERE user_id = '69f82f8a-67ff-4bb7-b444-f5d2d3606f15';
-```
+### 2. New Filter Option
+Add grant filter options to the status filter dropdown:
+- `with_grant` — students with a reduced programme total (grant applied)
+- `no_grant` — students at the standard edition total
 
-### 2. Rajesh — fix link only
-```sql
-UPDATE payment_config 
-SET payment_link = 'https://rzp.io/rzp/lqegb1u'
-WHERE user_id = 'cf7a97f0-db03-4069-8761-17a2545f4838';
-```
+### 3. Grant Column in Table
+Add a **"Grant"** column between "Total" and "Paid" that shows:
+- The grant amount (e.g., "₹5,000") with a green badge if they have one
+- "—" if no grant (standard fee)
 
-Both executed via the database insert tool. No schema or code changes.
+Grant amount = `editionDefault.programme_total - config.programme_total`
+
+### 4. Grant Field in Edit Dialog
+Add a read-only computed "Grant Applied" line in the edit dialog summary section so admins can see the grant amount when editing.
+
+## No Schema Changes
+All derived from existing data: `payment_config.programme_total` vs `payment_defaults.programme_total` per edition.
 
