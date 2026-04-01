@@ -13,7 +13,7 @@ import {
   CheckCircle2,
   Loader2
 } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+import { DynamicIcon } from '@/lib/dynamicIcon';
 import { cn } from '@/lib/utils';
 
 interface NightlyRitualSectionProps {
