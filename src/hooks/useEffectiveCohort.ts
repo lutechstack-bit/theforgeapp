@@ -22,11 +22,12 @@ export const useEffectiveCohort = () => {
       if (error) throw error;
       return {
         id: data.id,
-        name: data.name,
         forge_start_date: data.forge_start_date,
         forge_end_date: data.forge_end_date,
         cohort_type: data.cohort_type as Edition['cohort_type'],
         city: data.city,
+        online_start_date: data.online_start_date,
+        online_end_date: data.online_end_date,
       } as Edition;
     },
     enabled: isTestingMode && !!simulatedEditionId,

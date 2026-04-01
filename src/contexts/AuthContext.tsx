@@ -53,6 +53,8 @@ export interface Edition {
   forge_end_date: string | null;
   cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS';
   city: string;
+  online_start_date: string | null;
+  online_end_date: string | null;
 }
 
 interface AuthContextType {
@@ -190,7 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchEdition = async (editionId: string): Promise<Edition | null> => {
     const { data, error } = await supabase
       .from('editions')
-      .select('id, forge_start_date, forge_end_date, cohort_type')
+      .select('id, forge_start_date, forge_end_date, cohort_type, online_start_date, online_end_date, city')
       .eq('id', editionId)
       .maybeSingle();
     
