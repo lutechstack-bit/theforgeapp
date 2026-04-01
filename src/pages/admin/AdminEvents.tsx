@@ -467,7 +467,7 @@ const AdminEvents: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       {(event as any).zoom_link ? (
-                        <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-600">Set</span>
+                        <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary">Set</span>
                       ) : (
                         <span className="text-xs text-muted-foreground">-</span>
                       )}
