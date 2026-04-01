@@ -12,7 +12,7 @@ import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { JourneyStage, JourneyTask } from '@/hooks/useStudentJourney';
 import { SwipeableTaskItem } from './SwipeableTaskItem';
-import * as LucideIcons from 'lucide-react';
+import { DynamicIcon } from '@/lib/dynamicIcon';
 
 interface StickyNoteBottomSheetProps {
   isOpen: boolean;
@@ -47,9 +47,9 @@ export const StickyNoteBottomSheet: React.FC<StickyNoteBottomSheetProps> = ({
   const progressPercent = tasks.length > 0 ? (completedCount / tasks.length) * 100 : 0;
 
   // Get icon component
-  const IconComponent = stage.icon 
-    ? (LucideIcons as any)[stage.icon] || LucideIcons.Circle 
-    : LucideIcons.Circle;
+  const IconComponent = ({ className }: { className?: string }) => (
+    <DynamicIcon name={stage.icon} className={className} />
+  );
 
   const handleNavigate = (deepLink: string) => {
     navigate(deepLink);

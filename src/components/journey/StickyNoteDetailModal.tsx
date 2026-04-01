@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Check, ChevronRight, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { JourneyStage, JourneyTask } from '@/hooks/useStudentJourney';
-import * as LucideIcons from 'lucide-react';
+import { DynamicIcon } from '@/lib/dynamicIcon';
 
 interface StickyNoteDetailModalProps {
   isOpen: boolean;
@@ -46,9 +46,9 @@ export const StickyNoteDetailModal: React.FC<StickyNoteDetailModalProps> = ({
   const progressPercent = tasks.length > 0 ? (completedCount / tasks.length) * 100 : 0;
 
   // Get icon component
-  const IconComponent = stage.icon 
-    ? (LucideIcons as any)[stage.icon] || LucideIcons.Circle 
-    : LucideIcons.Circle;
+  const IconComponent = ({ className }: { className?: string }) => (
+    <DynamicIcon name={stage.icon} className={className} />
+  );
 
   const handleDeepLinkClick = (e: React.MouseEvent, deepLink: string) => {
     e.stopPropagation();

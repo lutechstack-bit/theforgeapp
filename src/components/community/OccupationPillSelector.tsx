@@ -1,55 +1,43 @@
 import React from 'react';
-import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 interface OccupationPillSelectorProps {
   selected: string[];
   onChange: (occupations: string[]) => void;
-  maxSelections?: number;
+  max?: number;
 }
 
 export const OccupationPillSelector: React.FC<OccupationPillSelectorProps> = ({
   selected,
   onChange,
-  maxSelections = 4,
+  max = 4,
 }) => {
-  const { data: occupations, isLoading } = useQuery({
+  const { data: occupations = [] } = useQuery({
     queryKey: ['collaborator-occupations'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('collaborator_occupations')
         .select('*')
         .eq('is_active', true)
         .order('order_index');
-      if (error) throw error;
-      return data;
+      return data || [];
     },
   });
 
   const toggle = (name: string) => {
     if (selected.includes(name)) {
-      onChange(selected.filter((o) => o !== name));
-    } else if (selected.length < maxSelections) {
+      onChange(selected.filter(s => s !== name));
+    } else if (selected.length < max) {
       onChange([...selected, name]);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-wrap gap-2">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="h-9 w-24 rounded-full" />
-        ))}
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
-        {(occupations || []).map((occ) => {
+        {occupations.map((occ) => {
           const isSelected = selected.includes(occ.name);
           return (
             <button
@@ -57,10 +45,10 @@ export const OccupationPillSelector: React.FC<OccupationPillSelectorProps> = ({
               type="button"
               onClick={() => toggle(occ.name)}
               className={cn(
-                'px-4 py-2 rounded-full text-sm font-medium transition-all border',
+                'px-3 py-1.5 rounded-full text-xs font-medium border transition-all active:scale-95',
                 isSelected
                   ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-muted/30 text-muted-foreground border-border/50 hover:border-primary/50 hover:text-foreground'
+                  : 'bg-card text-muted-foreground border-border/30 hover:border-border/60'
               )}
             >
               {occ.name}
@@ -68,9 +56,7 @@ export const OccupationPillSelector: React.FC<OccupationPillSelectorProps> = ({
           );
         })}
       </div>
-      <p className="text-xs text-muted-foreground">
-        {selected.length}/{maxSelections} selected
-      </p>
+      <p className="text-[11px] text-muted-foreground">{selected.length}/{max} selected</p>
     </div>
   );
 };

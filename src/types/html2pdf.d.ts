@@ -6,6 +6,7 @@ declare module 'html2pdf.js' {
     html2canvas?: { scale: number; useCORS?: boolean; logging?: boolean };
     jsPDF?: { unit: string; format: string; orientation: string };
     pagebreak?: { mode: string[] };
+    [key: string]: any;
   }
 
   interface Html2Pdf {

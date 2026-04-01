@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Lock, Check } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+import { DynamicIcon } from '@/lib/dynamicIcon';
 
 interface StickyNoteCardProps {
   title: string;
@@ -95,7 +95,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
   onClick,
   fullWidth = false,
 }) => {
-  const IconComponent = (LucideIcons as any)[icon] || LucideIcons.Circle;
+  const IconComponent = ({ className }: { className?: string }) => <DynamicIcon name={icon} className={className} />;
   const isLocked = variant === 'upcoming';
   const isCompleted = variant === 'completed';
   const isCurrent = variant === 'current';

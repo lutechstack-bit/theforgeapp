@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Users, Loader2, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { MemberCard } from './MemberCard';
 import { MemberModal } from './MemberModal';
 import { cn } from '@/lib/utils';
 

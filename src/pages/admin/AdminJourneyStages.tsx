@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Pencil, Save, X, GripVertical } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+import { DynamicIcon } from '@/lib/dynamicIcon';
 
 interface JourneyStage {
   id: string;
@@ -99,8 +99,7 @@ const AdminJourneyStages: React.FC = () => {
   };
 
   const getIconComponent = (iconName: string) => {
-    const Icon = (LucideIcons as any)[iconName] || LucideIcons.Circle;
-    return <Icon className="w-5 h-5" />;
+    return <DynamicIcon name={iconName} className="w-5 h-5" />;
   };
 
   if (isLoading) {

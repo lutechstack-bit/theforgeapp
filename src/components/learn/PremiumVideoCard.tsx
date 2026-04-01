@@ -1,143 +1,70 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { cn, formatDurationFromMinutes } from '@/lib/utils';
-import { Play, Clock, CheckCircle } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { VideoProgressBar } from './VideoProgressBar';
+import { Play, Clock } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Progress } from '@/components/ui/progress';
 
 interface PremiumVideoCardProps {
   id: string;
   title: string;
   thumbnailUrl?: string;
   instructorName?: string;
-  instructorAvatar?: string;
-  companyName?: string;
   durationMinutes?: number;
-  isPremium?: boolean;
-  progressPercent?: number;
-  isCompleted?: boolean;
+  progressPercent: number;
+  isCompleted: boolean;
   onClick?: () => void;
-  className?: string;
 }
 
 export const PremiumVideoCard: React.FC<PremiumVideoCardProps> = ({
-  id,
   title,
   thumbnailUrl,
   instructorName,
-  instructorAvatar,
-  companyName,
   durationMinutes,
-  isPremium,
-  progressPercent = 0,
-  isCompleted = false,
+  progressPercent,
+  isCompleted,
   onClick,
-  className,
 }) => {
-  const navigate = useNavigate();
-
-  const handleClick = () => {
-    if (onClick) {
-      onClick();
-    } else {
-      navigate(`/learn/${id}`);
-    }
-  };
-
-
   return (
-    <div className={cn("rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300", className)}>
-    <div
-      onClick={handleClick}
-      className="group relative cursor-pointer rounded-[13px] bg-card"
+    <button
+      onClick={onClick}
+      className="w-full text-left rounded-xl border border-border/30 bg-card overflow-hidden hover:border-primary/30 hover:shadow-lg transition-all active:scale-[0.98]"
     >
-      {/* Thumbnail Container */}
-      <div className="relative aspect-video overflow-hidden rounded-t-[13px]">
+      {/* Thumbnail */}
+      <div className="relative aspect-video bg-muted">
         {thumbnailUrl ? (
-          <img
-            src={thumbnailUrl}
-            alt={title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          />
+          <img src={thumbnailUrl} alt={title} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 via-accent/10 to-muted/50 flex items-center justify-center">
-            <Play className="h-12 w-12 text-primary/50" />
+          <div className="w-full h-full flex items-center justify-center">
+            <Play className="w-8 h-8 text-muted-foreground/30" />
           </div>
         )}
-
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300" />
-
-        {/* Play Button Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-          <div className="w-16 h-16 rounded-full bg-primary/90 backdrop-blur-md flex items-center justify-center shadow-[0_0_40px_hsl(var(--primary)/0.5)] transform scale-75 group-hover:scale-100 transition-transform duration-300">
-            <Play className="h-7 w-7 text-primary-foreground ml-1" fill="currentColor" />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+          <div className="w-10 h-10 rounded-full bg-primary/90 flex items-center justify-center">
+            <Play className="w-5 h-5 text-primary-foreground ml-0.5" />
           </div>
         </div>
-
-        {/* Duration Badge */}
-        {(durationMinutes ?? 0) > 0 && (
-          <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-sm text-white text-xs font-medium flex items-center gap-1.5">
-            <Clock className="h-3 w-3" />
-            {formatDurationFromMinutes(durationMinutes)}
+        {/* Progress bar at bottom */}
+        {progressPercent > 0 && (
+          <div className="absolute bottom-0 left-0 right-0">
+            <Progress value={progressPercent} className="h-1 rounded-none" />
           </div>
         )}
+      </div>
 
-        {/* Completed Badge */}
+      {/* Info */}
+      <div className="p-3 space-y-1">
+        <h4 className="text-sm font-semibold text-foreground line-clamp-2">{title}</h4>
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          {instructorName && <span>{instructorName}</span>}
+          {durationMinutes && (
+            <span className="flex items-center gap-0.5">
+              <Clock className="w-3 h-3" /> {durationMinutes}m
+            </span>
+          )}
+        </div>
         {isCompleted && (
-          <div className="absolute top-3 right-3 p-1.5 rounded-full bg-green-500/90 backdrop-blur-sm">
-            <CheckCircle className="h-4 w-4 text-white" />
-          </div>
-        )}
-
-        {/* Premium Badge */}
-        {isPremium && !isCompleted && (
-          <div className="absolute top-3 right-3 px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-full">
-            Premium
-          </div>
-        )}
-
-        {/* Progress Bar */}
-        <VideoProgressBar progress={progressPercent} />
-      </div>
-
-      {/* Content */}
-      <div className="p-4 space-y-3">
-        {/* Title */}
-        <h4 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-300">
-          {title}
-        </h4>
-
-        {/* Instructor Info */}
-        {instructorName && (
-          <div className="flex items-center gap-2">
-            <Avatar className="h-7 w-7 border border-border/50">
-              <AvatarImage src={instructorAvatar} alt={instructorName} />
-              <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                {instructorName.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-foreground font-medium truncate">
-                {instructorName}
-              </p>
-              {companyName && (
-                <p className="text-xs text-muted-foreground truncate">
-                  {companyName}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Progress Text */}
-        {progressPercent > 0 && !isCompleted && (
-          <p className="text-xs text-muted-foreground">
-            {progressPercent}% complete
-          </p>
+          <span className="text-[10px] font-medium text-emerald-500">✓ Completed</span>
         )}
       </div>
-    </div>
-    </div>
+    </button>
   );
 };
