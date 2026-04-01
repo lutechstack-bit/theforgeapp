@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Pencil, Save, X, GripVertical } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+import { DynamicIcon } from '@/lib/dynamicIcon';
 
 interface JourneyStage {
   id: string;
