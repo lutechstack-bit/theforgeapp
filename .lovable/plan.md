@@ -1,27 +1,31 @@
 
 
-# Add Admin Roles for Gautam, Hiresh, and Rahul
+# Fix Payment Links for Sanjeev & Rajesh
 
-## Found Users
+## Confirmed Current State
 
-| Name | Email | User ID |
-|------|-------|---------|
-| Gautam | g@g.in | `03c9f5e4-37d3-41cc-98e3-af3ec7949e9d` |
-| Hiresh | hiresh@leveluplearning.in | `b1cbafbc-c4ff-4975-b3f7-88ea53991df5` |
-| Rahul | irahul1997@gmail.com | `b23dfdf3-941e-471d-b4b4-4048dcb2ad4c` |
+| User | Current Link | Current Total | Current Balance |
+|------|-------------|---------------|-----------------|
+| Sanjeev (`69f82f8a-67ff-4bb7-b444-f5d2d3606f15`) | `T0kUgAOh` | 80,000 | 65,000 |
+| Rajesh (`cf7a97f0-db03-4069-8761-17a2545f4838`) | `T0kUgAOh` | 85,000 | 70,000 |
 
-None of them currently have any roles assigned.
+## Updates
 
-## Change
-
-Insert 3 rows into `user_roles` table:
-
+### 1. Sanjeev — fix link, total, and balance
 ```sql
-INSERT INTO user_roles (user_id, role) VALUES
-  ('03c9f5e4-37d3-41cc-98e3-af3ec7949e9d', 'admin'),
-  ('b1cbafbc-c4ff-4975-b3f7-88ea53991df5', 'admin'),
-  ('b23dfdf3-941e-471d-b4b4-4048dcb2ad4c', 'admin');
+UPDATE payment_config 
+SET payment_link = 'https://rzp.io/rzp/lqegb1u',
+    programme_total = 85000,
+    balance_due = 70000
+WHERE user_id = '69f82f8a-67ff-4bb7-b444-f5d2d3606f15';
 ```
 
-No code or schema changes needed — just a data insert.
+### 2. Rajesh — fix link only
+```sql
+UPDATE payment_config 
+SET payment_link = 'https://rzp.io/rzp/lqegb1u'
+WHERE user_id = 'cf7a97f0-db03-4069-8761-17a2545f4838';
+```
+
+Both executed via the database insert tool. No schema or code changes.
 
