@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Check, ChevronRight, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { JourneyStage, JourneyTask } from '@/hooks/useStudentJourney';
-import * as LucideIcons from 'lucide-react';
+import { DynamicIcon } from '@/lib/dynamicIcon';
 
 interface StickyNoteDetailModalProps {
   isOpen: boolean;
