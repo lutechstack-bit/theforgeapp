@@ -458,18 +458,19 @@ export default function AdminPayments() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8">
+                <TableCell colSpan={10} className="text-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
                 </TableCell>
               </TableRow>
             ) : filteredUsers?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No users found</TableCell>
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">No users found</TableCell>
               </TableRow>
             ) : (
               filteredUsers?.map(user => {
                 const config = configMap.get(user.id);
                 const isHighlighted = highlightUserId === user.id;
+                const grantAmt = getGrantAmount(user);
                 return (
                   <TableRow key={user.id} className={isHighlighted ? 'bg-primary/10 ring-1 ring-primary/30' : undefined}>
                     <TableCell className="font-medium">{user.full_name || '-'}</TableCell>
@@ -477,6 +478,16 @@ export default function AdminPayments() {
                     <TableCell className="text-sm">{getEditionName(user.edition_id)}</TableCell>
                     <TableCell className="text-right font-mono text-sm">
                       {config ? `₹${config.programme_total.toLocaleString('en-IN')}` : '-'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {grantAmt > 0 ? (
+                        <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                          <Gift className="w-3 h-3 mr-1" />
+                          ₹{grantAmt.toLocaleString('en-IN')}
+                        </Badge>
+                      ) : config ? (
+                        <span className="text-muted-foreground text-sm">—</span>
+                      ) : '-'}
                     </TableCell>
                     <TableCell className="text-right font-mono text-sm">
                       {config ? `₹${config.deposit_paid.toLocaleString('en-IN')}` : '-'}
