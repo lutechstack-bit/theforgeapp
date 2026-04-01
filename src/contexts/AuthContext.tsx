@@ -53,6 +53,8 @@ export interface Edition {
   forge_end_date: string | null;
   cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS';
   city: string;
+  online_start_date: string | null;
+  online_end_date: string | null;
 }
 
 interface AuthContextType {
