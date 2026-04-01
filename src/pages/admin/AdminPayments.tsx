@@ -447,6 +447,7 @@ export default function AdminPayments() {
               <TableHead>Email</TableHead>
               <TableHead>Edition</TableHead>
               <TableHead className="text-right">Total</TableHead>
+              <TableHead className="text-center">Grant</TableHead>
               <TableHead className="text-right">Paid</TableHead>
               <TableHead className="text-right">Balance</TableHead>
               <TableHead>Deadline</TableHead>
