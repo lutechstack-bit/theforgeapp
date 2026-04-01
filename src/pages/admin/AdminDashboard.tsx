@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { 
   Users, Calendar, CalendarDays, CreditCard, BookOpen, MessageSquare, 
   TrendingUp, ArrowUpRight, ArrowDownRight, LogIn, Palette, RefreshCw,
-  Check, X, AlertTriangle, Eye, Info, Map, UserX, ChevronDown
+  Check, X, AlertTriangle, Eye, Info, Map, UserX, ChevronDown, ClipboardCheck, UserCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -30,14 +30,17 @@ function useUserStats() {
   return useQuery({
     queryKey: ['admin-user-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, payment_status, forge_mode, profile_setup_completed, created_at');
-      if (error) throw error;
-      const profiles = data || [];
+      const [profilesRes, collabRes] = await Promise.all([
+        supabase.from('profiles').select('id, payment_status, forge_mode, profile_setup_completed, ky_form_completed, created_at'),
+        supabase.from('collaborator_profiles').select('id', { count: 'exact', head: true }),
+      ]);
+      if (profilesRes.error) throw profilesRes.error;
+      const profiles = profilesRes.data || [];
       return {
         total: profiles.length,
         completed: profiles.filter(p => p.profile_setup_completed).length,
+        kyFormsCompleted: profiles.filter(p => p.ky_form_completed).length,
+        communityProfiles: collabRes.count || 0,
         balancePaid: profiles.filter(p => p.payment_status === 'BALANCE_PAID').length,
         balancePending: profiles.filter(p => p.payment_status === 'CONFIRMED_15K').length,
         preForge: profiles.filter(p => p.forge_mode === 'PRE_FORGE').length,
@@ -277,6 +280,7 @@ export default function AdminDashboard() {
   };
 
   const completionRate = userStats ? Math.round((userStats.completed / Math.max(userStats.total, 1)) * 100) : 0;
+  const kyFormRate = userStats ? Math.round((userStats.kyFormsCompleted / Math.max(userStats.total, 1)) * 100) : 0;
   const paymentData = userStats ? [
     { name: 'Paid', value: userStats.balancePaid },
     { name: 'Pending', value: userStats.balancePending },
@@ -288,7 +292,8 @@ export default function AdminDashboard() {
   const kpiCards = [
     { label: 'People', value: userStats?.total || 0, subtitle: 'signed up', icon: Users, color: 'text-primary', bg: 'bg-primary/15', link: '/admin/users' },
     { label: 'Onboarded', value: `${completionRate}%`, subtitle: `${userStats?.completed || 0} of ${userStats?.total || 0}`, icon: Check, color: 'text-emerald-500', bg: 'bg-emerald-500/15', link: '/admin/users' },
-    { label: 'Profiles', value: funnelData?.[2]?.count || 0, subtitle: 'creative profiles', icon: Palette, color: 'text-blue-500', bg: 'bg-blue-500/15', link: '/admin/network' },
+    { label: 'KY Forms', value: `${kyFormRate}%`, subtitle: `${userStats?.kyFormsCompleted || 0} completed`, icon: ClipboardCheck, color: 'text-violet-500', bg: 'bg-violet-500/15', link: '/admin/ky-forms' },
+    { label: 'Community', value: userStats?.communityProfiles || 0, subtitle: 'profiles created', icon: UserCircle, color: 'text-blue-500', bg: 'bg-blue-500/15', link: '/admin/ky-forms' },
     { label: 'Logins Today', value: loginStats?.todayCount || 0, subtitle: undefined, icon: LogIn, color: 'text-primary', bg: 'bg-primary/15', link: '/admin/activity', trend: loginStats?.trend },
     { label: 'Never Logged In', value: neverLoggedIn?.length || 0, subtitle: 'since signup', icon: UserX, color: 'text-amber-500', bg: 'bg-amber-500/15', link: '', isToggle: true },
   ];
@@ -332,7 +337,7 @@ export default function AdminDashboard() {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {kpiCards.map((kpi: any) => (
           <Card
             key={kpi.label}
