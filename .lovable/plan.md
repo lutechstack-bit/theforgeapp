@@ -1,45 +1,30 @@
 
 
-# Rebuild Admin KY Forms Page + Dashboard KY Metrics
+# Fix: Online Session Dates Wrong for E16 & E17
 
-## What Changes
+## Root Cause
+The `Edition` interface and `fetchEdition` query in `AuthContext.tsx` only select `id, forge_start_date, forge_end_date, cohort_type` — **missing `online_start_date`, `online_end_date`, and `city`**.
 
-### 1. Admin KY Forms page — Live Sheet View with student data
-Replace the current form-builder-only page with a tabbed layout:
-- **Tab 1: "Student Data"** (new, default) — A spreadsheet-style table showing all students with their KY form completion status and key filled fields. Features:
-  - Filterable by cohort type (Filmmaking / Creators / Writing)
-  - Columns: Name, Email, Edition, Cohort, KY Form Status (complete/incomplete), Collaborator Profile Status (complete/incomplete), key KY fields (occupation, MBTI, city)
-  - Checkbox selection on each row for bulk actions
-  - "Download Selected" button that exports selected rows as CSV (or all if none selected)
-  - "Download All Student Data" button retained
-  - Click a row to expand/view all their filled KY data in a slide-out sheet
-- **Tab 2: "Form Builder"** — Existing form builder UI moved here unchanged
+So `useRoadmapData.ts` line 39 casts `(effectiveEd as any)?.online_start_date` which is always `undefined`, causing online session dates to be calculated from `forge_start_date` minus day offsets instead of the actual `online_start_date`.
 
-### 2. Dashboard — KY Form Completion Metrics
-Add a new KPI card row or section in the Overview tab showing:
-- **KY Forms Completed**: Count of users with `ky_form_completed = true` vs total, shown as a percentage ring or fraction
-- **Collaborator Profiles Created**: Count of `collaborator_profiles` entries vs total users — this is the community profile completion metric
-- These two metrics will be added as new KPI cards in the existing top row (making it 7 cards, or placed in the Overview tab as a mini section)
+**Result**: E16 shows Apr 18 instead of Apr 15. E17 shows Apr 20 instead of Apr 17.
 
-### 3. Fix runtime error
-The `AdminTestingContext.tsx` has a `useState` crash — likely a React version mismatch or import issue. Will check and fix the import.
+## Fix (3 files, small changes)
 
-## Technical Plan
+### 1. `src/contexts/AuthContext.tsx`
+- Add `online_start_date`, `online_end_date` (both `string | null`) and `city` (`string`) to the `Edition` interface (line 50-56)
+- Update the `fetchEdition` select query (line 193) to include those 3 fields:
+  `'id, forge_start_date, forge_end_date, cohort_type, online_start_date, online_end_date, city'`
 
-### Files to modify:
-1. **`src/pages/admin/AdminKYForms.tsx`** — Major rewrite:
-   - Add `Tabs` with "Student Data" and "Form Builder"
-   - New `useStudentKYData` hook that fetches profiles + edition + ky responses + collaborator_profiles in one query
-   - Render a `Table` with checkboxes, filters, and download functionality
-   - Row click opens a `Sheet` showing all KY response fields for that student
-   
-2. **`src/pages/admin/AdminDashboard.tsx`** — Add KY completion metrics:
-   - New `useKYFormStats` hook querying `profiles` for `ky_form_completed` counts and `collaborator_profiles` count
-   - Add 2 KPI cards: "KY Forms" (% completed) and "Community Profiles" (count)
-   - Place in the existing KPI row or as a new mini-section in the Overview tab
+### 2. `src/hooks/useEffectiveCohort.ts`
+- Add `online_start_date` and `online_end_date` to the simulated edition object (line 23-30) so admin simulation also gets correct dates
 
-3. **`src/contexts/AdminTestingContext.tsx`** — Fix the `useState` null error (likely needs a guard or React import fix)
+### 3. `src/hooks/useRoadmapData.ts`
+- Remove the `(effectiveEd as any)` cast on line 39 since `online_start_date` will now be on the `Edition` type
 
-### No database changes needed
-All data already exists in `profiles`, `kyf_responses`, `kyc_responses`, `kyw_responses`, `collaborator_profiles`, and `editions`.
+## Result
+- E16 online sessions: Apr 15–23 (correct)
+- E17 online sessions: Apr 17–25 (correct)
+- Bootcamp dates unaffected (already use `forge_start_date`)
+- No database changes needed — `online_start_date` and `online_end_date` already exist in the `editions` table
 
