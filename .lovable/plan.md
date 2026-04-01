@@ -1,38 +1,72 @@
 
 
-# Generate LLM Context Document for The Forge App
+# App Bloat Audit — Unused Code & Optimization Opportunities
 
-## What
-Create a comprehensive markdown document (`forge-app-context.md`) that describes the entire Forge by LevelUp application — its purpose, architecture, features, data model, user flows, and admin capabilities. This document is designed to be fed to LLMs as context so they can understand the app deeply.
+## 1. Completely Unused Component Files (safe to delete)
 
-## Approach
-Generate a single markdown file to `/mnt/documents/forge-app-context.md` using a script. The document will be structured as follows:
+These files are **never imported anywhere** in the codebase:
 
-### Document Structure
-1. **Overview** — What Forge is, who it's for, the brand ("Where Dreamers Become Doers")
-2. **Cohort Types** — FORGE (Filmmaking), FORGE_WRITING (Writing), FORGE_CREATORS (Creators)
-3. **Forge Modes** — PRE_FORGE, DURING_FORGE, POST_FORGE lifecycle
-4. **User Journey** — Auth → Profile Setup → KY Form → Home Dashboard → Full app access
-5. **Core Features** (one section each):
-   - Home (hero banners, onboarding checklist, today's focus, journey section, batchmates, alumni showcase, payment tracking)
-   - Community (creatives directory, gigs board, real-time chat with city/cohort groups, collaboration requests)
-   - Roadmap (day-by-day journey, tasks, prep checklist, equipment, rules, gallery, student films)
-   - Learn (courses, masterclasses, programs, continue watching, video progress tracking, upcoming sessions)
-   - Events (event types, registration, virtual/in-person)
-   - Perks (partner perks with claim forms)
-   - Profile (bento grid layout, works portfolio, proficiency tiles, MBTI, public portfolio sharing)
-   - KY Forms (Know Your — dynamic multi-step forms per cohort type)
-   - Journey System (stages, tasks, streaks, progress tracking, sticky notes, announcements)
-   - Updates/Changelog
-6. **Data Model** — All major tables with key columns and relationships
-7. **Admin Panel** — Full list of admin capabilities (users, editions, events, content, payments, etc.)
-8. **Navigation** — Bottom nav (mobile), side nav (desktop), app layout
-9. **Authentication & Authorization** — Email/password auth, RLS, admin roles via user_roles table
-10. **Technical Stack** — React 18, Vite 5, TypeScript, Tailwind, Supabase, TanStack Query
-11. **Key Patterns** — Feature flags, cohort-scoped content, edition-based isolation, forge mode gating
+| File | Lines | Notes |
+|------|-------|-------|
+| `src/components/community/CollaboratorRequestModal.tsx` | ~65 | Never imported |
+| `src/components/community/ContactPitchModal.tsx` | ? | Never imported |
+| `src/components/community/CreativeCard.tsx` | ? | Never imported |
+| `src/components/community/CreativeDetailModal.tsx` | ? | Never imported |
+| `src/components/community/CollaboratorCard.tsx` | ? | Never imported |
+| `src/components/community/GigCard.tsx` | ? | Never imported |
+| `src/components/community/GigPostForm.tsx` | ? | Never imported |
+| `src/components/community/MemberCard.tsx` | ? | Never imported |
+| `src/components/community/OccupationPillSelector.tsx` | ? | Never imported |
+| `src/components/community/HighlightsCard.tsx` | ? | Never imported |
+| `src/components/home/WhatYouCanDoHere.tsx` | 142 | Never imported |
+| `src/components/events/PastProgramCard.tsx` | ? | Never imported |
+| `src/components/learn/PremiumVideoCard.tsx` | ? | Never imported |
+| `src/components/learn/VideoProgressBar.tsx` | ? | Never imported |
+| `src/components/learn/CourseCard.tsx` | ? | Never imported (LearnCourseCard is used instead) |
+| `src/components/profile/SharePortfolio.tsx` | ? | Never imported |
+| `src/components/profile/CommunityBadges.tsx` | ? | Never imported |
 
-## Execution
-- Single script writes the document to `/mnt/documents/forge-app-context.md`
-- No codebase changes needed
-- Output as a downloadable markdown file
+**Total: ~17 dead component files**
+
+## 2. Unused Type/Utility Files
+
+| File | Notes |
+|------|-------|
+| `src/types/html2pdf.d.ts` | Never referenced via import (html2pdf is imported directly) |
+
+## 3. Major Bundle Bloat: `import * as LucideIcons`
+
+**5 files** import the **entire** lucide-react library (~1,000+ icons, ~200KB+) as a wildcard namespace:
+
+- `src/components/roadmap/NightlyRitualSection.tsx`
+- `src/pages/admin/AdminJourneyStages.tsx`
+- `src/components/journey/StickyNoteBottomSheet.tsx`
+- `src/components/journey/StickyNoteCard.tsx`
+- `src/components/journey/StickyNoteDetailModal.tsx`
+
+These should use a dynamic icon resolver pattern instead of `import * as LucideIcons`.
+
+## 4. `remotion/` Directory
+
+The `remotion/` folder (video generation project) is **completely separate** — not imported by the main app. It ships its own `node_modules` and does NOT affect the webapp bundle. However, it adds ~50+ files to the git repo that are irrelevant to the webapp. Consider moving it to a separate repo or adding it to `.gitignore` for the main build.
+
+## Proposed Cleanup Plan
+
+### Step 1: Delete 17 unused component files
+Remove all files listed in section 1 above. Zero risk — they have no imports.
+
+### Step 2: Delete unused type file
+Remove `src/types/html2pdf.d.ts`.
+
+### Step 3: Replace `import * as LucideIcons` with dynamic icon map
+In each of the 5 files, replace the wildcard import with a small lookup map of only the icons actually used from the admin-configured icon names. This alone could save ~150-200KB from the bundle.
+
+### Step 4: (Optional) Move `remotion/` out of main repo
+Add `remotion/` to the build ignore list or move to a separate repository.
+
+### Summary
+- **~18 dead files** to delete
+- **5 files** with wildcard lucide imports bloating the bundle by ~200KB
+- No database changes needed
+- No functional impact — all deletions are unused code
 
