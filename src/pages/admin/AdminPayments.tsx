@@ -356,7 +356,7 @@ export default function AdminPayments() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
           <CardContent className="pt-4 pb-3">
             <p className="text-xs text-muted-foreground">Total Users</p>
@@ -379,6 +379,21 @@ export default function AdminPayments() {
           <CardContent className="pt-4 pb-3">
             <p className="text-xs text-muted-foreground">Fully Paid</p>
             <p className="text-2xl font-bold text-emerald-500">{totalFullyPaid}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-emerald-500/20">
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-1.5">
+              <Gift className="w-3.5 h-3.5 text-emerald-500" />
+              <p className="text-xs text-muted-foreground">With Grant</p>
+            </div>
+            <p className="text-2xl font-bold text-emerald-500">{totalWithGrant}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4 pb-3">
+            <p className="text-xs text-muted-foreground">No Grant</p>
+            <p className="text-2xl font-bold">{totalNoGrant}</p>
           </CardContent>
         </Card>
       </div>
