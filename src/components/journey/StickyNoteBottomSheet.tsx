@@ -12,7 +12,7 @@ import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { JourneyStage, JourneyTask } from '@/hooks/useStudentJourney';
 import { SwipeableTaskItem } from './SwipeableTaskItem';
-import * as LucideIcons from 'lucide-react';
+import { DynamicIcon } from '@/lib/dynamicIcon';
 
 interface StickyNoteBottomSheetProps {
   isOpen: boolean;
