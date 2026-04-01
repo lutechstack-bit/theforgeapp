@@ -324,7 +324,9 @@ export default function AdminPayments() {
       (statusFilter === 'configured' && config) ||
       (statusFilter === 'unconfigured' && !config) ||
       (statusFilter === 'fully_paid' && config && config.balance_due <= 0) ||
-      (statusFilter === 'pending' && config && config.balance_due > 0);
+      (statusFilter === 'pending' && config && config.balance_due > 0) ||
+      (statusFilter === 'with_grant' && getGrantAmount(user) > 0) ||
+      (statusFilter === 'no_grant' && config && getGrantAmount(user) === 0);
     return matchesSearch && matchesEdition && matchesStatus;
   });
 
@@ -332,6 +334,11 @@ export default function AdminPayments() {
   const totalConfigured = paymentConfigs?.length || 0;
   const totalPending = paymentConfigs?.filter(c => c.balance_due > 0).length || 0;
   const totalFullyPaid = paymentConfigs?.filter(c => c.balance_due <= 0).length || 0;
+  const totalWithGrant = users?.filter(u => getGrantAmount(u) > 0).length || 0;
+  const totalNoGrant = users?.filter(u => {
+    const config = configMap.get(u.id);
+    return config && getGrantAmount(u) === 0;
+  }).length || 0;
 
   const isLoading = usersLoading || configsLoading;
 
