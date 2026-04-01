@@ -110,7 +110,12 @@ export const CleanEventCard: React.FC<CleanEventCardProps> = ({
                   {hostName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-xs text-muted-foreground truncate">{hostName}</span>
+              <div className="min-w-0">
+                <span className="text-xs text-muted-foreground truncate block">{hostName}</span>
+                {hostDesignation && (
+                  <span className="text-[10px] text-muted-foreground/60 truncate block">{hostDesignation}</span>
+                )}
+              </div>
             </>
           ) : (
             <span className="text-xs text-muted-foreground truncate">
