@@ -127,6 +127,23 @@ export default function AdminPayments() {
   const configMap = new Map<string, PaymentConfig>();
   paymentConfigs?.forEach(c => configMap.set(c.user_id, c));
 
+  // Defaults map by edition_id
+  const defaultsMap = useMemo(() => {
+    const m = new Map<string, PaymentDefault>();
+    paymentDefaults?.forEach(d => m.set(d.edition_id, d));
+    return m;
+  }, [paymentDefaults]);
+
+  // Grant helpers
+  const getGrantAmount = (user: any): number => {
+    const config = configMap.get(user.id);
+    if (!config || !user.edition_id) return 0;
+    const def = defaultsMap.get(user.edition_id);
+    if (!def) return 0;
+    const diff = def.programme_total - config.programme_total;
+    return diff > 0 ? diff : 0;
+  };
+
   const getEditionName = (editionId: string | null) => {
     if (!editionId) return 'No Edition';
     return editions?.find(e => e.id === editionId)?.name || 'Unknown';
