@@ -1,72 +1,45 @@
 
 
-# App Bloat Audit — Unused Code & Optimization Opportunities
+# Rebuild Admin KY Forms Page + Dashboard KY Metrics
 
-## 1. Completely Unused Component Files (safe to delete)
+## What Changes
 
-These files are **never imported anywhere** in the codebase:
+### 1. Admin KY Forms page — Live Sheet View with student data
+Replace the current form-builder-only page with a tabbed layout:
+- **Tab 1: "Student Data"** (new, default) — A spreadsheet-style table showing all students with their KY form completion status and key filled fields. Features:
+  - Filterable by cohort type (Filmmaking / Creators / Writing)
+  - Columns: Name, Email, Edition, Cohort, KY Form Status (complete/incomplete), Collaborator Profile Status (complete/incomplete), key KY fields (occupation, MBTI, city)
+  - Checkbox selection on each row for bulk actions
+  - "Download Selected" button that exports selected rows as CSV (or all if none selected)
+  - "Download All Student Data" button retained
+  - Click a row to expand/view all their filled KY data in a slide-out sheet
+- **Tab 2: "Form Builder"** — Existing form builder UI moved here unchanged
 
-| File | Lines | Notes |
-|------|-------|-------|
-| `src/components/community/CollaboratorRequestModal.tsx` | ~65 | Never imported |
-| `src/components/community/ContactPitchModal.tsx` | ? | Never imported |
-| `src/components/community/CreativeCard.tsx` | ? | Never imported |
-| `src/components/community/CreativeDetailModal.tsx` | ? | Never imported |
-| `src/components/community/CollaboratorCard.tsx` | ? | Never imported |
-| `src/components/community/GigCard.tsx` | ? | Never imported |
-| `src/components/community/GigPostForm.tsx` | ? | Never imported |
-| `src/components/community/MemberCard.tsx` | ? | Never imported |
-| `src/components/community/OccupationPillSelector.tsx` | ? | Never imported |
-| `src/components/community/HighlightsCard.tsx` | ? | Never imported |
-| `src/components/home/WhatYouCanDoHere.tsx` | 142 | Never imported |
-| `src/components/events/PastProgramCard.tsx` | ? | Never imported |
-| `src/components/learn/PremiumVideoCard.tsx` | ? | Never imported |
-| `src/components/learn/VideoProgressBar.tsx` | ? | Never imported |
-| `src/components/learn/CourseCard.tsx` | ? | Never imported (LearnCourseCard is used instead) |
-| `src/components/profile/SharePortfolio.tsx` | ? | Never imported |
-| `src/components/profile/CommunityBadges.tsx` | ? | Never imported |
+### 2. Dashboard — KY Form Completion Metrics
+Add a new KPI card row or section in the Overview tab showing:
+- **KY Forms Completed**: Count of users with `ky_form_completed = true` vs total, shown as a percentage ring or fraction
+- **Collaborator Profiles Created**: Count of `collaborator_profiles` entries vs total users — this is the community profile completion metric
+- These two metrics will be added as new KPI cards in the existing top row (making it 7 cards, or placed in the Overview tab as a mini section)
 
-**Total: ~17 dead component files**
+### 3. Fix runtime error
+The `AdminTestingContext.tsx` has a `useState` crash — likely a React version mismatch or import issue. Will check and fix the import.
 
-## 2. Unused Type/Utility Files
+## Technical Plan
 
-| File | Notes |
-|------|-------|
-| `src/types/html2pdf.d.ts` | Never referenced via import (html2pdf is imported directly) |
+### Files to modify:
+1. **`src/pages/admin/AdminKYForms.tsx`** — Major rewrite:
+   - Add `Tabs` with "Student Data" and "Form Builder"
+   - New `useStudentKYData` hook that fetches profiles + edition + ky responses + collaborator_profiles in one query
+   - Render a `Table` with checkboxes, filters, and download functionality
+   - Row click opens a `Sheet` showing all KY response fields for that student
+   
+2. **`src/pages/admin/AdminDashboard.tsx`** — Add KY completion metrics:
+   - New `useKYFormStats` hook querying `profiles` for `ky_form_completed` counts and `collaborator_profiles` count
+   - Add 2 KPI cards: "KY Forms" (% completed) and "Community Profiles" (count)
+   - Place in the existing KPI row or as a new mini-section in the Overview tab
 
-## 3. Major Bundle Bloat: `import * as LucideIcons`
+3. **`src/contexts/AdminTestingContext.tsx`** — Fix the `useState` null error (likely needs a guard or React import fix)
 
-**5 files** import the **entire** lucide-react library (~1,000+ icons, ~200KB+) as a wildcard namespace:
-
-- `src/components/roadmap/NightlyRitualSection.tsx`
-- `src/pages/admin/AdminJourneyStages.tsx`
-- `src/components/journey/StickyNoteBottomSheet.tsx`
-- `src/components/journey/StickyNoteCard.tsx`
-- `src/components/journey/StickyNoteDetailModal.tsx`
-
-These should use a dynamic icon resolver pattern instead of `import * as LucideIcons`.
-
-## 4. `remotion/` Directory
-
-The `remotion/` folder (video generation project) is **completely separate** — not imported by the main app. It ships its own `node_modules` and does NOT affect the webapp bundle. However, it adds ~50+ files to the git repo that are irrelevant to the webapp. Consider moving it to a separate repo or adding it to `.gitignore` for the main build.
-
-## Proposed Cleanup Plan
-
-### Step 1: Delete 17 unused component files
-Remove all files listed in section 1 above. Zero risk — they have no imports.
-
-### Step 2: Delete unused type file
-Remove `src/types/html2pdf.d.ts`.
-
-### Step 3: Replace `import * as LucideIcons` with dynamic icon map
-In each of the 5 files, replace the wildcard import with a small lookup map of only the icons actually used from the admin-configured icon names. This alone could save ~150-200KB from the bundle.
-
-### Step 4: (Optional) Move `remotion/` out of main repo
-Add `remotion/` to the build ignore list or move to a separate repository.
-
-### Summary
-- **~18 dead files** to delete
-- **5 files** with wildcard lucide imports bloating the bundle by ~200KB
-- No database changes needed
-- No functional impact — all deletions are unused code
+### No database changes needed
+All data already exists in `profiles`, `kyf_responses`, `kyc_responses`, `kyw_responses`, `collaborator_profiles`, and `editions`.
 
