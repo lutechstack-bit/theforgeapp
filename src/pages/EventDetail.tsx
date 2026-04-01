@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Calendar, MapPin, Clock, Video, FileText, User, ExternalLink, CheckCircle, Sparkles, Share2, Camera } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Clock, Video, FileText, User, ExternalLink, CheckCircle, Sparkles, Share2, Camera, Copy, Link } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -55,13 +55,21 @@ const EventDetail: React.FC = () => {
     }
   };
 
+  const handleCopyZoomLink = async () => {
+    const zoomLink = (event as any)?.zoom_link;
+    if (zoomLink) {
+      await navigator.clipboard.writeText(zoomLink);
+      toast.success('Zoom link copied!');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background p-4 pb-24 max-w-5xl lg:max-w-6xl mx-auto">
         <Skeleton className="h-8 w-48 mb-6" />
         <div className="grid grid-cols-1 md:grid-cols-[minmax(0,400px)_1fr] gap-8">
           <div className="space-y-4">
-            <Skeleton className="aspect-[4/3] w-full rounded-2xl" />
+            <Skeleton className="aspect-square w-full rounded-2xl" />
             <Skeleton className="h-12 w-full rounded-xl" />
           </div>
           <div className="space-y-4">
@@ -88,6 +96,8 @@ const EventDetail: React.FC = () => {
 
   const embedUrl = event.recording_url ? getEmbedUrl(event.recording_url) : null;
   const eventDate = new Date(event.event_date);
+  const zoomLink = (event as any)?.zoom_link;
+  const hostDesignation = (event as any)?.host_designation;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -116,8 +126,8 @@ const EventDetail: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-[minmax(0,380px)_1fr] gap-8">
           {/* Left Column */}
           <div className="flex flex-col gap-5">
-            {/* Event Image */}
-            <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-card/60 border border-border/50">
+            {/* Event Poster - 1:1 Square */}
+            <div className="aspect-square rounded-2xl overflow-hidden bg-card/60 border border-border/50">
               {event.image_url ? (
                 <img src={event.image_url} alt={event.title} className="w-full h-full object-cover" />
               ) : (
@@ -139,7 +149,12 @@ const EventDetail: React.FC = () => {
                     {(event.host_name || 'H').charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <span className="font-medium text-foreground">{event.host_name || 'Forge Team'}</span>
+                <div>
+                  <span className="font-medium text-foreground block">{event.host_name || 'Forge Team'}</span>
+                  {hostDesignation && (
+                    <span className="text-xs text-muted-foreground">{hostDesignation}</span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -164,6 +179,37 @@ const EventDetail: React.FC = () => {
                   </>
                 )}
               </Button>
+            )}
+
+            {/* Zoom Link - visible to registered users */}
+            {!isEventPast && zoomLink && isRegistered && (
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Video className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold text-foreground">Zoom Meeting Link</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={zoomLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline truncate flex-1"
+                  >
+                    {zoomLink}
+                  </a>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleCopyZoomLink}>
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Prompt to register for Zoom access */}
+            {!isEventPast && zoomLink && !isRegistered && (
+              <div className="bg-muted/30 border border-border/50 rounded-xl p-4 flex items-center gap-3">
+                <Link className="h-4 w-4 text-muted-foreground shrink-0" />
+                <p className="text-xs text-muted-foreground">Register to get access to the Zoom link</p>
+              </div>
             )}
 
             {isEventPast && (

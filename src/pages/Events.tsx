@@ -132,6 +132,7 @@ const Events: React.FC = () => {
                       isPastEvent={false}
                       hostName={(event as any).host_name || undefined}
                       hostAvatar={(event as any).host_avatar_url || undefined}
+                      hostDesignation={(event as any).host_designation || undefined}
                       onRegister={(e) => handleRegisterClick(e, event)}
                       onClick={() => navigate(`/events/${event.id}`)}
                     />
@@ -160,6 +161,7 @@ const Events: React.FC = () => {
                       isPastEvent={true}
                       hostName={(event as any).host_name || undefined}
                       hostAvatar={(event as any).host_avatar_url || undefined}
+                      hostDesignation={(event as any).host_designation || undefined}
                       onClick={() => navigate(`/events/${event.id}`)}
                     />
                   ))}

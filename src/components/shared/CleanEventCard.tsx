@@ -17,6 +17,7 @@ interface CleanEventCardProps {
   isPastEvent?: boolean;
   hostName?: string;
   hostAvatar?: string;
+  hostDesignation?: string;
   onRegister?: (e: React.MouseEvent) => void;
   onClick?: () => void;
   className?: string;
@@ -33,6 +34,7 @@ export const CleanEventCard: React.FC<CleanEventCardProps> = ({
   isPastEvent,
   hostName,
   hostAvatar,
+  hostDesignation,
   onClick,
   className,
 }) => {
@@ -48,8 +50,8 @@ export const CleanEventCard: React.FC<CleanEventCardProps> = ({
         className
       )}
     >
-      {/* Image Container - Portrait */}
-      <div className="relative aspect-[4/5] overflow-hidden">
+      {/* Image Container - Square Poster */}
+      <div className="relative aspect-square overflow-hidden">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -108,7 +110,12 @@ export const CleanEventCard: React.FC<CleanEventCardProps> = ({
                   {hostName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-xs text-muted-foreground truncate">{hostName}</span>
+              <div className="min-w-0">
+                <span className="text-xs text-muted-foreground truncate block">{hostName}</span>
+                {hostDesignation && (
+                  <span className="text-[10px] text-muted-foreground/60 truncate block">{hostDesignation}</span>
+                )}
+              </div>
             </>
           ) : (
             <span className="text-xs text-muted-foreground truncate">
