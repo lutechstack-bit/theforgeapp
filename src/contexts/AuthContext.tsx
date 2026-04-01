@@ -192,7 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchEdition = async (editionId: string): Promise<Edition | null> => {
     const { data, error } = await supabase
       .from('editions')
-      .select('id, forge_start_date, forge_end_date, cohort_type')
+      .select('id, forge_start_date, forge_end_date, cohort_type, online_start_date, online_end_date, city')
       .eq('id', editionId)
       .maybeSingle();
     
