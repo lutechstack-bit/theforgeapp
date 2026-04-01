@@ -422,6 +422,8 @@ export default function AdminPayments() {
             <SelectItem value="unconfigured">Not Configured</SelectItem>
             <SelectItem value="fully_paid">Fully Paid</SelectItem>
             <SelectItem value="pending">Balance Pending</SelectItem>
+            <SelectItem value="with_grant">With Grant</SelectItem>
+            <SelectItem value="no_grant">No Grant</SelectItem>
           </SelectContent>
         </Select>
 
