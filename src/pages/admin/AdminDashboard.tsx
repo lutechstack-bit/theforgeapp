@@ -280,6 +280,7 @@ export default function AdminDashboard() {
   };
 
   const completionRate = userStats ? Math.round((userStats.completed / Math.max(userStats.total, 1)) * 100) : 0;
+  const kyFormRate = userStats ? Math.round((userStats.kyFormsCompleted / Math.max(userStats.total, 1)) * 100) : 0;
   const paymentData = userStats ? [
     { name: 'Paid', value: userStats.balancePaid },
     { name: 'Pending', value: userStats.balancePending },
@@ -291,7 +292,8 @@ export default function AdminDashboard() {
   const kpiCards = [
     { label: 'People', value: userStats?.total || 0, subtitle: 'signed up', icon: Users, color: 'text-primary', bg: 'bg-primary/15', link: '/admin/users' },
     { label: 'Onboarded', value: `${completionRate}%`, subtitle: `${userStats?.completed || 0} of ${userStats?.total || 0}`, icon: Check, color: 'text-emerald-500', bg: 'bg-emerald-500/15', link: '/admin/users' },
-    { label: 'Profiles', value: funnelData?.[2]?.count || 0, subtitle: 'creative profiles', icon: Palette, color: 'text-blue-500', bg: 'bg-blue-500/15', link: '/admin/network' },
+    { label: 'KY Forms', value: `${kyFormRate}%`, subtitle: `${userStats?.kyFormsCompleted || 0} completed`, icon: ClipboardCheck, color: 'text-violet-500', bg: 'bg-violet-500/15', link: '/admin/ky-forms' },
+    { label: 'Community', value: userStats?.communityProfiles || 0, subtitle: 'profiles created', icon: UserCircle, color: 'text-blue-500', bg: 'bg-blue-500/15', link: '/admin/ky-forms' },
     { label: 'Logins Today', value: loginStats?.todayCount || 0, subtitle: undefined, icon: LogIn, color: 'text-primary', bg: 'bg-primary/15', link: '/admin/activity', trend: loginStats?.trend },
     { label: 'Never Logged In', value: neverLoggedIn?.length || 0, subtitle: 'since signup', icon: UserX, color: 'text-amber-500', bg: 'bg-amber-500/15', link: '', isToggle: true },
   ];
