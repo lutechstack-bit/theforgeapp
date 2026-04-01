@@ -573,14 +573,29 @@ export default function AdminPayments() {
               <Label className="cursor-pointer">Deposit Verified</Label>
             </div>
             {editForm.programme_total && editForm.deposit_paid && (
-              <div className="bg-muted/50 rounded-lg p-3 text-sm">
-                <span className="text-muted-foreground">Balance Due: </span>
-                <span className="font-bold text-foreground">
-                  ₹{(Number(editForm.programme_total) - Number(editForm.deposit_paid)).toLocaleString('en-IN')}
-                </span>
-                {Number(editForm.deposit_paid) >= Number(editForm.programme_total) && (
-                  <span className="ml-2 text-emerald-500 text-xs">(Will auto-mark as BALANCE_PAID)</span>
-                )}
+              <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-1">
+                <div>
+                  <span className="text-muted-foreground">Balance Due: </span>
+                  <span className="font-bold text-foreground">
+                    ₹{(Number(editForm.programme_total) - Number(editForm.deposit_paid)).toLocaleString('en-IN')}
+                  </span>
+                  {Number(editForm.deposit_paid) >= Number(editForm.programme_total) && (
+                    <span className="ml-2 text-emerald-500 text-xs">(Will auto-mark as BALANCE_PAID)</span>
+                  )}
+                </div>
+                {editingPayment && (() => {
+                  const grantAmt = getGrantAmount(editingPayment);
+                  if (grantAmt > 0) {
+                    return (
+                      <div className="flex items-center gap-1.5">
+                        <Gift className="w-3.5 h-3.5 text-emerald-500" />
+                        <span className="text-muted-foreground">Grant Applied: </span>
+                        <span className="font-bold text-emerald-500">₹{grantAmt.toLocaleString('en-IN')}</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
             )}
           </div>
