@@ -1,0 +1,1 @@
+ALTER TABLE public.learn_content ADD COLUMN linked_event_id uuid;

@@ -627,11 +627,13 @@ export type Database = {
       }
       events: {
         Row: {
+          community_session_id: string | null
           created_at: string
           description: string | null
           event_date: string
           event_type_id: string | null
           host_avatar_url: string | null
+          host_designation: string | null
           host_name: string | null
           id: string
           image_url: string | null
@@ -641,13 +643,16 @@ export type Database = {
           recording_url: string | null
           show_on_homepage: boolean
           title: string
+          zoom_link: string | null
         }
         Insert: {
+          community_session_id?: string | null
           created_at?: string
           description?: string | null
           event_date: string
           event_type_id?: string | null
           host_avatar_url?: string | null
+          host_designation?: string | null
           host_name?: string | null
           id?: string
           image_url?: string | null
@@ -657,13 +662,16 @@ export type Database = {
           recording_url?: string | null
           show_on_homepage?: boolean
           title: string
+          zoom_link?: string | null
         }
         Update: {
+          community_session_id?: string | null
           created_at?: string
           description?: string | null
           event_date?: string
           event_type_id?: string | null
           host_avatar_url?: string | null
+          host_designation?: string | null
           host_name?: string | null
           id?: string
           image_url?: string | null
@@ -673,6 +681,7 @@ export type Database = {
           recording_url?: string | null
           show_on_homepage?: boolean
           title?: string
+          zoom_link?: string | null
         }
         Relationships: [
           {
@@ -1592,6 +1601,7 @@ export type Database = {
           instructor_avatar_url: string | null
           instructor_name: string | null
           is_premium: boolean
+          linked_event_id: string | null
           order_index: number
           program_id: string | null
           section_type: string
@@ -1616,6 +1626,7 @@ export type Database = {
           instructor_avatar_url?: string | null
           instructor_name?: string | null
           is_premium?: boolean
+          linked_event_id?: string | null
           order_index?: number
           program_id?: string | null
           section_type?: string
@@ -1640,6 +1651,7 @@ export type Database = {
           instructor_avatar_url?: string | null
           instructor_name?: string | null
           is_premium?: boolean
+          linked_event_id?: string | null
           order_index?: number
           program_id?: string | null
           section_type?: string
