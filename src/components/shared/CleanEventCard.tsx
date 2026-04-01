@@ -50,8 +50,8 @@ export const CleanEventCard: React.FC<CleanEventCardProps> = ({
         className
       )}
     >
-      {/* Image Container - Portrait */}
-      <div className="relative aspect-[4/5] overflow-hidden">
+      {/* Image Container - Square Poster */}
+      <div className="relative aspect-square overflow-hidden">
         {imageUrl ? (
           <img
             src={imageUrl}
