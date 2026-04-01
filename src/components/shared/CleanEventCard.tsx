@@ -17,6 +17,7 @@ interface CleanEventCardProps {
   isPastEvent?: boolean;
   hostName?: string;
   hostAvatar?: string;
+  hostDesignation?: string;
   onRegister?: (e: React.MouseEvent) => void;
   onClick?: () => void;
   className?: string;
