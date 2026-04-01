@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, Edit, Loader2, Settings, Users as UsersIcon } from 'lucide-react';
+import { Search, Edit, Loader2, Settings, Users as UsersIcon, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -126,6 +126,23 @@ export default function AdminPayments() {
   // Config map for quick lookup
   const configMap = new Map<string, PaymentConfig>();
   paymentConfigs?.forEach(c => configMap.set(c.user_id, c));
+
+  // Defaults map by edition_id
+  const defaultsMap = useMemo(() => {
+    const m = new Map<string, PaymentDefault>();
+    paymentDefaults?.forEach(d => m.set(d.edition_id, d));
+    return m;
+  }, [paymentDefaults]);
+
+  // Grant helpers
+  const getGrantAmount = (user: any): number => {
+    const config = configMap.get(user.id);
+    if (!config || !user.edition_id) return 0;
+    const def = defaultsMap.get(user.edition_id);
+    if (!def) return 0;
+    const diff = def.programme_total - config.programme_total;
+    return diff > 0 ? diff : 0;
+  };
 
   const getEditionName = (editionId: string | null) => {
     if (!editionId) return 'No Edition';
@@ -307,7 +324,9 @@ export default function AdminPayments() {
       (statusFilter === 'configured' && config) ||
       (statusFilter === 'unconfigured' && !config) ||
       (statusFilter === 'fully_paid' && config && config.balance_due <= 0) ||
-      (statusFilter === 'pending' && config && config.balance_due > 0);
+      (statusFilter === 'pending' && config && config.balance_due > 0) ||
+      (statusFilter === 'with_grant' && getGrantAmount(user) > 0) ||
+      (statusFilter === 'no_grant' && config && getGrantAmount(user) === 0);
     return matchesSearch && matchesEdition && matchesStatus;
   });
 
@@ -315,6 +334,11 @@ export default function AdminPayments() {
   const totalConfigured = paymentConfigs?.length || 0;
   const totalPending = paymentConfigs?.filter(c => c.balance_due > 0).length || 0;
   const totalFullyPaid = paymentConfigs?.filter(c => c.balance_due <= 0).length || 0;
+  const totalWithGrant = users?.filter(u => getGrantAmount(u) > 0).length || 0;
+  const totalNoGrant = users?.filter(u => {
+    const config = configMap.get(u.id);
+    return config && getGrantAmount(u) === 0;
+  }).length || 0;
 
   const isLoading = usersLoading || configsLoading;
 
@@ -332,7 +356,7 @@ export default function AdminPayments() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
           <CardContent className="pt-4 pb-3">
             <p className="text-xs text-muted-foreground">Total Users</p>
@@ -355,6 +379,21 @@ export default function AdminPayments() {
           <CardContent className="pt-4 pb-3">
             <p className="text-xs text-muted-foreground">Fully Paid</p>
             <p className="text-2xl font-bold text-emerald-500">{totalFullyPaid}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-emerald-500/20">
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-1.5">
+              <Gift className="w-3.5 h-3.5 text-emerald-500" />
+              <p className="text-xs text-muted-foreground">With Grant</p>
+            </div>
+            <p className="text-2xl font-bold text-emerald-500">{totalWithGrant}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4 pb-3">
+            <p className="text-xs text-muted-foreground">No Grant</p>
+            <p className="text-2xl font-bold">{totalNoGrant}</p>
           </CardContent>
         </Card>
       </div>
@@ -383,6 +422,8 @@ export default function AdminPayments() {
             <SelectItem value="unconfigured">Not Configured</SelectItem>
             <SelectItem value="fully_paid">Fully Paid</SelectItem>
             <SelectItem value="pending">Balance Pending</SelectItem>
+            <SelectItem value="with_grant">With Grant</SelectItem>
+            <SelectItem value="no_grant">No Grant</SelectItem>
           </SelectContent>
         </Select>
 
@@ -406,6 +447,7 @@ export default function AdminPayments() {
               <TableHead>Email</TableHead>
               <TableHead>Edition</TableHead>
               <TableHead className="text-right">Total</TableHead>
+              <TableHead className="text-center">Grant</TableHead>
               <TableHead className="text-right">Paid</TableHead>
               <TableHead className="text-right">Balance</TableHead>
               <TableHead>Deadline</TableHead>
@@ -416,18 +458,19 @@ export default function AdminPayments() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8">
+                <TableCell colSpan={10} className="text-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
                 </TableCell>
               </TableRow>
             ) : filteredUsers?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No users found</TableCell>
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">No users found</TableCell>
               </TableRow>
             ) : (
               filteredUsers?.map(user => {
                 const config = configMap.get(user.id);
                 const isHighlighted = highlightUserId === user.id;
+                const grantAmt = getGrantAmount(user);
                 return (
                   <TableRow key={user.id} className={isHighlighted ? 'bg-primary/10 ring-1 ring-primary/30' : undefined}>
                     <TableCell className="font-medium">{user.full_name || '-'}</TableCell>
@@ -435,6 +478,16 @@ export default function AdminPayments() {
                     <TableCell className="text-sm">{getEditionName(user.edition_id)}</TableCell>
                     <TableCell className="text-right font-mono text-sm">
                       {config ? `₹${config.programme_total.toLocaleString('en-IN')}` : '-'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {grantAmt > 0 ? (
+                        <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                          <Gift className="w-3 h-3 mr-1" />
+                          ₹{grantAmt.toLocaleString('en-IN')}
+                        </Badge>
+                      ) : config ? (
+                        <span className="text-muted-foreground text-sm">—</span>
+                      ) : '-'}
                     </TableCell>
                     <TableCell className="text-right font-mono text-sm">
                       {config ? `₹${config.deposit_paid.toLocaleString('en-IN')}` : '-'}
@@ -520,14 +573,29 @@ export default function AdminPayments() {
               <Label className="cursor-pointer">Deposit Verified</Label>
             </div>
             {editForm.programme_total && editForm.deposit_paid && (
-              <div className="bg-muted/50 rounded-lg p-3 text-sm">
-                <span className="text-muted-foreground">Balance Due: </span>
-                <span className="font-bold text-foreground">
-                  ₹{(Number(editForm.programme_total) - Number(editForm.deposit_paid)).toLocaleString('en-IN')}
-                </span>
-                {Number(editForm.deposit_paid) >= Number(editForm.programme_total) && (
-                  <span className="ml-2 text-emerald-500 text-xs">(Will auto-mark as BALANCE_PAID)</span>
-                )}
+              <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-1">
+                <div>
+                  <span className="text-muted-foreground">Balance Due: </span>
+                  <span className="font-bold text-foreground">
+                    ₹{(Number(editForm.programme_total) - Number(editForm.deposit_paid)).toLocaleString('en-IN')}
+                  </span>
+                  {Number(editForm.deposit_paid) >= Number(editForm.programme_total) && (
+                    <span className="ml-2 text-emerald-500 text-xs">(Will auto-mark as BALANCE_PAID)</span>
+                  )}
+                </div>
+                {editingPayment && (() => {
+                  const grantAmt = getGrantAmount(editingPayment);
+                  if (grantAmt > 0) {
+                    return (
+                      <div className="flex items-center gap-1.5">
+                        <Gift className="w-3.5 h-3.5 text-emerald-500" />
+                        <span className="text-muted-foreground">Grant Applied: </span>
+                        <span className="font-bold text-emerald-500">₹{grantAmt.toLocaleString('en-IN')}</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
             )}
           </div>
