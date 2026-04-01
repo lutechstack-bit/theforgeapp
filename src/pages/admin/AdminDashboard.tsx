@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { 
   Users, Calendar, CalendarDays, CreditCard, BookOpen, MessageSquare, 
   TrendingUp, ArrowUpRight, ArrowDownRight, LogIn, Palette, RefreshCw,
-  Check, X, AlertTriangle, Eye, Info, Map, UserX, ChevronDown
+  Check, X, AlertTriangle, Eye, Info, Map, UserX, ChevronDown, ClipboardCheck, UserCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
