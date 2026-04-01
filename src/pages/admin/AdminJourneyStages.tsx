@@ -99,8 +99,7 @@ const AdminJourneyStages: React.FC = () => {
   };
 
   const getIconComponent = (iconName: string) => {
-    const Icon = (LucideIcons as any)[iconName] || LucideIcons.Circle;
-    return <Icon className="w-5 h-5" />;
+    return <DynamicIcon name={iconName} className="w-5 h-5" />;
   };
 
   if (isLoading) {

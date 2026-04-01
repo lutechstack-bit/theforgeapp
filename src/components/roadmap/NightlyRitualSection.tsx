@@ -71,11 +71,10 @@ const NightlyRitualSection: React.FC<NightlyRitualSectionProps> = ({ currentDayN
   }
 
   // Get dynamic icon component
-  const getIconComponent = (iconName: string | null): React.ComponentType<{ className?: string }> => {
-    if (!iconName) return Moon;
-    const icons = LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string }>>;
-    const IconComponent = icons[iconName];
-    return IconComponent || Moon;
+  const getIconComponent = (iconName: string | null) => {
+    return ({ className }: { className?: string }) => (
+      <DynamicIcon name={iconName} className={className} />
+    );
   };
 
   const allCompleted = progress.percent === 100;

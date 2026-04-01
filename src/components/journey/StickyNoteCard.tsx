@@ -95,7 +95,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
   onClick,
   fullWidth = false,
 }) => {
-  const IconComponent = (LucideIcons as any)[icon] || LucideIcons.Circle;
+  const IconComponent = ({ className }: { className?: string }) => <DynamicIcon name={icon} className={className} />;
   const isLocked = variant === 'upcoming';
   const isCompleted = variant === 'completed';
   const isCurrent = variant === 'current';
