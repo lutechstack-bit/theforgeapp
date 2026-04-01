@@ -115,7 +115,7 @@ const AdminEvents: React.FC = () => {
             message: `Happening on ${formData.event_date ? format(new Date(formData.event_date), 'MMM d, yyyy') : 'TBD'}`,
             is_global: true,
             deep_link: `/events/${created.id}`,
-            type: 'info',
+            type: 'EVENTS' as const,
             icon_emoji: '🎉',
           });
         }
