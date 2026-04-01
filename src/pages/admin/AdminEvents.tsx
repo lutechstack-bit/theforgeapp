@@ -154,7 +154,7 @@ const AdminEvents: React.FC = () => {
         message: `Don't forget — happening ${format(new Date(event.event_date), 'MMM d')} at ${format(new Date(event.event_date), 'h:mm a')}`,
         is_global: true,
         deep_link: `/events/${event.id}`,
-        type: 'info',
+        type: 'EVENTS' as const,
         icon_emoji: '⏰',
       });
       if (error) throw error;
