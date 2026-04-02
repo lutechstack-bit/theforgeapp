@@ -79,7 +79,7 @@ const LiveSession: React.FC = () => {
     try {
       // Get signature from edge function
       const { data: sigData, error: sigError } = await supabase.functions.invoke('zoom-signature', {
-        body: { meetingNumber: session.zoom_meeting_number, role: 0 },
+        body: { meetingNumber: cleanMeetingNumber, role: 0 },
       });
 
       if (sigError || !sigData?.signature) {
