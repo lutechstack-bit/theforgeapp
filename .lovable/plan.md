@@ -1,51 +1,67 @@
 
 
-# Fix: Zoom Meeting SDK Embedded Join — Align to Official SDK Flow
+# Update Payment Links and Add Grant Toggle
 
-## Summary
-The current implementation is architecturally correct for Meeting SDK web embedding. The edge function, signature generation, and LiveSession page follow the right pattern. The remaining "Failed to join meeting" errors stem from two fixable issues:
+## Current State
+- 13 students with payment_config records, all currently pointing to old `rzp.io` short links
+- Sanjeev is incorrectly set as non-grant (85K/70K) but should be grant (80K/65K) per spreadsheet
+- Manoj and Akash are already correctly set as grant students (80K/65K)
+- Goda Prabhakar should be left untouched
+- `payment_defaults` table only has E16 entry, no E17 entry, and no new links
 
-1. **Credential type verification** — The secrets `ZOOM_MEETING_SDK_KEY` and `ZOOM_MEETING_SDK_SECRET` must be the **Client ID** and **Client Secret** from a **Meeting SDK** app type on Zoom Marketplace (not from a Server-to-Server OAuth app). This is the most common cause of "Signature is invalid" / "Failed to join" errors per Zoom's own docs.
+## What Changes
 
-2. **Better error surfacing** — The current catch-all error message "Failed to join meeting" hides the actual Zoom SDK error code (e.g., 3712, 3172) which is critical for debugging.
+### 1. Database updates (via migration + data script)
 
-3. **Zoom container mounting order** — The container `ref` must exist in the DOM *before* `client.init()` is called; currently the container only renders when `sessionState === 'live'`, which is correct, but the `zoomAppRoot` element should use a stable ID lookup as a fallback.
+**Update payment_config for 12 students** (all except Goda):
 
-## Changes
+**70K (non-grant) students** — set `payment_link` to `https://pages.razorpay.com/pl_SRqJNCWHcTp7sv/view`:
+- Girish, Laxmi, Rajesh, Pavan, Madhukar, Sheshank, Marutie, Siddhardha, Aryan
 
-### 1. `src/pages/LiveSession.tsx` — Improve error handling and SDK init
+**65K (grant) students** — set `programme_total=80000`, `balance_due=65000`, `payment_link` to `https://pages.razorpay.com/pl_SRqUHCieFlVyop/view`:
+- Sanjeev (currently wrong at 85K — fix to 80K)
+- Manoj, Akash (already correct totals, just update link)
 
-- Capture Zoom SDK error events (`client.on('connection-change')`) to surface exact error codes/reasons in the UI instead of generic "Failed to join meeting".
-- Add a retry button that clears the previous client instance before re-attempting.
-- Log the full Zoom error object (errorCode + reason) to the console for debugging.
-- Ensure `cleanMeetingNumber` is passed as a string to `client.join()` (SDK expects string).
+**Update payment_defaults** for both E16 and E17 editions with the new 70K link as default, since most students are non-grant.
 
-### 2. `supabase/functions/zoom-signature/index.ts` — No changes needed
+### 2. Admin UI: Grant toggle in edit dialog (`AdminPayments.tsx`)
 
-The edge function is correct: it strips non-digits, uses `parseInt` for the JWT `mn` field (number), and returns `{ signature, sdkKey }`. This matches Zoom's required JWT payload format.
+Add a **"Grant Student (₹5,000)"** toggle/switch in the payment edit dialog that:
+- When toggled ON: sets `programme_total = 80000`, auto-recalculates `balance_due = 65000`, sets `payment_link` to the 65K Razorpay link
+- When toggled OFF: sets `programme_total = 85000`, auto-recalculates `balance_due = 70000`, sets `payment_link` to the 70K Razorpay link
+- The toggle derives its initial state from whether `programme_total < edition default programme_total`
 
-### 3. Credential verification guidance
+This is added as a prominent switch at the top of the edit dialog, above the existing fields.
 
-After the code changes, if the join still fails, the issue is 100% the credentials stored in secrets. You will need to verify in Zoom Marketplace:
-- App type is **Meeting SDK** (not Server-to-Server OAuth, not JWT deprecated)
-- Copy the **Client ID** → `ZOOM_MEETING_SDK_KEY`
-- Copy the **Client Secret** → `ZOOM_MEETING_SDK_SECRET`
-- The app must be **Activated** (not in draft)
+### 3. Files changed
+- `src/pages/admin/AdminPayments.tsx` — add grant toggle switch in edit dialog
+- Database migration — bulk update payment_config links + fix Sanjeev + update payment_defaults
 
-## Technical Details
+### Technical Details
 
-### LiveSession.tsx error handling improvement
-```typescript
-// After client.join(), listen for connection changes
-client.on('connection-change', (payload: any) => {
-  if (payload.state === 'Fail') {
-    console.error('Zoom connection failed:', payload);
-    setZoomError(`Zoom error ${payload.errorCode}: ${payload.reason}`);
-    setZoomClient(null);
-  }
-});
+**SQL migration** (single migration):
+```sql
+-- Fix Sanjeev to grant student
+UPDATE payment_config SET programme_total = 80000, balance_due = 65000, 
+  payment_link = 'https://pages.razorpay.com/pl_SRqUHCieFlVyop/view'
+WHERE user_id = '69f82f8a-67ff-4bb7-b444-f5d2d3606f15';
+
+-- Update 65K grant students' links (Manoj, Akash)
+UPDATE payment_config SET payment_link = 'https://pages.razorpay.com/pl_SRqUHCieFlVyop/view'
+WHERE user_id IN ('83fd23bc-...', '2e3032ac-...');
+
+-- Update 70K non-grant students' links (9 students, excluding Goda)
+UPDATE payment_config SET payment_link = 'https://pages.razorpay.com/pl_SRqJNCWHcTp7sv/view'
+WHERE user_id IN (...9 IDs...);
+
+-- Update payment_defaults
+UPDATE payment_defaults SET payment_link = 'https://pages.razorpay.com/pl_SRqJNCWHcTp7sv/view' 
+WHERE edition_id = 'cafb3143-...';
+INSERT INTO payment_defaults (...) VALUES (E17 edition, 85000, 15000, ..., 70K link);
 ```
 
-### Files changed
-- `src/pages/LiveSession.tsx` — enhanced error handling, retry support, connection-change listener
+**Grant toggle in AdminPayments.tsx**:
+- Add `Switch` component with label "Grant Student (₹5,000 off)"
+- On toggle, auto-set `programme_total`, recalc displayed balance, and swap `payment_link` between the two Razorpay URLs
+- Store the two link constants at top of file
 
