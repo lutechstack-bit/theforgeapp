@@ -1,31 +1,30 @@
 
 
-# Fix: zoom-signature Edge Function Not Working
+# Fix: Zoom "Signature is invalid" Error
 
 ## Problem
-The network tab shows:
-1. **404 on preflight (OPTIONS)** — the edge function is not deployed
-2. **CORS error** on the actual request — consequence of the 404
+The edge function returns 200 successfully, but Zoom SDK rejects the signature with "Signature is invalid." The network tab confirms the signature is generated and returned — the issue is in the JWT payload format.
 
-Additionally, the function imports `@supabase/supabase-js@2.89.0` which may not have the `getClaims()` method, and the CORS headers are missing some headers the Supabase client sends.
+## Root Cause
+The `mn` (meeting number) field in the JWT payload is a **string**, but Zoom Meeting SDK requires it to be a **number** (integer). When the meeting number is passed as `"12345678"` instead of `12345678`, Zoom's signature validation fails.
 
 ## Fix
 
 ### File: `supabase/functions/zoom-signature/index.ts`
 
-1. **Update CORS headers** to include all headers the Supabase JS client sends:
-   ```typescript
-   "Access-Control-Allow-Headers":
-     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version"
-   ```
+Change line 28 from:
+```typescript
+mn: meetingNumber,
+```
+to:
+```typescript
+mn: parseInt(meetingNumber, 10),
+```
 
-2. **Replace `getClaims()` with `getUser()`** for auth validation — `getClaims` isn't available in all SDK versions:
-   ```typescript
-   const { data: { user }, error: userError } = await supabase.auth.getUser();
-   if (userError || !user) { ... return 401 }
-   ```
+This converts the string meeting number to an integer before embedding it in the JWT payload, matching what Zoom's SDK expects.
 
-3. **Deploy the function** after the fix so it's actually accessible.
+### Redeploy
+The edge function must be redeployed after this change.
 
 ### No other files change.
 
