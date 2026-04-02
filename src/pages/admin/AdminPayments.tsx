@@ -539,7 +539,24 @@ export default function AdminPayments() {
             <DialogTitle>Payment Config — {editingPayment?.full_name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
+            <div className="flex items-center gap-2">
+              <Gift className="w-4 h-4 text-emerald-500" />
+              <div>
+                <Label className="text-sm font-medium">Grant Student (₹{GRANT_AMOUNT.toLocaleString('en-IN')} off)</Label>
+                <p className="text-xs text-muted-foreground">Reduces programme total to ₹{(DEFAULT_PROGRAMME_TOTAL - GRANT_AMOUNT).toLocaleString('en-IN')}</p>
+              </div>
+            </div>
+            <Switch
+              checked={Number(editForm.programme_total) < DEFAULT_PROGRAMME_TOTAL}
+              onCheckedChange={(checked) => {
+                const newTotal = checked ? DEFAULT_PROGRAMME_TOTAL - GRANT_AMOUNT : DEFAULT_PROGRAMME_TOTAL;
+                const newLink = checked ? RAZORPAY_LINK_65K : RAZORPAY_LINK_70K;
+                setEditForm(f => ({ ...f, programme_total: String(newTotal), payment_link: newLink }));
+              }}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Programme Total (₹)</Label>
                 <Input type="number" value={editForm.programme_total} onChange={e => setEditForm(f => ({ ...f, programme_total: e.target.value }))} />
