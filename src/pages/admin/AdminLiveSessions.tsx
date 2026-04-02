@@ -375,7 +375,7 @@ const AdminLiveSessions: React.FC = () => {
                 <Select value={form.learn_content_id} onValueChange={v => updateField('learn_content_id', v)}>
                   <SelectTrigger><SelectValue placeholder="Optional — link to Learn" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {learnContent.map(lc => (
                       <SelectItem key={lc.id} value={lc.id}>{lc.title}</SelectItem>
                     ))}
