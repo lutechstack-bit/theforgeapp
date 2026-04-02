@@ -300,14 +300,12 @@ const LiveSession: React.FC = () => {
           </Card>
         )}
 
-        {/* Zoom Embed Container */}
-        {sessionState === 'live' && (
-          <div
-            ref={zoomContainerRef}
-            id="zoom-meeting-container"
-            className={`w-full ${zoomClient ? 'min-h-[500px] rounded-xl overflow-hidden border border-border' : ''}`}
-          />
-        )}
+        {/* Zoom Embed Container — always mounted so ref is stable */}
+        <div
+          ref={zoomContainerRef}
+          id="zoom-meeting-container"
+          className={`w-full ${zoomClient ? 'min-h-[500px] rounded-xl overflow-hidden border border-border' : ''}`}
+        />
 
         {sessionState === 'ended' && (
           <Card>
