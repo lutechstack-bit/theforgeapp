@@ -71,6 +71,8 @@ import AdminActivity from "./pages/admin/AdminActivity";
 
 import EventDetail from "./pages/EventDetail";
 import PerkDetail from "./pages/PerkDetail";
+import LiveSession from "./pages/LiveSession";
+import AdminLiveSessions from "./pages/admin/AdminLiveSessions";
 
 
 const queryClient = new QueryClient({
