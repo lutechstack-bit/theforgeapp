@@ -267,6 +267,7 @@ const AdminLiveSessions: React.FC = () => {
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? 'Edit Live Session' : 'New Live Session'}</DialogTitle>
+            <DialogDescription>Fill in the details below to {editingId ? 'update the' : 'create a new'} live session.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
