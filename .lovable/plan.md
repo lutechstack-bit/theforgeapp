@@ -1,63 +1,51 @@
 
-Fix: Live session still fails because the meeting number is stored with spaces and the current signature code truncates it.
 
-What I found
-- The `zoom-signature` call is now succeeding with HTTP 200, so this is no longer a CORS/deployment problem.
-- The current live session record for `/live-session/1ad0d0ec-68f4-472d-9f3b-629623d51c41` stores:
-  ```text
-  zoom_meeting_number = "880 4949 9009"
-  ```
-- In `supabase/functions/zoom-signature/index.ts`, the code currently does:
-  ```ts
-  mn: parseInt(meetingNumber, 10)
-  ```
-- That means:
-  ```ts
-  parseInt("880 4949 9009", 10) === 880
-  ```
-- So the signature is being generated for meeting `880`, not for the real meeting `88049499009`. Zoom then rejects the join and shows “Failed to join meeting”.
+# Fix: Zoom Meeting SDK Embedded Join — Align to Official SDK Flow
 
-Root cause
-```text
-Stored value:        "880 4949 9009"
-Edge function signs: 880
-Client joins with:   "880 4949 9009"
-Result: mismatch -> Zoom join fails
+## Summary
+The current implementation is architecturally correct for Meeting SDK web embedding. The edge function, signature generation, and LiveSession page follow the right pattern. The remaining "Failed to join meeting" errors stem from two fixable issues:
+
+1. **Credential type verification** — The secrets `ZOOM_MEETING_SDK_KEY` and `ZOOM_MEETING_SDK_SECRET` must be the **Client ID** and **Client Secret** from a **Meeting SDK** app type on Zoom Marketplace (not from a Server-to-Server OAuth app). This is the most common cause of "Signature is invalid" / "Failed to join" errors per Zoom's own docs.
+
+2. **Better error surfacing** — The current catch-all error message "Failed to join meeting" hides the actual Zoom SDK error code (e.g., 3712, 3172) which is critical for debugging.
+
+3. **Zoom container mounting order** — The container `ref` must exist in the DOM *before* `client.init()` is called; currently the container only renders when `sessionState === 'live'`, which is correct, but the `zoomAppRoot` element should use a stable ID lookup as a fallback.
+
+## Changes
+
+### 1. `src/pages/LiveSession.tsx` — Improve error handling and SDK init
+
+- Capture Zoom SDK error events (`client.on('connection-change')`) to surface exact error codes/reasons in the UI instead of generic "Failed to join meeting".
+- Add a retry button that clears the previous client instance before re-attempting.
+- Log the full Zoom error object (errorCode + reason) to the console for debugging.
+- Ensure `cleanMeetingNumber` is passed as a string to `client.join()` (SDK expects string).
+
+### 2. `supabase/functions/zoom-signature/index.ts` — No changes needed
+
+The edge function is correct: it strips non-digits, uses `parseInt` for the JWT `mn` field (number), and returns `{ signature, sdkKey }`. This matches Zoom's required JWT payload format.
+
+### 3. Credential verification guidance
+
+After the code changes, if the join still fails, the issue is 100% the credentials stored in secrets. You will need to verify in Zoom Marketplace:
+- App type is **Meeting SDK** (not Server-to-Server OAuth, not JWT deprecated)
+- Copy the **Client ID** → `ZOOM_MEETING_SDK_KEY`
+- Copy the **Client Secret** → `ZOOM_MEETING_SDK_SECRET`
+- The app must be **Activated** (not in draft)
+
+## Technical Details
+
+### LiveSession.tsx error handling improvement
+```typescript
+// After client.join(), listen for connection changes
+client.on('connection-change', (payload: any) => {
+  if (payload.state === 'Fail') {
+    console.error('Zoom connection failed:', payload);
+    setZoomError(`Zoom error ${payload.errorCode}: ${payload.reason}`);
+    setZoomClient(null);
+  }
+});
 ```
 
-Implementation plan
-1. Normalize the meeting number everywhere with:
-   ```ts
-   raw.replace(/\D/g, '')
-   ```
-   so spaces/dashes never break the join flow.
-2. Update `supabase/functions/zoom-signature/index.ts` to:
-   - clean the incoming meeting number first
-   - validate the cleaned value
-   - sign with:
-     ```ts
-     mn: Number(normalizedMeetingNumber)
-     ```
-   instead of parsing the raw formatted string.
-3. Update `src/pages/LiveSession.tsx` to use the same normalized meeting number for:
-   - the edge function request
-   - `client.join({ meetingNumber })`
-   - the mobile Zoom URL
-4. Update `src/pages/admin/AdminLiveSessions.tsx` to sanitize the meeting number before insert/update so future sessions are stored correctly even if pasted with spaces.
-5. Add small admin input guidance like “spaces are okay, they’ll be cleaned automatically” or enforce numeric-only input formatting.
+### Files changed
+- `src/pages/LiveSession.tsx` — enhanced error handling, retry support, connection-change listener
 
-Files to change
-- `supabase/functions/zoom-signature/index.ts`
-- `src/pages/LiveSession.tsx`
-- `src/pages/admin/AdminLiveSessions.tsx`
-
-Technical details
-- Do not use `parseInt()` on the raw admin-entered meeting number.
-- Clean first, then sign/join with the cleaned value.
-- No database schema change is required.
-- Existing sessions with spaced meeting numbers will start working once runtime normalization is added.
-
-Expected result
-- The current broken session should join correctly.
-- Newly created sessions will no longer save a Zoom-incompatible meeting number format.
-- This fixes the real cause, not the earlier CORS/signature symptom.
