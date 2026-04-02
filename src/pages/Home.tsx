@@ -127,6 +127,9 @@ const Home: React.FC = () => {
             />
           )}
 
+          {/* Live Session Card */}
+          <LiveSessionCard />
+
           {/* 4. Payment Focus Card */}
           {paymentSection !== null && <PaymentFocusCard />}
 

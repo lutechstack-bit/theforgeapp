@@ -5,7 +5,7 @@ import {
   ClipboardList, Moon, Package, PanelRight, UserCircle, Star, BookOpen, Route,
   ListTodo, Megaphone, History, PanelLeft, PanelLeftClose, Home, Target, Gift,
   Handshake, ExternalLink, Film, CreditCard, Activity, ChevronRight, BarChart3,
-  Settings, Users2, MonitorSmartphone, GraduationCap, Search, Plus, RefreshCw
+  Settings, Users2, MonitorSmartphone, GraduationCap, Search, Plus, RefreshCw, Video
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';

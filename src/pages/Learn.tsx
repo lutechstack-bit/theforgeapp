@@ -56,6 +56,54 @@ interface WatchProgress {
 
 // forgeResidencies removed — now fetched from explore_programs table
 
+const SessionRecordingsSection: React.FC = () => {
+  const navigate = useNavigate();
+  const { data: recordings = [] } = useQuery({
+    queryKey: ['live-session-recordings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('live_sessions')
+        .select('id, title, mentor_name, thumbnail_url, learn_content_id, start_at')
+        .eq('recording_status', 'ready')
+        .not('learn_content_id', 'is', null)
+        .order('start_at', { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  if (recordings.length === 0) return null;
+
+  return (
+    <section className="space-y-4">
+      <div>
+        <h2 className="text-lg sm:text-xl font-bold text-foreground">Session Recordings</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">Replays from live sessions</p>
+      </div>
+      <ScrollableCardRow>
+        {recordings.map((rec) => (
+          <div
+            key={rec.id}
+            className="snap-start flex-shrink-0 cursor-pointer"
+            onClick={() => navigate(`/learn/${rec.learn_content_id}`)}
+          >
+            <LearnCourseCard
+              id={rec.id}
+              title={rec.title}
+              thumbnailUrl={rec.thumbnail_url || undefined}
+              instructorName={rec.mentor_name || undefined}
+              category="Session Recording"
+              cardLayout="portrait"
+              onClick={() => navigate(`/learn/${rec.learn_content_id}`)}
+            />
+          </div>
+        ))}
+      </ScrollableCardRow>
+    </section>
+  );
+};
+
 const Learn: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
