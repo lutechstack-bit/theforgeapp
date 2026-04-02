@@ -25,7 +25,7 @@ async function generateSignature(
   const header = { alg: "HS256", typ: "JWT" };
   const payload = {
     sdkKey,
-    mn: meetingNumber,
+    mn: parseInt(meetingNumber, 10),
     role,
     iat,
     exp,
