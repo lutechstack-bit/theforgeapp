@@ -45,6 +45,11 @@ interface PaymentDefault {
   installment_link: string | null;
 }
 
+const RAZORPAY_LINK_70K = 'https://pages.razorpay.com/pl_SRqJNCWHcTp7sv/view';
+const RAZORPAY_LINK_65K = 'https://pages.razorpay.com/pl_SRqUHCieFlVyop/view';
+const GRANT_AMOUNT = 5000;
+const DEFAULT_PROGRAMME_TOTAL = 85000;
+
 export default function AdminPayments() {
   const [searchParams] = useSearchParams();
   const highlightUserId = searchParams.get('user');
