@@ -280,6 +280,7 @@ const AppRoutes = () => {
         </Route>
         <Route path="/perks" element={<Perks />} />
         <Route path="/perks/:id" element={<PerkDetail />} />
+        <Route path="/live-session/:id" element={<LiveSession />} />
         <Route path="/updates" element={<Updates />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/my-kyform" element={<MyKYForm />} />
