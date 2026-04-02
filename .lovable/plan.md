@@ -1,23 +1,31 @@
 
 
-# Fix: Timezone Offset Bug in Live Sessions
+# Fix: zoom-signature Edge Function Not Working
 
 ## Problem
-The `datetime-local` input produces a string like `2026-04-02T15:30` (no timezone). When saved to a `timestamptz` column, Supabase interprets it as **UTC**. When displayed back, `new Date()` converts UTC to local time (IST = UTC+5:30), so 3:30 PM becomes 9:00 PM.
+The network tab shows:
+1. **404 on preflight (OPTIONS)** — the edge function is not deployed
+2. **CORS error** on the actual request — consequence of the 404
 
-## Fix in `AdminLiveSessions.tsx`
+Additionally, the function imports `@supabase/supabase-js@2.89.0` which may not have the `getClaims()` method, and the CORS headers are missing some headers the Supabase client sends.
 
-**When saving** (lines 110-111): Convert the local datetime string to a proper ISO string with timezone offset before sending to Supabase.
+## Fix
 
-```typescript
-start_at: new Date(payload.start_at).toISOString(),
-end_at: new Date(payload.end_at).toISOString(),
-```
+### File: `supabase/functions/zoom-signature/index.ts`
 
-`new Date("2026-04-02T15:30")` interprets the input as **local time** and `.toISOString()` converts it to the correct UTC value (e.g., `2026-04-02T10:00:00.000Z` for IST). When reading back, `new Date()` will correctly convert UTC back to local time for display.
+1. **Update CORS headers** to include all headers the Supabase JS client sends:
+   ```typescript
+   "Access-Control-Allow-Headers":
+     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version"
+   ```
 
-**No changes needed** for `openEdit` or display formatting — they already use `new Date()` which handles UTC→local conversion correctly.
+2. **Replace `getClaims()` with `getUser()`** for auth validation — `getClaims` isn't available in all SDK versions:
+   ```typescript
+   const { data: { user }, error: userError } = await supabase.auth.getUser();
+   if (userError || !user) { ... return 401 }
+   ```
 
-### Files Changed
-- `src/pages/admin/AdminLiveSessions.tsx` — 2 lines in `saveMutation`
+3. **Deploy the function** after the fix so it's actually accessible.
+
+### No other files change.
 
