@@ -1802,6 +1802,84 @@ export type Database = {
           },
         ]
       }
+      live_sessions: {
+        Row: {
+          cohort_type: string
+          created_at: string | null
+          description: string | null
+          edition_id: string | null
+          end_at: string
+          id: string
+          learn_content_id: string | null
+          mentor_name: string | null
+          recording_status: string
+          recording_url: string | null
+          start_at: string
+          status: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+          zoom_host_email: string | null
+          zoom_meeting_number: string
+          zoom_passcode: string | null
+        }
+        Insert: {
+          cohort_type?: string
+          created_at?: string | null
+          description?: string | null
+          edition_id?: string | null
+          end_at: string
+          id?: string
+          learn_content_id?: string | null
+          mentor_name?: string | null
+          recording_status?: string
+          recording_url?: string | null
+          start_at: string
+          status?: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+          zoom_host_email?: string | null
+          zoom_meeting_number: string
+          zoom_passcode?: string | null
+        }
+        Update: {
+          cohort_type?: string
+          created_at?: string | null
+          description?: string | null
+          edition_id?: string | null
+          end_at?: string
+          id?: string
+          learn_content_id?: string | null
+          mentor_name?: string | null
+          recording_status?: string
+          recording_url?: string | null
+          start_at?: string
+          status?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+          zoom_host_email?: string | null
+          zoom_meeting_number?: string
+          zoom_passcode?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_sessions_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_sessions_learn_content_id_fkey"
+            columns: ["learn_content_id"]
+            isOneToOne: false
+            referencedRelation: "learn_content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mentors: {
         Row: {
           bio: string[] | null
