@@ -274,7 +274,12 @@ const LiveSession: React.FC = () => {
                 </p>
               </div>
               {zoomError && (
-                <p className="text-sm text-destructive">{zoomError}</p>
+                <div className="space-y-2">
+                  <p className="text-sm text-destructive">{zoomError}</p>
+                  <Button size="sm" variant="outline" onClick={handleRetryZoom}>
+                    Retry
+                  </Button>
+                </div>
               )}
               <Button
                 size="lg"
