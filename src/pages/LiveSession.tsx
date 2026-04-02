@@ -102,7 +102,7 @@ const LiveSession: React.FC = () => {
       await client.join({
         sdkKey: sigData.sdkKey,
         signature: sigData.signature,
-        meetingNumber: session.zoom_meeting_number,
+        meetingNumber: cleanMeetingNumber,
         password: session.zoom_passcode || '',
         userName: user.user_metadata?.full_name || user.email || 'Forge Student',
       });

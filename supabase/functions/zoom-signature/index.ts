@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
 
     // Parse and validate body
     const body = await req.json();
-    const meetingNumber = String(body.meetingNumber || "").trim();
+    const meetingNumber = String(body.meetingNumber || "").replace(/\D/g, "");
     const role = Number(body.role ?? 0);
 
     if (!meetingNumber || meetingNumber.length < 5) {
