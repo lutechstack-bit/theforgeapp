@@ -105,7 +105,7 @@ const AdminLiveSessions: React.FC = () => {
       const record: any = {
         title: payload.title,
         description: payload.description || null,
-        edition_id: payload.edition_id || null,
+        edition_id: payload.edition_id && payload.edition_id !== 'none' ? payload.edition_id : null,
         cohort_type: payload.cohort_type,
         start_at: payload.start_at,
         end_at: payload.end_at,
@@ -117,7 +117,7 @@ const AdminLiveSessions: React.FC = () => {
         status: payload.status,
         recording_status: payload.recording_status,
         recording_url: payload.recording_url || null,
-        learn_content_id: payload.learn_content_id || null,
+        learn_content_id: payload.learn_content_id && payload.learn_content_id !== 'none' ? payload.learn_content_id : null,
       };
 
       if (editingId) {
