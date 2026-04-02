@@ -163,6 +163,9 @@ const Learn: React.FC = () => {
         {/* Upcoming Online Sessions */}
         <UpcomingSessionsSection />
 
+        {/* Session Recordings from Live Sessions */}
+        <SessionRecordingsSection />
+
         {/* Continue Watching */}
         {continueWatchingItems.length > 0 && (
           <ContinueWatchingCarousel
