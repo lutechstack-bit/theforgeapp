@@ -71,6 +71,8 @@ import AdminActivity from "./pages/admin/AdminActivity";
 
 import EventDetail from "./pages/EventDetail";
 import PerkDetail from "./pages/PerkDetail";
+import LiveSession from "./pages/LiveSession";
+import AdminLiveSessions from "./pages/admin/AdminLiveSessions";
 
 
 const queryClient = new QueryClient({
@@ -278,6 +280,7 @@ const AppRoutes = () => {
         </Route>
         <Route path="/perks" element={<Perks />} />
         <Route path="/perks/:id" element={<PerkDetail />} />
+        <Route path="/live-session/:id" element={<LiveSession />} />
         <Route path="/updates" element={<Updates />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/my-kyform" element={<MyKYForm />} />
@@ -312,6 +315,7 @@ const AppRoutes = () => {
         <Route path="network" element={<AdminNetwork />} />
         <Route path="payments" element={<AdminPayments />} />
         <Route path="activity" element={<AdminActivity />} />
+        <Route path="live-sessions" element={<AdminLiveSessions />} />
       </Route>
       
       {/* Legacy KY form redirects */}

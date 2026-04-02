@@ -14,6 +14,7 @@ import OnboardingStepsSection from '@/components/home/OnboardingStepsSection';
 import BatchmatesSection from '@/components/home/BatchmatesSection';
 import AlumniShowcaseSection from '@/components/home/AlumniShowcaseSection';
 import PaymentFocusCard from '@/components/home/PaymentFocusCard';
+import LiveSessionCard from '@/components/home/LiveSessionCard';
 import TravelStaySection from '@/components/home/TravelStaySection';
 import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
 
@@ -125,6 +126,9 @@ const Home: React.FC = () => {
               subtitle={onboardingSection.subtitle || undefined}
             />
           )}
+
+          {/* Live Session Card */}
+          <LiveSessionCard />
 
           {/* 4. Payment Focus Card */}
           {paymentSection !== null && <PaymentFocusCard />}

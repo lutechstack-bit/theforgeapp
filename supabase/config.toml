@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.reset-ky-forms]
 verify_jwt = false
+
+[functions.zoom-signature]
+verify_jwt = false
