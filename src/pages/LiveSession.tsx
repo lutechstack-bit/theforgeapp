@@ -64,9 +64,11 @@ const LiveSession: React.FC = () => {
   const handleJoinZoom = async () => {
     if (!session || !user) return;
 
+    const cleanMeetingNumber = session.zoom_meeting_number.replace(/\D/g, '');
+
     if (isMobile) {
       // On mobile, open Zoom app
-      const zoomUrl = `https://zoom.us/j/${session.zoom_meeting_number}${session.zoom_passcode ? `?pwd=${session.zoom_passcode}` : ''}`;
+      const zoomUrl = `https://zoom.us/j/${cleanMeetingNumber}${session.zoom_passcode ? `?pwd=${session.zoom_passcode}` : ''}`;
       window.open(zoomUrl, '_blank');
       return;
     }
@@ -77,7 +79,7 @@ const LiveSession: React.FC = () => {
     try {
       // Get signature from edge function
       const { data: sigData, error: sigError } = await supabase.functions.invoke('zoom-signature', {
-        body: { meetingNumber: session.zoom_meeting_number, role: 0 },
+        body: { meetingNumber: cleanMeetingNumber, role: 0 },
       });
 
       if (sigError || !sigData?.signature) {
@@ -100,7 +102,7 @@ const LiveSession: React.FC = () => {
       await client.join({
         sdkKey: sigData.sdkKey,
         signature: sigData.signature,
-        meetingNumber: session.zoom_meeting_number,
+        meetingNumber: cleanMeetingNumber,
         password: session.zoom_passcode || '',
         userName: user.user_metadata?.full_name || user.email || 'Forge Student',
       });

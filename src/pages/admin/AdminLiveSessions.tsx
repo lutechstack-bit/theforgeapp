@@ -109,7 +109,7 @@ const AdminLiveSessions: React.FC = () => {
         cohort_type: payload.cohort_type,
         start_at: new Date(payload.start_at).toISOString(),
         end_at: new Date(payload.end_at).toISOString(),
-        zoom_meeting_number: payload.zoom_meeting_number,
+        zoom_meeting_number: payload.zoom_meeting_number.replace(/\D/g, ''),
         zoom_passcode: payload.zoom_passcode || null,
         zoom_host_email: payload.zoom_host_email || null,
         mentor_name: payload.mentor_name || null,
