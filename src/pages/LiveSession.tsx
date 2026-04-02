@@ -64,9 +64,11 @@ const LiveSession: React.FC = () => {
   const handleJoinZoom = async () => {
     if (!session || !user) return;
 
+    const cleanMeetingNumber = session.zoom_meeting_number.replace(/\D/g, '');
+
     if (isMobile) {
       // On mobile, open Zoom app
-      const zoomUrl = `https://zoom.us/j/${session.zoom_meeting_number}${session.zoom_passcode ? `?pwd=${session.zoom_passcode}` : ''}`;
+      const zoomUrl = `https://zoom.us/j/${cleanMeetingNumber}${session.zoom_passcode ? `?pwd=${session.zoom_passcode}` : ''}`;
       window.open(zoomUrl, '_blank');
       return;
     }
