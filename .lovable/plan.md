@@ -1,28 +1,23 @@
 
 
-# Fix: "New Session" Dialog Crash
+# Fix: Timezone Offset Bug in Live Sessions
 
-## Root Cause
-Two issues in `AdminLiveSessions.tsx` are causing the crash:
+## Problem
+The `datetime-local` input produces a string like `2026-04-02T15:30` (no timezone). When saved to a `timestamptz` column, Supabase interprets it as **UTC**. When displayed back, `new Date()` converts UTC to local time (IST = UTC+5:30), so 3:30 PM becomes 9:00 PM.
 
-1. **`<SelectItem value="">None</SelectItem>`** (line 378) — Radix UI Select does not allow empty string values. This throws a runtime error that the ErrorBoundary catches, showing "Something went wrong."
+## Fix in `AdminLiveSessions.tsx`
 
-2. **Missing `DialogDescription`** — Radix UI logs a console error when `DialogContent` has no `DialogDescription`, which can contribute to rendering issues.
+**When saving** (lines 110-111): Convert the local datetime string to a proper ISO string with timezone offset before sending to Supabase.
 
-## Fix
+```typescript
+start_at: new Date(payload.start_at).toISOString(),
+end_at: new Date(payload.end_at).toISOString(),
+```
 
-### File: `src/pages/admin/AdminLiveSessions.tsx`
+`new Date("2026-04-02T15:30")` interprets the input as **local time** and `.toISOString()` converts it to the correct UTC value (e.g., `2026-04-02T10:00:00.000Z` for IST). When reading back, `new Date()` will correctly convert UTC back to local time for display.
 
-1. Change `<SelectItem value="">None</SelectItem>` to `<SelectItem value="none">None</SelectItem>` and handle the mapping in the save mutation (convert `"none"` back to `null`).
+**No changes needed** for `openEdit` or display formatting — they already use `new Date()` which handles UTC→local conversion correctly.
 
-2. Add a `DialogDescription` import and include it in the dialog header for accessibility.
-
-3. Apply the same fix to the Edition select if it can also have an empty value — use a sentinel value like `"none"` instead of `""`.
-
-### Changes Summary
-- Replace empty-string `SelectItem` values with `"none"` sentinel
-- Map `"none"` → `null` in the save mutation for `learn_content_id` and `edition_id`
-- Add `DialogDescription` to the dialog
-
-No other files need changes.
+### Files Changed
+- `src/pages/admin/AdminLiveSessions.tsx` — 2 lines in `saveMutation`
 
