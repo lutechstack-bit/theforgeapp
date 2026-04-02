@@ -67,7 +67,6 @@ const LiveSession: React.FC = () => {
     const cleanMeetingNumber = session.zoom_meeting_number.replace(/\D/g, '');
 
     if (isMobile) {
-      // On mobile, open Zoom app
       const zoomUrl = `https://zoom.us/j/${cleanMeetingNumber}${session.zoom_passcode ? `?pwd=${session.zoom_passcode}` : ''}`;
       window.open(zoomUrl, '_blank');
       return;
@@ -86,18 +85,35 @@ const LiveSession: React.FC = () => {
         throw new Error(sigError?.message || 'Failed to get Zoom signature');
       }
 
+      console.log('[Zoom] Signature obtained, sdkKey:', sigData.sdkKey?.substring(0, 8) + '...');
+
       // Dynamic import of Zoom SDK
       const ZoomMtgEmbedded = (await import('@zoom/meetingsdk/embedded')).default;
       const client = ZoomMtgEmbedded.createClient();
 
-      if (!zoomContainerRef.current) throw new Error('Zoom container not found');
+      const container = zoomContainerRef.current || document.getElementById('zoom-meeting-container');
+      if (!container) throw new Error('Zoom container not found');
 
       await client.init({
-        zoomAppRoot: zoomContainerRef.current,
+        zoomAppRoot: container,
         language: 'en-US',
         patchJsMedia: true,
         leaveOnPageUnload: true,
       });
+
+      // Listen for connection state changes to surface real error codes
+      client.on('connection-change', (payload: any) => {
+        console.log('[Zoom] connection-change:', payload);
+        if (payload.state === 'Fail') {
+          const code = payload.errorCode || payload.code || 'unknown';
+          const reason = payload.reason || 'Unknown error';
+          console.error('[Zoom] Join failed:', { code, reason, payload });
+          setZoomError(`Zoom error ${code}: ${reason}`);
+          setZoomClient(null);
+        }
+      });
+
+      console.log('[Zoom] Joining meeting:', cleanMeetingNumber);
 
       await client.join({
         sdkKey: sigData.sdkKey,
@@ -109,11 +125,23 @@ const LiveSession: React.FC = () => {
 
       setZoomClient(client);
     } catch (err: any) {
-      console.error('Zoom join error:', err);
-      setZoomError(err.message || 'Failed to join meeting');
+      console.error('[Zoom] Join error:', err);
+      const msg = err.message || 'Failed to join meeting';
+      // Surface Zoom-specific error codes if available
+      const code = err.errorCode || err.code || '';
+      setZoomError(code ? `Zoom error ${code}: ${msg}` : msg);
     } finally {
       setIsJoining(false);
     }
+  };
+
+  const handleRetryZoom = () => {
+    if (zoomClient) {
+      try { zoomClient.leaveMeeting(); } catch {}
+    }
+    setZoomClient(null);
+    setZoomError(null);
+    handleJoinZoom();
   };
 
   // Cleanup
