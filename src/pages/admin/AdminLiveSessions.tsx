@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
@@ -105,7 +105,7 @@ const AdminLiveSessions: React.FC = () => {
       const record: any = {
         title: payload.title,
         description: payload.description || null,
-        edition_id: payload.edition_id || null,
+        edition_id: payload.edition_id && payload.edition_id !== 'none' ? payload.edition_id : null,
         cohort_type: payload.cohort_type,
         start_at: payload.start_at,
         end_at: payload.end_at,
@@ -117,7 +117,7 @@ const AdminLiveSessions: React.FC = () => {
         status: payload.status,
         recording_status: payload.recording_status,
         recording_url: payload.recording_url || null,
-        learn_content_id: payload.learn_content_id || null,
+        learn_content_id: payload.learn_content_id && payload.learn_content_id !== 'none' ? payload.learn_content_id : null,
       };
 
       if (editingId) {
@@ -267,6 +267,7 @@ const AdminLiveSessions: React.FC = () => {
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? 'Edit Live Session' : 'New Live Session'}</DialogTitle>
+            <DialogDescription>Fill in the details below to {editingId ? 'update the' : 'create a new'} live session.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -374,7 +375,7 @@ const AdminLiveSessions: React.FC = () => {
                 <Select value={form.learn_content_id} onValueChange={v => updateField('learn_content_id', v)}>
                   <SelectTrigger><SelectValue placeholder="Optional — link to Learn" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {learnContent.map(lc => (
                       <SelectItem key={lc.id} value={lc.id}>{lc.title}</SelectItem>
                     ))}
