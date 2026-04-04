@@ -103,9 +103,8 @@ const LiveSession: React.FC = () => {
       const container = zoomContainerRef.current;
       if (!container) throw new Error('Zoom container not found');
 
-      const HEADER_HEIGHT = 57;
       const width = window.innerWidth;
-      const height = window.innerHeight - HEADER_HEIGHT;
+      const height = window.innerHeight;
 
       await client.init({
         zoomAppRoot: container,
