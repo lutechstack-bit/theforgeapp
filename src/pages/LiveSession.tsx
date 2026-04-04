@@ -244,21 +244,16 @@ const LiveSession: React.FC = () => {
   // ── Normal pre-join / post-session UI ──
   return (
     <>
-      {/* ── Full-screen meeting overlay ── */}
+      {/* Floating leave button overlay */}
       {isInMeeting && (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background shrink-0">
-            <div className="flex items-center gap-3 min-w-0">
-              <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30 gap-1.5 shrink-0">
-                <Radio className="w-3 h-3 animate-pulse" /> Live
-              </Badge>
-              <h2 className="font-semibold text-foreground truncate">{session!.title}</h2>
-            </div>
-            <Button variant="destructive" size="sm" onClick={handleLeave} className="gap-2 shrink-0">
-              <LogOut className="w-4 h-4" /> Leave Meeting
-            </Button>
-          </div>
-        </div>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleLeave}
+          className="fixed top-4 right-4 z-[60] gap-2 shadow-lg"
+        >
+          <LogOut className="w-4 h-4" /> Leave
+        </Button>
       )}
 
       {/* Zoom SDK CSS overrides when meeting is active */}
@@ -271,11 +266,13 @@ const LiveSession: React.FC = () => {
           #zoom-meeting-container iframe {
             width: 100% !important;
             height: 100% !important;
-            position: relative !important;
           }
-          #zoom-meeting-container [class*="suspension-window"] {
+          #zoom-meeting-container [class*="suspension-window"],
+          #zoom-meeting-container #ZOOM_WEB_SDK_SELF_DEFINED {
             width: 100% !important;
             height: 100% !important;
+            left: 0 !important;
+            top: 0 !important;
           }
         `}</style>
       )}
@@ -285,7 +282,7 @@ const LiveSession: React.FC = () => {
         ref={zoomContainerRef}
         id="zoom-meeting-container"
         className={isInMeeting
-          ? "fixed top-[57px] left-0 right-0 bottom-0 z-[51] bg-black"
+          ? "fixed inset-0 z-[51] bg-black"
           : "w-0 h-0 overflow-hidden"
         }
       />
