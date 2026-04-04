@@ -95,7 +95,9 @@ const LiveSession: React.FC = () => {
       const container = zoomContainerRef.current;
       if (!container) throw new Error('Zoom container not found');
 
-      const rect = container.getBoundingClientRect();
+      const HEADER_HEIGHT = 57;
+      const width = window.innerWidth;
+      const height = window.innerHeight - HEADER_HEIGHT;
 
       await client.init({
         zoomAppRoot: container,
@@ -107,8 +109,8 @@ const LiveSession: React.FC = () => {
             isResizable: true,
             viewSizes: {
               default: {
-                width: Math.max(Math.floor(rect.width), 900),
-                height: Math.max(Math.floor(rect.height), 600),
+                width: Math.max(width, 900),
+                height: Math.max(height, 600),
               },
               ribbon: {
                 width: 300,
@@ -159,18 +161,21 @@ const LiveSession: React.FC = () => {
     handleJoinZoom();
   };
 
-  // ResizeObserver to keep Zoom filling container
+  // ResizeObserver + window resize to keep Zoom filling container
   useEffect(() => {
-    if (!zoomClient || !zoomContainerRef.current) return;
-    const container = zoomContainerRef.current;
-    const observer = new ResizeObserver(() => {
+    if (!zoomClient) return;
+    const HEADER_HEIGHT = 57;
+    const handleResize = () => {
       try {
-        const rect = container.getBoundingClientRect();
-        zoomClient.updateVideoSize?.(Math.floor(rect.width), Math.floor(rect.height));
+        const width = window.innerWidth;
+        const height = window.innerHeight - HEADER_HEIGHT;
+        zoomClient.updateVideoSize?.(width, height);
       } catch {}
-    });
-    observer.observe(container);
-    return () => observer.disconnect();
+    };
+    window.addEventListener('resize', handleResize);
+    // Initial resize after joining
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
   }, [zoomClient]);
 
   // Cleanup on unmount
@@ -249,12 +254,31 @@ const LiveSession: React.FC = () => {
         </div>
       )}
 
+      {/* Zoom SDK CSS overrides when meeting is active */}
+      {isInMeeting && (
+        <style>{`
+          #zoom-meeting-container,
+          #zoom-meeting-container > div,
+          #zoom-meeting-container [class*="meeting-client"],
+          #zoom-meeting-container [class*="meeting-app"],
+          #zoom-meeting-container iframe {
+            width: 100% !important;
+            height: 100% !important;
+            position: relative !important;
+          }
+          #zoom-meeting-container [class*="suspension-window"] {
+            width: 100% !important;
+            height: 100% !important;
+          }
+        `}</style>
+      )}
+
       {/* Persistent Zoom container — always in DOM, positioned based on meeting state */}
       <div
         ref={zoomContainerRef}
         id="zoom-meeting-container"
         className={isInMeeting
-          ? "fixed inset-0 z-50 mt-[57px]"
+          ? "fixed top-[57px] left-0 right-0 bottom-0 z-[51] bg-black"
           : "w-0 h-0 overflow-hidden"
         }
       />
