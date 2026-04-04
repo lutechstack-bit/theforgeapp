@@ -237,6 +237,7 @@ const FEATURE_TOGGLES = [
   { key: 'community_chat_enabled', label: 'Community Chat', desc: 'Show/hide Chat', icon: MessageSquare },
   { key: 'updates_enabled', label: 'Updates Tab', desc: 'Show/hide Updates', icon: Info },
   { key: 'pre_forge_sessions_enabled', label: 'Pre Forge Sessions', desc: 'Show/hide on Learn', icon: BookOpen },
+  { key: 'embedded_zoom_enabled', label: 'Embedded Zoom', desc: 'In-app Zoom vs native app', icon: Video },
 ];
 
 // --- Main Dashboard ---
