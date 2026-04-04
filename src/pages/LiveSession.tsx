@@ -95,7 +95,9 @@ const LiveSession: React.FC = () => {
       const container = zoomContainerRef.current;
       if (!container) throw new Error('Zoom container not found');
 
-      const rect = container.getBoundingClientRect();
+      const HEADER_HEIGHT = 57;
+      const width = window.innerWidth;
+      const height = window.innerHeight - HEADER_HEIGHT;
 
       await client.init({
         zoomAppRoot: container,
@@ -107,8 +109,8 @@ const LiveSession: React.FC = () => {
             isResizable: true,
             viewSizes: {
               default: {
-                width: Math.max(Math.floor(rect.width), 900),
-                height: Math.max(Math.floor(rect.height), 600),
+                width: Math.max(width, 900),
+                height: Math.max(height, 600),
               },
               ribbon: {
                 width: 300,
