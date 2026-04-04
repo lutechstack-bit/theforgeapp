@@ -17,6 +17,7 @@ const LiveSession: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const { isFeatureEnabled } = useFeatureFlags();
   const zoomContainerRef = useRef<HTMLDivElement>(null);
   const [zoomClient, setZoomClient] = useState<any>(null);
   const [isJoining, setIsJoining] = useState(false);
