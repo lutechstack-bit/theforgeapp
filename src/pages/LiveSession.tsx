@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { LoadingScreen } from '@/components/shared/LoadingScreen';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 const LiveSession: React.FC = () => {
   const { id } = useParams<{ id: string }>();
