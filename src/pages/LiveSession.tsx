@@ -138,6 +138,10 @@ const LiveSession: React.FC = () => {
           setZoomError(`Zoom error ${code}: ${reason}`);
           setZoomClient(null);
         }
+        if (payload.state === 'Closed') {
+          console.log('[Zoom] Meeting closed');
+          setZoomClient(null);
+        }
       });
 
       await client.join({
