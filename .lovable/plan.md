@@ -1,46 +1,65 @@
 
 
-# Fix: Full-Screen Zoom Meeting Experience
+# Fix: True Full-Screen Zoom Meeting Experience
 
 ## Problem
-From the screenshot, the Zoom SDK renders its video in a constrained box (~1040px wide) with black dead space on the right. The SDK's internal elements aren't stretching to fill the viewport. Additionally, there's no scrolling possible and the Zoom toolbar may be cut off at the bottom.
+From your screenshots, three issues are visible:
+1. The Zoom video renders in a constrained box (~1090px) that doesn't fill the full viewport width — leaving black dead space on the right
+2. The Zoom toolbar (Mute, Video, Participants, Chat, etc.) is cut off at the bottom and only visible by scrolling
+3. The custom header bar wastes 57px of vertical space and adds visual noise compared to the native Zoom experience (reference screenshots 3-5)
 
-Root causes:
-1. **Init sizing uses container rect, but container is `w-0 h-0` at init time** — so `getBoundingClientRect()` returns 0/0 and the fallback minimum (900x600) is used, which is smaller than the viewport
-2. **No CSS overrides** for Zoom SDK's internal elements — the SDK creates its own DOM nodes with hardcoded sizes that don't respect the parent container
-3. **Missing height constraint** — the zoom container uses `mt-[57px]` but no explicit `h-[calc(100vh-57px)]` to fill remaining space
+**Root cause:** The Zoom Meeting SDK's "Component View" renders its internal elements with hardcoded inline styles. The current CSS overrides target the wrong selectors and the `position: relative !important` rule breaks the SDK's absolute positioning model. Additionally, the 57px header pushes the container down, causing the toolbar to overflow below the viewport.
 
 ## Changes — `src/pages/LiveSession.tsx`
 
-### 1. Fix init sizing — use `window.innerWidth/Height` instead of container rect
-Since the container is hidden (`w-0 h-0`) when `handleJoinZoom` runs, use viewport dimensions directly:
-```typescript
-const width = window.innerWidth;
-const height = window.innerHeight - 57; // subtract header
+### 1. Remove the header bar, go full-screen like native Zoom
+Instead of a 57px header with "Live" badge and "Leave Meeting" button, overlay a small floating leave button in the top-right corner (like Zoom's "End" button). This gives the SDK the full `100vh` to work with — no offset, no toolbar cutoff.
+
+```text
+Current layout:
+┌─────────────────────────────┐
+│ [Live] Title    [Leave]     │ ← 57px header
+├─────────────────────────────┤
+│                             │
+│  Zoom SDK (constrained)     │
+│                             │
+│  ── toolbar cut off ──      │ ← overflows below viewport
+└─────────────────────────────┘
+
+Proposed layout:
+┌─────────────────────────────┐
+│                    [Leave]  │ ← floating overlay button
+│                             │
+│     Zoom SDK (full screen)  │
+│                             │
+│  [Mute][Video][Chat][...]   │ ← toolbar visible
+└─────────────────────────────┘
 ```
 
-### 2. Add CSS overrides for Zoom SDK internals
-Inject a `<style>` tag when meeting is active to force Zoom's internal elements to fill the container:
-```css
-#zoom-meeting-container [class*="meeting-client"] { width: 100% !important; height: 100% !important; }
-#zoom-meeting-container iframe { width: 100% !important; height: 100% !important; }
-```
+### 2. Fix CSS overrides — target the right SDK elements
+The SDK creates a `suspension-window` element with absolute positioning and fixed dimensions. Current overrides set `position: relative !important` which breaks the SDK layout. Replace with:
+- Target `#ZOOM_WEB_SDK_SELF_DEFINED` (the SDK's own root ID)
+- Force the `suspension-window` to `left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important`
+- Do NOT override `position` — the SDK needs absolute positioning internally
 
-### 3. Fix container dimensions when active
-Change from `mt-[57px]` to explicit positioning:
-```
-fixed top-[57px] left-0 right-0 bottom-0 z-[51]
-```
-This ensures it fills exactly the remaining viewport below the header.
+### 3. Lock body scroll when in meeting
+Add `overflow: hidden` to `document.body` when `isInMeeting` is true to prevent page scrolling that pushes the toolbar out of view.
 
-### 4. ResizeObserver — use window dimensions
-Update the resize handler to pass full available dimensions.
+### 4. Init with full viewport dimensions (no header offset)
+Since we're removing the header, init sizing becomes simply `window.innerWidth` x `window.innerHeight`. The `updateVideoOptions` call on resize also uses the full viewport.
 
-### 5. Mobile — keep existing behavior
-Mobile already opens native Zoom app, no changes needed there.
+### 5. Handle the `connection-change` "Closed" event
+When the meeting ends or the user leaves from within Zoom's own UI, detect `state === 'Closed'` and reset `zoomClient` to null, returning to the pre-join UI.
 
-## Technical Details
-- The Zoom Meeting SDK "Component View" creates internal `<div>` elements with inline `width`/`height` styles — CSS `!important` overrides are the standard approach to make it fill a parent
-- The header bar stays at 57px; zoom fills `calc(100vh - 57px)` below it
-- `z-[51]` on the container ensures it layers above the `z-50` header overlay properly
+## Mobile
+Mobile already redirects to the native Zoom app — no changes needed there. The reference screenshots (4 and 5) confirm this is the right approach for mobile.
+
+## Summary of code changes
+- **One file**: `src/pages/LiveSession.tsx`
+  - Replace the header overlay with a floating "Leave" button
+  - Fix CSS override selectors (target `suspension-window`, `#ZOOM_WEB_SDK_SELF_DEFINED`)
+  - Remove `position: relative !important` override
+  - Init with full `window.innerWidth` x `window.innerHeight` (no 57px subtraction)
+  - Add body overflow lock via useEffect when `isInMeeting`
+  - Listen for `connection-change` `Closed` state to auto-exit
 
