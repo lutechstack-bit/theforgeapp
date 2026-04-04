@@ -172,19 +172,15 @@ const LiveSession: React.FC = () => {
     handleJoinZoom();
   };
 
-  // ResizeObserver + window resize to keep Zoom filling container
+  // Window resize to keep Zoom filling container
   useEffect(() => {
     if (!zoomClient) return;
-    const HEADER_HEIGHT = 57;
     const handleResize = () => {
       try {
-        const width = window.innerWidth;
-        const height = window.innerHeight - HEADER_HEIGHT;
-        zoomClient.updateVideoSize?.(width, height);
+        zoomClient.updateVideoSize?.(window.innerWidth, window.innerHeight);
       } catch {}
     };
     window.addEventListener('resize', handleResize);
-    // Initial resize after joining
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
   }, [zoomClient]);
