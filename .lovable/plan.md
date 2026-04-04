@@ -1,21 +1,85 @@
 
 
-# Fix: Admin Content Scrolling / Cut-off Issue
+# Fix: Full-Screen Zoom Meeting Embed Experience
 
 ## Problem
-The admin panel content — particularly the payment edit dialog — gets cut off at smaller viewport heights (660px). The `DialogContent` has no max-height constraint or internal scroll, so when its content exceeds the viewport, users cannot reach the bottom fields or the Save button.
-
-Additionally, admin pages with long tables may have similar scroll issues within the main content area.
+The Zoom Meeting SDK renders as a small floating popup (default "Component View" behavior) instead of filling the page. This is because `client.init()` is called without `customize.video` sizing options, so Zoom uses its tiny default dimensions.
 
 ## Changes
 
-### 1. `src/components/ui/dialog.tsx` — Add max-height + scroll to DialogContent
-- Add `max-h-[85vh] overflow-y-auto` to the `DialogContent` component so all dialogs become scrollable when they exceed viewport height.
+### 1. `src/pages/LiveSession.tsx` — Full-screen embedded Zoom layout
 
-### 2. `src/pages/admin/AdminPayments.tsx` — Ensure edit dialog is scrollable
-- Add `max-h-[85vh] overflow-y-auto` class to the edit payment `DialogContent` specifically, in case the global fix needs to be more targeted.
-- This ensures the grant toggle, all form fields, balance summary, and Save button are always accessible.
+**Init with custom video sizing:**
+- Pass `customize.video.viewSizes.default` with the container's full width/height to `client.init()`
+- Set `isResizable: true` so it adapts
+- Use a `ResizeObserver` on the container to call `client.updateVideoSize()` when the viewport changes
 
-### Technical Details
-The `DialogContent` in `dialog.tsx` currently uses `fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]` positioning with no height constraint. Adding `max-h-[85vh] overflow-y-auto` ensures content scrolls within the dialog rather than being clipped by the viewport edge.
+**Layout changes when meeting is active:**
+- When `zoomClient` is set (meeting joined), switch to a full-viewport layout:
+  - Hide the session header, countdown cards, and other content
+  - Show only a minimal top bar with session title + "Leave" button
+  - Make the zoom container fill remaining screen height (`h-[calc(100vh-60px)]`)
+- When not in a meeting, show the current UI as-is
+
+**Key code in `client.init()`:**
+```typescript
+const rect = container.getBoundingClientRect();
+await client.init({
+  zoomAppRoot: container,
+  language: 'en-US',
+  patchJsMedia: true,
+  leaveOnPageUnload: true,
+  customize: {
+    video: {
+      isResizable: true,
+      viewSizes: {
+        default: {
+          width: Math.max(rect.width, 900),
+          height: Math.max(rect.height, 600),
+        },
+        ribbon: {
+          width: 300,
+          height: 700,
+        },
+      },
+    },
+    meetingInfo: ['topic', 'host', 'mn', 'pwd', 'telPwd', 'invite', 'participant', 'dc', 'enctype'],
+    toolbar: {
+      buttons: [
+        { text: 'Custom Button', className: 'CustomButton', onClick: () => {} },
+      ],
+    },
+  },
+});
+```
+
+**Container styling when active:**
+```tsx
+// When zoomClient is active, go full-screen
+<div className="fixed inset-0 z-50 bg-background flex flex-col">
+  {/* Minimal header bar */}
+  <div className="flex items-center justify-between px-4 py-3 border-b">
+    <h2 className="font-semibold truncate">{session.title}</h2>
+    <Button variant="destructive" size="sm" onClick={handleLeave}>
+      Leave Meeting
+    </Button>
+  </div>
+  {/* Zoom fills remaining space */}
+  <div ref={zoomContainerRef} id="zoom-meeting-container" 
+       className="flex-1 w-full" />
+</div>
+```
+
+**Add leave handler:**
+```typescript
+const handleLeave = () => {
+  if (zoomClient) {
+    try { zoomClient.leaveMeeting(); } catch {}
+  }
+  setZoomClient(null);
+};
+```
+
+### 2. Files changed
+- `src/pages/LiveSession.tsx` — customize init sizing, full-viewport active meeting layout, leave button, resize observer
 
