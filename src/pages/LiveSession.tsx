@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { format, isPast, isFuture, differenceInSeconds } from 'date-fns';
-import { Video, Clock, User, Calendar, ArrowLeft, ExternalLink, Play, Radio, CheckCircle2, Loader2 } from 'lucide-react';
+import { format, isPast, differenceInSeconds } from 'date-fns';
+import { Video, Clock, User, Calendar, ArrowLeft, ExternalLink, Play, Radio, CheckCircle2, Loader2, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,7 +22,6 @@ const LiveSession: React.FC = () => {
   const [zoomError, setZoomError] = useState<string | null>(null);
   const [now, setNow] = useState(new Date());
 
-  // Tick every second for countdown
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(interval);
@@ -53,13 +52,19 @@ const LiveSession: React.FC = () => {
     const startAt = new Date(session.start_at);
     const endAt = new Date(session.end_at);
     if (now >= startAt && now <= endAt) return 'live';
-    // Allow joining 5 minutes early
     const earlyJoinWindow = new Date(startAt.getTime() - 5 * 60 * 1000);
     if (now >= earlyJoinWindow && now < startAt) return 'live';
     return 'upcoming';
   }, [session, now]);
 
   const sessionState = getSessionState();
+
+  const handleLeave = useCallback(() => {
+    if (zoomClient) {
+      try { zoomClient.leaveMeeting(); } catch {}
+    }
+    setZoomClient(null);
+  }, [zoomClient]);
 
   const handleJoinZoom = async () => {
     if (!session || !user) return;
@@ -76,7 +81,6 @@ const LiveSession: React.FC = () => {
     setZoomError(null);
 
     try {
-      // Get signature from edge function
       const { data: sigData, error: sigError } = await supabase.functions.invoke('zoom-signature', {
         body: { meetingNumber: cleanMeetingNumber, role: 0 },
       });
@@ -85,23 +89,37 @@ const LiveSession: React.FC = () => {
         throw new Error(sigError?.message || 'Failed to get Zoom signature');
       }
 
-      console.log('[Zoom] Signature obtained, sdkKey:', sigData.sdkKey?.substring(0, 8) + '...');
-
-      // Dynamic import of Zoom SDK
       const ZoomMtgEmbedded = (await import('@zoom/meetingsdk/embedded')).default;
       const client = ZoomMtgEmbedded.createClient();
 
-      const container = zoomContainerRef.current || document.getElementById('zoom-meeting-container');
+      const container = zoomContainerRef.current;
       if (!container) throw new Error('Zoom container not found');
+
+      const rect = container.getBoundingClientRect();
 
       await client.init({
         zoomAppRoot: container,
         language: 'en-US',
         patchJsMedia: true,
         leaveOnPageUnload: true,
+        customize: {
+          video: {
+            isResizable: true,
+            viewSizes: {
+              default: {
+                width: Math.max(Math.floor(rect.width), 900),
+                height: Math.max(Math.floor(rect.height), 600),
+              },
+              ribbon: {
+                width: 300,
+                height: 700,
+              },
+            },
+          },
+          meetingInfo: ['topic', 'host', 'mn', 'pwd', 'telPwd', 'invite', 'participant', 'dc', 'enctype'],
+        },
       });
 
-      // Listen for connection state changes to surface real error codes
       client.on('connection-change', (payload: any) => {
         console.log('[Zoom] connection-change:', payload);
         if (payload.state === 'Fail') {
@@ -112,8 +130,6 @@ const LiveSession: React.FC = () => {
           setZoomClient(null);
         }
       });
-
-      console.log('[Zoom] Joining meeting:', cleanMeetingNumber);
 
       await client.join({
         sdkKey: sigData.sdkKey,
@@ -127,7 +143,6 @@ const LiveSession: React.FC = () => {
     } catch (err: any) {
       console.error('[Zoom] Join error:', err);
       const msg = err.message || 'Failed to join meeting';
-      // Surface Zoom-specific error codes if available
       const code = err.errorCode || err.code || '';
       setZoomError(code ? `Zoom error ${code}: ${msg}` : msg);
     } finally {
@@ -144,7 +159,21 @@ const LiveSession: React.FC = () => {
     handleJoinZoom();
   };
 
-  // Cleanup
+  // ResizeObserver to keep Zoom filling container
+  useEffect(() => {
+    if (!zoomClient || !zoomContainerRef.current) return;
+    const container = zoomContainerRef.current;
+    const observer = new ResizeObserver(() => {
+      try {
+        const rect = container.getBoundingClientRect();
+        zoomClient.updateVideoSize?.(Math.floor(rect.width), Math.floor(rect.height));
+      } catch {}
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [zoomClient]);
+
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (zoomClient) {
@@ -198,10 +227,36 @@ const LiveSession: React.FC = () => {
 
   const status = statusConfig[sessionState] || statusConfig.upcoming;
 
+  // ── Full-screen meeting mode ──
+  if (zoomClient && session) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex flex-col">
+        {/* Minimal header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30 gap-1.5 shrink-0">
+              <Radio className="w-3 h-3 animate-pulse" /> Live
+            </Badge>
+            <h2 className="font-semibold text-foreground truncate">{session.title}</h2>
+          </div>
+          <Button variant="destructive" size="sm" onClick={handleLeave} className="gap-2 shrink-0">
+            <LogOut className="w-4 h-4" /> Leave Meeting
+          </Button>
+        </div>
+        {/* Zoom fills remaining space */}
+        <div
+          ref={zoomContainerRef}
+          id="zoom-meeting-container"
+          className="flex-1 w-full min-h-0"
+        />
+      </div>
+    );
+  }
+
+  // ── Normal pre-join / post-session UI ──
   return (
     <div className="min-h-screen pb-24 md:pb-8">
       <div className="page-container max-w-4xl mx-auto space-y-6">
-        {/* Back button */}
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors pt-2"
@@ -219,9 +274,7 @@ const LiveSession: React.FC = () => {
               <Badge variant="secondary" className="text-xs">{session.cohort_type}</Badge>
             )}
           </div>
-
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{session.title}</h1>
-
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             {session.mentor_name && (
               <span className="flex items-center gap-1.5">
@@ -235,13 +288,12 @@ const LiveSession: React.FC = () => {
               <Clock className="w-4 h-4" /> {format(startAt, 'h:mm a')} – {format(endAt, 'h:mm a')}
             </span>
           </div>
-
           {session.description && (
             <p className="text-muted-foreground leading-relaxed">{session.description}</p>
           )}
         </div>
 
-        {/* State-based Content */}
+        {/* Upcoming */}
         {sessionState === 'upcoming' && (
           <Card className="border-blue-500/20 bg-blue-500/5">
             <CardContent className="pt-6 text-center space-y-4">
@@ -261,7 +313,8 @@ const LiveSession: React.FC = () => {
           </Card>
         )}
 
-        {sessionState === 'live' && !zoomClient && (
+        {/* Live – join prompt */}
+        {sessionState === 'live' && (
           <Card className="border-red-500/20 bg-red-500/5">
             <CardContent className="pt-6 text-center space-y-4">
               <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto">
@@ -276,17 +329,10 @@ const LiveSession: React.FC = () => {
               {zoomError && (
                 <div className="space-y-2">
                   <p className="text-sm text-destructive">{zoomError}</p>
-                  <Button size="sm" variant="outline" onClick={handleRetryZoom}>
-                    Retry
-                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleRetryZoom}>Retry</Button>
                 </div>
               )}
-              <Button
-                size="lg"
-                onClick={handleJoinZoom}
-                disabled={isJoining}
-                className="gap-2"
-              >
+              <Button size="lg" onClick={handleJoinZoom} disabled={isJoining} className="gap-2">
                 {isJoining ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : isMobile ? (
@@ -300,11 +346,12 @@ const LiveSession: React.FC = () => {
           </Card>
         )}
 
-        {/* Zoom Embed Container — always mounted so ref is stable */}
+        {/* Hidden container for Zoom init (needs to be in DOM before join) */}
         <div
           ref={zoomContainerRef}
           id="zoom-meeting-container"
-          className={`w-full ${zoomClient ? 'min-h-[500px] rounded-xl overflow-hidden border border-border' : ''}`}
+          className="w-full"
+          style={{ display: 'none' }}
         />
 
         {sessionState === 'ended' && (
