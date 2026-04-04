@@ -227,31 +227,7 @@ const LiveSession: React.FC = () => {
 
   const status = statusConfig[sessionState] || statusConfig.upcoming;
 
-  // ── Full-screen meeting mode ──
-  if (zoomClient && session) {
-    return (
-      <div className="fixed inset-0 z-50 bg-background flex flex-col">
-        {/* Minimal header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30 gap-1.5 shrink-0">
-              <Radio className="w-3 h-3 animate-pulse" /> Live
-            </Badge>
-            <h2 className="font-semibold text-foreground truncate">{session.title}</h2>
-          </div>
-          <Button variant="destructive" size="sm" onClick={handleLeave} className="gap-2 shrink-0">
-            <LogOut className="w-4 h-4" /> Leave Meeting
-          </Button>
-        </div>
-        {/* Zoom fills remaining space */}
-        <div
-          ref={zoomContainerRef}
-          id="zoom-meeting-container"
-          className="flex-1 w-full min-h-0"
-        />
-      </div>
-    );
-  }
+  const isInMeeting = !!zoomClient && !!session;
 
   // ── Normal pre-join / post-session UI ──
   return (
