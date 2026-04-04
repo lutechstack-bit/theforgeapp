@@ -10,12 +10,14 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { LoadingScreen } from '@/components/shared/LoadingScreen';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 const LiveSession: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const { isFeatureEnabled } = useFeatureFlags();
   const zoomContainerRef = useRef<HTMLDivElement>(null);
   const [zoomClient, setZoomClient] = useState<any>(null);
   const [isJoining, setIsJoining] = useState(false);
@@ -79,7 +81,9 @@ const LiveSession: React.FC = () => {
 
     const cleanMeetingNumber = session.zoom_meeting_number.replace(/\D/g, '');
 
-    if (isMobile) {
+    const useNativeZoom = isMobile || !isFeatureEnabled('embedded_zoom_enabled');
+
+    if (useNativeZoom) {
       const zoomUrl = `https://zoom.us/j/${cleanMeetingNumber}${session.zoom_passcode ? `?pwd=${session.zoom_passcode}` : ''}`;
       window.open(zoomUrl, '_blank');
       return;

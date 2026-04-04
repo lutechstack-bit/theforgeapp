@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { 
   Users, Calendar, CalendarDays, CreditCard, BookOpen, MessageSquare, 
   TrendingUp, ArrowUpRight, ArrowDownRight, LogIn, Palette, RefreshCw,
-  Check, X, AlertTriangle, Eye, Info, Map, UserX, ChevronDown, ClipboardCheck, UserCircle
+  Check, X, AlertTriangle, Eye, Info, Map, UserX, ChevronDown, ClipboardCheck, UserCircle, Video
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -237,6 +237,7 @@ const FEATURE_TOGGLES = [
   { key: 'community_chat_enabled', label: 'Community Chat', desc: 'Show/hide Chat', icon: MessageSquare },
   { key: 'updates_enabled', label: 'Updates Tab', desc: 'Show/hide Updates', icon: Info },
   { key: 'pre_forge_sessions_enabled', label: 'Pre Forge Sessions', desc: 'Show/hide on Learn', icon: BookOpen },
+  { key: 'embedded_zoom_enabled', label: 'Embedded Zoom', desc: 'In-app Zoom vs native app', icon: Video },
 ];
 
 // --- Main Dashboard ---
