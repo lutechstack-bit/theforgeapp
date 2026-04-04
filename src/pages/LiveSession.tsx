@@ -66,6 +66,14 @@ const LiveSession: React.FC = () => {
     setZoomClient(null);
   }, [zoomClient]);
 
+  // Lock body scroll when in meeting
+  useEffect(() => {
+    if (zoomClient) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [zoomClient]);
+
   const handleJoinZoom = async () => {
     if (!session || !user) return;
 
@@ -95,9 +103,8 @@ const LiveSession: React.FC = () => {
       const container = zoomContainerRef.current;
       if (!container) throw new Error('Zoom container not found');
 
-      const HEADER_HEIGHT = 57;
       const width = window.innerWidth;
-      const height = window.innerHeight - HEADER_HEIGHT;
+      const height = window.innerHeight;
 
       await client.init({
         zoomAppRoot: container,
@@ -131,6 +138,10 @@ const LiveSession: React.FC = () => {
           setZoomError(`Zoom error ${code}: ${reason}`);
           setZoomClient(null);
         }
+        if (payload.state === 'Closed') {
+          console.log('[Zoom] Meeting closed');
+          setZoomClient(null);
+        }
       });
 
       await client.join({
@@ -161,19 +172,15 @@ const LiveSession: React.FC = () => {
     handleJoinZoom();
   };
 
-  // ResizeObserver + window resize to keep Zoom filling container
+  // Window resize to keep Zoom filling container
   useEffect(() => {
     if (!zoomClient) return;
-    const HEADER_HEIGHT = 57;
     const handleResize = () => {
       try {
-        const width = window.innerWidth;
-        const height = window.innerHeight - HEADER_HEIGHT;
-        zoomClient.updateVideoSize?.(width, height);
+        zoomClient.updateVideoSize?.(window.innerWidth, window.innerHeight);
       } catch {}
     };
     window.addEventListener('resize', handleResize);
-    // Initial resize after joining
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
   }, [zoomClient]);
@@ -237,21 +244,16 @@ const LiveSession: React.FC = () => {
   // ── Normal pre-join / post-session UI ──
   return (
     <>
-      {/* ── Full-screen meeting overlay ── */}
+      {/* Floating leave button overlay */}
       {isInMeeting && (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background shrink-0">
-            <div className="flex items-center gap-3 min-w-0">
-              <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30 gap-1.5 shrink-0">
-                <Radio className="w-3 h-3 animate-pulse" /> Live
-              </Badge>
-              <h2 className="font-semibold text-foreground truncate">{session!.title}</h2>
-            </div>
-            <Button variant="destructive" size="sm" onClick={handleLeave} className="gap-2 shrink-0">
-              <LogOut className="w-4 h-4" /> Leave Meeting
-            </Button>
-          </div>
-        </div>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleLeave}
+          className="fixed top-4 right-4 z-[60] gap-2 shadow-lg"
+        >
+          <LogOut className="w-4 h-4" /> Leave
+        </Button>
       )}
 
       {/* Zoom SDK CSS overrides when meeting is active */}
@@ -264,11 +266,13 @@ const LiveSession: React.FC = () => {
           #zoom-meeting-container iframe {
             width: 100% !important;
             height: 100% !important;
-            position: relative !important;
           }
-          #zoom-meeting-container [class*="suspension-window"] {
+          #zoom-meeting-container [class*="suspension-window"],
+          #zoom-meeting-container #ZOOM_WEB_SDK_SELF_DEFINED {
             width: 100% !important;
             height: 100% !important;
+            left: 0 !important;
+            top: 0 !important;
           }
         `}</style>
       )}
@@ -278,7 +282,7 @@ const LiveSession: React.FC = () => {
         ref={zoomContainerRef}
         id="zoom-meeting-container"
         className={isInMeeting
-          ? "fixed top-[57px] left-0 right-0 bottom-0 z-[51] bg-black"
+          ? "fixed inset-0 z-[51] bg-black"
           : "w-0 h-0 overflow-hidden"
         }
       />
