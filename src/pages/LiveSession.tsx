@@ -254,12 +254,31 @@ const LiveSession: React.FC = () => {
         </div>
       )}
 
+      {/* Zoom SDK CSS overrides when meeting is active */}
+      {isInMeeting && (
+        <style>{`
+          #zoom-meeting-container,
+          #zoom-meeting-container > div,
+          #zoom-meeting-container [class*="meeting-client"],
+          #zoom-meeting-container [class*="meeting-app"],
+          #zoom-meeting-container iframe {
+            width: 100% !important;
+            height: 100% !important;
+            position: relative !important;
+          }
+          #zoom-meeting-container [class*="suspension-window"] {
+            width: 100% !important;
+            height: 100% !important;
+          }
+        `}</style>
+      )}
+
       {/* Persistent Zoom container — always in DOM, positioned based on meeting state */}
       <div
         ref={zoomContainerRef}
         id="zoom-meeting-container"
         className={isInMeeting
-          ? "fixed inset-0 z-50 mt-[57px]"
+          ? "fixed top-[57px] left-0 right-0 bottom-0 z-[51] bg-black"
           : "w-0 h-0 overflow-hidden"
         }
       />
