@@ -81,7 +81,9 @@ const LiveSession: React.FC = () => {
 
     const cleanMeetingNumber = session.zoom_meeting_number.replace(/\D/g, '');
 
-    if (isMobile) {
+    const useNativeZoom = isMobile || !isFeatureEnabled('embedded_zoom_enabled');
+
+    if (useNativeZoom) {
       const zoomUrl = `https://zoom.us/j/${cleanMeetingNumber}${session.zoom_passcode ? `?pwd=${session.zoom_passcode}` : ''}`;
       window.open(zoomUrl, '_blank');
       return;
