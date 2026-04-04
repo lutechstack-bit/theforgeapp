@@ -66,6 +66,14 @@ const LiveSession: React.FC = () => {
     setZoomClient(null);
   }, [zoomClient]);
 
+  // Lock body scroll when in meeting
+  useEffect(() => {
+    if (zoomClient) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [zoomClient]);
+
   const handleJoinZoom = async () => {
     if (!session || !user) return;
 
