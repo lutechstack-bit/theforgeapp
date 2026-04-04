@@ -227,175 +227,172 @@ const LiveSession: React.FC = () => {
 
   const status = statusConfig[sessionState] || statusConfig.upcoming;
 
-  // ── Full-screen meeting mode ──
-  if (zoomClient && session) {
-    return (
-      <div className="fixed inset-0 z-50 bg-background flex flex-col">
-        {/* Minimal header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30 gap-1.5 shrink-0">
-              <Radio className="w-3 h-3 animate-pulse" /> Live
-            </Badge>
-            <h2 className="font-semibold text-foreground truncate">{session.title}</h2>
-          </div>
-          <Button variant="destructive" size="sm" onClick={handleLeave} className="gap-2 shrink-0">
-            <LogOut className="w-4 h-4" /> Leave Meeting
-          </Button>
-        </div>
-        {/* Zoom fills remaining space */}
-        <div
-          ref={zoomContainerRef}
-          id="zoom-meeting-container"
-          className="flex-1 w-full min-h-0"
-        />
-      </div>
-    );
-  }
+  const isInMeeting = !!zoomClient && !!session;
 
   // ── Normal pre-join / post-session UI ──
   return (
-    <div className="min-h-screen pb-24 md:pb-8">
-      <div className="page-container max-w-4xl mx-auto space-y-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors pt-2"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back
-        </button>
-
-        {/* Session Header */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            <Badge variant="outline" className={`${status.color} gap-1.5`}>
-              {status.icon} {status.label}
-            </Badge>
-            {session.cohort_type && (
-              <Badge variant="secondary" className="text-xs">{session.cohort_type}</Badge>
-            )}
+    <>
+      {/* ── Full-screen meeting overlay ── */}
+      {isInMeeting && (
+        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background shrink-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30 gap-1.5 shrink-0">
+                <Radio className="w-3 h-3 animate-pulse" /> Live
+              </Badge>
+              <h2 className="font-semibold text-foreground truncate">{session!.title}</h2>
+            </div>
+            <Button variant="destructive" size="sm" onClick={handleLeave} className="gap-2 shrink-0">
+              <LogOut className="w-4 h-4" /> Leave Meeting
+            </Button>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{session.title}</h1>
-          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-            {session.mentor_name && (
-              <span className="flex items-center gap-1.5">
-                <User className="w-4 h-4" /> {session.mentor_name}
-              </span>
-            )}
-            <span className="flex items-center gap-1.5">
-              <Calendar className="w-4 h-4" /> {format(startAt, 'MMM d, yyyy')}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Clock className="w-4 h-4" /> {format(startAt, 'h:mm a')} – {format(endAt, 'h:mm a')}
-            </span>
-          </div>
-          {session.description && (
-            <p className="text-muted-foreground leading-relaxed">{session.description}</p>
-          )}
         </div>
+      )}
 
-        {/* Upcoming */}
-        {sessionState === 'upcoming' && (
-          <Card className="border-blue-500/20 bg-blue-500/5">
-            <CardContent className="pt-6 text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto">
-                <Clock className="w-8 h-8 text-blue-400" />
-              </div>
-              <div>
-                <p className="text-lg font-semibold text-foreground">Session starts in</p>
-                <p className="text-3xl font-bold text-blue-400 font-mono mt-2">
-                  {formatCountdown(secondsUntilStart) || 'Starting soon...'}
-                </p>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                You'll be able to join 5 minutes before the session starts.
-              </p>
-            </CardContent>
-          </Card>
-        )}
+      {/* Persistent Zoom container — always in DOM, positioned based on meeting state */}
+      <div
+        ref={zoomContainerRef}
+        id="zoom-meeting-container"
+        className={isInMeeting
+          ? "fixed inset-0 z-50 mt-[57px]"
+          : "w-0 h-0 overflow-hidden"
+        }
+      />
 
-        {/* Live – join prompt */}
-        {sessionState === 'live' && (
-          <Card className="border-red-500/20 bg-red-500/5">
-            <CardContent className="pt-6 text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto">
-                <Radio className="w-8 h-8 text-red-400 animate-pulse" />
-              </div>
-              <div>
-                <p className="text-lg font-semibold text-foreground">Session is Live!</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {isMobile ? 'Join via the Zoom app' : 'Join the session right here in the app'}
-                </p>
-              </div>
-              {zoomError && (
-                <div className="space-y-2">
-                  <p className="text-sm text-destructive">{zoomError}</p>
-                  <Button size="sm" variant="outline" onClick={handleRetryZoom}>Retry</Button>
-                </div>
-              )}
-              <Button size="lg" onClick={handleJoinZoom} disabled={isJoining} className="gap-2">
-                {isJoining ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : isMobile ? (
-                  <ExternalLink className="w-4 h-4" />
-                ) : (
-                  <Video className="w-4 h-4" />
+      {/* ── Normal pre-join / post-session UI ── */}
+      {!isInMeeting && (
+        <div className="min-h-screen pb-24 md:pb-8">
+          <div className="page-container max-w-4xl mx-auto space-y-6">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors pt-2"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 flex-wrap">
+                <Badge variant="outline" className={`${status.color} gap-1.5`}>
+                  {status.icon} {status.label}
+                </Badge>
+                {session!.cohort_type && (
+                  <Badge variant="secondary" className="text-xs">{session!.cohort_type}</Badge>
                 )}
-                {isJoining ? 'Connecting...' : isMobile ? 'Open in Zoom' : 'Join Session'}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{session!.title}</h1>
+              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                {session!.mentor_name && (
+                  <span className="flex items-center gap-1.5">
+                    <User className="w-4 h-4" /> {session!.mentor_name}
+                  </span>
+                )}
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4" /> {format(startAt, 'MMM d, yyyy')}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-4 h-4" /> {format(startAt, 'h:mm a')} – {format(endAt, 'h:mm a')}
+                </span>
+              </div>
+              {session!.description && (
+                <p className="text-muted-foreground leading-relaxed">{session!.description}</p>
+              )}
+            </div>
 
-        {/* Hidden container for Zoom init (needs to be in DOM before join) */}
-        <div
-          ref={zoomContainerRef}
-          id="zoom-meeting-container"
-          className="w-full"
-          style={{ display: 'none' }}
-        />
+            {sessionState === 'upcoming' && (
+              <Card className="border-blue-500/20 bg-blue-500/5">
+                <CardContent className="pt-6 text-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto">
+                    <Clock className="w-8 h-8 text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-foreground">Session starts in</p>
+                    <p className="text-3xl font-bold text-blue-400 font-mono mt-2">
+                      {formatCountdown(secondsUntilStart) || 'Starting soon...'}
+                    </p>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    You'll be able to join 5 minutes before the session starts.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
-        {sessionState === 'ended' && (
-          <Card>
-            <CardContent className="pt-6 text-center space-y-3">
-              <CheckCircle2 className="w-12 h-12 text-muted-foreground mx-auto" />
-              <p className="text-lg font-semibold">This session has ended</p>
-              <p className="text-sm text-muted-foreground">Recording will be available soon if applicable.</p>
-            </CardContent>
-          </Card>
-        )}
+            {sessionState === 'live' && (
+              <Card className="border-red-500/20 bg-red-500/5">
+                <CardContent className="pt-6 text-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto">
+                    <Radio className="w-8 h-8 text-red-400 animate-pulse" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-foreground">Session is Live!</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {isMobile ? 'Join via the Zoom app' : 'Join the session right here in the app'}
+                    </p>
+                  </div>
+                  {zoomError && (
+                    <div className="space-y-2">
+                      <p className="text-sm text-destructive">{zoomError}</p>
+                      <Button size="sm" variant="outline" onClick={handleRetryZoom}>Retry</Button>
+                    </div>
+                  )}
+                  <Button size="lg" onClick={handleJoinZoom} disabled={isJoining} className="gap-2">
+                    {isJoining ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : isMobile ? (
+                      <ExternalLink className="w-4 h-4" />
+                    ) : (
+                      <Video className="w-4 h-4" />
+                    )}
+                    {isJoining ? 'Connecting...' : isMobile ? 'Open in Zoom' : 'Join Session'}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
-        {sessionState === 'recording_processing' && (
-          <Card className="border-amber-500/20 bg-amber-500/5">
-            <CardContent className="pt-6 text-center space-y-3">
-              <Loader2 className="w-12 h-12 text-amber-400 animate-spin mx-auto" />
-              <p className="text-lg font-semibold">Recording is being processed</p>
-              <p className="text-sm text-muted-foreground">Check back soon — it'll appear in Learn when ready.</p>
-            </CardContent>
-          </Card>
-        )}
+            {sessionState === 'ended' && (
+              <Card>
+                <CardContent className="pt-6 text-center space-y-3">
+                  <CheckCircle2 className="w-12 h-12 text-muted-foreground mx-auto" />
+                  <p className="text-lg font-semibold">This session has ended</p>
+                  <p className="text-sm text-muted-foreground">Recording will be available soon if applicable.</p>
+                </CardContent>
+              </Card>
+            )}
 
-        {sessionState === 'recording_ready' && session.learn_content_id && (
-          <Card className="border-emerald-500/20 bg-emerald-500/5">
-            <CardContent className="pt-6 text-center space-y-4">
-              <Play className="w-12 h-12 text-emerald-400 mx-auto" />
-              <p className="text-lg font-semibold">Recording is available!</p>
-              <Button onClick={() => navigate(`/learn/${session.learn_content_id}`)} className="gap-2">
-                <Play className="w-4 h-4" /> Watch Recording
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+            {sessionState === 'recording_processing' && (
+              <Card className="border-amber-500/20 bg-amber-500/5">
+                <CardContent className="pt-6 text-center space-y-3">
+                  <Loader2 className="w-12 h-12 text-amber-400 animate-spin mx-auto" />
+                  <p className="text-lg font-semibold">Recording is being processed</p>
+                  <p className="text-sm text-muted-foreground">Check back soon — it'll appear in Learn when ready.</p>
+                </CardContent>
+              </Card>
+            )}
 
-        {sessionState === 'cancelled' && (
-          <Card>
-            <CardContent className="pt-6 text-center space-y-3">
-              <Video className="w-12 h-12 text-muted-foreground mx-auto" />
-              <p className="text-lg font-semibold">This session has been cancelled</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </div>
+            {sessionState === 'recording_ready' && session!.learn_content_id && (
+              <Card className="border-emerald-500/20 bg-emerald-500/5">
+                <CardContent className="pt-6 text-center space-y-4">
+                  <Play className="w-12 h-12 text-emerald-400 mx-auto" />
+                  <p className="text-lg font-semibold">Recording is available!</p>
+                  <Button onClick={() => navigate(`/learn/${session!.learn_content_id}`)} className="gap-2">
+                    <Play className="w-4 h-4" /> Watch Recording
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {sessionState === 'cancelled' && (
+              <Card>
+                <CardContent className="pt-6 text-center space-y-3">
+                  <Video className="w-12 h-12 text-muted-foreground mx-auto" />
+                  <p className="text-lg font-semibold">This session has been cancelled</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
