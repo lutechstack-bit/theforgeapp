@@ -1,85 +1,46 @@
 
 
-# Fix: Full-Screen Zoom Meeting Embed Experience
+# Fix: Full-Screen Zoom Meeting Experience
 
 ## Problem
-The Zoom Meeting SDK renders as a small floating popup (default "Component View" behavior) instead of filling the page. This is because `client.init()` is called without `customize.video` sizing options, so Zoom uses its tiny default dimensions.
+From the screenshot, the Zoom SDK renders its video in a constrained box (~1040px wide) with black dead space on the right. The SDK's internal elements aren't stretching to fill the viewport. Additionally, there's no scrolling possible and the Zoom toolbar may be cut off at the bottom.
 
-## Changes
+Root causes:
+1. **Init sizing uses container rect, but container is `w-0 h-0` at init time** — so `getBoundingClientRect()` returns 0/0 and the fallback minimum (900x600) is used, which is smaller than the viewport
+2. **No CSS overrides** for Zoom SDK's internal elements — the SDK creates its own DOM nodes with hardcoded sizes that don't respect the parent container
+3. **Missing height constraint** — the zoom container uses `mt-[57px]` but no explicit `h-[calc(100vh-57px)]` to fill remaining space
 
-### 1. `src/pages/LiveSession.tsx` — Full-screen embedded Zoom layout
+## Changes — `src/pages/LiveSession.tsx`
 
-**Init with custom video sizing:**
-- Pass `customize.video.viewSizes.default` with the container's full width/height to `client.init()`
-- Set `isResizable: true` so it adapts
-- Use a `ResizeObserver` on the container to call `client.updateVideoSize()` when the viewport changes
-
-**Layout changes when meeting is active:**
-- When `zoomClient` is set (meeting joined), switch to a full-viewport layout:
-  - Hide the session header, countdown cards, and other content
-  - Show only a minimal top bar with session title + "Leave" button
-  - Make the zoom container fill remaining screen height (`h-[calc(100vh-60px)]`)
-- When not in a meeting, show the current UI as-is
-
-**Key code in `client.init()`:**
+### 1. Fix init sizing — use `window.innerWidth/Height` instead of container rect
+Since the container is hidden (`w-0 h-0`) when `handleJoinZoom` runs, use viewport dimensions directly:
 ```typescript
-const rect = container.getBoundingClientRect();
-await client.init({
-  zoomAppRoot: container,
-  language: 'en-US',
-  patchJsMedia: true,
-  leaveOnPageUnload: true,
-  customize: {
-    video: {
-      isResizable: true,
-      viewSizes: {
-        default: {
-          width: Math.max(rect.width, 900),
-          height: Math.max(rect.height, 600),
-        },
-        ribbon: {
-          width: 300,
-          height: 700,
-        },
-      },
-    },
-    meetingInfo: ['topic', 'host', 'mn', 'pwd', 'telPwd', 'invite', 'participant', 'dc', 'enctype'],
-    toolbar: {
-      buttons: [
-        { text: 'Custom Button', className: 'CustomButton', onClick: () => {} },
-      ],
-    },
-  },
-});
+const width = window.innerWidth;
+const height = window.innerHeight - 57; // subtract header
 ```
 
-**Container styling when active:**
-```tsx
-// When zoomClient is active, go full-screen
-<div className="fixed inset-0 z-50 bg-background flex flex-col">
-  {/* Minimal header bar */}
-  <div className="flex items-center justify-between px-4 py-3 border-b">
-    <h2 className="font-semibold truncate">{session.title}</h2>
-    <Button variant="destructive" size="sm" onClick={handleLeave}>
-      Leave Meeting
-    </Button>
-  </div>
-  {/* Zoom fills remaining space */}
-  <div ref={zoomContainerRef} id="zoom-meeting-container" 
-       className="flex-1 w-full" />
-</div>
+### 2. Add CSS overrides for Zoom SDK internals
+Inject a `<style>` tag when meeting is active to force Zoom's internal elements to fill the container:
+```css
+#zoom-meeting-container [class*="meeting-client"] { width: 100% !important; height: 100% !important; }
+#zoom-meeting-container iframe { width: 100% !important; height: 100% !important; }
 ```
 
-**Add leave handler:**
-```typescript
-const handleLeave = () => {
-  if (zoomClient) {
-    try { zoomClient.leaveMeeting(); } catch {}
-  }
-  setZoomClient(null);
-};
+### 3. Fix container dimensions when active
+Change from `mt-[57px]` to explicit positioning:
 ```
+fixed top-[57px] left-0 right-0 bottom-0 z-[51]
+```
+This ensures it fills exactly the remaining viewport below the header.
 
-### 2. Files changed
-- `src/pages/LiveSession.tsx` — customize init sizing, full-viewport active meeting layout, leave button, resize observer
+### 4. ResizeObserver — use window dimensions
+Update the resize handler to pass full available dimensions.
+
+### 5. Mobile — keep existing behavior
+Mobile already opens native Zoom app, no changes needed there.
+
+## Technical Details
+- The Zoom Meeting SDK "Component View" creates internal `<div>` elements with inline `width`/`height` styles — CSS `!important` overrides are the standard approach to make it fill a parent
+- The header bar stays at 57px; zoom fills `calc(100vh - 57px)` below it
+- `z-[51]` on the container ensures it layers above the `z-50` header overlay properly
 
