@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Gift, FileText, Users, Download } from 'lucide-react';
+import { FileUpload } from '@/components/admin/FileUpload';
 
 interface Perk {
   id: string;
@@ -279,8 +280,40 @@ const AdminPerks: React.FC = () => {
             <div className="space-y-4">
               <div><Label>Name</Label><Input value={editPerk.name || ''} onChange={e => setEditPerk({...editPerk, name: e.target.value})} maxLength={100} /></div>
               <div><Label>Headline</Label><Input value={editPerk.headline || ''} onChange={e => setEditPerk({...editPerk, headline: e.target.value})} maxLength={200} /></div>
-              <div><Label>Logo URL</Label><Input value={editPerk.logo_url || ''} onChange={e => setEditPerk({...editPerk, logo_url: e.target.value})} /></div>
-              <div><Label>Banner URL</Label><Input value={editPerk.banner_url || ''} onChange={e => setEditPerk({...editPerk, banner_url: e.target.value})} /></div>
+              <div>
+                <Label>Logo Image</Label>
+                <FileUpload
+                  bucket="user-uploads"
+                  accept="image/*"
+                  maxSizeMB={5}
+                  label="Upload logo image"
+                  currentUrl={editPerk.logo_url || undefined}
+                  onUploadComplete={(url) => setEditPerk({...editPerk, logo_url: url})}
+                />
+                <Input
+                  value={editPerk.logo_url || ''}
+                  onChange={e => setEditPerk({...editPerk, logo_url: e.target.value})}
+                  placeholder="Or paste image URL"
+                  className="mt-2 text-xs"
+                />
+              </div>
+              <div>
+                <Label>Banner Image</Label>
+                <FileUpload
+                  bucket="user-uploads"
+                  accept="image/*"
+                  maxSizeMB={10}
+                  label="Upload banner image"
+                  currentUrl={editPerk.banner_url || undefined}
+                  onUploadComplete={(url) => setEditPerk({...editPerk, banner_url: url})}
+                />
+                <Input
+                  value={editPerk.banner_url || ''}
+                  onChange={e => setEditPerk({...editPerk, banner_url: e.target.value})}
+                  placeholder="Or paste image URL"
+                  className="mt-2 text-xs"
+                />
+              </div>
               <div><Label>Banner Color</Label><Input type="color" value={editPerk.banner_color || '#1a1a2e'} onChange={e => setEditPerk({...editPerk, banner_color: e.target.value})} /></div>
               <div><Label>Category</Label><Input value={editPerk.category || ''} onChange={e => setEditPerk({...editPerk, category: e.target.value})} maxLength={50} /></div>
               <div><Label>About</Label><Textarea value={editPerk.about || ''} onChange={e => setEditPerk({...editPerk, about: e.target.value})} maxLength={2000} /></div>
