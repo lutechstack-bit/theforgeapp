@@ -112,55 +112,39 @@ export const useRoadmapData = () => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
   });
 
-  // Calculate dates dynamically based on forge_start_date + day_number
+  // Calculate dates: bootcamp days use formula, online sessions use stored dates only
   const roadmapDays = useMemo(() => {
     if (!templateDays) return [];
-    
+
     return templateDays.map(day => {
-      const isOwnEditionOnlineSession = 
-        day.edition_id === editionIdForQuery && 
-        day.day_number < 0 && 
-        day.date;
-      
-      if (isOwnEditionOnlineSession) {
-        return day;
+      // Online sessions (day_number < 0): NEVER calculate dates from formula.
+      // Online session dates are non-consecutive and depend on mentor availability,
+      // so they must be stored explicitly per-edition in the database.
+      // If the date is set in the DB, use it. If null, leave it null (UI shows "TBA").
+      if (day.day_number < 0) {
+        return day; // Keep whatever date is stored (or null)
       }
-      
+
+      // Bootcamp days (day_number > 0): Calculate from forge_start_date.
+      // Bootcamp days are always consecutive, so the formula works.
       let calculatedDate: string | null = null;
-      
       if (day.day_number > 0 && forgeStartDate) {
         const dayDate = new Date(forgeStartDate);
         dayDate.setDate(dayDate.getDate() + (day.day_number - 1));
         calculatedDate = dayDate.toISOString().split('T')[0];
-      } else if (day.day_number < 0) {
-        // Use online_start_date for online sessions if available, else fall back to forge_start_date
-        const baseDate = onlineStartDate || forgeStartDate;
-        if (baseDate) {
-          // day_number is negative, e.g. -5 means 5th day before bootcamp
-          // With online_start_date: calculate forward from online start (day -5 = online day 1, day -4 = online day 2, etc.)
-          if (onlineStartDate) {
-            // Find how many online days total (the most negative day_number)
-            const allNegativeDays = templateDays?.filter(d => d.day_number < 0) || [];
-            const minDayNum = Math.min(...allNegativeDays.map(d => d.day_number));
-            // day_number -5 with min -5 => offset 0 (first day), day_number -4 => offset 1, etc.
-            const offset = day.day_number - minDayNum;
-            const dayDate = new Date(onlineStartDate);
-            dayDate.setDate(dayDate.getDate() + offset);
-            calculatedDate = dayDate.toISOString().split('T')[0];
-          } else {
-            const dayDate = new Date(forgeStartDate!);
-            dayDate.setDate(dayDate.getDate() + day.day_number);
-            calculatedDate = dayDate.toISOString().split('T')[0];
-          }
-        }
       }
-      
+
+      // day_number === 0 (prep day): keep stored date or null
+      if (day.day_number === 0) {
+        return day;
+      }
+
       return {
         ...day,
         date: calculatedDate
       };
     });
-  }, [templateDays, forgeStartDate, onlineStartDate, editionIdForQuery]);
+  }, [templateDays, forgeStartDate, editionIdForQuery]);
 
   // Fetch galleries with timeout
   const { data: galleries } = useQuery({

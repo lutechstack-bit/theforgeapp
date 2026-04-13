@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Edit, Trash2, Loader2, Clock, MapPin, GripVertical, Video, Globe, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit, Trash2, Loader2, Clock, MapPin, GripVertical, Video, Globe, Eye, EyeOff, Calendar, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -94,10 +96,24 @@ export default function AdminRoadmap() {
 
   return (
     <div className="p-8">
+      <h1 className="text-3xl font-bold text-foreground mb-2">Roadmap Management</h1>
+      <p className="text-muted-foreground mb-6">Manage roadmap templates and edition-specific online session schedules.</p>
+
+      <Tabs defaultValue="template">
+        <TabsList className="mb-6">
+          <TabsTrigger value="template">Template Days</TabsTrigger>
+          <TabsTrigger value="online-sessions">Online Sessions (per Edition)</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="online-sessions">
+          <EditionOnlineSessions />
+        </TabsContent>
+
+        <TabsContent value="template">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Roadmap Template</h1>
-          <p className="text-muted-foreground mt-1">Shared roadmap content for all editions. Dates are calculated from each edition's start date.</p>
+          <h2 className="text-xl font-bold text-foreground">Shared Template</h2>
+          <p className="text-muted-foreground mt-1">Content shared across all editions. Bootcamp dates auto-calculate from edition start date.</p>
         </div>
         <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
           <Plus className="w-4 h-4" />
@@ -217,7 +233,275 @@ export default function AdminRoadmap() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+        </TabsContent>
+      </Tabs>
     </div>
+  );
+}
+
+// ── Edition Online Sessions Manager ──────────────────────────────
+function EditionOnlineSessions() {
+  const [selectedEditionId, setSelectedEditionId] = useState<string>('');
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  // Fetch all active editions
+  const { data: editions } = useQuery({
+    queryKey: ['admin-editions-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('editions')
+        .select('id, name, city, cohort_type, forge_start_date, online_start_date')
+        .eq('is_archived', false)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fetch online sessions for selected edition
+  const { data: onlineSessions, isLoading: sessionsLoading } = useQuery({
+    queryKey: ['admin-online-sessions', selectedEditionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('roadmap_days')
+        .select('*')
+        .eq('edition_id', selectedEditionId)
+        .lt('day_number', 0)
+        .order('day_number', { ascending: true });
+      if (error) throw error;
+      return data as RoadmapDay[];
+    },
+    enabled: !!selectedEditionId,
+  });
+
+  // Update a single session
+  const updateSession = useMutation({
+    mutationFn: async ({ id, ...data }: Partial<RoadmapDay> & { id: string }) => {
+      const { error } = await supabase.from('roadmap_days').update(data).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Session updated');
+      queryClient.invalidateQueries({ queryKey: ['admin-online-sessions', selectedEditionId] });
+      setSavingId(null);
+    },
+    onError: (error: Error) => { toast.error(error.message); setSavingId(null); }
+  });
+
+  const selectedEdition = editions?.find(e => e.id === selectedEditionId);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-foreground mb-1">Online Session Scheduler</h2>
+        <p className="text-muted-foreground text-sm">Set exact dates, times, and Zoom links for each online session per edition. These change based on mentor availability.</p>
+      </div>
+
+      {/* Edition selector */}
+      <div className="max-w-md">
+        <Label className="mb-2 block">Select Edition</Label>
+        <Select value={selectedEditionId} onValueChange={setSelectedEditionId}>
+          <SelectTrigger>
+            <SelectValue placeholder="Choose an edition..." />
+          </SelectTrigger>
+          <SelectContent>
+            {editions?.map(ed => (
+              <SelectItem key={ed.id} value={ed.id}>
+                {ed.name} — {ed.city} ({ed.cohort_type})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {selectedEditionId && selectedEdition && (
+        <div className="text-xs text-muted-foreground flex gap-4">
+          <span>Bootcamp: {selectedEdition.forge_start_date || 'Not set'}</span>
+          <span>Online start: {selectedEdition.online_start_date || 'Not set'}</span>
+        </div>
+      )}
+
+      {/* Sessions list */}
+      {sessionsLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      )}
+
+      {selectedEditionId && !sessionsLoading && (!onlineSessions || onlineSessions.length === 0) && (
+        <Card className="bg-card/50 border-border/50">
+          <CardContent className="py-12 text-center text-muted-foreground">
+            No online sessions found for this edition. Online sessions are created from the template when an edition is set up.
+          </CardContent>
+        </Card>
+      )}
+
+      {onlineSessions && onlineSessions.length > 0 && (
+        <div className="space-y-4">
+          {onlineSessions.map((session, index) => (
+            <OnlineSessionCard
+              key={session.id}
+              session={session}
+              sessionNumber={index + 1}
+              isSaving={savingId === session.id}
+              onSave={(data) => {
+                setSavingId(session.id);
+                updateSession.mutate({ id: session.id, ...data });
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Single Online Session Card (inline edit) ─────────────────────
+function OnlineSessionCard({
+  session,
+  sessionNumber,
+  isSaving,
+  onSave,
+}: {
+  session: RoadmapDay;
+  sessionNumber: number;
+  isSaving: boolean;
+  onSave: (data: Partial<RoadmapDay>) => void;
+}) {
+  const [date, setDate] = useState(session.date || '');
+  const [startTime, setStartTime] = useState(session.session_start_time || '');
+  const [duration, setDuration] = useState(String(session.session_duration_hours || ''));
+  const [meetingUrl, setMeetingUrl] = useState(session.meeting_url || '');
+  const [meetingId, setMeetingId] = useState(session.meeting_id || '');
+  const [passcode, setPasscode] = useState(session.meeting_passcode || '');
+
+  const hasChanges =
+    date !== (session.date || '') ||
+    startTime !== (session.session_start_time || '') ||
+    duration !== String(session.session_duration_hours || '') ||
+    meetingUrl !== (session.meeting_url || '') ||
+    meetingId !== (session.meeting_id || '') ||
+    passcode !== (session.meeting_passcode || '');
+
+  const handleSave = () => {
+    onSave({
+      date: date || null,
+      session_start_time: startTime || null,
+      session_duration_hours: duration ? parseFloat(duration) : null,
+      meeting_url: meetingUrl || null,
+      meeting_id: meetingId || null,
+      meeting_passcode: passcode || null,
+    });
+  };
+
+  return (
+    <Card className="bg-card/50 border-border/50">
+      <CardContent className="py-4 px-5 space-y-4">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" className="text-blue-400 border-blue-400/30 bg-blue-500/10">
+              <Video className="w-3 h-3 mr-1" />
+              Session {sessionNumber}
+            </Badge>
+            <h3 className="font-semibold text-foreground">{session.title}</h3>
+          </div>
+          <Button
+            size="sm"
+            disabled={!hasChanges || isSaving}
+            onClick={handleSave}
+            className="gap-1.5"
+          >
+            {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+            Save
+          </Button>
+        </div>
+
+        {session.description && (
+          <p className="text-sm text-muted-foreground">{session.description}</p>
+        )}
+
+        {/* Date + Time row */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-1">
+            <Label className="text-xs">Date</Label>
+            <Input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="h-9 text-sm"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Start Time</Label>
+            <Input
+              type="time"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              className="h-9 text-sm"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Duration (hrs)</Label>
+            <Input
+              type="number"
+              min={0.5}
+              max={12}
+              step={0.5}
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              className="h-9 text-sm"
+            />
+          </div>
+        </div>
+
+        {/* Zoom row */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-1 col-span-1">
+            <Label className="text-xs">Zoom Link</Label>
+            <Input
+              placeholder="https://zoom.us/j/..."
+              value={meetingUrl}
+              onChange={(e) => setMeetingUrl(e.target.value)}
+              className="h-9 text-sm"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Meeting ID</Label>
+            <Input
+              placeholder="123 456 7890"
+              value={meetingId}
+              onChange={(e) => setMeetingId(e.target.value)}
+              className="h-9 text-sm"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Passcode</Label>
+            <Input
+              placeholder="Passcode"
+              value={passcode}
+              onChange={(e) => setPasscode(e.target.value)}
+              className="h-9 text-sm"
+            />
+          </div>
+        </div>
+
+        {/* Status indicator */}
+        <div className="flex items-center gap-2 text-xs">
+          {date ? (
+            <span className="text-green-400 flex items-center gap-1"><Calendar className="w-3 h-3" /> {date} at {startTime || 'time TBA'}</span>
+          ) : (
+            <span className="text-amber-400 flex items-center gap-1"><Calendar className="w-3 h-3" /> Date not yet set — users will see "TBA"</span>
+          )}
+          {meetingUrl ? (
+            <span className="text-green-400 flex items-center gap-1 ml-3"><Video className="w-3 h-3" /> Zoom ready</span>
+          ) : (
+            <span className="text-muted-foreground flex items-center gap-1 ml-3"><Video className="w-3 h-3" /> No Zoom link</span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

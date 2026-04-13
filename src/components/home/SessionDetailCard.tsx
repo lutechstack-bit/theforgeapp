@@ -42,7 +42,7 @@ const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onVi
       <div className="flex items-center gap-2 mb-2">
         <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-primary/15 text-primary text-[11px] font-bold tracking-wider">
           {dayBadgeLabel}
-          {dateStr && <span className="ml-1.5 text-primary/70">| {dateStr}</span>}
+          <span className="ml-1.5 text-primary/70">| {dateStr ?? 'Date TBA'}</span>
         </span>
       </div>
 
@@ -75,10 +75,16 @@ const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onVi
             {day.location}
           </span>
         )}
+        {day.session_duration_hours && (
+          <span className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5" />
+            {day.session_duration_hours}h
+          </span>
+        )}
         {isVirtual && (
           <span className="flex items-center gap-1.5">
             <Video className="w-3.5 h-3.5" />
-            Via Zoom Link
+            {day.meeting_url ? 'Zoom' : 'Via Zoom Link'}
           </span>
         )}
       </div>
@@ -155,6 +161,25 @@ const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onVi
               </PopoverContent>
             )}
           </Popover>
+        </div>
+      )}
+
+      {/* Online session: Zoom join button */}
+      {isVirtual && day.meeting_url && (
+        <div className="mb-4">
+          <Button
+            size="sm"
+            className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={(e) => { e.stopPropagation(); window.open(day.meeting_url!, '_blank'); }}
+          >
+            <Video className="w-3.5 h-3.5" />
+            Join Zoom Session
+          </Button>
+          {day.meeting_id && (
+            <p className="text-[10px] text-muted-foreground mt-1.5">
+              Meeting ID: {day.meeting_id}{day.meeting_passcode ? ` | Passcode: ${day.meeting_passcode}` : ''}
+            </p>
+          )}
         </div>
       )}
 
