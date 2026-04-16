@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronLeft, Home, ExternalLink, X, MapPin } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Home, ExternalLink, X, MapPin, Phone } from 'lucide-react';
 import forgeIcon from '@/assets/forge-icon.png';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,11 @@ interface GalleryImage {
   caption?: string;
 }
 
+interface Contact {
+  name: string;
+  phone: string;
+}
+
 interface StayLocation {
   id: string;
   name: string;
@@ -22,6 +27,7 @@ interface StayLocation {
   featured_image_url: string | null;
   gallery_images: GalleryImage[] | null;
   notes: any[] | null;
+  contacts: Contact[];
 }
 
 interface TravelStaySectionProps {
@@ -76,6 +82,7 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
         featured_image_url: d.featured_image_url,
         gallery_images: d.gallery_images as GalleryImage[] | null,
         notes: d.notes,
+        contacts: (d.contacts as unknown as Contact[]) || [],
       })) as StayLocation[];
     },
     staleTime: 5 * 60 * 1000,
@@ -142,34 +149,44 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
       <div className="flex flex-col sm:flex-row gap-4">
         {/* Image Carousel */}
         {allImages.length > 0 && (
-          <div className="relative w-full sm:w-2/5 aspect-[16/10] sm:aspect-[4/3] rounded-xl overflow-hidden bg-muted/50 flex-shrink-0">
+          <div
+            className="relative w-full sm:w-2/5 aspect-[16/10] sm:aspect-[4/3] rounded-xl overflow-hidden bg-muted/50 flex-shrink-0 cursor-pointer group"
+            onClick={handleOpenDetail}
+          >
             <img
               src={allImages[currentImageIdx]?.url}
               alt={location.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
             />
+            {/* Hover overlay */}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+              <span className="text-white text-xs font-medium bg-black/60 px-3 py-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                View {allImages.length} photos
+              </span>
+            </div>
             {allImages.length > 1 && (
               <>
                 <button
-                  onClick={handlePrev}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors opacity-0 group-hover:opacity-100"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={handleNext}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); handleNext(); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors opacity-0 group-hover:opacity-100"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
-                {/* Dots */}
+                {/* Dots - clickable */}
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
                   {allImages.map((_, i) => (
-                    <div
+                    <button
                       key={i}
+                      onClick={(e) => { e.stopPropagation(); setCurrentImageIdx(i); }}
                       className={`h-1.5 rounded-full transition-all ${
-                        i === currentImageIdx ? 'w-4 bg-primary' : 'w-1.5 bg-white/50'
+                        i === currentImageIdx ? 'w-4 bg-primary' : 'w-1.5 bg-white/50 hover:bg-white/70'
                       }`}
                     />
                   ))}
@@ -288,6 +305,28 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Open in Google Maps
               </Button>
+            )}
+
+            {/* Your Life Guards - Contact Info */}
+            {location.contacts && location.contacts.length > 0 && (
+              <div className="pt-4 border-t border-border/40">
+                <h4 className="text-sm font-bold text-primary mb-3">Your Life Guards</h4>
+                <div className="space-y-2.5">
+                  {location.contacts.map((contact, i) => (
+                    <div key={i} className="flex items-center justify-between rounded-lg bg-muted/30 border border-border/30 px-3.5 py-2.5">
+                      <span className="text-sm font-medium text-foreground">{contact.name}</span>
+                      <a
+                        href={`tel:${contact.phone}`}
+                        className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors font-medium"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Phone className="h-3 w-3" />
+                        {contact.phone}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         </DialogContent>
