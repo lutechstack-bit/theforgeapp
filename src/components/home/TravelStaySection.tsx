@@ -223,7 +223,7 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
       </div>
       {/* Detail Dialog */}
       <Dialog open={showDetail} onOpenChange={setShowDetail}>
-        <DialogContent className="max-w-lg p-0 bg-card border-border/50 overflow-hidden gap-0 [&>button]:hidden">
+        <DialogContent className="max-w-lg p-0 bg-card border-border/50 gap-0 [&>button]:hidden max-h-[90vh] overflow-y-auto">
           {/* Carousel */}
           {allImages.length > 0 && (
             <div
