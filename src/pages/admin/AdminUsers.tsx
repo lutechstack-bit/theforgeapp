@@ -227,9 +227,15 @@ const EDITION_16_17_STUDENTS = [
   { full_name: "Hrithik Sharma", email: "hrithik.sh28@gmail.com", phone: "9960471659", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
   { full_name: "Lakhinana Sai Gowtham", email: "gowthamlakhinana99@gmail.com", phone: "9515631049", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
   { full_name: "Nivas", email: "nvsneo@gmail.com", phone: "7840022308", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
+  { full_name: "Priyadarshan TC", email: "priyadarshanlaltc@gmail.com", phone: "919447739577", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
   { full_name: "Princeton Lewis", email: "lewisprincejr@gmail.com", phone: "9686034462", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
   { full_name: "Sreekesh Reddy Madadi", email: "sreekeshreddymadadi@gmail.com", phone: "14702330907", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
   { full_name: "Siddhardha S", email: "surojusiddhardha@gmail.com", phone: "8106220035", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: EDITION_16_ID },
+  { full_name: "Aryan Matta", email: "aryan.ceo@gsfmoney.org", phone: "7033445558", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: EDITION_16_ID },
+  { full_name: "Baasit Ali Marjaan", email: "aliquadri007@gmail.com", phone: "8657078017", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/T0kUgAOh", balance_due: 65000, edition_id: EDITION_16_ID },
+  { full_name: "Ketan Gupta", email: "ketan@movedproduction.com", phone: "9148765836", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: EDITION_16_ID },
+  { full_name: "Rabindra Sah", email: "rsah9118@gmail.com", phone: "917488173678", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/T0kUgAOh", balance_due: 65000, edition_id: EDITION_16_ID },
+  { full_name: "Sanchi Shah", email: "sanchi.shah.04.25@gmail.com", phone: "9321569311", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: EDITION_16_ID },
 
   // ── Edition 17 ──────────────────────────────────────────────────────────
   { full_name: "Pramod Pandith N", email: "pramodpandith007@gmail.com", phone: "6362077643", payment_status: "CONFIRMED_15K" as const, payment_link: null, balance_due: null, edition_id: EDITION_17_ID },
@@ -251,7 +257,6 @@ const EDITION_16_17_STUDENTS = [
 
   // ── Waitlisted (paid but no cohort assigned yet) ─────────────────────────
   { full_name: "Aadish Kadam", email: "aadish1304@gmail.com", phone: "8951117911", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: null },
-  { full_name: "Sanchi Shah", email: "sanchi.shah.04.25@gmail.com", phone: "9321569311", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: null },
   { full_name: "Girish Reddy Veluru", email: "girishreddy.veluru@gmail.com", phone: "9703106944", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: null },
   { full_name: "Sanjeev", email: "sanjeevmattoo@gmail.com", phone: "6304871155", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/T0kUgAOh", balance_due: 65000, edition_id: null },
   { full_name: "Laxmi Bhushan Jha", email: "laxmibhushan@gmail.com", phone: "9968666669", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: null },
@@ -264,11 +269,6 @@ const EDITION_16_17_STUDENTS = [
   { full_name: "Raj Vudali", email: "raj.vudali@gmail.com", phone: "9731000795", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: null },
   { full_name: "Manoj Kinger", email: "manoj.kinger@outlook.com", phone: "9971369702", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/T0kUgAOh", balance_due: 65000, edition_id: null },
   { full_name: "Marutie PV", email: "pvmarutie@gmail.com", phone: "9008573737", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: null },
-  { full_name: "Priyadarshan TC", email: "priyadarshanlaltc@gmail.com", phone: "919447739577", payment_status: "BALANCE_PAID" as const, payment_link: null, balance_due: null, edition_id: null },
-  { full_name: "Aryan Matta", email: "aryan.ceo@gsfmoney.org", phone: "7033445558", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: null },
-  { full_name: "Baasit Ali Marjaan", email: "aliquadri007@gmail.com", phone: "8657078017", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/T0kUgAOh", balance_due: 65000, edition_id: null },
-  { full_name: "Ketan Gupta", email: "ketan@movedproduction.com", phone: "9148765836", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: null },
-  { full_name: "Rabindra Sah", email: "rsah9118@gmail.com", phone: "917488173678", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/T0kUgAOh", balance_due: 65000, edition_id: null },
   { full_name: "Goda Prabhakar", email: "godaprabhu@gmail.com", phone: "7327093222", payment_status: "CONFIRMED_15K" as const, payment_link: "https://rzp.io/rzp/lqegb1u", balance_due: 70000, edition_id: null },
 ];
 
