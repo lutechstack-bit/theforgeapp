@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload, Users, LayoutGrid, List, Download, CreditCard } from 'lucide-react';
+import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload, Users, LayoutGrid, List, Download, CreditCard, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -1269,19 +1269,20 @@ export default function AdminUsers() {
                 <TableHead>Edition</TableHead>
                 <TableHead>Payment</TableHead>
                 <TableHead>KYF</TableHead>
+                <TableHead>Admin</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
+                  <TableCell colSpan={9} className="text-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
                   </TableCell>
                 </TableRow>
               ) : filteredUsers?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     No users found
                   </TableCell>
                 </TableRow>
@@ -1330,7 +1331,42 @@ export default function AdminUsers() {
                         </Badge>
                       </TableCell>
                       <TableCell>
+                        {isAdmin ? (
+                          <Badge variant="default" className="gap-1.5 bg-amber-500/20 text-amber-500 border-amber-500/30">
+                            <Crown className="w-3 h-3" />
+                            Admin
+                          </Badge>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 text-xs gap-1"
+                            onClick={() => {
+                              updateUserMutation.mutate({ id: user.id, is_admin: true });
+                            }}
+                            disabled={updateUserMutation.isPending}
+                          >
+                            <Crown className="w-3 h-3 opacity-50" />
+                            Make Admin
+                          </Button>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <div className="flex gap-1">
+                          {isAdmin ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-amber-500 hover:text-amber-600 hover:bg-amber-500/10"
+                              onClick={() => {
+                                updateUserMutation.mutate({ id: user.id, is_admin: false });
+                              }}
+                              disabled={updateUserMutation.isPending}
+                              title="Remove admin privileges"
+                            >
+                              <Crown className="w-4 h-4" />
+                            </Button>
+                          ) : null}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -1626,6 +1662,7 @@ function EditUserDialog({
         twitter_handle: user.twitter_handle,
         profile_setup_completed: user.profile_setup_completed,
         ky_form_completed: user.ky_form_completed,
+        is_admin: (user as any).is_admin || false,
       });
     }
   }, [user]);
@@ -1764,6 +1801,17 @@ function EditUserDialog({
               />
               <Label htmlFor="ky_form" className="text-sm">KY Form Done</Label>
             </div>
+          </div>
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <Checkbox
+              id="is_admin"
+              checked={(formData as any).is_admin || false}
+              onCheckedChange={(checked) => setFormData({ ...formData, is_admin: !!checked } as any)}
+            />
+            <Label htmlFor="is_admin" className="text-sm flex items-center gap-1.5 cursor-pointer">
+              <Crown className="w-4 h-4 text-amber-500" />
+              Admin Account
+            </Label>
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}

@@ -2432,6 +2432,7 @@ export type Database = {
           has_seen_tour: boolean | null
           id: string
           instagram_handle: string | null
+          is_admin: boolean
           ky_form_completed: boolean
           ky_section_progress: Json | null
           kyf_completed: boolean
@@ -2457,6 +2458,7 @@ export type Database = {
           has_seen_tour?: boolean | null
           id: string
           instagram_handle?: string | null
+          is_admin?: boolean
           ky_form_completed?: boolean
           ky_section_progress?: Json | null
           kyf_completed?: boolean
@@ -2482,6 +2484,7 @@ export type Database = {
           has_seen_tour?: boolean | null
           id?: string
           instagram_handle?: string | null
+          is_admin?: boolean
           ky_form_completed?: boolean
           ky_section_progress?: Json | null
           kyf_completed?: boolean
