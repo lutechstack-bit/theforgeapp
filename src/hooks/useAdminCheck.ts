@@ -14,26 +14,26 @@ export const useAdminCheck = () => {
     queryKey: ['admin-check', user?.id],
     queryFn: async () => {
       if (!user?.id) return false;
-      
+
       try {
+        // Check is_admin field in profiles table
         const result = await promiseWithTimeout(
           supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', user.id)
-            .eq('role', 'admin')
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', user.id)
             .maybeSingle()
             .then(res => res),
           ADMIN_CHECK_TIMEOUT,
           'Admin check'
         );
-        
+
         if (result.error) {
           console.error('Error checking admin role:', result.error);
           return false;
         }
-        
-        return !!result.data;
+
+        return result.data?.is_admin === true;
       } catch (err) {
         console.error('Admin check error:', err);
         return false;
