@@ -2152,6 +2152,7 @@ export type Database = {
           payment_deadline: string | null
           payment_link: string | null
           programme_total: number
+          transfer_fee: number | null
           updated_at: string | null
           user_id: string
         }
@@ -2167,6 +2168,7 @@ export type Database = {
           payment_deadline?: string | null
           payment_link?: string | null
           programme_total?: number
+          transfer_fee?: number | null
           updated_at?: string | null
           user_id: string
         }
@@ -2182,6 +2184,7 @@ export type Database = {
           payment_deadline?: string | null
           payment_link?: string | null
           programme_total?: number
+          transfer_fee?: number | null
           updated_at?: string | null
           user_id?: string
         }
