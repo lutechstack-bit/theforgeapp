@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Video, Upload, Link, PlayCircle, Clock, CalendarDays } from 'lucide-react';
+import { Video, Upload, Link, PlayCircle, Clock, CalendarDays, Image } from 'lucide-react';
 import { FileUpload } from '@/components/admin/FileUpload';
 
 interface RoadmapSession {
@@ -44,6 +44,7 @@ const emptyRecordingForm = {
   recording_status: 'ready',
   recordingSourceType: 'embed' as 'embed' | 'upload',
   thumbnail_url: '',
+  thumbnailSourceType: 'upload' as 'upload' | 'url',
 };
 
 const AdminLiveSessions: React.FC = () => {
@@ -119,6 +120,7 @@ const AdminLiveSessions: React.FC = () => {
       recording_status: existingLs?.recording_status === 'processing' ? 'processing' : 'ready',
       recordingSourceType: existingLs?.recording_url?.startsWith('http') !== false ? 'embed' : 'upload',
       thumbnail_url: existingLs?.thumbnail_url || '',
+      thumbnailSourceType: 'upload',
     });
     setUploadDialogOpen(true);
   };
@@ -160,7 +162,7 @@ const AdminLiveSessions: React.FC = () => {
           video_url: record.recording_url,
           video_source_type: isEmbed ? 'embed' : 'upload',
           thumbnail_url: record.thumbnail_url || null,
-          section_type: 'online_session_recordings',
+          section_type: 'community_sessions',
           category: 'Session Recording',
           is_premium: false,
           order_index: 0,
@@ -395,17 +397,51 @@ const AdminLiveSessions: React.FC = () => {
             )}
 
             {/* Thumbnail */}
-            <div className="space-y-1">
+            <div className="space-y-2">
               <Label>
-                Thumbnail URL{' '}
+                Thumbnail Image{' '}
                 <span className="text-muted-foreground text-xs font-normal">(optional)</span>
               </Label>
-              <Input
-                value={recordingForm.thumbnail_url}
-                onChange={e => updateField('thumbnail_url', e.target.value)}
-                placeholder="https://..."
-              />
-              <p className="text-xs text-muted-foreground">Shown as the card image in Learn tab</p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={recordingForm.thumbnailSourceType === 'upload' ? 'default' : 'outline'}
+                  className="gap-1.5 flex-1"
+                  onClick={() => updateField('thumbnailSourceType', 'upload')}
+                >
+                  <Image className="w-3.5 h-3.5" /> Upload Image
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={recordingForm.thumbnailSourceType === 'url' ? 'default' : 'outline'}
+                  className="gap-1.5 flex-1"
+                  onClick={() => updateField('thumbnailSourceType', 'url')}
+                >
+                  <Link className="w-3.5 h-3.5" /> Paste URL
+                </Button>
+              </div>
+              {recordingForm.thumbnailSourceType === 'upload' ? (
+                <FileUpload
+                  bucket="learn-thumbnails"
+                  label="Upload Thumbnail"
+                  helperText="JPG, PNG, or WebP · shown as card image in Learn tab"
+                  accept="image/*"
+                  maxSizeMB={10}
+                  currentUrl={recordingForm.thumbnail_url}
+                  onUploadComplete={url => updateField('thumbnail_url', url)}
+                />
+              ) : (
+                <div className="space-y-1">
+                  <Input
+                    value={recordingForm.thumbnail_url}
+                    onChange={e => updateField('thumbnail_url', e.target.value)}
+                    placeholder="https://..."
+                  />
+                  <p className="text-xs text-muted-foreground">Shown as the card image in Learn tab</p>
+                </div>
+              )}
             </div>
 
             {/* Status */}
