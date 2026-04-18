@@ -346,7 +346,7 @@ export default function AdminUsers() {
   const [selectedEditionFilter, setSelectedEditionFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'users' | 'admin-accounts'>('users');
   const [adminSearchQuery, setAdminSearchQuery] = useState('');
-  const [adminSearchResult, setAdminSearchResult] = useState<Profile | null>(null);
+  const [adminSearchResults, setAdminSearchResults] = useState<Profile[]>([]);
   const [adminSearchLoading, setAdminSearchLoading] = useState(false);
   const [adminSearchError, setAdminSearchError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -999,13 +999,15 @@ export default function AdminUsers() {
         .from('profiles')
         .update({
           is_admin: true,
+          // NOTE: `cohort_type` does not exist on profiles — cohort is derived
+          // from the edition via editions.cohort_type. Nulling edition_id is
+          // enough to detach the user from any cohort.
           edition_id: null,
-          cohort_type: null,
           payment_status: null,
           unlock_level: null,
+          forge_mode: null,
           profile_setup_completed: false,
           ky_form_completed: false,
-          forge_mode: null,
         })
         .eq('id', userId);
       if (error) throw error;
@@ -1014,7 +1016,7 @@ export default function AdminUsers() {
       toast.success('Admin access granted — user moved to no cohort');
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       queryClient.invalidateQueries({ queryKey: ['admin-users-list'] });
-      setAdminSearchResult(null);
+      setAdminSearchResults([]);
       setAdminSearchQuery('');
     },
     onError: (e: Error) => toast.error(e.message),
@@ -1037,21 +1039,27 @@ export default function AdminUsers() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  // Admin email search
+  // Admin search — partial match on full_name OR email (case-insensitive)
   const handleAdminSearch = async () => {
-    if (!adminSearchQuery.trim()) return;
+    const q = adminSearchQuery.trim();
+    if (!q) return;
     setAdminSearchLoading(true);
     setAdminSearchError(null);
-    setAdminSearchResult(null);
+    setAdminSearchResults([]);
     try {
+      const pattern = `%${q}%`;
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .ilike('email', adminSearchQuery.trim())
-        .maybeSingle();
+        .or(`full_name.ilike.${pattern},email.ilike.${pattern}`)
+        .order('full_name', { ascending: true })
+        .limit(10);
       if (error) throw error;
-      if (!data) setAdminSearchError('No user found with that email address.');
-      else setAdminSearchResult(data as Profile);
+      if (!data || data.length === 0) {
+        setAdminSearchError('No users match that name or email.');
+      } else {
+        setAdminSearchResults(data as Profile[]);
+      }
     } catch (e: any) {
       setAdminSearchError(e.message);
     } finally {
@@ -1612,7 +1620,7 @@ export default function AdminUsers() {
             adminUsersLoading={adminUsersLoading}
             adminSearchQuery={adminSearchQuery}
             setAdminSearchQuery={setAdminSearchQuery}
-            adminSearchResult={adminSearchResult}
+            adminSearchResults={adminSearchResults}
             adminSearchLoading={adminSearchLoading}
             adminSearchError={adminSearchError}
             onSearch={handleAdminSearch}
@@ -1633,7 +1641,7 @@ function AdminAccountsTab({
   adminUsersLoading,
   adminSearchQuery,
   setAdminSearchQuery,
-  adminSearchResult,
+  adminSearchResults,
   adminSearchLoading,
   adminSearchError,
   onSearch,
@@ -1646,7 +1654,7 @@ function AdminAccountsTab({
   adminUsersLoading: boolean;
   adminSearchQuery: string;
   setAdminSearchQuery: (q: string) => void;
-  adminSearchResult: Profile | null;
+  adminSearchResults: Profile[];
   adminSearchLoading: boolean;
   adminSearchError: string | null;
   onSearch: () => void;
@@ -1668,7 +1676,7 @@ function AdminAccountsTab({
         <CardContent className="space-y-4">
           <div className="flex gap-2">
             <Input
-              placeholder="Search by email address..."
+              placeholder="Search by name or email..."
               value={adminSearchQuery}
               onChange={(e) => setAdminSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && onSearch()}
@@ -1684,26 +1692,34 @@ function AdminAccountsTab({
             <p className="text-sm text-red-400">{adminSearchError}</p>
           )}
 
-          {adminSearchResult && (
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40 border border-border/50">
-              <div>
-                <p className="font-medium text-sm">{adminSearchResult.full_name || 'No Name'}</p>
-                <p className="text-xs text-muted-foreground">{adminSearchResult.email}</p>
-              </div>
-              {adminSearchResult.is_admin ? (
-                <Badge variant="outline" className="text-amber-400 border-amber-400/40">
-                  Already Admin
-                </Badge>
-              ) : (
-                <Button
-                  size="sm"
-                  onClick={() => onGrant(adminSearchResult.id)}
-                  disabled={isGranting}
+          {adminSearchResults.length > 0 && (
+            <div className="space-y-2">
+              {adminSearchResults.map((result) => (
+                <div
+                  key={result.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/40 border border-border/50"
                 >
-                  {isGranting && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
-                  Grant Admin Access
-                </Button>
-              )}
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate">{result.full_name || 'No Name'}</p>
+                    <p className="text-xs text-muted-foreground truncate">{result.email}</p>
+                  </div>
+                  {result.is_admin ? (
+                    <Badge variant="outline" className="text-amber-400 border-amber-400/40 flex-shrink-0">
+                      Already Admin
+                    </Badge>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="flex-shrink-0"
+                      onClick={() => onGrant(result.id)}
+                      disabled={isGranting}
+                    >
+                      {isGranting && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
+                      Grant Admin Access
+                    </Button>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
