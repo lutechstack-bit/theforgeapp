@@ -70,7 +70,7 @@ const navGroups: NavGroup[] = [
       { to: '/admin/journey-stages', icon: Route, label: 'Journey Stages' },
       { to: '/admin/journey-tasks', icon: ListTodo, label: 'Journey Tasks' },
       { to: '/admin/learn', icon: FileText, label: 'Learn' },
-      { to: '/admin/live-sessions', icon: Video, label: 'Live Sessions' },
+      { to: '/admin/live-sessions', icon: Video, label: 'Live Sessions & Recordings' },
     ],
   },
   {
