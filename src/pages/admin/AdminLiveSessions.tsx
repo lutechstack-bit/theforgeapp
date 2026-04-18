@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Video } from 'lucide-react';
+import { Plus, Pencil, Trash2, Video, Upload, Link } from 'lucide-react';
+import { FileUpload } from '@/components/admin/FileUpload';
 import { format } from 'date-fns';
 
 interface LiveSession {
@@ -49,6 +50,7 @@ const emptyForm = {
   recording_status: 'none',
   recording_url: '',
   learn_content_id: '',
+  recordingSourceType: 'embed' as 'embed' | 'upload', // UI only — not saved to DB
 };
 
 const statusColors: Record<string, string> = {
@@ -120,6 +122,43 @@ const AdminLiveSessions: React.FC = () => {
         learn_content_id: payload.learn_content_id && payload.learn_content_id !== 'none' ? payload.learn_content_id : null,
       };
 
+      // Auto-create / update learn_content when recording is marked ready
+      if (record.recording_status === 'ready' && record.recording_url) {
+        const isEmbed = record.recording_url.startsWith('http') || record.recording_url.includes('vimeo');
+        const contentPayload = {
+          title: record.title,
+          video_url: record.recording_url,
+          video_source_type: isEmbed ? 'embed' : 'upload',
+          thumbnail_url: record.thumbnail_url || null,
+          instructor_name: record.mentor_name || null,
+          section_type: 'online_session_recordings',
+          category: 'Session Recording',
+          is_premium: false,
+          order_index: 0,
+        };
+
+        const existingContentId = editingId
+          ? sessions.find(s => s.id === editingId)?.learn_content_id
+          : null;
+
+        if (existingContentId) {
+          const { error: contentErr } = await supabase
+            .from('learn_content')
+            .update(contentPayload)
+            .eq('id', existingContentId);
+          if (contentErr) throw contentErr;
+          record.learn_content_id = existingContentId;
+        } else {
+          const { data: newContent, error: contentErr } = await supabase
+            .from('learn_content')
+            .insert(contentPayload)
+            .select('id')
+            .single();
+          if (contentErr) throw contentErr;
+          record.learn_content_id = newContent.id;
+        }
+      }
+
       if (editingId) {
         const { error } = await supabase.from('live_sessions').update(record).eq('id', editingId);
         if (error) throw error;
@@ -159,6 +198,9 @@ const AdminLiveSessions: React.FC = () => {
 
   const openEdit = (s: LiveSession) => {
     setEditingId(s.id);
+    const existingUrl = s.recording_url || '';
+    // Detect source type: if URL starts with http it's an embed, otherwise storage path
+    const srcType: 'embed' | 'upload' = existingUrl.startsWith('http') ? 'embed' : 'upload';
     setForm({
       title: s.title,
       description: s.description || '',
@@ -173,8 +215,9 @@ const AdminLiveSessions: React.FC = () => {
       thumbnail_url: s.thumbnail_url || '',
       status: s.status,
       recording_status: s.recording_status,
-      recording_url: s.recording_url || '',
+      recording_url: existingUrl,
       learn_content_id: s.learn_content_id || '',
+      recordingSourceType: srcType,
     });
     setDialogOpen(true);
   };
@@ -195,7 +238,7 @@ const AdminLiveSessions: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Video className="w-6 h-6 text-primary" /> Live Sessions
+            <Video className="w-6 h-6 text-primary" /> Live Sessions & Recordings
           </h1>
           <p className="text-sm text-muted-foreground mt-1">{sessions.length} session(s)</p>
         </div>
@@ -365,22 +408,59 @@ const AdminLiveSessions: React.FC = () => {
                 </Select>
               </div>
 
-              <div className="sm:col-span-2">
-                <Label>Recording URL</Label>
-                <Input value={form.recording_url} onChange={e => updateField('recording_url', e.target.value)} placeholder="Paste recording URL when ready" />
-              </div>
+              {/* Recording section */}
+              <div className="sm:col-span-2 space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+                <Label className="text-sm font-semibold flex items-center gap-1.5">
+                  <Video className="w-3.5 h-3.5" /> Session Recording
+                </Label>
 
-              <div className="sm:col-span-2">
-                <Label>Link to Learn Content</Label>
-                <Select value={form.learn_content_id} onValueChange={v => updateField('learn_content_id', v)}>
-                  <SelectTrigger><SelectValue placeholder="Optional — link to Learn" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {learnContent.map(lc => (
-                      <SelectItem key={lc.id} value={lc.id}>{lc.title}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {/* Source type toggle */}
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={form.recordingSourceType === 'embed' ? 'default' : 'outline'}
+                    className="gap-1.5"
+                    onClick={() => updateField('recordingSourceType', 'embed')}
+                  >
+                    <Link className="w-3.5 h-3.5" /> Vimeo / Embed Link
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={form.recordingSourceType === 'upload' ? 'default' : 'outline'}
+                    className="gap-1.5"
+                    onClick={() => updateField('recordingSourceType', 'upload')}
+                  >
+                    <Upload className="w-3.5 h-3.5" /> Upload from Device
+                  </Button>
+                </div>
+
+                {form.recordingSourceType === 'embed' ? (
+                  <div>
+                    <Input
+                      value={form.recording_url}
+                      onChange={e => updateField('recording_url', e.target.value)}
+                      placeholder="https://vimeo.com/123456789 or embed URL"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Paste a Vimeo URL or any embed link</p>
+                  </div>
+                ) : (
+                  <FileUpload
+                    bucket="learn-videos"
+                    label="Upload Recording"
+                    helperText="MP4 recommended · max 5 GB"
+                    accept="video/*"
+                    maxSizeMB={5120}
+                    currentUrl={form.recording_url}
+                    onUploadComplete={(url) => updateField('recording_url', url)}
+                    onDurationDetected={(mins) => {/* duration stored on learn_content */}}
+                  />
+                )}
+
+                <p className="text-xs text-muted-foreground">
+                  When Recording Status is set to <strong>Ready</strong>, a Learn content entry is automatically created and linked.
+                </p>
               </div>
             </div>
 

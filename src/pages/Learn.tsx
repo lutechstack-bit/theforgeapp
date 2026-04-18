@@ -104,10 +104,61 @@ const SessionRecordingsSection: React.FC = () => {
   );
 };
 
+const OnlineSessionRecordingsSection: React.FC<{ editionId: string }> = ({ editionId }) => {
+  const navigate = useNavigate();
+
+  const { data: recordings = [] } = useQuery({
+    queryKey: ['online-session-recordings', editionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('live_sessions')
+        .select('id, title, mentor_name, thumbnail_url, learn_content_id, start_at')
+        .eq('edition_id', editionId)
+        .eq('recording_status', 'ready')
+        .not('learn_content_id', 'is', null)
+        .order('start_at', { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!editionId,
+  });
+
+  if (recordings.length === 0) return null;
+
+  return (
+    <section className="space-y-4">
+      <div>
+        <h2 className="text-lg sm:text-xl font-bold text-foreground">Online Session Recordings</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">Recordings from your live online sessions</p>
+      </div>
+      <ScrollableCardRow>
+        {recordings.map((rec) => (
+          <div
+            key={rec.id}
+            className="snap-start flex-shrink-0 cursor-pointer"
+            onClick={() => navigate(`/learn/${rec.learn_content_id}`)}
+          >
+            <LearnCourseCard
+              id={rec.id}
+              title={rec.title}
+              thumbnailUrl={rec.thumbnail_url || undefined}
+              instructorName={rec.mentor_name || undefined}
+              category="Online Session"
+              cardLayout="portrait"
+              onClick={() => navigate(`/learn/${rec.learn_content_id}`)}
+            />
+          </div>
+        ))}
+      </ScrollableCardRow>
+    </section>
+  );
+};
+
 const Learn: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { effectiveCohortType } = useEffectiveCohort();
+  const { effectiveCohortType, effectiveEdition } = useEffectiveCohort();
   const { isFeatureEnabled } = useFeatureFlags();
   const [programTab, setProgramTab] = useState<'online' | 'offline'>('online');
 
@@ -260,6 +311,11 @@ const Learn: React.FC = () => {
             )}
 
           </div>
+        )}
+
+        {/* Online Session Recordings — edition-specific */}
+        {effectiveEdition?.id && (
+          <OnlineSessionRecordingsSection editionId={effectiveEdition.id} />
         )}
 
         {/* LevelUp Zone */}
