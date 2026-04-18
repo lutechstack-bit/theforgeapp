@@ -23,10 +23,15 @@ export function useFeatureFlags() {
 
   const toggleFeature = useMutation({
     mutationFn: async ({ key, enabled }: { key: string; enabled: boolean }) => {
+      // Use upsert (not update) so the first toggle for a flag that was never
+      // seeded in app_feature_flags creates the row instead of silently
+      // affecting zero rows. onConflict targets the unique feature_key column.
       const { error } = await supabase
         .from('app_feature_flags')
-        .update({ is_enabled: enabled, updated_at: new Date().toISOString() })
-        .eq('feature_key', key);
+        .upsert(
+          { feature_key: key, is_enabled: enabled, updated_at: new Date().toISOString() },
+          { onConflict: 'feature_key' }
+        );
       if (error) throw error;
     },
     onSuccess: () => {
