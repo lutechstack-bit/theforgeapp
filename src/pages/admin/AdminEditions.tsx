@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Edit, Loader2, Calendar, Archive, ArchiveRestore } from 'lucide-react';
+import { Plus, Edit, Loader2, Calendar, Archive, ArchiveRestore, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { FloatingInput } from '@/components/ui/floating-input';
 import { Label } from '@/components/ui/label';
@@ -44,6 +45,8 @@ export default function AdminEditions() {
   const [isDialogOpen, setIsDialogOpen] = useState(searchParams.get('action') === 'create');
   const [editingEdition, setEditingEdition] = useState<Edition | null>(null);
   const [archivingEdition, setArchivingEdition] = useState<EditionWithCount | null>(null);
+  const [deletingEdition, setDeletingEdition] = useState<EditionWithCount | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const queryClient = useQueryClient();
 
@@ -125,6 +128,36 @@ export default function AdminEditions() {
     },
     onError: (error: Error) => {
       toast.error(error.message);
+    }
+  });
+
+  // Delete edition permanently — detaches enrolled users first, then removes the row
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // Step 1: detach any users currently pinned to this edition so the FK
+      // from profiles.edition_id doesn't block the delete.
+      const { error: profilesErr } = await supabase
+        .from('profiles')
+        .update({ edition_id: null })
+        .eq('edition_id', id);
+      if (profilesErr) throw profilesErr;
+
+      // Step 2: delete the edition itself. If other tables (roadmap_days,
+      // live_sessions, roadmap_galleries, etc.) still reference it, Supabase
+      // returns a FK error and the caller sees the exact constraint name.
+      const { error } = await supabase.from('editions').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Edition deleted permanently');
+      queryClient.invalidateQueries({ queryKey: ['admin-editions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      setDeletingEdition(null);
+      setDeleteConfirmText('');
+    },
+    onError: (error: Error) => {
+      // Common cause: FK violation from roadmap_days / live_sessions / etc.
+      toast.error(`Could not delete edition: ${error.message}`, { duration: 8000 });
     }
   });
 
@@ -223,6 +256,18 @@ export default function AdminEditions() {
                       <Archive className="w-4 h-4" />
                     )}
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setDeletingEdition(edition);
+                      setDeleteConfirmText('');
+                    }}
+                    title="Delete edition permanently"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
@@ -310,17 +355,79 @@ export default function AdminEditions() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => archivingEdition && archiveMutation.mutate({ 
-                id: archivingEdition.id, 
-                archive: !archivingEdition.is_archived 
+              onClick={() => archivingEdition && archiveMutation.mutate({
+                id: archivingEdition.id,
+                archive: !archivingEdition.is_archived
               })}
-              className={archivingEdition?.is_archived 
+              className={archivingEdition?.is_archived
                 ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                 : 'bg-amber-600 text-white hover:bg-amber-700'
               }
             >
               {archiveMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {archivingEdition?.is_archived ? 'Restore' : 'Archive'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog
+        open={!!deletingEdition}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeletingEdition(null);
+            setDeleteConfirmText('');
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">Delete Edition Permanently?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span className="block">
+                This will <strong>permanently delete</strong> "{deletingEdition?.name}" and cannot be undone.
+                If you only want to hide it, use <strong>Archive</strong> instead.
+              </span>
+              {deletingEdition && deletingEdition.userCount > 0 && (
+                <span className="block mt-2 text-amber-400">
+                  {deletingEdition.userCount} enrolled user{deletingEdition.userCount !== 1 ? 's' : ''} will be detached from this edition (moved to "No Edition"). Their accounts stay intact.
+                </span>
+              )}
+              <span className="block mt-2 text-xs text-muted-foreground">
+                Note: if the edition still has roadmap days, live sessions, or galleries pointing at it, the delete will fail — remove those first. Users are handled automatically.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {deletingEdition && (
+            <div className="space-y-2 py-2">
+              <Label htmlFor="delete-confirm-name" className="text-sm">
+                Type <span className="font-mono text-destructive">{deletingEdition.name}</span> to confirm
+              </Label>
+              <Input
+                id="delete-confirm-name"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder={deletingEdition.name}
+                autoFocus
+              />
+            </div>
+          )}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={
+                !deletingEdition ||
+                deleteConfirmText.trim() !== deletingEdition.name ||
+                deleteMutation.isPending
+              }
+              onClick={() => deletingEdition && deleteMutation.mutate(deletingEdition.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Delete Permanently
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
