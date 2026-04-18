@@ -39,8 +39,8 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
 
   if (cardLayout === 'landscape') {
     return (
-      <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300">
-        <div onClick={handleClick} className="group cursor-pointer w-full flex-shrink-0">
+      <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300 w-72 sm:w-80 flex-shrink-0">
+        <div onClick={handleClick} className="group cursor-pointer">
           <div className="relative aspect-[16/10] rounded-[13px] overflow-hidden transition-colors duration-300">
             <img
               src={thumbnailUrl || '/images/learn/pre-forge-placeholder.png'}

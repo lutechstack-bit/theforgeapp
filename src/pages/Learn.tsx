@@ -56,20 +56,22 @@ interface WatchProgress {
 
 // forgeResidencies removed — now fetched from explore_programs table
 
-const OnlineSessionRecordingsSection: React.FC<{ editionId: string }> = ({ editionId }) => {
+const OnlineSessionRecordingsSection: React.FC<{ editionId?: string }> = ({ editionId }) => {
   const navigate = useNavigate();
 
   const { data: recordings = [] } = useQuery({
-    queryKey: ['online-session-recordings', editionId],
+    queryKey: ['online-session-recordings', editionId ?? 'all'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from('live_sessions')
         .select('id, title, mentor_name, thumbnail_url, learn_content_id, start_at')
-        .eq('edition_id', editionId)
         .eq('recording_status', 'ready')
         .not('learn_content_id', 'is', null)
         .order('start_at', { ascending: false })
         .limit(20);
+      // If user has an edition, scope to it; otherwise (e.g. admin with no edition) show all
+      if (editionId) q = q.eq('edition_id', editionId);
+      const { data, error } = await q;
       if (error) throw error;
       // Dedupe by learn_content_id in case duplicate live_session rows exist
       const seen = new Set<string>();
@@ -79,7 +81,6 @@ const OnlineSessionRecordingsSection: React.FC<{ editionId: string }> = ({ editi
         return true;
       });
     },
-    enabled: !!editionId,
   });
 
   if (recordings.length === 0) return null;
@@ -103,7 +104,7 @@ const OnlineSessionRecordingsSection: React.FC<{ editionId: string }> = ({ editi
               thumbnailUrl={rec.thumbnail_url || undefined}
               instructorName={rec.mentor_name || undefined}
               category="Online Session"
-              cardLayout="portrait"
+              cardLayout="landscape"
               onClick={() => navigate(`/learn/${rec.learn_content_id}`)}
             />
           </div>
@@ -223,10 +224,8 @@ const Learn: React.FC = () => {
         {/* Upcoming Online Sessions */}
         <UpcomingSessionsSection />
 
-        {/* Session Recordings — edition-specific replays */}
-        {effectiveEdition?.id && (
-          <OnlineSessionRecordingsSection editionId={effectiveEdition.id} />
-        )}
+        {/* Session Recordings — edition-specific replays (all ready if admin has no edition) */}
+        <OnlineSessionRecordingsSection editionId={effectiveEdition?.id} />
 
         {/* Continue Watching */}
         {continueWatchingItems.length > 0 && (
