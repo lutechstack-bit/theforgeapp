@@ -3,7 +3,8 @@ import { RefreshCw, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRoadmapData } from '@/hooks/useRoadmapData';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import DatePillSelector from '@/components/home/DatePillSelector';
 import SessionDetailCard from '@/components/home/SessionDetailCard';
@@ -31,6 +32,32 @@ const RoadmapJourney: React.FC = () => {
     userCohortType,
     edition,
   } = useRoadmapData();
+
+  // Fetch ready recordings for this edition so we can link them to past sessions
+  const { data: sessionRecordings = [] } = useQuery({
+    queryKey: ['roadmap-session-recordings', edition?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('live_sessions')
+        .select('id, start_at, learn_content_id')
+        .eq('edition_id', edition!.id)
+        .eq('recording_status', 'ready')
+        .not('learn_content_id', 'is', null);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!edition?.id,
+  });
+
+  // Map date string (YYYY-MM-DD) → learn_content_id for quick lookup
+  const recordingByDate = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const rec of sessionRecordings) {
+      const dateKey = rec.start_at.split('T')[0]; // YYYY-MM-DD
+      if (rec.learn_content_id) map[dateKey] = rec.learn_content_id;
+    }
+    return map;
+  }, [sessionRecordings]);
 
   // Timer to prevent infinite skeleton
   useEffect(() => {
@@ -140,8 +167,9 @@ const RoadmapJourney: React.FC = () => {
       meeting_id: (selectedDay as any).meeting_id, meeting_passcode: (selectedDay as any).meeting_passcode,
       session_start_time: (selectedDay as any).session_start_time,
       session_duration_hours: (selectedDay as any).session_duration_hours,
+      recording_learn_content_id: selectedDay.date ? (recordingByDate[selectedDay.date] ?? null) : null,
     };
-  }, [selectedDay]);
+  }, [selectedDay, recordingByDate]);
 
   // Loading state
   if (isLoadingDays) {

@@ -33,6 +33,8 @@ export interface JourneyCardDay {
   meeting_passcode?: string | null;
   session_start_time?: string | null;
   session_duration_hours?: number | null;
+  // Recording (linked learn_content id after session ends)
+  recording_learn_content_id?: string | null;
 }
 
 interface JourneyCardProps {

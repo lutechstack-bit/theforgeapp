@@ -1,6 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { Clock, MapPin, Video, Calendar, ChevronRight, Download } from 'lucide-react';
+import { Clock, MapPin, Video, Calendar, ChevronRight, Download, PlayCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { getScheduleIcon } from '@/lib/roadmapIcons';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -17,9 +18,22 @@ interface SessionDetailCardProps {
 }
 
 const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onViewDetail, sessionNumber }) => {
+  const navigate = useNavigate();
   const dayDate = day.date ? new Date(day.date) : null;
   const isVirtual = day.is_virtual;
   const isBootcamp = day.day_number > 0 && !isVirtual;
+
+  // Determine if this online session has already ended
+  const sessionHasEnded = React.useMemo(() => {
+    if (!isVirtual || !day.date) return false;
+    const start = new Date(day.date);
+    if (day.session_start_time) {
+      const [h, m] = day.session_start_time.split(':').map(Number);
+      start.setHours(h, m, 0, 0);
+    }
+    const end = new Date(start.getTime() + (day.session_duration_hours || 2) * 3600 * 1000);
+    return new Date() > end;
+  }, [isVirtual, day.date, day.session_start_time, day.session_duration_hours]);
 
   const dateStr = dayDate ? format(dayDate, 'MMM d') : null;
   const timeStr = day.call_time || (day.session_start_time ? day.session_start_time : null);
@@ -164,8 +178,8 @@ const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onVi
         </div>
       )}
 
-      {/* Online session: Zoom join button */}
-      {isVirtual && day.meeting_url && (
+      {/* Online session: Zoom join button (only if session hasn't ended) */}
+      {isVirtual && day.meeting_url && !sessionHasEnded && (
         <div className="mb-4">
           <Button
             size="sm"
@@ -179,6 +193,32 @@ const SessionDetailCard: React.FC<SessionDetailCardProps> = ({ day, status, onVi
             <p className="text-[10px] text-muted-foreground mt-1.5">
               Meeting ID: {day.meeting_id}{day.meeting_passcode ? ` | Passcode: ${day.meeting_passcode}` : ''}
             </p>
+          )}
+        </div>
+      )}
+
+      {/* View Session Recording CTA — shown after session ends */}
+      {isVirtual && sessionHasEnded && (
+        <div className="mb-4">
+          {day.recording_learn_content_id ? (
+            <Button
+              size="sm"
+              className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={(e) => { e.stopPropagation(); navigate(`/learn/${day.recording_learn_content_id}`); }}
+            >
+              <PlayCircle className="w-3.5 h-3.5" />
+              View Session Recording
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-2 border-muted-foreground/30 text-muted-foreground cursor-default"
+              disabled
+            >
+              <PlayCircle className="w-3.5 h-3.5" />
+              Recording Coming Soon
+            </Button>
           )}
         </div>
       )}
