@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Video, Upload, Link, PlayCircle, Clock, CalendarDays, Image } from 'lucide-react';
+import { Video, Upload, Link, PlayCircle, Clock, CalendarDays, Image, Trash2 } from 'lucide-react';
 import { FileUpload } from '@/components/admin/FileUpload';
 
 interface RoadmapSession {
@@ -108,6 +108,50 @@ const AdminLiveSessions: React.FC = () => {
     }
     return map;
   }, [liveSessions]);
+
+  // ALL recordings across every edition — used for the "manage/cleanup" list
+  // at the bottom of the page so admins can delete orphaned or stale recordings
+  // that students are seeing on the Learn tab.
+  const { data: allRecordings = [] } = useQuery({
+    queryKey: ['admin-all-recordings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('live_sessions')
+        .select('id, title, thumbnail_url, recording_url, recording_status, learn_content_id, start_at, edition_id')
+        .not('recording_url', 'is', null)
+        .order('start_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const editionNameById = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const e of editions) m[e.id] = e.name;
+    return m;
+  }, [editions]);
+
+  const deleteRecordingMutation = useMutation({
+    mutationFn: async ({ liveSessionId, learnContentId }: { liveSessionId: string; learnContentId: string | null }) => {
+      // Delete learn_content first (otherwise the live_session FK dangles after delete).
+      if (learnContentId) {
+        const { error: lcErr } = await supabase.from('learn_content').delete().eq('id', learnContentId);
+        if (lcErr) throw lcErr;
+      }
+      const { error } = await supabase.from('live_sessions').delete().eq('id', liveSessionId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-all-recordings'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-live-sessions-edition', selectedEditionId] });
+      queryClient.invalidateQueries({ queryKey: ['online-session-recordings-all'] });
+      queryClient.invalidateQueries({ queryKey: ['roadmap-session-recordings'] });
+      toast({ title: 'Recording deleted' });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Could not delete recording', description: err.message, variant: 'destructive' });
+    },
+  });
 
   const selectedEdition = editions.find(e => e.id === selectedEditionId);
 
@@ -330,6 +374,84 @@ const AdminLiveSessions: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* All Session Recordings — management list for cleanup across editions */}
+      <div className="space-y-3 pt-4 border-t border-border/40">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">
+            All Session Recordings
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              {allRecordings.length} recording{allRecordings.length !== 1 ? 's' : ''}
+            </span>
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Every recording currently visible to students in the Learn tab. Use this to delete stale or orphaned recordings.
+          </p>
+        </div>
+
+        {allRecordings.length === 0 ? (
+          <div className="rounded-xl border border-border/50 bg-card/40 p-6 text-center">
+            <p className="text-sm text-muted-foreground">No recordings uploaded yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {allRecordings.map(rec => {
+              const editionName = rec.edition_id ? (editionNameById[rec.edition_id] || 'Unknown edition') : 'No edition';
+              const dateStr = rec.start_at ? rec.start_at.split('T')[0] : '—';
+              const isDeleting = deleteRecordingMutation.isPending && deleteRecordingMutation.variables?.liveSessionId === rec.id;
+              return (
+                <div
+                  key={rec.id}
+                  className="flex items-center gap-4 p-3 rounded-xl border border-border/50 bg-card/40"
+                >
+                  {/* Thumbnail */}
+                  <div className="w-24 h-14 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                    {rec.thumbnail_url ? (
+                      <img src={rec.thumbnail_url} alt={rec.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                        <Video className="w-5 h-5" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground truncate">{rec.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground flex-wrap">
+                      <span>{editionName}</span>
+                      <span>·</span>
+                      <span>{dateStr}</span>
+                      {rec.recording_status === 'ready' ? (
+                        <Badge variant="outline" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] px-1.5 py-0">
+                          Ready
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px] px-1.5 py-0">
+                          {rec.recording_status}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                    disabled={isDeleting}
+                    onClick={() => {
+                      if (!confirm(`Delete recording "${rec.title}"? This cannot be undone.`)) return;
+                      deleteRecordingMutation.mutate({ liveSessionId: rec.id, learnContentId: rec.learn_content_id });
+                    }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    {isDeleting ? 'Deleting…' : 'Delete'}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Upload Recording Dialog — only asks for the video, nothing else */}
       <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
