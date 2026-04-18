@@ -20,6 +20,7 @@ import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
 
 import { useHomepageSections } from '@/hooks/useHomepageSections';
 import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import {  promiseWithTimeout, isTimeoutError } from '@/lib/promiseTimeout';
 
 const QUERY_TIMEOUT = 12000;
@@ -34,6 +35,7 @@ const Home: React.FC = () => {
 
   
   const { getSection } = useHomepageSections();
+  const { isFeatureEnabled } = useFeatureFlags();
 
   const showDebug = searchParams.get('homeDebug') === '1';
   const { effectiveCohortType } = useEffectiveCohort();
@@ -130,8 +132,8 @@ const Home: React.FC = () => {
           {/* Live Session Card */}
           <LiveSessionCard />
 
-          {/* 4. Payment Focus Card */}
-          {paymentSection !== null && <PaymentFocusCard />}
+          {/* 4. Payment Focus Card — gated by both the homepage section config AND the global payments feature flag */}
+          {paymentSection !== null && isFeatureEnabled('payments_enabled') && <PaymentFocusCard />}
 
           {/* 5. Journey Timeline */}
           {journeySection && (

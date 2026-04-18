@@ -238,6 +238,7 @@ const FEATURE_TOGGLES = [
   { key: 'updates_enabled', label: 'Updates Tab', desc: 'Show/hide Updates', icon: Info },
   { key: 'pre_forge_sessions_enabled', label: 'Pre Forge Sessions', desc: 'Show/hide on Learn', icon: BookOpen },
   { key: 'embedded_zoom_enabled', label: 'Embedded Zoom', desc: 'In-app Zoom vs native app', icon: Video },
+  { key: 'payments_enabled', label: 'Payments', desc: 'Show/hide payment card on Home', icon: CreditCard },
 ];
 
 // --- Main Dashboard ---
