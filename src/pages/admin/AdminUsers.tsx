@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload, Users, LayoutGrid, List, Download, Crown, IndianRupee } from 'lucide-react';
+import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload, Users, LayoutGrid, List, Download, Crown, IndianRupee, FileSpreadsheet, FileUp } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -349,6 +350,12 @@ export default function AdminUsers() {
   const [adminSearchResults, setAdminSearchResults] = useState<Profile[]>([]);
   const [adminSearchLoading, setAdminSearchLoading] = useState(false);
   const [adminSearchError, setAdminSearchError] = useState<string | null>(null);
+  // Bulk CSV import state
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  const [bulkImportEditionId, setBulkImportEditionId] = useState<string>('none');
+  const [bulkImportCity, setBulkImportCity] = useState('Goa');
+  const [bulkImportCsv, setBulkImportCsv] = useState('');
+  const [bulkImportResults, setBulkImportResults] = useState<null | { created: number; reset: number; failed: number; errors: { name: string; error: string }[] }>(null);
   const queryClient = useQueryClient();
 
   // Fetch users (exclude admins — they appear only in the Admin Accounts tab)
@@ -995,6 +1002,143 @@ export default function AdminUsers() {
     }
   });
 
+  // Bulk CSV import — generic, admin provides the data.
+  // Expected columns (comma-separated, one row per line, header optional):
+  //   full_name, email, phone, payment_status, balance_due, payment_link
+  // - payment_status: BALANCE_PAID | CONFIRMED_15K (defaults to BALANCE_PAID)
+  // - balance_due + payment_link are only used for CONFIRMED_15K rows
+  // Blank lines and lines starting with '#' are ignored. A header row where
+  // the first cell equals 'full_name' (case-insensitive) is also skipped.
+  const bulkImportMutation = useMutation({
+    mutationFn: async () => {
+      const editionId = bulkImportEditionId === 'none' ? null : bulkImportEditionId;
+
+      // Parse CSV
+      type Row = {
+        full_name: string;
+        email: string;
+        phone: string;
+        payment_status: 'BALANCE_PAID' | 'CONFIRMED_15K';
+        balance_due: number | null;
+        payment_link: string | null;
+      };
+      const rows: Row[] = [];
+      const parseErrors: string[] = [];
+      const lines = bulkImportCsv.split(/\r?\n/);
+      lines.forEach((raw, idx) => {
+        const line = raw.trim();
+        if (!line || line.startsWith('#')) return;
+        const parts = line.split(',').map(p => p.trim());
+        // Skip a header row
+        if (idx === 0 && parts[0].toLowerCase() === 'full_name') return;
+        const [full_name, email, phone, paymentStatusRaw, balanceDueRaw, paymentLinkRaw] = parts;
+        if (!full_name || !email) {
+          parseErrors.push(`Line ${idx + 1}: missing full_name or email`);
+          return;
+        }
+        const payment_status: Row['payment_status'] =
+          paymentStatusRaw && paymentStatusRaw.toUpperCase() === 'CONFIRMED_15K'
+            ? 'CONFIRMED_15K'
+            : 'BALANCE_PAID';
+        const balance_due = balanceDueRaw ? Number(balanceDueRaw) : null;
+        const payment_link = paymentLinkRaw || null;
+        rows.push({
+          full_name,
+          email,
+          phone: phone || '',
+          payment_status,
+          balance_due: Number.isFinite(balance_due as number) ? (balance_due as number) : null,
+          payment_link,
+        });
+      });
+
+      if (parseErrors.length > 0) {
+        throw new Error(parseErrors.slice(0, 5).join('\n'));
+      }
+      if (rows.length === 0) {
+        throw new Error('No rows to import — check your CSV.');
+      }
+
+      const results = { created: 0, reset: 0, failed: 0, errors: [] as { name: string; error: string }[] };
+      for (let i = 0; i < rows.length; i++) {
+        const student = rows[i];
+        setImportProgress({ current: i + 1, total: rows.length });
+        const firstName = student.full_name.split(' ')[0];
+        const password = `${firstName}@Forge!`;
+        try {
+          const response = await supabase.functions.invoke('create-user', {
+            body: {
+              email: student.email,
+              password,
+              full_name: student.full_name,
+              phone: student.phone,
+              city: bulkImportCity || 'Goa',
+              edition_id: editionId,
+              payment_status: student.payment_status,
+            },
+          });
+          if (response.error || response.data?.error) {
+            results.failed++;
+            results.errors.push({
+              name: student.full_name,
+              error: response.data?.error || response.error?.message || 'Unknown error',
+            });
+            continue;
+          }
+          if (response.data?.action === 'updated') results.reset++;
+          else results.created++;
+
+          if (
+            student.payment_status === 'CONFIRMED_15K' &&
+            student.payment_link &&
+            student.balance_due &&
+            response.data?.user_id
+          ) {
+            const programmeTotal = student.balance_due + 15000;
+            const { error: paymentError } = await supabase
+              .from('payment_config')
+              .upsert(
+                {
+                  user_id: response.data.user_id,
+                  programme_total: programmeTotal,
+                  deposit_paid: 15000,
+                  balance_due: student.balance_due,
+                  payment_link: student.payment_link,
+                  is_deposit_verified: true,
+                },
+                { onConflict: 'user_id' }
+              );
+            if (paymentError) console.error(`Payment config for ${student.full_name}:`, paymentError);
+          }
+        } catch (err) {
+          results.failed++;
+          results.errors.push({
+            name: student.full_name,
+            error: err instanceof Error ? err.message : 'Unknown error',
+          });
+        }
+      }
+      return results;
+    },
+    onSuccess: (data) => {
+      setImportProgress(null);
+      setBulkImportResults(data);
+      const ok = data.created + data.reset;
+      if (data.failed > 0) {
+        toast.error(`Imported ${ok} (${data.created} new, ${data.reset} reset), ${data.failed} failed`, {
+          description: data.errors.slice(0, 3).map(e => `${e.name}: ${e.error}`).join('\n'),
+        });
+      } else {
+        toast.success(`Done — ${data.created} created, ${data.reset} password-reset`);
+      }
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+    onError: (error: Error) => {
+      setImportProgress(null);
+      toast.error(error.message);
+    },
+  });
+
   // Grant admin mutation — also detaches the user from any cohort and resets
   // their student-lifecycle state, since staff accounts shouldn't be counted
   // as students in any edition.
@@ -1156,10 +1300,20 @@ export default function AdminUsers() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            onClick={() => {
+              setBulkImportResults(null);
+              setBulkImportOpen(true);
+            }}
+            className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            Bulk Import (CSV)
+          </Button>
           {viewMode === 'list' && (
-            <Button 
-              variant="destructive" 
-              onClick={() => setShowBulkDeleteConfirm(true)} 
+            <Button
+              variant="destructive"
+              onClick={() => setShowBulkDeleteConfirm(true)}
               className="gap-2"
               disabled={selectedUserIds.size === 0}
             >
@@ -1636,6 +1790,136 @@ export default function AdminUsers() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Bulk CSV Import Dialog */}
+      <Dialog
+        open={bulkImportOpen}
+        onOpenChange={(open) => {
+          if (!bulkImportMutation.isPending) {
+            setBulkImportOpen(open);
+            if (!open) {
+              setBulkImportCsv('');
+              setBulkImportResults(null);
+            }
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-primary" />
+              Bulk Import Users (CSV)
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Edition</Label>
+                <Select value={bulkImportEditionId} onValueChange={setBulkImportEditionId}>
+                  <SelectTrigger><SelectValue placeholder="Choose edition..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— No edition / Waitlist —</SelectItem>
+                    {editions?.filter(e => !e.is_archived).map(ed => (
+                      <SelectItem key={ed.id} value={ed.id}>{ed.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>Default City</Label>
+                <Input
+                  value={bulkImportCity}
+                  onChange={e => setBulkImportCity(e.target.value)}
+                  placeholder="Goa"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <Label>CSV Data</Label>
+                <div className="flex items-center gap-2">
+                  <label className="inline-flex items-center gap-1.5 text-xs text-primary cursor-pointer hover:underline">
+                    <FileUp className="w-3.5 h-3.5" />
+                    Upload .csv
+                    <input
+                      type="file"
+                      accept=".csv,text/csv,text/plain"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const text = await file.text();
+                        setBulkImportCsv(text);
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const template =
+                        'full_name,email,phone,payment_status,balance_due,payment_link\n' +
+                        'Rahul Reddy,rahul@example.com,9876543210,BALANCE_PAID,,\n' +
+                        'Priya Sharma,priya@example.com,9876543211,CONFIRMED_15K,70000,https://rzp.io/xyz\n';
+                      setBulkImportCsv(template);
+                    }}
+                    className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                  >
+                    Insert template
+                  </button>
+                </div>
+              </div>
+              <Textarea
+                value={bulkImportCsv}
+                onChange={e => setBulkImportCsv(e.target.value)}
+                placeholder="full_name,email,phone,payment_status,balance_due,payment_link&#10;John Doe,john@example.com,9876543210,BALANCE_PAID,,"
+                rows={10}
+                className="font-mono text-xs"
+              />
+              <p className="text-xs text-muted-foreground">
+                One student per line. Columns: <code>full_name, email, phone, payment_status, balance_due, payment_link</code>.
+                Password is auto-set to <code>{'{FirstName}@Forge!'}</code>. Existing users will have their password reset to match.
+              </p>
+            </div>
+
+            {importProgress && (
+              <div className="text-sm text-muted-foreground">
+                Importing {importProgress.current} / {importProgress.total}…
+              </div>
+            )}
+
+            {bulkImportResults && (
+              <div className="rounded-lg border border-border/50 bg-card/40 p-3 space-y-2">
+                <p className="text-sm font-medium">
+                  {bulkImportResults.created} created · {bulkImportResults.reset} password-reset · {bulkImportResults.failed} failed
+                </p>
+                {bulkImportResults.errors.length > 0 && (
+                  <div className="text-xs text-destructive space-y-1 max-h-32 overflow-auto">
+                    {bulkImportResults.errors.map((e, i) => (
+                      <div key={i}><strong>{e.name}:</strong> {e.error}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setBulkImportOpen(false)} disabled={bulkImportMutation.isPending}>
+              Close
+            </Button>
+            <Button
+              onClick={() => bulkImportMutation.mutate()}
+              disabled={bulkImportMutation.isPending || !bulkImportCsv.trim()}
+            >
+              {bulkImportMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Import Users
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
