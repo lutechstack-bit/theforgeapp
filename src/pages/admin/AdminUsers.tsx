@@ -990,17 +990,28 @@ export default function AdminUsers() {
     }
   });
 
-  // Grant admin mutation
+  // Grant admin mutation — also detaches the user from any cohort and resets
+  // their student-lifecycle state, since staff accounts shouldn't be counted
+  // as students in any edition.
   const grantAdminMutation = useMutation({
     mutationFn: async (userId: string) => {
       const { error } = await supabase
         .from('profiles')
-        .update({ is_admin: true })
+        .update({
+          is_admin: true,
+          edition_id: null,
+          cohort_type: null,
+          payment_status: null,
+          unlock_level: null,
+          profile_setup_completed: false,
+          ky_form_completed: false,
+          forge_mode: null,
+        })
         .eq('id', userId);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Admin access granted');
+      toast.success('Admin access granted — user moved to no cohort');
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       queryClient.invalidateQueries({ queryKey: ['admin-users-list'] });
       setAdminSearchResult(null);

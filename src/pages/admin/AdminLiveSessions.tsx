@@ -196,7 +196,7 @@ const AdminLiveSessions: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-live-sessions-edition', selectedEditionId] });
       queryClient.invalidateQueries({ queryKey: ['roadmap-session-recordings'] });
-      queryClient.invalidateQueries({ queryKey: ['online-session-recordings'] });
+      queryClient.invalidateQueries({ queryKey: ['online-session-recordings-all'] });
       setUploadDialogOpen(false);
       setSelectedRoadmapSession(null);
       setExistingLiveSessionId(null);

@@ -19,7 +19,6 @@ interface ExploreProgram {
 }
 import { LearnCourseCard } from '@/components/learn/LearnCourseCard';
 import { ContinueWatchingCarousel } from '@/components/learn/ContinueWatchingCarousel';
-import { UpcomingSessionsSection } from '@/components/learn/UpcomingSessionsSection';
 import { MasterclassCard } from '@/components/learn/MasterclassCard';
 import { ProgramBanner } from '@/components/learn/ProgramBanner';
 import { ScrollableCardRow } from '@/components/learn/ScrollableCardRow';
@@ -56,28 +55,34 @@ interface WatchProgress {
 
 // forgeResidencies removed — now fetched from explore_programs table
 
-const OnlineSessionRecordingsSection: React.FC<{ editionId?: string }> = ({ editionId }) => {
+const OnlineSessionRecordingsSection: React.FC = () => {
   const navigate = useNavigate();
 
   const { data: recordings = [] } = useQuery({
-    queryKey: ['online-session-recordings', editionId ?? 'all'],
+    queryKey: ['online-session-recordings-all'],
     queryFn: async () => {
-      let q = supabase
+      // Show every ready recording in the app. We intentionally do NOT filter by
+      // edition here — the previous edition-scoped query was causing empty states
+      // when edition_id on the live_session didn't line up with the viewer's
+      // effectiveEdition (admins, cross-cohort viewers, etc.).
+      const { data, error } = await supabase
         .from('live_sessions')
-        .select('id, title, mentor_name, thumbnail_url, learn_content_id, start_at')
+        .select('id, title, mentor_name, thumbnail_url, learn_content_id, start_at, recording_url')
         .eq('recording_status', 'ready')
-        .not('learn_content_id', 'is', null)
         .order('start_at', { ascending: false })
-        .limit(20);
-      // If user has an edition, scope to it; otherwise (e.g. admin with no edition) show all
-      if (editionId) q = q.eq('edition_id', editionId);
-      const { data, error } = await q;
+        .limit(50);
       if (error) throw error;
-      // Dedupe by learn_content_id in case duplicate live_session rows exist
+      // Dedupe by learn_content_id when present, otherwise by session id.
+      // We still include rows whose learn_content_id is null (fallback to the
+      // session id for navigation) so a card always appears as soon as the
+      // admin marks a recording Ready, even if the learn_content auto-create
+      // step had a hiccup.
       const seen = new Set<string>();
       return (data || []).filter(r => {
-        if (!r.learn_content_id || seen.has(r.learn_content_id)) return false;
-        seen.add(r.learn_content_id);
+        if (!r.recording_url) return false;
+        const key = r.learn_content_id || r.id;
+        if (seen.has(key)) return false;
+        seen.add(key);
         return true;
       });
     },
@@ -92,23 +97,28 @@ const OnlineSessionRecordingsSection: React.FC<{ editionId?: string }> = ({ edit
         <p className="text-sm text-muted-foreground mt-0.5">Replays from your live online sessions</p>
       </div>
       <ScrollableCardRow>
-        {recordings.map((rec) => (
-          <div
-            key={rec.id}
-            className="snap-start flex-shrink-0 cursor-pointer"
-            onClick={() => navigate(`/learn/${rec.learn_content_id}`)}
-          >
-            <LearnCourseCard
-              id={rec.id}
-              title={rec.title}
-              thumbnailUrl={rec.thumbnail_url || undefined}
-              instructorName={rec.mentor_name || undefined}
-              category="Online Session"
-              cardLayout="landscape"
-              onClick={() => navigate(`/learn/${rec.learn_content_id}`)}
-            />
-          </div>
-        ))}
+        {recordings.map((rec) => {
+          const href = rec.learn_content_id
+            ? `/learn/${rec.learn_content_id}`
+            : `/learn/live/${rec.id}`; // fallback (handled further down the stack)
+          return (
+            <div
+              key={rec.id}
+              className="snap-start flex-shrink-0 cursor-pointer"
+              onClick={() => navigate(href)}
+            >
+              <LearnCourseCard
+                id={rec.id}
+                title={rec.title}
+                thumbnailUrl={rec.thumbnail_url || undefined}
+                instructorName={rec.mentor_name || undefined}
+                category="Online Session"
+                cardLayout="landscape"
+                onClick={() => navigate(href)}
+              />
+            </div>
+          );
+        })}
       </ScrollableCardRow>
     </section>
   );
@@ -117,7 +127,7 @@ const OnlineSessionRecordingsSection: React.FC<{ editionId?: string }> = ({ edit
 const Learn: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { effectiveCohortType, effectiveEdition } = useEffectiveCohort();
+  const { effectiveCohortType } = useEffectiveCohort();
   const { isFeatureEnabled } = useFeatureFlags();
   const [programTab, setProgramTab] = useState<'online' | 'offline'>('online');
 
@@ -221,11 +231,8 @@ const Learn: React.FC = () => {
           badge="Learning"
         />
 
-        {/* Upcoming Online Sessions */}
-        <UpcomingSessionsSection />
-
-        {/* Session Recordings — edition-specific replays (all ready if admin has no edition) */}
-        <OnlineSessionRecordingsSection editionId={effectiveEdition?.id} />
+        {/* Session Recordings — shown directly under the hero */}
+        <OnlineSessionRecordingsSection />
 
         {/* Continue Watching */}
         {continueWatchingItems.length > 0 && (
