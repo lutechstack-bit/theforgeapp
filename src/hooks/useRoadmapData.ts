@@ -55,8 +55,8 @@ export const useRoadmapData = () => {
         console.log('[Roadmap] No edition_id available, returning empty days');
         return [];
       }
-      
-      // Step 1: Try user's exact edition (with timeout)
+
+      // Step 1: Fetch edition-specific rows (online sessions stored per-edition)
       const editionResult = await promiseWithTimeout(
         supabase
           .from('roadmap_days')
@@ -67,35 +67,52 @@ export const useRoadmapData = () => {
         ROADMAP_QUERY_TIMEOUT,
         'roadmap_days_edition'
       );
-      
-      if (!editionResult.error && editionResult.data && editionResult.data.length > 0) {
-        console.log(`[Roadmap] Found ${editionResult.data.length} days for edition ${editionIdForQuery}`);
-        return editionResult.data as RoadmapDay[];
+      const editionRows: RoadmapDay[] = (!editionResult.error && editionResult.data)
+        ? editionResult.data as RoadmapDay[] : [];
+
+      // If edition has bootcamp days (day_number > 0), it's fully self-contained (E14/E15 style).
+      // Return edition rows exclusively — preserves old behaviour.
+      if (editionRows.some(d => d.day_number > 0)) {
+        console.log(`[Roadmap] Self-contained edition: ${editionRows.length} days`);
+        return editionRows;
       }
-      
-      // Step 2: Fall back to master template for cohort type
-      if (userCohortType) {
-        console.log(`[Roadmap] No days for edition ${editionIdForQuery}, falling back to ${userCohortType} template`);
-        const templateResult = await promiseWithTimeout(
-          supabase
-            .from('roadmap_days')
-            .select('*')
-            .eq('cohort_type', userCohortType)
-            .eq('is_template', true)
-            .order('day_number', { ascending: true })
-            .then(res => res),
-          ROADMAP_QUERY_TIMEOUT,
-          'roadmap_days_template'
-        );
-        
-        if (!templateResult.error && templateResult.data && templateResult.data.length > 0) {
-          console.log(`[Roadmap] Found ${templateResult.data.length} template days for ${userCohortType}`);
-          return templateResult.data as RoadmapDay[];
-        }
+
+      // Step 2: Fetch shared template (bootcamp days + template online sessions)
+      const templateResult = userCohortType ? await promiseWithTimeout(
+        supabase
+          .from('roadmap_days')
+          .select('*')
+          .eq('cohort_type', userCohortType)
+          .eq('is_template', true)
+          .order('day_number', { ascending: true })
+          .then(res => res),
+        ROADMAP_QUERY_TIMEOUT,
+        'roadmap_days_template'
+      ) : null;
+      const templateRows: RoadmapDay[] = (templateResult && !templateResult.error && templateResult.data)
+        ? templateResult.data as RoadmapDay[] : [];
+
+      if (templateRows.length === 0) {
+        // No template exists — return whatever edition rows we have (or empty)
+        console.log('[Roadmap] No template found, returning edition rows only');
+        return editionRows;
       }
-      
-      console.warn('[Roadmap] No roadmap days found for edition or cohort template');
-      return [];
+
+      if (editionRows.length > 0) {
+        // Step 3: Merge — edition-specific online sessions override template online sessions
+        // Bootcamp template days (day_number > 0) pass through unchanged.
+        const editionDayNumbers = new Set(editionRows.map(d => d.day_number));
+        const merged = [
+          ...templateRows.filter(d => !editionDayNumbers.has(d.day_number)),
+          ...editionRows,
+        ].sort((a, b) => a.day_number - b.day_number);
+        console.log(`[Roadmap] Merged ${templateRows.length} template + ${editionRows.length} edition-specific → ${merged.length} total`);
+        return merged;
+      }
+
+      // No edition rows at all — return template only
+      console.log(`[Roadmap] Template-only: ${templateRows.length} days for ${userCohortType}`);
+      return templateRows;
     },
     // CRITICAL: Only enable when profile loading is complete
     enabled: queryEnabled,

@@ -51,6 +51,7 @@ const emptyForm = {
   recording_url: '',
   learn_content_id: '',
   recordingSourceType: 'embed' as 'embed' | 'upload', // UI only — not saved to DB
+  roadmapSessionId: '', // UI only — which roadmap_day this recording belongs to
 };
 
 const statusColors: Record<string, string> = {
@@ -100,6 +101,22 @@ const AdminLiveSessions: React.FC = () => {
       if (error) throw error;
       return data || [];
     },
+  });
+
+  // Roadmap online sessions for the selected edition — used to auto-link recordings
+  const { data: roadmapOnlineSessions = [] } = useQuery({
+    queryKey: ['admin-roadmap-online-sessions', form.edition_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('roadmap_days')
+        .select('id, title, day_number, date, session_start_time, session_duration_hours')
+        .eq('edition_id', form.edition_id)
+        .lt('day_number', 0)
+        .order('day_number', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!form.edition_id && form.edition_id !== 'none' && form.edition_id !== '',
   });
 
   const saveMutation = useMutation({
@@ -218,6 +235,7 @@ const AdminLiveSessions: React.FC = () => {
       recording_url: existingUrl,
       learn_content_id: s.learn_content_id || '',
       recordingSourceType: srcType,
+      roadmapSessionId: '', // will be auto-detected by the dropdown once sessions load
     });
     setDialogOpen(true);
   };
@@ -326,7 +344,11 @@ const AdminLiveSessions: React.FC = () => {
 
               <div>
                 <Label>Edition</Label>
-                <Select value={form.edition_id} onValueChange={v => updateField('edition_id', v)}>
+                <Select value={form.edition_id} onValueChange={v => {
+                  updateField('edition_id', v);
+                  // Clear roadmap session link when edition changes
+                  updateField('roadmapSessionId', '');
+                }}>
                   <SelectTrigger><SelectValue placeholder="Select edition" /></SelectTrigger>
                   <SelectContent>
                     {editions.map(ed => (
@@ -335,6 +357,51 @@ const AdminLiveSessions: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Roadmap Session Picker — links this recording to an online session */}
+              {roadmapOnlineSessions.length > 0 && (
+                <div className="sm:col-span-2 space-y-1">
+                  <Label className="flex items-center gap-1.5">
+                    <Link className="w-3.5 h-3.5 text-primary" />
+                    Link to Online Session (auto-fills date &amp; title)
+                  </Label>
+                  <Select
+                    value={form.roadmapSessionId}
+                    onValueChange={(sessionId) => {
+                      const rd = roadmapOnlineSessions.find((s: any) => s.id === sessionId);
+                      if (!rd) { updateField('roadmapSessionId', sessionId); return; }
+                      const baseDate = rd.date || '';
+                      const timePart = rd.session_start_time || '00:00';
+                      const startDT = baseDate ? `${baseDate}T${timePart}` : '';
+                      const durationH = rd.session_duration_hours || 2;
+                      const endDT = startDT
+                        ? new Date(new Date(startDT).getTime() + durationH * 3600000)
+                            .toISOString().slice(0, 16)
+                        : '';
+                      setForm(prev => ({
+                        ...prev,
+                        roadmapSessionId: sessionId,
+                        title: rd.title || prev.title,
+                        start_at: startDT || prev.start_at,
+                        end_at: endDT || prev.end_at,
+                      }));
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select session to link..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— Not linked —</SelectItem>
+                      {roadmapOnlineSessions.map((s: any, i: number) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          Session {i + 1}: {s.title}{s.date ? ` · ${s.date}` : ' · Date TBA'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Selecting a session auto-fills the date so the recording appears in that session's Roadmap card.
+                  </p>
+                </div>
+              )}
 
               <div>
                 <Label>Cohort Type</Label>
