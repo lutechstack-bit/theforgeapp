@@ -58,7 +58,7 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
   const duration = formatDurationFromMinutes(durationMinutes);
 
   return (
-    <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300 w-full flex-shrink-0">
+    <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[#FFBF00]/15 via-[#FFBF00]/5 to-[#FFBF00]/15 hover:from-[#FFBF00]/50 hover:via-[#FFBF00]/25 hover:to-[#FFBF00]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300 w-40 sm:w-48 flex-shrink-0">
     <div
       onClick={handleClick}
       className="group cursor-pointer"
@@ -72,7 +72,11 @@ export const LearnCourseCard: React.FC<LearnCourseCardProps> = ({
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50" />
+          <img
+            src="/images/learn/pre-forge-placeholder.png"
+            alt={title}
+            className="w-full h-full object-cover opacity-60"
+          />
         )}
 
         {/* Hover overlay */}

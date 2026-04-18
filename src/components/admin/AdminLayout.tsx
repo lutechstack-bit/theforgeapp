@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { AdminCommandPalette } from './AdminCommandPalette';
 import { AdminNotifications } from './AdminNotifications';
 import { AdminActivityFeed } from './AdminActivityFeed';
+import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import { format } from 'date-fns';
 
 interface NavItem {
@@ -337,7 +338,9 @@ export const AdminLayout: React.FC = () => {
           </div>
 
           <main className="flex-1 overflow-auto">
-            <Outlet />
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
           </main>
         </div>
 
