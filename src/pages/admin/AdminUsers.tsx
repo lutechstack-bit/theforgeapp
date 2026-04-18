@@ -926,7 +926,11 @@ export default function AdminUsers() {
         const student = EDITION_16_17_STUDENTS[i];
         setImportProgress({ current: i + 1, total: EDITION_16_17_STUDENTS.length });
 
-        const firstName = student.full_name.split(' ')[0];
+        // Always produce Title-cased first name: e.g. "NASAR muhammed" -> "Nasar"
+        const rawFirst = (student.full_name || '').trim().split(/\s+/)[0] || '';
+        const firstName = rawFirst
+          ? rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1).toLowerCase()
+          : '';
         const password = `${firstName}@Forge!`;
 
         try {
@@ -1063,7 +1067,11 @@ export default function AdminUsers() {
       for (let i = 0; i < rows.length; i++) {
         const student = rows[i];
         setImportProgress({ current: i + 1, total: rows.length });
-        const firstName = student.full_name.split(' ')[0];
+        // Always produce Title-cased first name: e.g. "NASAR muhammed" -> "Nasar"
+        const rawFirst = (student.full_name || '').trim().split(/\s+/)[0] || '';
+        const firstName = rawFirst
+          ? rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1).toLowerCase()
+          : '';
         const password = `${firstName}@Forge!`;
         try {
           const response = await supabase.functions.invoke('create-user', {
