@@ -56,54 +56,6 @@ interface WatchProgress {
 
 // forgeResidencies removed — now fetched from explore_programs table
 
-const SessionRecordingsSection: React.FC = () => {
-  const navigate = useNavigate();
-  const { data: recordings = [] } = useQuery({
-    queryKey: ['live-session-recordings'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('live_sessions')
-        .select('id, title, mentor_name, thumbnail_url, learn_content_id, start_at')
-        .eq('recording_status', 'ready')
-        .not('learn_content_id', 'is', null)
-        .order('start_at', { ascending: false })
-        .limit(10);
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  if (recordings.length === 0) return null;
-
-  return (
-    <section className="space-y-4">
-      <div>
-        <h2 className="text-lg sm:text-xl font-bold text-foreground">Session Recordings</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">Replays from live sessions</p>
-      </div>
-      <ScrollableCardRow>
-        {recordings.map((rec) => (
-          <div
-            key={rec.id}
-            className="snap-start flex-shrink-0 cursor-pointer"
-            onClick={() => navigate(`/learn/${rec.learn_content_id}`)}
-          >
-            <LearnCourseCard
-              id={rec.id}
-              title={rec.title}
-              thumbnailUrl={rec.thumbnail_url || undefined}
-              instructorName={rec.mentor_name || undefined}
-              category="Session Recording"
-              cardLayout="portrait"
-              onClick={() => navigate(`/learn/${rec.learn_content_id}`)}
-            />
-          </div>
-        ))}
-      </ScrollableCardRow>
-    </section>
-  );
-};
-
 const OnlineSessionRecordingsSection: React.FC<{ editionId: string }> = ({ editionId }) => {
   const navigate = useNavigate();
 
@@ -119,7 +71,13 @@ const OnlineSessionRecordingsSection: React.FC<{ editionId: string }> = ({ editi
         .order('start_at', { ascending: false })
         .limit(20);
       if (error) throw error;
-      return data || [];
+      // Dedupe by learn_content_id in case duplicate live_session rows exist
+      const seen = new Set<string>();
+      return (data || []).filter(r => {
+        if (!r.learn_content_id || seen.has(r.learn_content_id)) return false;
+        seen.add(r.learn_content_id);
+        return true;
+      });
     },
     enabled: !!editionId,
   });
@@ -129,8 +87,8 @@ const OnlineSessionRecordingsSection: React.FC<{ editionId: string }> = ({ editi
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-lg sm:text-xl font-bold text-foreground">Online Session Recordings</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">Recordings from your live online sessions</p>
+        <h2 className="text-lg sm:text-xl font-bold text-foreground">Session Recordings</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">Replays from your live online sessions</p>
       </div>
       <ScrollableCardRow>
         {recordings.map((rec) => (
@@ -220,7 +178,10 @@ const Learn: React.FC = () => {
 
   // Group content
   const forgeOnlineSessions = courses.filter(c => c.section_type === 'bfp_sessions');
-  const communitySessions = courses.filter(c => c.section_type === 'community_sessions');
+  // Exclude rows that are actually live-session recordings (they live in their own section above)
+  const communitySessions = courses.filter(c =>
+    c.section_type === 'community_sessions' && c.category !== 'Session Recording'
+  );
   const masterclassCards = [
     { name: 'Lokesh Kanagaraj', image: 'https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/6899f2de01c2b6f380973a82_Frame%20191%20LK.png', url: 'https://masterclass.leveluplearning.in/lokesh-kanagaraj' },
     { name: 'Nelson Dilipkumar', image: 'https://cdn.prod.website-files.com/649fbe7d7f61c6fc912e1d33/6878bd67851730bc31658da7_NM.png', url: 'https://masterclass.leveluplearning.in/' },
@@ -262,8 +223,10 @@ const Learn: React.FC = () => {
         {/* Upcoming Online Sessions */}
         <UpcomingSessionsSection />
 
-        {/* Session Recordings from Live Sessions */}
-        <SessionRecordingsSection />
+        {/* Session Recordings — edition-specific replays */}
+        {effectiveEdition?.id && (
+          <OnlineSessionRecordingsSection editionId={effectiveEdition.id} />
+        )}
 
         {/* Continue Watching */}
         {continueWatchingItems.length > 0 && (
@@ -311,11 +274,6 @@ const Learn: React.FC = () => {
             )}
 
           </div>
-        )}
-
-        {/* Online Session Recordings — edition-specific */}
-        {effectiveEdition?.id && (
-          <OnlineSessionRecordingsSection editionId={effectiveEdition.id} />
         )}
 
         {/* LevelUp Zone */}

@@ -31,6 +31,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
   Select,
@@ -563,7 +564,7 @@ export default function AdminUsers() {
             results.failed++;
             results.errors.push({ 
               name: student.full_name, 
-              error: response.error?.message || response.data?.error || 'Unknown error' 
+              error: response.data?.error || response.error?.message || 'Unknown error'
             });
           } else {
             results.success++;
@@ -625,7 +626,7 @@ export default function AdminUsers() {
             results.failed++;
             results.errors.push({ 
               name: student.full_name, 
-              error: response.error?.message || response.data?.error || 'Unknown error' 
+              error: response.data?.error || response.error?.message || 'Unknown error'
             });
           } else {
             results.success++;
@@ -687,7 +688,7 @@ export default function AdminUsers() {
             results.failed++;
             results.errors.push({ 
               name: student.full_name, 
-              error: response.error?.message || response.data?.error || 'Unknown error' 
+              error: response.data?.error || response.error?.message || 'Unknown error'
             });
           } else {
             results.success++;
@@ -749,7 +750,7 @@ export default function AdminUsers() {
             results.failed++;
             results.errors.push({ 
               name: student.full_name, 
-              error: response.error?.message || response.data?.error || 'Unknown error' 
+              error: response.data?.error || response.error?.message || 'Unknown error'
             });
           } else {
             results.success++;
@@ -811,7 +812,7 @@ export default function AdminUsers() {
             results.failed++;
             results.errors.push({ 
               name: student.full_name, 
-              error: response.error?.message || response.data?.error || 'Unknown error' 
+              error: response.data?.error || response.error?.message || 'Unknown error'
             });
           } else {
             results.success++;
@@ -873,7 +874,7 @@ export default function AdminUsers() {
             results.failed++;
             results.errors.push({ 
               name: student.full_name, 
-              error: response.error?.message || response.data?.error || 'Unknown error' 
+              error: response.data?.error || response.error?.message || 'Unknown error'
             });
           } else {
             results.success++;
@@ -938,7 +939,7 @@ export default function AdminUsers() {
             results.failed++;
             results.errors.push({ 
               name: student.full_name, 
-              error: response.error?.message || response.data?.error || 'Unknown error' 
+              error: response.data?.error || response.error?.message || 'Unknown error'
             });
           } else {
             results.success++;
