@@ -913,15 +913,15 @@ export default function AdminUsers() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
-      const results = { success: 0, failed: 0, errors: [] as { name: string; error: string }[] };
-      
+      const results = { created: 0, reset: 0, failed: 0, errors: [] as { name: string; error: string }[] };
+
       for (let i = 0; i < EDITION_16_17_STUDENTS.length; i++) {
         const student = EDITION_16_17_STUDENTS[i];
         setImportProgress({ current: i + 1, total: EDITION_16_17_STUDENTS.length });
-        
+
         const firstName = student.full_name.split(' ')[0];
         const password = `${firstName}@Forge!`;
-        
+
         try {
           const response = await supabase.functions.invoke('create-user', {
             body: {
@@ -937,26 +937,30 @@ export default function AdminUsers() {
 
           if (response.error || response.data?.error) {
             results.failed++;
-            results.errors.push({ 
-              name: student.full_name, 
+            results.errors.push({
+              name: student.full_name,
               error: response.data?.error || response.error?.message || 'Unknown error'
             });
           } else {
-            results.success++;
-            
-            // If 15k user, insert payment_config with their link and balance
+            if (response.data?.action === 'updated') results.reset++;
+            else results.created++;
+
+            // If 15k user, upsert payment_config (safe on re-run — won't duplicate)
             if (student.payment_status === 'CONFIRMED_15K' && student.payment_link && student.balance_due && response.data?.user_id) {
               const programmeTotal = student.balance_due + 15000;
               const { error: paymentError } = await supabase
                 .from('payment_config')
-                .insert({
-                  user_id: response.data.user_id,
-                  programme_total: programmeTotal,
-                  deposit_paid: 15000,
-                  balance_due: student.balance_due,
-                  payment_link: student.payment_link,
-                  is_deposit_verified: true
-                });
+                .upsert(
+                  {
+                    user_id: response.data.user_id,
+                    programme_total: programmeTotal,
+                    deposit_paid: 15000,
+                    balance_due: student.balance_due,
+                    payment_link: student.payment_link,
+                    is_deposit_verified: true
+                  },
+                  { onConflict: 'user_id' }
+                );
               if (paymentError) {
                 console.error(`Payment config error for ${student.full_name}:`, paymentError);
               }
@@ -964,23 +968,24 @@ export default function AdminUsers() {
           }
         } catch (err) {
           results.failed++;
-          results.errors.push({ 
-            name: student.full_name, 
-            error: err instanceof Error ? err.message : 'Unknown error' 
+          results.errors.push({
+            name: student.full_name,
+            error: err instanceof Error ? err.message : 'Unknown error'
           });
         }
       }
-      
+
       return results;
     },
     onSuccess: (data) => {
       setImportProgress(null);
+      const ok = data.created + data.reset;
       if (data.failed > 0) {
-        toast.error(`Imported ${data.success} students, ${data.failed} failed`, {
+        toast.error(`Imported ${ok} (${data.created} new, ${data.reset} password-reset), ${data.failed} failed`, {
           description: data.errors.slice(0, 3).map(e => `${e.name}: ${e.error}`).join('\n')
         });
       } else {
-        toast.success(`Successfully imported all ${data.success} E16/E17 students!`);
+        toast.success(`Done — ${data.created} created, ${data.reset} existing users had passwords reset`);
       }
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },

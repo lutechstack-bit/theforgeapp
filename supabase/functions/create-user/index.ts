@@ -95,6 +95,13 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
+    // Try to create. If the email already exists, we fall through to the
+    // "reset existing user's password + sync profile" path so running the
+    // import is idempotent — useful when students were created earlier with
+    // a different password and now can't log in.
+    let newUserId: string | null = null;
+    let action: 'created' | 'updated' = 'created';
+
     const { data: authData, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password,
@@ -103,13 +110,68 @@ serve(async (req) => {
     });
 
     if (createError) {
-      return new Response(
-        JSON.stringify({ error: 'Failed to create user' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+      // Detect "already registered" — Supabase's message varies slightly by
+      // version, so we match loosely.
+      const msg = (createError.message || '').toLowerCase();
+      const alreadyExists =
+        msg.includes('already registered') ||
+        msg.includes('already exists') ||
+        msg.includes('duplicate') ||
+        (createError as any).status === 422;
 
-    const newUserId = authData.user.id;
+      if (!alreadyExists) {
+        console.error('createUser error:', createError);
+        return new Response(
+          JSON.stringify({ error: createError.message || 'Failed to create user' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Look up the existing user by email so we can reset their password.
+      // listUsers paginates; we filter client-side since there's no direct
+      // getUserByEmail in the admin API.
+      let foundId: string | null = null;
+      const perPage = 1000;
+      for (let page = 1; page <= 10 && !foundId; page++) {
+        const { data: list, error: listErr } = await adminClient.auth.admin.listUsers({ page, perPage });
+        if (listErr) {
+          console.error('listUsers error:', listErr);
+          return new Response(
+            JSON.stringify({ error: 'User exists but lookup failed: ' + listErr.message }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        const match = (list?.users || []).find(u => (u.email || '').toLowerCase() === email.toLowerCase());
+        if (match) foundId = match.id;
+        if ((list?.users || []).length < perPage) break;
+      }
+
+      if (!foundId) {
+        return new Response(
+          JSON.stringify({ error: 'User reported as existing but could not be found to reset password' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Reset password + re-confirm email + update metadata.
+      const { error: updateAuthErr } = await adminClient.auth.admin.updateUserById(foundId, {
+        password,
+        email_confirm: true,
+        user_metadata: { full_name },
+      });
+      if (updateAuthErr) {
+        console.error('updateUserById error:', updateAuthErr);
+        return new Response(
+          JSON.stringify({ error: 'Could not reset password: ' + updateAuthErr.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      newUserId = foundId;
+      action = 'updated';
+    } else {
+      newUserId = authData.user.id;
+    }
 
     const { error: profileError } = await adminClient
       .from('profiles')
@@ -130,10 +192,11 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         user_id: newUserId,
-        message: 'User created successfully' 
+        action,
+        message: action === 'created' ? 'User created successfully' : 'Existing user password reset and profile synced'
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
