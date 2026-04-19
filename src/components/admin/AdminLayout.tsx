@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { 
+import {
   LayoutDashboard, Users, Calendar, FileText, ArrowLeft, Shield, Sparkles, Map,
   ClipboardList, Moon, Package, PanelRight, UserCircle, Star, BookOpen, Route,
   ListTodo, Megaphone, History, PanelLeft, PanelLeftClose, Home, Target, Gift,
   Handshake, ExternalLink, Film, CreditCard, Activity, ChevronRight, BarChart3,
-  Settings, Users2, MonitorSmartphone, GraduationCap, Search, Plus, RefreshCw, Video
+  Settings, Users2, MonitorSmartphone, GraduationCap, Search, Plus, RefreshCw, Video,
+  Mail, Send, AtSign
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -83,6 +84,17 @@ const navGroups: NavGroup[] = [
       { to: '/admin/alumni-showcase', icon: Film, label: 'Alumni Showcase' },
       { to: '/admin/mentors', icon: UserCircle, label: 'Mentors' },
       { to: '/admin/explore-programs', icon: ExternalLink, label: 'Explore Programs' },
+    ],
+  },
+  {
+    label: 'Email',
+    icon: Mail,
+    items: [
+      { to: '/admin/email', icon: LayoutDashboard, label: 'Dashboard', end: true },
+      { to: '/admin/email/templates', icon: FileText, label: 'Templates' },
+      { to: '/admin/email/send', icon: Send, label: 'Compose & Send' },
+      { to: '/admin/email/history', icon: History, label: 'History' },
+      { to: '/admin/email/senders', icon: AtSign, label: 'Senders' },
     ],
   },
   {

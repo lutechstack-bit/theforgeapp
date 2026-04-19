@@ -73,6 +73,12 @@ import EventDetail from "./pages/EventDetail";
 import PerkDetail from "./pages/PerkDetail";
 import LiveSession from "./pages/LiveSession";
 import AdminLiveSessions from "./pages/admin/AdminLiveSessions";
+import AdminEmailDashboard from "./pages/admin/AdminEmailDashboard";
+import AdminEmailTemplates from "./pages/admin/AdminEmailTemplates";
+import AdminEmailTemplateEdit from "./pages/admin/AdminEmailTemplateEdit";
+import AdminEmailSend from "./pages/admin/AdminEmailSend";
+import AdminEmailHistory from "./pages/admin/AdminEmailHistory";
+import AdminEmailSenders from "./pages/admin/AdminEmailSenders";
 
 
 const queryClient = new QueryClient({
@@ -316,6 +322,14 @@ const AppRoutes = () => {
         <Route path="payments" element={<AdminPayments />} />
         <Route path="activity" element={<AdminActivity />} />
         <Route path="live-sessions" element={<AdminLiveSessions />} />
+
+        {/* Email infrastructure (Phase 1 thin-slice) */}
+        <Route path="email" element={<AdminEmailDashboard />} />
+        <Route path="email/templates" element={<AdminEmailTemplates />} />
+        <Route path="email/templates/:id" element={<AdminEmailTemplateEdit />} />
+        <Route path="email/send" element={<AdminEmailSend />} />
+        <Route path="email/history" element={<AdminEmailHistory />} />
+        <Route path="email/senders" element={<AdminEmailSenders />} />
       </Route>
       
       {/* Legacy KY form redirects */}
