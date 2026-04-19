@@ -22,6 +22,7 @@ import {
 import { toast } from 'sonner';
 import { formatDurationFromMinutes } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 
 interface LearnContent {
   id: string;
@@ -69,6 +70,7 @@ const CourseDetail: React.FC = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const [showPlayer, setShowPlayer] = useState(false);
+  const { effectiveEdition } = useEffectiveCohort();
 
   // Fetch course details
   const { data: course, isLoading } = useQuery({
@@ -102,18 +104,72 @@ const CourseDetail: React.FC = () => {
     enabled: !!id,
   });
 
-  // Fetch sibling content (same section_type + category)
+  // Fetch sibling content for the right sidebar playlist.
+  //
+  // Special-cased for session recordings: our DB stores them under
+  // section_type='community_sessions' (workaround for the learn_content
+  // section_type_check constraint) but tagged with category='Session Recording'.
+  // Without this branch, opening any session recording would list EVERY
+  // community session in the sidebar — mixing real community content with
+  // session recordings from other editions.
+  //
+  // Branches:
+  // 1. If current course is a Session Recording → pull only the recordings
+  //    linked to live_sessions for the viewer's edition (via learn_content_id).
+  // 2. Otherwise (real community session / bfp_session / etc.) → pull siblings
+  //    in the same section_type, excluding Session Recording-tagged rows so
+  //    recordings don't leak into the community playlist.
+  const isRecording = (course?.category === 'Session Recording');
+  const editionId = effectiveEdition?.id;
+
   const { data: siblings } = useQuery({
-    queryKey: ['learn_siblings', course?.section_type],
+    queryKey: ['learn_siblings', course?.id, course?.section_type, isRecording, editionId ?? 'all'],
     queryFn: async () => {
       if (!course) return [];
+
+      if (isRecording) {
+        // Pull edition-scoped session recordings via live_sessions join.
+        // If the viewer has no edition (admin), fall back to showing every
+        // ready recording so they can navigate any of them.
+        let lsQ = supabase
+          .from('live_sessions')
+          .select('learn_content_id, start_at')
+          .eq('recording_status', 'ready')
+          .not('learn_content_id', 'is', null);
+        if (editionId) lsQ = lsQ.eq('edition_id', editionId);
+        const { data: live, error: lsErr } = await lsQ;
+        if (lsErr) throw lsErr;
+        const ids = Array.from(
+          new Set((live || []).map(r => r.learn_content_id).filter(Boolean))
+        );
+        if (ids.length === 0) return [];
+        const { data, error } = await supabase
+          .from('learn_content')
+          .select('id, title, duration_minutes, order_index, video_url')
+          .in('id', ids);
+        if (error) throw error;
+        // Preserve live_session chronological order (start_at asc) so the
+        // sidebar reflects the session schedule.
+        const orderIndex = new Map(
+          (live || [])
+            .slice()
+            .sort((a, b) => (a.start_at || '').localeCompare(b.start_at || ''))
+            .map((r, i) => [r.learn_content_id as string, i])
+        );
+        return (data || []).slice().sort(
+          (a, b) => (orderIndex.get(a.id) ?? 999) - (orderIndex.get(b.id) ?? 999)
+        );
+      }
+
+      // Regular community/bfp/etc. siblings — exclude session recordings so
+      // they don't bleed into the playlist.
       const { data, error } = await supabase
         .from('learn_content')
-        .select('id, title, duration_minutes, order_index, video_url')
+        .select('id, title, duration_minutes, order_index, video_url, category')
         .eq('section_type', course.section_type)
         .order('order_index');
       if (error) throw error;
-      return data || [];
+      return (data || []).filter(r => r.category !== 'Session Recording');
     },
     enabled: !!course,
   });

@@ -55,22 +55,24 @@ interface WatchProgress {
 
 // forgeResidencies removed — now fetched from explore_programs table
 
-const OnlineSessionRecordingsSection: React.FC = () => {
+const OnlineSessionRecordingsSection: React.FC<{ editionId?: string }> = ({ editionId }) => {
   const navigate = useNavigate();
 
   const { data: recordings = [] } = useQuery({
-    queryKey: ['online-session-recordings-all'],
+    queryKey: ['online-session-recordings', editionId ?? 'all'],
     queryFn: async () => {
-      // Show every ready recording in the app. We intentionally do NOT filter by
-      // edition here — the previous edition-scoped query was causing empty states
-      // when edition_id on the live_session didn't line up with the viewer's
-      // effectiveEdition (admins, cross-cohort viewers, etc.).
-      const { data, error } = await supabase
+      // Scope recordings to the viewer's edition so E16 students don't see
+      // E17 recordings and vice versa. If no editionId was passed (e.g. an
+      // admin with no cohort), fall back to showing all ready recordings so
+      // admins can still see everything.
+      let q = supabase
         .from('live_sessions')
-        .select('id, title, mentor_name, thumbnail_url, learn_content_id, start_at, recording_url')
+        .select('id, title, mentor_name, thumbnail_url, learn_content_id, start_at, recording_url, edition_id')
         .eq('recording_status', 'ready')
         .order('start_at', { ascending: false })
         .limit(50);
+      if (editionId) q = q.eq('edition_id', editionId);
+      const { data, error } = await q;
       if (error) throw error;
       // Dedupe by learn_content_id when present, otherwise by session id.
       // We still include rows whose learn_content_id is null (fallback to the
@@ -127,7 +129,7 @@ const OnlineSessionRecordingsSection: React.FC = () => {
 const Learn: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { effectiveCohortType } = useEffectiveCohort();
+  const { effectiveCohortType, effectiveEdition } = useEffectiveCohort();
   const { isFeatureEnabled } = useFeatureFlags();
   const [programTab, setProgramTab] = useState<'online' | 'offline'>('online');
 
@@ -231,8 +233,9 @@ const Learn: React.FC = () => {
           badge="Learning"
         />
 
-        {/* Session Recordings — shown directly under the hero */}
-        <OnlineSessionRecordingsSection />
+        {/* Session Recordings — scoped to the viewer's edition (admins with
+            no edition see all) */}
+        <OnlineSessionRecordingsSection editionId={effectiveEdition?.id} />
 
         {/* Continue Watching */}
         {continueWatchingItems.length > 0 && (

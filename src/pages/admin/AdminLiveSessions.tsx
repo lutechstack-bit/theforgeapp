@@ -144,7 +144,7 @@ const AdminLiveSessions: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-all-recordings'] });
       queryClient.invalidateQueries({ queryKey: ['admin-live-sessions-edition', selectedEditionId] });
-      queryClient.invalidateQueries({ queryKey: ['online-session-recordings-all'] });
+      queryClient.invalidateQueries({ queryKey: ['online-session-recordings'] });
       queryClient.invalidateQueries({ queryKey: ['roadmap-session-recordings'] });
       toast({ title: 'Recording deleted' });
     },
@@ -240,7 +240,7 @@ const AdminLiveSessions: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-live-sessions-edition', selectedEditionId] });
       queryClient.invalidateQueries({ queryKey: ['roadmap-session-recordings'] });
-      queryClient.invalidateQueries({ queryKey: ['online-session-recordings-all'] });
+      queryClient.invalidateQueries({ queryKey: ['online-session-recordings'] });
       setUploadDialogOpen(false);
       setSelectedRoadmapSession(null);
       setExistingLiveSessionId(null);
