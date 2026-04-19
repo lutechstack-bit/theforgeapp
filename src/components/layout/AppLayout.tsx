@@ -6,6 +6,7 @@ import { TopProfileDropdown } from './TopProfileDropdown';
 import { SidebarProvider, useSidebar } from '@/contexts/SidebarContext';
 import { cn } from '@/lib/utils';
 import { useActivityTracker } from '@/hooks/useActivityTracker';
+import OnboardingTour from '@/components/onboarding/OnboardingTour';
 
 const AppLayoutContent: React.FC = () => {
   const location = useLocation();
@@ -26,6 +27,7 @@ const AppLayoutContent: React.FC = () => {
 
   return (
     <div className="min-h-[100dvh] bg-background safe-area-pt">
+      {showNav && <OnboardingTour />}
       {showNav && <SideNav />}
       <main className={cn(
         "relative pb-24 md:pb-0 transition-all duration-300 ease-in-out safe-area-pb",

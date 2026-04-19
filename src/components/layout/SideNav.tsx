@@ -21,10 +21,10 @@ import forgeIcon from '@/assets/forge-icon.png';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const navItems = [
-  { to: '/', icon: House, label: 'Home' },
-  { to: '/community', icon: Users, label: 'Community' },
-  { to: '/roadmap', icon: Compass, label: 'Roadmap' },
-  { to: '/learn', icon: BookOpen, label: 'Learn' },
+  { to: '/', icon: House, label: 'Home', tour: 'home' },
+  { to: '/community', icon: Users, label: 'Community', tour: 'community' },
+  { to: '/roadmap', icon: Compass, label: 'Roadmap', tour: 'roadmap' },
+  { to: '/learn', icon: BookOpen, label: 'Learn', tour: 'learn' },
   { to: '/perks', icon: Gift, label: 'Perks' },
   { to: '/events', icon: CalendarDays, label: 'Events' },
 ];
@@ -56,10 +56,11 @@ export const SideNav: React.FC = () => {
     navigate('/auth');
   };
 
-  const NavItem = ({ to, icon: Icon, label, isActive }: { to: string; icon: React.ElementType; label: string; isActive: boolean }) => {
+  const NavItem = ({ to, icon: Icon, label, isActive, tour }: { to: string; icon: React.ElementType; label: string; isActive: boolean; tour?: string }) => {
     const content = (
       <NavLink
         to={to}
+        data-tour={tour}
         className={cn(
           "group flex items-center gap-3.5 rounded-2xl transition-colors duration-200 text-base font-medium",
           collapsed ? "justify-center p-3" : "px-4 py-3.5",
@@ -131,11 +132,11 @@ export const SideNav: React.FC = () => {
 
         {/* Main Navigation */}
         <nav className={cn("flex-1 space-y-2 mt-2", collapsed ? "px-3" : "px-3")}>
-          {filteredNavItems.map(({ to, icon, label }) => {
+          {filteredNavItems.map(({ to, icon, label, tour }) => {
             const isActive = to === '/'
               ? location.pathname === '/'
               : location.pathname === to || location.pathname.startsWith(to + '/');
-            return <NavItem key={to} to={to} icon={icon} label={label} isActive={isActive} />;
+            return <NavItem key={to} to={to} icon={icon} label={label} isActive={isActive} tour={tour} />;
           })}
         </nav>
 

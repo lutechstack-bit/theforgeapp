@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { User, Edit } from 'lucide-react';
+import { User, Edit, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useRestartTour } from '@/components/onboarding/OnboardingTour';
 
 const cohortLabelMap: Record<string, string> = {
   FORGE: 'The Forge',
@@ -25,6 +26,7 @@ export const TopProfileDropdown: React.FC = () => {
   const { effectiveCohortType, effectiveEdition } = useEffectiveCohort();
   const navigate = useNavigate();
   const location = useLocation();
+  const restartTour = useRestartTour();
 
   const initials = profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U';
   const firstName = profile?.full_name?.split(' ')[0] || 'User';
@@ -45,6 +47,7 @@ export const TopProfileDropdown: React.FC = () => {
         <DropdownMenuTrigger asChild>
           <button
             aria-label="Profile menu"
+            data-tour="profile-menu"
             className={cn(
               "flex items-center gap-2 rounded-lg border border-white/20 bg-black/40 backdrop-blur-md px-3 py-1.5",
               "transition-all duration-300 focus:outline-none",
@@ -75,6 +78,11 @@ export const TopProfileDropdown: React.FC = () => {
           <DropdownMenuItem onClick={() => navigate('/profile?action=edit')} className="cursor-pointer">
             <Edit className="h-4 w-4 mr-2" />
             Edit Profile
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => restartTour()} className="cursor-pointer">
+            <HelpCircle className="h-4 w-4 mr-2" />
+            Restart Tour
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

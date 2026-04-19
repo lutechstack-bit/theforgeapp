@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  Users, Calendar, CalendarDays, CreditCard, BookOpen, MessageSquare, 
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  Users, Calendar, CalendarDays, CreditCard, BookOpen, MessageSquare,
   TrendingUp, ArrowUpRight, ArrowDownRight, LogIn, Palette, RefreshCw,
-  Check, X, AlertTriangle, Eye, Info, Map, UserX, ChevronDown, ClipboardCheck, UserCircle, Video
+  Check, X, AlertTriangle, Eye, Info, Map, UserX, ChevronDown, ClipboardCheck, UserCircle, Video,
+  Compass
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -243,12 +245,43 @@ const FEATURE_TOGGLES = [
 
 // --- Main Dashboard ---
 
+// E17 edition UUID — kept in sync with EDITION_17_ID in src/pages/admin/AdminUsers.tsx.
+// Used for the "Reset onboarding tour for all E17 students" button below.
+const EDITION_17_ID = 'fada9b20-b56e-4d8e-b67c-7c2313e7ed9e';
+
+// Helper: updates profiles.has_seen_tour = false for the matching scope and
+// returns the row count so the toast can show "Tour reset for N users".
+async function resetTourScope(scope: 'e17' | 'all' | 'me', userId?: string) {
+  let q = supabase.from('profiles').update({ has_seen_tour: false }).select('id');
+  if (scope === 'e17') q = q.eq('edition_id', EDITION_17_ID);
+  else if (scope === 'all') q = q.is('is_admin', false);
+  else if (scope === 'me') {
+    if (!userId) throw new Error('Not signed in');
+    q = q.eq('id', userId);
+  }
+  const { data, error } = await q;
+  if (error) throw error;
+  return data?.length ?? 0;
+}
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   const { data: userStats, isLoading: statsLoading } = useUserStats();
   const { data: growthData, isLoading: growthLoading } = useGrowthData();
   const { data: cohortData, isLoading: cohortLoading } = useCohortDistribution();
   const { isFeatureEnabled, toggleFeature } = useFeatureFlags();
+
+  // Reset onboarding tour mutation — scoped UPDATE on profiles.has_seen_tour.
+  const resetTourMutation = useMutation({
+    mutationFn: async (scope: 'e17' | 'all' | 'me') =>
+      resetTourScope(scope, authUser?.id),
+    onSuccess: (count, scope) => {
+      const label = scope === 'e17' ? 'E17 students' : scope === 'all' ? 'students' : 'you';
+      toast.success(`Tour reset for ${count} ${label}`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
   const { data: loginStats, isLoading: loginLoading, refetch: refetchLogins } = useLoginStats();
   const { data: funnelData, isLoading: funnelLoading, refetch: refetchFunnel } = useEngagementFunnel();
   const { data: activityData, isLoading: activityLoading, refetch: refetchActivity } = useRecentActivity();
@@ -647,6 +680,57 @@ export default function AdminDashboard() {
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Onboarding Tour — reset has_seen_tour so users see the react-joyride walkthrough again */}
+          <Card className="bg-card/60 border-border/40">
+            <CardHeader className="pb-2 pt-4 px-4">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Compass className="w-3.5 h-3.5 text-primary" />
+                Onboarding Tour
+              </CardTitle>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Re-show the first-time walkthrough to a scope of users.
+              </p>
+            </CardHeader>
+            <CardContent className="px-4 pb-4 flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 h-8 text-xs"
+                disabled={resetTourMutation.isPending}
+                onClick={() => {
+                  if (!confirm('Reset tour for all 16 E17 students? Each will see the walkthrough on their next page load.')) return;
+                  resetTourMutation.mutate('e17');
+                }}
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Reset for all E17 students
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 h-8 text-xs"
+                disabled={resetTourMutation.isPending}
+                onClick={() => {
+                  if (!confirm('Reset tour for EVERY non-admin student? This affects all cohorts.')) return;
+                  resetTourMutation.mutate('all');
+                }}
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Reset for every student
+              </Button>
+              <Button
+                size="sm"
+                variant="default"
+                className="gap-1.5 h-8 text-xs"
+                disabled={resetTourMutation.isPending || !authUser?.id}
+                onClick={() => resetTourMutation.mutate('me')}
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Reset my own tour
+              </Button>
             </CardContent>
           </Card>
 
