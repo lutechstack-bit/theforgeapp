@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
+import Joyride, { ACTIONS, CallBackProps, EVENTS, STATUS, Step } from 'react-joyride';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -98,19 +98,57 @@ const JOYRIDE_STYLES = {
   spotlight: { borderRadius: 12 },
 };
 
-// Hook — reads profiles.has_seen_tour for the current user.
+// localStorage fallback so even if the DB update fails (RLS, flaky network),
+// a same-browser return visit is still silent. Keyed per user id.
+const LS_KEY = (userId: string) => `forge.onboarding.seen.${userId}`;
+
+const hasSeenLocally = (userId?: string): boolean => {
+  if (!userId || typeof window === 'undefined') return false;
+  try {
+    return localStorage.getItem(LS_KEY(userId)) === 'true';
+  } catch {
+    return false;
+  }
+};
+
+const markSeenLocally = (userId?: string) => {
+  if (!userId || typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(LS_KEY(userId), 'true');
+  } catch {
+    /* storage full / blocked — ignore */
+  }
+};
+
+const clearSeenLocally = (userId?: string) => {
+  if (!userId || typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(LS_KEY(userId));
+  } catch {
+    /* ignore */
+  }
+};
+
+// Hook — reads profiles.has_seen_tour for the current user, OR the
+// localStorage fallback set after the tour ends.
 export const useHasSeenTour = () => {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['onboarding-tour', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
+      // Local fallback wins for "already seen" — prevents DB hiccups re-showing
+      // the tour on every visit.
+      if (hasSeenLocally(user.id)) return true;
       const { data, error } = await supabase
         .from('profiles')
         .select('has_seen_tour')
         .eq('id', user.id)
         .single();
-      if (error) throw error;
+      if (error) {
+        console.error('[OnboardingTour] Could not read has_seen_tour:', error);
+        return false;
+      }
       return data?.has_seen_tour ?? false;
     },
     enabled: !!user?.id,
@@ -129,6 +167,7 @@ export const useRestartTour = () => {
   const mutation = useMutation({
     mutationFn: async () => {
       if (!user?.id) throw new Error('Not signed in');
+      clearSeenLocally(user.id);
       const { error } = await supabase
         .from('profiles')
         .update({ has_seen_tour: false })
@@ -163,12 +202,36 @@ const OnboardingTour: React.FC = () => {
   }, [hasSeenTour, isLoading, user]);
 
   const handleCallback = async (data: CallBackProps) => {
-    const { status } = data;
-    const done: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
-    if (done.includes(status)) {
+    const { status, type, action } = data;
+
+    // Tour ended for any reason: completed, skipped, closed via X, or the
+    // tour:end event (fires whenever Joyride tears down). Persist + mark
+    // locally so it never re-shows on next visit.
+    const terminalStatus =
+      status === STATUS.FINISHED ||
+      status === STATUS.SKIPPED ||
+      (status as unknown as string) === 'error';
+    const closedByUser = action === ACTIONS.CLOSE && type === EVENTS.STEP_AFTER;
+    const tourEnded = type === EVENTS.TOUR_END;
+
+    if (terminalStatus || closedByUser || tourEnded) {
       setRun(false);
       if (user?.id) {
-        await supabase.from('profiles').update({ has_seen_tour: true }).eq('id', user.id);
+        // Optimistic local cache so the next page load is instantly silent,
+        // even before the DB update round-trips.
+        markSeenLocally(user.id);
+        queryClient.setQueryData(['onboarding-tour', user.id], true);
+
+        const { error } = await supabase
+          .from('profiles')
+          .update({ has_seen_tour: true })
+          .eq('id', user.id);
+        if (error) {
+          // Surface so we can debug RLS / permissions issues — but the
+          // localStorage fallback above already guarantees the user won't
+          // see the tour again on this browser.
+          console.error('[OnboardingTour] Failed to persist has_seen_tour:', error);
+        }
         queryClient.invalidateQueries({ queryKey: ['onboarding-tour', user.id] });
       }
     }
