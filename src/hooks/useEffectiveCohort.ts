@@ -8,9 +8,15 @@ export const useEffectiveCohort = () => {
   const { edition, userDataLoading } = useAuth();
   const { isTestingMode, simulatedCohortType, simulatedEditionId } = useAdminTestingSafe();
 
-  const isSimulating = isTestingMode && !!simulatedCohortType && simulatedCohortType !== edition?.cohort_type;
+  // We're simulating whenever the admin has picked a different edition than
+  // their own — this covers cross-cohort simulation (FORGE -> WRITING) AND
+  // same-cohort edition swapping (E16 -> E17) which the old cohort-type check
+  // missed.
+  const hasEditionOverride = isTestingMode && !!simulatedEditionId && simulatedEditionId !== edition?.id;
+  const hasCohortOverride = isTestingMode && !!simulatedCohortType && simulatedCohortType !== edition?.cohort_type;
+  const isSimulating = hasEditionOverride || hasCohortOverride;
 
-  // Fetch the simulated edition when admin switches cohort
+  // Fetch the simulated edition row whenever an override id is set.
   const { data: simEdition } = useQuery({
     queryKey: ['simulated-edition', simulatedEditionId],
     queryFn: async () => {
@@ -34,8 +40,12 @@ export const useEffectiveCohort = () => {
     staleTime: 10 * 60 * 1000,
   });
 
+  // When simulating, derive the cohort type from the simulated edition so the
+  // picker only needs to set editionId — cohort follows automatically. Falls
+  // back to simulatedCohortType for backwards compat, then to the real cohort.
   const effectiveCohortType: CohortType | undefined =
-    (isTestingMode && simulatedCohortType) || (edition?.cohort_type as CohortType | undefined);
+    (isSimulating && (simEdition?.cohort_type || simulatedCohortType)) ||
+    (edition?.cohort_type as CohortType | undefined);
 
   const effectiveEdition: Edition | null =
     (isSimulating && simEdition) ? simEdition : edition;

@@ -91,6 +91,9 @@ export const AdminTestingProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setState(prev => ({
       ...prev,
       simulatedEditionId: id,
+      // Auto-enable testing mode when an edition is picked, so admins don't
+      // have to flip a separate toggle before the simulation kicks in.
+      isTestingMode: id !== null ? true : prev.isTestingMode,
     }));
   }, []);
 
