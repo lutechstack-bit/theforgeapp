@@ -17,6 +17,9 @@ import { useNavigate } from 'react-router-dom';
 
 // Tour copy. Each step targets a data-tour="..." attribute on an existing
 // element in the layout (see SideNav.tsx + TopProfileDropdown.tsx).
+// Every sidebar target must force 'right' placement — the sidebar is flush to
+// the left edge of the viewport, so if we leave placement on 'auto' Joyride
+// may pick 'left' and the tooltip gets clipped off-screen.
 const STEPS: Step[] = [
   {
     target: 'body',
@@ -30,23 +33,27 @@ const STEPS: Step[] = [
     content:
       "Announcements, today's focus, and what's coming next for your cohort — it all lives here.",
     disableBeacon: true,
+    placement: 'right',
   },
   {
     target: '[data-tour="roadmap"]',
     content:
       'Your full journey — every online session and bootcamp day with its date, Zoom link, and recording once the session is done.',
     disableBeacon: true,
+    placement: 'right',
   },
   {
     target: '[data-tour="learn"]',
     content:
       "After every online class, the recording appears here the next day or two so you can rewatch it. Your Orientation recording is already up — hit play when you're done here and get started.",
     disableBeacon: true,
+    placement: 'right',
   },
   {
     target: '[data-tour="community"]',
     content: 'Find your batchmates, start a conversation, and team up for projects.',
     disableBeacon: true,
+    placement: 'right',
   },
   {
     target: '[data-tour="profile-menu"]',
@@ -56,29 +63,39 @@ const STEPS: Step[] = [
   },
 ];
 
-// Joyride styling tuned to the Forge amber + dark palette.
+// Joyride styling tuned to the Forge amber + dark palette. Tooltip has a
+// fixed comfortable width so copy doesn't wrap into 1–2 ugly words per line.
 const JOYRIDE_STYLES = {
   options: {
     primaryColor: '#FFBF00',
     backgroundColor: '#0F0F10',
     textColor: '#F5F5F5',
     arrowColor: '#0F0F10',
-    overlayColor: 'rgba(0, 0, 0, 0.6)',
+    overlayColor: 'rgba(0, 0, 0, 0.65)',
     zIndex: 10000,
+    width: 360,
   },
+  tooltip: {
+    borderRadius: 14,
+    border: '1px solid rgba(255, 191, 0, 0.25)',
+    padding: 20,
+    maxWidth: 'calc(100vw - 32px)' as any,
+    boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,191,0,0.12)',
+  },
+  tooltipContainer: { textAlign: 'left' as const },
+  tooltipTitle: { fontSize: 17, fontWeight: 700, marginBottom: 8 },
+  tooltipContent: { fontSize: 14, lineHeight: 1.55, padding: 0 },
   buttonNext: {
     backgroundColor: '#FFBF00',
     color: '#0F0F10',
     fontWeight: 600,
     borderRadius: 8,
+    padding: '8px 14px',
   },
-  buttonBack: { color: '#FFBF00' },
+  buttonBack: { color: '#FFBF00', marginRight: 8 },
   buttonSkip: { color: '#9CA3AF' },
-  tooltip: {
-    borderRadius: 12,
-    border: '1px solid rgba(255, 191, 0, 0.15)',
-  },
-  tooltipTitle: { fontSize: 18, fontWeight: 700 },
+  buttonClose: { top: 10, right: 10 },
+  spotlight: { borderRadius: 12 },
 };
 
 // Hook — reads profiles.has_seen_tour for the current user.
@@ -171,6 +188,13 @@ const OnboardingTour: React.FC = () => {
       disableScrolling={false}
       disableCloseOnEsc={false}
       scrollToFirstStep
+      spotlightPadding={6}
+      floaterProps={{
+        // Gives tooltip a small gap from the target so the arrow and target
+        // aren't crammed together
+        offset: 14,
+        styles: { floater: { filter: 'none' } },
+      }}
       styles={JOYRIDE_STYLES}
       locale={{ back: 'Back', close: 'Close', last: 'Finish', next: 'Next', skip: 'Skip' }}
       callback={handleCallback}
