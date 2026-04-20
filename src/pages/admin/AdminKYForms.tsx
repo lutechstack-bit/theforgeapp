@@ -14,13 +14,14 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Trash2, GripVertical, Save, Copy, Settings, Download, Search, Eye, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { getSectionsForCohort, type SectionStepField } from '@/components/kyform/KYSectionConfig';
 import { useStudentKYData, type StudentRow } from '@/hooks/useStudentKYData';
+import { StudentDetailSheet } from '@/components/admin/ky/StudentDetailSheet';
+import { buildCsvExport, downloadCsv } from '@/lib/kyFieldSchema';
 
 const FIELD_TYPES = [
   { value: 'text', label: 'Text Input' },
@@ -76,12 +77,6 @@ interface Form {
   steps: FormStep[];
 }
 
-const SKIP_KEYS = new Set(['id', 'user_id', 'created_at', 'updated_at']);
-
-function formatLabel(key: string): string {
-  return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-}
-
 function StudentDataTab() {
   const [cohortFilter, setCohortFilter] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -113,44 +108,19 @@ function StudentDataTab() {
     }
   };
 
-  const escapeCSV = (val: any): string => {
-    if (val === null || val === undefined) return '';
-    const str = Array.isArray(val) ? val.join('; ') : typeof val === 'object' ? JSON.stringify(val) : String(val);
-    return str.includes(',') || str.includes('"') || str.includes('\n') ? `"${str.replace(/"/g, '""')}"` : str;
-  };
-
+  // CSV export is driven by the canonical schema in src/lib/kyFieldSchema.ts
+  // — human-readable headers, logical column order, consistent boolean /
+  // list / URL formatting. Any unknown fields still on a respondent row are
+  // appended as "Other: …" columns so nothing is silently lost.
   const downloadCSV = () => {
     const toExport = selectedIds.size > 0 ? filtered.filter(s => selectedIds.has(s.id)) : filtered;
     if (toExport.length === 0) {
       toast({ title: 'No data to export', variant: 'destructive' });
       return;
     }
-
-    // Gather all KY field keys from the export set
-    const kyKeys = new Set<string>();
-    toExport.forEach(s => {
-      if (s.kyData) Object.keys(s.kyData).forEach(k => { if (!SKIP_KEYS.has(k)) kyKeys.add(k); });
-    });
-    const sortedKyKeys = Array.from(kyKeys).sort();
-
-    const headers = ['full_name', 'email', 'city', 'edition', 'cohort_type', 'ky_form_completed', 'collaborator_profile', 'mbti_type',
-      'collab_tagline', 'collab_occupations', ...sortedKyKeys];
-
-    const rows = toExport.map(s => [
-      escapeCSV(s.full_name), escapeCSV(s.email), escapeCSV(s.city), escapeCSV(s.edition_name),
-      escapeCSV(s.cohort_type), escapeCSV(s.ky_form_completed), escapeCSV(s.has_collaborator_profile), escapeCSV(s.mbti_type),
-      escapeCSV(s.collabData?.tagline), escapeCSV(s.collabData?.occupations),
-      ...sortedKyKeys.map(k => escapeCSV(s.kyData?.[k])),
-    ].join(','));
-
-    const csv = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `student-data-${cohortFilter || 'all'}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const exp = buildCsvExport(toExport);
+    const filename = `ky-responses-${cohortFilter || 'all'}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    downloadCsv(filename, exp);
     toast({ title: `Exported ${toExport.length} students` });
   };
 
@@ -278,82 +248,11 @@ function StudentDataTab() {
         </Card>
       )}
 
-      {/* Detail Sheet */}
-      <Sheet open={!!detailStudent} onOpenChange={open => !open && setDetailStudent(null)}>
-        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>{detailStudent?.full_name || 'Student Details'}</SheetTitle>
-            <SheetDescription>{detailStudent?.email}</SheetDescription>
-          </SheetHeader>
-          {detailStudent && (
-            <div className="mt-6 space-y-6">
-              {/* Status */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg bg-muted/30 border border-border/30">
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">KY Form</div>
-                  <Badge variant={detailStudent.ky_form_completed ? 'default' : 'outline'}>
-                    {detailStudent.ky_form_completed ? 'Completed' : 'Incomplete'}
-                  </Badge>
-                </div>
-                <div className="p-3 rounded-lg bg-muted/30 border border-border/30">
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Community Profile</div>
-                  <Badge variant={detailStudent.has_collaborator_profile ? 'default' : 'outline'}>
-                    {detailStudent.has_collaborator_profile ? 'Created' : 'Not created'}
-                  </Badge>
-                </div>
-              </div>
-
-              {/* KY Form Data */}
-              {detailStudent.kyData && (
-                <div>
-                  <h3 className="text-sm font-semibold mb-3">KY Form Responses</h3>
-                  <div className="space-y-2">
-                    {Object.entries(detailStudent.kyData)
-                      .filter(([k]) => !SKIP_KEYS.has(k))
-                      .map(([key, value]) => (
-                        <div key={key} className="flex justify-between items-start py-1.5 border-b border-border/20 last:border-0">
-                          <span className="text-xs text-muted-foreground">{formatLabel(key)}</span>
-                          <span className="text-xs font-medium text-foreground text-right max-w-[200px] break-words">
-                            {value === null || value === undefined ? '—' :
-                              typeof value === 'boolean' ? (value ? 'Yes' : 'No') :
-                              Array.isArray(value) ? value.join(', ') :
-                              String(value)}
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Collaborator Profile Data */}
-              {detailStudent.collabData && (
-                <div>
-                  <h3 className="text-sm font-semibold mb-3">Community Profile</h3>
-                  <div className="space-y-2">
-                    {Object.entries(detailStudent.collabData)
-                      .filter(([k]) => !SKIP_KEYS.has(k) && k !== 'user_id')
-                      .map(([key, value]) => (
-                        <div key={key} className="flex justify-between items-start py-1.5 border-b border-border/20 last:border-0">
-                          <span className="text-xs text-muted-foreground">{formatLabel(key)}</span>
-                          <span className="text-xs font-medium text-foreground text-right max-w-[200px] break-words">
-                            {value === null || value === undefined ? '—' :
-                              typeof value === 'boolean' ? (value ? 'Yes' : 'No') :
-                              Array.isArray(value) ? value.join(', ') :
-                              String(value)}
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
-
-              {!detailStudent.kyData && !detailStudent.collabData && (
-                <p className="text-sm text-muted-foreground text-center py-8">No form data available for this student.</p>
-              )}
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
+      {/* Detail Sheet — renders grouped bento sections with photos,
+          proper labels, clickable email/phone, etc. Driven by
+          src/lib/kyFieldSchema.ts so the CSV export and this UI stay
+          in lockstep. */}
+      <StudentDetailSheet student={detailStudent} onClose={() => setDetailStudent(null)} />
     </div>
   );
 }
