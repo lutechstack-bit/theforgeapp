@@ -1,0 +1,1 @@
+UPDATE public.profiles SET email = 'admin@adventactorstudio.com' WHERE id = '2c921dd8-bb42-4bbf-ac80-a91dcf56c033';
