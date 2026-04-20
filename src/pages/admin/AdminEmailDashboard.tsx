@@ -18,19 +18,20 @@ const useEmailStats = () => {
       monthStart.setDate(1);
       monthStart.setHours(0, 0, 0, 0);
 
+      const sb = supabase as any;
       const [allSends, monthSends] = await Promise.all([
-        supabase
+        sb
           .from('email_sends')
           .select('id, status, sent_at, delivered_at, opened_at, clicked_at, bounced_at', { count: 'exact' })
           .order('created_at', { ascending: false })
           .limit(1000),
-        supabase
+        sb
           .from('email_sends')
           .select('id', { count: 'exact', head: true })
           .gte('created_at', monthStart.toISOString()),
       ]);
       if (allSends.error) throw allSends.error;
-      const rows = allSends.data || [];
+      const rows: any[] = allSends.data || [];
       const sentCount = rows.filter(r => r.sent_at !== null).length;
       const delivered = rows.filter(r => r.delivered_at !== null).length;
       const opened = rows.filter(r => r.opened_at !== null).length;
@@ -60,22 +61,24 @@ const useRecentSends = () => {
   return useQuery({
     queryKey: ['admin-email-recent-sends'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const sb = supabase as any;
+      const { data, error } = await sb
         .from('email_sends')
         .select('id, recipient_email, status, sent_at, opened_at, created_at, template_id, subject_rendered')
         .order('created_at', { ascending: false })
         .limit(20);
       if (error) throw error;
-      const templateIds = [...new Set((data || []).map(r => r.template_id).filter(Boolean))] as string[];
+      const rows: any[] = data || [];
+      const templateIds = [...new Set(rows.map(r => r.template_id).filter(Boolean))] as string[];
       let templatesById: Record<string, string> = {};
       if (templateIds.length > 0) {
-        const { data: tpls } = await supabase
+        const { data: tpls } = await sb
           .from('email_templates').select('id, name').in('id', templateIds);
-        for (const t of tpls || []) templatesById[t.id as string] = t.name as string;
+        for (const t of (tpls || []) as any[]) templatesById[t.id] = t.name;
       }
-      return (data || []).map(r => ({
+      return rows.map(r => ({
         ...r,
-        templateName: r.template_id ? (templatesById[r.template_id as string] || '—') : '—',
+        templateName: r.template_id ? (templatesById[r.template_id] || '—') : '—',
       }));
     },
     staleTime: 30_000,
