@@ -79,6 +79,8 @@ interface Form {
 
 function StudentDataTab() {
   const [cohortFilter, setCohortFilter] = useState<string | null>(null);
+  const [editionFilter, setEditionFilter] = useState<string>('all');       // edition_name ('all' | specific name)
+  const [completionFilter, setCompletionFilter] = useState<'all' | 'complete' | 'incomplete'>('all');
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [detailStudent, setDetailStudent] = useState<StudentRow | null>(null);
@@ -86,11 +88,49 @@ function StudentDataTab() {
 
   const { data: students, isLoading } = useStudentKYData(cohortFilter);
 
+  // Reset edition filter whenever cohort changes (editions are cohort-scoped)
+  useEffect(() => { setEditionFilter('all'); }, [cohortFilter]);
+
+  // Distinct edition names present in the current cohort's student set,
+  // sorted (most-recent-ish via numeric suffix first).
+  const editionOptions = React.useMemo(() => {
+    const names = Array.from(
+      new Set((students || []).map(s => s.edition_name).filter((n): n is string => !!n))
+    );
+    // Try to sort by trailing number (E17 > E16 > E15 …) then alpha
+    return names.sort((a, b) => {
+      const ai = parseInt(a.match(/(\d+)$/)?.[1] || '', 10);
+      const bi = parseInt(b.match(/(\d+)$/)?.[1] || '', 10);
+      if (!Number.isNaN(ai) && !Number.isNaN(bi)) return bi - ai;
+      return a.localeCompare(b);
+    });
+  }, [students]);
+
   const filtered = (students || []).filter(s => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (s.full_name?.toLowerCase().includes(q)) || (s.email?.toLowerCase().includes(q)) || (s.edition_name?.toLowerCase().includes(q));
+    if (editionFilter !== 'all' && s.edition_name !== editionFilter) return false;
+    if (completionFilter === 'complete' && !s.ky_form_completed) return false;
+    if (completionFilter === 'incomplete' && s.ky_form_completed) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (
+        !s.full_name?.toLowerCase().includes(q) &&
+        !s.email?.toLowerCase().includes(q) &&
+        !s.edition_name?.toLowerCase().includes(q)
+      ) return false;
+    }
+    return true;
   });
+
+  const anyFilterActive = !!cohortFilter || editionFilter !== 'all' || completionFilter !== 'all' || !!search;
+
+  // Reset selection if the active set no longer contains it.
+  useEffect(() => {
+    if (selectedIds.size === 0) return;
+    const validIds = new Set(filtered.map(s => s.id));
+    const stillValid = Array.from(selectedIds).filter(id => validIds.has(id));
+    if (stillValid.length !== selectedIds.size) setSelectedIds(new Set(stillValid));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered.length, cohortFilter, editionFilter, completionFilter]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -112,6 +152,10 @@ function StudentDataTab() {
   // — human-readable headers, logical column order, consistent boolean /
   // list / URL formatting. Any unknown fields still on a respondent row are
   // appended as "Other: …" columns so nothing is silently lost.
+  //
+  // The export respects every active filter (cohort + edition +
+  // completion-status + search + row selection), so admins always get
+  // exactly what they see in the table.
   const downloadCSV = () => {
     const toExport = selectedIds.size > 0 ? filtered.filter(s => selectedIds.has(s.id)) : filtered;
     if (toExport.length === 0) {
@@ -119,16 +163,38 @@ function StudentDataTab() {
       return;
     }
     const exp = buildCsvExport(toExport);
-    const filename = `ky-responses-${cohortFilter || 'all'}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    const cohortLabel = cohortFilter
+      ? (COHORT_TYPES.find(c => c.value === cohortFilter)?.label || cohortFilter).toLowerCase().replace(/\s+/g, '-')
+      : 'all-cohorts';
+    const editionLabel = editionFilter !== 'all' ? editionFilter.toLowerCase().replace(/\s+/g, '-') : null;
+    const filename = [
+      'ky-responses',
+      cohortLabel,
+      editionLabel,
+      completionFilter !== 'all' ? completionFilter : null,
+      format(new Date(), 'yyyy-MM-dd'),
+    ].filter(Boolean).join('-') + '.csv';
     downloadCsv(filename, exp);
-    toast({ title: `Exported ${toExport.length} students` });
+    toast({ title: `Exported ${toExport.length} ${toExport.length === 1 ? 'student' : 'students'}` });
   };
+
+  // Human-readable label for the primary export button.
+  const exportScopeLabel = (() => {
+    if (selectedIds.size > 0) return `Export ${selectedIds.size} selected`;
+    const bits: string[] = [];
+    if (cohortFilter) bits.push(COHORT_TYPES.find(c => c.value === cohortFilter)?.label || cohortFilter);
+    if (editionFilter !== 'all') bits.push(editionFilter);
+    if (completionFilter !== 'all') bits.push(completionFilter === 'complete' ? 'completed' : 'incomplete');
+    if (bits.length === 0) return `Export all (${filtered.length})`;
+    return `Export ${bits.join(' · ')} (${filtered.length})`;
+  })();
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+      {/* Filters row 1 — cohort pills + export button */}
+      <div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center justify-between">
         <div className="flex gap-2 items-center flex-wrap">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground mr-1">Cohort</span>
           <Badge
             variant={!cohortFilter ? 'default' : 'outline'}
             className="cursor-pointer"
@@ -147,20 +213,79 @@ function StudentDataTab() {
             </Badge>
           ))}
         </div>
-        <div className="flex gap-2 items-center">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-            <Input
-              placeholder="Search name or email..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="pl-8 h-9 text-xs w-[220px]"
-            />
-          </div>
-          <Button size="sm" variant="outline" className="gap-1.5 h-9 text-xs" onClick={downloadCSV}>
-            <Download className="w-3.5 h-3.5" />
-            {selectedIds.size > 0 ? `Export ${selectedIds.size}` : 'Export All'}
+
+        <Button
+          size="sm"
+          className="gap-1.5 h-9 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+          onClick={downloadCSV}
+          disabled={filtered.length === 0}
+          title="Exports only the students matching every active filter"
+        >
+          <Download className="w-3.5 h-3.5" />
+          {exportScopeLabel}
+        </Button>
+      </div>
+
+      {/* Filters row 2 — edition, completion, search */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Edition</span>
+          <Select value={editionFilter} onValueChange={setEditionFilter}>
+            <SelectTrigger className="h-8 text-xs w-[220px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All editions</SelectItem>
+              {editionOptions.map(name => (
+                <SelectItem key={name} value={name}>{name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Status</span>
+          <Select value={completionFilter} onValueChange={(v) => setCompletionFilter(v as typeof completionFilter)}>
+            <SelectTrigger className="h-8 text-xs w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any status</SelectItem>
+              <SelectItem value="complete">KY completed</SelectItem>
+              <SelectItem value="incomplete">KY incomplete</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Search name, email, edition…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="pl-8 h-8 text-xs w-[260px]"
+          />
+        </div>
+
+        {anyFilterActive && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 text-xs text-muted-foreground gap-1"
+            onClick={() => {
+              setCohortFilter(null);
+              setEditionFilter('all');
+              setCompletionFilter('all');
+              setSearch('');
+            }}
+          >
+            <X className="w-3 h-3" /> Clear filters
           </Button>
+        )}
+
+        <div className="ml-auto text-[11px] text-muted-foreground">
+          {filtered.length} {filtered.length === 1 ? 'student' : 'students'}
+          {selectedIds.size > 0 && ` · ${selectedIds.size} selected`}
         </div>
       </div>
 
