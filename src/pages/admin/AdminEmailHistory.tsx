@@ -31,17 +31,17 @@ export default function AdminEmailHistory() {
   const { data: templates = [] } = useQuery({
     queryKey: ['admin-email-templates-names'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('email_templates').select('id, name').order('name');
       if (error) throw error;
-      return data || [];
+      return (data || []) as any[];
     },
   });
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ['admin-email-history', statusFilter, templateFilter],
     queryFn: async () => {
-      let q = supabase
+      let q = (supabase as any)
         .from('email_sends')
         .select('*')
         .order('created_at', { ascending: false })
@@ -50,7 +50,7 @@ export default function AdminEmailHistory() {
       if (templateFilter !== 'all') q = q.eq('template_id', templateFilter);
       const { data, error } = await q;
       if (error) throw error;
-      return data || [];
+      return (data || []) as any[];
     },
   });
 
