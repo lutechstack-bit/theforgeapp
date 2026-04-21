@@ -4,98 +4,90 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { ForgeTooltip } from './ForgeTooltip';
 
 /**
- * OnboardingTour — a short first-time walkthrough built on react-joyride.
+ * OnboardingTour is a short first-time walkthrough built on react-joyride.
  *
- * Source of truth: profiles.has_seen_tour (boolean, nullable). The tour fires
- * exactly when that flag is null or false; on completion/skip we persist
- * `has_seen_tour = true` so subsequent logins are silent. Admins can reset
- * the flag in bulk from the Admin → Controls panel, and any user can replay
- * the tour from the avatar dropdown via useRestartTour() below.
+ * Source of truth is profiles.has_seen_tour (boolean, nullable). The tour
+ * fires exactly when that flag is null or false; on completion or skip we
+ * persist has_seen_tour = true so subsequent logins are silent. Admins can
+ * reset the flag in bulk from the Admin Controls panel, and any user can
+ * replay the tour from the avatar dropdown via useRestartTour() below.
+ *
+ * Every step uses placement "center" so the tooltip always sits in the
+ * middle of the viewport and can never be clipped on narrow screens. The
+ * spotlight ring still highlights the target element through the overlay,
+ * so users can see which nav item or control each step is about.
  */
 
-// Tour copy. Each step targets a data-tour="..." attribute on an existing
-// element in the layout (see SideNav.tsx + TopProfileDropdown.tsx).
-// Every sidebar target must force 'right' placement — the sidebar is flush to
-// the left edge of the viewport, so if we leave placement on 'auto' Joyride
-// may pick 'left' and the tooltip gets clipped off-screen.
+// Both the desktop sidebar (SideNav.tsx) and the mobile bottom nav
+// (BottomNav.tsx) carry data-tour="..." attributes so the same step targets
+// work on every device. If an attribute isn't present on the current layout
+// (e.g. profile-menu on a tiny phone), Joyride falls back gracefully to
+// showing the centered tooltip without a spotlight.
 const STEPS: Step[] = [
   {
     target: 'body',
     placement: 'center',
-    title: 'Welcome to the Forge 👋',
-    content: "Quick tour in under a minute. Let's show you around.",
+    title: 'Welcome to the Forge',
+    content: "Quick tour in under a minute. We'll show you around the app.",
     disableBeacon: true,
   },
   {
     target: '[data-tour="home"]',
+    placement: 'center',
+    title: 'Home',
     content:
       "Announcements, today's focus, and what's coming next for your cohort. It all lives here.",
     disableBeacon: true,
-    placement: 'right',
   },
   {
     target: '[data-tour="roadmap"]',
+    placement: 'center',
+    title: 'Roadmap',
     content:
       'Your full journey. Every online session and bootcamp day with its date, Zoom link, and recording once the session is done.',
     disableBeacon: true,
-    placement: 'right',
   },
   {
     target: '[data-tour="learn"]',
+    placement: 'center',
+    title: 'Learn',
     content:
       "After every online class, the recording appears here in a day or two so you can rewatch it. Your Orientation recording is already up. Hit play when you're done here and get started.",
     disableBeacon: true,
-    placement: 'right',
   },
   {
     target: '[data-tour="community"]',
+    placement: 'center',
+    title: 'Community',
     content: 'Find your batchmates, start a conversation, and team up for projects.',
     disableBeacon: true,
-    placement: 'right',
   },
   {
     target: '[data-tour="profile-menu"]',
+    placement: 'center',
+    title: 'Your profile',
     content: 'Edit your profile, restart this tour anytime, or sign out from here.',
     disableBeacon: true,
-    placement: 'bottom-end',
   },
 ];
 
-// Joyride styling tuned to the Forge amber + dark palette. Tooltip has a
-// fixed comfortable width so copy doesn't wrap into 1–2 ugly words per line.
+// Joyride styles scoped to what the custom ForgeTooltip doesn't already
+// control: the dark page overlay and the spotlight ring around the active
+// nav target. All tooltip styling lives inside ForgeTooltip.tsx.
 const JOYRIDE_STYLES = {
   options: {
     primaryColor: '#FFBF00',
-    backgroundColor: '#0F0F10',
-    textColor: '#F5F5F5',
-    arrowColor: '#0F0F10',
-    overlayColor: 'rgba(0, 0, 0, 0.65)',
     zIndex: 10000,
-    width: 360,
+    overlayColor: 'rgba(0, 0, 0, 0.72)',
+    arrowColor: '#0F0F10',
   },
-  tooltip: {
+  spotlight: {
     borderRadius: 14,
-    border: '1px solid rgba(255, 191, 0, 0.25)',
-    padding: 20,
-    maxWidth: 'calc(100vw - 32px)' as any,
-    boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,191,0,0.12)',
+    boxShadow: '0 0 0 2px rgba(255, 191, 0, 0.35)',
   },
-  tooltipContainer: { textAlign: 'left' as const },
-  tooltipTitle: { fontSize: 17, fontWeight: 700, marginBottom: 8 },
-  tooltipContent: { fontSize: 14, lineHeight: 1.55, padding: 0 },
-  buttonNext: {
-    backgroundColor: '#FFBF00',
-    color: '#0F0F10',
-    fontWeight: 600,
-    borderRadius: 8,
-    padding: '8px 14px',
-  },
-  buttonBack: { color: '#FFBF00', marginRight: 8 },
-  buttonSkip: { color: '#9CA3AF' },
-  buttonClose: { top: 10, right: 10 },
-  spotlight: { borderRadius: 12 },
 };
 
 // localStorage fallback so even if the DB update fails (RLS, flaky network),
@@ -116,7 +108,7 @@ const markSeenLocally = (userId?: string) => {
   try {
     localStorage.setItem(LS_KEY(userId), 'true');
   } catch {
-    /* storage full / blocked — ignore */
+    /* storage full or blocked, ignore */
   }
 };
 
@@ -129,7 +121,7 @@ const clearSeenLocally = (userId?: string) => {
   }
 };
 
-// Hook — reads profiles.has_seen_tour for the current user, OR the
+// Hook that reads profiles.has_seen_tour for the current user, or the
 // localStorage fallback set after the tour ends.
 export const useHasSeenTour = () => {
   const { user } = useAuth();
@@ -137,7 +129,7 @@ export const useHasSeenTour = () => {
     queryKey: ['onboarding-tour', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      // Local fallback wins for "already seen" — prevents DB hiccups re-showing
+      // Local fallback wins for "already seen" so DB hiccups don't re-show
       // the tour on every visit.
       if (hasSeenLocally(user.id)) return true;
       const { data, error } = await supabase
@@ -156,7 +148,7 @@ export const useHasSeenTour = () => {
   });
 };
 
-// Hook — returns a function any component can call to replay the tour.
+// Hook that returns a function any component can call to replay the tour.
 // Sets has_seen_tour = false on the profile and invalidates the query
 // so the <OnboardingTour /> mounted in AppLayout re-evaluates and fires.
 export const useRestartTour = () => {
@@ -227,7 +219,7 @@ const OnboardingTour: React.FC = () => {
           .update({ has_seen_tour: true })
           .eq('id', user.id);
         if (error) {
-          // Surface so we can debug RLS / permissions issues — but the
+          // Surface so we can debug RLS / permissions issues. The
           // localStorage fallback above already guarantees the user won't
           // see the tour again on this browser.
           console.error('[OnboardingTour] Failed to persist has_seen_tour:', error);
@@ -247,19 +239,18 @@ const OnboardingTour: React.FC = () => {
       run={run}
       continuous
       showSkipButton
-      showProgress
       disableScrolling={false}
       disableCloseOnEsc={false}
       scrollToFirstStep
-      spotlightPadding={6}
+      spotlightPadding={8}
+      tooltipComponent={ForgeTooltip}
       floaterProps={{
-        // Gives tooltip a small gap from the target so the arrow and target
-        // aren't crammed together
-        offset: 14,
+        // With placement "center" the floater still exists; zero the filter
+        // so Joyride's default glow doesn't double up with our own shadow.
         styles: { floater: { filter: 'none' } },
       }}
       styles={JOYRIDE_STYLES}
-      locale={{ back: 'Back', close: 'Close', last: 'Finish', next: 'Next', skip: 'Skip' }}
+      locale={{ back: 'Back', close: 'Close', last: "Let's go", next: 'Next', skip: 'Skip' }}
       callback={handleCallback}
     />
   );

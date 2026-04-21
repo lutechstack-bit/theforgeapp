@@ -15,10 +15,10 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const navItems = [
-  { to: '/', icon: Home, label: 'Home' },
-  { to: '/community', icon: MessageCircle, label: 'Community' },
-  { to: '/roadmap', icon: Map, label: 'Roadmap' },
-  { to: '/learn', icon: BookOpen, label: 'Learn' },
+  { to: '/', icon: Home, label: 'Home', tour: 'home' },
+  { to: '/community', icon: MessageCircle, label: 'Community', tour: 'community' },
+  { to: '/roadmap', icon: Map, label: 'Roadmap', tour: 'roadmap' },
+  { to: '/learn', icon: BookOpen, label: 'Learn', tour: 'learn' },
 ];
 
 export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
@@ -47,12 +47,13 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
         <nav ref={ref} className="fixed bottom-0 left-0 right-0 z-50 glass-nav md:hidden safe-area-pb" {...props}>
           <div className="container">
             <div className="flex items-center justify-around h-[68px]">
-              {navItems.map(({ to, icon: Icon, label }) => {
+              {navItems.map(({ to, icon: Icon, label, tour }) => {
                 const isActive = isNavActive(to);
                 return (
                   <NavLink
                     key={to}
                     to={to}
+                    data-tour={tour}
                     className={cn(
                       "relative flex flex-col items-center justify-center gap-0.5 min-h-[52px] min-w-[52px] px-3 py-2 rounded-2xl transition-all duration-300",
                       "active:scale-95 tap-feedback",
