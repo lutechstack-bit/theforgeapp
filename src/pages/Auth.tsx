@@ -1,12 +1,26 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { FloatingInput } from '@/components/ui/floating-input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { z } from 'zod';
 import forgeLogo from '@/assets/forge-logo.png';
+import forgeLogoLight from '@/assets/forge-logo-light.png';
+
+/**
+ * Auth (Login) — split-screen redesign.
+ *
+ * Visual layout ported from Shakthi's HTML prototype in
+ * lovable/ui-login-page-revamp (commit 526444d). Desktop is 35/65
+ * split with the form on the left and a background video on the
+ * right; on mobile the video stacks above the form with a
+ * fade-to-black handoff so the login pulls up into it.
+ *
+ * Every piece of auth logic from the previous implementation is
+ * preserved unchanged: zod validation, Supabase signIn via the
+ * useAuth context, toast error mapping, navigation to /welcome on
+ * success. Only the JSX + styling changed.
+ */
 
 const authSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -19,7 +33,7 @@ const Auth: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  
+
   const navigate = useNavigate();
   const { signIn } = useAuth();
   const { toast } = useToast();
@@ -46,7 +60,7 @@ const Auth: React.FC = () => {
     if (error) {
       toast({
         title: 'Login Failed',
-        description: error.message === 'Invalid login credentials' 
+        description: error.message === 'Invalid login credentials'
           ? 'The email or password you entered is incorrect.'
           : error.message,
         variant: 'destructive',
@@ -58,93 +72,171 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] flex items-center justify-center px-4 py-8 sm:p-6 bg-background safe-area-inset">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-primary/15 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-accent/15 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '4s' }} />
-      </div>
+    <main className="min-h-[100dvh] w-full grid grid-cols-1 lg:grid-cols-[35fr_65fr] bg-black text-foreground overflow-x-hidden">
+      {/* ─────────────── Video pane (right on desktop, top on mobile) ─────────────── */}
+      <section className="relative overflow-hidden bg-black order-1 lg:order-2 min-h-[58vh] lg:min-h-screen">
+        <video
+          src="/login/Forge_website.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
 
-      <div className="relative w-full max-w-md space-y-6 sm:space-y-8 animate-slide-up">
-        <div className="text-center space-y-4 sm:space-y-5">
-          <div className="relative mx-auto w-20 h-20 sm:w-24 sm:h-24">
-            <div className="absolute inset-0 bg-primary/30 rounded-2xl blur-xl" />
-            <img 
-              src={forgeLogo} 
-              alt="Forge" 
-              className="relative w-full h-full object-contain drop-shadow-lg"
-            />
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold gradient-text">
-            Welcome Back, Creator
-          </h1>
-          <p className="text-muted-foreground">
-            Continue your creative journey
-          </p>
+        {/* Desktop vignette: subtle horizontal edge-blend + radial darken */}
+        <div
+          aria-hidden
+          className="hidden lg:block absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              'linear-gradient(90deg, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0) 18%, rgba(10,10,10,0) 82%, rgba(10,10,10,0.25) 100%), radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%)',
+          }}
+        />
+
+        {/* Mobile vignette: bottom fade-to-black so the form pulls up seamlessly */}
+        <div
+          aria-hidden
+          className="lg:hidden absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 25%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.6) 82%, #000 100%)',
+          }}
+        />
+
+        {/* Mobile-only Forge logo overlay on the video */}
+        <div className="lg:hidden absolute top-5 left-5 z-[3] animate-fade-up">
+          <div
+            aria-hidden
+            className="absolute -inset-x-4 -inset-y-3 -z-10 blur-[6px]"
+            style={{
+              background:
+                'radial-gradient(ellipse at center, rgba(255,188,59,0.38) 0%, rgba(255,188,59,0) 65%)',
+            }}
+          />
+          <img
+            src={forgeLogoLight}
+            alt=""
+            className="w-[118px] h-auto drop-shadow-[0_4px_14px_rgba(0,0,0,0.6)]"
+          />
         </div>
 
-        <div className="bg-card/80 backdrop-blur-lg rounded-2xl p-6 sm:p-8 border border-border/50 shadow-2xl">
-          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
-            <FloatingInput
-              id="email"
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-secondary/50"
-              error={errors.email}
-            />
+        {/* Editorial tagline */}
+        <p className="absolute z-[3] left-5 lg:left-11 right-5 lg:right-auto bottom-24 lg:bottom-11 lg:max-w-[720px] font-fraunces italic font-medium text-[30px] lg:text-[44px] leading-[1.15] tracking-[-0.4px] text-[#F5F1E8] drop-shadow-[0_2px_14px_rgba(0,0,0,0.55)] animate-fade-up">
+          Your journey from Dreamer to Doer starts here
+        </p>
+      </section>
 
-            <div>
-              <div className="flex items-center justify-end mb-1">
-                <Link 
-                  to="/forgot-password" 
-                  className="text-sm text-primary hover:underline"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="relative">
-                <FloatingInput
-                  id="password"
-                  label="Password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-secondary/50 pr-12"
-                  error={errors.password}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="absolute right-3 top-4 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
+      {/* ─────────────── Login pane (left on desktop, bottom on mobile) ─────────────── */}
+      <section
+        className="relative flex flex-col items-center justify-center bg-black px-5 py-10 lg:px-14 lg:py-12 order-2 lg:order-1 -mt-20 lg:mt-0 z-[4] lg:z-auto"
+      >
+        <div className="relative w-full max-w-[420px] flex flex-col items-center animate-fade-up">
+          {/* Desktop logo with radial glow (hidden on mobile — replaced by overlay above) */}
+          <div className="relative w-[220px] h-[90px] hidden lg:flex items-center justify-center mb-2">
+            <div
+              aria-hidden
+              className="absolute -inset-x-10 -inset-y-5 blur-[6px] animate-pulse-soft"
+              style={{
+                background:
+                  'radial-gradient(ellipse at center, rgba(255,188,59,0.45) 0%, rgba(255,188,59,0) 65%)',
+              }}
+            />
+            <img src={forgeLogo} alt="the Forge" className="relative w-full h-auto" />
+          </div>
+
+          <h1 className="mt-2 lg:mt-5 text-[26px] lg:text-[32px] font-bold text-primary text-center leading-[1.15] tracking-[-0.4px]">
+            Welcome Back, Creator
+          </h1>
+          <p className="mt-2 lg:mt-2.5 mb-6 lg:mb-9 text-sm lg:text-[15px] text-muted-foreground text-center">
+            Continue your creative journey
+          </p>
+
+          <form
+            onSubmit={handleSubmit}
+            className="w-full lg:bg-[#141414] lg:border lg:border-primary/[0.08] lg:rounded-[20px] lg:p-7 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_20px_50px_rgba(0,0,0,0.5)] lg:backdrop-blur-[10px]"
+          >
+            {/* Email */}
+            <div className="mb-2.5">
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                required
+                className="w-full bg-white/[0.04] lg:bg-[#1C1C1C] border border-white/[0.08] lg:border-[rgba(245,241,232,0.06)] rounded-[14px] lg:rounded-xl px-5 py-[17px] lg:py-[18px] text-[15px] text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:border-primary/40 focus:bg-white/[0.06] lg:focus:bg-[#1F1F1F]"
+              />
+              {errors.email && (
+                <p className="text-xs text-destructive mt-1.5 ml-1">{errors.email}</p>
+              )}
             </div>
 
-            <Button
+            {/* Forgot password link */}
+            <div className="flex justify-end mt-1.5 mb-3.5 mx-0.5">
+              <Link
+                to="/forgot-password"
+                className="text-[13px] font-medium text-primary/90 hover:text-primary hover:underline underline-offset-[3px] transition-opacity"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
+            {/* Password with eye toggle */}
+            <div className="relative mb-2.5">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+                className="w-full bg-white/[0.04] lg:bg-[#1C1C1C] border border-white/[0.08] lg:border-[rgba(245,241,232,0.06)] rounded-[14px] lg:rounded-xl px-5 py-[17px] lg:py-[18px] pr-12 text-[15px] text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:border-primary/40 focus:bg-white/[0.06] lg:focus:bg-[#1F1F1F]"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute right-[18px] top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-primary transition-colors"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+              {errors.password && (
+                <p className="text-xs text-destructive mt-1.5 ml-1">{errors.password}</p>
+              )}
+            </div>
+
+            {/* CTA */}
+            <button
               type="submit"
-              variant="premium"
-              size="xl"
-              className="w-full"
               disabled={loading}
+              className="w-full py-[17px] mt-1.5 rounded-[14px] text-[#111] font-semibold text-base tracking-[0.1px] bg-gradient-to-b from-[#F5C76A] via-primary to-[#D99A1F] shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_10px_25px_rgba(255,188,59,0.18),0_2px_6px_rgba(0,0,0,0.3)] hover:brightness-[1.04] hover:-translate-y-px hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_14px_32px_rgba(255,188,59,0.28),0_3px_8px_rgba(0,0,0,0.35)] active:translate-y-0 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
               {loading ? (
-                <>
+                <span className="inline-flex items-center justify-center gap-2">
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  Entering...
-                </>
+                  Entering…
+                </span>
               ) : (
                 'Enter the Circle'
               )}
-            </Button>
+            </button>
           </form>
+
+          <p className="mt-7 text-[13px] text-muted-foreground text-center">
+            New to the Forge?
+            {/* TODO: swap to a proper landing URL once one exists */}
+            <a
+              href="mailto:hello@leveluplearning.in"
+              className="text-primary font-medium ml-1 hover:underline underline-offset-[3px]"
+            >
+              Request an invite
+            </a>
+          </p>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 

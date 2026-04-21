@@ -24,6 +24,7 @@ export default {
       fontFamily: {
         sans: ['OpenSauceOne', 'sans-serif'],
         serif: ['Cormorant Garamond', 'serif'],
+        fraunces: ['Fraunces', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",
