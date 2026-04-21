@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>the Forge — Welcome Back, Creator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Open+Sauce+One:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0A0A0A;
+    --bg-card: #141414;
+    --bg-input: #1C1C1C;
+    --gold: #FFBC3B;
+    --gold-soft: #F5C76A;
+    --gold-deep: #D99A1F;
+    --text: #F5F1E8;
+    --text-muted: #8C8578;
+    --border: rgba(255, 188, 59, 0.08);
+    --border-input: rgba(245, 241, 232, 0.06);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Open Sauce One', system-ui, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 35fr 65fr;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* ------- LEFT: LOGIN ------- */
+  .pane-login {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 48px 56px;
+    background: #000;
+    overflow: hidden;
+  }
+
+  .login-wrap {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: fadeUp 900ms cubic-bezier(.2,.7,.3,1) both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .logo {
+    position: relative;
+    width: 220px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+  .logo::before {
+    content: "";
+    position: absolute;
+    inset: -20px -40px;
+    background: radial-gradient(ellipse at center, rgba(255, 188, 59, 0.45) 0%, rgba(255, 188, 59, 0) 65%);
+    filter: blur(6px);
+    animation: pulse 4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.9; transform: scale(1); }
+    50%      { opacity: 0.65; transform: scale(0.96); }
+  }
+
+  .logo img {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  h1 {
+    font-family: 'Open Sauce One', sans-serif;
+    font-weight: 700;
+    font-size: 32px;
+    line-height: 1.15;
+    color: var(--gold);
+    margin-top: 20px;
+    text-align: center;
+    letter-spacing: -0.3px;
+  }
+
+  .subtitle {
+    font-size: 15px;
+    color: var(--text-muted);
+    margin-top: 10px;
+    margin-bottom: 36px;
+    text-align: center;
+    font-weight: 400;
+  }
+
+  .card {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 26px;
+    backdrop-filter: blur(10px);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.02) inset,
+      0 20px 50px rgba(0, 0, 0, 0.5);
+  }
+
+  .field {
+    position: relative;
+    margin-bottom: 10px;
+  }
+  .field input {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border-input);
+    border-radius: 12px;
+    padding: 18px 20px;
+    font-size: 15px;
+    color: var(--text);
+    font-family: inherit;
+    transition: border-color 180ms ease, background 180ms ease;
+  }
+  .field input::placeholder {
+    color: var(--text-muted);
+  }
+  .field input:focus {
+    outline: none;
+    border-color: rgba(255, 188, 59, 0.35);
+    background: #1F1F1F;
+  }
+
+  .eye {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: 0;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    transition: color 180ms ease;
+  }
+  .eye:hover { color: var(--gold); }
+
+  .forgot-row {
+    display: flex;
+    justify-content: flex-end;
+    margin: 6px 2px 14px;
+  }
+  .forgot {
+    font-size: 13px;
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: 500;
+    opacity: 0.9;
+    transition: opacity 160ms ease;
+  }
+  .forgot:hover { opacity: 1; text-decoration: underline; text-underline-offset: 3px; }
+
+  .cta {
+    width: 100%;
+    padding: 17px;
+    border: 0;
+    border-radius: 14px;
+    background: linear-gradient(180deg, var(--gold-soft) 0%, var(--gold) 55%, var(--gold-deep) 100%);
+    color: #111;
+    font-family: 'Open Sauce One', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    letter-spacing: 0.1px;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.35) inset,
+      0 10px 25px rgba(255, 188, 59, 0.18),
+      0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: transform 200ms cubic-bezier(.2,.7,.3,1), box-shadow 220ms ease, filter 200ms ease;
+  }
+  .cta:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.04);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.4) inset,
+      0 14px 32px rgba(255, 188, 59, 0.28),
+      0 3px 8px rgba(0, 0, 0, 0.35);
+  }
+  .cta:active { transform: translateY(0); }
+
+  .footer {
+    margin-top: 28px;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+  .footer a {
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 4px;
+  }
+  .footer a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ------- RIGHT: VIDEO ------- */
+  .pane-video {
+    position: relative;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .pane-video video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  /* Soft vignette + edge-blend so the video feels part of the page */
+  .pane-video::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0) 18%, rgba(10,10,10,0) 82%, rgba(10,10,10,0.25) 100%),
+      radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* Editorial overlay inside the video pane */
+  .video-caption {
+    position: absolute;
+    z-index: 3;
+    left: 44px;
+    bottom: 44px;
+    right: 44px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    color: #F5F1E8;
+    animation: fadeUp 1100ms cubic-bezier(.2,.7,.3,1) 200ms both;
+  }
+  .video-caption .kicker {
+    font-family: 'Open Sauce One', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .video-caption h2 {
+    font-family: 'Open Sauce One', sans-serif;
+    font-weight: 600;
+    font-style: normal;
+    font-size: 32px;
+    line-height: 1.15;
+    max-width: 440px;
+    color: #F5F1E8;
+    letter-spacing: -0.3px;
+  }
+  .video-caption .meta {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(245, 241, 232, 0.6);
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    white-space: nowrap;
+  }
+
+  /* Mobile-only logo overlay on the video (hidden on desktop) */
+  .mobile-logo { display: none; }
+
+  .video-tagline {
+    position: absolute;
+    z-index: 3;
+    left: 44px;
+    bottom: 44px;
+    max-width: 720px;
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-style: italic;
+    font-size: 44px;
+    line-height: 1.15;
+    letter-spacing: -0.4px;
+    color: #F5F1E8;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+    animation: fadeUp 1100ms cubic-bezier(.2,.7,.3,1) 200ms both;
+  }
+
+  .video-top {
+    position: absolute;
+    top: 32px;
+    right: 32px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Open Sauce One', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: rgba(245, 241, 232, 0.7);
+    font-weight: 600;
+  }
+  .live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 10px var(--gold);
+    animation: blink 1.6s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+  }
+
+  /* ------- RESPONSIVE ------- */
+  @media (max-width: 960px) {
+    html, body { overflow: auto; height: auto; }
+    .shell {
+      grid-template-columns: 1fr;
+      grid-template-rows: 58vh auto;
+      height: auto;
+      min-height: 100vh;
+    }
+
+    .pane-video {
+      order: 1;
+      min-height: 58vh;
+    }
+    /* Bottom fade → black so video dissolves into login */
+    .pane-video::before {
+      background:
+        linear-gradient(180deg,
+          rgba(0,0,0,0.15) 0%,
+          rgba(0,0,0,0) 25%,
+          rgba(0,0,0,0) 55%,
+          rgba(0,0,0,0.6) 82%,
+          #000 100%);
+    }
+
+    .pane-login {
+      order: 2;
+      padding: 14px 22px 44px;
+      /* Pull the login up into the video fade for a seamless handoff */
+      margin-top: -80px;
+      position: relative;
+      z-index: 4;
+    }
+
+    .login-wrap { max-width: 100%; }
+
+    /* Hide the in-form logo — it lives as an overlay on the video on mobile */
+    .logo { display: none; }
+
+    .mobile-logo {
+      display: block;
+      position: absolute;
+      top: 20px;
+      left: 22px;
+      z-index: 3;
+      width: 118px;
+      animation: fadeUp 900ms cubic-bezier(.2,.7,.3,1) both;
+    }
+    .mobile-logo::before {
+      content: "";
+      position: absolute;
+      inset: -14px -22px;
+      background: radial-gradient(ellipse at center, rgba(255, 188, 59, 0.38) 0%, rgba(255, 188, 59, 0) 65%);
+      filter: blur(6px);
+      z-index: -1;
+      pointer-events: none;
+    }
+    .mobile-logo img {
+      width: 100%;
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 4px 14px rgba(0,0,0,0.6));
+    }
+
+    h1 {
+      font-size: 26px;
+      margin-top: 8px;
+      letter-spacing: -0.4px;
+    }
+    .subtitle {
+      font-size: 14px;
+      margin-top: 8px;
+      margin-bottom: 22px;
+    }
+
+    /* Drop the card chrome — inputs sit flush on pure black */
+    .card {
+      background: transparent;
+      border: 0;
+      backdrop-filter: none;
+      box-shadow: none;
+      padding: 0;
+      border-radius: 0;
+    }
+
+    .field { margin-bottom: 12px; }
+    .field input {
+      padding: 17px 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+    }
+    .field input:focus {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 188, 59, 0.45);
+    }
+
+    .forgot-row { margin: 4px 2px 14px; }
+
+    .cta {
+      padding: 17px;
+      border-radius: 14px;
+      margin-top: 6px;
+    }
+
+    .footer { margin-top: 24px; font-size: 13px; }
+
+    /* Editorial caption — kicker up top, headline sits above the fade */
+    .video-caption {
+      left: 22px;
+      right: 22px;
+      bottom: 96px;
+      gap: 0;
+    }
+    .video-caption h2 {
+      font-size: 22px;
+      line-height: 1.2;
+      max-width: 100%;
+    }
+    .video-caption .kicker {
+      font-size: 10px;
+      letter-spacing: 2.4px;
+      margin-bottom: 8px;
+    }
+    .video-caption .meta { display: none; }
+
+    .video-top {
+      top: 22px;
+      right: 22px;
+      font-size: 10px;
+      letter-spacing: 2.2px;
+    }
+
+    .video-tagline {
+      left: 22px;
+      right: 22px;
+      bottom: 96px;
+      font-size: 30px;
+      line-height: 1.15;
+      max-width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+  <main class="shell">
+
+    <!-- LEFT: LOGIN -->
+    <section class="pane-login">
+      <div class="grain"></div>
+
+      <div class="login-wrap">
+        <div class="logo">
+          <img src="forge-logo.png" alt="the Forge — by LevelUp Learning" />
+        </div>
+
+        <h1>Welcome Back, Creator</h1>
+        <p class="subtitle">Continue your creative journey</p>
+
+        <form class="card" onsubmit="event.preventDefault();">
+          <div class="field">
+            <input type="email" placeholder="Email" autocomplete="email" required />
+          </div>
+
+          <div class="forgot-row">
+            <a class="forgot" href="#">Forgot password?</a>
+          </div>
+
+          <div class="field">
+            <input id="pw" type="password" placeholder="Password" autocomplete="current-password" required />
+            <button class="eye" type="button" aria-label="Show password" onclick="togglePw(this)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+
+          <button class="cta" type="submit">Enter the Circle</button>
+        </form>
+
+        <p class="footer">New to the Forge?<a href="#">Request an invite</a></p>
+      </div>
+    </section>
+
+    <!-- RIGHT: VIDEO -->
+    <section class="pane-video">
+      <video src="Forge_website.mp4" autoplay muted loop playsinline preload="auto"></video>
+
+      <div class="mobile-logo" aria-hidden="true">
+        <img src="forge-logo-light.png" alt="" />
+      </div>
+
+      <p class="video-tagline">Your journey from Dreamer to Doer starts here</p>
+    </section>
+
+  </main>
+
+  <script>
+    function togglePw(btn) {
+      const input = document.getElementById('pw');
+      const isPw = input.type === 'password';
+      input.type = isPw ? 'text' : 'password';
+      btn.setAttribute('aria-label', isPw ? 'Hide password' : 'Show password');
+    }
+  </script>
+</body>
+</html>
