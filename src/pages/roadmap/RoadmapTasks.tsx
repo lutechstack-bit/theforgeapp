@@ -1,6 +1,8 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStudentJourney } from '@/hooks/useStudentJourney';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { useQueryClient } from '@tanstack/react-query';
 import { TaskStageCard, TasksHeader, type TaskFilterType } from '@/components/tasks';
 import { ConfettiCelebration } from '@/components/journey/ConfettiCelebration';
@@ -13,6 +15,13 @@ const RoadmapTasks: React.FC = () => {
   const { edition } = useAuth();
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
+  // Respect the tasks_enabled feature flag — if admin has turned the Tasks
+  // feature off, redirect deep-links to the Roadmap landing instead of
+  // rendering a live Tasks page.
+  const { isFeatureEnabled, isLoading: flagsLoading } = useFeatureFlags();
+  if (!flagsLoading && !isFeatureEnabled('tasks_enabled')) {
+    return <Navigate to="/roadmap" replace />;
+  }
   
   const {
     stages,

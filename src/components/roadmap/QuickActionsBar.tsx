@@ -1,9 +1,10 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { 
+import {
   Map, FileText, Package, Film, Image, BookOpen, CheckSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 interface QuickActionsBarProps {
   hasGallery?: boolean;
@@ -18,10 +19,14 @@ const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isFeatureEnabled } = useFeatureFlags();
+  const tasksEnabled = isFeatureEnabled('tasks_enabled');
 
   const sections = [
     { id: 'journey', path: '/roadmap', label: 'Journey', icon: Map },
-    { id: 'tasks', path: '/roadmap/tasks', label: 'Tasks', icon: CheckSquare },
+    // Tasks tab is gated by the tasks_enabled flag so admins can hide the
+    // feature on cohorts that don't use the journey-tasks workflow.
+    ...(tasksEnabled ? [{ id: 'tasks', path: '/roadmap/tasks', label: 'Tasks', icon: CheckSquare }] : []),
     { id: 'prep', path: '/roadmap/prep', label: 'Prep', icon: FileText },
     ...(hasEquipment ? [{ id: 'equipment', path: '/roadmap/equipment', label: 'Equipment', icon: Package }] : []),
     { id: 'rules', path: '/roadmap/rules', label: 'Rules', icon: BookOpen },

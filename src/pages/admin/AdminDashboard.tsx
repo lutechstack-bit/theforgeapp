@@ -6,7 +6,7 @@ import {
   Users, Calendar, CalendarDays, CreditCard, BookOpen, MessageSquare,
   TrendingUp, ArrowUpRight, ArrowDownRight, LogIn, Palette, RefreshCw,
   Check, X, AlertTriangle, Eye, Info, Map, UserX, ChevronDown, ClipboardCheck, UserCircle, Video,
-  Compass
+  Compass, CheckSquare
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -241,6 +241,7 @@ const FEATURE_TOGGLES = [
   { key: 'pre_forge_sessions_enabled', label: 'Pre Forge Sessions', desc: 'Show/hide on Learn', icon: BookOpen },
   { key: 'embedded_zoom_enabled', label: 'Embedded Zoom', desc: 'In-app Zoom vs native app', icon: Video },
   { key: 'payments_enabled', label: 'Payments', desc: 'Show/hide payment card on Home', icon: CreditCard },
+  { key: 'tasks_enabled', label: 'Tasks', desc: 'Show/hide Tasks on Home & Roadmap', icon: CheckSquare },
 ];
 
 // --- Main Dashboard ---

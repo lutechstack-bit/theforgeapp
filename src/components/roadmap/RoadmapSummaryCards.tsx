@@ -4,6 +4,7 @@ import { Map, CheckSquare, FileText, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRoadmapData } from '@/hooks/useRoadmapData';
 import { useStudentJourney } from '@/hooks/useStudentJourney';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { ProgressRing } from '@/components/journey/ProgressRing';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
@@ -20,6 +21,8 @@ const RoadmapSummaryCards: React.FC = () => {
   } = useRoadmapData();
 
   const { tasks, isTaskCompleted } = useStudentJourney();
+  const { isFeatureEnabled } = useFeatureFlags();
+  const tasksEnabled = isFeatureEnabled('tasks_enabled');
 
   // Journey card data
   const currentDay = roadmapDays?.find(d => getDayStatus(d) === 'current')
@@ -122,9 +125,19 @@ const RoadmapSummaryCards: React.FC = () => {
     },
   ];
 
+  // Respect the tasks_enabled feature flag — hides the Tasks summary card
+  // on both Home (via HomeJourneySection) and the Roadmap landing page.
+  const visibleCards = cards.filter(c => c.id !== 'tasks' || tasksEnabled);
+
+  // Grid column count collapses 3 -> 2 when Tasks is hidden so the remaining
+  // cards don't stretch awkwardly.
+  const gridClass = visibleCards.length === 3
+    ? 'grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-4'
+    : 'grid grid-cols-2 gap-2 sm:gap-3 mb-4';
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
-      {cards.map((card) => {
+    <div className={gridClass}>
+      {visibleCards.map((card) => {
         const Icon = card.icon;
         return (
           <button
