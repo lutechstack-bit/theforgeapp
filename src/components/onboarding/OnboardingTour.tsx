@@ -23,9 +23,15 @@ import { ForgeTooltip } from './ForgeTooltip';
 
 // Both the desktop sidebar (SideNav.tsx) and the mobile bottom nav
 // (BottomNav.tsx) carry data-tour="..." attributes so the same step targets
-// work on every device. If an attribute isn't present on the current layout
-// (e.g. profile-menu on a tiny phone), Joyride falls back gracefully to
-// showing the centered tooltip without a spotlight.
+// work on every device. If an attribute isn't present on the current layout,
+// Joyride falls back gracefully to showing the tooltip without a spotlight.
+//
+// Placement rules:
+//   - Welcome step (target 'body') uses 'center' for a modal-style opener.
+//   - Every other step uses 'auto' so Joyride can cut a spotlight over the
+//     actual nav item and position the tooltip in the best available space.
+//     Our custom tooltip has its own max-width (min(92vw, 440px)) so it
+//     never clips regardless of which side Joyride picks.
 const STEPS: Step[] = [
   {
     target: 'body',
@@ -36,7 +42,7 @@ const STEPS: Step[] = [
   },
   {
     target: '[data-tour="home"]',
-    placement: 'center',
+    placement: 'auto',
     title: 'Home',
     content:
       "Announcements, today's focus, and what's coming next for your cohort. It all lives here.",
@@ -44,7 +50,7 @@ const STEPS: Step[] = [
   },
   {
     target: '[data-tour="roadmap"]',
-    placement: 'center',
+    placement: 'auto',
     title: 'Roadmap',
     content:
       'Your full journey. Every online session and bootcamp day with its date, Zoom link, and recording once the session is done.',
@@ -52,7 +58,7 @@ const STEPS: Step[] = [
   },
   {
     target: '[data-tour="learn"]',
-    placement: 'center',
+    placement: 'auto',
     title: 'Learn',
     content:
       "After every online class, the recording appears here in a day or two so you can rewatch it. Your Orientation recording is already up. Hit play when you're done here and get started.",
@@ -60,14 +66,14 @@ const STEPS: Step[] = [
   },
   {
     target: '[data-tour="community"]',
-    placement: 'center',
+    placement: 'auto',
     title: 'Community',
     content: 'Find your batchmates, start a conversation, and team up for projects.',
     disableBeacon: true,
   },
   {
     target: '[data-tour="profile-menu"]',
-    placement: 'center',
+    placement: 'auto',
     title: 'Your profile',
     content: 'Edit your profile, restart this tour anytime, or sign out from here.',
     disableBeacon: true,
@@ -77,16 +83,20 @@ const STEPS: Step[] = [
 // Joyride styles scoped to what the custom ForgeTooltip doesn't already
 // control: the dark page overlay and the spotlight ring around the active
 // nav target. All tooltip styling lives inside ForgeTooltip.tsx.
+//
+// Spotlight ring uses a fat amber glow so students immediately see which
+// nav item the current step is talking about, even on busy pages.
 const JOYRIDE_STYLES = {
   options: {
     primaryColor: '#FFBF00',
     zIndex: 10000,
-    overlayColor: 'rgba(0, 0, 0, 0.72)',
+    overlayColor: 'rgba(0, 0, 0, 0.75)',
     arrowColor: '#0F0F10',
   },
   spotlight: {
-    borderRadius: 14,
-    boxShadow: '0 0 0 2px rgba(255, 191, 0, 0.35)',
+    borderRadius: 16,
+    boxShadow:
+      '0 0 0 4px rgba(255, 191, 0, 0.55), 0 0 32px rgba(255, 191, 0, 0.35)',
   },
 };
 
@@ -242,11 +252,13 @@ const OnboardingTour: React.FC = () => {
       disableScrolling={false}
       disableCloseOnEsc={false}
       scrollToFirstStep
-      spotlightPadding={8}
+      spotlightPadding={10}
       tooltipComponent={ForgeTooltip}
       floaterProps={{
-        // With placement "center" the floater still exists; zero the filter
-        // so Joyride's default glow doesn't double up with our own shadow.
+        // Keep the tooltip 16px away from the spotlight so the amber ring
+        // is fully visible and the arrow has room. The filter reset avoids
+        // doubling up Joyride's default glow with our custom shadow.
+        offset: 16,
         styles: { floater: { filter: 'none' } },
       }}
       styles={JOYRIDE_STYLES}
