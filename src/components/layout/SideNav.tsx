@@ -60,7 +60,7 @@ export const SideNav: React.FC = () => {
     const content = (
       <NavLink
         to={to}
-        data-tour={tour}
+        data-tour-desktop={tour}
         className={cn(
           "group flex items-center gap-3.5 rounded-2xl transition-colors duration-200 text-base font-medium",
           collapsed ? "justify-center p-3" : "px-4 py-3.5",

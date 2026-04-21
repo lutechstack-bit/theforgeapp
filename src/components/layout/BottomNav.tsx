@@ -53,7 +53,7 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
                   <NavLink
                     key={to}
                     to={to}
-                    data-tour={tour}
+                    data-tour-mobile={tour}
                     className={cn(
                       "relative flex flex-col items-center justify-center gap-0.5 min-h-[52px] min-w-[52px] px-3 py-2 rounded-2xl transition-all duration-300",
                       "active:scale-95 tap-feedback",

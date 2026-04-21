@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Joyride, { ACTIONS, CallBackProps, EVENTS, STATUS, Step } from 'react-joyride';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { ForgeTooltip } from './ForgeTooltip';
 
 /**
@@ -21,64 +22,82 @@ import { ForgeTooltip } from './ForgeTooltip';
  * so users can see which nav item or control each step is about.
  */
 
-// Both the desktop sidebar (SideNav.tsx) and the mobile bottom nav
-// (BottomNav.tsx) carry data-tour="..." attributes so the same step targets
-// work on every device. If an attribute isn't present on the current layout,
-// Joyride falls back gracefully to showing the tooltip without a spotlight.
-//
-// Placement rules:
-//   - Welcome step (target 'body') uses 'center' for a modal-style opener.
-//   - Every other step uses 'auto' so Joyride can cut a spotlight over the
-//     actual nav item and position the tooltip in the best available space.
-//     Our custom tooltip has its own max-width (min(92vw, 440px)) so it
-//     never clips regardless of which side Joyride picks.
-const STEPS: Step[] = [
+// Step content is device-agnostic; only the CSS selector we spotlight and
+// the placement direction change between desktop and mobile. Desktop
+// targets the sidebar (data-tour-desktop), mobile targets the bottom nav
+// (data-tour-mobile), and the profile menu uses the same selector on both
+// because the avatar renders on every screen size.
+type StepCopy = {
+  key: 'welcome' | 'home' | 'roadmap' | 'learn' | 'community' | 'profile';
+  title?: string;
+  content: string;
+};
+
+const STEP_COPY: StepCopy[] = [
   {
-    target: 'body',
-    placement: 'center',
+    key: 'welcome',
     title: 'Welcome to the Forge',
     content: "Quick tour in under a minute. We'll show you around the app.",
-    disableBeacon: true,
   },
   {
-    target: '[data-tour="home"]',
-    placement: 'auto',
+    key: 'home',
     title: 'Home',
     content:
       "Announcements, today's focus, and what's coming next for your cohort. It all lives here.",
-    disableBeacon: true,
   },
   {
-    target: '[data-tour="roadmap"]',
-    placement: 'auto',
+    key: 'roadmap',
     title: 'Roadmap',
     content:
       'Your full journey. Every online session and bootcamp day with its date, Zoom link, and recording once the session is done.',
-    disableBeacon: true,
   },
   {
-    target: '[data-tour="learn"]',
-    placement: 'auto',
+    key: 'learn',
     title: 'Learn',
     content:
       "After every online class, the recording appears here in a day or two so you can rewatch it. Your Orientation recording is already up. Hit play when you're done here and get started.",
-    disableBeacon: true,
   },
   {
-    target: '[data-tour="community"]',
-    placement: 'auto',
+    key: 'community',
     title: 'Community',
     content: 'Find your batchmates, start a conversation, and team up for projects.',
-    disableBeacon: true,
   },
   {
-    target: '[data-tour="profile-menu"]',
-    placement: 'auto',
+    key: 'profile',
     title: 'Your profile',
     content: 'Edit your profile, restart this tour anytime, or sign out from here.',
-    disableBeacon: true,
   },
 ];
+
+/**
+ * Build the Joyride steps for the current viewport. We pick targets and
+ * placements based on `isMobile` so:
+ *   - The spotlight always lands on the VISIBLE nav element (sidebar on
+ *     desktop, bottom-nav on mobile). Querying a hidden element would
+ *     give Joyride a zero-rect target and silently drop the step.
+ *   - The tooltip position never clips the viewport: right-start on
+ *     desktop anchors to the top edge of the target, top-start on mobile
+ *     floats above the bottom-nav.
+ */
+function buildSteps(isMobile: boolean): Step[] {
+  const navAttr = isMobile ? 'data-tour-mobile' : 'data-tour-desktop';
+  const navPlacement: Step['placement'] = isMobile ? 'top-start' : 'right-start';
+  return STEP_COPY.map<Step>(s => {
+    if (s.key === 'welcome') {
+      return { target: 'body', placement: 'center', title: s.title, content: s.content, disableBeacon: true };
+    }
+    if (s.key === 'profile') {
+      return { target: '[data-tour="profile-menu"]', placement: 'bottom-end', title: s.title, content: s.content, disableBeacon: true };
+    }
+    return {
+      target: `[${navAttr}="${s.key}"]`,
+      placement: navPlacement,
+      title: s.title,
+      content: s.content,
+      disableBeacon: true,
+    };
+  });
+}
 
 // Joyride styles scoped to what the custom ForgeTooltip doesn't already
 // control: the dark page overlay and the spotlight ring around the active
@@ -190,6 +209,8 @@ const OnboardingTour: React.FC = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: hasSeenTour, isLoading } = useHasSeenTour();
+  const isMobile = useIsMobile();
+  const steps = useMemo(() => buildSteps(isMobile), [isMobile]);
   const [run, setRun] = useState(false);
 
   // Delay firing slightly on mount so the sidebar + profile menu render first
@@ -245,7 +266,7 @@ const OnboardingTour: React.FC = () => {
 
   return (
     <Joyride
-      steps={STEPS}
+      steps={steps}
       run={run}
       continuous
       showSkipButton
