@@ -25,27 +25,27 @@ const STEPS: Step[] = [
     target: 'body',
     placement: 'center',
     title: 'Welcome to the Forge 👋',
-    content: "Quick tour — under a minute. Let's show you around.",
+    content: "Quick tour in under a minute. Let's show you around.",
     disableBeacon: true,
   },
   {
     target: '[data-tour="home"]',
     content:
-      "Announcements, today's focus, and what's coming next for your cohort — it all lives here.",
+      "Announcements, today's focus, and what's coming next for your cohort. It all lives here.",
     disableBeacon: true,
     placement: 'right',
   },
   {
     target: '[data-tour="roadmap"]',
     content:
-      'Your full journey — every online session and bootcamp day with its date, Zoom link, and recording once the session is done.',
+      'Your full journey. Every online session and bootcamp day with its date, Zoom link, and recording once the session is done.',
     disableBeacon: true,
     placement: 'right',
   },
   {
     target: '[data-tour="learn"]',
     content:
-      "After every online class, the recording appears here the next day or two so you can rewatch it. Your Orientation recording is already up — hit play when you're done here and get started.",
+      "After every online class, the recording appears here in a day or two so you can rewatch it. Your Orientation recording is already up. Hit play when you're done here and get started.",
     disableBeacon: true,
     placement: 'right',
   },
