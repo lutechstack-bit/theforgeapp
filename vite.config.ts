@@ -49,6 +49,20 @@ export default defineConfig(({ mode }) => ({
               expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 7 },
             },
           },
+          {
+            // Cache the /auth hero mp4 at runtime so return visits load
+            // the 10 MB video from disk. We DON'T precache it (users
+            // who never see /auth shouldn't pay the bandwidth) — this
+            // is a lazy, first-request-populates-cache strategy.
+            urlPattern: /\/login\/.*\.mp4$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "auth-video-cache",
+              expiration: { maxEntries: 2, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              rangeRequests: true,
+              cacheableResponse: { statuses: [0, 200, 206] },
+            },
+          },
           // Removed Supabase caching to prevent auth token issues
         ],
       },
