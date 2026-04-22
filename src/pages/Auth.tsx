@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -38,6 +38,22 @@ const Auth: React.FC = () => {
   const { signIn } = useAuth();
   const { toast } = useToast();
 
+  // Safari on iOS sometimes ignores the autoPlay attribute on the first
+  // render — especially when a service worker serves the mp4 from a
+  // Range cache (our PWA runtime-cache does this). Manually calling
+  // play() once the element is mounted catches those cases so users
+  // don't see the big "tap to play" overlay. If the browser still
+  // refuses (e.g. Low Power Mode is on — an OS-level block we can't
+  // override) the promise rejects silently and the poster stays.
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.play().catch(() => {
+      /* autoplay blocked (low power mode, reduce motion, etc.) — no-op */
+    });
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -72,10 +88,11 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <main className="h-[100dvh] w-full grid grid-cols-1 lg:grid-cols-[35fr_65fr] bg-black text-foreground overflow-hidden">
+    <main className="h-[100svh] lg:h-[100dvh] w-full grid grid-cols-1 lg:grid-cols-[35fr_65fr] bg-black text-foreground overflow-hidden">
       {/* ─────────────── Video pane (right on desktop, top on mobile) ─────────────── */}
-      <section className="relative overflow-hidden bg-black order-1 lg:order-2 h-[46vh] lg:h-full">
+      <section className="relative overflow-hidden bg-black order-1 lg:order-2 h-[42vh] lg:h-full">
         <video
+          ref={videoRef}
           src="/login/Forge_website.mp4"
           poster="/login/Forge_website_poster.jpg"
           autoPlay
@@ -83,6 +100,11 @@ const Auth: React.FC = () => {
           loop
           playsInline
           preload="auto"
+          // iOS hides native controls by default on inline video,
+          // but these extra disables stop AirPlay/PiP buttons from
+          // appearing if the user long-presses.
+          disablePictureInPicture
+          disableRemotePlayback
           className="absolute inset-0 w-full h-full object-cover"
         />
 
@@ -131,7 +153,7 @@ const Auth: React.FC = () => {
 
       {/* ─────────────── Login pane (left on desktop, bottom on mobile) ─────────────── */}
       <section
-        className="relative flex flex-col items-center justify-center bg-black px-5 py-4 lg:px-16 lg:py-10 order-2 lg:order-1 z-[4] lg:z-auto lg:h-full lg:overflow-hidden"
+        className="relative flex flex-col items-center justify-center bg-black px-5 py-3 lg:px-16 lg:py-10 order-2 lg:order-1 z-[4] lg:z-auto lg:h-full lg:overflow-hidden"
       >
         <div className="relative w-full max-w-[420px] flex flex-col items-center animate-fade-up">
           {/* Desktop logo with radial glow (hidden on mobile — replaced by overlay above) */}
@@ -150,16 +172,16 @@ const Auth: React.FC = () => {
           <h1 className="text-[24px] lg:text-[30px] font-bold text-primary text-center leading-[1.15] tracking-[-0.4px]">
             Welcome Creator
           </h1>
-          <p className="mt-1.5 mb-4 lg:mb-7 text-[13px] lg:text-[14px] text-muted-foreground text-center">
+          <p className="mt-1 mb-3 lg:mb-7 text-[13px] lg:text-[14px] text-muted-foreground text-center">
             Continue your creative journey
           </p>
 
           <form
             onSubmit={handleSubmit}
-            className="w-full bg-[#141414] border border-primary/[0.08] rounded-[20px] p-5 lg:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_20px_50px_rgba(0,0,0,0.5)]"
+            className="w-full bg-[#141414] border border-primary/[0.08] rounded-[20px] p-4 lg:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_20px_50px_rgba(0,0,0,0.5)]"
           >
             {/* Email */}
-            <div className="mb-4">
+            <div className="mb-3 lg:mb-4">
               <label
                 htmlFor="auth-email"
                 className="block text-[14px] font-semibold text-foreground mb-2"
@@ -182,7 +204,7 @@ const Auth: React.FC = () => {
             </div>
 
             {/* Password + Forgot link on same row */}
-            <div className="mb-4">
+            <div className="mb-3 lg:mb-4">
               <div className="flex items-center justify-between mb-2">
                 <label
                   htmlFor="auth-password"
