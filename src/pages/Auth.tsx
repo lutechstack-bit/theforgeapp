@@ -72,9 +72,9 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <main className="min-h-[100dvh] w-full grid grid-cols-1 lg:grid-cols-[35fr_65fr] bg-black text-foreground overflow-x-hidden">
+    <main className="h-[100dvh] w-full grid grid-cols-1 lg:grid-cols-[35fr_65fr] bg-black text-foreground overflow-hidden">
       {/* ─────────────── Video pane (right on desktop, top on mobile) ─────────────── */}
-      <section className="relative overflow-hidden bg-black order-1 lg:order-2 h-[50vh] lg:h-auto lg:min-h-screen">
+      <section className="relative overflow-hidden bg-black order-1 lg:order-2 h-[50vh] lg:h-full">
         <video
           src="/login/Forge_website.mp4"
           poster="/login/Forge_website_poster.jpg"
@@ -131,11 +131,11 @@ const Auth: React.FC = () => {
 
       {/* ─────────────── Login pane (left on desktop, bottom on mobile) ─────────────── */}
       <section
-        className="relative flex flex-col items-center justify-center bg-black px-5 py-6 lg:px-20 lg:py-20 order-2 lg:order-1 -mt-24 lg:mt-0 z-[4] lg:z-auto"
+        className="relative flex flex-col items-center justify-center bg-black px-5 py-4 lg:px-16 lg:py-10 order-2 lg:order-1 -mt-24 lg:mt-0 z-[4] lg:z-auto h-full lg:h-full overflow-hidden"
       >
         <div className="relative w-full max-w-[420px] flex flex-col items-center animate-fade-up">
           {/* Desktop logo with radial glow (hidden on mobile — replaced by overlay above) */}
-          <div className="relative w-[240px] h-[100px] hidden lg:flex items-center justify-center mb-10">
+          <div className="relative w-[220px] h-[88px] hidden lg:flex items-center justify-center mb-6">
             <div
               aria-hidden
               className="absolute -inset-x-10 -inset-y-5 blur-[6px] animate-pulse-soft"
@@ -147,62 +147,76 @@ const Auth: React.FC = () => {
             <img src={forgeLogo} alt="the Forge" className="relative w-full h-auto" />
           </div>
 
-          <h1 className="mt-1 lg:mt-6 text-[24px] lg:text-[32px] font-bold text-primary text-center leading-[1.15] tracking-[-0.4px]">
+          <h1 className="text-[24px] lg:text-[30px] font-bold text-primary text-center leading-[1.15] tracking-[-0.4px]">
             Welcome Creator
           </h1>
-          <p className="mt-1.5 lg:mt-3.5 mb-4 lg:mb-10 text-[13px] lg:text-[15px] text-muted-foreground text-center">
+          <p className="mt-1.5 mb-4 lg:mb-7 text-[13px] lg:text-[14px] text-muted-foreground text-center">
             Continue your creative journey
           </p>
 
           <form
             onSubmit={handleSubmit}
-            className="w-full lg:bg-[#141414] lg:border lg:border-primary/[0.08] lg:rounded-[20px] lg:p-7 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_20px_50px_rgba(0,0,0,0.5)] lg:backdrop-blur-[10px]"
+            className="w-full bg-[#141414] border border-primary/[0.08] rounded-[20px] p-5 lg:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_20px_50px_rgba(0,0,0,0.5)]"
           >
             {/* Email */}
-            <div className="mb-2.5">
+            <div className="mb-4">
+              <label
+                htmlFor="auth-email"
+                className="block text-[14px] font-semibold text-foreground mb-2"
+              >
+                Email
+              </label>
               <input
+                id="auth-email"
                 type="email"
-                placeholder="Email"
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
                 required
-                className="w-full bg-white/[0.04] lg:bg-[#1C1C1C] border border-white/[0.08] lg:border-[rgba(245,241,232,0.06)] rounded-[14px] lg:rounded-xl px-5 py-[13px] lg:py-[18px] text-[15px] text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:border-primary/40 focus:bg-white/[0.06] lg:focus:bg-[#1F1F1F]"
+                className="w-full bg-[#1C1C1C] border border-primary/20 rounded-xl px-4 py-[13px] lg:py-[14px] text-[15px] text-foreground placeholder:text-primary/50 transition-colors focus:outline-none focus:border-primary/60 focus:bg-[#1F1F1F]"
               />
               {errors.email && (
                 <p className="text-xs text-destructive mt-1.5 ml-1">{errors.email}</p>
               )}
             </div>
 
-            {/* Forgot password link */}
-            <div className="flex justify-end mt-1 mb-2.5 mx-0.5">
-              <Link
-                to="/forgot-password"
-                className="text-[13px] font-medium text-primary/90 hover:text-primary hover:underline underline-offset-[3px] transition-opacity"
-              >
-                Forgot password?
-              </Link>
-            </div>
-
-            {/* Password with eye toggle */}
-            <div className="relative mb-2.5">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                required
-                className="w-full bg-white/[0.04] lg:bg-[#1C1C1C] border border-white/[0.08] lg:border-[rgba(245,241,232,0.06)] rounded-[14px] lg:rounded-xl px-5 py-[13px] lg:py-[18px] pr-12 text-[15px] text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:border-primary/40 focus:bg-white/[0.06] lg:focus:bg-[#1F1F1F]"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="absolute right-[18px] top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-primary transition-colors"
-              >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
+            {/* Password + Forgot link on same row */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <label
+                  htmlFor="auth-password"
+                  className="block text-[14px] font-semibold text-foreground"
+                >
+                  Password
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-[13px] font-medium text-primary/90 hover:text-primary hover:underline underline-offset-[3px] transition-opacity"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative">
+                <input
+                  id="auth-password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                  className="w-full bg-[#1C1C1C] border border-primary/20 rounded-xl px-4 py-[13px] lg:py-[14px] pr-12 text-[15px] text-foreground placeholder:text-primary/40 transition-colors focus:outline-none focus:border-primary/60 focus:bg-[#1F1F1F]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
               {errors.password && (
                 <p className="text-xs text-destructive mt-1.5 ml-1">{errors.password}</p>
               )}
@@ -212,7 +226,7 @@ const Auth: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-[14px] lg:py-[17px] mt-2 rounded-[14px] text-[#111] font-semibold text-base tracking-[0.1px] bg-gradient-to-b from-[#F5C76A] via-primary to-[#D99A1F] shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_10px_25px_rgba(255,188,59,0.18),0_2px_6px_rgba(0,0,0,0.3)] hover:brightness-[1.04] hover:-translate-y-px hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_14px_32px_rgba(255,188,59,0.28),0_3px_8px_rgba(0,0,0,0.35)] active:translate-y-0 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+              className="w-full py-[14px] lg:py-[16px] mt-1 rounded-xl text-[#111] font-semibold text-[15px] lg:text-base tracking-[0.1px] bg-gradient-to-b from-[#F5C76A] via-primary to-[#D99A1F] shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_10px_25px_rgba(255,188,59,0.18),0_2px_6px_rgba(0,0,0,0.3)] hover:brightness-[1.04] hover:-translate-y-px hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_14px_32px_rgba(255,188,59,0.28),0_3px_8px_rgba(0,0,0,0.35)] active:translate-y-0 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
               {loading ? (
                 <span className="inline-flex items-center justify-center gap-2">
