@@ -74,7 +74,7 @@ const Auth: React.FC = () => {
   return (
     <main className="h-[100dvh] w-full grid grid-cols-1 lg:grid-cols-[35fr_65fr] bg-black text-foreground overflow-hidden">
       {/* ─────────────── Video pane (right on desktop, top on mobile) ─────────────── */}
-      <section className="relative overflow-hidden bg-black order-1 lg:order-2 h-[50vh] lg:h-full">
+      <section className="relative overflow-hidden bg-black order-1 lg:order-2 h-[40vh] lg:h-full">
         <video
           src="/login/Forge_website.mp4"
           poster="/login/Forge_website_poster.jpg"
@@ -124,14 +124,14 @@ const Auth: React.FC = () => {
         </div>
 
         {/* Editorial tagline */}
-        <p className="absolute z-[3] left-5 lg:left-11 right-5 lg:right-auto bottom-20 lg:bottom-10 lg:max-w-[720px] font-fraunces italic font-medium text-[20px] lg:text-[44px] leading-[1.2] lg:leading-[1.15] tracking-[-0.3px] lg:tracking-[-0.4px] max-w-[260px] lg:max-w-[720px] text-[#F5F1E8] drop-shadow-[0_2px_14px_rgba(0,0,0,0.55)] animate-fade-up">
+        <p className="absolute z-[3] left-5 lg:left-11 right-5 lg:right-auto bottom-5 lg:bottom-10 lg:max-w-[720px] font-fraunces italic font-medium text-[20px] lg:text-[44px] leading-[1.2] lg:leading-[1.15] tracking-[-0.3px] lg:tracking-[-0.4px] max-w-[260px] lg:max-w-[720px] text-[#F5F1E8] drop-shadow-[0_2px_14px_rgba(0,0,0,0.55)] animate-fade-up">
           Your journey from Dreamer to Doer starts here
         </p>
       </section>
 
       {/* ─────────────── Login pane (left on desktop, bottom on mobile) ─────────────── */}
       <section
-        className="relative flex flex-col items-center justify-center bg-black px-5 py-4 lg:px-16 lg:py-10 order-2 lg:order-1 -mt-24 lg:mt-0 z-[4] lg:z-auto h-full lg:h-full overflow-hidden"
+        className="relative flex flex-col items-center justify-center bg-black px-5 py-4 lg:px-16 lg:py-10 order-2 lg:order-1 z-[4] lg:z-auto lg:h-full lg:overflow-hidden"
       >
         <div className="relative w-full max-w-[420px] flex flex-col items-center animate-fade-up">
           {/* Desktop logo with radial glow (hidden on mobile — replaced by overlay above) */}
