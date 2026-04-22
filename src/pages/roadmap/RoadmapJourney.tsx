@@ -53,7 +53,7 @@ const RoadmapJourney: React.FC = () => {
   const recordingByDate = useMemo(() => {
     const map: Record<string, string> = {};
     for (const rec of sessionRecordings) {
-      const dateKey = rec.start_at.split('T')[0]; // YYYY-MM-DD
+      const dateKey = format(new Date(rec.start_at), 'yyyy-MM-dd'); // local date, not UTC
       if (rec.learn_content_id) map[dateKey] = rec.learn_content_id;
     }
     return map;
