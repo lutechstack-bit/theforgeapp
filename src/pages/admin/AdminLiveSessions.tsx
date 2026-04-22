@@ -8,8 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Video, Upload, Link, PlayCircle, Clock, CalendarDays, Image, Trash2 } from 'lucide-react';
+import { Video, Upload, Link, PlayCircle, Clock, CalendarDays, Image, Trash2, FileText, Plus } from 'lucide-react';
 import { FileUpload } from '@/components/admin/FileUpload';
+
+interface FormResource {
+  id?: string;
+  title: string;
+  file_url: string;
+}
 
 interface RoadmapSession {
   id: string;
@@ -45,6 +51,7 @@ const emptyRecordingForm = {
   recordingSourceType: 'embed' as 'embed' | 'upload',
   thumbnail_url: '',
   thumbnailSourceType: 'upload' as 'upload' | 'url',
+  resources: [] as FormResource[],
 };
 
 const AdminLiveSessions: React.FC = () => {
@@ -155,16 +162,29 @@ const AdminLiveSessions: React.FC = () => {
 
   const selectedEdition = editions.find(e => e.id === selectedEditionId);
 
-  const openUploadDialog = (session: RoadmapSession) => {
+  const openUploadDialog = async (session: RoadmapSession) => {
     setSelectedRoadmapSession(session);
     const existingLs = session.date ? liveSessionByDate[session.date] : null;
     setExistingLiveSessionId(existingLs?.id ?? null);
+
+    let resources: FormResource[] = [];
+    if (existingLs?.learn_content_id) {
+      const { data } = await supabase
+        .from('learn_resources')
+        .select('id, title, file_url')
+        .eq('learn_content_id', existingLs.learn_content_id)
+        .eq('file_type', 'pdf')
+        .order('order_index', { ascending: true });
+      resources = (data ?? []) as FormResource[];
+    }
+
     setRecordingForm({
       recording_url: existingLs?.recording_url || '',
       recording_status: existingLs?.recording_status === 'processing' ? 'processing' : 'ready',
       recordingSourceType: existingLs?.recording_url?.startsWith('http') !== false ? 'embed' : 'upload',
       thumbnail_url: existingLs?.thumbnail_url || '',
       thumbnailSourceType: 'upload',
+      resources,
     });
     setUploadDialogOpen(true);
   };
@@ -236,16 +256,80 @@ const AdminLiveSessions: React.FC = () => {
         const { error } = await supabase.from('live_sessions').insert(record);
         if (error) throw error;
       }
+
+      // Sync PDF resources onto learn_resources. Only meaningful when we have
+      // a learn_content_id — which only exists when status is 'ready'.
+      if (record.recording_status === 'ready' && record.learn_content_id) {
+        const learnContentId = record.learn_content_id;
+        const { data: existing, error: fetchErr } = await supabase
+          .from('learn_resources')
+          .select('id, file_url')
+          .eq('learn_content_id', learnContentId)
+          .eq('file_type', 'pdf');
+        if (fetchErr) throw fetchErr;
+
+        const incomingUrls = new Set(
+          recordingForm.resources.filter(r => r.file_url).map(r => r.file_url)
+        );
+        const toDeleteIds = (existing ?? [])
+          .filter(row => !incomingUrls.has(row.file_url))
+          .map(row => row.id);
+
+        if (toDeleteIds.length) {
+          const { error: delErr } = await supabase
+            .from('learn_resources').delete().in('id', toDeleteIds);
+          if (delErr) throw delErr;
+        }
+
+        // Compute retained set AFTER factoring in the delete.
+        const retainedUrls = new Set(
+          (existing ?? [])
+            .filter(row => !toDeleteIds.includes(row.id))
+            .map(row => row.file_url)
+        );
+        const toInsert = recordingForm.resources
+          .filter(r => r.file_url && !retainedUrls.has(r.file_url))
+          .map((r, i) => ({
+            learn_content_id: learnContentId,
+            title: r.title?.trim() || 'Untitled',
+            file_url: r.file_url,
+            file_type: 'pdf',
+            file_size_mb: null,
+            is_premium: false,
+            order_index: i,
+          }));
+        if (toInsert.length) {
+          const { error: insErr } = await supabase.from('learn_resources').insert(toInsert);
+          if (insErr) throw insErr;
+        }
+      }
+
+      return {
+        learnContentId: record.learn_content_id as string | undefined,
+        hadPendingResources:
+          record.recording_status !== 'ready' &&
+          recordingForm.resources.some(r => r.file_url),
+      };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['admin-live-sessions-edition', selectedEditionId] });
       queryClient.invalidateQueries({ queryKey: ['roadmap-session-recordings'] });
       queryClient.invalidateQueries({ queryKey: ['online-session-recordings'] });
+      if (result?.learnContentId) {
+        queryClient.invalidateQueries({ queryKey: ['learn_resources', result.learnContentId] });
+      }
       setUploadDialogOpen(false);
       setSelectedRoadmapSession(null);
       setExistingLiveSessionId(null);
       setRecordingForm(emptyRecordingForm);
       toast({ title: 'Recording saved successfully' });
+      if (result?.hadPendingResources) {
+        toast({
+          title: 'Materials not saved yet',
+          description: 'Mark this session Ready to publish PDFs.',
+          variant: 'destructive',
+        });
+      }
     },
     onError: (err: any) => {
       toast({ title: 'Error saving recording', description: err.message, variant: 'destructive' });
@@ -254,6 +338,24 @@ const AdminLiveSessions: React.FC = () => {
 
   const updateField = (key: string, value: string) =>
     setRecordingForm(prev => ({ ...prev, [key]: value }));
+
+  const addResourceRow = () =>
+    setRecordingForm(prev => ({
+      ...prev,
+      resources: [...prev.resources, { title: '', file_url: '' }],
+    }));
+
+  const updateResourceRow = (index: number, patch: Partial<FormResource>) =>
+    setRecordingForm(prev => ({
+      ...prev,
+      resources: prev.resources.map((r, i) => (i === index ? { ...r, ...patch } : r)),
+    }));
+
+  const removeResourceRow = (index: number) =>
+    setRecordingForm(prev => ({
+      ...prev,
+      resources: prev.resources.filter((_, i) => i !== index),
+    }));
 
   const sessionIndex = selectedRoadmapSession
     ? roadmapSessions.indexOf(selectedRoadmapSession)
@@ -564,6 +666,75 @@ const AdminLiveSessions: React.FC = () => {
                   <p className="text-xs text-muted-foreground">Shown as the card image in Learn tab</p>
                 </div>
               )}
+            </div>
+
+            {/* Session Materials (PDFs) */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-primary" />
+                Session Materials (PDFs)
+                <span className="text-muted-foreground text-xs font-normal">(optional)</span>
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Uploaded PDFs appear in the Resources tab of this recording for students.
+              </p>
+
+              {recordingForm.resources.length > 0 && (
+                <div className="space-y-2">
+                  {recordingForm.resources.map((row, i) => (
+                    <div
+                      key={i}
+                      className="bg-muted/40 rounded-lg p-3 space-y-2 border border-border/40"
+                    >
+                      <div className="flex items-start gap-2">
+                        <Input
+                          value={row.title}
+                          onChange={(e) => updateResourceRow(i, { title: e.target.value })}
+                          placeholder="PDF title (e.g. Session Slides)"
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeResourceRow(i)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                          aria-label="Remove PDF"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <FileUpload
+                        bucket="learn-resources"
+                        label="PDF"
+                        helperText="Max 50 MB"
+                        accept=".pdf"
+                        maxSizeMB={50}
+                        currentUrl={row.file_url}
+                        onUploadComplete={(url) => updateResourceRow(i, { file_url: url })}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addResourceRow}
+                className="gap-1.5 w-full"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add PDF
+              </Button>
+
+              {recordingForm.recording_status !== 'ready' &&
+                recordingForm.resources.some(r => r.file_url) && (
+                  <p className="text-xs text-amber-400">
+                    Materials will publish when this session is marked <strong>Ready</strong>.
+                  </p>
+                )}
             </div>
 
             {/* Status */}

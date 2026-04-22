@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SecureVideoPlayer } from '@/components/learn/SecureVideoPlayer';
 import { ContentSidebar } from '@/components/learn/ContentSidebar';
+import { PDFViewerModal } from '@/components/learn/PDFViewerModal';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
@@ -70,6 +71,8 @@ const CourseDetail: React.FC = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const [showPlayer, setShowPlayer] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [activeResource, setActiveResource] = useState<LearnResource | null>(null);
   const { effectiveEdition } = useEffectiveCohort();
 
   // Fetch course details
@@ -261,8 +264,24 @@ const CourseDetail: React.FC = () => {
     setShowPlayer(true);
   };
 
-  const handleDownloadResource = (resource: LearnResource) => {
-    window.open(resource.file_url, '_blank');
+  const handleDownloadResource = async (resource: LearnResource) => {
+    const { data, error } = await supabase.storage
+      .from('learn-resources')
+      .createSignedUrl(resource.file_url, 3600);
+    if (error || !data) {
+      toast.error(error?.message ?? 'Could not open file');
+      return;
+    }
+    window.open(data.signedUrl, '_blank');
+  };
+
+  const handleResourceClick = (resource: LearnResource) => {
+    if (resource.file_type?.toLowerCase() === 'pdf') {
+      setActiveResource(resource);
+      setViewerOpen(true);
+    } else {
+      handleDownloadResource(resource);
+    }
   };
 
   if (isLoading) {
@@ -448,40 +467,68 @@ const CourseDetail: React.FC = () => {
               <TabsContent value="resources" className="pt-3">
                 {resources && resources.length > 0 ? (
                   <div className="grid gap-2">
-                    {resources.map((resource) => (
-                      <div 
-                        key={resource.id}
-                        className="bg-card rounded-lg p-2.5 flex items-center justify-between border border-border/50 hover:border-primary/30 transition-all group"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-                            <FileText className="h-4 w-4 text-primary" />
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-foreground text-xs">{resource.title}</h4>
-                            <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground">
-                              <span className="uppercase font-medium px-1 py-0.5 rounded bg-muted text-[9px]">{resource.file_type}</span>
-                              {resource.file_size_mb && <span>{resource.file_size_mb} MB</span>}
-                              {resource.is_premium && (
-                                <span className="text-primary font-medium flex items-center gap-0.5">
-                                  <Sparkles className="h-2 w-2" />
-                                  Premium
-                                </span>
-                              )}
+                    {resources.map((resource) => {
+                      const isPdf = resource.file_type?.toLowerCase() === 'pdf';
+                      return (
+                        <div
+                          key={resource.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => handleResourceClick(resource)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleResourceClick(resource);
+                            }
+                          }}
+                          className="bg-card rounded-lg p-2.5 flex items-center justify-between border border-border/50 hover:border-primary/30 transition-all group cursor-pointer focus:outline-none focus:border-primary/50"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                              <FileText className="h-4 w-4 text-primary" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-foreground text-xs">{resource.title}</h4>
+                              <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground">
+                                <span className="uppercase font-medium px-1 py-0.5 rounded bg-muted text-[9px]">{resource.file_type}</span>
+                                {resource.file_size_mb ? <span>{resource.file_size_mb} MB</span> : null}
+                                {resource.is_premium && course?.section_type !== 'community_sessions' && (
+                                  <span className="text-primary font-medium flex items-center gap-0.5">
+                                    <Sparkles className="h-2 w-2" />
+                                    Premium
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isPdf) {
+                                handleResourceClick(resource);
+                              } else {
+                                handleDownloadResource(resource);
+                              }
+                            }}
+                            className="shrink-0 gap-1 rounded-full px-2.5 h-7 text-[10px] hover:bg-primary hover:text-primary-foreground hover:border-primary"
+                          >
+                            {isPdf ? (
+                              <>
+                                <FileText className="h-3 w-3" />
+                                <span className="hidden sm:inline">View</span>
+                              </>
+                            ) : (
+                              <>
+                                <Download className="h-3 w-3" />
+                                <span className="hidden sm:inline">Download</span>
+                              </>
+                            )}
+                          </Button>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownloadResource(resource)}
-                          className="shrink-0 gap-1 rounded-full px-2.5 h-7 text-[10px] hover:bg-primary hover:text-primary-foreground hover:border-primary"
-                        >
-                          <Download className="h-3 w-3" />
-                          <span className="hidden sm:inline">Download</span>
-                        </Button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="bg-card rounded-lg p-5 text-center border border-border/50">
@@ -503,6 +550,12 @@ const CourseDetail: React.FC = () => {
         </div>
       </div>
 
+      <PDFViewerModal
+        open={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+        fileUrl={activeResource?.file_url ?? ''}
+        title={activeResource?.title ?? ''}
+      />
     </div>
   );
 };
