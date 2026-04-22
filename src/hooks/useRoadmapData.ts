@@ -56,17 +56,39 @@ export const useRoadmapData = () => {
         return [];
       }
 
-      // Step 1: Fetch edition-specific rows (online sessions stored per-edition)
-      const editionResult = await promiseWithTimeout(
-        supabase
-          .from('roadmap_days')
-          .select('*')
-          .eq('edition_id', editionIdForQuery!)
-          .order('day_number', { ascending: true })
-          .then(res => res),
-        ROADMAP_QUERY_TIMEOUT,
-        'roadmap_days_edition'
-      );
+      // Fire edition-specific and shared-template queries in parallel.
+      // Previously these ran serially: edition awaited, then (if edition
+      // wasn't self-contained) template awaited. For the common case —
+      // editions that aren't self-contained — this stair-stepped the
+      // homepage roadmap section by ~300–600 ms.
+      //
+      // Downside: for self-contained editions (E14/E15 style) we now
+      // fetch the template and throw it away. That's a few KB on a
+      // 5-minute cache — acceptable cost for the latency win everywhere else.
+      const [editionResult, templateResult] = await Promise.all([
+        promiseWithTimeout(
+          supabase
+            .from('roadmap_days')
+            .select('*')
+            .eq('edition_id', editionIdForQuery!)
+            .order('day_number', { ascending: true })
+            .then(res => res),
+          ROADMAP_QUERY_TIMEOUT,
+          'roadmap_days_edition'
+        ),
+        userCohortType ? promiseWithTimeout(
+          supabase
+            .from('roadmap_days')
+            .select('*')
+            .eq('cohort_type', userCohortType)
+            .eq('is_template', true)
+            .order('day_number', { ascending: true })
+            .then(res => res),
+          ROADMAP_QUERY_TIMEOUT,
+          'roadmap_days_template'
+        ) : Promise.resolve(null),
+      ]);
+
       const editionRows: RoadmapDay[] = (!editionResult.error && editionResult.data)
         ? editionResult.data as RoadmapDay[] : [];
 
@@ -77,18 +99,6 @@ export const useRoadmapData = () => {
         return editionRows;
       }
 
-      // Step 2: Fetch shared template (bootcamp days + template online sessions)
-      const templateResult = userCohortType ? await promiseWithTimeout(
-        supabase
-          .from('roadmap_days')
-          .select('*')
-          .eq('cohort_type', userCohortType)
-          .eq('is_template', true)
-          .order('day_number', { ascending: true })
-          .then(res => res),
-        ROADMAP_QUERY_TIMEOUT,
-        'roadmap_days_template'
-      ) : null;
       const templateRows: RoadmapDay[] = (templateResult && !templateResult.error && templateResult.data)
         ? templateResult.data as RoadmapDay[] : [];
 

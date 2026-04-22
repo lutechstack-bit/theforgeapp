@@ -136,9 +136,12 @@ const Learn: React.FC = () => {
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ['learn_content'],
     queryFn: async () => {
+      // Only select columns we actually render. Dropping `.select('*')`
+      // trims rows that carry big `full_description` markdown we don't
+      // show on the index view.
       const { data, error } = await supabase
         .from('learn_content')
-        .select('*')
+        .select('id, title, description, thumbnail_url, video_url, video_source_type, instructor_name, company_name, is_premium, duration_minutes, section_type, category, order_index, card_layout')
         .order('order_index', { ascending: true });
       if (error) throw error;
       return (data || []) as (LearnContent & { card_layout?: string })[];
@@ -172,8 +175,16 @@ const Learn: React.FC = () => {
     enabled: !!user?.id,
   });
 
+  // Index watch progress by content id so card renders are O(1) instead
+  // of O(n) `.find()` scans through the full progress list on every render.
+  const progressByContentId = React.useMemo(() => {
+    const map = new Map<string, WatchProgress>();
+    for (const p of watchProgress) map.set(p.learn_content_id, p);
+    return map;
+  }, [watchProgress]);
+
   const getProgressPercent = (contentId: string, durationMinutes?: number) => {
-    const progress = watchProgress.find(p => p.learn_content_id === contentId);
+    const progress = progressByContentId.get(contentId);
     if (!progress) return 0;
     const totalSeconds = progress.total_seconds || (durationMinutes ? durationMinutes * 60 : 0);
     if (!totalSeconds) return 0;
@@ -181,7 +192,7 @@ const Learn: React.FC = () => {
   };
 
   const isCompleted = (contentId: string) => {
-    const progress = watchProgress.find(p => p.learn_content_id === contentId);
+    const progress = progressByContentId.get(contentId);
     return progress?.completed || false;
   };
 

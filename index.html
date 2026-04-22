@@ -15,6 +15,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Fraunces:ital,opsz,wght@1,9..144,500&display=swap" rel="stylesheet" />
+
+    <!-- Preload just the auth page poster. We deliberately DO NOT preload
+         the 3 MB mp4 — on throttled mobile that pushes the video onto the
+         LCP critical path and starves the JS/CSS. The poster is enough
+         for first paint; the <video> element's own preload="auto" picks
+         up the mp4 after the page is interactive. -->
+    <link rel="preload" as="image" href="/login/Forge_website_poster.jpg" fetchpriority="high" />
     
     <!-- Microsoft Clarity -->
     <script type="text/javascript">

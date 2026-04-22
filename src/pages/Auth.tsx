@@ -74,9 +74,10 @@ const Auth: React.FC = () => {
   return (
     <main className="min-h-[100dvh] w-full grid grid-cols-1 lg:grid-cols-[35fr_65fr] bg-black text-foreground overflow-x-hidden">
       {/* ─────────────── Video pane (right on desktop, top on mobile) ─────────────── */}
-      <section className="relative overflow-hidden bg-black order-1 lg:order-2 min-h-[58vh] lg:min-h-screen">
+      <section className="relative overflow-hidden bg-black order-1 lg:order-2 h-[50vh] lg:h-auto lg:min-h-screen">
         <video
           src="/login/Forge_website.mp4"
+          poster="/login/Forge_website_poster.jpg"
           autoPlay
           muted
           loop
@@ -101,7 +102,7 @@ const Auth: React.FC = () => {
           className="lg:hidden absolute inset-0 pointer-events-none"
           style={{
             background:
-              'linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 25%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.6) 82%, #000 100%)',
+              'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.35) 60%, rgba(0,0,0,0.75) 82%, #000 95%, #000 100%)',
           }}
         />
 
@@ -123,18 +124,18 @@ const Auth: React.FC = () => {
         </div>
 
         {/* Editorial tagline */}
-        <p className="absolute z-[3] left-5 lg:left-11 right-5 lg:right-auto bottom-24 lg:bottom-11 lg:max-w-[720px] font-fraunces italic font-medium text-[30px] lg:text-[44px] leading-[1.15] tracking-[-0.4px] text-[#F5F1E8] drop-shadow-[0_2px_14px_rgba(0,0,0,0.55)] animate-fade-up">
+        <p className="absolute z-[3] left-5 lg:left-11 right-5 lg:right-auto bottom-20 lg:bottom-3 lg:max-w-[720px] font-fraunces italic font-medium text-[20px] lg:text-[44px] leading-[1.2] lg:leading-[1.15] tracking-[-0.3px] lg:tracking-[-0.4px] max-w-[260px] lg:max-w-[720px] text-[#F5F1E8] drop-shadow-[0_2px_14px_rgba(0,0,0,0.55)] animate-fade-up">
           Your journey from Dreamer to Doer starts here
         </p>
       </section>
 
       {/* ─────────────── Login pane (left on desktop, bottom on mobile) ─────────────── */}
       <section
-        className="relative flex flex-col items-center justify-center bg-black px-5 py-10 lg:px-14 lg:py-12 order-2 lg:order-1 -mt-20 lg:mt-0 z-[4] lg:z-auto"
+        className="relative flex flex-col items-center justify-center bg-black px-5 py-6 lg:px-20 lg:py-20 order-2 lg:order-1 -mt-24 lg:mt-0 z-[4] lg:z-auto"
       >
         <div className="relative w-full max-w-[420px] flex flex-col items-center animate-fade-up">
           {/* Desktop logo with radial glow (hidden on mobile — replaced by overlay above) */}
-          <div className="relative w-[220px] h-[90px] hidden lg:flex items-center justify-center mb-2">
+          <div className="relative w-[240px] h-[100px] hidden lg:flex items-center justify-center mb-10">
             <div
               aria-hidden
               className="absolute -inset-x-10 -inset-y-5 blur-[6px] animate-pulse-soft"
@@ -146,10 +147,10 @@ const Auth: React.FC = () => {
             <img src={forgeLogo} alt="the Forge" className="relative w-full h-auto" />
           </div>
 
-          <h1 className="mt-2 lg:mt-5 text-[26px] lg:text-[32px] font-bold text-primary text-center leading-[1.15] tracking-[-0.4px]">
-            Welcome Back, Creator
+          <h1 className="mt-1 lg:mt-6 text-[24px] lg:text-[32px] font-bold text-primary text-center leading-[1.15] tracking-[-0.4px]">
+            Welcome Creator
           </h1>
-          <p className="mt-2 lg:mt-2.5 mb-6 lg:mb-9 text-sm lg:text-[15px] text-muted-foreground text-center">
+          <p className="mt-1.5 lg:mt-3.5 mb-4 lg:mb-10 text-[13px] lg:text-[15px] text-muted-foreground text-center">
             Continue your creative journey
           </p>
 
@@ -166,7 +167,7 @@ const Auth: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
                 required
-                className="w-full bg-white/[0.04] lg:bg-[#1C1C1C] border border-white/[0.08] lg:border-[rgba(245,241,232,0.06)] rounded-[14px] lg:rounded-xl px-5 py-[17px] lg:py-[18px] text-[15px] text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:border-primary/40 focus:bg-white/[0.06] lg:focus:bg-[#1F1F1F]"
+                className="w-full bg-white/[0.04] lg:bg-[#1C1C1C] border border-white/[0.08] lg:border-[rgba(245,241,232,0.06)] rounded-[14px] lg:rounded-xl px-5 py-[13px] lg:py-[18px] text-[15px] text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:border-primary/40 focus:bg-white/[0.06] lg:focus:bg-[#1F1F1F]"
               />
               {errors.email && (
                 <p className="text-xs text-destructive mt-1.5 ml-1">{errors.email}</p>
@@ -174,7 +175,7 @@ const Auth: React.FC = () => {
             </div>
 
             {/* Forgot password link */}
-            <div className="flex justify-end mt-1.5 mb-3.5 mx-0.5">
+            <div className="flex justify-end mt-1 mb-2.5 mx-0.5">
               <Link
                 to="/forgot-password"
                 className="text-[13px] font-medium text-primary/90 hover:text-primary hover:underline underline-offset-[3px] transition-opacity"
@@ -192,7 +193,7 @@ const Auth: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 required
-                className="w-full bg-white/[0.04] lg:bg-[#1C1C1C] border border-white/[0.08] lg:border-[rgba(245,241,232,0.06)] rounded-[14px] lg:rounded-xl px-5 py-[17px] lg:py-[18px] pr-12 text-[15px] text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:border-primary/40 focus:bg-white/[0.06] lg:focus:bg-[#1F1F1F]"
+                className="w-full bg-white/[0.04] lg:bg-[#1C1C1C] border border-white/[0.08] lg:border-[rgba(245,241,232,0.06)] rounded-[14px] lg:rounded-xl px-5 py-[13px] lg:py-[18px] pr-12 text-[15px] text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:border-primary/40 focus:bg-white/[0.06] lg:focus:bg-[#1F1F1F]"
               />
               <button
                 type="button"
@@ -211,7 +212,7 @@ const Auth: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-[17px] mt-1.5 rounded-[14px] text-[#111] font-semibold text-base tracking-[0.1px] bg-gradient-to-b from-[#F5C76A] via-primary to-[#D99A1F] shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_10px_25px_rgba(255,188,59,0.18),0_2px_6px_rgba(0,0,0,0.3)] hover:brightness-[1.04] hover:-translate-y-px hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_14px_32px_rgba(255,188,59,0.28),0_3px_8px_rgba(0,0,0,0.35)] active:translate-y-0 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+              className="w-full py-[14px] lg:py-[17px] mt-2 rounded-[14px] text-[#111] font-semibold text-base tracking-[0.1px] bg-gradient-to-b from-[#F5C76A] via-primary to-[#D99A1F] shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_10px_25px_rgba(255,188,59,0.18),0_2px_6px_rgba(0,0,0,0.3)] hover:brightness-[1.04] hover:-translate-y-px hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_14px_32px_rgba(255,188,59,0.28),0_3px_8px_rgba(0,0,0,0.35)] active:translate-y-0 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
               {loading ? (
                 <span className="inline-flex items-center justify-center gap-2">
@@ -223,17 +224,6 @@ const Auth: React.FC = () => {
               )}
             </button>
           </form>
-
-          <p className="mt-7 text-[13px] text-muted-foreground text-center">
-            New to the Forge?
-            {/* TODO: swap to a proper landing URL once one exists */}
-            <a
-              href="mailto:hello@leveluplearning.in"
-              className="text-primary font-medium ml-1 hover:underline underline-offset-[3px]"
-            >
-              Request an invite
-            </a>
-          </p>
         </div>
       </section>
     </main>

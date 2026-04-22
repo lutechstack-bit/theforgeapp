@@ -15,70 +15,80 @@ import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { LoadingScreen } from "@/components/shared/LoadingScreen";
 import { SplashScreen } from "@/components/shared/SplashScreen";
 import { UserDataRecovery } from "@/components/shared/UserDataRecovery";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, lazy, Suspense } from "react";
 
-// Pages
+// Pages — code-split. Auth is the only eager page because it's the
+// unauthenticated gate and must paint without a Suspense fallback.
+// Everything else loads on demand so the initial JS bundle doesn't
+// include all 60 pages (including every admin screen) for every user.
 import Auth from "./pages/Auth";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import Welcome from "./pages/Welcome";
-import ProfileSetup from "./pages/ProfileSetup";
-// Old form imports removed
-import Home from "./pages/Home";
-import Community from "./pages/Community";
-import Learn from "./pages/Learn";
-import AllCourses from "./pages/AllCourses";
-import CourseDetail from "./pages/CourseDetail";
-import Events from "./pages/Events";
-import RoadmapLayout from "./components/roadmap/RoadmapLayout";
-import { RoadmapJourney, RoadmapTasks, RoadmapPrep, RoadmapEquipment, RoadmapRules, RoadmapGallery, RoadmapFilms } from "./pages/roadmap";
-import Perks from "./pages/Perks";
-import Updates from "./pages/Updates";
-import Profile from "./pages/Profile";
-import MyKYForm from "./pages/MyKYForm";
-import KYSectionForm from "./pages/KYSectionForm";
-import PublicPortfolio from "./pages/PublicPortfolio";
-import NotFound from "./pages/NotFound";
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Welcome = lazy(() => import("./pages/Welcome"));
+const ProfileSetup = lazy(() => import("./pages/ProfileSetup"));
+const Home = lazy(() => import("./pages/Home"));
+const Community = lazy(() => import("./pages/Community"));
+const Learn = lazy(() => import("./pages/Learn"));
+const AllCourses = lazy(() => import("./pages/AllCourses"));
+const CourseDetail = lazy(() => import("./pages/CourseDetail"));
+const Events = lazy(() => import("./pages/Events"));
+const RoadmapLayout = lazy(() => import("./components/roadmap/RoadmapLayout"));
+// Roadmap sub-pages come from a barrel; keep them on one chunk since the
+// user typically navigates between them within a single session.
+const RoadmapJourney = lazy(() => import("./pages/roadmap").then(m => ({ default: m.RoadmapJourney })));
+const RoadmapTasks = lazy(() => import("./pages/roadmap").then(m => ({ default: m.RoadmapTasks })));
+const RoadmapPrep = lazy(() => import("./pages/roadmap").then(m => ({ default: m.RoadmapPrep })));
+const RoadmapEquipment = lazy(() => import("./pages/roadmap").then(m => ({ default: m.RoadmapEquipment })));
+const RoadmapRules = lazy(() => import("./pages/roadmap").then(m => ({ default: m.RoadmapRules })));
+const RoadmapGallery = lazy(() => import("./pages/roadmap").then(m => ({ default: m.RoadmapGallery })));
+const RoadmapFilms = lazy(() => import("./pages/roadmap").then(m => ({ default: m.RoadmapFilms })));
+const Perks = lazy(() => import("./pages/Perks"));
+const Updates = lazy(() => import("./pages/Updates"));
+const Profile = lazy(() => import("./pages/Profile"));
+const MyKYForm = lazy(() => import("./pages/MyKYForm"));
+const KYSectionForm = lazy(() => import("./pages/KYSectionForm"));
+const PublicPortfolio = lazy(() => import("./pages/PublicPortfolio"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
-// Admin Pages
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminEditions from "./pages/admin/AdminEditions";
-import AdminEvents from "./pages/admin/AdminEvents";
-import AdminLearn from "./pages/admin/AdminLearn";
-import AdminExplorePrograms from "./pages/admin/AdminExplorePrograms";
-import AdminAlumniShowcase from "./pages/admin/AdminAlumniShowcase";
-import AdminAutoUpdates from "./pages/admin/AdminAutoUpdates";
-import AdminRoadmap from "./pages/admin/AdminRoadmap";
-import AdminRoadmapSidebar from "./pages/admin/AdminRoadmapSidebar";
-import AdminKYForms from "./pages/admin/AdminKYForms";
-import AdminCommunityHighlights from "./pages/admin/AdminCommunityHighlights";
-import AdminNightlyRituals from "./pages/admin/AdminNightlyRituals";
-import AdminEquipment from "./pages/admin/AdminEquipment";
-import AdminMentors from "./pages/admin/AdminMentors";
+// Admin pages — nearly every student never visits these, so lazy
+// loading is a huge bundle-size win.
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminEditions = lazy(() => import("./pages/admin/AdminEditions"));
+const AdminEvents = lazy(() => import("./pages/admin/AdminEvents"));
+const AdminLearn = lazy(() => import("./pages/admin/AdminLearn"));
+const AdminExplorePrograms = lazy(() => import("./pages/admin/AdminExplorePrograms"));
+const AdminAlumniShowcase = lazy(() => import("./pages/admin/AdminAlumniShowcase"));
+const AdminAutoUpdates = lazy(() => import("./pages/admin/AdminAutoUpdates"));
+const AdminRoadmap = lazy(() => import("./pages/admin/AdminRoadmap"));
+const AdminRoadmapSidebar = lazy(() => import("./pages/admin/AdminRoadmapSidebar"));
+const AdminKYForms = lazy(() => import("./pages/admin/AdminKYForms"));
+const AdminCommunityHighlights = lazy(() => import("./pages/admin/AdminCommunityHighlights"));
+const AdminNightlyRituals = lazy(() => import("./pages/admin/AdminNightlyRituals"));
+const AdminEquipment = lazy(() => import("./pages/admin/AdminEquipment"));
+const AdminMentors = lazy(() => import("./pages/admin/AdminMentors"));
+const AdminDocs = lazy(() => import("./pages/admin/AdminDocs"));
+const AdminJourneyStages = lazy(() => import("./pages/admin/AdminJourneyStages"));
+const AdminJourneyTasks = lazy(() => import("./pages/admin/AdminJourneyTasks"));
+const AdminAnnouncements = lazy(() => import("./pages/admin/AdminAnnouncements"));
+const AdminChangelog = lazy(() => import("./pages/admin/AdminChangelog"));
+const AdminHomepage = lazy(() => import("./pages/admin/AdminHomepage"));
+const AdminTodaysFocus = lazy(() => import("./pages/admin/AdminTodaysFocus"));
+const AdminPerks = lazy(() => import("./pages/admin/AdminPerks"));
+const AdminNetwork = lazy(() => import("./pages/admin/AdminNetwork"));
+const AdminPayments = lazy(() => import("./pages/admin/AdminPayments"));
+const AdminActivity = lazy(() => import("./pages/admin/AdminActivity"));
 
-import AdminDocs from "./pages/admin/AdminDocs";
-import AdminJourneyStages from "./pages/admin/AdminJourneyStages";
-import AdminJourneyTasks from "./pages/admin/AdminJourneyTasks";
-import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
-import AdminChangelog from "./pages/admin/AdminChangelog";
-import AdminHomepage from "./pages/admin/AdminHomepage";
-import AdminTodaysFocus from "./pages/admin/AdminTodaysFocus";
-import AdminPerks from "./pages/admin/AdminPerks";
-import AdminNetwork from "./pages/admin/AdminNetwork";
-import AdminPayments from "./pages/admin/AdminPayments";
-import AdminActivity from "./pages/admin/AdminActivity";
-
-import EventDetail from "./pages/EventDetail";
-import PerkDetail from "./pages/PerkDetail";
-import LiveSession from "./pages/LiveSession";
-import AdminLiveSessions from "./pages/admin/AdminLiveSessions";
-import AdminEmailDashboard from "./pages/admin/AdminEmailDashboard";
-import AdminEmailTemplates from "./pages/admin/AdminEmailTemplates";
-import AdminEmailTemplateEdit from "./pages/admin/AdminEmailTemplateEdit";
-import AdminEmailSend from "./pages/admin/AdminEmailSend";
-import AdminEmailHistory from "./pages/admin/AdminEmailHistory";
-import AdminEmailSenders from "./pages/admin/AdminEmailSenders";
+const EventDetail = lazy(() => import("./pages/EventDetail"));
+const PerkDetail = lazy(() => import("./pages/PerkDetail"));
+const LiveSession = lazy(() => import("./pages/LiveSession"));
+const AdminLiveSessions = lazy(() => import("./pages/admin/AdminLiveSessions"));
+const AdminEmailDashboard = lazy(() => import("./pages/admin/AdminEmailDashboard"));
+const AdminEmailTemplates = lazy(() => import("./pages/admin/AdminEmailTemplates"));
+const AdminEmailTemplateEdit = lazy(() => import("./pages/admin/AdminEmailTemplateEdit"));
+const AdminEmailSend = lazy(() => import("./pages/admin/AdminEmailSend"));
+const AdminEmailHistory = lazy(() => import("./pages/admin/AdminEmailHistory"));
+const AdminEmailSenders = lazy(() => import("./pages/admin/AdminEmailSenders"));
 
 
 const queryClient = new QueryClient({
@@ -228,6 +238,7 @@ const AppRoutes = () => {
   return (
     <>
     {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
+    <Suspense fallback={<LoadingScreen />}>
     <Routes>
       {/* Public routes */}
       <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
@@ -340,6 +351,7 @@ const AppRoutes = () => {
       {/* Catch-all */}
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </Suspense>
     </>
   );
 };

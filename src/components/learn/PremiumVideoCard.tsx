@@ -31,7 +31,7 @@ export const PremiumVideoCard: React.FC<PremiumVideoCardProps> = ({
       {/* Thumbnail */}
       <div className="relative aspect-video bg-muted">
         {thumbnailUrl ? (
-          <img src={thumbnailUrl} alt={title} className="w-full h-full object-cover" />
+          <img src={thumbnailUrl} alt={title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Play className="w-8 h-8 text-muted-foreground/30" />
