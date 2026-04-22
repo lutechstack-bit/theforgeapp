@@ -74,7 +74,7 @@ const Auth: React.FC = () => {
   return (
     <main className="h-[100dvh] w-full grid grid-cols-1 lg:grid-cols-[35fr_65fr] bg-black text-foreground overflow-hidden">
       {/* ─────────────── Video pane (right on desktop, top on mobile) ─────────────── */}
-      <section className="relative overflow-hidden bg-black order-1 lg:order-2 h-[40vh] lg:h-full">
+      <section className="relative overflow-hidden bg-black order-1 lg:order-2 h-[46vh] lg:h-full">
         <video
           src="/login/Forge_website.mp4"
           poster="/login/Forge_website_poster.jpg"
