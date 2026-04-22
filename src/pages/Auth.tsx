@@ -92,7 +92,7 @@ const Auth: React.FC = () => {
           className="hidden lg:block absolute inset-0 pointer-events-none"
           style={{
             background:
-              'linear-gradient(90deg, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0) 18%, rgba(10,10,10,0) 82%, rgba(10,10,10,0.25) 100%), radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%)',
+              'linear-gradient(90deg, #000 0%, rgba(0,0,0,0.85) 4%, rgba(0,0,0,0.45) 10%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 82%, rgba(10,10,10,0.25) 100%), radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%)',
           }}
         />
 
@@ -124,7 +124,7 @@ const Auth: React.FC = () => {
         </div>
 
         {/* Editorial tagline */}
-        <p className="absolute z-[3] left-5 lg:left-11 right-5 lg:right-auto bottom-20 lg:bottom-3 lg:max-w-[720px] font-fraunces italic font-medium text-[20px] lg:text-[44px] leading-[1.2] lg:leading-[1.15] tracking-[-0.3px] lg:tracking-[-0.4px] max-w-[260px] lg:max-w-[720px] text-[#F5F1E8] drop-shadow-[0_2px_14px_rgba(0,0,0,0.55)] animate-fade-up">
+        <p className="absolute z-[3] left-5 lg:left-11 right-5 lg:right-auto bottom-20 lg:bottom-10 lg:max-w-[720px] font-fraunces italic font-medium text-[20px] lg:text-[44px] leading-[1.2] lg:leading-[1.15] tracking-[-0.3px] lg:tracking-[-0.4px] max-w-[260px] lg:max-w-[720px] text-[#F5F1E8] drop-shadow-[0_2px_14px_rgba(0,0,0,0.55)] animate-fade-up">
           Your journey from Dreamer to Doer starts here
         </p>
       </section>
