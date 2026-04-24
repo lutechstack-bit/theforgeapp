@@ -33,20 +33,21 @@ const RoadmapJourney: React.FC = () => {
     edition,
   } = useRoadmapData();
 
-  // Fetch ready recordings for this edition so we can link them to past sessions
+  // Fetch ready recordings so we can link them to past sessions.
+  // We intentionally don't filter by edition_id here because the edition stored on
+  // a live_session row (set by the admin at upload time) may differ from the edition
+  // the viewer's profile resolves to.  Matching by date is sufficient and more robust.
   const { data: sessionRecordings = [] } = useQuery({
-    queryKey: ['roadmap-session-recordings', edition?.id],
+    queryKey: ['roadmap-session-recordings'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('live_sessions')
         .select('id, start_at, learn_content_id')
-        .eq('edition_id', edition!.id)
         .eq('recording_status', 'ready')
         .not('learn_content_id', 'is', null);
       if (error) throw error;
       return data || [];
     },
-    enabled: !!edition?.id,
   });
 
   // Map date string (YYYY-MM-DD) → learn_content_id for quick lookup
