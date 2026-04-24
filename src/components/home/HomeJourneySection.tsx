@@ -5,7 +5,8 @@ import { RefreshCw, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRoadmapData } from '@/hooks/useRoadmapData';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import DatePillSelector from './DatePillSelector';
 import SessionDetailCard from './SessionDetailCard';
@@ -43,6 +44,46 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
     userCohortType,
     edition,
   } = useRoadmapData();
+
+  // Fetch community session recordings — same dual-lookup as RoadmapJourney
+  const { data: communityRecordings = [] } = useQuery({
+    queryKey: ['community-session-recordings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('learn_content')
+        .select('id, title')
+        .eq('section_type', 'community_sessions');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+  const { data: sessionRecordings = [] } = useQuery({
+    queryKey: ['roadmap-session-recordings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('live_sessions')
+        .select('id, start_at, learn_content_id')
+        .eq('recording_status', 'ready')
+        .not('learn_content_id', 'is', null);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+  const recordingByTitle = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const rec of communityRecordings) {
+      if (rec.title) map[rec.title.trim().toLowerCase()] = rec.id;
+    }
+    return map;
+  }, [communityRecordings]);
+  const recordingByDate = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const rec of sessionRecordings) {
+      const dateKey = format(new Date(rec.start_at), 'yyyy-MM-dd');
+      if (rec.learn_content_id) map[dateKey] = rec.learn_content_id;
+    }
+    return map;
+  }, [sessionRecordings]);
 
   // Timer to prevent infinite skeleton
   useEffect(() => {
@@ -154,8 +195,17 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
       meeting_id: (selectedDay as any).meeting_id, meeting_passcode: (selectedDay as any).meeting_passcode,
       session_start_time: (selectedDay as any).session_start_time,
       session_duration_hours: (selectedDay as any).session_duration_hours,
+      recording_learn_content_id: (() => {
+        if (selectedDay.date && recordingByDate[selectedDay.date]) {
+          return recordingByDate[selectedDay.date];
+        }
+        if (selectedDay.title) {
+          return recordingByTitle[selectedDay.title.trim().toLowerCase()] ?? null;
+        }
+        return null;
+      })(),
     };
-  }, [selectedDay]);
+  }, [selectedDay, recordingByDate, recordingByTitle]);
 
   // Loading / error states
   if (userDataLoading || isLoadingDays) {
