@@ -21,13 +21,15 @@ const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
   const navigate = useNavigate();
   const { isFeatureEnabled } = useFeatureFlags();
   const tasksEnabled = isFeatureEnabled('tasks_enabled');
+  const prepEnabled = isFeatureEnabled('prep_enabled');
 
   const sections = [
     { id: 'journey', path: '/roadmap', label: 'Journey', icon: Map },
     // Tasks tab is gated by the tasks_enabled flag so admins can hide the
     // feature on cohorts that don't use the journey-tasks workflow.
     ...(tasksEnabled ? [{ id: 'tasks', path: '/roadmap/tasks', label: 'Tasks', icon: CheckSquare }] : []),
-    { id: 'prep', path: '/roadmap/prep', label: 'Prep', icon: FileText },
+    // Prep tab is gated by the prep_enabled flag.
+    ...(prepEnabled ? [{ id: 'prep', path: '/roadmap/prep', label: 'Prep', icon: FileText }] : []),
     ...(hasEquipment ? [{ id: 'equipment', path: '/roadmap/equipment', label: 'Equipment', icon: Package }] : []),
     { id: 'rules', path: '/roadmap/rules', label: 'Rules', icon: BookOpen },
     ...(hasGallery ? [{ id: 'gallery', path: '/roadmap/gallery', label: 'Gallery', icon: Image }] : []),

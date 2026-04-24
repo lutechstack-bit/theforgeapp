@@ -1,11 +1,16 @@
 import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Navigate } from 'react-router-dom';
 import { useRoadmapData } from '@/hooks/useRoadmapData';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import PrepChecklistSection from '@/components/roadmap/PrepChecklistSection';
 import NightlyRitualSection from '@/components/roadmap/NightlyRitualSection';
 
 const RoadmapPrep: React.FC = () => {
   const location = useLocation();
+  const { isFeatureEnabled, isLoading: flagsLoading } = useFeatureFlags();
+  if (!flagsLoading && !isFeatureEnabled('prep_enabled')) {
+    return <Navigate to="/roadmap" replace />;
+  }
   const {
     prepItems,
     completedIds,
