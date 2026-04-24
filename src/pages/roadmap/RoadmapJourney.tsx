@@ -33,10 +33,22 @@ const RoadmapJourney: React.FC = () => {
     edition,
   } = useRoadmapData();
 
-  // Fetch ready recordings so we can link them to past sessions.
-  // We intentionally don't filter by edition_id here because the edition stored on
-  // a live_session row (set by the admin at upload time) may differ from the edition
-  // the viewer's profile resolves to.  Matching by date is sufficient and more robust.
+  // Primary: learn_content community sessions — title-based lookup.
+  // learn_content has open RLS ("Authenticated users can view") so this works
+  // regardless of which edition the admin used when uploading the recording.
+  const { data: communityRecordings = [] } = useQuery({
+    queryKey: ['community-session-recordings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('learn_content')
+        .select('id, title')
+        .eq('section_type', 'community_sessions');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Secondary: live_sessions date-based lookup (may be filtered by RLS in edge cases)
   const { data: sessionRecordings = [] } = useQuery({
     queryKey: ['roadmap-session-recordings'],
     queryFn: async () => {
@@ -50,11 +62,20 @@ const RoadmapJourney: React.FC = () => {
     },
   });
 
-  // Map date string (YYYY-MM-DD) → learn_content_id for quick lookup
+  // title (lower-cased) → learn_content_id
+  const recordingByTitle = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const rec of communityRecordings) {
+      if (rec.title) map[rec.title.trim().toLowerCase()] = rec.id;
+    }
+    return map;
+  }, [communityRecordings]);
+
+  // date (YYYY-MM-DD, local) → learn_content_id
   const recordingByDate = useMemo(() => {
     const map: Record<string, string> = {};
     for (const rec of sessionRecordings) {
-      const dateKey = format(new Date(rec.start_at), 'yyyy-MM-dd'); // local date, not UTC
+      const dateKey = format(new Date(rec.start_at), 'yyyy-MM-dd');
       if (rec.learn_content_id) map[dateKey] = rec.learn_content_id;
     }
     return map;
@@ -168,9 +189,20 @@ const RoadmapJourney: React.FC = () => {
       meeting_id: (selectedDay as any).meeting_id, meeting_passcode: (selectedDay as any).meeting_passcode,
       session_start_time: (selectedDay as any).session_start_time,
       session_duration_hours: (selectedDay as any).session_duration_hours,
-      recording_learn_content_id: selectedDay.date ? (recordingByDate[selectedDay.date] ?? null) : null,
+      recording_learn_content_id: (() => {
+        // 1. Date match via live_sessions (most precise)
+        if (selectedDay.date && recordingByDate[selectedDay.date]) {
+          return recordingByDate[selectedDay.date];
+        }
+        // 2. Title match via learn_content (handles recordings uploaded through AdminLearn
+        //    or when live_sessions RLS filters the row out)
+        if (selectedDay.title) {
+          return recordingByTitle[selectedDay.title.trim().toLowerCase()] ?? null;
+        }
+        return null;
+      })(),
     };
-  }, [selectedDay, recordingByDate]);
+  }, [selectedDay, recordingByDate, recordingByTitle]);
 
   // Loading state
   if (isLoadingDays) {
