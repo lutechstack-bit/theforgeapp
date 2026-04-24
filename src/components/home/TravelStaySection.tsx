@@ -209,19 +209,21 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
 
             {/* Compact contacts */}
             {location.contacts && location.contacts.length > 0 && (
-              <div className="space-y-1 mb-2">
+              <div className="space-y-1.5 mb-3">
+                <p className="text-[10px] font-semibold text-primary/70 uppercase tracking-wider mb-1">Life Guards</p>
                 {location.contacts.map((contact, i) => (
-                  <div key={i} className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] text-muted-foreground truncate">{contact.name}</span>
-                    <a
-                      href={`tel:${contact.phone}`}
-                      className="flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 transition-colors font-medium whitespace-nowrap"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                  <a
+                    key={i}
+                    href={`tel:${contact.phone}`}
+                    className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-primary/5 border border-primary/10 hover:bg-primary/10 hover:border-primary/20 transition-colors group"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className="text-[11px] font-medium text-foreground/80 truncate">{contact.name}</span>
+                    <span className="flex items-center gap-1 text-[11px] text-primary font-semibold whitespace-nowrap">
                       <Phone className="h-2.5 w-2.5" />
                       {contact.phone}
-                    </a>
-                  </div>
+                    </span>
+                  </a>
                 ))}
               </div>
             )}
