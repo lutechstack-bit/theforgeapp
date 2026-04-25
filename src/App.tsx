@@ -10,6 +10,8 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { AdminRoute } from "@/components/admin/AdminRoute";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { MentorRoute } from "@/components/mentor/MentorRoute";
+import { MentorLayout } from "@/components/mentor/MentorLayout";
 
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { LoadingScreen } from "@/components/shared/LoadingScreen";
@@ -56,6 +58,8 @@ import AdminCommunityHighlights from "./pages/admin/AdminCommunityHighlights";
 import AdminNightlyRituals from "./pages/admin/AdminNightlyRituals";
 import AdminEquipment from "./pages/admin/AdminEquipment";
 import AdminMentors from "./pages/admin/AdminMentors";
+import AdminMentorAssignments from "./pages/admin/AdminMentorAssignments";
+import AdminEscalatedDoubts from "./pages/admin/AdminEscalatedDoubts";
 
 import AdminDocs from "./pages/admin/AdminDocs";
 import AdminJourneyStages from "./pages/admin/AdminJourneyStages";
@@ -68,6 +72,9 @@ import AdminPerks from "./pages/admin/AdminPerks";
 import AdminNetwork from "./pages/admin/AdminNetwork";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminActivity from "./pages/admin/AdminActivity";
+
+// Mentor pages
+import MentorWorkspace from "./pages/mentor/MentorWorkspace";
 
 import EventDetail from "./pages/EventDetail";
 import PerkDetail from "./pages/PerkDetail";
@@ -292,6 +299,12 @@ const AppRoutes = () => {
         <Route path="/my-kyform" element={<MyKYForm />} />
       </Route>
       
+      {/* Mentor routes (feature-flag gated) */}
+      <Route path="/mentor" element={<MentorRoute><MentorLayout /></MentorRoute>}>
+        <Route index element={<MentorWorkspace />} />
+        <Route path="students/:studentId" element={<MentorWorkspace />} />
+      </Route>
+
       {/* Admin routes */}
       <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
         <Route index element={<AdminDashboard />} />
@@ -312,6 +325,8 @@ const AppRoutes = () => {
         <Route path="community-highlights" element={<AdminCommunityHighlights />} />
         <Route path="nightly-rituals" element={<AdminNightlyRituals />} />
         <Route path="mentors" element={<AdminMentors />} />
+        <Route path="mentor-assignments" element={<AdminMentorAssignments />} />
+        <Route path="escalated-doubts" element={<AdminEscalatedDoubts />} />
         
         <Route path="docs" element={<AdminDocs />} />
         <Route path="changelog" element={<AdminChangelog />} />

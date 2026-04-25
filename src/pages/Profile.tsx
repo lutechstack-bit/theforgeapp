@@ -32,6 +32,8 @@ import { BentoPersonalTile } from '@/components/profile/BentoPersonalTile';
 import { BentoWorksTile } from '@/components/profile/BentoWorksTile';
 import { BentoBadgesTile } from '@/components/profile/BentoBadgesTile';
 import { BentoShareTile } from '@/components/profile/BentoShareTile';
+import MyMentorDoubts from '@/components/student/MyMentorDoubts';
+import MentorCardsStack from '@/components/student/MentorCardsStack';
 
 const ProfileSkeleton = () => (
   <div className="max-w-6xl mx-auto page-container space-y-4 pb-24 md:pb-6">
@@ -270,6 +272,12 @@ const Profile: React.FC = () => {
           onDownloadPDF={handleDownloadPDF}
           isUpdating={createOrUpdatePortfolio.isPending}
         />
+      </div>
+
+      {/* Mentor-triggered cards (from your mentor / admin) — self-gated on flag */}
+      <div className="mt-4 space-y-4">
+        <MentorCardsStack />
+        <MyMentorDoubts />
       </div>
 
       {/* Delete Work confirmation */}

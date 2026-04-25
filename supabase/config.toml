@@ -23,3 +23,8 @@ verify_jwt = false
 
 [functions.zoom-signature]
 verify_jwt = false
+
+[functions.tally-webhook]
+# Public endpoint — Tally hits this with no JWT. We HMAC-verify the body
+# against TALLY_WEBHOOK_SECRET inside the function.
+verify_jwt = false

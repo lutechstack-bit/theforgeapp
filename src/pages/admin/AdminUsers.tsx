@@ -1,7 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload, Users, LayoutGrid, List, Download, Crown, IndianRupee, FileSpreadsheet, FileUp } from 'lucide-react';
+import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload, Users, LayoutGrid, List, Download, Crown, IndianRupee, FileSpreadsheet, FileUp, UserPlus, UserMinus, GraduationCap } from 'lucide-react';
+import {
+  useMentorRoleSet,
+  useGrantMentorRole,
+  useRevokeMentorRole,
+} from '@/hooks/useMentorAdminData';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -1224,6 +1229,16 @@ export default function AdminUsers() {
     }
   };
 
+  // ─── Mentor role lookups for the users list ───
+  const { data: mentorRoleSet } = useMentorRoleSet();
+  const grantMentorRole = useGrantMentorRole();
+  const revokeMentorRole = useRevokeMentorRole();
+  const [mentorDialog, setMentorDialog] = useState<{
+    user: { id: string; full_name: string | null; email: string | null };
+    mode: 'grant' | 'revoke';
+  } | null>(null);
+  const [mentorCapacity, setMentorCapacity] = useState<number>(5);
+
   const filteredUsers = useMemo(() => {
     return users?.filter(user => {
       const matchesSearch =
@@ -1627,7 +1642,20 @@ export default function AdminUsers() {
                           aria-label={`Select ${user.full_name || user.email}`}
                         />
                       </TableCell>
-                      <TableCell className="font-medium">{user.full_name || '-'}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <span>{user.full_name || '-'}</span>
+                          {mentorRoleSet?.has(user.id) && (
+                            <Badge
+                              variant="outline"
+                              className="h-5 border-primary/30 bg-primary/5 px-1.5 text-[10px] font-semibold uppercase tracking-wider text-primary"
+                            >
+                              <GraduationCap className="mr-0.5 h-3 w-3" />
+                              Mentor
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>{user.email || '-'}</TableCell>
                       <TableCell>{user.city || '-'}</TableCell>
                       <TableCell>{getEditionName(user.edition_id)}</TableCell>
@@ -1660,15 +1688,49 @@ export default function AdminUsers() {
                             variant="ghost"
                             size="icon"
                             onClick={() => setEditingUser(user)}
+                            title="Edit user"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
+                          {mentorRoleSet?.has(user.id) ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-primary hover:bg-primary/10"
+                              onClick={() => {
+                                setMentorDialog({
+                                  user: { id: user.id, full_name: user.full_name ?? null, email: user.email ?? null },
+                                  mode: 'revoke',
+                                });
+                              }}
+                              title="Revoke mentor role"
+                            >
+                              <UserMinus className="w-4 h-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setMentorCapacity(5);
+                                setMentorDialog({
+                                  user: { id: user.id, full_name: user.full_name ?? null, email: user.email ?? null },
+                                  mode: 'grant',
+                                });
+                              }}
+                              disabled={isAdmin && !user.is_admin /* noop, placeholder */}
+                              title="Make mentor"
+                            >
+                              <UserPlus className="w-4 h-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
                             className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             onClick={() => setUserToDelete(user)}
                             disabled={isAdmin}
+                            title="Delete user"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -1928,6 +1990,94 @@ export default function AdminUsers() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ─── Grant / revoke mentor role ─────────────────────────────── */}
+      <AlertDialog
+        open={!!mentorDialog}
+        onOpenChange={(v) => { if (!v) setMentorDialog(null); }}
+      >
+        <AlertDialogContent>
+          {mentorDialog?.mode === 'grant' ? (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Make {mentorDialog.user.full_name ?? 'this user'} a mentor?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Grants the <code className="text-xs">mentor</code> role and creates their mentor
+                  profile. They'll be able to access the mentor workspace once the{' '}
+                  <code className="text-xs">mentors_enabled</code> feature flag is on. Students are
+                  assigned separately from Admin → Mentor assignments.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div>
+                <Label htmlFor="mentor-cap">Initial capacity (1–20)</Label>
+                <Input
+                  id="mentor-cap"
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={mentorCapacity}
+                  onChange={(e) => setMentorCapacity(Math.max(1, Math.min(20, Number(e.target.value))))}
+                  className="mt-1 w-24"
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  How many students this mentor can take on at once. Editable later.
+                </p>
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={async () => {
+                    try {
+                      await grantMentorRole.mutateAsync({
+                        userId: mentorDialog.user.id,
+                        capacity: mentorCapacity,
+                      });
+                      toast.success(`${mentorDialog.user.full_name ?? 'User'} is now a mentor`);
+                      setMentorDialog(null);
+                      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+                    } catch (e) {
+                      toast.error(`Could not grant mentor role: ${String(e)}`);
+                    }
+                  }}
+                  disabled={grantMentorRole.isPending}
+                >
+                  {grantMentorRole.isPending ? 'Granting…' : 'Make mentor'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          ) : mentorDialog?.mode === 'revoke' ? (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Revoke mentor role from {mentorDialog.user.full_name ?? 'this user'}?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  They'll lose access to the mentor workspace. Their existing student assignments and
+                  past notes / reviews stay intact — if you grant the role back later, nothing is
+                  lost. To fully detach assigned students, go to Admin → Mentor assignments.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={async () => {
+                    try {
+                      await revokeMentorRole.mutateAsync({ userId: mentorDialog.user.id });
+                      toast.success('Mentor role revoked');
+                      setMentorDialog(null);
+                      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+                    } catch (e) {
+                      toast.error(`Could not revoke: ${String(e)}`);
+                    }
+                  }}
+                  disabled={revokeMentorRole.isPending}
+                >
+                  {revokeMentorRole.isPending ? 'Revoking…' : 'Revoke mentor role'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          ) : null}
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

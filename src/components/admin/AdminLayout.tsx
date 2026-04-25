@@ -83,6 +83,8 @@ const navGroups: NavGroup[] = [
       { to: '/admin/community-highlights', icon: Star, label: 'Highlights' },
       { to: '/admin/alumni-showcase', icon: Film, label: 'Alumni Showcase' },
       { to: '/admin/mentors', icon: UserCircle, label: 'Mentors' },
+      { to: '/admin/mentor-assignments', icon: Handshake, label: 'Mentor assignments' },
+      { to: '/admin/escalated-doubts', icon: AtSign, label: 'Escalated doubts' },
       { to: '/admin/explore-programs', icon: ExternalLink, label: 'Explore Programs' },
     ],
   },
