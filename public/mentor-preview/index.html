@@ -1,0 +1,2088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>the Forge — Mentor Workspace (Preview)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Open+Sauce+One:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:           #0A0A0A;
+    --bg-elev:      #121212;
+    --bg-raised:    #181818;
+    --bg-rail:      #0C0C0C;
+
+    --gold:         #FFBC3B;
+    --gold-soft:    #F5C76A;
+    --gold-deep:    #D38F0C;
+    --orange:       #DD6F16;
+    --cream:        #FCF7EF;
+
+    --text:         #F5F1E8;
+    --text-dim:     #A9A396;
+    --text-muted:   #6E6858;
+
+    --border:       rgba(245, 241, 232, 0.07);
+    --border-strong:rgba(245, 241, 232, 0.13);
+    --border-gold:  rgba(255, 188, 59, 0.28);
+
+    --danger:       #E05B4B;
+    --success:      #6FBF73;
+
+    --radius:       14px;
+    --radius-sm:    10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Open Sauce One', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    height: 100%;
+    overflow: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.12); }
+
+  /* ============ SHELL ============ */
+  .shell {
+    display: grid;
+    grid-template-rows: 56px 1fr;
+    height: 100vh;
+  }
+
+  /* Top bar */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px;
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 14px;
+    font-weight: 700; letter-spacing: 0.04em;
+  }
+  .brand-mark {
+    width: 26px; height: 26px; border-radius: 7px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%);
+    display: grid; place-items: center;
+    color: #000; font-weight: 800; font-size: 13px;
+  }
+  .role-pill {
+    font-size: 10.5px; font-weight: 600;
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(255,188,59,0.10);
+    color: var(--gold);
+    border: 1px solid var(--border-gold);
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  /* View toggle */
+  .vt-group {
+    display: inline-flex;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+    margin-left: 4px;
+  }
+  .vt-group a, .vt-group button {
+    padding: 5px 12px;
+    background: transparent;
+    color: var(--text-dim);
+    border: 0;
+    border-radius: 6px;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 140ms ease;
+    font-family: inherit;
+  }
+  .vt-group a:hover, .vt-group button:hover { color: var(--text); }
+  .vt-group .active {
+    background: rgba(255,188,59,0.12);
+    color: var(--gold);
+  }
+  .vt-group .active:hover { color: var(--gold); }
+  .top-alert {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--text-dim);
+  }
+  .top-alert .dot-ping {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 0 3px rgba(255,188,59,0.18);
+  }
+  .top-alert b { color: var(--text); font-weight: 600; }
+  .top-user { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 999px;
+    display: grid; place-items: center;
+    color: var(--gold); font-weight: 700; font-size: 12px;
+    background: linear-gradient(135deg, #3b3228 0%, #1a1410 100%);
+    border: 1px solid var(--border-strong);
+    flex-shrink: 0;
+  }
+
+  /* Body: rail + main */
+  .body {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* ============ LEFT RAIL ============ */
+  .rail {
+    background: var(--bg-rail);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .rail-head {
+    padding: 22px 20px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rail-title {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .rail-title h2 {
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .rail-count {
+    font-size: 12px; color: var(--text-muted);
+  }
+  .rail-sub {
+    font-size: 13px; color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+  .rail-sub b { color: var(--text); font-weight: 500; }
+  .filters {
+    display: flex; gap: 6px;
+  }
+  .chip {
+    padding: 5px 11px;
+    font-size: 12px; font-weight: 500;
+    color: var(--text-dim);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .chip:hover { color: var(--text); border-color: var(--border-strong); }
+  .chip.active {
+    color: var(--gold); border-color: var(--border-gold);
+    background: rgba(255,188,59,0.07);
+  }
+
+  .rail-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 10px 16px;
+  }
+  .s-item {
+    display: grid;
+    grid-template-columns: 40px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 120ms ease;
+    position: relative;
+  }
+  .s-item:hover { background: rgba(255,255,255,0.025); }
+  .s-item.active {
+    background: rgba(255,188,59,0.07);
+  }
+  .s-item.active::before {
+    content: "";
+    position: absolute; left: 0; top: 10px; bottom: 10px;
+    width: 2px; border-radius: 2px;
+    background: var(--gold);
+  }
+  .s-av {
+    width: 40px; height: 40px; border-radius: 999px;
+    background: linear-gradient(135deg, #3a3024 0%, #161210 100%);
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 13px; color: var(--gold);
+    border: 1px solid var(--border-strong);
+  }
+  .s-main { min-width: 0; }
+  .s-name {
+    font-size: 14px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .s-meta {
+    margin-top: 3px;
+    font-size: 12px; color: var(--text-dim);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .s-badge {
+    min-width: 22px; height: 22px; padding: 0 7px;
+    display: grid; place-items: center;
+    border-radius: 999px;
+    font-size: 11px; font-weight: 700;
+    color: #0A0A0A; background: var(--gold);
+  }
+  .s-badge.muted {
+    color: var(--text-dim); background: transparent;
+    border: 1px solid var(--border);
+    font-weight: 500;
+  }
+
+  /* ============ MAIN (student detail) ============ */
+  .main {
+    overflow-y: auto;
+    position: relative;
+  }
+  .main-pad { padding: 32px 40px 80px; max-width: 1100px; }
+
+  /* Student header */
+  .sh {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 20px;
+    align-items: center;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sh-av {
+    width: 72px; height: 72px; border-radius: 999px;
+    background: linear-gradient(135deg, #4a3a28 0%, #1c1612 100%);
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 24px; color: var(--gold);
+    border: 1px solid var(--border-gold);
+  }
+  .sh-name {
+    font-size: 28px; font-weight: 700; letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .sh-meta {
+    margin-top: 6px;
+    font-size: 14px; color: var(--text-dim);
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  }
+  .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-muted); }
+  .sh-actions {
+    display: flex; gap: 8px;
+  }
+  .btn {
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-weight: 600; font-size: 13px;
+    cursor: pointer;
+    border: 0;
+    transition: all 120ms ease;
+  }
+  .btn-primary { background: var(--gold); color: #0A0A0A; }
+  .btn-primary:hover { background: var(--gold-soft); }
+  .btn-ghost {
+    background: transparent; color: var(--text);
+    border: 1px solid var(--border-strong);
+  }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-icon {
+    width: 36px; height: 36px; padding: 0;
+    display: grid; place-items: center;
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    color: var(--text-dim);
+    border-radius: 8px;
+  }
+  .btn-icon:hover { color: var(--text); border-color: var(--border-gold); }
+
+  /* At-a-glance ribbon */
+  .glance {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    margin-top: 24px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .g-item {
+    padding: 0 24px;
+    border-right: 1px solid var(--border);
+  }
+  .g-item:last-child { border-right: 0; }
+  .g-label {
+    font-size: 11.5px; color: var(--text-muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .g-val {
+    font-size: 18px; font-weight: 600; letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+  .g-val .accent { color: var(--gold); }
+  .g-sub {
+    margin-top: 4px;
+    font-size: 12px; color: var(--text-dim);
+  }
+  .bar {
+    height: 3px; border-radius: 999px;
+    background: rgba(245,241,232,0.08);
+    overflow: hidden;
+    margin-top: 10px;
+  }
+  .bar > span {
+    display: block; height: 100%;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold-deep) 100%);
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex; gap: 28px;
+    margin-top: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 12px 0;
+    font-size: 14px; font-weight: 500;
+    color: var(--text-dim);
+    cursor: pointer;
+    position: relative;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--text); }
+  .tab.active::after {
+    content: "";
+    position: absolute; left: 0; right: 0; bottom: -1px;
+    height: 2px; background: var(--gold);
+  }
+  .tab-count {
+    font-size: 11px; font-weight: 600;
+    color: #0A0A0A; background: var(--gold);
+    padding: 1px 7px; border-radius: 999px;
+  }
+  .tab-count.muted {
+    color: var(--text-dim); background: rgba(245,241,232,0.08);
+  }
+
+  /* ============ OVERVIEW CONTENT ============ */
+  .overview {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 24px;
+    margin-top: 28px;
+  }
+
+  /* Pending-for-you card */
+  .now-card {
+    padding: 22px 24px;
+    background: var(--bg-elev);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--gold);
+  }
+  .now-label {
+    font-size: 11px; color: var(--gold);
+    letter-spacing: 0.12em; text-transform: uppercase;
+    font-weight: 600;
+  }
+  .now-title {
+    margin-top: 8px;
+    font-size: 20px; font-weight: 600; letter-spacing: -0.01em;
+  }
+  .now-desc {
+    margin-top: 10px;
+    color: var(--text-dim); font-size: 14px; line-height: 1.55;
+  }
+  .now-foot {
+    margin-top: 20px;
+    display: flex; gap: 10px; align-items: center;
+  }
+  .now-foot .meta {
+    font-size: 12px; color: var(--text-muted);
+    margin-left: auto;
+  }
+
+  /* Timeline */
+  .panel {
+    padding: 22px 24px;
+    background: var(--bg-elev);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  .panel-title {
+    font-size: 14px; font-weight: 600;
+    margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-title .link { color: var(--gold); font-size: 12px; font-weight: 500; }
+
+  .tl { position: relative; }
+  .tl::before {
+    content: ""; position: absolute;
+    left: 5px; top: 8px; bottom: 8px;
+    width: 1px; background: var(--border);
+  }
+  .tl-item {
+    position: relative;
+    padding: 4px 0 16px 22px;
+    font-size: 13px;
+  }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-item::before {
+    content: ""; position: absolute;
+    left: 2px; top: 7px;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--text-muted);
+  }
+  .tl-item.gold::before { background: var(--gold); }
+  .tl-item b { font-weight: 500; }
+  .tl-meta { margin-top: 2px; color: var(--text-muted); font-size: 11.5px; }
+
+  /* About / profile */
+  .about {
+    margin-top: 28px;
+    padding: 22px 24px;
+    background: var(--bg-elev);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  .about-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px 40px;
+  }
+  .about-row .k {
+    font-size: 11.5px; color: var(--text-muted);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .about-row .v { font-size: 14px; font-weight: 500; }
+  .about-row .v.dim { color: var(--text-dim); font-weight: 400; }
+  .bio {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 14px; line-height: 1.6;
+    color: var(--text-dim);
+    max-width: 68ch;
+  }
+  .bio-quote {
+    font-family: 'Fraunces', serif; font-style: italic;
+    font-size: 15px; color: var(--cream);
+  }
+
+  /* Submissions table */
+  .sub-section { margin-top: 28px; }
+  .sub-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .sub-head h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+  .sub-table {
+    background: var(--bg-elev);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .sub-row {
+    display: grid;
+    grid-template-columns: 72px 1fr 140px 120px 100px;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 120ms ease;
+  }
+  .sub-row:hover { background: rgba(255,255,255,0.02); }
+  .sub-row:last-child { border-bottom: 0; }
+  .sub-type {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .sub-type.script  { color: var(--gold); }
+  .sub-type.premise { color: var(--orange); }
+  .sub-type.equip   { color: var(--cream); }
+  .sub-title { font-weight: 500; }
+  .sub-when { color: var(--text-dim); font-size: 12.5px; }
+  .status {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 500;
+  }
+  .status::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+  }
+  .status.pending::before  { background: var(--gold); }
+  .status.approved::before { background: var(--success); }
+  .status.revise::before   { background: var(--orange); }
+  .status.pending  { color: var(--gold); }
+  .status.approved { color: var(--success); }
+  .status.revise   { color: var(--orange); }
+
+  /* Private notes */
+  .notes-box {
+    margin-top: 28px;
+    padding: 22px 24px;
+    background: var(--bg-elev);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  .notes-title {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .notes-title h3 { font-size: 15px; font-weight: 600; }
+  .notes-title .hint {
+    font-size: 11.5px; color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+  .note {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13.5px; line-height: 1.55;
+  }
+  .note:last-child { border-bottom: 0; padding-bottom: 0; }
+  .note:first-child { padding-top: 0; }
+  .note-meta {
+    margin-top: 6px;
+    font-size: 12px; color: var(--text-muted);
+  }
+
+  @media (max-width: 1100px) {
+    .overview { grid-template-columns: 1fr; }
+    .glance { grid-template-columns: repeat(2, 1fr); }
+    .g-item:nth-child(2) { border-right: 0; }
+    .sub-row { grid-template-columns: 60px 1fr auto; }
+    .sub-row .sub-when, .sub-row .status { display: none; }
+  }
+  @media (max-width: 820px) {
+    .body { grid-template-columns: 1fr; }
+    .rail { display: none; }
+  }
+
+  /* ========= SEND NOTIFICATION / CARD MODAL ========= */
+  .sn-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(3px);
+    z-index: 90;
+    opacity: 0; pointer-events: none;
+    transition: opacity 200ms ease;
+  }
+  .sn-backdrop.show { opacity: 1; pointer-events: auto; }
+  .sn-modal {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -48%) scale(0.98);
+    width: min(720px, 94vw);
+    max-height: 92vh;
+    background: #121212;
+    border: 1px solid rgba(255, 188, 59, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+    z-index: 91;
+    opacity: 0; pointer-events: none;
+    transition: all 220ms cubic-bezier(.2,.8,.3,1);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .sn-modal.show {
+    opacity: 1; pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .sn-head {
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid rgba(245,241,232,0.07);
+    display: flex; align-items: flex-start; gap: 12px;
+    background: linear-gradient(180deg, rgba(255,188,59,0.04), transparent);
+  }
+  .sn-source-pill {
+    font-size: 10.5px; color: var(--gold);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 600;
+    padding: 3px 9px;
+    background: rgba(255,188,59,0.1);
+    border: 1px solid rgba(255,188,59,0.3);
+    border-radius: 999px;
+    display: inline-block;
+    margin-bottom: 6px;
+  }
+  .sn-head h3 { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; color: var(--cream, #F5F1E8); }
+  .sn-head .sn-sub { margin-top: 4px; font-size: 13px; color: hsl(40 20% 60%); }
+  .sn-head .sn-close {
+    margin-left: auto;
+    width: 30px; height: 30px;
+    background: transparent;
+    border: 1px solid rgba(245,241,232,0.1);
+    color: hsl(40 20% 60%);
+    border-radius: 7px; font-size: 16px; line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-family: inherit;
+  }
+  .sn-close:hover { color: #fff; }
+
+  .sn-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    padding: 20px 22px;
+    overflow-y: auto;
+  }
+
+  .sn-label {
+    display: block;
+    font-size: 11px; color: rgba(255,255,255,0.4);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .sn-field { margin-bottom: 14px; }
+  .sn-field input, .sn-field textarea {
+    width: 100%;
+    background: rgba(245,241,232,0.03);
+    border: 1px solid rgba(245,241,232,0.08);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    color: #F5F1E8;
+    font-family: inherit;
+    line-height: 1.55;
+    outline: none;
+    transition: border-color 120ms ease;
+  }
+  .sn-field input:focus, .sn-field textarea:focus { border-color: rgba(255,188,59,0.4); }
+  .sn-field textarea { resize: vertical; min-height: 90px; max-height: 160px; }
+  .sn-field-counter {
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    text-align: right;
+    margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .sn-field-counter.near { color: #DD6F16; }
+  .sn-field-counter.over { color: #E05B4B; }
+
+  /* Type toggle */
+  .sn-type-row {
+    display: flex; gap: 6px;
+    background: rgba(0,0,0,0.3);
+    padding: 3px;
+    border-radius: 9px;
+    margin-bottom: 14px;
+  }
+  .sn-type-btn {
+    flex: 1;
+    padding: 8px 10px;
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.5);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 140ms ease;
+  }
+  .sn-type-btn.active {
+    background: rgba(255,188,59,0.14);
+    color: var(--gold);
+    font-weight: 600;
+  }
+  .sn-type-btn:hover:not(.active) { color: #F5F1E8; }
+
+  .sn-template-row {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-bottom: 12px;
+  }
+  .sn-tmpl-chip {
+    font-size: 11.5px;
+    padding: 5px 10px;
+    background: transparent;
+    border: 1px solid rgba(245,241,232,0.1);
+    border-radius: 999px;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 500;
+    transition: all 140ms ease;
+  }
+  .sn-tmpl-chip:hover {
+    color: var(--gold);
+    border-color: rgba(255,188,59,0.3);
+  }
+
+  /* Preview column */
+  .sn-preview-label {
+    font-size: 10.5px; color: rgba(255,255,255,0.4);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 8px; margin-top: 14px;
+  }
+  .sn-preview-label:first-child { margin-top: 0; }
+  .sn-preview-dim {
+    opacity: 0.3;
+  }
+
+  /* Push preview */
+  .sn-push {
+    background: rgba(26,25,22,0.97);
+    border: 1px solid rgba(255,188,59,0.28);
+    border-radius: 12px;
+    padding: 11px 13px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+  }
+  .sn-push-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .sn-push-icon {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--gold);
+    display: grid; place-items: center;
+    font-size: 12px; color: #0A0A0A;
+  }
+  .sn-push-app { font-size: 11px; color: #F5F1E8; font-weight: 500; }
+  .sn-push-time { font-size: 10px; color: rgba(255,255,255,0.4); margin-left: auto; }
+  .sn-push-title { font-size: 13px; font-weight: 600; color: #F5F1E8; }
+  .sn-push-body { font-size: 11.5px; color: rgba(255,255,255,0.6); margin-top: 3px; line-height: 1.45; }
+
+  /* Home card preview */
+  .sn-home {
+    background: #141414;
+    border: 1px solid rgba(245,241,232,0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    min-height: 140px;
+  }
+  .sn-home-photo {
+    width: 100px;
+    background: linear-gradient(135deg, #3a2a10, #1a1309);
+    display: grid; place-items: center;
+    font-size: 30px; color: var(--gold);
+    flex-shrink: 0;
+  }
+  .sn-home-body { padding: 12px 14px; flex: 1; display: flex; flex-direction: column; }
+  .sn-home-label {
+    font-size: 9.5px; color: rgba(255,255,255,0.4);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .sn-home-title { font-size: 13.5px; font-weight: 600; color: #F5F1E8; line-height: 1.3; margin-bottom: 4px; }
+  .sn-home-text { font-size: 11.5px; color: rgba(255,255,255,0.6); line-height: 1.5; margin-bottom: 10px; }
+  .sn-home-cta {
+    margin-top: auto; align-self: flex-start;
+    background: var(--gold);
+    color: #0A0A0A;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11.5px; font-weight: 600;
+  }
+
+  .sn-foot {
+    padding: 12px 22px;
+    border-top: 1px solid rgba(245,241,232,0.07);
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(0,0,0,0.2);
+  }
+  .sn-foot-hint { font-size: 11.5px; color: rgba(255,255,255,0.4); flex: 1; }
+  .sn-foot-hint b { color: #F5F1E8; font-weight: 500; }
+  .sn-btn {
+    padding: 8px 16px;
+    border: 0;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 140ms ease;
+  }
+  .sn-btn.primary { background: var(--gold); color: #0A0A0A; }
+  .sn-btn.primary:hover { background: #F5C76A; }
+  .sn-btn.ghost { background: transparent; color: #F5F1E8; border: 1px solid rgba(245,241,232,0.13); }
+  .sn-btn.ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* Sent-toast */
+  .sn-toast {
+    position: fixed;
+    bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(30px);
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 16px 11px 13px;
+    background: #1A1A1A;
+    border: 1px solid rgba(111, 191, 115, 0.35);
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    font-size: 13px;
+    opacity: 0; pointer-events: none;
+    transition: all 260ms ease;
+    z-index: 100;
+  }
+  .sn-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+  .sn-toast .sn-tick {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #6FBF73; color: #0A0A0A;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 800;
+  }
+
+  @media (max-width: 720px) {
+    .sn-body { grid-template-columns: 1fr; }
+  }
+
+  /* Inline review composer on the "Awaiting your review" card */
+  .nrc {
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+  }
+  .nrc.approved { border-color: rgba(111, 191, 115, 0.35); background: rgba(111, 191, 115, 0.06); }
+  .nrc.revisions { border-color: rgba(221, 111, 22, 0.35); background: rgba(221, 111, 22, 0.06); }
+  .nrc-label {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+  }
+  .nrc.approved .nrc-label { color: #6FBF73; }
+  .nrc.revisions .nrc-label { color: #DD6F16; }
+  .nrc-req {
+    font-weight: 500; font-size: 10.5px;
+    letter-spacing: 0; text-transform: none;
+    color: rgba(255,255,255,0.4);
+  }
+  .nrc textarea {
+    width: 100%;
+    background: transparent;
+    border: 1px solid rgba(245,241,232,0.08);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #F5F1E8;
+    font-family: inherit;
+    line-height: 1.55;
+    resize: vertical;
+    min-height: 80px;
+    max-height: 150px;
+    outline: none;
+    transition: border-color 120ms ease;
+  }
+  .nrc textarea:focus { border-color: rgba(255,188,59,0.4); }
+  .nrc-bot {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 9px;
+  }
+  .nrc-counter {
+    font-size: 11.5px;
+    color: rgba(255,255,255,0.4);
+    font-variant-numeric: tabular-nums;
+  }
+  .nrc-counter.near { color: #DD6F16; }
+  .nrc-counter.over { color: #E05B4B; }
+  .nrc-actions { margin-left: auto; display: flex; gap: 6px; }
+  .nrc-btn {
+    padding: 7px 14px;
+    border-radius: 7px;
+    font-size: 12.5px; font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: 0;
+    transition: all 140ms ease;
+  }
+  .nrc-btn.approve { background: #6FBF73; color: #0A0A0A; }
+  .nrc-btn.approve:hover { background: #85cf89; }
+  .nrc-btn.revisions { background: rgba(221,111,22,0.15); color: #DD6F16; border: 1px solid rgba(221,111,22,0.35); }
+  .nrc-btn.revisions:hover { background: rgba(221,111,22,0.25); }
+  .nrc-btn.cancel { background: transparent; color: rgba(255,255,255,0.5); border: 1px solid rgba(245,241,232,0.08); }
+  .nrc-btn.cancel:hover { color: #F5F1E8; }
+  .nrc-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ========== Doubts inbox ========== */
+  .doubts-panel { display: none; }
+  .doubts-panel.active { display: block; }
+
+  .doubts-head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 4px 0 14px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 18px;
+  }
+  .doubts-head h3 {
+    font-size: 17px; font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .doubts-head p {
+    margin-top: 4px;
+    font-size: 12.5px; color: var(--text-dim);
+  }
+  .doubts-head .sim-btn {
+    padding: 7px 14px;
+    background: rgba(139, 130, 229, 0.12);
+    border: 1px solid rgba(139, 130, 229, 0.35);
+    color: #AFA9EC;
+    border-radius: 8px;
+    font-size: 12.5px; font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .doubts-head .sim-btn:hover {
+    background: rgba(139, 130, 229, 0.2);
+  }
+
+  .doubts-list { display: flex; flex-direction: column; gap: 12px; }
+  .doubt {
+    background: var(--bg-elev, #121212);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .doubt.status-open     { border-left: 2px solid var(--gold); }
+  .doubt.status-replied  { border-left: 2px solid #89C0FF; }
+  .doubt.status-closed   { opacity: 0.65; }
+  .doubt.status-escalated { border-left: 2px solid #AFA9EC; }
+  .doubt.status-cancelled { opacity: 0.45; }
+  .doubt-top {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px;
+  }
+  .doubt-av {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 12px;
+    background: linear-gradient(135deg, #3a3024 0%, #161210 100%);
+    color: var(--gold);
+    flex-shrink: 0;
+  }
+  .doubt-who { font-size: 13px; font-weight: 500; color: var(--text); }
+  .doubt-when { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+  .doubt-badge {
+    margin-left: auto;
+    font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+  }
+  .doubt-badge.open     { color: var(--gold);    background: rgba(255,188,59,0.08); border-color: rgba(255,188,59,0.25); }
+  .doubt-badge.replied  { color: #89C0FF;        background: rgba(137,192,255,0.08); border-color: rgba(137,192,255,0.25); }
+  .doubt-badge.closed   { color: #6FBF73;        background: rgba(111,191,115,0.08); border-color: rgba(111,191,115,0.25); }
+  .doubt-badge.escalated { color: #AFA9EC;       background: rgba(139,130,229,0.1); border-color: rgba(139,130,229,0.3); }
+  .doubt-badge.cancelled { color: var(--text-muted); background: rgba(245,241,232,0.04); border-color: var(--border); }
+
+  .doubt-q {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.55;
+    padding: 12px 14px;
+    background: rgba(245,241,232,0.03);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+  }
+  .doubt-meta-bottom {
+    display: flex; align-items: center; gap: 12px;
+    margin-top: 4px;
+    font-size: 11.5px; color: var(--text-muted);
+  }
+  .doubt-meta-bottom .sep { opacity: 0.4; }
+
+  .doubt-replies {
+    margin-top: 12px;
+    padding-left: 18px;
+    border-left: 2px solid rgba(137,192,255,0.3);
+  }
+  .doubt-reply {
+    padding: 8px 0 10px;
+    font-size: 13px; line-height: 1.55;
+    color: var(--text-dim);
+  }
+  .doubt-reply b { color: var(--text); font-weight: 500; }
+  .doubt-reply em { font-style: italic; color: var(--text); }
+  .doubt-reply .meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+  .doubt-actions {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .doubt-btn {
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: 12px; font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 140ms ease;
+    border: 0;
+  }
+  .doubt-btn.reply    { background: var(--gold); color: #0A0A0A; }
+  .doubt-btn.reply:hover { background: var(--gold-soft, #F5C76A); }
+  .doubt-btn.close    { background: rgba(111,191,115,0.12); color: #6FBF73; border: 1px solid rgba(111,191,115,0.3); }
+  .doubt-btn.close:hover { background: rgba(111,191,115,0.2); }
+  .doubt-btn.escalate { background: rgba(139,130,229,0.12); color: #AFA9EC; border: 1px solid rgba(139,130,229,0.3); }
+  .doubt-btn.escalate:hover { background: rgba(139,130,229,0.2); }
+  .doubt-btn.cancel   { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+  .doubt-btn.cancel:hover { color: #E05B4B; border-color: rgba(224,91,75,0.3); }
+
+  /* Inline reply composer */
+  .doubt-composer {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(137,192,255,0.05);
+    border: 1px solid rgba(137,192,255,0.25);
+    border-radius: 9px;
+  }
+  .doubt-composer textarea {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 9px 11px;
+    font-size: 13px;
+    color: var(--text);
+    font-family: inherit;
+    line-height: 1.55;
+    resize: vertical;
+    min-height: 72px;
+    max-height: 150px;
+    outline: none;
+  }
+  .doubt-composer textarea:focus { border-color: rgba(137,192,255,0.5); }
+  .doubt-composer-foot {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 8px;
+  }
+  .doubt-composer-counter { font-size: 11.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .doubt-composer-counter.near { color: #DD6F16; }
+  .doubt-composer-counter.over { color: #E05B4B; }
+
+  .doubts-empty {
+    padding: 40px 24px;
+    text-align: center;
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  /* Nav tab interactive state */
+  .tab { cursor: pointer; user-select: none; }
+
+  /* Hidden tab panels */
+  .tp-overview, .tp-submissions, .tp-notes { display: block; }
+  .tp-overview.hidden, .tp-submissions.hidden, .tp-notes.hidden { display: none; }
+
+  /* Student simulator mini-modal */
+  .stu-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(3px);
+    z-index: 95;
+    opacity: 0; pointer-events: none;
+    transition: opacity 200ms ease;
+  }
+  .stu-backdrop.show { opacity: 1; pointer-events: auto; }
+  .stu-modal {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -48%) scale(0.97);
+    width: min(460px, 92vw);
+    background: #121212;
+    border: 1px solid rgba(139,130,229,0.35);
+    border-radius: 14px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+    z-index: 96;
+    opacity: 0; pointer-events: none;
+    transition: all 220ms cubic-bezier(.2,.8,.3,1);
+    overflow: hidden;
+  }
+  .stu-modal.show { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+  .stu-head {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; gap: 10px;
+    background: linear-gradient(180deg, rgba(139,130,229,0.06), transparent);
+  }
+  .stu-pill {
+    font-size: 10.5px; color: #AFA9EC;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 600;
+    padding: 3px 9px;
+    background: rgba(139,130,229,0.12);
+    border: 1px solid rgba(139,130,229,0.3);
+    border-radius: 999px;
+    display: inline-block;
+    margin-bottom: 5px;
+  }
+  .stu-head h3 { font-size: 16px; font-weight: 600; color: var(--text); }
+  .stu-head p { font-size: 12.5px; color: var(--text-dim); margin-top: 3px; }
+  .stu-body { padding: 16px 20px; }
+  .stu-body textarea {
+    width: 100%;
+    background: rgba(245,241,232,0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: var(--text);
+    font-family: inherit;
+    line-height: 1.55;
+    resize: vertical;
+    min-height: 96px;
+    max-height: 160px;
+    outline: none;
+  }
+  .stu-body textarea:focus { border-color: rgba(139,130,229,0.4); }
+  .stu-counter {
+    font-size: 11.5px;
+    text-align: right;
+    margin-top: 5px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .stu-counter.near { color: #DD6F16; }
+  .stu-counter.over { color: #E05B4B; }
+  .stu-foot {
+    padding: 10px 20px 14px;
+    display: flex; gap: 8px; justify-content: flex-end;
+  }
+
+  /* Done state replacement for now-card after review */
+  .now-resolved {
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    margin-top: 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .now-resolved.approved {
+    background: rgba(111,191,115,0.08);
+    border: 1px solid rgba(111,191,115,0.3);
+    color: #6FBF73;
+  }
+  .now-resolved.revisions {
+    background: rgba(221,111,22,0.08);
+    border: 1px solid rgba(221,111,22,0.3);
+    color: #DD6F16;
+  }
+  .now-resolved b { color: #F5F1E8; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ===== TOP BAR ===== -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">F</div>
+      <span>the forge</span>
+      <div class="vt-group" role="tablist" aria-label="Switch view">
+        <a href="assign-bento.html">Admin</a>
+        <button class="active" aria-current="true">Mentor</button>
+      </div>
+    </div>
+    <div class="top-alert">
+      <span class="dot-ping"></span>
+      <span><b>6 items</b> need your attention today</span>
+    </div>
+    <div class="top-user">
+      <span style="color: var(--text-dim);">Arjun Menon</span>
+      <div class="avatar">AM</div>
+    </div>
+  </div>
+
+  <!-- ===== BODY ===== -->
+  <div class="body">
+
+    <!-- ========== LEFT RAIL ========== -->
+    <aside class="rail">
+      <div class="rail-head">
+        <div class="rail-title">
+          <h2>My Students</h2>
+          <span class="rail-count">5</span>
+        </div>
+        <div class="rail-sub">Forge 08 · <b>Day 14 of 30</b></div>
+        <div class="filters">
+          <button class="chip active">All</button>
+          <button class="chip">Needs review</button>
+          <button class="chip">On track</button>
+        </div>
+      </div>
+
+      <div class="rail-list">
+
+        <div class="s-item active">
+          <div class="s-av">KS</div>
+          <div class="s-main">
+            <div class="s-name">Karthik Subramanian</div>
+            <div class="s-meta">Filmmaker · Draft 2 pending</div>
+          </div>
+          <div class="s-badge">2</div>
+        </div>
+
+        <div class="s-item">
+          <div class="s-av">RN</div>
+          <div class="s-main">
+            <div class="s-name">Riya Nair</div>
+            <div class="s-meta">Writer-director · Premise pending</div>
+          </div>
+          <div class="s-badge">1</div>
+        </div>
+
+        <div class="s-item">
+          <div class="s-av">VR</div>
+          <div class="s-main">
+            <div class="s-name">Vikram Rao</div>
+            <div class="s-meta">Filmmaker · 1 open doubt</div>
+          </div>
+          <div class="s-badge">1</div>
+        </div>
+
+        <div class="s-item">
+          <div class="s-av">SP</div>
+          <div class="s-main">
+            <div class="s-name">Sneha Prakash</div>
+            <div class="s-meta">Writer · Draft 1 submitted 4h</div>
+          </div>
+          <div class="s-badge">2</div>
+        </div>
+
+        <div class="s-item">
+          <div class="s-av">DI</div>
+          <div class="s-main">
+            <div class="s-name">Divya Iyer</div>
+            <div class="s-meta">Filmmaker · On track</div>
+          </div>
+          <div class="s-badge muted">—</div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- ========== MAIN (Karthik's profile) ========== -->
+    <main class="main">
+      <div class="main-pad">
+
+        <!-- Student header -->
+        <div class="sh">
+          <div class="sh-av">KS</div>
+          <div>
+            <div class="sh-name">Karthik Subramanian</div>
+            <div class="sh-meta">
+              <span>Filmmaker · 2nd year</span>
+              <span class="dot"></span>
+              <span>Chennai</span>
+              <span class="dot"></span>
+              <span>Forge 08 · Joined Apr 8</span>
+            </div>
+          </div>
+          <div class="sh-actions">
+            <button class="btn btn-ghost" onclick="openSendModal()">Send notification / card</button>
+            <button class="btn btn-ghost">Schedule 1:1</button>
+            <button class="btn btn-primary">Review Draft 2</button>
+          </div>
+        </div>
+
+        <!-- At-a-glance -->
+        <div class="glance">
+          <div class="g-item">
+            <div class="g-label">Roadmap</div>
+            <div class="g-val">62<span style="color:var(--text-muted); font-size:14px">%</span></div>
+            <div class="bar"><span style="width:62%"></span></div>
+          </div>
+          <div class="g-item">
+            <div class="g-label">Submissions</div>
+            <div class="g-val">7</div>
+            <div class="g-sub">4 approved · 2 pending · 1 revise</div>
+          </div>
+          <div class="g-item">
+            <div class="g-label">Sessions attended</div>
+            <div class="g-val">12<span style="color:var(--text-muted); font-size:14px">/14</span></div>
+            <div class="g-sub">2 missed — last on Apr 19</div>
+          </div>
+          <div class="g-item">
+            <div class="g-label">Your turnaround</div>
+            <div class="g-val accent">1.4d</div>
+            <div class="g-sub">cohort avg · 2.1d</div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs" id="mtab-bar">
+          <div class="tab active" data-mtab="overview" onclick="switchMentorTab('overview')">Overview</div>
+          <div class="tab" data-mtab="submissions" onclick="switchMentorTab('submissions')">Submissions <span class="tab-count">2</span></div>
+          <div class="tab" data-mtab="doubts" onclick="switchMentorTab('doubts')">Doubts <span class="tab-count muted" id="doubts-count-pill">3</span></div>
+          <div class="tab" data-mtab="roadmap" onclick="switchMentorTab('roadmap')">Roadmap</div>
+          <div class="tab" data-mtab="profile" onclick="switchMentorTab('profile')">Profile</div>
+          <div class="tab" data-mtab="notes" onclick="switchMentorTab('notes')">Notes</div>
+        </div>
+
+        <!-- ======= DOUBTS PANEL (hidden by default) ======= -->
+        <div class="doubts-panel" id="doubts-panel">
+          <div class="doubts-head">
+            <div>
+              <h3>Doubts from Karthik</h3>
+              <p>Quick questions he's sent you. Reply inline, close when resolved, or escalate if admin help is needed.</p>
+            </div>
+            <button class="sim-btn" onclick="openStudentSim()">👁 Simulate: Karthik asks a new doubt</button>
+          </div>
+          <div class="doubts-list" id="doubts-list"><!-- rendered --></div>
+        </div>
+
+        <!-- Overview: current focus + timeline -->
+        <div class="overview tp-overview">
+
+          <div class="now-card" id="now-card">
+            <div class="now-label">▸ Awaiting your review · 2 days</div>
+            <div class="now-title">Draft 2 — First Draft Script submission</div>
+            <div class="now-desc">
+              Karthik just submitted via Tally. The script itself lives in Tally — open it there to read,
+              then come back here to approve or send back with revision notes.
+            </div>
+            <div class="now-foot">
+              <a class="btn btn-ghost" href="https://tally.so/r/wMobBA" target="_blank" rel="noopener">↗ Open in Tally</a>
+              <button class="btn btn-primary" onclick="startNowReview('approved')">✓ Approve</button>
+              <button class="btn btn-ghost" onclick="startNowReview('revisions')">✎ Send revisions</button>
+              <span class="meta" style="margin-left:auto;">submitted Apr 20, 11:42 PM</span>
+            </div>
+
+            <div id="now-review-composer" style="display:none; margin-top: 16px;"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">
+              Recent activity
+              <a class="link" href="#">Full timeline</a>
+            </div>
+            <div class="tl">
+              <div class="tl-item gold"><b>Submitted Draft 2</b><div class="tl-meta">Apr 20 · 11:42 PM</div></div>
+              <div class="tl-item"><b>Attended</b> Live — Editing rhythm<div class="tl-meta">Apr 19 · 6:00 PM</div></div>
+              <div class="tl-item"><b>Asked a doubt</b> — non-linear 2nd act<div class="tl-meta">Apr 18 · 2:11 PM</div></div>
+              <div class="tl-item"><b>Premise re-approved</b> by you<div class="tl-meta">Apr 16</div></div>
+              <div class="tl-item"><b>Roadmap task done</b> — Location scout brief<div class="tl-meta">Apr 15</div></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- About -->
+        <div class="about tp-overview tp-profile">
+          <div class="panel-title" style="margin-bottom: 18px;">About Karthik</div>
+          <div class="about-grid">
+            <div class="about-row">
+              <div class="k">Cohort</div>
+              <div class="v">Forge 08 · Filmmaking</div>
+            </div>
+            <div class="about-row">
+              <div class="k">Track</div>
+              <div class="v">Short narrative · 10–15 min</div>
+            </div>
+            <div class="about-row">
+              <div class="k">Equipment</div>
+              <div class="v dim">Sony FX3 (owned) · borrowing lights</div>
+            </div>
+            <div class="about-row">
+              <div class="k">Location</div>
+              <div class="v dim">Chennai · shooting in Pollachi</div>
+            </div>
+            <div class="about-row">
+              <div class="k">Collaborators</div>
+              <div class="v dim">Cinematographer TBD · sound via Forge</div>
+            </div>
+            <div class="about-row">
+              <div class="k">Contact</div>
+              <div class="v dim">karthik.s@email.com · +91 ••• ••1234</div>
+            </div>
+          </div>
+          <div class="bio">
+            <div class="bio-quote">
+              "I want to make films that feel like the slow hours between 2 and 5 AM — when trains pull into empty stations and the world is quiet enough to hear itself."
+            </div>
+            <div style="margin-top: 12px;">
+              Worked as an AD on two indie features. Studied literature before switching. First Forge cohort. Citing Kiarostami, Vetrimaaran, Lynne Ramsay as influences.
+            </div>
+          </div>
+        </div>
+
+        <!-- Submissions -->
+        <div class="sub-section tp-overview tp-submissions">
+          <div class="sub-head">
+            <h3>Submissions</h3>
+            <a class="link" style="font-size:13px; color: var(--gold); font-weight:500;" href="#">All 7 →</a>
+          </div>
+          <div class="sub-table">
+
+            <div class="sub-row">
+              <div class="sub-type script">Script</div>
+              <div class="sub-title">Draft 2 — Last Train to Pollachi</div>
+              <div class="status pending">Awaiting review</div>
+              <div class="sub-when">Apr 20 · 2d ago</div>
+              <button class="btn btn-primary" style="padding:6px 12px;">Review</button>
+            </div>
+
+            <div class="sub-row">
+              <div class="sub-type premise">Premise</div>
+              <div class="sub-title">Night-shift clerk finds a lost camera</div>
+              <div class="status approved">Approved</div>
+              <div class="sub-when">Apr 16 · 6d</div>
+              <button class="btn btn-ghost" style="padding:6px 12px;">Open</button>
+            </div>
+
+            <div class="sub-row">
+              <div class="sub-type script">Script</div>
+              <div class="sub-title">Draft 1 — Last Train to Pollachi</div>
+              <div class="status revise">Revisions sent</div>
+              <div class="sub-when">Apr 13 · 9d</div>
+              <button class="btn btn-ghost" style="padding:6px 12px;">Open</button>
+            </div>
+
+            <div class="sub-row">
+              <div class="sub-type equip">Equipment list</div>
+              <div class="sub-title">Shooting kit — Pollachi schedule</div>
+              <div class="status approved">Approved</div>
+              <div class="sub-when">Apr 11 · 11d</div>
+              <button class="btn btn-ghost" style="padding:6px 12px;">Open</button>
+            </div>
+
+            <div class="sub-row">
+              <div class="sub-type premise">Premise</div>
+              <div class="sub-title">Original — "Station dog"</div>
+              <div class="status revise">Revisions sent</div>
+              <div class="sub-when">Apr 9 · 13d</div>
+              <button class="btn btn-ghost" style="padding:6px 12px;">Open</button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Private notes -->
+        <div class="notes-box tp-overview tp-notes">
+          <div class="notes-title">
+            <h3>My private notes</h3>
+            <span class="hint">Only you can see these</span>
+          </div>
+          <div class="note">
+            Karthik is strongest on atmosphere and weakest on scene-level stakes. Pushed him on the Draft 1 second-act pivot — he pushed back but eventually took half the note. Good sign.
+            <div class="note-meta">Apr 15 · 1 week ago</div>
+          </div>
+          <div class="note">
+            Missed two live sessions — says he's on a location scout. Worth checking in on Thursday.
+            <div class="note-meta">Apr 12</div>
+          </div>
+          <button class="btn btn-ghost" style="margin-top: 14px;">+ Add note</button>
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+</div>
+
+<!-- ===== SEND NOTIFICATION / CARD MODAL ===== -->
+<div class="sn-backdrop" id="sn-backdrop" onclick="closeSendModal(event)"></div>
+<div class="sn-modal" id="sn-modal" role="dialog" aria-modal="true">
+  <div class="sn-head">
+    <div style="flex:1; min-width:0;">
+      <span class="sn-source-pill">Mentor · Arjun Menon</span>
+      <h3 id="sn-title-heading">Send to Karthik</h3>
+      <div class="sn-sub">Only Karthik will see this — logged as a mentor-triggered event.</div>
+    </div>
+    <button class="sn-close" onclick="closeSendModal()" title="Close">×</button>
+  </div>
+
+  <div class="sn-body">
+    <div>
+      <span class="sn-label">Deliver as</span>
+      <div class="sn-type-row" role="tablist">
+        <button class="sn-type-btn active" id="sn-type-both" onclick="setSnType('both')">⚡ Both</button>
+        <button class="sn-type-btn" id="sn-type-push" onclick="setSnType('push')">📱 Push only</button>
+        <button class="sn-type-btn" id="sn-type-card" onclick="setSnType('card')">◈ Home card only</button>
+      </div>
+
+      <span class="sn-label">Quick templates</span>
+      <div class="sn-template-row" id="sn-templates">
+        <!-- populated -->
+      </div>
+
+      <div class="sn-field">
+        <label class="sn-label" for="sn-input-title">Title</label>
+        <input type="text" id="sn-input-title" maxlength="80" placeholder="e.g. Good work on Draft 1 — here's what's next" oninput="onSnInput()" />
+        <div class="sn-field-counter" id="sn-title-counter">0 / 80</div>
+      </div>
+
+      <div class="sn-field">
+        <label class="sn-label" for="sn-input-body">Body</label>
+        <textarea id="sn-input-body" maxlength="300" placeholder="A short note to Karthik — keep it under 300 characters." oninput="onSnInput()"></textarea>
+        <div class="sn-field-counter" id="sn-body-counter">0 / 300</div>
+      </div>
+
+      <div class="sn-field" id="sn-cta-field">
+        <label class="sn-label">Card CTA</label>
+        <input type="text" id="sn-input-cta" maxlength="30" placeholder="e.g. Book a 1:1 →" oninput="onSnInput()" />
+        <input type="text" id="sn-input-url" placeholder="https://…" oninput="onSnInput()" style="margin-top:8px;" />
+      </div>
+    </div>
+
+    <div>
+      <div class="sn-preview-label">Push notification</div>
+      <div class="sn-push" id="sn-push-preview">
+        <div class="sn-push-top">
+          <div class="sn-push-icon">🔥</div>
+          <div class="sn-push-app">the Forge</div>
+          <div class="sn-push-time">now</div>
+        </div>
+        <div class="sn-push-title" id="sn-prev-push-title">—</div>
+        <div class="sn-push-body" id="sn-prev-push-body">—</div>
+      </div>
+
+      <div class="sn-preview-label">Home card</div>
+      <div class="sn-home" id="sn-home-preview">
+        <div class="sn-home-photo" id="sn-prev-icon">💬</div>
+        <div class="sn-home-body">
+          <div class="sn-home-label">From your mentor · Arjun Menon</div>
+          <div class="sn-home-title" id="sn-prev-card-title">—</div>
+          <div class="sn-home-text" id="sn-prev-card-body">—</div>
+          <div class="sn-home-cta" id="sn-prev-card-cta">Open →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sn-foot">
+    <div class="sn-foot-hint">
+      Sending to <b>Karthik Subramanian</b> · source tracked as <b>Mentor · Arjun</b>
+    </div>
+    <button class="sn-btn ghost" onclick="closeSendModal()">Cancel</button>
+    <button class="sn-btn primary" id="sn-send-btn" onclick="doSendNotif()">Send →</button>
+  </div>
+</div>
+
+<!-- Student doubt simulator modal -->
+<div class="stu-backdrop" id="stu-backdrop" onclick="closeStudentSim(event)"></div>
+<div class="stu-modal" id="stu-modal" role="dialog" aria-modal="true">
+  <div class="stu-head">
+    <div style="flex:1;">
+      <span class="stu-pill">Student view · Karthik</span>
+      <h3>Ask your mentor a question</h3>
+      <p>Keep it short — 200 characters max. Priya will get a ping and can reply in-app.</p>
+    </div>
+    <button class="sn-close" onclick="closeStudentSim()">×</button>
+  </div>
+  <div class="stu-body">
+    <textarea id="stu-text" maxlength="200" placeholder="e.g. Can I use voice-over in a non-linear narrative? How does it affect premise approval?" oninput="onStuInput()"></textarea>
+    <div class="stu-counter" id="stu-counter">0 / 200</div>
+  </div>
+  <div class="stu-foot">
+    <button class="sn-btn ghost" onclick="closeStudentSim()">Cancel</button>
+    <button class="sn-btn primary" id="stu-send-btn" onclick="submitStudentDoubt()" disabled style="opacity:0.5;">Send to Priya →</button>
+  </div>
+</div>
+
+<!-- Success toast -->
+<div class="sn-toast" id="sn-toast">
+  <div class="sn-tick">✓</div>
+  <span id="sn-toast-msg">Sent</span>
+</div>
+
+<script>
+/* ===== Send notification / card ===== */
+const SN_TEMPLATES = [
+  {
+    id: 'nudge',
+    label: 'Nudge on submission',
+    icon: '⏰',
+    title: 'Quick nudge — haven\'t seen your draft yet',
+    body: 'You\'re close — once you submit, I can give you feedback before the next session. Aim to get it in today.',
+    cta: 'Submit now →',
+    url: 'https://tally.so/r/wMobBA',
+  },
+  {
+    id: 'approved-note',
+    label: 'Congrats note',
+    icon: '🎉',
+    title: 'Really strong work on this one',
+    body: 'Just wanted to say — the restraint in scene 7 is exactly what I was hoping you\'d find. Keep pulling that thread.',
+    cta: '',
+    url: '',
+  },
+  {
+    id: 'checkin',
+    label: '1:1 check-in',
+    icon: '📅',
+    title: 'Let\'s jump on a 20-min call this week',
+    body: 'Want to walk through where you\'re stuck. Pick a slot that works for you and we\'ll iron it out together.',
+    cta: 'Book a slot →',
+    url: 'https://calendly.com/leveluplearningindia/theforge-script-mentorship',
+  },
+  {
+    id: 'resource',
+    label: 'Send a resource',
+    icon: '📎',
+    title: 'Watch this before Draft 2',
+    body: 'Reminded me of what you\'re going for with the second act. Short watch — borrow what resonates, leave the rest.',
+    cta: 'Open link →',
+    url: 'https://',
+  },
+  {
+    id: 'blank',
+    label: 'Start blank',
+    icon: '✏️',
+    title: '',
+    body: '',
+    cta: '',
+    url: '',
+  },
+];
+
+let snType = 'both';
+let snCurrentIcon = '💬';
+
+function openSendModal() {
+  document.getElementById('sn-backdrop').classList.add('show');
+  document.getElementById('sn-modal').classList.add('show');
+  renderSnTemplates();
+  setSnType('both');
+  // Start with nudge template loaded
+  applySnTemplate(SN_TEMPLATES[0]);
+  setTimeout(() => document.getElementById('sn-input-title')?.focus(), 80);
+}
+window.openSendModal = openSendModal;
+
+function closeSendModal(ev) {
+  if (ev && ev.target && ev.currentTarget && ev.target !== ev.currentTarget && ev.target.id !== 'sn-backdrop') return;
+  document.getElementById('sn-backdrop').classList.remove('show');
+  document.getElementById('sn-modal').classList.remove('show');
+}
+window.closeSendModal = closeSendModal;
+
+function renderSnTemplates() {
+  const row = document.getElementById('sn-templates');
+  row.innerHTML = SN_TEMPLATES.map((t, i) => `
+    <button class="sn-tmpl-chip" onclick="applySnTemplate(SN_TEMPLATES[${i}])">
+      ${t.icon} ${t.label}
+    </button>
+  `).join('');
+}
+
+function applySnTemplate(t) {
+  document.getElementById('sn-input-title').value = t.title;
+  document.getElementById('sn-input-body').value = t.body;
+  document.getElementById('sn-input-cta').value = t.cta;
+  document.getElementById('sn-input-url').value = t.url;
+  snCurrentIcon = t.icon || '💬';
+  onSnInput();
+}
+window.applySnTemplate = applySnTemplate;
+window.SN_TEMPLATES = SN_TEMPLATES;
+
+function setSnType(t) {
+  snType = t;
+  ['both', 'push', 'card'].forEach(k => {
+    const btn = document.getElementById('sn-type-' + k);
+    if (btn) btn.classList.toggle('active', k === t);
+  });
+  const pushEl = document.getElementById('sn-push-preview');
+  const homeEl = document.getElementById('sn-home-preview');
+  const ctaField = document.getElementById('sn-cta-field');
+  pushEl.classList.toggle('sn-preview-dim', t === 'card');
+  homeEl.classList.toggle('sn-preview-dim', t === 'push');
+  ctaField.style.display = t === 'push' ? 'none' : 'block';
+}
+window.setSnType = setSnType;
+
+function onSnInput() {
+  const title = document.getElementById('sn-input-title').value;
+  const body = document.getElementById('sn-input-body').value;
+  const cta = document.getElementById('sn-input-cta').value;
+  // Counters
+  const tc = document.getElementById('sn-title-counter');
+  const bc = document.getElementById('sn-body-counter');
+  tc.textContent = `${title.length} / 80`;
+  bc.textContent = `${body.length} / 300`;
+  tc.classList.toggle('near', title.length >= 70 && title.length < 80);
+  tc.classList.toggle('over', title.length >= 80);
+  bc.classList.toggle('near', body.length >= 260 && body.length < 300);
+  bc.classList.toggle('over', body.length >= 300);
+  // Preview
+  document.getElementById('sn-prev-push-title').textContent = title || 'Notification title';
+  document.getElementById('sn-prev-push-body').textContent = body || 'Message preview…';
+  document.getElementById('sn-prev-card-title').textContent = title || 'Card title';
+  document.getElementById('sn-prev-card-body').textContent = body || 'Card body shown on student\'s home';
+  document.getElementById('sn-prev-card-cta').textContent = cta || 'Open →';
+  document.getElementById('sn-prev-icon').textContent = snCurrentIcon;
+  // Send button enabled only with title
+  document.getElementById('sn-send-btn').disabled = !title.trim();
+  document.getElementById('sn-send-btn').style.opacity = title.trim() ? '1' : '0.5';
+}
+window.onSnInput = onSnInput;
+
+function doSendNotif() {
+  const title = document.getElementById('sn-input-title').value.trim();
+  if (!title) return;
+  const bits = [];
+  if (snType === 'both' || snType === 'push') bits.push('push');
+  if (snType === 'both' || snType === 'card') bits.push('home card');
+  closeSendModal();
+  const toast = document.getElementById('sn-toast');
+  document.getElementById('sn-toast-msg').innerHTML = `<b>"${title.length > 40 ? title.slice(0,40) + '…' : title}"</b> sent to Karthik · ${bits.join(' + ')}`;
+  toast.classList.add('show');
+  clearTimeout(window.__snToastT);
+  window.__snToastT = setTimeout(() => toast.classList.remove('show'), 4200);
+}
+window.doSendNotif = doSendNotif;
+
+/* Esc closes */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('sn-modal')?.classList.contains('show')) { closeSendModal(); return; }
+    if (document.getElementById('stu-modal')?.classList.contains('show')) { closeStudentSim(); return; }
+    if (nowReviewActive) { cancelNowReview(); return; }
+  }
+});
+
+/* ========== Tab switching ========== */
+function switchMentorTab(tab) {
+  document.querySelectorAll('#mtab-bar .tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.mtab === tab);
+  });
+  const doubtsPanel = document.getElementById('doubts-panel');
+  // Overview, submissions, notes use tp- classes. Roadmap/profile = overview-lite for mockup.
+  const show = (sel) => document.querySelectorAll(sel).forEach(el => el.classList.remove('hidden'));
+  const hide = (sel) => document.querySelectorAll(sel).forEach(el => el.classList.add('hidden'));
+
+  // Hide all first
+  hide('.tp-overview, .tp-submissions, .tp-notes, .tp-profile');
+  doubtsPanel.classList.remove('active');
+  // Also hide the Overview-specific blocks (.overview)
+  const overview = document.querySelector('.overview');
+  if (overview) overview.style.display = 'none';
+
+  if (tab === 'overview')        { if (overview) overview.style.display = ''; show('.tp-overview'); }
+  else if (tab === 'submissions'){ show('.tp-submissions'); }
+  else if (tab === 'doubts')     { doubtsPanel.classList.add('active'); }
+  else if (tab === 'notes')      { show('.tp-notes'); }
+  else if (tab === 'profile')    { show('.tp-profile'); }
+  else if (tab === 'roadmap')    { if (overview) overview.style.display = ''; }  // mini: reuse overview
+
+  // Scroll to top of main
+  document.querySelector('.main')?.scrollTo?.({ top: 0, behavior: 'smooth' });
+}
+window.switchMentorTab = switchMentorTab;
+
+/* ========== Doubts inbox state ========== */
+let doubts = [
+  { id: 'd1', who: 'Karthik', initials: 'KS', q: 'How do I handle a non-linear 2nd act without confusing the audience?', askedAt: '6h ago', status: 'open', replies: [] },
+  { id: 'd2', who: 'Karthik', initials: 'KS', q: 'Can I reuse a location from my Draft 1 premise in the Draft 2 script?', askedAt: '1d ago', status: 'replied', replies: [{ by: 'Priya Menon', at: '22h ago', text: 'Yes — so long as the script still fits your approved premise scope. Keep it under 3 pages.' }] },
+  { id: 'd3', who: 'Karthik', initials: 'KS', q: 'The slot I picked conflicts with my travel. Can I switch to night slot?', askedAt: '2d ago', status: 'escalated', replies: [{ by: 'Priya Menon', at: '2d ago', text: 'Passing this to the Forge admin — slot changes are managed by the LevelUp team.' }] },
+];
+let replyingTo = null;   // doubt id currently being replied to
+
+function renderDoubts() {
+  const list = document.getElementById('doubts-list');
+  if (!list) return;
+
+  const badge = {
+    open: 'Open',
+    replied: 'Replied · awaiting close',
+    closed: 'Closed',
+    escalated: 'With admin',
+    cancelled: 'Cancelled',
+  };
+
+  list.innerHTML = doubts.length === 0 ? `
+    <div class="doubts-empty">No doubts yet. When a student sends one, it'll show up here.</div>
+  ` : doubts.map(d => {
+    const isReplying = replyingTo === d.id;
+    const repliesHtml = d.replies && d.replies.length ? `
+      <div class="doubt-replies">
+        ${d.replies.map(r => `
+          <div class="doubt-reply">
+            <b>${r.by}</b> replied: <em>"${escapeHtml(r.text)}"</em>
+            <div class="meta">${r.at}</div>
+          </div>
+        `).join('')}
+      </div>
+    ` : '';
+
+    const actionsHtml = (d.status === 'closed' || d.status === 'escalated' || d.status === 'cancelled') ? '' : `
+      <div class="doubt-actions">
+        <button class="doubt-btn reply" onclick="openReplyComposer('${d.id}')">${d.status === 'replied' ? 'Reply again' : 'Reply'}</button>
+        <button class="doubt-btn close" onclick="doubtAction('${d.id}', 'closed')">✓ Close</button>
+        <button class="doubt-btn escalate" onclick="doubtAction('${d.id}', 'escalated')">Escalate to admin</button>
+        <button class="doubt-btn cancel" onclick="doubtAction('${d.id}', 'cancelled')">Cancel</button>
+      </div>
+    `;
+
+    const composerHtml = isReplying ? `
+      <div class="doubt-composer">
+        <textarea id="dc-text-${d.id}" placeholder="Type your reply to ${d.who}… (keep it actionable)" oninput="onDcInput('${d.id}')"></textarea>
+        <div class="doubt-composer-foot">
+          <span class="doubt-composer-counter" id="dc-counter-${d.id}">0 chars</span>
+          <div style="margin-left:auto; display:flex; gap:6px;">
+            <button class="doubt-btn cancel" onclick="cancelReplyComposer()">Cancel</button>
+            <button class="doubt-btn reply" id="dc-send-${d.id}" onclick="sendReply('${d.id}')" disabled style="opacity:0.5;">Send reply</button>
+          </div>
+        </div>
+      </div>
+    ` : '';
+
+    return `
+      <div class="doubt status-${d.status}" id="doubt-${d.id}">
+        <div class="doubt-top">
+          <div class="doubt-av">${d.initials}</div>
+          <div>
+            <div class="doubt-who">${d.who}</div>
+            <div class="doubt-when">${d.askedAt}</div>
+          </div>
+          <span class="doubt-badge ${d.status}">${badge[d.status]}</span>
+        </div>
+        <div class="doubt-q">${escapeHtml(d.q)}</div>
+        ${repliesHtml}
+        ${composerHtml}
+        ${actionsHtml}
+      </div>
+    `;
+  }).join('');
+
+  // Update tab count badge
+  const openCnt = doubts.filter(d => d.status === 'open' || d.status === 'replied').length;
+  const countPill = document.getElementById('doubts-count-pill');
+  if (countPill) {
+    countPill.textContent = openCnt;
+    countPill.classList.toggle('muted', openCnt === 0);
+  }
+}
+window.renderDoubts = renderDoubts;
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function doubtAction(id, newStatus) {
+  const d = doubts.find(x => x.id === id);
+  if (!d) return;
+  if (newStatus === 'escalated') {
+    // Inject a system reply showing the escalation
+    d.replies = d.replies || [];
+    d.replies.push({ by: 'Priya Menon (system)', at: 'just now', text: 'Passed to admin — someone from LevelUp will follow up here.' });
+  }
+  d.status = newStatus;
+  renderDoubts();
+  // Toast
+  const labels = { closed: 'Doubt closed', escalated: 'Escalated to admin', cancelled: 'Doubt cancelled' };
+  showSnToast(labels[newStatus] || 'Updated');
+}
+window.doubtAction = doubtAction;
+
+function openReplyComposer(id) {
+  replyingTo = id;
+  renderDoubts();
+  setTimeout(() => document.getElementById('dc-text-' + id)?.focus(), 30);
+}
+window.openReplyComposer = openReplyComposer;
+
+function cancelReplyComposer() {
+  replyingTo = null;
+  renderDoubts();
+}
+window.cancelReplyComposer = cancelReplyComposer;
+
+function onDcInput(id) {
+  const ta = document.getElementById('dc-text-' + id);
+  const counter = document.getElementById('dc-counter-' + id);
+  const send = document.getElementById('dc-send-' + id);
+  if (!ta) return;
+  const len = ta.value.length;
+  counter.textContent = `${len} chars`;
+  counter.classList.toggle('near', len > 300 && len <= 500);
+  counter.classList.toggle('over', len > 500);
+  const valid = !!ta.value.trim();
+  send.disabled = !valid;
+  send.style.opacity = valid ? '1' : '0.5';
+}
+window.onDcInput = onDcInput;
+
+function sendReply(id) {
+  const ta = document.getElementById('dc-text-' + id);
+  const text = (ta ? ta.value : '').trim();
+  if (!text) return;
+  const d = doubts.find(x => x.id === id);
+  if (!d) return;
+  d.replies = d.replies || [];
+  d.replies.push({ by: 'Priya Menon', at: 'just now', text });
+  d.status = 'replied';
+  replyingTo = null;
+  renderDoubts();
+  showSnToast('Reply sent to ' + d.who);
+}
+window.sendReply = sendReply;
+
+/* ========== Student simulator ========== */
+function openStudentSim() {
+  document.getElementById('stu-backdrop').classList.add('show');
+  document.getElementById('stu-modal').classList.add('show');
+  document.getElementById('stu-text').value = '';
+  document.getElementById('stu-counter').textContent = '0 / 200';
+  document.getElementById('stu-send-btn').disabled = true;
+  document.getElementById('stu-send-btn').style.opacity = '0.5';
+  setTimeout(() => document.getElementById('stu-text')?.focus(), 80);
+}
+window.openStudentSim = openStudentSim;
+
+function closeStudentSim(ev) {
+  if (ev && ev.target && ev.target.id !== 'stu-backdrop' && !ev.currentTarget) return;
+  document.getElementById('stu-backdrop').classList.remove('show');
+  document.getElementById('stu-modal').classList.remove('show');
+}
+window.closeStudentSim = closeStudentSim;
+
+function onStuInput() {
+  const ta = document.getElementById('stu-text');
+  const counter = document.getElementById('stu-counter');
+  const send = document.getElementById('stu-send-btn');
+  const len = ta.value.length;
+  counter.textContent = `${len} / 200`;
+  counter.classList.toggle('near', len >= 170 && len < 200);
+  counter.classList.toggle('over', len >= 200);
+  const valid = !!ta.value.trim();
+  send.disabled = !valid;
+  send.style.opacity = valid ? '1' : '0.5';
+}
+window.onStuInput = onStuInput;
+
+function submitStudentDoubt() {
+  const ta = document.getElementById('stu-text');
+  const text = (ta ? ta.value : '').trim();
+  if (!text || text.length > 200) return;
+  doubts.unshift({
+    id: 'd' + Date.now(),
+    who: 'Karthik',
+    initials: 'KS',
+    q: text,
+    askedAt: 'just now',
+    status: 'open',
+    replies: [],
+  });
+  closeStudentSim();
+  renderDoubts();
+  switchMentorTab('doubts');
+  showSnToast('New doubt from Karthik');
+}
+window.submitStudentDoubt = submitStudentDoubt;
+
+function showSnToast(msg) {
+  const toast = document.getElementById('sn-toast');
+  document.getElementById('sn-toast-msg').innerHTML = msg;
+  toast.classList.add('show');
+  clearTimeout(window.__snToastT);
+  window.__snToastT = setTimeout(() => toast.classList.remove('show'), 3200);
+}
+
+/* Init */
+renderDoubts();
+
+/* ===== "Awaiting your review" inline composer ===== */
+const NRC_MAX = 500;
+let nowReviewActive = null;   // 'approved' | 'revisions' | null
+
+function startNowReview(decision) {
+  nowReviewActive = decision;
+  const comp = document.getElementById('now-review-composer');
+  comp.style.display = 'block';
+  comp.innerHTML = `
+    <div class="nrc ${decision}">
+      <div class="nrc-label">
+        <span>${decision === 'approved' ? '✓ Approval note (optional)' : '✎ Revision notes (required)'}</span>
+        <span class="nrc-req">Max ${NRC_MAX} chars · Karthik will see this</span>
+      </div>
+      <textarea id="nrc-text" maxlength="${NRC_MAX}" placeholder="${decision === 'approved' ? 'Optional: what worked, what to carry into production…' : 'Tell Karthik exactly what to revise — scene numbers, beats, pacing, etc.'}" oninput="onNrcInput()"></textarea>
+      <div class="nrc-bot">
+        <span class="nrc-counter" id="nrc-counter">0 / ${NRC_MAX}</span>
+        <div class="nrc-actions">
+          <button class="nrc-btn cancel" onclick="cancelNowReview()">Cancel</button>
+          <button class="nrc-btn ${decision}" id="nrc-confirm" onclick="confirmNowReview()">
+            ${decision === 'approved' ? '✓ Confirm approval' : 'Send revisions →'}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  setTimeout(() => {
+    document.getElementById('nrc-text')?.focus();
+    onNrcInput();
+  }, 30);
+}
+window.startNowReview = startNowReview;
+
+function cancelNowReview() {
+  nowReviewActive = null;
+  const comp = document.getElementById('now-review-composer');
+  comp.style.display = 'none';
+  comp.innerHTML = '';
+}
+window.cancelNowReview = cancelNowReview;
+
+function onNrcInput() {
+  const ta = document.getElementById('nrc-text');
+  const counter = document.getElementById('nrc-counter');
+  const confirm = document.getElementById('nrc-confirm');
+  if (!ta || !counter || !confirm) return;
+  const len = ta.value.length;
+  counter.textContent = `${len} / ${NRC_MAX}`;
+  counter.classList.toggle('near', len >= NRC_MAX - 60 && len < NRC_MAX);
+  counter.classList.toggle('over', len >= NRC_MAX);
+  if (nowReviewActive === 'revisions') {
+    confirm.disabled = !ta.value.trim();
+  }
+}
+window.onNrcInput = onNrcInput;
+
+function confirmNowReview() {
+  const ta = document.getElementById('nrc-text');
+  const text = (ta ? ta.value : '').trim();
+  if (nowReviewActive === 'revisions' && !text) return;
+  if (text.length > NRC_MAX) return;
+
+  const decision = nowReviewActive;
+  const card = document.getElementById('now-card');
+  const heading = decision === 'approved' ? 'Draft 2 approved · Karthik notified' : 'Revisions sent to Karthik';
+  const body = text
+    ? (decision === 'approved' ? 'With a note: "' + text + '"' : 'Notes: "' + text + '"')
+    : (decision === 'approved' ? 'No note attached — stage unlocked in his app.' : '');
+
+  // Replace the card contents with a resolved state
+  card.innerHTML = `
+    <div class="now-label" style="color: ${decision === 'approved' ? '#6FBF73' : '#DD6F16'};">
+      ${decision === 'approved' ? '✓ Review complete' : '↺ Review sent back'}
+    </div>
+    <div class="now-title">${heading}</div>
+    <div class="now-desc">${body}</div>
+    <div class="now-resolved ${decision}">
+      <span style="font-size: 14px;">${decision === 'approved' ? '✓' : '✎'}</span>
+      <span>${decision === 'approved' ? 'Script stage complete — Production form just unlocked on Karthik\'s home.' : 'Karthik sees your notes on his home card and can re-submit via Tally.'}</span>
+    </div>
+  `;
+
+  // Show a toast
+  const toast = document.getElementById('sn-toast');
+  document.getElementById('sn-toast-msg').innerHTML = `<b>${decision === 'approved' ? 'Draft 2 approved' : 'Revisions sent'}</b> · Karthik notified`;
+  toast.classList.add('show');
+  clearTimeout(window.__snToastT);
+  window.__snToastT = setTimeout(() => toast.classList.remove('show'), 3600);
+
+  nowReviewActive = null;
+}
+window.confirmNowReview = confirmNowReview;
+</script>
+
+</body>
+</html>

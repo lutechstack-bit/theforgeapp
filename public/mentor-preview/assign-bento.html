@@ -1,0 +1,2952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>the Forge — Assign Students (Bento)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sauce+One:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:           #0A0A0A;
+    --bg-elev:      #121212;
+    --bg-raised:    #181818;
+    --bg-card:      #131313;
+    --gold:         #FFBC3B;
+    --gold-soft:    #F5C76A;
+    --gold-deep:    #D38F0C;
+    --orange:       #DD6F16;
+    --cream:        #FCF7EF;
+    --text:         #F5F1E8;
+    --text-dim:     #A9A396;
+    --text-muted:   #6E6858;
+    --border:       rgba(245, 241, 232, 0.07);
+    --border-strong:rgba(245, 241, 232, 0.13);
+    --border-gold:  rgba(255, 188, 59, 0.30);
+    --success:      #6FBF73;
+    --danger:       #E05B4B;
+    --radius:       18px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Open Sauce One', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100%;
+  }
+  button { font-family: inherit; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 8px; }
+
+  /* subtle ambient glow */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(1200px 600px at 20% -10%, rgba(255,188,59,0.05), transparent 60%),
+      radial-gradient(900px 500px at 110% 0%, rgba(221,111,22,0.04), transparent 60%);
+    z-index: 0;
+  }
+
+  /* Top */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; height: 56px;
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 30;
+  }
+  .brand { display: flex; align-items: center; gap: 14px; font-weight: 700; letter-spacing: 0.04em; }
+  .brand-mark {
+    width: 26px; height: 26px; border-radius: 7px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%);
+    display: grid; place-items: center;
+    color: #000; font-weight: 800; font-size: 13px;
+  }
+  .role-pill {
+    font-size: 10.5px; font-weight: 600;
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(255,188,59,0.10);
+    color: var(--gold);
+    border: 1px solid var(--border-gold);
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+
+  /* View toggle */
+  .vt-group {
+    display: inline-flex;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+    margin-left: 4px;
+  }
+  .vt-group a, .vt-group button {
+    padding: 5px 12px;
+    background: transparent;
+    color: var(--text-dim);
+    border: 0;
+    border-radius: 6px;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 140ms ease;
+    font-family: inherit;
+  }
+  .vt-group a:hover, .vt-group button:hover { color: var(--text); }
+  .vt-group .active {
+    background: rgba(255,188,59,0.12);
+    color: var(--gold);
+  }
+  .vt-group .active:hover { color: var(--gold); }
+  .crumbs { font-size: 13px; color: var(--text-dim); display: flex; gap: 10px; }
+  .crumbs b { color: var(--text); font-weight: 500; }
+  .crumbs .sep { color: var(--text-muted); }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 999px;
+    display: grid; place-items: center;
+    color: var(--gold); font-weight: 700; font-size: 12px;
+    background: linear-gradient(135deg, #3b3228 0%, #1a1410 100%);
+    border: 1px solid var(--border-strong);
+  }
+
+  /* Page */
+  .page {
+    position: relative; z-index: 1;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 36px 32px 80px;
+  }
+  .page-head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+  }
+  .page-title { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+  .page-sub {
+    margin-top: 6px;
+    font-size: 14px; color: var(--text-dim);
+  }
+  .page-sub b { color: var(--text); font-weight: 500; }
+  .page-sub .warn { color: var(--orange); font-weight: 600; }
+  .head-actions { display: flex; gap: 10px; }
+  .btn {
+    padding: 9px 16px; border-radius: 9px;
+    font-weight: 600; font-size: 13px;
+    border: 0; cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .btn-primary { background: var(--gold); color: #0A0A0A; }
+  .btn-primary:hover { background: var(--gold-soft); }
+  .btn-ghost {
+    background: transparent; color: var(--text);
+    border: 1px solid var(--border-strong);
+  }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* ====== BENTO GRID ====== */
+  .bento {
+    display: grid;
+    grid-template-columns: 320px 1fr 1fr 1fr;
+    grid-auto-rows: 1fr;
+    gap: 18px;
+    min-height: 680px;
+  }
+  .bento .pool { grid-column: 1; grid-row: 1 / span 2; }
+  .bento .m-card:nth-of-type(2) { grid-column: 2; grid-row: 1; }
+  .bento .m-card:nth-of-type(3) { grid-column: 3; grid-row: 1; }
+  .bento .m-card:nth-of-type(4) { grid-column: 4; grid-row: 1; }
+  .bento .m-card:nth-of-type(5) { grid-column: 2; grid-row: 2; }
+  .bento .m-card:nth-of-type(6) { grid-column: 3; grid-row: 2; }
+  .bento .m-card:nth-of-type(7) { grid-column: 4; grid-row: 2; }
+
+  /* Card shell */
+  .card {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.03) inset,
+      0 18px 40px -20px rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: border-color 160ms ease, background 160ms ease, transform 180ms ease;
+  }
+  .card.drop-valid {
+    border-color: var(--gold);
+    background: rgba(255,188,59,0.04);
+  }
+  .card.drop-valid::before {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: var(--radius);
+    box-shadow: inset 0 0 0 2px var(--gold), 0 0 30px rgba(255,188,59,0.15);
+    pointer-events: none;
+  }
+  .card.drop-invalid {
+    border-color: rgba(224,91,75,0.35);
+    background: rgba(224,91,75,0.04);
+  }
+
+  /* Card head */
+  .c-head {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .c-head-row {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .c-av {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 13px; color: var(--gold);
+    background: linear-gradient(135deg, #3a3024 0%, #161210 100%);
+    border: 1px solid var(--border-strong);
+    flex-shrink: 0;
+  }
+  .c-title {
+    font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
+  }
+  .c-sub {
+    margin-top: 3px;
+    font-size: 12.5px; color: var(--text-dim);
+  }
+  .c-cap {
+    margin-left: auto;
+    text-align: right;
+    font-size: 11px; color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+  }
+  .c-cap > b {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--text); font-weight: 600;
+    line-height: 1;
+  }
+  .c-cap.full b { color: var(--gold); }
+  .c-cap.over b { color: var(--danger); }
+  .cap-btn {
+    width: 20px; height: 20px; border-radius: 5px;
+    background: rgba(245,241,232,0.04);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 14px; line-height: 1;
+    cursor: pointer;
+    display: inline-grid; place-items: center;
+    padding: 0;
+    transition: all 120ms ease;
+  }
+  .cap-btn:hover:not(:disabled) {
+    border-color: var(--border-gold);
+    color: var(--gold);
+    background: rgba(255,188,59,0.08);
+  }
+  .cap-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .bar {
+    margin-top: 12px;
+    height: 3px; border-radius: 999px;
+    background: rgba(245,241,232,0.07);
+    overflow: hidden;
+  }
+  .bar > span {
+    display: block; height: 100%;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold-deep) 100%);
+    transition: width 200ms ease;
+  }
+  .bar.full > span { background: linear-gradient(90deg, var(--orange), var(--danger)); }
+
+  /* Pool head (special) */
+  .pool .c-head {
+    background: rgba(221,111,22,0.05);
+  }
+  .pool .c-av {
+    color: var(--orange);
+    background: linear-gradient(135deg, #3a2a1a 0%, #1a120a 100%);
+  }
+
+  /* Student list */
+  .c-body {
+    flex: 1;
+    padding: 10px 12px 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .student {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 9px 10px;
+    border-radius: 9px;
+    cursor: grab;
+    transition: background 120ms ease;
+    user-select: none;
+  }
+  .student:hover { background: rgba(255,255,255,0.03); }
+  .student:active { cursor: grabbing; }
+  .student.dragging {
+    opacity: 0.35;
+    background: rgba(255,188,59,0.07);
+  }
+  .student.selected {
+    background: rgba(255,188,59,0.10);
+    box-shadow: inset 0 0 0 1px var(--border-gold);
+  }
+  .student.selected:hover { background: rgba(255,188,59,0.14); }
+  .student.selected .s-handle { opacity: 1; color: var(--gold); }
+
+  /* Context menu */
+  .ctx {
+    position: fixed;
+    min-width: 260px;
+    background: #141414;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.7);
+    padding: 6px;
+    z-index: 60;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.96);
+    transform-origin: top left;
+    transition: opacity 120ms ease, transform 120ms ease;
+  }
+  .ctx.open {
+    opacity: 1; pointer-events: auto; transform: scale(1);
+  }
+  .ctx-head {
+    padding: 10px 12px 6px;
+    font-size: 11px; font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .ctx-head b { color: var(--gold); font-weight: 700; }
+  .ctx-row {
+    display: grid;
+    grid-template-columns: 26px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 120ms ease;
+  }
+  .ctx-row:hover:not(.disabled) { background: rgba(255,188,59,0.08); }
+  .ctx-row.disabled { opacity: 0.4; cursor: not-allowed; }
+  .ctx-av {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, #3a3024 0%, #161210 100%);
+    color: var(--gold); font-weight: 700; font-size: 10px;
+  }
+  .ctx-av.pool { color: var(--orange); background: linear-gradient(135deg, #3a2a1a 0%, #1a120a 100%); }
+  .ctx-load {
+    font-size: 11px; color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .ctx-load.full { color: var(--orange); }
+  .ctx-divider { height: 1px; background: var(--border); margin: 6px 4px; }
+  .ctx-hint {
+    padding: 8px 12px 4px;
+    font-size: 11px; color: var(--text-muted);
+  }
+  .ctx-hint kbd {
+    display: inline-block;
+    padding: 1px 6px;
+    background: rgba(245,241,232,0.06);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: ui-monospace, monospace;
+    font-size: 10.5px;
+    color: var(--text-dim);
+  }
+
+  /* Floating selection indicator */
+  .sel-chip {
+    position: fixed;
+    top: 72px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px 8px 14px;
+    background: #1A1A1A;
+    border: 1px solid var(--border-gold);
+    border-radius: 999px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    font-size: 13px;
+    z-index: 25;
+    opacity: 0;
+    transition: all 200ms ease;
+  }
+  .sel-chip.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .sel-chip b { font-weight: 700; }
+  .sel-chip .pip {
+    min-width: 22px; height: 22px; padding: 0 7px;
+    border-radius: 999px;
+    background: var(--gold); color: #0A0A0A;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 700;
+  }
+  .sel-chip .hint {
+    color: var(--text-dim); font-size: 12px;
+    padding-left: 10px;
+    border-left: 1px solid var(--border);
+    margin-left: 2px;
+  }
+  .sel-chip .hint kbd {
+    display: inline-block;
+    padding: 1px 5px;
+    background: rgba(245,241,232,0.06);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: ui-monospace, monospace;
+    font-size: 10.5px;
+  }
+  .sel-chip .x {
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 16px;
+    line-height: 1;
+  }
+  .sel-chip .x:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+  .s-av {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, #3a3024 0%, #161210 100%);
+    color: var(--gold); font-weight: 700; font-size: 10.5px;
+    flex-shrink: 0;
+  }
+  .s-name {
+    font-size: 13.5px; font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .s-sub {
+    font-size: 11.5px; color: var(--text-dim);
+    margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .s-handle {
+    color: var(--text-muted);
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+  .student:hover .s-handle { opacity: 1; }
+
+  /* Empty state inside cards */
+  .empty {
+    flex: 1;
+    display: grid; place-items: center;
+    padding: 24px 16px;
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: center;
+    line-height: 1.5;
+  }
+  .empty .dashed {
+    width: 100%;
+    padding: 22px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 12px;
+    transition: border-color 180ms ease, color 180ms ease;
+  }
+  .card.drop-valid .empty .dashed {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  /* ===== Save banner ===== */
+  .save-banner {
+    display: none;
+    align-items: center; gap: 14px;
+    padding: 14px 22px;
+    margin-bottom: 20px;
+    background: linear-gradient(90deg, rgba(111,191,115,0.08), rgba(111,191,115,0.02));
+    border: 1px solid rgba(111,191,115,0.3);
+    border-radius: 12px;
+    font-size: 14px;
+  }
+  .save-banner.show { display: flex; }
+  .save-banner .tick-big {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--success); color: #0A0A0A;
+    display: grid; place-items: center;
+    font-size: 15px; font-weight: 800;
+    flex-shrink: 0;
+  }
+  .save-banner b { font-weight: 600; }
+  .save-banner .dim { color: var(--text-dim); }
+  .save-banner .banner-actions { margin-left: auto; display: flex; gap: 8px; }
+  .save-banner .banner-btn {
+    padding: 7px 14px;
+    background: transparent; color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer;
+  }
+  .save-banner .banner-btn.primary {
+    background: var(--gold); color: #0A0A0A; border-color: var(--gold);
+    font-weight: 600;
+  }
+  .save-banner .banner-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .save-banner .banner-btn.primary:hover { background: var(--gold-soft); color: #0A0A0A; }
+
+  /* When confirmed: disable drag/edit affordances */
+  body.confirmed .student { cursor: pointer; }
+  body.confirmed .cap-btn { display: none; }
+  body.confirmed .pool .empty,
+  body.confirmed .m-card .empty .dashed { opacity: 0.5; }
+  body.confirmed .sel-chip { display: none !important; }
+
+  /* ===== Student detail drawer ===== */
+  .drawer-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(2px);
+    z-index: 55;
+    opacity: 0; pointer-events: none;
+    transition: opacity 200ms ease;
+  }
+  .drawer-backdrop.show { opacity: 1; pointer-events: auto; }
+
+  .drawer {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: min(560px, 100vw);
+    background: #101010;
+    border-left: 1px solid var(--border-strong);
+    box-shadow: -24px 0 60px rgba(0,0,0,0.6);
+    z-index: 56;
+    transform: translateX(100%);
+    transition: transform 260ms cubic-bezier(.2,.8,.3,1);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .drawer.show { transform: translateX(0); }
+  .dr-head {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; gap: 14px;
+    background: linear-gradient(180deg, rgba(255,188,59,0.05), transparent);
+  }
+  .dr-head .big-av {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, #4a3a28 0%, #1c1612 100%);
+    color: var(--gold); font-weight: 700; font-size: 17px;
+    border: 1px solid var(--border-gold);
+    flex-shrink: 0;
+  }
+  .dr-name { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.15; }
+  .dr-sub {
+    margin-top: 4px;
+    font-size: 13px; color: var(--text-dim);
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  }
+  .dr-sub .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-muted); }
+  .dr-sub .mentor-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 9px 3px 3px;
+    background: rgba(255,188,59,0.08);
+    border: 1px solid var(--border-gold);
+    border-radius: 999px;
+    font-size: 12px; color: var(--text);
+    font-weight: 500;
+  }
+  .dr-sub .mentor-chip .mc-av {
+    width: 18px; height: 18px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, #3a3024 0%, #161210 100%);
+    color: var(--gold); font-size: 9px; font-weight: 700;
+  }
+  .dr-close {
+    margin-left: auto;
+    width: 32px; height: 32px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 8px; font-size: 16px; line-height: 1;
+    cursor: pointer;
+  }
+  .dr-close:hover { color: var(--text); border-color: var(--border-strong); }
+
+  .dr-body {
+    flex: 1; overflow-y: auto;
+    padding: 20px 24px 40px;
+  }
+
+  /* Stage pipeline */
+  .pipeline {
+    margin-top: 4px;
+    padding: 18px 18px 16px;
+    background: #141414;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .pipeline-label {
+    font-size: 10.5px; color: var(--text-muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 14px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .pipeline-label .next {
+    color: var(--gold);
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 11.5px;
+  }
+  .pipeline-track {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    position: relative;
+  }
+  .pipe-step {
+    position: relative;
+    padding: 10px 10px 10px 34px;
+    border-radius: 9px;
+    background: rgba(245,241,232,0.03);
+    border: 1px solid var(--border);
+  }
+  .pipe-step.approved  { border-color: rgba(111,191,115,0.3); background: rgba(111,191,115,0.06); }
+  .pipe-step.pending   { border-color: var(--border-gold); background: rgba(255,188,59,0.06); }
+  .pipe-step.revisions { border-color: rgba(221,111,22,0.3); background: rgba(221,111,22,0.06); }
+  .pipe-step.locked    { opacity: 0.45; }
+  .pipe-step .pipe-dot {
+    position: absolute; left: 12px; top: 13px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: rgba(245,241,232,0.1);
+    display: grid; place-items: center;
+    color: #0A0A0A; font-size: 10px; font-weight: 700;
+  }
+  .pipe-step.approved .pipe-dot { background: var(--success); }
+  .pipe-step.pending .pipe-dot  { background: var(--gold); }
+  .pipe-step.revisions .pipe-dot { background: var(--orange); }
+  .pipe-step.locked .pipe-dot { background: rgba(245,241,232,0.12); color: transparent; }
+  .pipe-step .pipe-name {
+    font-size: 12px; font-weight: 600;
+    color: var(--text);
+  }
+  .pipe-step .pipe-status {
+    margin-top: 2px;
+    font-size: 11px; color: var(--text-dim);
+  }
+  .pipe-step.locked .pipe-status { color: var(--text-muted); }
+
+  /* Send form action */
+  .send-form {
+    margin-top: 14px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px;
+    background: rgba(255,188,59,0.06);
+    border: 1px dashed var(--border-gold);
+    border-radius: 10px;
+  }
+  .send-form .sf-label {
+    font-size: 12.5px;
+    color: var(--text-dim);
+  }
+  .send-form .sf-label b { color: var(--text); font-weight: 600; }
+  .send-form button {
+    margin-left: auto;
+    padding: 7px 12px;
+    background: var(--gold); color: #0A0A0A;
+    border: 0; border-radius: 7px;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer;
+    transition: background 120ms ease;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .send-form button:hover { background: var(--gold-soft); }
+
+  /* Form picker popover */
+  .form-picker {
+    position: absolute;
+    top: calc(100% + 6px); right: 0;
+    width: 280px;
+    background: #141414;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    box-shadow: 0 24px 50px rgba(0,0,0,0.6);
+    padding: 6px;
+    z-index: 70;
+    opacity: 0; pointer-events: none;
+    transform: scale(0.96) translateY(-4px);
+    transform-origin: top right;
+    transition: all 140ms ease;
+  }
+  .form-picker.open {
+    opacity: 1; pointer-events: auto;
+    transform: scale(1) translateY(0);
+  }
+  .form-picker-head {
+    padding: 10px 12px 6px;
+    font-size: 11px; font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .fp-row {
+    display: grid; grid-template-columns: 24px 1fr;
+    gap: 10px; align-items: center;
+    padding: 10px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 120ms ease;
+  }
+  .fp-row:hover { background: rgba(255,188,59,0.08); }
+  .fp-row .fp-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: rgba(245,241,232,0.06);
+    color: var(--text-dim);
+    font-weight: 700; font-size: 11px;
+  }
+  .fp-row.suggested .fp-num { background: var(--gold); color: #0A0A0A; }
+  .fp-row .fp-name { font-size: 13.5px; font-weight: 500; }
+  .fp-row .fp-sub { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
+  .fp-row .fp-sub .tag {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 1px 6px;
+    font-size: 10px;
+    background: var(--gold); color: #0A0A0A;
+    border-radius: 999px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+
+  /* Drawer stats row */
+  .dr-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .dr-stat { padding: 0 16px; border-right: 1px solid var(--border); }
+  .dr-stat:first-child { padding-left: 0; }
+  .dr-stat:last-child { border-right: 0; padding-right: 0; }
+  .dr-stat .k {
+    font-size: 10.5px; color: var(--text-muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .dr-stat .v { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; line-height: 1; }
+  .dr-stat .v span { color: var(--text-muted); font-weight: 500; font-size: 12px; }
+  .dr-progress-bar {
+    height: 3px; border-radius: 999px;
+    background: rgba(245,241,232,0.08);
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .dr-progress-bar > span {
+    display: block; height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold-deep));
+  }
+
+  /* Drawer sections */
+  .dr-sec {
+    margin-top: 22px;
+  }
+  .dr-sec h4 {
+    font-size: 11.5px; color: var(--text-muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .subs {
+    background: #141414;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .sub {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 14px;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13.5px;
+  }
+  .sub:last-child { border-bottom: 0; }
+  .sub-type-pill {
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .sub-type-pill.script     { color: var(--gold); }
+  .sub-type-pill.premise    { color: var(--orange); }
+  .sub-type-pill.production { color: #89C0FF; }
+  .sub-type-pill.equip      { color: var(--cream); }
+  .sub-type-pill.recce      { color: #89C0FF; }
+  .sub-title { font-weight: 500; }
+  .sub-date { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .sub-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; font-weight: 600;
+  }
+  .sub-status::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%;
+  }
+  .sub-status.approved { color: var(--success); }
+  .sub-status.approved::before { background: var(--success); }
+  .sub-status.pending  { color: var(--gold); }
+  .sub-status.pending::before  { background: var(--gold); }
+  .sub-status.revisions { color: var(--orange); }
+  .sub-status.revisions::before { background: var(--orange); }
+  .sub-status.draft { color: var(--text-muted); }
+  .sub-status.draft::before { background: var(--text-muted); }
+
+  /* Timeline */
+  .tl { position: relative; padding-left: 6px; }
+  .tl::before {
+    content: ""; position: absolute;
+    left: 4px; top: 8px; bottom: 8px;
+    width: 1px; background: var(--border);
+  }
+  .tl-item {
+    position: relative;
+    padding: 2px 0 14px 20px;
+    font-size: 13px;
+  }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-item::before {
+    content: ""; position: absolute;
+    left: 1px; top: 6px;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--text-muted);
+  }
+  .tl-item.gold::before { background: var(--gold); }
+  .tl-item b { font-weight: 500; }
+  .tl-meta { margin-top: 2px; color: var(--text-muted); font-size: 11.5px; }
+
+  .note-card {
+    padding: 14px 16px;
+    background: #141414;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13.5px; line-height: 1.55;
+    color: var(--text-dim);
+  }
+  .note-card b { color: var(--text); font-weight: 500; }
+  .note-card .note-meta {
+    margin-top: 8px;
+    font-size: 11.5px; color: var(--text-muted);
+  }
+
+  /* ===== Submission review composer (inline) ===== */
+  .sub-expanded {
+    grid-column: 1 / -1;
+    padding: 14px 16px 4px;
+    margin-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+  .sub-review-composer {
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+  }
+  .sub-review-composer.approved { border-color: rgba(111, 191, 115, 0.35); background: rgba(111, 191, 115, 0.04); }
+  .sub-review-composer.revisions { border-color: rgba(221, 111, 22, 0.35); background: rgba(221, 111, 22, 0.04); }
+  .srl {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+  }
+  .sub-review-composer.approved .srl { color: var(--success); }
+  .sub-review-composer.revisions .srl { color: var(--orange); }
+  .srl-req {
+    font-weight: 500;
+    font-size: 10.5px;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--text-muted);
+  }
+  .sub-review-composer textarea {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 9px 11px;
+    font-size: 13px;
+    color: var(--text);
+    font-family: inherit;
+    line-height: 1.55;
+    resize: vertical;
+    min-height: 72px;
+    max-height: 150px;
+    outline: none;
+    transition: border-color 120ms ease;
+  }
+  .sub-review-composer textarea:focus { border-color: var(--border-gold); }
+  .srb {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 9px;
+  }
+  .sr-counter { font-size: 11.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .sr-counter.near { color: var(--orange); }
+  .sr-counter.over { color: var(--danger); }
+  .sr-actions { margin-left: auto; display: flex; gap: 6px; }
+  .sr-btn {
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: 12.5px; font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: 0;
+    transition: all 140ms ease;
+  }
+  .sr-btn.approve { background: var(--success); color: #0A0A0A; }
+  .sr-btn.approve:hover { background: #85cf89; }
+  .sr-btn.revisions { background: rgba(221, 111, 22, 0.15); color: var(--orange); border: 1px solid rgba(221, 111, 22, 0.35); }
+  .sr-btn.revisions:hover { background: rgba(221, 111, 22, 0.25); }
+  .sr-btn.cancel { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+  .sr-btn.cancel:hover { color: var(--text); }
+  .sr-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Feedback on approved/revised submissions */
+  .sub-feedback {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--text-dim);
+    display: flex; gap: 10px;
+    border: 1px solid var(--border);
+    background: rgba(245, 241, 232, 0.02);
+  }
+  .sub-feedback.approved { border-color: rgba(111, 191, 115, 0.25); background: rgba(111, 191, 115, 0.05); }
+  .sub-feedback.revisions { border-color: rgba(221, 111, 22, 0.3); background: rgba(221, 111, 22, 0.05); }
+  .sub-feedback-av {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: linear-gradient(135deg, #3a3024 0%, #161210 100%);
+    color: var(--gold);
+    font-size: 9.5px; font-weight: 700;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .sub-feedback em { font-style: italic; color: var(--text); }
+  .sub-feedback b { color: var(--text); font-weight: 500; }
+  .sub-feedback .meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Review buttons on pending submissions */
+  .sub-review-actions { display: flex; gap: 6px; justify-self: end; }
+  .sub-review-actions button {
+    padding: 5px 11px;
+    border-radius: 6px;
+    font-size: 11.5px; font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: 0;
+    transition: all 140ms ease;
+  }
+  .sub-review-actions .approve {
+    background: rgba(111, 191, 115, 0.12);
+    color: var(--success);
+    border: 1px solid rgba(111, 191, 115, 0.3);
+  }
+  .sub-review-actions .approve:hover { background: rgba(111, 191, 115, 0.2); }
+  .sub-review-actions .revisions {
+    background: rgba(221, 111, 22, 0.1);
+    color: var(--orange);
+    border: 1px solid rgba(221, 111, 22, 0.3);
+  }
+  .sub-review-actions .revisions:hover { background: rgba(221, 111, 22, 0.2); }
+
+  /* Make sub row accommodate full-width expansion */
+  .subs .sub { grid-template-columns: 80px 1fr auto auto; }
+
+  /* ===== Private notes ===== */
+  .notes-wrap {
+    background: #141414;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .notes-head {
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 10.5px; color: #AFA9EC;
+    background: rgba(83, 74, 183, 0.08);
+    border-bottom: 1px solid var(--border);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 600;
+  }
+  .notes-head .lock {
+    width: 14px; height: 14px; border-radius: 3px;
+    background: rgba(83, 74, 183, 0.2);
+    display: inline-grid; place-items: center;
+    font-size: 9px;
+  }
+  .notes-head .hint {
+    margin-left: auto;
+    color: var(--text-muted);
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    font-size: 10.5px;
+  }
+  .notes-list {
+    max-height: 260px;
+    overflow-y: auto;
+  }
+  .note-item {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.55;
+  }
+  .note-item:last-of-type { border-bottom: 0; }
+  .note-item .ni-meta {
+    margin-top: 6px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--text-muted);
+  }
+  .note-item .ni-author-av {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: linear-gradient(135deg, #3a3024 0%, #161210 100%);
+    display: inline-grid; place-items: center;
+    color: var(--gold); font-size: 8.5px; font-weight: 700;
+  }
+  .notes-empty {
+    padding: 22px 14px;
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+  .note-composer {
+    padding: 12px 14px;
+    border-top: 1px solid var(--border);
+    background: rgba(83, 74, 183, 0.03);
+  }
+  .note-composer textarea {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 9px 11px;
+    font-size: 13px;
+    color: var(--text);
+    font-family: inherit;
+    line-height: 1.55;
+    resize: vertical;
+    min-height: 60px;
+    outline: none;
+    transition: border-color 120ms ease;
+  }
+  .note-composer textarea:focus { border-color: rgba(83, 74, 183, 0.5); }
+  .note-composer-actions {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 8px;
+  }
+  .note-composer-actions .nc-hint {
+    font-size: 11px; color: var(--text-muted);
+    flex: 1;
+  }
+  .note-composer-actions button {
+    padding: 6px 12px;
+    font-size: 12px; font-weight: 600;
+    border-radius: 7px;
+    cursor: pointer;
+    border: 0;
+    font-family: inherit;
+  }
+  .note-composer-actions .nc-save {
+    background: #534AB7;
+    color: #fff;
+  }
+  .note-composer-actions .nc-save:hover { background: #6258c9; }
+  .note-composer-actions .nc-save:disabled {
+    opacity: 0.4; cursor: not-allowed;
+  }
+  .note-composer-actions .nc-cancel {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .note-composer-actions .nc-cancel:hover { color: var(--text); }
+  .add-note-btn {
+    width: 100%;
+    padding: 10px 14px;
+    background: transparent;
+    border: 0;
+    border-top: 1px dashed var(--border);
+    color: var(--text-dim);
+    font-size: 12.5px; font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 120ms ease;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .add-note-btn:hover {
+    color: #AFA9EC;
+    background: rgba(83, 74, 183, 0.04);
+  }
+
+  /* ===== Mentor compose modal ===== */
+  .compose-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(2px);
+    z-index: 70;
+    opacity: 0; pointer-events: none;
+    transition: opacity 180ms ease;
+  }
+  .compose-backdrop.show { opacity: 1; pointer-events: auto; }
+  .compose-modal {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -48%) scale(0.98);
+    width: min(640px, 94vw);
+    max-height: 90vh;
+    background: #121212;
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+    z-index: 71;
+    opacity: 0; pointer-events: none;
+    transition: all 200ms cubic-bezier(.2,.8,.3,1);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .compose-modal.show {
+    opacity: 1; pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .cm-head {
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; gap: 12px;
+    background: linear-gradient(180deg, rgba(255,188,59,0.04), transparent);
+  }
+  .cm-head .cm-source {
+    font-size: 10.5px; color: #AFA9EC;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 600;
+    padding: 3px 9px;
+    background: rgba(83, 74, 183, 0.12);
+    border: 1px solid rgba(83, 74, 183, 0.3);
+    border-radius: 999px;
+    display: inline-block;
+    margin-bottom: 6px;
+  }
+  .cm-head h3 { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+  .cm-head .cm-sub {
+    margin-top: 4px;
+    font-size: 13px; color: var(--text-dim);
+  }
+  .cm-head .cm-close {
+    margin-left: auto;
+    width: 30px; height: 30px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 7px; font-size: 16px; line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .cm-close:hover { color: var(--text); }
+  .cm-body {
+    overflow-y: auto;
+    padding: 18px 22px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .cm-col h4 {
+    font-size: 10.5px; color: var(--text-muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .cm-field { margin-bottom: 14px; }
+  .cm-field label {
+    display: block;
+    font-size: 11px; color: var(--text-muted);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 5px;
+  }
+  .cm-field input, .cm-field textarea {
+    width: 100%;
+    background: rgba(245,241,232,0.03);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 9px 11px;
+    font-size: 13px;
+    color: var(--text);
+    font-family: inherit;
+    outline: none;
+    transition: border-color 120ms ease;
+  }
+  .cm-field input:focus, .cm-field textarea:focus { border-color: var(--border-gold); }
+  .cm-field textarea { resize: vertical; min-height: 90px; line-height: 1.55; }
+  .cm-toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px;
+    background: rgba(245,241,232,0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .cm-toggle-row .cm-toggle-label { color: var(--text); font-weight: 500; }
+  .cm-toggle-row .cm-toggle-sub { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
+  .cm-tog {
+    width: 34px; height: 20px;
+    border-radius: 999px;
+    background: rgba(245,241,232,0.12);
+    position: relative;
+    transition: background 140ms ease;
+    flex-shrink: 0;
+  }
+  .cm-tog::after {
+    content: ""; position: absolute;
+    top: 2px; left: 2px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #e8e4d8;
+    transition: transform 140ms ease;
+  }
+  .cm-tog.on { background: var(--gold); }
+  .cm-tog.on::after { transform: translateX(14px); background: #0A0A0A; }
+  /* Preview devices */
+  .cm-preview-label {
+    font-size: 10.5px; color: var(--text-muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 600;
+    margin-top: 14px; margin-bottom: 8px;
+  }
+  .cm-push {
+    background: rgba(26,25,22,0.97);
+    border: 1px solid rgba(255,188,59,0.28);
+    border-radius: 12px;
+    padding: 11px 13px;
+    margin-bottom: 12px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+  }
+  .cm-push-top {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
+  }
+  .cm-push-icon {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--gold);
+    display: grid; place-items: center;
+    font-size: 12px; color: #0A0A0A;
+  }
+  .cm-push-app { font-size: 10.5px; color: var(--text); font-weight: 500; }
+  .cm-push-time { font-size: 10px; color: var(--text-muted); margin-left: auto; }
+  .cm-push-title { font-size: 12.5px; font-weight: 600; color: var(--text); }
+  .cm-push-body { font-size: 11.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.45; }
+  .cm-home-card {
+    background: var(--bg-elev);
+    border: 1px solid rgba(245,241,232,0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    min-height: 140px;
+  }
+  .cm-home-photo {
+    width: 90px;
+    background: linear-gradient(135deg, #3a2a10, #1a1309);
+    display: grid; place-items: center;
+    font-size: 28px; color: var(--gold);
+    flex-shrink: 0;
+  }
+  .cm-home-body { padding: 12px 14px; flex: 1; display: flex; flex-direction: column; }
+  .cm-home-label {
+    font-size: 9px; color: var(--text-muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .cm-home-title {
+    font-size: 13.5px; font-weight: 600; color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 4px;
+  }
+  .cm-home-text { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+  .cm-home-cta {
+    margin-top: auto;
+    align-self: flex-start;
+    background: var(--gold);
+    color: #0A0A0A;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px; font-weight: 600;
+  }
+  .cm-foot {
+    padding: 12px 22px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(0,0,0,0.2);
+  }
+  .cm-foot .cm-foot-hint {
+    font-size: 11.5px; color: var(--text-muted);
+    flex: 1;
+  }
+  .cm-foot .cm-foot-hint b { color: var(--text); font-weight: 500; }
+
+  /* Sent log on drawer */
+  .sent-log {
+    margin-top: 16px;
+    padding: 12px 14px;
+    background: rgba(83, 74, 183, 0.06);
+    border: 1px solid rgba(83, 74, 183, 0.25);
+    border-radius: 10px;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .sent-log .sent-log-head {
+    font-size: 10.5px; color: #AFA9EC;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .sent-log .sent-log-item b { color: var(--text); font-weight: 500; }
+
+  @media (max-width: 720px) {
+    .cm-body { grid-template-columns: 1fr; }
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 32px;
+    transform: translateX(-50%) translateY(30px);
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 18px 12px 14px;
+    background: #1A1A1A;
+    border: 1px solid rgba(111, 191, 115, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    font-size: 13.5px;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 260ms ease;
+    z-index: 35;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: rgba(224,91,75,0.35); }
+  .toast .tick {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--success); color: #0A0A0A;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 800;
+  }
+  .toast.error .tick { background: var(--danger); }
+  .toast .undo {
+    margin-left: 6px; color: var(--gold); font-weight: 600; cursor: pointer;
+  }
+
+  @media (max-width: 1380px) {
+    .bento { grid-template-columns: 300px 1fr 1fr; }
+    .bento .m-card:nth-of-type(2) { grid-column: 2; grid-row: 1; }
+    .bento .m-card:nth-of-type(3) { grid-column: 3; grid-row: 1; }
+    .bento .m-card:nth-of-type(4) { grid-column: 2; grid-row: 2; }
+    .bento .m-card:nth-of-type(5) { grid-column: 3; grid-row: 2; }
+    .bento .m-card:nth-of-type(6) { grid-column: 2; grid-row: 3; }
+    .bento .m-card:nth-of-type(7) { grid-column: 3; grid-row: 3; }
+    .bento .pool { grid-row: 1 / span 3; }
+  }
+  @media (max-width: 1000px) {
+    .bento { grid-template-columns: 1fr 1fr; }
+    .bento .pool { grid-column: 1 / span 2; grid-row: auto; }
+    .bento .m-card:nth-of-type(n) { grid-column: auto; grid-row: auto; }
+  }
+  @media (max-width: 700px) {
+    .bento { grid-template-columns: 1fr; }
+    .bento .pool { grid-column: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">F</div>
+    <span>the forge</span>
+    <div class="vt-group" role="tablist" aria-label="Switch view">
+      <button class="active" aria-current="true">Admin</button>
+      <a href="index.html">Mentor</a>
+    </div>
+  </div>
+  <div class="crumbs">
+    <span>Admin</span><span class="sep">/</span><span>Mentors</span><span class="sep">/</span><b>Assign students</b>
+  </div>
+  <div style="display:flex; align-items:center; gap:10px; font-size:13px;">
+    <span style="color: var(--text-dim);">Shakthi Vel</span>
+    <div class="avatar">SV</div>
+  </div>
+</div>
+
+<div class="page">
+
+  <div class="page-head">
+    <div>
+      <div class="page-title">Assign students to mentors</div>
+      <div class="page-sub">
+        <b>Forge 08 · Filmmaking</b> · <b id="progress-text">0 of 24 assigned</b> · mentor capacity <b id="total-cap">24</b>
+        <span id="warn-chip" style="display:none; margin-left: 12px;" class="warn">⚠ <span id="warn-text"></span></span>
+      </div>
+    </div>
+    <div class="head-actions">
+      <button class="btn btn-ghost" onclick="autoBalance()">Auto-balance</button>
+      <button class="btn btn-ghost" onclick="resetDemo()">Reset</button>
+      <button class="btn btn-primary" id="save-btn" onclick="confirmAssignments()">Save</button>
+    </div>
+  </div>
+
+  <!-- Save banner (shown after confirm) -->
+  <div class="save-banner" id="save-banner">
+    <div class="tick-big">✓</div>
+    <div>
+      <b>Assignments saved</b>
+      <span class="dim" id="save-summary"> · 24 students across 6 mentors</span>
+    </div>
+    <div class="banner-actions">
+      <button class="banner-btn" onclick="exitConfirmed()">Edit</button>
+      <button class="banner-btn">Export CSV</button>
+      <button class="banner-btn primary">Notify mentors</button>
+    </div>
+  </div>
+
+  <!-- ============ BENTO GRID ============ -->
+  <div class="bento" id="bento">
+
+    <!-- Unassigned pool -->
+    <section class="card pool" data-mentor="__pool__">
+      <div class="c-head">
+        <div class="c-head-row">
+          <div class="c-av">?</div>
+          <div style="flex:1;">
+            <div class="c-title">Unassigned</div>
+            <div class="c-sub">Pool of students waiting for a mentor</div>
+          </div>
+          <div class="c-cap"><b id="pool-count">0</b>students</div>
+        </div>
+      </div>
+      <div class="c-body" data-drop="true"></div>
+    </section>
+
+    <!-- Mentor cards (capacities injected by JS) -->
+    <section class="card m-card" data-mentor="Priya Menon">
+      <div class="c-head">
+        <div class="c-head-row">
+          <div class="c-av">PM</div>
+          <div style="flex:1;">
+            <div class="c-title">Priya Menon</div>
+            <div class="c-sub">Director · 3 films</div>
+          </div>
+          <div class="c-cap">
+            <button class="cap-btn minus" onclick="adjustCap('Priya Menon', -1)" title="Decrease capacity">−</button>
+            <b><span class="load">0</span> / <span class="cap">6</span></b>
+            <button class="cap-btn plus" onclick="adjustCap('Priya Menon', 1)" title="Increase capacity">+</button>
+            <span class="slots">6 slots</span>
+          </div>
+        </div>
+        <div class="bar"><span style="width: 0%"></span></div>
+      </div>
+      <div class="c-body" data-drop="true"></div>
+    </section>
+
+    <section class="card m-card" data-mentor="Naveen Reddy">
+      <div class="c-head">
+        <div class="c-head-row">
+          <div class="c-av">NR</div>
+          <div style="flex:1;">
+            <div class="c-title">Naveen Reddy</div>
+            <div class="c-sub">Editor · Doc. filmmaker</div>
+          </div>
+          <div class="c-cap">
+            <button class="cap-btn minus" onclick="adjustCap('Naveen Reddy', -1)">−</button>
+            <b><span class="load">0</span> / <span class="cap">6</span></b>
+            <button class="cap-btn plus" onclick="adjustCap('Naveen Reddy', 1)">+</button>
+            <span class="slots">6 slots</span>
+          </div>
+        </div>
+        <div class="bar"><span style="width: 0%"></span></div>
+      </div>
+      <div class="c-body" data-drop="true"></div>
+    </section>
+
+    <section class="card m-card" data-mentor="Tara Balakrishnan">
+      <div class="c-head">
+        <div class="c-head-row">
+          <div class="c-av">TB</div>
+          <div style="flex:1;">
+            <div class="c-title">Tara Balakrishnan</div>
+            <div class="c-sub">Cinematographer</div>
+          </div>
+          <div class="c-cap">
+            <button class="cap-btn minus" onclick="adjustCap('Tara Balakrishnan', -1)">−</button>
+            <b><span class="load">0</span> / <span class="cap">7</span></b>
+            <button class="cap-btn plus" onclick="adjustCap('Tara Balakrishnan', 1)">+</button>
+            <span class="slots">7 slots</span>
+          </div>
+        </div>
+        <div class="bar"><span style="width: 0%"></span></div>
+      </div>
+      <div class="c-body" data-drop="true"></div>
+    </section>
+
+    <section class="card m-card" data-mentor="Arjun Menon">
+      <div class="c-head">
+        <div class="c-head-row">
+          <div class="c-av">AM</div>
+          <div style="flex:1;">
+            <div class="c-title">Arjun Menon</div>
+            <div class="c-sub">Writer · Forge alum</div>
+          </div>
+          <div class="c-cap">
+            <button class="cap-btn minus" onclick="adjustCap('Arjun Menon', -1)">−</button>
+            <b><span class="load">0</span> / <span class="cap">5</span></b>
+            <button class="cap-btn plus" onclick="adjustCap('Arjun Menon', 1)">+</button>
+            <span class="slots">5 slots</span>
+          </div>
+        </div>
+        <div class="bar"><span style="width: 0%"></span></div>
+      </div>
+      <div class="c-body" data-drop="true"></div>
+    </section>
+
+    <section class="card m-card" data-mentor="Suresh Iyengar">
+      <div class="c-head">
+        <div class="c-head-row">
+          <div class="c-av">SI</div>
+          <div style="flex:1;">
+            <div class="c-title">Suresh Iyengar</div>
+            <div class="c-sub">Sound designer · 2 features</div>
+          </div>
+          <div class="c-cap">
+            <button class="cap-btn minus" onclick="adjustCap('Suresh Iyengar', -1)">−</button>
+            <b><span class="load">0</span> / <span class="cap">5</span></b>
+            <button class="cap-btn plus" onclick="adjustCap('Suresh Iyengar', 1)">+</button>
+            <span class="slots">5 slots</span>
+          </div>
+        </div>
+        <div class="bar"><span style="width: 0%"></span></div>
+      </div>
+      <div class="c-body" data-drop="true"></div>
+    </section>
+
+    <section class="card m-card" data-mentor="Lakshmi Raghav">
+      <div class="c-head">
+        <div class="c-head-row">
+          <div class="c-av">LR</div>
+          <div style="flex:1;">
+            <div class="c-title">Lakshmi Raghav</div>
+            <div class="c-sub">Producer · Forge alum</div>
+          </div>
+          <div class="c-cap">
+            <button class="cap-btn minus" onclick="adjustCap('Lakshmi Raghav', -1)">−</button>
+            <b><span class="load">0</span> / <span class="cap">5</span></b>
+            <button class="cap-btn plus" onclick="adjustCap('Lakshmi Raghav', 1)">+</button>
+            <span class="slots">5 slots</span>
+          </div>
+        </div>
+        <div class="bar"><span style="width: 0%"></span></div>
+      </div>
+      <div class="c-body" data-drop="true"></div>
+    </section>
+
+  </div>
+</div>
+
+<!-- Selection chip -->
+<div class="sel-chip" id="sel-chip">
+  <span class="pip" id="sel-pip">0</span>
+  <span><b id="sel-count">0</b> selected</span>
+  <span class="hint">Right-click to assign · <kbd>Esc</kbd> to clear</span>
+  <span class="x" onclick="clearSelection()">×</span>
+</div>
+
+<!-- Context menu -->
+<div class="ctx" id="ctx">
+  <div class="ctx-head" id="ctx-head">Move <b>0</b> students to…</div>
+  <div id="ctx-list"></div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-row" onclick="moveSelectionTo('__pool__')">
+    <div class="ctx-av pool">?</div>
+    <div>Unassign</div>
+    <div class="ctx-load">pool</div>
+  </div>
+  <div class="ctx-hint">Tip: <kbd>Shift</kbd>+click for range · <kbd>Esc</kbd> to clear</div>
+</div>
+
+<!-- Student detail drawer -->
+<div class="drawer-backdrop" id="drawer-backdrop" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="dr-head">
+    <div class="big-av" id="dr-av">—</div>
+    <div style="flex:1; min-width:0;">
+      <div class="dr-name" id="dr-name">—</div>
+      <div class="dr-sub" id="dr-sub"></div>
+    </div>
+    <button class="dr-close" onclick="closeDrawer()" title="Close">×</button>
+  </div>
+  <div class="dr-body" id="dr-body"></div>
+</div>
+
+<!-- Mentor compose modal -->
+<div class="compose-backdrop" id="compose-backdrop" onclick="closeCompose()"></div>
+<div class="compose-modal" id="compose-modal" role="dialog" aria-modal="true">
+  <div class="cm-head">
+    <div style="flex:1; min-width:0;">
+      <span class="cm-source">Mentor · Priya Menon</span>
+      <h3 id="cm-head-title">Send form</h3>
+      <div class="cm-sub" id="cm-head-sub">—</div>
+    </div>
+    <button class="cm-close" onclick="closeCompose()" title="Close">×</button>
+  </div>
+  <div class="cm-body">
+    <div class="cm-col">
+      <h4>Compose</h4>
+      <div class="cm-field">
+        <label>Title</label>
+        <input id="cm-title" type="text" />
+      </div>
+      <div class="cm-field">
+        <label>Body</label>
+        <textarea id="cm-body-text"></textarea>
+      </div>
+      <div class="cm-toggle-row" onclick="toggleCmPush()">
+        <div>
+          <div class="cm-toggle-label">Also send push notification</div>
+          <div class="cm-toggle-sub">Alerts the student on their phone</div>
+        </div>
+        <div class="cm-tog on" id="cm-push-tog"></div>
+      </div>
+      <div class="cm-toggle-row" onclick="toggleCmCard()">
+        <div>
+          <div class="cm-toggle-label">Pin card on their home</div>
+          <div class="cm-toggle-sub">Stays until they submit the form</div>
+        </div>
+        <div class="cm-tog on" id="cm-card-tog"></div>
+      </div>
+    </div>
+    <div class="cm-col">
+      <h4>Student will see</h4>
+      <div class="cm-preview-label">Push notification</div>
+      <div class="cm-push">
+        <div class="cm-push-top">
+          <div class="cm-push-icon">🔥</div>
+          <div class="cm-push-app">the Forge</div>
+          <div class="cm-push-time">now</div>
+        </div>
+        <div class="cm-push-title" id="cm-prev-push-title">—</div>
+        <div class="cm-push-body" id="cm-prev-push-body">—</div>
+      </div>
+      <div class="cm-preview-label">Home card</div>
+      <div class="cm-home-card">
+        <div class="cm-home-photo" id="cm-prev-icon">💡</div>
+        <div class="cm-home-body">
+          <div class="cm-home-label" id="cm-prev-label">From your mentor · Priya</div>
+          <div class="cm-home-title" id="cm-prev-card-title">—</div>
+          <div class="cm-home-text" id="cm-prev-card-body">—</div>
+          <div class="cm-home-cta" id="cm-prev-cta">Open form →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="cm-foot">
+    <div class="cm-foot-hint">
+      Sending to <b id="cm-foot-student">—</b> · source tracked as <b>Mentor · Priya</b>
+    </div>
+    <button class="btn-ghost" onclick="closeCompose()">Cancel</button>
+    <button class="btn-primary" onclick="doSendCompose()">Send →</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="tick">✓</div>
+  <span id="toast-msg">Assigned</span>
+  <span class="undo" onclick="undo()">Undo</span>
+</div>
+
+<script>
+  /* ---- Seed data — 24 students max ---- */
+  const initialState = {
+    '__pool__': [
+      { name: 'Karthik Subramanian', role: 'Filmmaker · 2nd year' },
+      { name: 'Riya Nair',           role: 'Writer-director · 1st' },
+      { name: 'Vikram Rao',          role: 'Filmmaker · 3rd year' },
+      { name: 'Sneha Prakash',       role: 'Writer · 1st year' },
+      { name: 'Divya Iyer',          role: 'Filmmaker · 2nd year' },
+      { name: 'Aditi Kumar',         role: 'Filmmaker · 2nd year' },
+      { name: 'Rohan Shah',          role: 'Writer · 1st year' },
+      { name: 'Kavya Anand',         role: 'Filmmaker · 1st year' },
+      { name: 'Mira Joseph',         role: 'Writer-director · 2nd' },
+      { name: 'Ishaan Gupta',        role: 'Filmmaker · 3rd year' },
+      { name: 'Nithya Raghavan',     role: 'Creator · 1st year' },
+      { name: 'Arjun Pillai',        role: 'Filmmaker · 1st year' },
+      { name: 'Tanvi Bhatt',         role: 'Writer · 2nd year' },
+      { name: 'Dev Khanna',          role: 'Filmmaker · 2nd year' },
+      { name: 'Saanvi Patel',        role: 'Writer-director · 1st' },
+      { name: 'Rahul Venkat',        role: 'Filmmaker · 3rd year' },
+      { name: 'Meera Das',           role: 'Creator · 2nd year' },
+      { name: 'Yash Malhotra',       role: 'Filmmaker · 1st year' },
+      { name: 'Pooja Krishnan',      role: 'Writer · 2nd year' },
+      { name: 'Aryan Saxena',        role: 'Filmmaker · 2nd year' },
+      { name: 'Ira Gopalan',         role: 'Writer-director · 3rd' },
+      { name: 'Kabir Malhotra',      role: 'Filmmaker · 1st year' },
+      { name: 'Ananya Rao',          role: 'Creator · 1st year' },
+      { name: 'Zubin Mehta',         role: 'Filmmaker · 2nd year' },
+    ],
+    'Priya Menon':       [],
+    'Naveen Reddy':      [],
+    'Tara Balakrishnan': [],
+    'Arjun Menon':       [],
+    'Suresh Iyengar':    [],
+    'Lakshmi Raghav':    [],
+  };
+
+  // Per-mentor capacity (4–8 each) — defaults sum to 28, max students 24 with buffer
+  const MAX_STUDENTS = 24;
+  const CAP_MIN = 4, CAP_MAX = 8;
+  let caps = {
+    'Priya Menon':       5,
+    'Naveen Reddy':      5,
+    'Tara Balakrishnan': 5,
+    'Arjun Menon':       4,
+    'Suresh Iyengar':    4,
+    'Lakshmi Raghav':    5,
+  };
+  const initialCaps = { ...caps };
+
+  let state = structuredClone(initialState);
+  let lastMove = null;
+  let selected = new Set();      // key: "mentor::name"
+  let lastClickedKey = null;     // for shift-range
+  let isConfirmed = false;       // true after Save; disables editing, enables drawer
+
+  function initials(name) {
+    return name.split(' ').map(w => w[0]).slice(0,2).join('');
+  }
+
+  function render() {
+    document.querySelectorAll('.card').forEach(card => {
+      const mentor = card.dataset.mentor;
+      const list = state[mentor] || [];
+      const body = card.querySelector('.c-body');
+
+      body.innerHTML = '';
+      if (list.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.innerHTML = `<div class="dashed">${mentor === '__pool__' ? 'No unassigned students' : 'Drop students here'}</div>`;
+        body.appendChild(empty);
+      } else {
+        list.forEach(s => {
+          const row = document.createElement('div');
+          const key = `${mentor}::${s.name}`;
+          row.className = 'student' + (selected.has(key) ? ' selected' : '');
+          row.draggable = true;
+          row.dataset.name = s.name;
+          row.dataset.from = mentor;
+          row.dataset.key = key;
+          row.innerHTML = `
+            <div class="s-av">${initials(s.name)}</div>
+            <div>
+              <div class="s-name">${s.name}</div>
+              <div class="s-sub">${s.role}</div>
+            </div>
+            <div class="s-handle">⋮⋮</div>
+          `;
+          body.appendChild(row);
+        });
+      }
+
+      // update counts on mentor cards
+      if (mentor !== '__pool__') {
+        const load = list.length;
+        const cap = caps[mentor];
+        const slotsLeft = cap - load;
+        const loadEl = card.querySelector('.c-cap .load');
+        const capEl = card.querySelector('.c-cap .cap');
+        const slotsEl = card.querySelector('.c-cap .slots');
+        const capWrap = card.querySelector('.c-cap');
+        const bar = card.querySelector('.bar');
+        const barFill = card.querySelector('.bar > span');
+        const minusBtn = card.querySelector('.cap-btn.minus');
+        const plusBtn = card.querySelector('.cap-btn.plus');
+
+        loadEl.textContent = load;
+        capEl.textContent = cap;
+        slotsEl.textContent = slotsLeft > 0 ? `${slotsLeft} slot${slotsLeft > 1 ? 's' : ''}` : (load === cap ? 'full' : `+${load - cap} over`);
+        capWrap.classList.toggle('full', load === cap);
+        capWrap.classList.toggle('over', load > cap);
+        barFill.style.width = Math.min(100, (load / cap) * 100) + '%';
+        bar.classList.toggle('full', load >= cap);
+        // Capacity adjuster constraints
+        if (minusBtn) minusBtn.disabled = cap <= CAP_MIN || cap <= load;
+        if (plusBtn)  plusBtn.disabled = cap >= CAP_MAX;
+      }
+    });
+
+    // Pool count + progress
+    const poolCount = state['__pool__'].length;
+    const assignedCount = MAX_STUDENTS - poolCount;
+    const totalCap = Object.values(caps).reduce((a, b) => a + b, 0);
+    document.getElementById('pool-count').textContent = poolCount;
+    document.getElementById('progress-text').textContent = `${assignedCount} of ${MAX_STUDENTS} assigned`;
+    const totalCapEl = document.getElementById('total-cap');
+    totalCapEl.textContent = totalCap;
+    totalCapEl.style.color = totalCap < MAX_STUDENTS ? 'var(--orange)' : 'var(--text)';
+
+    const warn = document.getElementById('warn-chip');
+    const warnText = document.getElementById('warn-text');
+    if (poolCount > 0) {
+      warn.style.display = 'inline';
+      warnText.textContent = `${poolCount} student${poolCount > 1 ? 's' : ''} still unassigned`;
+    } else {
+      warn.style.display = 'none';
+    }
+
+    attachHandlers();
+    updateSelectionChip();
+  }
+
+  /* ---- Selection ---- */
+  function selectionKeys() {
+    // Resolve to only currently-valid keys
+    return [...selected].filter(k => {
+      const [m, name] = k.split('::');
+      return state[m] && state[m].some(s => s.name === name);
+    });
+  }
+
+  function updateSelectionChip() {
+    const n = selectionKeys().length;
+    if (n !== selected.size) {
+      // drop stale keys
+      selected = new Set(selectionKeys());
+    }
+    const chip = document.getElementById('sel-chip');
+    document.getElementById('sel-pip').textContent = n;
+    document.getElementById('sel-count').textContent = n;
+    chip.classList.toggle('show', n > 0);
+  }
+
+  function clearSelection() {
+    selected.clear();
+    lastClickedKey = null;
+    closeContextMenu();
+    render();
+  }
+
+  function orderedKeys() {
+    // All student keys in visual order (for shift-range)
+    const keys = [];
+    document.querySelectorAll('.card').forEach(card => {
+      const mentor = card.dataset.mentor;
+      (state[mentor] || []).forEach(s => keys.push(`${mentor}::${s.name}`));
+    });
+    return keys;
+  }
+
+  function handleRowClick(e, row) {
+    const key = row.dataset.key;
+
+    if (e.shiftKey && lastClickedKey) {
+      const keys = orderedKeys();
+      const a = keys.indexOf(lastClickedKey);
+      const b = keys.indexOf(key);
+      if (a >= 0 && b >= 0) {
+        const [lo, hi] = [Math.min(a,b), Math.max(a,b)];
+        for (let i = lo; i <= hi; i++) selected.add(keys[i]);
+      } else {
+        selected.add(key);
+      }
+    } else if (e.metaKey || e.ctrlKey) {
+      if (selected.has(key)) selected.delete(key); else selected.add(key);
+      lastClickedKey = key;
+    } else {
+      if (selected.has(key)) selected.delete(key); else selected.add(key);
+      lastClickedKey = key;
+    }
+    render();
+  }
+
+  /* ---- Attach event handlers ---- */
+  function attachHandlers() {
+    document.querySelectorAll('.student').forEach(el => {
+      if (isConfirmed) {
+        el.draggable = false;
+        el.addEventListener('click', () => openDrawer(el.dataset.from, el.dataset.name));
+      } else {
+        el.draggable = true;
+        el.addEventListener('dragstart', onDragStart);
+        el.addEventListener('dragend', onDragEnd);
+        el.addEventListener('click', (e) => handleRowClick(e, el));
+        el.addEventListener('contextmenu', (e) => onRowContextMenu(e, el));
+      }
+    });
+    if (!isConfirmed) {
+      document.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('dragover', onDragOver);
+        card.addEventListener('dragleave', onDragLeave);
+        card.addEventListener('drop', onDrop);
+      });
+    }
+  }
+
+  function onDragStart(e) {
+    draggingEl = e.currentTarget;
+    const key = draggingEl.dataset.key;
+
+    // If dragging a selected row, move ALL selected. Otherwise just this one.
+    const group = selected.has(key)
+      ? [...selected]
+      : [key];
+
+    draggingInfo = {
+      keys: group,
+      primaryFrom: draggingEl.dataset.from,
+    };
+
+    // Fade every row in the drag group
+    group.forEach(k => {
+      const el = document.querySelector(`.student[data-key="${CSS.escape(k)}"]`);
+      if (el) el.classList.add('dragging');
+    });
+
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', group.join(','));
+  }
+
+  function onDragEnd(e) {
+    document.querySelectorAll('.student.dragging').forEach(el => el.classList.remove('dragging'));
+    document.querySelectorAll('.card').forEach(c => {
+      c.classList.remove('drop-valid', 'drop-invalid');
+    });
+    draggingEl = null;
+    draggingInfo = null;
+  }
+
+  function onDragOver(e) {
+    if (!draggingInfo) return;
+    const card = e.currentTarget;
+    const target = card.dataset.mentor;
+
+    // Count how many of the dragged group are NOT already in the target
+    const incoming = draggingInfo.keys.filter(k => k.split('::')[0] !== target).length;
+    if (incoming === 0) return; // all already there
+
+    e.preventDefault();
+    const canDrop = canAcceptMany(target, incoming);
+    card.classList.toggle('drop-valid', canDrop);
+    card.classList.toggle('drop-invalid', !canDrop);
+    e.dataTransfer.dropEffect = canDrop ? 'move' : 'none';
+  }
+
+  function onDragLeave(e) {
+    const card = e.currentTarget;
+    // Only clear if leaving the card fully (to children)
+    if (!card.contains(e.relatedTarget)) {
+      card.classList.remove('drop-valid', 'drop-invalid');
+    }
+  }
+
+  function onDrop(e) {
+    e.preventDefault();
+    if (!draggingInfo) return;
+    const card = e.currentTarget;
+    const target = card.dataset.mentor;
+    card.classList.remove('drop-valid', 'drop-invalid');
+
+    const incomingKeys = draggingInfo.keys.filter(k => k.split('::')[0] !== target);
+    if (incomingKeys.length === 0) return;
+
+    if (!canAcceptMany(target, incomingKeys.length)) {
+      const open = target === '__pool__' ? 'unlimited' : (caps[target] - state[target].length);
+      showToast(`${target === '__pool__' ? 'Pool' : target} can't take ${incomingKeys.length} — only ${open} slot${open===1?'':'s'} open`, true);
+      return;
+    }
+
+    moveKeys(incomingKeys, target);
+  }
+
+  function canAccept(target) {
+    if (target === '__pool__') return true;
+    return (state[target] || []).length < caps[target];
+  }
+  function canAcceptMany(target, n) {
+    if (target === '__pool__') return true;
+    return (state[target] || []).length + n <= caps[target];
+  }
+
+  function moveKeys(keys, to) {
+    const previous = structuredClone(state);
+    const movedNames = [];
+    keys.forEach(key => {
+      const [from, name] = key.split('::');
+      const fromList = state[from];
+      if (!fromList) return;
+      const idx = fromList.findIndex(s => s.name === name);
+      if (idx === -1) return;
+      const [student] = fromList.splice(idx, 1);
+      state[to].push(student);
+      movedNames.push(name);
+    });
+
+    // Update selection to the new locations
+    selected = new Set(movedNames.map(n => `${to}::${n}`));
+    lastMove = { previous, movedKeys: selected, snapshot: true };
+    render();
+
+    const toLbl = to === '__pool__' ? 'Unassigned' : to;
+    if (movedNames.length === 1) {
+      showToast(`${movedNames[0]} → <b>${toLbl}</b>`);
+    } else {
+      showToast(`<b>${movedNames.length}</b> students moved to <b>${toLbl}</b>`);
+    }
+  }
+
+  function moveStudent(name, from, to) {
+    moveKeys([`${from}::${name}`], to);
+  }
+
+  function undo() {
+    if (!lastMove) return;
+    if (lastMove.snapshot || lastMove.__full__) {
+      state = lastMove.previous;
+      selected.clear();
+    }
+    lastMove = null;
+    render();
+    hideToast();
+  }
+
+  /* ---- Context menu ---- */
+  const ctx = document.getElementById('ctx');
+  const ctxList = document.getElementById('ctx-list');
+
+  function onRowContextMenu(e, row) {
+    e.preventDefault();
+    const key = row.dataset.key;
+    // If the right-clicked row isn't selected, select just it
+    if (!selected.has(key)) {
+      selected = new Set([key]);
+      lastClickedKey = key;
+      render();
+    }
+    openContextMenu(e.clientX, e.clientY);
+  }
+
+  function openContextMenu(x, y) {
+    // Build list
+    const n = selected.size;
+    document.getElementById('ctx-head').innerHTML = `Move <b>${n}</b> student${n>1?'s':''} to…`;
+
+    ctxList.innerHTML = '';
+    Object.keys(state).filter(m => m !== '__pool__').forEach(name => {
+      const load = state[name].length;
+      const cap = caps[name];
+      const slotsLeft = cap - load;
+      // Count how many selected are not already on this mentor
+      const incoming = [...selected].filter(k => k.split('::')[0] !== name).length;
+      const disabled = slotsLeft < incoming || incoming === 0;
+
+      const row = document.createElement('div');
+      row.className = 'ctx-row' + (disabled ? ' disabled' : '');
+      row.innerHTML = `
+        <div class="ctx-av">${initials(name)}</div>
+        <div>${name}</div>
+        <div class="ctx-load ${slotsLeft === 0 ? 'full' : ''}">${load} / ${cap}${slotsLeft < incoming && slotsLeft > 0 ? ` · only ${slotsLeft} slot${slotsLeft===1?'':'s'}` : ''}</div>
+      `;
+      if (!disabled) row.onclick = () => moveSelectionTo(name);
+      ctxList.appendChild(row);
+    });
+
+    // Position — clamp to viewport
+    const menuW = 280, menuH = 360;
+    const X = Math.min(x, window.innerWidth - menuW - 12);
+    const Y = Math.min(y, window.innerHeight - menuH - 12);
+    ctx.style.left = X + 'px';
+    ctx.style.top = Y + 'px';
+    ctx.classList.add('open');
+  }
+
+  function closeContextMenu() {
+    ctx.classList.remove('open');
+  }
+
+  function moveSelectionTo(target) {
+    const keys = [...selected].filter(k => k.split('::')[0] !== target);
+    if (keys.length === 0) { closeContextMenu(); return; }
+    if (!canAcceptMany(target, keys.length)) {
+      const open = target === '__pool__' ? 'unlimited' : (caps[target] - state[target].length);
+      showToast(`${target === '__pool__' ? 'Pool' : target} can't take ${keys.length} — only ${open} slot${open===1?'':'s'} open`, true);
+      return;
+    }
+    closeContextMenu();
+    moveKeys(keys, target);
+  }
+
+  function autoBalance() {
+    // Distribute pool across mentors round-robin by least-loaded
+    const pool = state['__pool__'];
+    if (pool.length === 0) return;
+
+    const previous = structuredClone(state);
+    while (pool.length > 0) {
+      const pick = Object.keys(state)
+        .filter(m => m !== '__pool__')
+        .map(name => ({ name, left: caps[name] - state[name].length }))
+        .filter(m => m.left > 0)
+        .sort((a, b) => b.left - a.left)[0];
+      if (!pick) break;
+      state[pick.name].push(pool.shift());
+    }
+
+    lastMove = { snapshot: true, previous };
+    selected.clear();
+    render();
+    showToast(`Auto-balanced students across mentors`);
+  }
+
+  function resetDemo() {
+    state = structuredClone(initialState);
+    caps = { ...initialCaps };
+    selected.clear();
+    lastClickedKey = null;
+    lastMove = null;
+    closeContextMenu();
+    render();
+    hideToast();
+  }
+
+  function adjustCap(mentor, delta) {
+    const next = caps[mentor] + delta;
+    if (next < CAP_MIN || next > CAP_MAX) return;
+    if (next < state[mentor].length) {
+      showToast(`${mentor} already has ${state[mentor].length} students — can't lower cap below that`, true);
+      return;
+    }
+    caps[mentor] = next;
+    render();
+  }
+  window.adjustCap = adjustCap;  // expose for inline onclick in HTML
+
+  /* ---- Global keyboard + click-away ---- */
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const cmOpen = document.getElementById('compose-modal')?.classList.contains('show');
+      if (cmOpen) { closeCompose(); return; }
+      if (activeReview) { cancelReview(); return; }
+      if (drawer.classList.contains('show')) { closeDrawer(); return; }
+      if (ctx.classList.contains('open')) { closeContextMenu(); return; }
+      if (selected.size > 0) clearSelection();
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#ctx')) closeContextMenu();
+  });
+
+  // Suppress native context menu on the page body (but not on inputs)
+  document.addEventListener('contextmenu', (e) => {
+    // If it's a row, our row handler already called preventDefault
+    // If it's somewhere else in the page, don't block
+    if (e.target.closest('.student')) return;
+    // Allow default for anything else
+  });
+
+  /* ---- Confirm / student drawer ---- */
+  function confirmAssignments() {
+    const poolCount = state['__pool__'].length;
+    if (poolCount > 0) {
+      const ok = confirm(`${poolCount} student${poolCount>1?'s':''} still unassigned. Save anyway?`);
+      if (!ok) return;
+    }
+    isConfirmed = true;
+    document.body.classList.add('confirmed');
+    const banner = document.getElementById('save-banner');
+    banner.classList.add('show');
+    const assignedCount = MAX_STUDENTS - poolCount;
+    const mentorCount = Object.keys(caps).length;
+    document.getElementById('save-summary').textContent =
+      ` · ${assignedCount} students across ${mentorCount} mentors`;
+    document.getElementById('save-btn').textContent = 'Saved ✓';
+    document.getElementById('save-btn').disabled = true;
+    clearSelection();
+    closeContextMenu();
+    render();
+    showToast(`Assignments saved · ${assignedCount} students notified`);
+  }
+  window.confirmAssignments = confirmAssignments;
+
+  function exitConfirmed() {
+    isConfirmed = false;
+    document.body.classList.remove('confirmed');
+    document.getElementById('save-banner').classList.remove('show');
+    const saveBtn = document.getElementById('save-btn');
+    saveBtn.textContent = 'Save';
+    saveBtn.disabled = false;
+    closeDrawer();
+    render();
+  }
+  window.exitConfirmed = exitConfirmed;
+
+  /* ---- Forge form registry (Tally) ---- */
+  const FORMS = {
+    premise:    { key: 'premise',    label: 'Premise Submission',        short: 'Premise',    url: 'https://tally.so/r/mRE0p9' },
+    script:     { key: 'script',     label: 'First Draft Script',        short: 'Script',     url: 'https://tally.so/r/wMobBA' },
+    production: { key: 'production', label: 'Production Schedule',       short: 'Production', url: 'https://tally.so/r/q45QEO' },
+  };
+  const STAGES = ['premise', 'script', 'production'];
+
+  /* ---- Student detail data ---- */
+  // stages[k] = { status: 'approved' | 'pending' | 'revisions' | 'locked' | 'not-sent', at?: date }
+  const studentDetails = {
+    'Karthik Subramanian': {
+      progress: 62, project: 'Last Train to Pollachi',
+      stages: {
+        premise:    { status: 'approved', at: 'Apr 16' },
+        script:     { status: 'pending',  at: 'Apr 20' },
+        production: { status: 'locked' },
+      },
+      submissions: [
+        { form: 'script',  title: 'Draft 2 — Last Train to Pollachi',     status: 'pending',   date: 'Apr 20' },
+        { form: 'premise', title: 'Night-shift clerk finds a lost camera', status: 'approved',  date: 'Apr 16', feedback: { decision: 'approved', text: 'Strong premise — the "develops the reel" beat is the hook. Protect that reveal when you write the script.', author: 'Priya Menon', initials: 'PM', at: 'Apr 16' } },
+        { form: 'script',  title: 'Draft 1 — Last Train to Pollachi',     status: 'revisions', date: 'Apr 13', feedback: { decision: 'revisions', text: 'Second-act pivot lands too quick. Stay in the clerk\'s POV longer in scene 7 before the flashback. Also trim the dinner scene.', author: 'Priya Menon', initials: 'PM', at: 'Apr 13' } },
+      ],
+      activity: [
+        { text: '<b>Submitted Draft 2</b>', date: 'Apr 20', gold: true },
+        { text: 'Attended Live — Editing rhythm', date: 'Apr 19' },
+        { text: 'Asked a doubt — non-linear 2nd act', date: 'Apr 18' },
+        { text: 'Premise re-approved', date: 'Apr 16' },
+      ],
+      notes: [
+        { text: 'Strong on atmosphere, weaker on scene-level stakes. Pushed him on the Draft 1 pivot — he took half the note. Good sign.', author: 'Priya Menon', initials: 'PM', at: 'Apr 15' },
+        { text: 'Missed live session on Apr 19 — followed up, says he was on a location scout. Not pushing him.', author: 'Priya Menon', initials: 'PM', at: 'Apr 19' },
+      ],
+    },
+    'Riya Nair': {
+      progress: 48, project: 'The Archivist',
+      stages: {
+        premise:    { status: 'pending', at: 'Apr 21' },
+        script:     { status: 'locked' },
+        production: { status: 'locked' },
+      },
+      submissions: [
+        { form: 'premise', title: 'The Archivist — working premise', status: 'pending',  date: 'Apr 21' },
+      ],
+      activity: [
+        { text: '<b>Submitted Premise</b>', date: 'Apr 21', gold: true },
+        { text: 'Roadmap task done — Character bios', date: 'Apr 17' },
+        { text: 'Premise form sent by mentor', date: 'Apr 18' },
+      ],
+      notes: [
+        { text: 'First-year, lots of ambition. Needs clearer protagonist drive. Schedule a 1:1 after premise approval.', author: 'Priya Menon', initials: 'PM', at: 'Apr 14' },
+      ],
+    },
+    'Vikram Rao': {
+      progress: 84, project: 'Nine Bells',
+      stages: {
+        premise:    { status: 'approved', at: 'Apr 05' },
+        script:     { status: 'approved', at: 'Apr 19' },
+        production: { status: 'pending',  at: 'Apr 22' },
+      },
+      submissions: [
+        { form: 'production', title: 'Production schedule — Kodaikanal',    status: 'pending',  date: 'Apr 22' },
+        { form: 'script',     title: 'Draft 3 — Nine Bells',                status: 'approved', date: 'Apr 19' },
+        { form: 'premise',    title: 'Small-town church at midnight',       status: 'approved', date: 'Apr 05' },
+      ],
+      activity: [
+        { text: '<b>Submitted Production Schedule</b>', date: 'Apr 22', gold: true },
+        { text: 'Draft 3 approved by mentor', date: 'Apr 19' },
+        { text: 'Production form sent by mentor', date: 'Apr 20' },
+      ],
+      notes: [
+        { text: 'Ahead of schedule. Recce looks promising — push for pre-pro call this week.', author: 'Priya Menon', initials: 'PM', at: 'Apr 19' },
+      ],
+    },
+  };
+
+  function getStudentDetail(name) {
+    if (studentDetails[name]) return studentDetails[name];
+    // Deterministic-ish fallback — varies what stage each student is at
+    const seed = [...name].reduce((a,c) => a + c.charCodeAt(0), 0);
+    const progress = 15 + (seed % 75);
+    const lane = seed % 5;   // picks which pipeline state the student is in
+    let stages, submissions, activity;
+
+    if (lane === 0) {
+      // Not started — no forms sent
+      stages = { premise: { status: 'not-sent' }, script: { status: 'locked' }, production: { status: 'locked' } };
+      submissions = [];
+      activity = [{ text: 'Joined cohort', date: 'Apr 8' }];
+    } else if (lane === 1) {
+      // Premise sent, not yet submitted
+      stages = { premise: { status: 'pending', at: `${(seed%5)+1}d ago` }, script: { status: 'locked' }, production: { status: 'locked' } };
+      submissions = [];
+      activity = [{ text: 'Premise form sent by mentor', date: `${(seed%5)+1}d ago` }];
+    } else if (lane === 2) {
+      // Premise approved, script in progress
+      stages = { premise: { status: 'approved', at: `${(seed%10)+3}d ago` }, script: { status: 'pending', at: `${(seed%3)+1}d ago` }, production: { status: 'locked' } };
+      submissions = [
+        { form: 'script',  title: `Draft ${(seed%2)+1} — working title`, status: 'pending', date: `${(seed%3)+1}d ago` },
+        { form: 'premise', title: 'Approved premise',                    status: 'approved', date: `${(seed%10)+3}d ago` },
+      ];
+      activity = [{ text: '<b>Submitted first draft</b>', date: `${(seed%3)+1}d ago`, gold: true }];
+    } else if (lane === 3) {
+      // Script approved, awaiting production
+      stages = { premise: { status: 'approved', at: `2w ago` }, script: { status: 'approved', at: `4d ago` }, production: { status: 'not-sent' } };
+      submissions = [
+        { form: 'script',  title: 'Final draft', status: 'approved', date: '4d ago' },
+        { form: 'premise', title: 'Approved premise', status: 'approved', date: '2w ago' },
+      ];
+      activity = [{ text: '<b>Script approved</b>', date: '4d ago', gold: true }];
+    } else {
+      // Production form submitted
+      stages = { premise: { status: 'approved', at: '3w ago' }, script: { status: 'approved', at: '1w ago' }, production: { status: 'pending', at: '1d ago' } };
+      submissions = [
+        { form: 'production', title: 'Shoot schedule', status: 'pending', date: '1d ago' },
+        { form: 'script',     title: 'Final draft',    status: 'approved', date: '1w ago' },
+        { form: 'premise',    title: 'Approved premise', status: 'approved', date: '3w ago' },
+      ];
+      activity = [{ text: '<b>Submitted production schedule</b>', date: '1d ago', gold: true }];
+    }
+
+    return { progress, project: 'Untitled project', stages, submissions, activity, notes: [] };
+  }
+
+  /* Next form the mentor should send based on the student's stage */
+  function suggestNextForm(stages) {
+    if (!stages) return 'premise';
+    if (stages.premise?.status !== 'approved') return 'premise';
+    if (stages.script?.status !== 'approved') return 'script';
+    if (stages.production?.status !== 'approved') return 'production';
+    return null;
+  }
+
+  /* ---- Drawer ---- */
+  const drawer = document.getElementById('drawer');
+  const backdrop = document.getElementById('drawer-backdrop');
+
+  function openDrawer(mentor, name) {
+    const data = getStudentDetail(name);
+    const inPool = mentor === '__pool__';
+    const parts = name.split(' ');
+    const initialsStr = (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase();
+    const student = state[mentor].find(s => s.name === name);
+
+    document.getElementById('dr-av').textContent = initialsStr;
+    document.getElementById('dr-name').textContent = name;
+
+    // Header sub line
+    const sub = document.getElementById('dr-sub');
+    sub.innerHTML = '';
+    const role = document.createElement('span'); role.textContent = student?.role || '';
+    sub.appendChild(role);
+    if (data.project) {
+      const d1 = document.createElement('span'); d1.className = 'dot'; sub.appendChild(d1);
+      const proj = document.createElement('span'); proj.textContent = `Project · ${data.project}`; sub.appendChild(proj);
+    }
+    if (!inPool) {
+      const d2 = document.createElement('span'); d2.className = 'dot'; sub.appendChild(d2);
+      const chip = document.createElement('a');
+      chip.className = 'mentor-chip';
+      chip.href = `index.html?mentor=${encodeURIComponent(mentor)}&focus=${encodeURIComponent(name)}`;
+      chip.title = `Open ${mentor}'s workspace`;
+      chip.style.cursor = 'pointer';
+      chip.innerHTML = `<span class="mc-av">${initials(mentor)}</span>${mentor} <span style="color: var(--text-muted); font-size: 10px; margin-left: 2px;">↗</span>`;
+      sub.appendChild(chip);
+    } else {
+      const d3 = document.createElement('span'); d3.className = 'dot'; sub.appendChild(d3);
+      const u = document.createElement('span'); u.style.color = 'var(--orange)'; u.textContent = 'Unassigned';
+      sub.appendChild(u);
+    }
+
+    // Body
+    const pending = data.submissions.filter(s => s.status === 'pending').length;
+    const approved = data.submissions.filter(s => s.status === 'approved').length;
+    const stages = data.stages || {};
+    const nextFormKey = suggestNextForm(stages);
+    const nextForm = nextFormKey ? FORMS[nextFormKey] : null;
+
+    const pipelineStatusLabel = (s) => {
+      if (!s || s.status === 'locked') return 'Locked';
+      if (s.status === 'not-sent') return 'Not sent';
+      if (s.status === 'pending') return `In review · ${s.at || ''}`.trim().replace(/·\s*$/, '');
+      if (s.status === 'approved') return `Approved · ${s.at || ''}`.trim().replace(/·\s*$/, '');
+      if (s.status === 'revisions') return 'Revisions sent';
+      return s.status;
+    };
+    const pipelineIcon = (s) => {
+      if (!s || s.status === 'locked') return '';
+      if (s.status === 'approved') return '✓';
+      if (s.status === 'pending') return '●';
+      return '·';
+    };
+
+    const pipelineHtml = `
+      <div class="pipeline">
+        <div class="pipeline-label">
+          <span>Form pipeline</span>
+          ${nextForm ? `<span class="next">Next → ${nextForm.label}</span>` : `<span class="next" style="color: var(--success);">✓ All stages complete</span>`}
+        </div>
+        <div class="pipeline-track">
+          ${STAGES.map((k, i) => {
+            const s = stages[k];
+            const cls = (s?.status) || 'locked';
+            return `
+              <div class="pipe-step ${cls}">
+                <div class="pipe-dot">${pipelineIcon(s)}</div>
+                <div class="pipe-name">${i+1}. ${FORMS[k].short}</div>
+                <div class="pipe-status">${pipelineStatusLabel(s)}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        ${nextForm ? `
+          <div class="send-form" style="position: relative;">
+            <div class="sf-label">
+              ${(() => {
+                const st = stages[nextFormKey]?.status;
+                if (!st || st === 'locked' || st === 'not-sent') return `Ready to send the <b>${nextForm.label}</b> form`;
+                if (st === 'pending')   return `<b>${nextForm.label}</b> awaiting your review`;
+                if (st === 'revisions') return `<b>${nextForm.label}</b> sent back for revisions`;
+                return `Send <b>${nextForm.label}</b> form`;
+              })()}
+            </div>
+            <button onclick="toggleFormPicker(event)">
+              Send form <span style="font-size:10px; opacity:0.7;">▾</span>
+            </button>
+            <div class="form-picker" id="form-picker">
+              <div class="form-picker-head">Choose a form to send</div>
+              ${STAGES.map((k, i) => {
+                const f = FORMS[k];
+                const isSuggested = k === nextFormKey;
+                return `
+                  <div class="fp-row ${isSuggested ? 'suggested' : ''}" onclick="sendForm('${k}', '${name.replace(/'/g, "\\'")}')">
+                    <div class="fp-num">${i+1}</div>
+                    <div>
+                      <div class="fp-name">${f.label} ${isSuggested ? '<span class="tag">NEXT</span>' : ''}</div>
+                      <div class="fp-sub">${f.url}</div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        ` : ''}
+      </div>
+
+      <div class="dr-stats">
+        <div class="dr-stat">
+          <div class="k">Roadmap</div>
+          <div class="v">${data.progress}<span>%</span></div>
+          <div class="dr-progress-bar"><span style="width:${data.progress}%"></span></div>
+        </div>
+        <div class="dr-stat">
+          <div class="k">Submissions</div>
+          <div class="v">${data.submissions.length}</div>
+          <div style="margin-top:6px; font-size:11.5px; color:var(--text-dim);">
+            ${approved} approved · ${pending} pending
+          </div>
+        </div>
+        <div class="dr-stat">
+          <div class="k">Status</div>
+          <div class="v" style="color: ${pending ? 'var(--gold)' : 'var(--success)'};">
+            ${pending ? 'Awaiting review' : 'On track'}
+          </div>
+          <div style="margin-top:6px; font-size:11.5px; color:var(--text-dim);">
+            ${pending ? `${pending} item${pending>1?'s':''} with mentor` : 'No blockers'}
+          </div>
+        </div>
+      </div>
+    `;
+
+    const body = document.getElementById('dr-body');
+    body.innerHTML = pipelineHtml + `
+      <div class="dr-sec">
+        <h4>Submissions</h4>
+        <div class="subs">
+          ${data.submissions.length === 0
+            ? `<div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px;">No submissions yet.</div>`
+            : data.submissions.map((s, idx) => {
+                const f = FORMS[s.form] || { short: s.form, label: s.form };
+                const isActiveReview = activeReview && activeReview.studentName === name && activeReview.subIdx === idx;
+                const statusLabel = s.status === 'approved' ? 'Approved' : s.status === 'pending' ? 'Pending review' : s.status === 'revisions' ? 'Revisions sent' : 'Draft';
+
+                const actionsCol = s.status === 'pending'
+                  ? `<div class="sub-review-actions">
+                      <button class="approve" onclick="startReview('${name.replace(/'/g, "\\'")}', ${idx}, 'approved')">Approve</button>
+                      <button class="revisions" onclick="startReview('${name.replace(/'/g, "\\'")}', ${idx}, 'revisions')">Revisions</button>
+                     </div>`
+                  : `<div class="sub-status ${s.status}" style="justify-self: end;">${statusLabel}</div>`;
+
+                const feedbackBlock = s.feedback && !isActiveReview ? `
+                  <div class="sub-feedback ${s.feedback.decision}">
+                    <div class="sub-feedback-av">${s.feedback.initials || 'PM'}</div>
+                    <div>
+                      <b>${s.feedback.author || 'Mentor'}</b> ${s.feedback.decision === 'approved' ? 'approved this submission' : 'sent it back for revisions'}.<br/>
+                      <em>"${(s.feedback.text || '').replace(/"/g, '&quot;')}"</em>
+                      <div class="meta">${s.feedback.at || 'earlier'} · private to mentors &amp; student</div>
+                    </div>
+                  </div>
+                ` : '';
+
+                const composerBlock = isActiveReview ? `
+                  <div class="sub-expanded">
+                    <div class="sub-review-composer ${activeReview.decision}">
+                      <div class="srl">
+                        <span>${activeReview.decision === 'approved' ? '✓ Approval note (optional)' : '✎ Revision notes (required)'}</span>
+                        <span class="srl-req">Max ${MAX_FEEDBACK_CHARS} chars · student will see this</span>
+                      </div>
+                      <textarea id="sr-text" maxlength="${MAX_FEEDBACK_CHARS}" placeholder="${activeReview.decision === 'approved' ? 'Optional: what worked, what to carry forward…' : 'Tell ' + name.split(' ')[0] + ' exactly what to revise — scenes, character, pacing, etc.'}" oninput="onReviewInput()">${activeReview.draft || ''}</textarea>
+                      <div class="srb">
+                        <span class="sr-counter" id="sr-counter">0 / ${MAX_FEEDBACK_CHARS}</span>
+                        <div class="sr-actions">
+                          <button class="sr-btn cancel" onclick="cancelReview()">Cancel</button>
+                          <button class="sr-btn ${activeReview.decision}" id="sr-confirm" onclick="confirmReview()">
+                            ${activeReview.decision === 'approved' ? '✓ Confirm approval' : 'Send revisions →'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ` : '';
+
+                return `
+                  <div class="sub">
+                    <div>
+                      <div class="sub-type-pill ${s.form}">${f.short}</div>
+                    </div>
+                    <div>
+                      <div class="sub-title">${s.title}</div>
+                      <div class="sub-date">${s.date}</div>
+                    </div>
+                    <div></div>
+                    ${actionsCol}
+                    ${feedbackBlock}
+                    ${composerBlock}
+                  </div>
+                `;
+              }).join('')}
+        </div>
+      </div>
+
+      <div class="dr-sec">
+        <h4>Recent activity</h4>
+        <div class="tl">
+          ${data.activity.map(a => `
+            <div class="tl-item ${a.gold ? 'gold' : ''}">
+              ${a.text}
+              <div class="tl-meta">${a.date}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="dr-sec">
+        <h4>Private mentor notes</h4>
+        <div class="notes-wrap">
+          <div class="notes-head">
+            <span class="lock">🔒</span>
+            Mentor-only
+            <span class="hint">${name.split(' ')[0]} can't see these</span>
+          </div>
+          <div class="notes-list" id="notes-list">
+            ${(data.notes && data.notes.length) ? data.notes.map(n => `
+              <div class="note-item">
+                ${n.text}
+                <div class="ni-meta">
+                  <span class="ni-author-av">${n.initials || (n.author || 'M').split(' ').map(w => w[0]).slice(0,2).join('')}</span>
+                  <span><b style="color: var(--text); font-weight: 500;">${n.author || 'Mentor'}</b> · ${n.at || 'earlier'}</span>
+                </div>
+              </div>
+            `).join('') : `<div class="notes-empty">No notes yet. Add the first one below.</div>`}
+          </div>
+          <button class="add-note-btn" id="add-note-btn" onclick="openNoteComposer('${name.replace(/'/g, "\\'")}')">+ Add a private note</button>
+          <div id="note-composer" style="display:none;"></div>
+        </div>
+      </div>
+
+      ${(sentLog[name] && sentLog[name].length) ? `
+        <div class="dr-sec">
+          <h4>Sent to this student</h4>
+          <div class="sent-log">
+            <div class="sent-log-head">Mentor-triggered · delivered to app</div>
+            ${sentLog[name].map(s => `
+              <div class="sent-log-item" style="margin-bottom: 4px;">
+                <b>${s.formLabel}</b> · ${s.at} · ${s.push ? 'push' : ''}${s.push && s.card ? ' + ' : ''}${s.card ? 'home card' : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+    `;
+
+    drawer.classList.add('show');
+    backdrop.classList.add('show');
+  }
+  window.openDrawer = openDrawer;
+
+  function closeDrawer() {
+    drawer.classList.remove('show');
+    backdrop.classList.remove('show');
+  }
+  window.closeDrawer = closeDrawer;
+
+  /* ---- Submission review composer (inline, in drawer) ---- */
+  const MAX_FEEDBACK_CHARS = 500;
+  let activeReview = null;  // { studentName, subIdx, decision, draft }
+
+  function currentOwnerMentor(studentName) {
+    let owner = '__pool__';
+    Object.keys(state).forEach(m => {
+      if ((state[m] || []).some(s => s.name === studentName)) owner = m;
+    });
+    return owner;
+  }
+
+  function startReview(studentName, subIdx, decision) {
+    activeReview = { studentName, subIdx, decision, draft: '' };
+    openDrawer(currentOwnerMentor(studentName), studentName);
+    setTimeout(() => {
+      const ta = document.getElementById('sr-text');
+      if (ta) ta.focus();
+      updateReviewUi();
+    }, 20);
+  }
+  window.startReview = startReview;
+
+  function cancelReview() {
+    const sn = activeReview?.studentName;
+    activeReview = null;
+    if (sn) openDrawer(currentOwnerMentor(sn), sn);
+  }
+  window.cancelReview = cancelReview;
+
+  function onReviewInput() {
+    const ta = document.getElementById('sr-text');
+    if (ta && activeReview) activeReview.draft = ta.value;
+    updateReviewUi();
+  }
+  window.onReviewInput = onReviewInput;
+
+  function updateReviewUi() {
+    const ta = document.getElementById('sr-text');
+    const counter = document.getElementById('sr-counter');
+    const confirm = document.getElementById('sr-confirm');
+    if (!ta || !counter || !confirm || !activeReview) return;
+    const len = ta.value.length;
+    counter.textContent = `${len} / ${MAX_FEEDBACK_CHARS}`;
+    counter.classList.toggle('near', len >= MAX_FEEDBACK_CHARS - 60 && len < MAX_FEEDBACK_CHARS);
+    counter.classList.toggle('over', len >= MAX_FEEDBACK_CHARS);
+    if (activeReview.decision === 'revisions') {
+      confirm.disabled = !ta.value.trim();
+    }
+  }
+
+  function confirmReview() {
+    if (!activeReview) return;
+    const ta = document.getElementById('sr-text');
+    const text = (ta ? ta.value : '').trim();
+    if (activeReview.decision === 'revisions' && !text) {
+      showToast('Revisions need a note for the student', true);
+      return;
+    }
+    if (text.length > MAX_FEEDBACK_CHARS) return;
+
+    const { studentName, subIdx, decision } = activeReview;
+
+    // Ensure we have a persistent detail record so updates stick
+    if (!studentDetails[studentName]) {
+      const fb = getStudentDetail(studentName);
+      studentDetails[studentName] = { ...fb };
+    }
+    const detail = studentDetails[studentName];
+    if (!detail.submissions) detail.submissions = [];
+    const sub = detail.submissions[subIdx];
+    if (!sub) { activeReview = null; return; }
+
+    sub.status = decision;
+    sub.feedback = {
+      decision,
+      text,
+      author: CURRENT_MENTOR.name,
+      initials: CURRENT_MENTOR.initials,
+      at: 'just now',
+    };
+
+    // Update stage to match so the pipeline reflects the decision
+    if (detail.stages && detail.stages[sub.form]) {
+      detail.stages[sub.form].status = decision;
+      detail.stages[sub.form].at = 'just now';
+    }
+    // If approved, unlock the next stage (locked → not-sent)
+    if (decision === 'approved' && detail.stages) {
+      const order = ['premise', 'script', 'production'];
+      const nextKey = order[order.indexOf(sub.form) + 1];
+      if (nextKey && detail.stages[nextKey] && detail.stages[nextKey].status === 'locked') {
+        detail.stages[nextKey].status = 'not-sent';
+      }
+    }
+
+    activeReview = null;
+    openDrawer(currentOwnerMentor(studentName), studentName);
+    showToast(
+      decision === 'approved'
+        ? `Approved · ${studentName.split(' ')[0]} notified${text ? ' with a note' : ''}`
+        : `Revisions sent to ${studentName.split(' ')[0]}`
+    );
+  }
+  window.confirmReview = confirmReview;
+
+  /* ---- Private notes composer ---- */
+  const CURRENT_MENTOR = { name: 'Priya Menon', initials: 'PM' };
+
+  function openNoteComposer(studentName) {
+    const composer = document.getElementById('note-composer');
+    const addBtn = document.getElementById('add-note-btn');
+    if (!composer) return;
+    addBtn.style.display = 'none';
+    composer.style.display = 'block';
+    composer.innerHTML = `
+      <div class="note-composer">
+        <textarea id="nc-text" placeholder="Write a private note about ${studentName.split(' ')[0]}…"></textarea>
+        <div class="note-composer-actions">
+          <span class="nc-hint">🔒 Only you and other mentors / admins can see this.</span>
+          <button class="nc-cancel" onclick="cancelNoteComposer('${studentName.replace(/'/g, "\\'")}')">Cancel</button>
+          <button class="nc-save" id="nc-save-btn" onclick="saveNote('${studentName.replace(/'/g, "\\'")}')" disabled>Save note</button>
+        </div>
+      </div>
+    `;
+    const ta = document.getElementById('nc-text');
+    const save = document.getElementById('nc-save-btn');
+    ta.oninput = () => { save.disabled = !ta.value.trim(); };
+    ta.focus();
+  }
+  window.openNoteComposer = openNoteComposer;
+
+  function cancelNoteComposer(studentName) {
+    const composer = document.getElementById('note-composer');
+    const addBtn = document.getElementById('add-note-btn');
+    if (composer) { composer.style.display = 'none'; composer.innerHTML = ''; }
+    if (addBtn) addBtn.style.display = 'flex';
+  }
+  window.cancelNoteComposer = cancelNoteComposer;
+
+  function saveNote(studentName) {
+    const ta = document.getElementById('nc-text');
+    if (!ta) return;
+    const text = ta.value.trim();
+    if (!text) return;
+
+    // Ensure a notes array exists for this student (for fallback students too)
+    if (!studentDetails[studentName]) {
+      const fallback = getStudentDetail(studentName);
+      studentDetails[studentName] = { ...fallback, notes: [] };
+    }
+    if (!studentDetails[studentName].notes) studentDetails[studentName].notes = [];
+
+    studentDetails[studentName].notes.unshift({
+      text,
+      author: CURRENT_MENTOR.name,
+      initials: CURRENT_MENTOR.initials,
+      at: 'just now',
+    });
+
+    // Re-render the drawer for this student to show the new note
+    const parts = studentName.split(' ');
+    // Find the mentor this student is on (or pool)
+    let ownerMentor = '__pool__';
+    Object.keys(state).forEach(m => {
+      if (state[m].some(s => s.name === studentName)) ownerMentor = m;
+    });
+    openDrawer(ownerMentor, studentName);
+    showToast(`Private note saved · only mentors can see`);
+  }
+  window.saveNote = saveNote;
+
+  function toggleFormPicker(ev) {
+    ev.stopPropagation();
+    const fp = document.getElementById('form-picker');
+    if (fp) fp.classList.toggle('open');
+  }
+  window.toggleFormPicker = toggleFormPicker;
+
+  /* ---- Mentor-triggerable notification templates (scoped copy of admin's) ---- */
+  /* These map 1:1 to FORMS and carry both the push + home-card content. */
+  const MENTOR_TEMPLATES = {
+    premise: {
+      pushTitle: 'Submit your premise 💡',
+      pushBody: 'Priya wants your premise by tomorrow 12 PM so she can review it before your slot.',
+      cardIcon: '💡',
+      cardTitle: 'Submit your premise by 12 PM tomorrow',
+      cardBody: 'Priya (your mentor) needs to approve your premise before you begin the script. Use the link to submit.',
+      cardCta: 'Submit premise →',
+    },
+    script: {
+      pushTitle: 'Submit your first draft ✍️',
+      pushBody: 'Priya is ready to review your first draft. Submit soon so she can give feedback before your slot.',
+      cardIcon: '✍️',
+      cardTitle: 'Submit your first draft script',
+      cardBody: 'Your premise is approved. Write your first draft and submit via the form — Priya will review and leave feedback.',
+      cardCta: 'Submit draft →',
+    },
+    production: {
+      pushTitle: 'Lock in your production schedule 🎥',
+      pushBody: 'Priya has approved your script. Send in your cast, locations, and props so we can schedule the shoot.',
+      cardIcon: '🎥',
+      cardTitle: 'Submit your production schedule',
+      cardBody: 'Your script is approved. Submit your cast list, chosen locations, and crucial props so we can lock in your shoot slot.',
+      cardCta: 'Submit schedule →',
+    },
+  };
+
+  /* Per-student activity log (in-memory demo) — seen on the drawer next time it opens */
+  const sentLog = {};  // { studentName: [{formKey, at, source}] }
+
+  /* ---- Compose modal wiring ---- */
+  let cmCtx = null; // { formKey, studentName, push, card }
+
+  function sendForm(formKey, studentName) {
+    const fp = document.getElementById('form-picker');
+    if (fp) fp.classList.remove('open');
+    openCompose(formKey, studentName);
+  }
+  window.sendForm = sendForm;
+
+  function openCompose(formKey, studentName) {
+    const f = FORMS[formKey];
+    const tpl = MENTOR_TEMPLATES[formKey];
+    if (!f || !tpl) return;
+
+    cmCtx = { formKey, studentName, push: true, card: true };
+    const firstName = studentName.split(' ')[0];
+
+    document.getElementById('cm-head-title').textContent = `Send ${f.label} to ${firstName}`;
+    document.getElementById('cm-head-sub').textContent = `Uses your "${f.label}" template — edit the copy below if needed.`;
+    document.getElementById('cm-foot-student').textContent = studentName;
+
+    document.getElementById('cm-title').value = tpl.cardTitle;
+    document.getElementById('cm-body-text').value = tpl.cardBody;
+    document.getElementById('cm-push-tog').className = 'cm-tog on';
+    document.getElementById('cm-card-tog').className = 'cm-tog on';
+    document.getElementById('cm-prev-icon').textContent = tpl.cardIcon;
+    document.getElementById('cm-prev-cta').textContent = tpl.cardCta;
+
+    renderComposePreview();
+
+    // Attach live-update listeners (idempotent)
+    const ti = document.getElementById('cm-title');
+    const bo = document.getElementById('cm-body-text');
+    ti.oninput = renderComposePreview;
+    bo.oninput = renderComposePreview;
+
+    document.getElementById('compose-backdrop').classList.add('show');
+    document.getElementById('compose-modal').classList.add('show');
+  }
+  window.openCompose = openCompose;
+
+  function closeCompose() {
+    document.getElementById('compose-backdrop').classList.remove('show');
+    document.getElementById('compose-modal').classList.remove('show');
+  }
+  window.closeCompose = closeCompose;
+
+  function renderComposePreview() {
+    if (!cmCtx) return;
+    const tpl = MENTOR_TEMPLATES[cmCtx.formKey];
+    const title = document.getElementById('cm-title').value || tpl.cardTitle;
+    const body = document.getElementById('cm-body-text').value || tpl.cardBody;
+    document.getElementById('cm-prev-push-title').textContent = tpl.pushTitle;
+    document.getElementById('cm-prev-push-body').textContent = title;
+    document.getElementById('cm-prev-card-title').textContent = title;
+    document.getElementById('cm-prev-card-body').textContent = body;
+  }
+
+  function toggleCmPush() {
+    cmCtx.push = !cmCtx.push;
+    document.getElementById('cm-push-tog').className = 'cm-tog' + (cmCtx.push ? ' on' : '');
+  }
+  window.toggleCmPush = toggleCmPush;
+
+  function toggleCmCard() {
+    cmCtx.card = !cmCtx.card;
+    document.getElementById('cm-card-tog').className = 'cm-tog' + (cmCtx.card ? ' on' : '');
+  }
+  window.toggleCmCard = toggleCmCard;
+
+  function doSendCompose() {
+    if (!cmCtx) return;
+    const { formKey, studentName, push, card } = cmCtx;
+    const f = FORMS[formKey];
+
+    // Log locally so the drawer can show it
+    if (!sentLog[studentName]) sentLog[studentName] = [];
+    sentLog[studentName].unshift({
+      formKey, formLabel: f.label, at: 'just now',
+      source: 'Mentor · Priya', push, card,
+    });
+
+    const bits = [];
+    if (push) bits.push('push');
+    if (card) bits.push('home card');
+    const bitsStr = bits.length ? ` (${bits.join(' + ')})` : '';
+
+    closeCompose();
+    showToast(`<b>${f.label}</b> sent to ${studentName.split(' ')[0]}${bitsStr} · <a href="${f.url}" target="_blank" style="color: var(--gold); text-decoration: underline;">open form</a>`);
+  }
+  window.doSendCompose = doSendCompose;
+
+  // Close form picker on outside click
+  document.addEventListener('click', (e) => {
+    const fp = document.getElementById('form-picker');
+    if (fp && !e.target.closest('.send-form')) fp.classList.remove('open');
+  });
+
+  /* ---- Toast ---- */
+  const toast = document.getElementById('toast');
+  const toastMsg = document.getElementById('toast-msg');
+  let toastTimer;
+  function showToast(html, isError = false) {
+    toastMsg.innerHTML = html;
+    toast.classList.toggle('error', isError);
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, 4000);
+  }
+  function hideToast() { toast.classList.remove('show'); }
+
+  render();
+</script>
+
+</body>
+</html>

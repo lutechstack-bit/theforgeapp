@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>the Forge — Tally submission round-trip (demo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:           #0A0A0A;
+    --bg-elev:      #121212;
+    --surface2:     #181818;
+    --gold:         #FFBC3B;
+    --gold-soft:    #F5C76A;
+    --gold-deep:    #D38F0C;
+    --orange:       #DD6F16;
+    --text:         #F5F1E8;
+    --text-dim:     #A9A396;
+    --text-muted:   #6E6858;
+    --border:       rgba(245, 241, 232, 0.07);
+    --border-strong:rgba(245, 241, 232, 0.13);
+    --border-gold:  rgba(255, 188, 59, 0.28);
+    --success:      #6FBF73;
+    --danger:       #E05B4B;
+    --purple:       #8B82E5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  button { font-family: inherit; cursor: pointer; }
+
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(1000px 600px at 25% 10%, rgba(139, 130, 229, 0.06), transparent 60%),
+      radial-gradient(1000px 600px at 75% 90%, rgba(255, 188, 59, 0.06), transparent 60%);
+    z-index: 0;
+  }
+
+  /* Top bar */
+  .topbar {
+    position: relative; z-index: 5;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px; height: 58px;
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand {
+    display: flex; align-items: center; gap: 12px;
+    font-weight: 700; letter-spacing: 0.04em;
+  }
+  .brand-mark {
+    width: 26px; height: 26px; border-radius: 7px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%);
+    display: grid; place-items: center;
+    color: #000; font-weight: 800; font-size: 13px;
+  }
+  .top-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px; font-weight: 500;
+    color: var(--text);
+  }
+  .top-title em { color: var(--gold); font-style: italic; }
+  .top-title .sub {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12px; color: var(--text-muted); margin-top: 2px;
+  }
+  .reset-btn {
+    padding: 7px 14px;
+    background: transparent; color: var(--text-dim);
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    font-size: 12px; font-weight: 500;
+  }
+  .reset-btn:hover { color: var(--gold); border-color: var(--border-gold); }
+
+  /* Stage progress bar */
+  .progress-rail {
+    position: relative; z-index: 2;
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 28px;
+    background: rgba(0, 0, 0, 0.4);
+    border-bottom: 1px solid var(--border);
+  }
+  .pr-step {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: rgba(245, 241, 232, 0.04);
+    border: 1px solid var(--border);
+    font-size: 12.5px; color: var(--text-dim);
+    font-weight: 500;
+    transition: all 220ms ease;
+  }
+  .pr-step.active {
+    background: rgba(255, 188, 59, 0.12);
+    border-color: var(--border-gold);
+    color: var(--gold);
+  }
+  .pr-step.done {
+    color: var(--success);
+    border-color: rgba(111, 191, 115, 0.3);
+    background: rgba(111, 191, 115, 0.06);
+  }
+  .pr-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(245, 241, 232, 0.2);
+    flex-shrink: 0;
+    transition: all 220ms ease;
+  }
+  .pr-step.active .pr-dot {
+    background: var(--gold);
+    box-shadow: 0 0 0 4px rgba(255, 188, 59, 0.15);
+  }
+  .pr-step.done .pr-dot { background: var(--success); }
+  .pr-connector {
+    flex: 0 0 30px; height: 1px;
+    background: var(--border);
+    transition: background 220ms ease;
+  }
+  .pr-connector.active { background: var(--success); }
+
+  /* Split layout */
+  .split {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    height: calc(100vh - 122px);
+    overflow: hidden;
+  }
+  .panel {
+    overflow-y: auto;
+    padding: 32px 36px 80px;
+    position: relative;
+  }
+  .panel.student { background: var(--bg); }
+  .panel.mentor { background: #0C0C0C; border-left: 1px solid var(--border); }
+
+  .panel-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  .panel-eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .panel.student .panel-eyebrow {
+    color: var(--purple);
+    background: rgba(139, 130, 229, 0.10);
+    border: 1px solid rgba(139, 130, 229, 0.25);
+  }
+  .panel.mentor .panel-eyebrow {
+    color: var(--gold);
+    background: rgba(255, 188, 59, 0.10);
+    border: 1px solid var(--border-gold);
+  }
+  .panel-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px; font-weight: 500;
+    color: var(--text);
+  }
+  .panel-sub {
+    margin-top: 4px;
+    font-size: 13px; color: var(--text-dim);
+  }
+  .panel-user {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--text-dim);
+  }
+  .av-sm {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 12px;
+    background: linear-gradient(135deg, #3a3024 0%, #161210 100%);
+    color: var(--gold);
+    border: 1px solid var(--border-strong);
+  }
+
+  /* ===== Student home card ===== */
+  .fcard {
+    position: relative;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    min-height: 210px;
+    transition: all 380ms ease;
+  }
+  .fcard.state-sent   { border-color: var(--border-gold); box-shadow: 0 0 0 1px var(--border-gold); }
+  .fcard.state-pending { border-color: rgba(111, 191, 115, 0.25); }
+  .fcard.state-approved { border-color: rgba(111, 191, 115, 0.45); box-shadow: 0 0 30px rgba(111, 191, 115, 0.08); }
+  .fcard.state-revisions { border-color: rgba(221, 111, 22, 0.4); }
+  .fc-photo {
+    width: 180px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #3a2a10 0%, #1a1309 100%);
+    display: grid; place-items: center;
+    font-size: 42px;
+    color: var(--gold);
+    transition: background 380ms ease, color 380ms ease;
+  }
+  .fcard.state-pending .fc-photo,
+  .fcard.state-approved .fc-photo {
+    background: linear-gradient(135deg, #0a2016 0%, #071a11 100%);
+    color: var(--success);
+  }
+  .fcard.state-revisions .fc-photo {
+    background: linear-gradient(135deg, #2a1608 0%, #1a0e06 100%);
+    color: var(--orange);
+  }
+  .fc-body {
+    flex: 1;
+    padding: 20px 22px;
+    display: flex; flex-direction: column;
+  }
+  .fc-label {
+    font-size: 10.5px; color: var(--text-muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 7px;
+  }
+  .fc-label .mentor-dot {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3a3024 0%, #161210 100%);
+    color: var(--gold);
+    font-size: 9px; font-weight: 700;
+    text-align: center; line-height: 16px;
+    margin-right: 6px;
+    text-transform: none;
+    letter-spacing: 0;
+    vertical-align: middle;
+  }
+  .fc-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-weight: 500;
+    color: var(--text);
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .fc-body-text {
+    font-size: 13px; color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .fc-cta {
+    align-self: flex-start;
+    margin-top: auto;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 9px 16px;
+    border: 0;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+    font-family: inherit;
+    background: var(--gold);
+    color: #0A0A0A;
+    transition: all 150ms ease;
+  }
+  .fc-cta:hover { background: var(--gold-soft); }
+  .fc-cta.success {
+    background: rgba(111, 191, 115, 0.12);
+    color: var(--success);
+    border: 1px solid rgba(111, 191, 115, 0.3);
+    cursor: default;
+  }
+  .fc-cta.revisions {
+    background: rgba(221, 111, 22, 0.1);
+    color: var(--orange);
+    border: 1px solid rgba(221, 111, 22, 0.3);
+  }
+  .fc-status-inline {
+    font-size: 11.5px; color: var(--text-muted);
+    margin-top: 8px;
+  }
+  .fc-body.pulse::after {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: 14px;
+    pointer-events: none;
+    animation: pulse 1.2s ease-out;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(111, 191, 115, 0.25); }
+    100% { box-shadow: 0 0 0 20px rgba(111, 191, 115, 0); }
+  }
+
+  /* Notifications strip (student) */
+  .notif-feed {
+    margin-top: 32px;
+  }
+  .notif-feed-head {
+    font-size: 10.5px; color: var(--text-muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .notif-item {
+    display: flex; gap: 12px;
+    padding: 13px 14px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    opacity: 0;
+    transform: translateY(-6px);
+    animation: slideIn 300ms ease forwards;
+  }
+  @keyframes slideIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .notif-item .ni-icon {
+    width: 28px; height: 28px; border-radius: 7px;
+    flex-shrink: 0;
+    display: grid; place-items: center;
+    font-size: 14px;
+  }
+  .notif-item.approved .ni-icon { background: rgba(111, 191, 115, 0.12); }
+  .notif-item.submitted .ni-icon { background: rgba(139, 130, 229, 0.12); }
+  .notif-item.revisions .ni-icon { background: rgba(221, 111, 22, 0.12); }
+  .notif-item .ni-title { font-weight: 500; color: var(--text); }
+  .notif-item .ni-body { color: var(--text-dim); margin-top: 3px; font-size: 12px; line-height: 1.5; }
+
+  /* Fake Tally modal */
+  .tally-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px);
+    z-index: 50;
+    opacity: 0; pointer-events: none;
+    transition: opacity 220ms ease;
+    display: grid; place-items: center;
+  }
+  .tally-backdrop.show { opacity: 1; pointer-events: auto; }
+  .tally-sheet {
+    background: #EFEDE6;
+    color: #1a1a1a;
+    width: min(520px, 92vw);
+    border-radius: 14px;
+    padding: 28px 30px;
+    transform: scale(0.96) translateY(8px);
+    transition: transform 220ms ease;
+    box-shadow: 0 40px 90px rgba(0,0,0,0.7);
+  }
+  .tally-backdrop.show .tally-sheet { transform: scale(1) translateY(0); }
+  .tally-head {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 11px; color: #666;
+    margin-bottom: 20px;
+  }
+  .tally-head strong { color: #222; font-weight: 700; }
+  .tally-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+  .tally-sub {
+    font-size: 13px; color: #555;
+    margin-bottom: 20px;
+    line-height: 1.55;
+  }
+  .tally-field { margin-bottom: 16px; }
+  .tally-field label {
+    display: block;
+    font-size: 11.5px; font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+    letter-spacing: 0.02em;
+  }
+  .tally-field input, .tally-field textarea {
+    width: 100%;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    font-family: inherit;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 120ms ease;
+  }
+  .tally-field input:focus, .tally-field textarea:focus { border-color: #333; }
+  .tally-field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+  .tally-submit {
+    width: 100%;
+    background: #1a1a1a;
+    color: #fff;
+    border: 0;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14px; font-weight: 600;
+    font-family: inherit;
+    transition: background 150ms ease;
+  }
+  .tally-submit:hover { background: #333; }
+  .tally-cancel {
+    width: 100%;
+    background: transparent;
+    color: #666;
+    border: 0;
+    padding: 10px;
+    font-size: 12px;
+    font-family: inherit;
+    margin-top: 6px;
+  }
+  .tally-webhook-hint {
+    margin-top: 14px;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.04);
+    border-radius: 6px;
+    font-size: 11px; color: #666;
+    line-height: 1.5;
+    font-family: ui-monospace, 'SF Mono', monospace;
+  }
+
+  /* ===== Mentor side ===== */
+  /* Pipeline (mini) */
+  .m-pipeline {
+    padding: 16px 18px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 20px;
+  }
+  .m-pipeline-head {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 10.5px; color: var(--text-muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .m-pipeline-next { color: var(--gold); font-weight: 600; text-transform: none; letter-spacing: 0; font-size: 11.5px; }
+  .m-pipeline-next.done { color: var(--success); }
+  .m-pipeline-track {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .m-pipe-step {
+    position: relative;
+    padding: 9px 10px 9px 30px;
+    border-radius: 8px;
+    background: rgba(245, 241, 232, 0.03);
+    border: 1px solid var(--border);
+    transition: all 250ms ease;
+  }
+  .m-pipe-step.approved { border-color: rgba(111,191,115,0.3); background: rgba(111,191,115,0.06); }
+  .m-pipe-step.pending  { border-color: var(--border-gold); background: rgba(255,188,59,0.07); }
+  .m-pipe-step.revisions { border-color: rgba(221,111,22,0.3); background: rgba(221,111,22,0.06); }
+  .m-pipe-step.locked   { opacity: 0.45; }
+  .m-pipe-dot {
+    position: absolute;
+    left: 10px; top: 12px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: rgba(245,241,232,0.1);
+    display: grid; place-items: center;
+    font-size: 9px; color: #0A0A0A;
+    font-weight: 700;
+    transition: all 250ms ease;
+  }
+  .m-pipe-step.approved .m-pipe-dot { background: var(--success); }
+  .m-pipe-step.pending .m-pipe-dot { background: var(--gold); }
+  .m-pipe-step.revisions .m-pipe-dot { background: var(--orange); }
+  .m-pipe-name { font-size: 11.5px; font-weight: 600; color: var(--text); }
+  .m-pipe-status { font-size: 10.5px; color: var(--text-dim); margin-top: 1px; }
+
+  /* Review queue (mentor) */
+  .m-queue-head {
+    font-size: 10.5px; color: var(--text-muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 10px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .m-queue-head .cnt {
+    color: var(--gold);
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: none;
+    font-size: 12px;
+  }
+
+  .m-empty {
+    padding: 28px 18px;
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .m-review {
+    position: relative;
+    padding: 18px 20px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    border-left: 2px solid var(--gold);
+    opacity: 0;
+    transform: translateY(-6px);
+    animation: slideIn 300ms ease forwards;
+  }
+  .m-review-top {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .m-review-tag {
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--gold);
+  }
+  .m-review-time { font-size: 11px; color: var(--text-muted); margin-left: auto; }
+  .m-review-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 19px; font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .m-review-sub {
+    font-size: 13px; color: var(--text-dim);
+    line-height: 1.55;
+    margin-bottom: 16px;
+  }
+  .m-review-answer {
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12.5px; color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .m-review-answer b { color: var(--text); font-weight: 500; }
+  .m-review-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* Feedback composer (inline) */
+  .m-feedback {
+    margin-top: 14px;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+  }
+  .m-feedback.approve { border-color: rgba(111, 191, 115, 0.35); background: rgba(111, 191, 115, 0.04); }
+  .m-feedback.revisions { border-color: rgba(221, 111, 22, 0.35); background: rgba(221, 111, 22, 0.04); }
+  .m-feedback-label {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .m-feedback.approve .m-feedback-label { color: var(--success); }
+  .m-feedback.revisions .m-feedback-label { color: var(--orange); }
+  .m-feedback-label .m-feedback-req {
+    font-weight: 500;
+    font-size: 10.5px;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--text-muted);
+  }
+  .m-feedback textarea {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: var(--text);
+    font-family: inherit;
+    line-height: 1.55;
+    resize: vertical;
+    min-height: 80px;
+    max-height: 160px;
+    outline: none;
+    transition: border-color 120ms ease;
+  }
+  .m-feedback textarea:focus { border-color: var(--border-gold); }
+  .m-feedback-bottom {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 10px;
+  }
+  .m-feedback-counter {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .m-feedback-counter.near { color: var(--orange); }
+  .m-feedback-counter.over { color: var(--danger); }
+  .m-feedback-actions { margin-left: auto; display: flex; gap: 6px; }
+  .m-feedback .m-btn { padding: 7px 14px; font-size: 12.5px; }
+  .m-feedback .m-btn.cancel {
+    background: transparent; color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  /* Feedback card on the student side */
+  .fc-feedback {
+    margin-top: 12px;
+    padding: 11px 13px;
+    background: rgba(245, 241, 232, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    line-height: 1.55;
+    display: flex; gap: 10px;
+  }
+  .fc-feedback.approve { border-color: rgba(111, 191, 115, 0.25); background: rgba(111, 191, 115, 0.05); }
+  .fc-feedback.revisions { border-color: rgba(221, 111, 22, 0.3); background: rgba(221, 111, 22, 0.05); }
+  .fc-feedback-av {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: linear-gradient(135deg, #3a3024 0%, #161210 100%);
+    color: var(--gold);
+    font-size: 9.5px; font-weight: 700;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .fc-feedback-body b { color: var(--text); font-weight: 500; }
+  .fc-feedback-body em { font-style: italic; color: var(--text); }
+  .m-btn {
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+    font-family: inherit;
+    transition: all 150ms ease;
+  }
+  .m-btn.approve {
+    background: var(--success);
+    color: #0A0A0A;
+  }
+  .m-btn.approve:hover { background: #85cf89; }
+  .m-btn.revisions {
+    background: rgba(221, 111, 22, 0.12);
+    color: var(--orange);
+    border: 1px solid rgba(221, 111, 22, 0.35);
+  }
+  .m-btn.revisions:hover { background: rgba(221, 111, 22, 0.2); }
+  .m-btn.open {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border-strong);
+  }
+  .m-btn.open:hover { color: var(--text); border-color: var(--gold); }
+
+  /* Console / event log */
+  .console {
+    margin-top: 28px;
+    background: #0A0A0A;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  .console-head {
+    padding: 8px 14px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    font-size: 10.5px; color: var(--text-muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 600;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .console-body {
+    max-height: 180px;
+    overflow-y: auto;
+    padding: 10px 14px;
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: var(--text-dim);
+  }
+  .log-row { white-space: pre-wrap; }
+  .log-row .t { color: var(--text-muted); }
+  .log-row .e { color: var(--gold); }
+  .log-row .e.ok { color: var(--success); }
+  .log-row .e.err { color: var(--danger); }
+  .log-row .d { color: var(--text); }
+
+  /* Toast */
+  .toast-wrap {
+    position: fixed;
+    top: 76px; right: 28px;
+    z-index: 40;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .toast {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 16px 11px 13px;
+    background: #1A1A1A;
+    border: 1px solid var(--border-strong);
+    border-radius: 11px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    font-size: 13px; color: var(--text);
+    min-width: 240px;
+    opacity: 0;
+    transform: translateX(40px);
+    animation: toastIn 260ms ease forwards, toastOut 300ms ease 3500ms forwards;
+  }
+  @keyframes toastIn {
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes toastOut {
+    to { opacity: 0; transform: translateX(40px); }
+  }
+  .toast.ok { border-color: rgba(111, 191, 115, 0.35); }
+  .toast.info { border-color: rgba(139, 130, 229, 0.35); }
+  .toast-icon {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 800;
+    flex-shrink: 0;
+  }
+  .toast.ok .toast-icon { background: var(--success); color: #0A0A0A; }
+  .toast.info .toast-icon { background: var(--purple); color: #0A0A0A; }
+
+  @media (max-width: 900px) {
+    .split { grid-template-columns: 1fr; height: auto; }
+    .panel { min-height: 60vh; }
+    .panel.mentor { border-left: 0; border-top: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="display: flex; align-items: center; gap: 14px;">
+    <div class="brand">
+      <div class="brand-mark">F</div>
+      <span>the forge</span>
+    </div>
+    <div class="top-title">
+      <div>Tally submission <em>round-trip</em></div>
+      <div class="sub">Student submits → Tally webhook → Supabase → both sides update</div>
+    </div>
+  </div>
+  <button class="reset-btn" onclick="resetDemo()">↻ Reset demo</button>
+</div>
+
+<!-- Stage progress rail -->
+<div class="progress-rail" id="progress-rail">
+  <div class="pr-step" id="pr-0"><div class="pr-dot"></div> Form sent to student</div>
+  <div class="pr-connector" id="pr-c-1"></div>
+  <div class="pr-step" id="pr-1"><div class="pr-dot"></div> Student submits via Tally</div>
+  <div class="pr-connector" id="pr-c-2"></div>
+  <div class="pr-step" id="pr-2"><div class="pr-dot"></div> Webhook → both sides update</div>
+  <div class="pr-connector" id="pr-c-3"></div>
+  <div class="pr-step" id="pr-3"><div class="pr-dot"></div> Mentor reviews</div>
+  <div class="pr-connector" id="pr-c-4"></div>
+  <div class="pr-step" id="pr-4"><div class="pr-dot"></div> Approved · next stage unlocked</div>
+</div>
+
+<!-- Split view -->
+<div class="split">
+
+  <!-- ============ STUDENT ============ -->
+  <section class="panel student">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">Student view</div>
+        <div class="panel-title">Karthik's home</div>
+        <div class="panel-sub">the Forge · Edition 10 · Filmmaking</div>
+      </div>
+      <div class="panel-user">
+        <span>Karthik</span>
+        <div class="av-sm">KS</div>
+      </div>
+    </div>
+
+    <div id="student-card-wrap">
+      <!-- Home card injected here -->
+    </div>
+
+    <div class="notif-feed" id="student-notif-feed" style="display: none;">
+      <div class="notif-feed-head">Recent · Notifications</div>
+      <div id="student-notif-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ MENTOR ============ -->
+  <section class="panel mentor">
+    <div class="panel-head">
+      <div>
+        <div class="panel-eyebrow">Mentor view</div>
+        <div class="panel-title">Priya's workspace</div>
+        <div class="panel-sub">Reviewing Karthik · 1 of 5 students</div>
+      </div>
+      <div class="panel-user">
+        <span>Priya</span>
+        <div class="av-sm">PM</div>
+      </div>
+    </div>
+
+    <div class="m-pipeline" id="m-pipeline">
+      <div class="m-pipeline-head">
+        <span>Form pipeline · Karthik</span>
+        <span class="m-pipeline-next" id="m-pipeline-next">Next → Awaiting premise</span>
+      </div>
+      <div class="m-pipeline-track" id="m-pipeline-track">
+        <!-- rendered -->
+      </div>
+    </div>
+
+    <div class="m-queue-head">
+      <span>Needs your review</span>
+      <span class="cnt" id="m-queue-cnt">0</span>
+    </div>
+    <div id="m-queue">
+      <!-- rendered -->
+    </div>
+
+    <div class="console">
+      <div class="console-head">
+        <span>Webhook event log (simulated)</span>
+        <span id="console-cnt" style="font-family: ui-monospace, monospace; text-transform: none; letter-spacing: 0;">0 events</span>
+      </div>
+      <div class="console-body" id="console-body">
+        <div class="log-row"><span class="t">[ready]</span> waiting for student to submit the Premise form…</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Fake Tally modal (redirect-style, since Tally form content lives there) -->
+<div class="tally-backdrop" id="tally-backdrop" onclick="closeTally(event)">
+  <div class="tally-sheet" onclick="event.stopPropagation()">
+    <div class="tally-head">
+      <span style="width:18px; height:18px; border-radius:4px; background:#1a1a1a; color:#fff; display:inline-grid; place-items:center; font-size:10px; font-weight:700;">T</span>
+      <span><strong>Tally</strong> · the Forge Filmmaking · Premise Submission</span>
+    </div>
+    <div class="tally-title">Opening the premise form in Tally…</div>
+    <div class="tally-sub">The Forge app redirects the student to the real Tally form (tally.so/r/mRE0p9). When the student submits there, only the <em>event</em> of submission comes back — the answers stay in Tally.</div>
+
+    <div style="padding: 16px; background: rgba(0,0,0,0.04); border-radius: 8px; font-size: 12.5px; color: #444; line-height: 1.6; margin-bottom: 16px;">
+      <strong>What actually happens when they submit:</strong><br/>
+      1. Tally collects the answers (we don't see them in the app)<br/>
+      2. Tally fires a webhook with <code>formId</code>, <code>responseId</code>, and any hidden fields we passed in (like <code>student_id</code>)<br/>
+      3. Our app records: <em>"student X submitted form Y at time Z"</em> — nothing more
+    </div>
+
+    <button class="tally-submit" onclick="doTallySubmit()">Simulate: student submits on Tally</button>
+    <button class="tally-cancel" onclick="closeTally()">Cancel</button>
+
+    <div class="tally-webhook-hint">
+      POST /functions/v1/tally-webhook<br/>
+      { formId: "mRE0p9", responseId: "r_...",<br/>
+      &nbsp;&nbsp;hiddenFields: { student_id: "..." } }
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+/* ==== Demo state ==== */
+let state = 'sent';  // 'sent' → 'pending' → 'approved' | 'revisions'
+let events = 0;
+let pendingDecision = null;          // 'approved' | 'revisions' | null
+let lastFeedback = null;             // { decision, text, at }
+const MAX_FEEDBACK = 500;
+
+function log(parts) {
+  const body = document.getElementById('console-body');
+  const row = document.createElement('div');
+  row.className = 'log-row';
+  row.innerHTML = parts;
+  body.insertBefore(row, body.firstChild);
+  events++;
+  document.getElementById('console-cnt').textContent = events + ' event' + (events !== 1 ? 's' : '');
+}
+
+function toast(html, kind='ok') {
+  const wrap = document.getElementById('toast-wrap');
+  const t = document.createElement('div');
+  t.className = 'toast ' + kind;
+  t.innerHTML = `<div class="toast-icon">${kind === 'ok' ? '✓' : 'ⓘ'}</div><div>${html}</div>`;
+  wrap.appendChild(t);
+  setTimeout(() => t.remove(), 4200);
+}
+
+/* ==== Student card rendering ==== */
+function renderStudentCard() {
+  const wrap = document.getElementById('student-card-wrap');
+  const cfg = {
+    sent: {
+      state: 'sent',
+      icon: '💡',
+      label: 'From your mentor · <span class="mentor-dot">PM</span> Priya Menon',
+      title: 'Submit your premise by 12 PM tomorrow',
+      body: 'Priya (your mentor) needs to approve your premise before you begin the script. Submit via the form linked below.',
+      cta: 'Submit premise →',
+      ctaClass: '',
+      onClick: 'openTally()',
+      inline: '',
+    },
+    pending: {
+      state: 'pending',
+      icon: '⏳',
+      label: '✓ Premise submitted · <span class="mentor-dot">PM</span> Priya is reviewing',
+      title: 'Your premise is in review',
+      body: 'Priya usually replies within 1–2 days. You\'ll get a notification as soon as she\'s looked at your submission in Tally.',
+      cta: '✓ Submitted',
+      ctaClass: 'success',
+      onClick: '',
+      inline: 'Submitted just now · awaiting review',
+    },
+    approved: {
+      state: 'approved',
+      icon: '✓',
+      label: '<span style="color: var(--success);">Premise approved</span> · <span class="mentor-dot">PM</span> by Priya',
+      title: 'You can start writing your first draft',
+      body: 'Priya approved your premise. The First Draft Script form is now unlocked. Submit your draft when ready — she\'ll review it the same way.',
+      cta: 'Start first draft →',
+      ctaClass: '',
+      onClick: 'toast(\'Opening first draft form…\', \'info\')',
+      inline: 'Approved just now · next stage unlocked',
+    },
+    revisions: {
+      state: 'revisions',
+      icon: '✎',
+      label: '<span style="color: var(--orange);">Revisions requested</span> · <span class="mentor-dot">PM</span> from Priya',
+      title: 'Priya has sent back notes',
+      body: 'Priya wants you to revise your premise before moving on. Check her notes (in-app or in Tally) and re-submit when ready.',
+      cta: 'Open form & resubmit →',
+      ctaClass: 'revisions',
+      onClick: 'openTally()',
+      inline: 'Sent back just now · don\'t worry, this is normal',
+    },
+  }[state] || cfg_sent;
+
+  const showFeedback = lastFeedback
+    && (state === 'approved' || state === 'revisions')
+    && lastFeedback.decision === state
+    && lastFeedback.text;
+
+  const feedbackBlock = showFeedback ? `
+    <div class="fc-feedback ${lastFeedback.decision}">
+      <div class="fc-feedback-av">PM</div>
+      <div class="fc-feedback-body">
+        <b>Priya says${lastFeedback.decision === 'approved' ? '' : ' — revision notes'}:</b> <em>"${escapeHtml(lastFeedback.text)}"</em>
+      </div>
+    </div>
+  ` : '';
+
+  wrap.innerHTML = `
+    <div class="fcard state-${cfg.state}">
+      <div class="fc-photo">${cfg.icon}</div>
+      <div class="fc-body">
+        <div class="fc-label">${cfg.label}</div>
+        <div class="fc-title">${cfg.title}</div>
+        <div class="fc-body-text">${cfg.body}</div>
+        ${feedbackBlock}
+        <button class="fc-cta ${cfg.ctaClass}" style="margin-top: ${showFeedback ? '14px' : 'auto'};" ${cfg.onClick ? 'onclick="' + cfg.onClick + '"' : ''}>${cfg.cta}</button>
+        ${cfg.inline ? '<div class="fc-status-inline">' + cfg.inline + '</div>' : ''}
+      </div>
+    </div>
+  `;
+}
+
+/* ==== Mentor pipeline rendering ==== */
+function renderMentorPipeline() {
+  const stages = {
+    sent:       { p: 'locked',   s: 'locked',   pr: 'locked' },
+    pending:    { p: 'pending',  s: 'locked',   pr: 'locked' },
+    revisions:  { p: 'revisions',s: 'locked',   pr: 'locked' },
+    approved:   { p: 'approved', s: 'pending',  pr: 'locked' },
+  }[state];
+
+  const track = document.getElementById('m-pipeline-track');
+  const stepHtml = (cls, name, status) => `
+    <div class="m-pipe-step ${cls}">
+      <div class="m-pipe-dot">${cls === 'approved' ? '✓' : cls === 'pending' ? '●' : cls === 'revisions' ? '↺' : ''}</div>
+      <div class="m-pipe-name">${name}</div>
+      <div class="m-pipe-status">${status}</div>
+    </div>
+  `;
+  const statusText = (k) => ({ locked: 'Locked', pending: 'In review · now', approved: 'Approved · now', revisions: 'Revisions sent' })[k];
+  track.innerHTML = stepHtml(stages.p, '1. Premise', statusText(stages.p))
+                  + stepHtml(stages.s, '2. Script', statusText(stages.s))
+                  + stepHtml(stages.pr, '3. Production', statusText(stages.pr));
+
+  const next = document.getElementById('m-pipeline-next');
+  if (state === 'sent') next.innerHTML = 'Next → Awaiting premise submission';
+  else if (state === 'pending') next.innerHTML = 'Next → Review premise';
+  else if (state === 'revisions') next.innerHTML = 'Next → Student revising premise';
+  else if (state === 'approved') { next.innerHTML = '✓ Premise done · Script unlocked'; next.className = 'm-pipeline-next done'; return; }
+  next.className = 'm-pipeline-next';
+}
+
+/* ==== Mentor queue rendering ==== */
+function renderMentorQueue() {
+  const q = document.getElementById('m-queue');
+  const cnt = document.getElementById('m-queue-cnt');
+
+  if (state === 'pending') {
+    cnt.textContent = '1';
+    const inlineFeedback = pendingDecision ? `
+      <div class="m-feedback ${pendingDecision}">
+        <div class="m-feedback-label">
+          <span>${pendingDecision === 'approved' ? '✓ Approval note (optional)' : '✎ Revision notes (required)'}</span>
+          <span class="m-feedback-req">Max ${MAX_FEEDBACK} characters · Karthik will see this</span>
+        </div>
+        <textarea id="m-feedback-text" maxlength="${MAX_FEEDBACK}" placeholder="${pendingDecision === 'approved' ? 'Optional: what worked, what to carry into the script…' : 'Tell Karthik what specifically needs work — scenes, character, pacing, etc.'}" oninput="onFeedbackInput()">${lastFeedback && lastFeedback.decision === pendingDecision ? (lastFeedback.text || '') : ''}</textarea>
+        <div class="m-feedback-bottom">
+          <span class="m-feedback-counter" id="m-feedback-counter">0 / ${MAX_FEEDBACK}</span>
+          <div class="m-feedback-actions">
+            <button class="m-btn cancel" onclick="cancelDecision()">Cancel</button>
+            <button class="m-btn ${pendingDecision}" id="m-feedback-confirm" onclick="confirmDecision()">
+              ${pendingDecision === 'approved' ? '✓ Confirm approval' : 'Send revisions →'}
+            </button>
+          </div>
+        </div>
+      </div>
+    ` : '';
+
+    const hideActions = pendingDecision ? 'style="display:none;"' : '';
+
+    q.innerHTML = `
+      <div class="m-review">
+        <div class="m-review-top">
+          <span class="m-review-tag">● Premise submission · Karthik</span>
+          <span class="m-review-time">just submitted</span>
+        </div>
+        <div class="m-review-title">Premise submitted via Tally</div>
+        <div class="m-review-sub">Karthik just submitted the Premise form. The answers live in Tally — open them there to read the full response, then come back here to approve or send back with notes.</div>
+        <div class="m-review-answer" style="background: rgba(26,26,26,0.5); border-style: dashed;">
+          <b style="color: var(--text-muted);">Submission content</b><br/>
+          <span style="color: var(--text-muted);">Not synced to the app.</span> Click <b>"Open in Tally"</b> to view the student's answers in the Tally dashboard.
+        </div>
+        <div class="m-review-actions" ${hideActions}>
+          <button class="m-btn open" onclick="toast('Opening Tally submission in new tab…', 'info')">↗ Open in Tally</button>
+          <button class="m-btn approve" onclick="startDecision('approved')">✓ Approve premise</button>
+          <button class="m-btn revisions" onclick="startDecision('revisions')">Send back for revisions</button>
+        </div>
+        ${inlineFeedback}
+      </div>
+    `;
+
+    if (pendingDecision) {
+      setTimeout(updateFeedbackUi, 0);
+    }
+  } else if (state === 'sent') {
+    cnt.textContent = '0';
+    q.innerHTML = `<div class="m-empty">Karthik hasn't submitted yet — the form was sent earlier today.<br/>Try the simulated submit on the left panel.</div>`;
+  } else if (state === 'revisions') {
+    cnt.textContent = '0';
+    q.innerHTML = `<div class="m-empty">You sent Karthik's premise back for revisions.<br/>He'll see your notes and re-submit.</div>`;
+  } else if (state === 'approved') {
+    cnt.textContent = '0';
+    q.innerHTML = `<div class="m-empty" style="border-style: solid; border-color: rgba(111, 191, 115, 0.2); color: var(--success);">✓ Karthik's premise is approved. Next up — you'll see his first draft here when he submits.</div>`;
+  }
+}
+
+/* ==== Progress rail ==== */
+function renderProgressRail() {
+  const stages = {
+    sent:      0,
+    pending:   2,
+    revisions: 3,
+    approved:  4,
+  };
+  const step = stages[state];
+  // All steps up to current are done (or active)
+  for (let i = 0; i <= 4; i++) {
+    const el = document.getElementById('pr-' + i);
+    el.classList.remove('active', 'done');
+    if (i < step) el.classList.add('done');
+    else if (i === step) el.classList.add('active');
+  }
+  for (let i = 1; i <= 4; i++) {
+    const c = document.getElementById('pr-c-' + i);
+    c.classList.toggle('active', i <= step);
+  }
+  // Step 0 is always "done" once we're past sent
+  if (state !== 'sent') document.getElementById('pr-0').classList.add('done');
+  else document.getElementById('pr-0').classList.add('active');
+}
+
+/* ==== Notifications feed (student) ==== */
+const studentNotifs = [];
+function addStudentNotif(type, title, body) {
+  studentNotifs.unshift({ type, title, body });
+  const list = document.getElementById('student-notif-list');
+  const icons = { submitted: '📤', approved: '✓', revisions: '✎' };
+  list.innerHTML = studentNotifs.map(n => `
+    <div class="notif-item ${n.type}">
+      <div class="ni-icon">${icons[n.type] || '🔔'}</div>
+      <div style="flex:1;">
+        <div class="ni-title">${n.title}</div>
+        <div class="ni-body">${n.body}</div>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('student-notif-feed').style.display = 'block';
+}
+
+/* ==== Tally modal ==== */
+function openTally() {
+  document.getElementById('tally-backdrop').classList.add('show');
+}
+function closeTally(ev) {
+  if (ev && ev.target.id !== 'tally-backdrop') return;
+  document.getElementById('tally-backdrop').classList.remove('show');
+}
+window.openTally = openTally;
+window.closeTally = closeTally;
+
+async function doTallySubmit() {
+  closeTally();
+  const isResubmit = state === 'revisions';
+  const labelPrefix = isResubmit ? 'Resubmitted' : 'Submitted';
+
+  // 1. Tally webhook fires
+  log('<span class="t">[Tally → webhook]</span> <span class="e">POST /tally-webhook</span>  <span class="d">{ formId: "mRE0p9", responseId: "r_' + Date.now() + '", hiddenFields: { student_id: "karthik_uuid", resubmit: ' + isResubmit + ' } }</span>');
+  await wait(280);
+  // 2. Supabase insert
+  log('<span class="t">[supabase]</span> <span class="e ok">INSERT INTO submissions</span>  <span class="d">(student_id, form_key=\'premise\', tally_response_id, status=\'pending\'' + (isResubmit ? ', revision_of=<prev_id>' : '') + ')</span>');
+  log('<span class="t">[supabase]</span> <span class="d" style="color: var(--text-muted);">// answers stay in Tally — we only know they submitted</span>');
+  await wait(260);
+  // 3. Trigger: update home_cards, notify mentor
+  log('<span class="t">[trigger]</span> <span class="e ok">home_cards</span> <span class="d">updated · state: ' + (isResubmit ? 'revisions' : 'sent') + ' → pending_review</span>');
+  log('<span class="t">[trigger]</span> <span class="e ok">notify(mentor=Priya)</span> <span class="d">"Karthik ' + (isResubmit ? 're-submitted his Premise after revisions' : 'submitted his Premise') + '"</span>');
+
+  // 4. UI updates
+  state = 'pending';
+  renderAll();
+  addStudentNotif('submitted', labelPrefix + ' · awaiting review', 'Your premise reached Priya' + (isResubmit ? ' again. Second round — she\'ll review the updated version' : '. She\'ll open it in Tally to review') + '.');
+  toast('Karthik ' + (isResubmit ? 're-submitted' : 'submitted') + ' his Premise', 'info');
+}
+window.doTallySubmit = doTallySubmit;
+
+/* ==== Mentor decision: two-step with feedback composer ==== */
+function startDecision(decision) {
+  pendingDecision = decision;
+  renderMentorQueue();
+  setTimeout(() => {
+    const ta = document.getElementById('m-feedback-text');
+    if (ta) ta.focus();
+    updateFeedbackUi();
+  }, 20);
+}
+window.startDecision = startDecision;
+
+function cancelDecision() {
+  pendingDecision = null;
+  renderMentorQueue();
+}
+window.cancelDecision = cancelDecision;
+
+function onFeedbackInput() { updateFeedbackUi(); }
+window.onFeedbackInput = onFeedbackInput;
+
+function updateFeedbackUi() {
+  const ta = document.getElementById('m-feedback-text');
+  const counter = document.getElementById('m-feedback-counter');
+  const confirm = document.getElementById('m-feedback-confirm');
+  if (!ta || !counter || !confirm) return;
+  const len = ta.value.length;
+  counter.textContent = `${len} / ${MAX_FEEDBACK}`;
+  counter.classList.toggle('near', len >= MAX_FEEDBACK - 60 && len < MAX_FEEDBACK);
+  counter.classList.toggle('over', len >= MAX_FEEDBACK);
+  // Revisions requires non-empty feedback; approval is optional
+  if (pendingDecision === 'revisions') {
+    confirm.disabled = !ta.value.trim();
+    confirm.style.opacity = ta.value.trim() ? '1' : '0.5';
+    confirm.style.cursor = ta.value.trim() ? 'pointer' : 'not-allowed';
+  }
+}
+
+async function confirmDecision() {
+  const ta = document.getElementById('m-feedback-text');
+  const text = (ta ? ta.value : '').trim();
+  if (pendingDecision === 'revisions' && !text) {
+    toast('Revisions need a note for the student', 'info');
+    return;
+  }
+  if (text.length > MAX_FEEDBACK) return;
+
+  const decision = pendingDecision;
+  lastFeedback = { decision, text, at: 'just now' };
+
+  if (decision === 'approved') {
+    log('<span class="t">[mentor action]</span> <span class="e ok">UPDATE submissions SET status=\'approved\'</span>  <span class="d">WHERE form_key=\'premise\' AND student_id=\'karthik_uuid\'</span>');
+    if (text) {
+      log('<span class="t">[supabase]</span> <span class="e ok">INSERT INTO submission_feedback</span>  <span class="d">(submission_id, author=\'mentor\', decision=\'approved\', body=<' + text.length + ' chars>)</span>');
+    }
+    await wait(200);
+    log('<span class="t">[trigger]</span> <span class="e ok">unlock stage</span> <span class="d">script form available to karthik</span>');
+    log('<span class="t">[trigger]</span> <span class="e ok">notify(student=Karthik)</span> <span class="d">"Your premise was approved' + (text ? ' — with a note from Priya' : '') + '"</span>');
+    state = 'approved';
+    addStudentNotif('approved', 'Premise approved', text ? `Priya approved your premise with a note: "${escapeHtml(text)}"` : 'Priya approved your premise. The first draft form is now unlocked.');
+    toast('Karthik notified · script unlocked', 'ok');
+  } else {
+    log('<span class="t">[mentor action]</span> <span class="e ok">UPDATE submissions SET status=\'revisions\'</span>  <span class="d">WHERE form_key=\'premise\'</span>');
+    log('<span class="t">[supabase]</span> <span class="e ok">INSERT INTO submission_feedback</span>  <span class="d">(submission_id, author=\'mentor\', decision=\'revisions\', body=<' + text.length + ' chars>)</span>');
+    await wait(180);
+    log('<span class="t">[trigger]</span> <span class="e ok">notify(student=Karthik)</span> <span class="d">"Priya has feedback on your premise"</span>');
+    state = 'revisions';
+    addStudentNotif('revisions', 'Priya has sent revisions', `"${escapeHtml(text)}"`);
+    toast('Revisions sent to Karthik', 'ok');
+  }
+  pendingDecision = null;
+  renderAll();
+}
+window.confirmDecision = confirmDecision;
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ==== Reset ==== */
+function resetDemo() {
+  state = 'sent';
+  pendingDecision = null;
+  lastFeedback = null;
+  studentNotifs.length = 0;
+  document.getElementById('student-notif-feed').style.display = 'none';
+  document.getElementById('student-notif-list').innerHTML = '';
+  document.getElementById('console-body').innerHTML = '<div class="log-row"><span class="t">[ready]</span> waiting for student to submit the Premise form…</div>';
+  events = 0;
+  document.getElementById('console-cnt').textContent = '0 events';
+  renderAll();
+  toast('Demo reset', 'info');
+}
+window.resetDemo = resetDemo;
+
+function renderAll() {
+  renderStudentCard();
+  renderMentorPipeline();
+  renderMentorQueue();
+  renderProgressRail();
+}
+
+renderAll();
+</script>
+
+</body>
+</html>

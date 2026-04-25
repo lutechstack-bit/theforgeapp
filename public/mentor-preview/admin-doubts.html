@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>the Forge — Admin · Escalated doubts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:           #0A0A0A;
+    --bg-elev:      #121212;
+    --surface2:     #181818;
+    --gold:         #FFBC3B;
+    --gold-soft:    #F5C76A;
+    --gold-deep:    #D38F0C;
+    --orange:       #DD6F16;
+    --cream:        #FCF7EF;
+    --text:         #F5F1E8;
+    --text-dim:     #A9A396;
+    --text-muted:   #6E6858;
+    --border:       rgba(245, 241, 232, 0.07);
+    --border-strong:rgba(245, 241, 232, 0.13);
+    --border-gold:  rgba(255, 188, 59, 0.28);
+    --success:      #6FBF73;
+    --danger:       #E05B4B;
+    --purple:       #8B82E5;
+    --purple-bg:    rgba(139, 130, 229, 0.10);
+    --purple-border:rgba(139, 130, 229, 0.3);
+    --blue:         #89C0FF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 8px; }
+
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(1000px 600px at 10% 0%, rgba(139, 130, 229, 0.06), transparent 60%),
+      radial-gradient(900px 500px at 110% 15%, rgba(255, 188, 59, 0.04), transparent 60%);
+    z-index: 0;
+  }
+
+  /* Top bar */
+  .topbar {
+    position: relative; z-index: 5;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px; height: 58px;
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand {
+    display: flex; align-items: center; gap: 14px;
+    font-weight: 700; letter-spacing: 0.04em;
+  }
+  .brand-mark {
+    width: 26px; height: 26px; border-radius: 7px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%);
+    display: grid; place-items: center;
+    color: #000; font-weight: 800; font-size: 13px;
+  }
+  .vt-group {
+    display: inline-flex;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+    margin-left: 4px;
+  }
+  .vt-group a, .vt-group button {
+    padding: 5px 12px;
+    background: transparent;
+    color: var(--text-dim);
+    border: 0;
+    border-radius: 6px;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: inherit;
+    transition: all 140ms ease;
+  }
+  .vt-group a:hover, .vt-group button:hover { color: var(--text); }
+  .vt-group .active {
+    background: rgba(255,188,59,0.12);
+    color: var(--gold);
+  }
+  .crumbs {
+    font-size: 13px; color: var(--text-dim);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .crumbs b { color: var(--text); font-weight: 500; }
+  .crumbs .sep { color: var(--text-muted); }
+  .top-user { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .av-sm {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, #3b3228 0%, #1a1410 100%);
+    color: var(--gold); font-weight: 700; font-size: 12px;
+    border: 1px solid var(--border-strong);
+  }
+
+  /* Page header */
+  .page {
+    position: relative; z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 36px 32px 80px;
+  }
+  .page-head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+  }
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 30px; font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .page-title em { color: var(--gold); font-style: italic; }
+  .page-sub {
+    margin-top: 6px;
+    font-size: 13.5px; color: var(--text-dim);
+    line-height: 1.55;
+    max-width: 60ch;
+  }
+
+  /* Stats row */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat {
+    padding: 16px 18px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .stat-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px; font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .stat-val.accent { color: var(--purple); }
+  .stat-val.gold { color: var(--gold); }
+  .stat-val.green { color: var(--success); }
+  .stat-lbl {
+    margin-top: 8px;
+    font-size: 11px; color: var(--text-muted);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 600;
+  }
+  .stat-sub {
+    margin-top: 6px;
+    font-size: 12px; color: var(--text-dim);
+  }
+
+  /* Filters */
+  .filters {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .filters h2 {
+    font-size: 15px; font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-right: 8px;
+  }
+  .filter-chip {
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 12.5px; font-weight: 500;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 140ms ease;
+  }
+  .filter-chip:hover { color: var(--text); }
+  .filter-chip.active {
+    background: rgba(255,188,59,0.1);
+    color: var(--gold);
+    border-color: var(--border-gold);
+  }
+  .filter-search {
+    margin-left: auto;
+    padding: 7px 12px;
+    width: 240px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text);
+    font-family: inherit;
+    outline: none;
+  }
+  .filter-search:focus { border-color: var(--border-gold); }
+  .filter-search::placeholder { color: var(--text-muted); }
+
+  /* Escalated doubt list */
+  .list { display: flex; flex-direction: column; gap: 14px; }
+  .esc-doubt {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--purple);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .esc-doubt.status-closed {
+    opacity: 0.6;
+    border-left-color: var(--success);
+  }
+  .esc-doubt.status-replied {
+    border-left-color: var(--blue);
+  }
+  .esc-doubt.status-reassigned {
+    border-left-color: var(--orange);
+  }
+
+  .esc-head {
+    padding: 16px 20px 12px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 14px;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--border);
+  }
+  .esc-av {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 14px;
+    background: linear-gradient(135deg, #3a3024 0%, #161210 100%);
+    color: var(--gold);
+    border: 1px solid var(--border-strong);
+  }
+  .esc-who-name {
+    font-size: 15px; font-weight: 600;
+    color: var(--text);
+  }
+  .esc-who-meta {
+    margin-top: 3px;
+    font-size: 12.5px; color: var(--text-dim);
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  }
+  .esc-who-meta .sep {
+    width: 3px; height: 3px; border-radius: 50%;
+    background: var(--text-muted);
+  }
+  .esc-who-meta .mentor-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 2px 9px 2px 3px;
+    background: rgba(255,188,59,0.06);
+    border: 1px solid rgba(255,188,59,0.2);
+    border-radius: 999px;
+    font-size: 11.5px; font-weight: 500;
+    color: var(--text);
+  }
+  .esc-who-meta .mentor-tag .mt-av {
+    width: 18px; height: 18px; border-radius: 50%;
+    display: inline-grid; place-items: center;
+    background: linear-gradient(135deg, #3a3024 0%, #161210 100%);
+    color: var(--gold); font-size: 9px; font-weight: 700;
+  }
+
+  .esc-badge {
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--purple-bg);
+    color: var(--purple);
+    border: 1px solid var(--purple-border);
+    white-space: nowrap;
+  }
+  .esc-badge.replied { background: rgba(137,192,255,0.1); color: var(--blue); border-color: rgba(137,192,255,0.3); }
+  .esc-badge.closed { background: rgba(111,191,115,0.1); color: var(--success); border-color: rgba(111,191,115,0.3); }
+  .esc-badge.reassigned { background: rgba(221,111,22,0.1); color: var(--orange); border-color: rgba(221,111,22,0.3); }
+
+  .esc-body { padding: 16px 20px; }
+
+  .q-block {
+    padding: 14px 16px;
+    background: rgba(245,241,232,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 12px;
+  }
+  .q-block-label {
+    font-size: 10.5px; font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .q-block-q { font-size: 14px; color: var(--text); line-height: 1.55; }
+
+  .mentor-note {
+    padding: 12px 14px;
+    background: rgba(255,188,59,0.04);
+    border: 1px solid rgba(255,188,59,0.18);
+    border-radius: 9px;
+    margin-bottom: 14px;
+    display: flex; gap: 10px;
+  }
+  .mentor-note-av {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: linear-gradient(135deg, #3a3024 0%, #161210 100%);
+    color: var(--gold);
+    font-size: 10px; font-weight: 700;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .mentor-note-body { font-size: 13px; line-height: 1.55; color: var(--text-dim); }
+  .mentor-note-body b { color: var(--text); font-weight: 500; }
+  .mentor-note-body em { font-style: italic; color: var(--text); }
+  .mentor-note-body .meta { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  .admin-replies {
+    margin-top: 8px;
+    padding-left: 18px;
+    border-left: 2px solid var(--purple-border);
+  }
+  .admin-reply {
+    padding: 8px 0 10px;
+    font-size: 13px; line-height: 1.55;
+    color: var(--text-dim);
+  }
+  .admin-reply b { color: var(--text); font-weight: 500; }
+  .admin-reply em { font-style: italic; color: var(--text); }
+  .admin-reply .meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+  .esc-actions {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .esc-btn {
+    padding: 7px 13px;
+    border-radius: 7px;
+    font-size: 12.5px; font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 140ms ease;
+    border: 0;
+  }
+  .esc-btn.primary { background: var(--purple); color: #0A0A0A; }
+  .esc-btn.primary:hover { background: #a79eff; }
+  .esc-btn.close { background: rgba(111,191,115,0.12); color: var(--success); border: 1px solid rgba(111,191,115,0.3); }
+  .esc-btn.close:hover { background: rgba(111,191,115,0.2); }
+  .esc-btn.reassign { background: rgba(221,111,22,0.1); color: var(--orange); border: 1px solid rgba(221,111,22,0.3); }
+  .esc-btn.reassign:hover { background: rgba(221,111,22,0.2); }
+  .esc-btn.ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+  .esc-btn.ghost:hover { color: var(--text); }
+
+  /* Composer */
+  .composer {
+    margin-top: 14px;
+    padding: 14px;
+    background: var(--purple-bg);
+    border: 1px solid var(--purple-border);
+    border-radius: 10px;
+  }
+  .composer-label {
+    font-size: 11px; font-weight: 600;
+    color: var(--purple);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .composer-hint {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 10.5px;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .composer textarea {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: var(--text);
+    font-family: inherit;
+    line-height: 1.55;
+    resize: vertical;
+    min-height: 84px;
+    max-height: 160px;
+    outline: none;
+    transition: border-color 120ms ease;
+  }
+  .composer textarea:focus { border-color: var(--purple-border); }
+  .composer-foot {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 10px;
+  }
+  .composer-counter {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .composer-counter.near { color: var(--orange); }
+  .composer-counter.over { color: var(--danger); }
+  .composer-cc {
+    font-size: 12px; color: var(--text-dim);
+    display: flex; align-items: center; gap: 6px;
+    margin-left: 14px;
+  }
+  .composer-cc .toggle {
+    width: 28px; height: 16px;
+    border-radius: 999px;
+    background: rgba(245,241,232,0.12);
+    position: relative;
+    cursor: pointer;
+    transition: background 140ms ease;
+  }
+  .composer-cc .toggle::after {
+    content: ""; position: absolute;
+    top: 2px; left: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #e8e4d8;
+    transition: transform 140ms ease;
+  }
+  .composer-cc .toggle.on { background: var(--purple); }
+  .composer-cc .toggle.on::after { transform: translateX(12px); background: #0A0A0A; }
+  .composer-actions { margin-left: auto; display: flex; gap: 6px; }
+
+  /* Reassign picker */
+  .reassign-picker {
+    margin-top: 14px;
+    padding: 14px;
+    background: rgba(221,111,22,0.04);
+    border: 1px solid rgba(221,111,22,0.25);
+    border-radius: 10px;
+  }
+  .reassign-picker h4 {
+    font-size: 11.5px; font-weight: 600;
+    color: var(--orange);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .mentor-list {
+    display: flex; flex-direction: column; gap: 4px;
+    margin-bottom: 10px;
+  }
+  .mentor-pick {
+    display: grid;
+    grid-template-columns: 32px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 9px 11px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--text);
+    text-align: left;
+    transition: all 140ms ease;
+  }
+  .mentor-pick:hover { border-color: var(--border-gold); background: rgba(255,188,59,0.04); }
+  .mentor-pick.current { opacity: 0.4; cursor: not-allowed; }
+  .mentor-pick-av {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, #3a3024 0%, #161210 100%);
+    color: var(--gold); font-size: 11px; font-weight: 700;
+  }
+  .mentor-pick-name { font-size: 13px; font-weight: 500; }
+  .mentor-pick-meta { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
+  .mentor-pick-load {
+    font-size: 11px; color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .empty {
+    padding: 48px 24px;
+    text-align: center;
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .empty em { color: var(--text-dim); font-style: normal; font-weight: 500; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(30px);
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 16px 11px 13px;
+    background: #1A1A1A;
+    border: 1px solid var(--purple-border);
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    font-size: 13px;
+    opacity: 0; pointer-events: none;
+    transition: all 260ms ease;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+  .toast .tick {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--purple); color: #0A0A0A;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 800;
+  }
+  .toast.success { border-color: rgba(111,191,115,0.35); }
+  .toast.success .tick { background: var(--success); }
+
+  @media (max-width: 720px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .filters { flex-wrap: wrap; }
+    .filter-search { width: 100%; margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="display: flex; align-items: center; gap: 14px;">
+    <div class="brand">
+      <div class="brand-mark">F</div>
+      <span>the forge</span>
+      <div class="vt-group" role="tablist">
+        <button class="active">Admin</button>
+        <a href="index.html">Mentor</a>
+      </div>
+    </div>
+  </div>
+  <div class="crumbs">
+    <a href="assign-bento.html">Admin</a>
+    <span class="sep">/</span>
+    <a href="assign-bento.html">Mentors</a>
+    <span class="sep">/</span>
+    <b>Escalated doubts</b>
+  </div>
+  <div class="top-user">
+    <span style="color: var(--text-dim);">Shakthi Vel</span>
+    <div class="av-sm">SV</div>
+  </div>
+</div>
+
+<div class="page">
+
+  <div class="page-head">
+    <div>
+      <div class="page-title">Escalated <em>doubts</em></div>
+      <div class="page-sub">Questions that mentors have pushed up. You see the student, the original question, the mentor's note on why it was escalated, and can reply, close, or reassign to another mentor.</div>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button class="esc-btn ghost" onclick="location.href='assign-bento.html'">← Back to assignments</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-val accent" id="stat-open">3</div>
+      <div class="stat-lbl">Awaiting you</div>
+      <div class="stat-sub" id="stat-open-sub">Oldest — 2 days</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="stat-replied">1</div>
+      <div class="stat-lbl">Replied · awaiting close</div>
+      <div class="stat-sub">Students may respond</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val green" id="stat-closed">7</div>
+      <div class="stat-lbl">Closed this week</div>
+      <div class="stat-sub">Avg turnaround · 4h</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val gold" id="stat-reassigned">2</div>
+      <div class="stat-lbl">Reassigned</div>
+      <div class="stat-sub">Sent to a different mentor</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <h2>All escalated</h2>
+    <button class="filter-chip active" onclick="setFilter(this, 'all')">All</button>
+    <button class="filter-chip" onclick="setFilter(this, 'escalated')">Awaiting</button>
+    <button class="filter-chip" onclick="setFilter(this, 'replied')">Replied</button>
+    <button class="filter-chip" onclick="setFilter(this, 'closed')">Closed</button>
+    <button class="filter-chip" onclick="setFilter(this, 'reassigned')">Reassigned</button>
+    <input class="filter-search" placeholder="Search student, mentor, question…" oninput="setSearch(this.value)" />
+  </div>
+
+  <!-- List -->
+  <div class="list" id="list"><!-- rendered --></div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="tick">✓</div>
+  <span id="toast-msg">Saved</span>
+</div>
+
+<script>
+/* ==== Seed data ==== */
+const MENTORS = [
+  { name: 'Priya Menon',        initials: 'PM', role: 'Director · 3 films',           load: '4 / 5' },
+  { name: 'Arjun Menon',        initials: 'AM', role: 'Writer · Forge alum',          load: '5 / 5 · full' },
+  { name: 'Tara Balakrishnan',  initials: 'TB', role: 'Cinematographer',              load: '4 / 5' },
+  { name: 'Naveen Reddy',       initials: 'NR', role: 'Editor · Doc. filmmaker',      load: '3 / 5' },
+  { name: 'Suresh Iyengar',     initials: 'SI', role: 'Sound designer · 2 features',  load: '3 / 4' },
+  { name: 'Lakshmi Raghav',     initials: 'LR', role: 'Producer · Forge alum',        load: '4 / 5' },
+];
+
+let doubts = [
+  {
+    id: 'e1',
+    student: { name: 'Karthik Subramanian', initials: 'KS', cohort: 'Forge 08 · Filmmaking', track: 'Filmmaker · 2nd year' },
+    mentor: { name: 'Priya Menon', initials: 'PM' },
+    q: 'The slot I picked conflicts with my travel — my parents rebooked my flight. Can I switch from morning to night slot for the Goa shoot?',
+    askedAt: 'Apr 22 · 2 days ago',
+    escalatedAt: 'Apr 22 · 2 days ago',
+    mentorNote: 'Passing this to admin — slot changes after selection are managed by the LevelUp team, not mentors. Happy to take back once decided.',
+    status: 'escalated',
+    replies: [],
+  },
+  {
+    id: 'e2',
+    student: { name: 'Riya Nair', initials: 'RN', cohort: 'Forge 08 · Filmmaking', track: 'Writer-director · 1st year' },
+    mentor: { name: 'Priya Menon', initials: 'PM' },
+    q: 'My accommodation booking got cancelled last minute. Is single occupancy available, and does the cost get adjusted in my fees?',
+    askedAt: 'Apr 23 · 1 day ago',
+    escalatedAt: 'Apr 23 · 1 day ago',
+    mentorNote: 'Accommodation + payments — that\'s beyond mentorship scope. Can admin handle directly?',
+    status: 'escalated',
+    replies: [],
+  },
+  {
+    id: 'e3',
+    student: { name: 'Vikram Rao', initials: 'VR', cohort: 'Forge 08 · Filmmaking', track: 'Filmmaker · 3rd year' },
+    mentor: { name: 'Tara Balakrishnan', initials: 'TB' },
+    q: 'I feel like I\'m not getting enough feedback on my script — my mentor has been busy. Can I request a different mentor?',
+    askedAt: 'Apr 20 · 4 days ago',
+    escalatedAt: 'Apr 21 · 3 days ago',
+    mentorNote: 'Sensitive one — Vikram specifically asked about a mentor change. I think Priya could be a better fit given her script-first approach.',
+    status: 'escalated',
+    replies: [],
+  },
+  {
+    id: 'e4',
+    student: { name: 'Sneha Prakash', initials: 'SP', cohort: 'Forge 08 · Filmmaking', track: 'Writer · 1st year' },
+    mentor: { name: 'Arjun Menon', initials: 'AM' },
+    q: 'Can I bring my own actor from Bangalore? She\'s already agreed and can self-fund. Is that allowed under the casting rules?',
+    askedAt: 'Apr 18 · 6 days ago',
+    escalatedAt: 'Apr 19 · 5 days ago',
+    mentorNote: 'Casting exception — not something I can green-light alone. Sneha is eager and the actor sounds solid.',
+    status: 'replied',
+    replies: [
+      { by: 'Shakthi Vel (admin)', at: 'Apr 20 · 4d ago', text: 'Yes, external actors allowed up to 1 per film as long as they can self-fund and travel. Sneha — send me her name + contact and I\'ll add her to the cast manifest.', cc: true },
+    ],
+  },
+  {
+    id: 'e5',
+    student: { name: 'Kavya Anand', initials: 'KA', cohort: 'Forge 08 · Filmmaking', track: 'Filmmaker · 1st year' },
+    mentor: { name: 'Naveen Reddy', initials: 'NR' },
+    q: 'I lost access to my Forge account email — need to update it. Nothing\'s working.',
+    askedAt: 'Apr 14 · 10 days ago',
+    escalatedAt: 'Apr 14 · 10 days ago',
+    mentorNote: 'Auth / account issue. Not a mentorship concern.',
+    status: 'closed',
+    replies: [
+      { by: 'Shakthi Vel (admin)', at: 'Apr 14 · 10d ago', text: 'Sent you a reset link to your backup email. Confirm once you\'re back in.', cc: false },
+      { by: 'Kavya Anand', at: 'Apr 14 · 10d ago', text: 'All sorted — thanks!' },
+    ],
+  },
+];
+
+let activeReply = null;      // doubt id
+let activeReassign = null;   // doubt id
+let ccMentor = true;         // cc the mentor on admin replies
+let currentFilter = 'all';
+let searchQuery = '';
+const MAX_REPLY = 500;
+
+/* ==== Rendering ==== */
+function render() {
+  const list = document.getElementById('list');
+  const filtered = doubts.filter(d => {
+    if (currentFilter !== 'all' && d.status !== currentFilter) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return d.student.name.toLowerCase().includes(q) ||
+             d.mentor.name.toLowerCase().includes(q) ||
+             d.q.toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    list.innerHTML = `
+      <div class="empty">
+        <em>No doubts match this filter.</em><br/>
+        Try "All" or clear the search.
+      </div>
+    `;
+    updateStats();
+    return;
+  }
+
+  list.innerHTML = filtered.map(d => {
+    const isReplying = activeReply === d.id;
+    const isReassigning = activeReassign === d.id;
+    const statusLabel = {
+      escalated: 'Awaiting admin',
+      replied: 'Admin replied',
+      closed: 'Closed',
+      reassigned: 'Reassigned',
+    }[d.status];
+
+    const canAct = d.status !== 'closed';
+
+    return `
+      <div class="esc-doubt status-${d.status}">
+        <div class="esc-head">
+          <div class="esc-av">${d.student.initials}</div>
+          <div>
+            <div class="esc-who-name">${d.student.name}</div>
+            <div class="esc-who-meta">
+              <span>${d.student.track}</span>
+              <span class="sep"></span>
+              <span>${d.student.cohort}</span>
+              <span class="sep"></span>
+              <span class="mentor-tag">
+                <span class="mt-av">${d.mentor.initials}</span>
+                ${d.mentor.name}
+              </span>
+            </div>
+          </div>
+          <span class="esc-badge ${d.status}">${statusLabel}</span>
+        </div>
+
+        <div class="esc-body">
+          <div class="q-block">
+            <div class="q-block-label">${d.student.name.split(' ')[0]} asked</div>
+            <div class="q-block-q">${escapeHtml(d.q)}</div>
+            <div style="margin-top:6px; font-size: 11.5px; color: var(--text-muted);">${d.askedAt}</div>
+          </div>
+
+          <div class="mentor-note">
+            <div class="mentor-note-av">${d.mentor.initials}</div>
+            <div class="mentor-note-body">
+              <b>${d.mentor.name}</b> escalated this: <em>"${escapeHtml(d.mentorNote)}"</em>
+              <div class="meta">Escalated ${d.escalatedAt}</div>
+            </div>
+          </div>
+
+          ${d.replies && d.replies.length ? `
+            <div class="admin-replies">
+              ${d.replies.map(r => `
+                <div class="admin-reply">
+                  <b>${r.by}</b>${r.cc ? ' <span style="color: var(--purple); font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 1px 6px; background: var(--purple-bg); border-radius: 999px; margin-left: 4px;">cc mentor</span>' : ''}: <em>"${escapeHtml(r.text)}"</em>
+                  <div class="meta">${r.at}</div>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+
+          ${isReplying ? `
+            <div class="composer">
+              <div class="composer-label">
+                <span>Your reply to ${d.student.name.split(' ')[0]}</span>
+                <span class="composer-hint">Max ${MAX_REPLY} chars · Logged as admin action</span>
+              </div>
+              <textarea id="reply-${d.id}" maxlength="${MAX_REPLY}" placeholder="Reply directly — this goes to student and ${ccMentor ? 'the mentor is cc-d' : 'mentor will not see it'}." oninput="onReplyInput('${d.id}')"></textarea>
+              <div class="composer-foot">
+                <span class="composer-counter" id="counter-${d.id}">0 / ${MAX_REPLY}</span>
+                <div class="composer-cc" onclick="toggleCc()">
+                  <div class="toggle ${ccMentor ? 'on' : ''}"></div>
+                  <span>cc ${d.mentor.name.split(' ')[0]}</span>
+                </div>
+                <div class="composer-actions">
+                  <button class="esc-btn ghost" onclick="cancelReply()">Cancel</button>
+                  <button class="esc-btn primary" id="send-${d.id}" onclick="sendReply('${d.id}')" disabled style="opacity: 0.5;">Send reply →</button>
+                </div>
+              </div>
+            </div>
+          ` : ''}
+
+          ${isReassigning ? `
+            <div class="reassign-picker">
+              <h4>Reassign to a different mentor</h4>
+              <div class="mentor-list">
+                ${MENTORS.map(m => `
+                  <button class="mentor-pick ${m.name === d.mentor.name ? 'current' : ''}" ${m.name === d.mentor.name ? 'disabled' : ''} onclick="${m.name === d.mentor.name ? '' : `doReassign('${d.id}', '${m.name.replace(/'/g, "\\'")}', '${m.initials}')`}">
+                    <div class="mentor-pick-av">${m.initials}</div>
+                    <div>
+                      <div class="mentor-pick-name">${m.name}${m.name === d.mentor.name ? ' <span style="font-size:11px; color: var(--text-muted); font-weight: 400;">(current)</span>' : ''}</div>
+                      <div class="mentor-pick-meta">${m.role}</div>
+                    </div>
+                    <div class="mentor-pick-load">${m.load}</div>
+                  </button>
+                `).join('')}
+              </div>
+              <div style="display: flex; justify-content: flex-end;">
+                <button class="esc-btn ghost" onclick="cancelReassign()">Cancel</button>
+              </div>
+            </div>
+          ` : ''}
+
+          ${canAct && !isReplying && !isReassigning ? `
+            <div class="esc-actions">
+              <button class="esc-btn primary" onclick="startReply('${d.id}')">${d.status === 'replied' ? 'Reply again' : 'Reply directly'}</button>
+              <button class="esc-btn reassign" onclick="startReassign('${d.id}')">Reassign mentor</button>
+              <button class="esc-btn close" onclick="closeDoubt('${d.id}')">✓ Mark resolved</button>
+              <button class="esc-btn ghost" style="margin-left:auto;" onclick="openInWorkspace('${d.student.name.replace(/'/g, "\\'")}')">↗ Open student workspace</button>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  updateStats();
+}
+
+function updateStats() {
+  const cnt = (s) => doubts.filter(d => d.status === s).length;
+  document.getElementById('stat-open').textContent = cnt('escalated');
+  document.getElementById('stat-replied').textContent = cnt('replied');
+  document.getElementById('stat-closed').textContent = cnt('closed');
+  document.getElementById('stat-reassigned').textContent = cnt('reassigned');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+/* ==== Actions ==== */
+function startReply(id) {
+  activeReply = id;
+  activeReassign = null;
+  render();
+  setTimeout(() => document.getElementById('reply-' + id)?.focus(), 30);
+}
+window.startReply = startReply;
+
+function cancelReply() {
+  activeReply = null;
+  render();
+}
+window.cancelReply = cancelReply;
+
+function onReplyInput(id) {
+  const ta = document.getElementById('reply-' + id);
+  const counter = document.getElementById('counter-' + id);
+  const send = document.getElementById('send-' + id);
+  if (!ta) return;
+  const len = ta.value.length;
+  counter.textContent = `${len} / ${MAX_REPLY}`;
+  counter.classList.toggle('near', len >= MAX_REPLY - 60 && len < MAX_REPLY);
+  counter.classList.toggle('over', len >= MAX_REPLY);
+  const valid = !!ta.value.trim();
+  send.disabled = !valid;
+  send.style.opacity = valid ? '1' : '0.5';
+}
+window.onReplyInput = onReplyInput;
+
+function toggleCc() {
+  ccMentor = !ccMentor;
+  // Refresh the composer toggle only — re-render to keep DOM in sync
+  render();
+  // Re-focus / re-open the composer
+  if (activeReply) setTimeout(() => document.getElementById('reply-' + activeReply)?.focus(), 10);
+}
+window.toggleCc = toggleCc;
+
+function sendReply(id) {
+  const ta = document.getElementById('reply-' + id);
+  const text = (ta ? ta.value : '').trim();
+  if (!text || text.length > MAX_REPLY) return;
+  const d = doubts.find(x => x.id === id);
+  d.replies = d.replies || [];
+  d.replies.push({
+    by: 'Shakthi Vel (admin)',
+    at: 'just now',
+    text,
+    cc: ccMentor,
+  });
+  d.status = 'replied';
+  activeReply = null;
+  render();
+  toast(`Reply sent to ${d.student.name.split(' ')[0]}${ccMentor ? ' · ' + d.mentor.name.split(' ')[0] + ' cc\'d' : ''}`, 'success');
+}
+window.sendReply = sendReply;
+
+function closeDoubt(id) {
+  const d = doubts.find(x => x.id === id);
+  d.status = 'closed';
+  render();
+  toast(`Doubt marked resolved`, 'success');
+}
+window.closeDoubt = closeDoubt;
+
+function startReassign(id) {
+  activeReassign = id;
+  activeReply = null;
+  render();
+}
+window.startReassign = startReassign;
+
+function cancelReassign() {
+  activeReassign = null;
+  render();
+}
+window.cancelReassign = cancelReassign;
+
+function doReassign(id, mentorName, mentorInitials) {
+  const d = doubts.find(x => x.id === id);
+  const oldMentorName = d.mentor.name;
+  d.replies = d.replies || [];
+  d.replies.push({
+    by: 'Shakthi Vel (admin)',
+    at: 'just now',
+    text: `Reassigned from ${oldMentorName} to ${mentorName}. ${mentorName.split(' ')[0]} will pick this up from here.`,
+    cc: true,
+  });
+  d.mentor = { name: mentorName, initials: mentorInitials };
+  d.status = 'reassigned';
+  activeReassign = null;
+  render();
+  toast(`Reassigned to ${mentorName}`, 'success');
+}
+window.doReassign = doReassign;
+
+function openInWorkspace(studentName) {
+  window.open(`index.html?student=${encodeURIComponent(studentName)}`, '_blank');
+}
+window.openInWorkspace = openInWorkspace;
+
+/* ==== Filters ==== */
+function setFilter(btn, f) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter = f;
+  render();
+}
+window.setFilter = setFilter;
+
+function setSearch(q) {
+  searchQuery = q;
+  render();
+}
+window.setSearch = setSearch;
+
+/* ==== Toast ==== */
+function toast(msg, kind) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.toggle('success', kind === 'success');
+  t.classList.add('show');
+  clearTimeout(window.__tt);
+  window.__tt = setTimeout(() => t.classList.remove('show'), 3800);
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (activeReply) { cancelReply(); return; }
+    if (activeReassign) { cancelReassign(); return; }
+  }
+});
+
+render();
+</script>
+
+</body>
+</html>
