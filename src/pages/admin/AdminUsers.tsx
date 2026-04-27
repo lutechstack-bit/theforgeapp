@@ -6,7 +6,10 @@ import {
   useMentorRoleSet,
   useGrantMentorRole,
   useRevokeMentorRole,
+  useBulkGrantMentorRole,
+  useUpdateMentorCapacity,
 } from '@/hooks/useMentorAdminData';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -1233,11 +1236,15 @@ export default function AdminUsers() {
   const { data: mentorRoleSet } = useMentorRoleSet();
   const grantMentorRole = useGrantMentorRole();
   const revokeMentorRole = useRevokeMentorRole();
+  const bulkGrantMentor = useBulkGrantMentorRole();
+  const updateMentorCapacity = useUpdateMentorCapacity();
   const [mentorDialog, setMentorDialog] = useState<{
     user: { id: string; full_name: string | null; email: string | null };
     mode: 'grant' | 'revoke';
   } | null>(null);
   const [mentorCapacity, setMentorCapacity] = useState<number>(5);
+  const [bulkPromoteOpen, setBulkPromoteOpen] = useState(false);
+  const [bulkCapacity, setBulkCapacity] = useState<number>(5);
 
   const filteredUsers = useMemo(() => {
     return users?.filter(user => {
@@ -1334,15 +1341,30 @@ export default function AdminUsers() {
             Bulk Import (CSV)
           </Button>
           {viewMode === 'list' && (
-            <Button
-              variant="destructive"
-              onClick={() => setShowBulkDeleteConfirm(true)}
-              className="gap-2"
-              disabled={selectedUserIds.size === 0}
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete Selected ({selectedUserIds.size})
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setBulkCapacity(5);
+                  setBulkPromoteOpen(true);
+                }}
+                className="gap-2"
+                disabled={selectedUserIds.size === 0}
+                title="Promote selected users to mentor role"
+              >
+                <UserPlus className="w-4 h-4" />
+                Promote to mentor ({selectedUserIds.size})
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => setShowBulkDeleteConfirm(true)}
+                className="gap-2"
+                disabled={selectedUserIds.size === 0}
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Selected ({selectedUserIds.size})
+              </Button>
+            </>
           )}
           <Button 
             variant="outline"
@@ -1646,13 +1668,22 @@ export default function AdminUsers() {
                         <div className="flex items-center gap-2">
                           <span>{user.full_name || '-'}</span>
                           {mentorRoleSet?.has(user.id) && (
-                            <Badge
-                              variant="outline"
-                              className="h-5 border-primary/30 bg-primary/5 px-1.5 text-[10px] font-semibold uppercase tracking-wider text-primary"
-                            >
-                              <GraduationCap className="mr-0.5 h-3 w-3" />
-                              Mentor
-                            </Badge>
+                            <MentorCapacityBadge
+                              userId={user.id}
+                              capacity={mentorRoleSet.get(user.id)?.capacity ?? 5}
+                              onUpdate={async (next) => {
+                                try {
+                                  await updateMentorCapacity.mutateAsync({
+                                    userId: user.id,
+                                    capacity: next,
+                                  });
+                                  toast.success(`Capacity set to ${next}`);
+                                  queryClient.invalidateQueries({ queryKey: ['admin', 'mentor-role-set'] });
+                                } catch (e) {
+                                  toast.error(`Could not update: ${String(e)}`);
+                                }
+                              }}
+                            />
                           )}
                         </div>
                       </TableCell>
@@ -2078,9 +2109,168 @@ export default function AdminUsers() {
           ) : null}
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ─── Bulk promote selected users to mentors ─── */}
+      <AlertDialog open={bulkPromoteOpen} onOpenChange={setBulkPromoteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Promote {selectedUserIds.size} user{selectedUserIds.size === 1 ? '' : 's'} to mentor?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Each selected user gets the <code className="text-xs">mentor</code> role and a mentor
+              profile with the capacity below. Users who are already mentors are skipped (no
+              duplicates). Capacities can be edited inline on the table afterwards.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div>
+            <Label htmlFor="bulk-cap">Initial capacity (1–20)</Label>
+            <Input
+              id="bulk-cap"
+              type="number"
+              min={1}
+              max={20}
+              value={bulkCapacity}
+              onChange={(e) =>
+                setBulkCapacity(Math.max(1, Math.min(20, Number(e.target.value))))
+              }
+              className="mt-1 w-24"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Sets capacity only for users who don't already have a mentor profile. Existing
+              capacities are preserved.
+            </p>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                try {
+                  const ids = Array.from(selectedUserIds);
+                  const result = await bulkGrantMentor.mutateAsync({
+                    userIds: ids,
+                    capacity: bulkCapacity,
+                  });
+                  toast.success(`Promoted ${result.granted} user${result.granted === 1 ? '' : 's'}`);
+                  setBulkPromoteOpen(false);
+                  setSelectedUserIds(new Set());
+                  queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+                } catch (e) {
+                  toast.error(`Bulk promote failed: ${String(e)}`);
+                }
+              }}
+              disabled={bulkGrantMentor.isPending || selectedUserIds.size === 0}
+            >
+              {bulkGrantMentor.isPending ? 'Promoting…' : 'Promote'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+
+// ────────────────────────────────────────────────────────────────────────
+// Inline mentor-capacity editor: click the Mentor badge to adjust.
+// ────────────────────────────────────────────────────────────────────────
+const CAPACITY_MIN = 1;
+const CAPACITY_MAX = 20;
+const MentorCapacityBadge: React.FC<{
+  userId: string;
+  capacity: number;
+  onUpdate: (next: number) => Promise<void>;
+}> = ({ capacity, onUpdate }) => {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<number>(capacity);
+  const [pending, setPending] = useState(false);
+
+  // Reset draft to live capacity each time the popover opens.
+  React.useEffect(() => {
+    if (open) setDraft(capacity);
+  }, [open, capacity]);
+
+  const dec = () => setDraft((v) => Math.max(CAPACITY_MIN, v - 1));
+  const inc = () => setDraft((v) => Math.min(CAPACITY_MAX, v + 1));
+  const apply = async () => {
+    if (draft === capacity) {
+      setOpen(false);
+      return;
+    }
+    setPending(true);
+    try {
+      await onUpdate(draft);
+      setOpen(false);
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Badge
+          variant="outline"
+          role="button"
+          tabIndex={0}
+          className="h-5 cursor-pointer border-primary/30 bg-primary/5 px-1.5 text-[10px] font-semibold uppercase tracking-wider text-primary hover:bg-primary/10"
+          title="Click to adjust capacity"
+        >
+          <GraduationCap className="mr-0.5 h-3 w-3" />
+          Mentor · {capacity}
+        </Badge>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-3" align="start">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Capacity
+        </div>
+        <div className="mt-2 flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-7 w-7"
+            onClick={dec}
+            disabled={draft <= CAPACITY_MIN || pending}
+          >
+            −
+          </Button>
+          <Input
+            type="number"
+            min={CAPACITY_MIN}
+            max={CAPACITY_MAX}
+            value={draft}
+            onChange={(e) =>
+              setDraft(
+                Math.max(CAPACITY_MIN, Math.min(CAPACITY_MAX, Number(e.target.value) || CAPACITY_MIN)),
+              )
+            }
+            className="h-7 w-14 text-center"
+          />
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-7 w-7"
+            onClick={inc}
+            disabled={draft >= CAPACITY_MAX || pending}
+          >
+            +
+          </Button>
+        </div>
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          Range {CAPACITY_MIN}–{CAPACITY_MAX}. Note: this won't drop below the mentor's current
+          load — that's enforced when changing it on the assignments page.
+        </p>
+        <div className="mt-3 flex justify-end gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setOpen(false)} disabled={pending}>
+            Cancel
+          </Button>
+          <Button size="sm" onClick={apply} disabled={pending || draft === capacity}>
+            {pending ? 'Saving…' : 'Save'}
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
 
 // Admin Accounts Tab Component
 function AdminAccountsTab({

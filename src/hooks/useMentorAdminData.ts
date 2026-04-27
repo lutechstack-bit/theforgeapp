@@ -247,22 +247,87 @@ export const useUpdateMentorCapacity = () => {
 };
 
 /**
- * Bulk-fetch the set of user_ids that currently hold the 'mentor' role.
- * Used by the Users table to render a "mentor" badge without per-row queries.
+ * Map of mentor user_id → { capacity }. Used by the Users table to render
+ * a "mentor" badge AND to support inline capacity editing without a
+ * per-row capacity fetch.
+ *
+ * Use `.has(id)` for the role check (Map's API matches the old Set), and
+ * `.get(id)?.capacity` for the capacity readout.
  */
 export const useMentorRoleSet = () =>
-  useQuery<Set<string>>({
+  useQuery<Map<string, { capacity: number; is_accepting_students: boolean }>>({
     queryKey: ['admin', 'mentor-role-set'],
     queryFn: async () => {
-      const { data, error } = await sb
+      const { data: roleRows, error: roleErr } = await sb
         .from('user_roles')
         .select('user_id')
         .eq('role', 'mentor');
-      if (error) throw error;
-      return new Set<string>((data ?? []).map((r: { user_id: string }) => r.user_id));
+      if (roleErr) throw roleErr;
+
+      const ids = (roleRows ?? []).map((r: { user_id: string }) => r.user_id);
+      if (ids.length === 0) return new Map();
+
+      const { data: profiles, error: profErr } = await sb
+        .from('mentor_profiles')
+        .select('user_id, capacity, is_accepting_students')
+        .in('user_id', ids);
+      if (profErr) throw profErr;
+
+      const out = new Map<string, { capacity: number; is_accepting_students: boolean }>();
+      ids.forEach((id: string) => out.set(id, { capacity: 5, is_accepting_students: true }));
+      (profiles ?? []).forEach(
+        (p: { user_id: string; capacity: number; is_accepting_students: boolean }) =>
+          out.set(p.user_id, { capacity: p.capacity, is_accepting_students: p.is_accepting_students }),
+      );
+      return out;
     },
     staleTime: 60 * 1000,
   });
+
+/**
+ * Bulk-grant the mentor role to many users at once. Each row is upserted
+ * into user_roles + mentor_profiles in two batched statements. Idempotent:
+ * users who already have the role are skipped (UNIQUE constraint).
+ */
+export const useBulkGrantMentorRole = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (args: { userIds: string[]; capacity: number }) => {
+      if (args.capacity < 1 || args.capacity > 20)
+        throw new Error('Capacity must be between 1 and 20');
+      if (args.userIds.length === 0) return { granted: 0, skipped: 0 };
+
+      // user_roles INSERT (no upsert on user_roles — UNIQUE(user_id, role)
+      // means duplicates error; we filter via insert with onConflict ignore).
+      // The supabase client's `upsert` with onConflict skips dupes.
+      const { error: roleErr } = await sb
+        .from('user_roles')
+        .upsert(
+          args.userIds.map((user_id) => ({ user_id, role: 'mentor' })),
+          { onConflict: 'user_id,role', ignoreDuplicates: true },
+        );
+      if (roleErr) throw roleErr;
+
+      // mentor_profiles upsert: only sets capacity if a row didn't already
+      // exist. We use ignoreDuplicates so existing capacities aren't
+      // overwritten — admins edit those inline.
+      const { error: profErr } = await sb
+        .from('mentor_profiles')
+        .upsert(
+          args.userIds.map((user_id) => ({ user_id, capacity: args.capacity })),
+          { onConflict: 'user_id', ignoreDuplicates: true },
+        );
+      if (profErr) throw profErr;
+
+      return { granted: args.userIds.length };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'mentors'] });
+      qc.invalidateQueries({ queryKey: ['admin', 'mentor-candidates'] });
+      qc.invalidateQueries({ queryKey: ['admin', 'mentor-role-set'] });
+    },
+  });
+};
 
 /**
  * Revoke the mentor role from a user. The mentor_profiles row is kept
