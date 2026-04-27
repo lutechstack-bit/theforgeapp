@@ -15,6 +15,7 @@ import BatchmatesSection from '@/components/home/BatchmatesSection';
 import AlumniShowcaseSection from '@/components/home/AlumniShowcaseSection';
 import PaymentFocusCard from '@/components/home/PaymentFocusCard';
 import LiveSessionCard from '@/components/home/LiveSessionCard';
+import MyMentorPipeline from '@/components/student/MyMentorPipeline';
 import TravelStaySection from '@/components/home/TravelStaySection';
 import AdminCohortSwitcher from '@/components/admin/AdminCohortSwitcher';
 
@@ -131,6 +132,9 @@ const Home: React.FC = () => {
 
           {/* Live Session Card */}
           <LiveSessionCard />
+
+          {/* Mentor pipeline (Premise → Script → Production) — self-gates on mentors_enabled */}
+          <MyMentorPipeline />
 
           {/* 4. Payment Focus Card — gated by both the homepage section config AND the global payments feature flag */}
           {paymentSection !== null && isFeatureEnabled('payments_enabled') && <PaymentFocusCard />}

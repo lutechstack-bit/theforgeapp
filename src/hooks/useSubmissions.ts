@@ -49,6 +49,27 @@ export const FORM_LABELS: Record<SubmissionFormKey, { short: string; long: strin
 export const STAGE_ORDER: SubmissionFormKey[] = ['premise', 'script', 'production'];
 
 /**
+ * The next stage in the pipeline after each form. Used by the review-event
+ * fan-out to point the student at what's now available.
+ */
+export const NEXT_STAGE: Record<SubmissionFormKey, SubmissionFormKey | null> = {
+  premise: 'script',
+  script: 'production',
+  production: null,
+};
+
+/**
+ * Tally form base URLs. Hardcoded here to match the existing `MENTOR_CARD_TEMPLATES`
+ * pattern; if these change, update them in lockstep with the
+ * TALLY_FORM_PREMISE / SCRIPT / PRODUCTION secrets used by the webhook.
+ */
+export const TALLY_FORM_URLS: Record<SubmissionFormKey, string> = {
+  premise:    'https://tally.so/r/mRE0p9',
+  script:     'https://tally.so/r/wMobBA',
+  production: 'https://tally.so/r/q45QEO',
+};
+
+/**
  * Latest submission per (student, form_key). This is what the mentor's
  * submissions tab and the stage pipeline render from.
  */
@@ -95,9 +116,12 @@ export const useSubmissionFeedback = (submissionId: string | null | undefined) =
   });
 
 /**
- * Mentor reviews a submission: writes feedback + updates status atomically
- * (from the caller's perspective — two serial requests; DB-side RLS guards
- * each one).
+ * Mentor reviews a submission. Writes the feedback row + flips status, then
+ * fans out to notifications and (where appropriate) targeted_cards so the
+ * student sees the result on their home stack and inbox.
+ *
+ * Side-effects (notification + card) failures are logged but don't roll back
+ * the review — the feedback row is the source of truth, the rest is delivery.
  */
 export const useReviewSubmission = () => {
   const qc = useQueryClient();
@@ -105,6 +129,8 @@ export const useReviewSubmission = () => {
   return useMutation({
     mutationFn: async (args: {
       submissionId: string;
+      formKey: SubmissionFormKey;
+      studentUserId: string;
       decision: 'approved' | 'revisions';
       body: string;
     }) => {
@@ -115,6 +141,7 @@ export const useReviewSubmission = () => {
       }
       if (body.length > 500) throw new Error('Feedback too long (max 500)');
 
+      // ─ 1. Feedback row ─
       const { error: fbErr } = await sb.from('submission_feedback').insert({
         submission_id: args.submissionId,
         mentor_user_id: user.id,
@@ -123,6 +150,7 @@ export const useReviewSubmission = () => {
       });
       if (fbErr) throw fbErr;
 
+      // ─ 2. Status update ─
       const { error: updErr } = await sb
         .from('submissions')
         .update({
@@ -131,10 +159,99 @@ export const useReviewSubmission = () => {
         })
         .eq('id', args.submissionId);
       if (updErr) throw updErr;
+
+      // ─ 3. Fan-out (best effort: log on failure, don't roll back) ─
+      try {
+        // Resolve mentor's display name for the notification copy.
+        const { data: mentorProfile } = await sb
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .maybeSingle();
+        const fullMentorName = mentorProfile?.full_name ?? 'Your mentor';
+        const mentorFirst = fullMentorName.split(' ')[0];
+        const formLabel = FORM_LABELS[args.formKey].short;
+
+        const notifTitle =
+          args.decision === 'approved'
+            ? `${mentorFirst} approved your ${formLabel}`
+            : `${mentorFirst} sent revisions on your ${formLabel}`;
+        const notifMessage =
+          body ||
+          (args.decision === 'approved'
+            ? 'Open your roadmap to see what unlocks next.'
+            : 'Open the feedback to see what to revise.');
+
+        // 3a — In-app notification (always)
+        const { error: notifErr } = await sb.from('notifications').insert({
+          user_id: args.studentUserId,
+          type: 'ROADMAP',
+          title: notifTitle,
+          message: notifMessage,
+          link: '/profile',
+          is_global: false,
+        });
+        if (notifErr) console.warn('Notification write failed', notifErr);
+
+        // 3b — Targeted card (situational)
+        const next = NEXT_STAGE[args.formKey];
+        if (args.decision === 'approved' && next) {
+          // Approved + next stage exists → point them at the next form.
+          const nextLong = FORM_LABELS[next].long;
+          const cardCtaUrl = buildTallyFormUrl(
+            TALLY_FORM_URLS[next],
+            args.studentUserId,
+          );
+          const { error: cardErr } = await sb.from('targeted_cards').insert({
+            target_user_id: args.studentUserId,
+            source: 'mentor',
+            source_user_id: user.id,
+            title: `${formLabel} approved — start your ${nextLong}`,
+            body:
+              body ||
+              `${mentorFirst} approved your ${formLabel}. Submit your ${nextLong} when ready.`,
+            cta_label: `Submit ${FORM_LABELS[next].short} →`,
+            cta_url: cardCtaUrl,
+            icon: '✓',
+            template_key: 'review-approved',
+            linked_form_key: next,
+            delivered_as_card: true,
+            delivered_as_push: false,
+          });
+          if (cardErr) console.warn('Approval card write failed', cardErr);
+        } else if (args.decision === 'revisions') {
+          // Revisions → point them back at the same form to resubmit.
+          const url = buildTallyFormUrl(
+            TALLY_FORM_URLS[args.formKey],
+            args.studentUserId,
+          );
+          const { error: cardErr } = await sb.from('targeted_cards').insert({
+            target_user_id: args.studentUserId,
+            source: 'mentor',
+            source_user_id: user.id,
+            title: `${mentorFirst} sent feedback on your ${formLabel}`,
+            body,
+            cta_label: 'Open form & resubmit →',
+            cta_url: url,
+            icon: '✎',
+            template_key: 'review-revisions',
+            linked_form_key: args.formKey,
+            delivered_as_card: true,
+            delivered_as_push: false,
+          });
+          if (cardErr) console.warn('Revisions card write failed', cardErr);
+        }
+        // Final-stage approval (production) intentionally has no card —
+        // the notification carries the news.
+      } catch (e) {
+        // Catch-all so a fan-out hiccup never blocks the review itself.
+        console.warn('Review fan-out partially failed', e);
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['submissions'] });
       qc.invalidateQueries({ queryKey: ['submission-feedback'] });
+      qc.invalidateQueries({ queryKey: ['targeted-cards'] });
     },
   });
 };

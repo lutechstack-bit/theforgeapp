@@ -11,7 +11,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { useQueryClient } from '@tanstack/react-query';
-import { GripVertical, Users, AlertCircle } from 'lucide-react';
+import { GripVertical, Users, AlertCircle, Minus, Plus } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,7 @@ import {
   useEditionsList,
   useMentorCandidates,
   useGrantMentorRole,
+  useUpdateMentorCapacity,
   type MentorRow,
   type StudentRow,
   type AssignmentRow,
@@ -124,6 +125,9 @@ const DropContainer: React.FC<{
 // ────────────────────────────────────────────────────────────────────────
 // Mentor card — header + droppable student list
 // ────────────────────────────────────────────────────────────────────────
+const CAPACITY_MIN = 1;
+const CAPACITY_MAX = 20;
+
 const MentorCard: React.FC<{
   mentor: MentorRow;
   students: StudentRow[];
@@ -135,6 +139,24 @@ const MentorCard: React.FC<{
   const remaining = cap - load;
   const canAccept =
     !overCapacity && mentor.is_accepting_students && incomingCount <= remaining;
+
+  const updateCapacity = useUpdateMentorCapacity();
+  const canDecrease = cap > load && cap > CAPACITY_MIN && !updateCapacity.isPending;
+  const canIncrease = cap < CAPACITY_MAX && !updateCapacity.isPending;
+
+  const adjust = async (delta: 1 | -1) => {
+    const next = cap + delta;
+    if (delta === -1 && next < load) {
+      toast.error(`Can't lower below current load (${load}). Reassign students first.`);
+      return;
+    }
+    if (next < CAPACITY_MIN || next > CAPACITY_MAX) return;
+    try {
+      await updateCapacity.mutateAsync({ userId: mentor.user_id, capacity: next });
+    } catch (e) {
+      toast.error(`Could not update capacity: ${String(e)}`);
+    }
+  };
 
   return (
     <Card
@@ -161,18 +183,50 @@ const MentorCard: React.FC<{
             )}
           </div>
           <div className="text-right text-xs tabular-nums">
-            <div
-              className={[
-                'font-semibold',
-                load >= cap ? 'text-primary' : 'text-foreground',
-                load > cap && 'text-destructive',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              {load} / {cap}
+            <div className="flex items-center justify-end gap-1">
+              <button
+                type="button"
+                aria-label="Decrease capacity"
+                title={
+                  cap <= load
+                    ? `Reassign students before lowering below ${load}`
+                    : 'Decrease capacity'
+                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  adjust(-1);
+                }}
+                disabled={!canDecrease}
+                className="grid h-5 w-5 place-items-center rounded border border-border text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-30 disabled:hover:border-border disabled:cursor-not-allowed"
+              >
+                <Minus className="h-3 w-3" />
+              </button>
+              <span
+                className={[
+                  'min-w-[44px] text-center font-semibold',
+                  load >= cap ? 'text-primary' : 'text-foreground',
+                  load > cap && 'text-destructive',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                {load} / {cap}
+              </span>
+              <button
+                type="button"
+                aria-label="Increase capacity"
+                title="Increase capacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  adjust(1);
+                }}
+                disabled={!canIncrease}
+                className="grid h-5 w-5 place-items-center rounded border border-border text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-30 disabled:hover:border-border disabled:cursor-not-allowed"
+              >
+                <Plus className="h-3 w-3" />
+              </button>
             </div>
-            <div className="text-[10px] text-muted-foreground">
+            <div className="mt-0.5 text-[10px] text-muted-foreground">
               {remaining > 0
                 ? `${remaining} slot${remaining === 1 ? '' : 's'}`
                 : load === cap

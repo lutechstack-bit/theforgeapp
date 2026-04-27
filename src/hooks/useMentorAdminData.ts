@@ -225,6 +225,28 @@ export const useMentorCandidates = (search: string) =>
   });
 
 /**
+ * Update a mentor's capacity. The DB CHECK enforces 1–20; the call-site
+ * should also avoid dropping capacity below the mentor's current load.
+ */
+export const useUpdateMentorCapacity = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (args: { userId: string; capacity: number }) => {
+      if (args.capacity < 1 || args.capacity > 20)
+        throw new Error('Capacity must be between 1 and 20');
+      const { error } = await sb
+        .from('mentor_profiles')
+        .update({ capacity: args.capacity })
+        .eq('user_id', args.userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'mentors'] });
+    },
+  });
+};
+
+/**
  * Bulk-fetch the set of user_ids that currently hold the 'mentor' role.
  * Used by the Users table to render a "mentor" badge without per-row queries.
  */

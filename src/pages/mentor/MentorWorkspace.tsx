@@ -20,6 +20,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MentorDoubtsTab } from '@/components/mentor/MentorDoubtsTab';
 import { MentorSubmissionsTab } from '@/components/mentor/MentorSubmissionsTab';
 import { SendMentorCardDialog } from '@/components/mentor/SendMentorCardDialog';
+import { SentCardsLog } from '@/components/mentor/SentCardsLog';
 
 // ────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -291,6 +292,13 @@ const OverviewTab: React.FC<{ student: NonNullable<ReturnType<typeof useStudentD
         <p className="mt-3 text-sm text-muted-foreground">No edition assigned.</p>
       )}
     </Card>
+
+    <div className="md:col-span-2">
+      <SentCardsLog
+        studentId={student.id}
+        studentFirstName={student.full_name?.split(' ')[0] ?? 'this student'}
+      />
+    </div>
 
     {student.bio && (
       <Card className="p-5 md:col-span-2">

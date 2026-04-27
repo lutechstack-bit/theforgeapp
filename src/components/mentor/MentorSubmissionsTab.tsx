@@ -100,10 +100,12 @@ const StagePipeline: React.FC<{
 // ────────────────────────────────────────────────────────────────────────
 const ReviewComposer: React.FC<{
   submissionId: string;
+  formKey: SubmissionFormKey;
+  studentUserId: string;
   decision: 'approved' | 'revisions';
   studentFirstName: string;
   onClose: () => void;
-}> = ({ submissionId, decision, studentFirstName, onClose }) => {
+}> = ({ submissionId, formKey, studentUserId, decision, studentFirstName, onClose }) => {
   const [draft, setDraft] = useState('');
   const review = useReviewSubmission();
   const required = decision === 'revisions';
@@ -111,7 +113,13 @@ const ReviewComposer: React.FC<{
 
   const onSubmit = async () => {
     try {
-      await review.mutateAsync({ submissionId, decision, body: draft });
+      await review.mutateAsync({
+        submissionId,
+        formKey,
+        studentUserId,
+        decision,
+        body: draft,
+      });
       setDraft('');
       onClose();
       toast.success(
@@ -306,6 +314,8 @@ const SubmissionCard: React.FC<{
       {composer && (
         <ReviewComposer
           submissionId={sub.id}
+          formKey={sub.form_key}
+          studentUserId={sub.student_user_id}
           decision={composer}
           studentFirstName={studentFirstName}
           onClose={() => setComposer(null)}

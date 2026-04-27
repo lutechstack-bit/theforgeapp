@@ -9,8 +9,7 @@ import { cn } from '@/lib/utils';
  */
 const navItems = [
   { to: '/mentor', label: 'My students', end: true },
-  // Phase 3+: { to: '/mentor/submissions', label: 'Submissions' },
-  // Phase 3+: { to: '/mentor/doubts', label: 'Doubts' },
+  { to: '/mentor/queue', label: 'Queue' },
 ];
 
 export const MentorLayout: React.FC = () => {

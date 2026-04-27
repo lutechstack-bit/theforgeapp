@@ -75,6 +75,7 @@ import AdminActivity from "./pages/admin/AdminActivity";
 
 // Mentor pages
 import MentorWorkspace from "./pages/mentor/MentorWorkspace";
+import MentorQueue from "./pages/mentor/MentorQueue";
 
 import EventDetail from "./pages/EventDetail";
 import PerkDetail from "./pages/PerkDetail";
@@ -302,6 +303,7 @@ const AppRoutes = () => {
       {/* Mentor routes (feature-flag gated) */}
       <Route path="/mentor" element={<MentorRoute><MentorLayout /></MentorRoute>}>
         <Route index element={<MentorWorkspace />} />
+        <Route path="queue" element={<MentorQueue />} />
         <Route path="students/:studentId" element={<MentorWorkspace />} />
       </Route>
 
