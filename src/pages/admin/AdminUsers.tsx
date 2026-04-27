@@ -10,6 +10,7 @@ import {
   useUpdateMentorCapacity,
 } from '@/hooks/useMentorAdminData';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { errMessage } from '@/lib/errMessage';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -1680,7 +1681,7 @@ export default function AdminUsers() {
                                   toast.success(`Capacity set to ${next}`);
                                   queryClient.invalidateQueries({ queryKey: ['admin', 'mentor-role-set'] });
                                 } catch (e) {
-                                  toast.error(`Could not update: ${String(e)}`);
+                                  toast.error(`Could not update: ${errMessage(e)}`);
                                 }
                               }}
                             />
@@ -2067,7 +2068,7 @@ export default function AdminUsers() {
                       setMentorDialog(null);
                       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
                     } catch (e) {
-                      toast.error(`Could not grant mentor role: ${String(e)}`);
+                      toast.error(`Could not grant mentor role: ${errMessage(e)}`);
                     }
                   }}
                   disabled={grantMentorRole.isPending}
@@ -2097,7 +2098,7 @@ export default function AdminUsers() {
                       setMentorDialog(null);
                       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
                     } catch (e) {
-                      toast.error(`Could not revoke: ${String(e)}`);
+                      toast.error(`Could not revoke: ${errMessage(e)}`);
                     }
                   }}
                   disabled={revokeMentorRole.isPending}
@@ -2156,7 +2157,7 @@ export default function AdminUsers() {
                   setSelectedUserIds(new Set());
                   queryClient.invalidateQueries({ queryKey: ['admin-users'] });
                 } catch (e) {
-                  toast.error(`Bulk promote failed: ${String(e)}`);
+                  toast.error(`Bulk promote failed: ${errMessage(e)}`);
                 }
               }}
               disabled={bulkGrantMentor.isPending || selectedUserIds.size === 0}

@@ -11,6 +11,43 @@ import { supabase } from '@/integrations/supabase/client';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
 
+/**
+ * If a Supabase error matches a known "migrations not applied" failure mode,
+ * re-throw it as a friendly Error explaining which migration to apply.
+ * Otherwise re-throw as-is.
+ */
+const guardMentorSchemaError = (err: unknown): never => {
+  const e = (err ?? {}) as { code?: string; message?: string };
+  const msg = e.message ?? '';
+  // Postgres 22P02 "invalid input syntax" — fires when 'mentor' enum value is missing.
+  if (e.code === '22P02' || /enum app_role|mentor/i.test(msg)) {
+    if (/mentor/i.test(msg) && /enum/i.test(msg)) {
+      throw new Error(
+        "The 'mentor' role isn't in the app_role enum yet. Apply migration " +
+        '20260424100000_add_mentor_role.sql to your Supabase project and try again.',
+      );
+    }
+  }
+  // Postgres 42P01 "undefined_table".
+  if (e.code === '42P01' || /relation .*does not exist/i.test(msg)) {
+    if (/mentor_profiles/i.test(msg)) {
+      throw new Error(
+        "The mentor_profiles table doesn't exist yet. Apply migration " +
+        '20260424100100_mentor_assignments.sql and try again.',
+      );
+    }
+    if (/mentor_assignments/i.test(msg)) {
+      throw new Error(
+        "The mentor_assignments table doesn't exist yet. Apply migration " +
+        '20260424100100_mentor_assignments.sql and try again.',
+      );
+    }
+  }
+  // Pass-through: unhandled errors become Error so the toast helper can read .message.
+  if (typeof e === 'object' && msg) throw new Error(msg + (e.code ? ` [${e.code}]` : ''));
+  throw err;
+};
+
 export type MentorRow = {
   user_id: string;
   full_name: string | null;
@@ -238,7 +275,7 @@ export const useUpdateMentorCapacity = () => {
         .from('mentor_profiles')
         .update({ capacity: args.capacity })
         .eq('user_id', args.userId);
-      if (error) throw error;
+      if (error) guardMentorSchemaError(error);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'mentors'] });
@@ -306,7 +343,7 @@ export const useBulkGrantMentorRole = () => {
           args.userIds.map((user_id) => ({ user_id, role: 'mentor' })),
           { onConflict: 'user_id,role', ignoreDuplicates: true },
         );
-      if (roleErr) throw roleErr;
+      if (roleErr) guardMentorSchemaError(roleErr);
 
       // mentor_profiles upsert: only sets capacity if a row didn't already
       // exist. We use ignoreDuplicates so existing capacities aren't
@@ -317,7 +354,7 @@ export const useBulkGrantMentorRole = () => {
           args.userIds.map((user_id) => ({ user_id, capacity: args.capacity })),
           { onConflict: 'user_id', ignoreDuplicates: true },
         );
-      if (profErr) throw profErr;
+      if (profErr) guardMentorSchemaError(profErr);
 
       return { granted: args.userIds.length };
     },
@@ -363,7 +400,7 @@ export const useGrantMentorRole = () => {
       const { error: roleErr } = await sb
         .from('user_roles')
         .insert({ user_id: args.userId, role: 'mentor' });
-      if (roleErr) throw roleErr;
+      if (roleErr) guardMentorSchemaError(roleErr);
 
       // Upsert the mentor_profile so re-granting after a revoke still works.
       const { error: profErr } = await sb
@@ -372,7 +409,7 @@ export const useGrantMentorRole = () => {
           { user_id: args.userId, capacity: args.capacity },
           { onConflict: 'user_id' },
         );
-      if (profErr) throw profErr;
+      if (profErr) guardMentorSchemaError(profErr);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'mentors'] });
