@@ -164,14 +164,23 @@ export default function AdminRoadmap() {
         </Card>
       ) : (
         <div className="space-y-3">
-          {roadmapDays?.map((day) => (
+          {(() => {
+            const totalOnline = roadmapDays?.filter(d => d.day_number < 0).length ?? 0;
+            return roadmapDays?.map((day) => {
+              const dayLabel =
+                day.day_number < 0
+                  ? `S${totalOnline + day.day_number + 1}`
+                  : day.day_number === 0
+                  ? 'Pre'
+                  : `Day ${day.day_number}`;
+              return (
             <Card key={day.id} className="bg-card/50 border-border/50">
               <CardContent className="py-4 px-5 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <GripVertical className="w-4 h-4" />
                     <span className="font-bold text-primary w-12">
-                      {day.day_number === 0 ? 'Pre' : `Day ${day.day_number}`}
+                      {dayLabel}
                     </span>
                   </div>
                   <div>
@@ -224,7 +233,9 @@ export default function AdminRoadmap() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+              );
+            });
+          })()}
         </div>
       )}
 
