@@ -32,20 +32,31 @@ import type { Database } from '@/integrations/supabase/types';
 
 type RoadmapDay = Database['public']['Tables']['roadmap_days']['Row'];
 
+type CohortType = 'FORGE' | 'FORGE_CREATORS' | 'FORGE_WRITING';
+
+const COHORT_LABELS: Record<CohortType, string> = {
+  FORGE: 'Filmmaking',
+  FORGE_CREATORS: 'Creators',
+  FORGE_WRITING: 'Writing',
+};
+
 export default function AdminRoadmap() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDay, setEditingDay] = useState<RoadmapDay | null>(null);
   const [deletingDay, setDeletingDay] = useState<RoadmapDay | null>(null);
+  const [selectedCohort, setSelectedCohort] = useState<CohortType>('FORGE');
   const queryClient = useQueryClient();
 
-  // Fetch shared template roadmap days (edition_id IS NULL)
+  // Fetch template days for the selected cohort
   const { data: roadmapDays, isLoading: daysLoading } = useQuery({
-    queryKey: ['admin-roadmap-days-template'],
+    queryKey: ['admin-roadmap-days-template', selectedCohort],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('roadmap_days')
         .select('*')
         .is('edition_id', null)
+        .eq('is_template', true)
+        .eq('cohort_type', selectedCohort)
         .order('day_number', { ascending: true });
       if (error) throw error;
       return data as RoadmapDay[];
@@ -60,7 +71,7 @@ export default function AdminRoadmap() {
     },
     onSuccess: () => {
       toast.success('Day created successfully');
-      queryClient.invalidateQueries({ queryKey: ['admin-roadmap-days'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-roadmap-days-template'] });
       setIsDialogOpen(false);
     },
     onError: (error: Error) => toast.error(error.message)
@@ -74,7 +85,7 @@ export default function AdminRoadmap() {
     },
     onSuccess: () => {
       toast.success('Day updated successfully');
-      queryClient.invalidateQueries({ queryKey: ['admin-roadmap-days'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-roadmap-days-template'] });
       setEditingDay(null);
     },
     onError: (error: Error) => toast.error(error.message)
@@ -110,15 +121,33 @@ export default function AdminRoadmap() {
         </TabsContent>
 
         <TabsContent value="template">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-4">
         <div>
-          <h2 className="text-xl font-bold text-foreground">Shared Template</h2>
-          <p className="text-muted-foreground mt-1">Content shared across all editions. Bootcamp dates auto-calculate from edition start date.</p>
+          <h2 className="text-xl font-bold text-foreground">Roadmap Templates</h2>
+          <p className="text-muted-foreground mt-1">Content used for new editions. Bootcamp dates auto-calculate from the edition's start date.</p>
         </div>
         <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
           <Plus className="w-4 h-4" />
           Add Day
         </Button>
+      </div>
+
+      {/* Cohort selector */}
+      <div className="flex gap-2 mb-6">
+        {(Object.keys(COHORT_LABELS) as CohortType[]).map(cohort => (
+          <button
+            key={cohort}
+            onClick={() => setSelectedCohort(cohort)}
+            className={cn(
+              'px-4 py-2 rounded-full text-sm border transition-all duration-200',
+              selectedCohort === cohort
+                ? 'bg-primary text-primary-foreground border-primary font-medium'
+                : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30'
+            )}
+          >
+            {COHORT_LABELS[cohort]}
+          </button>
+        ))}
       </div>
 
       {/* Roadmap Days List */}
@@ -129,7 +158,7 @@ export default function AdminRoadmap() {
       ) : roadmapDays?.length === 0 ? (
         <Card className="bg-card/50 border-border/50">
           <CardContent className="py-12 text-center text-muted-foreground">
-            No days added yet. Create your first day to build the roadmap.
+            No template days for <span className="text-foreground font-medium">{COHORT_LABELS[selectedCohort]}</span> yet. Click "Add Day" to create the first one.
           </CardContent>
         </Card>
       ) : (
@@ -145,8 +174,13 @@ export default function AdminRoadmap() {
                     </span>
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold text-foreground">{day.title}</h3>
+                      {day.cohort_type && (
+                        <Badge variant="outline" className="text-primary border-primary/30 bg-primary/5 text-xs">
+                          {day.cohort_type}
+                        </Badge>
+                      )}
                       {day.is_virtual && (
                         <Badge variant="outline" className="text-blue-400 border-blue-400/30 bg-blue-500/10 text-xs">
                           <Globe className="w-3 h-3 mr-1" />
@@ -203,6 +237,7 @@ export default function AdminRoadmap() {
           }
         }}
         day={editingDay}
+        defaultCohortType={selectedCohort}
         onSubmit={(data) => {
           if (editingDay) {
             updateMutation.mutate({ id: editingDay.id, ...data });
@@ -243,6 +278,7 @@ export default function AdminRoadmap() {
 function EditionOnlineSessions() {
   const [selectedEditionId, setSelectedEditionId] = useState<string>('');
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [seeding, setSeeding] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch all active editions
@@ -291,6 +327,51 @@ function EditionOnlineSessions() {
 
   const selectedEdition = editions?.find(e => e.id === selectedEditionId);
 
+  const handleSeedSessions = async () => {
+    if (!selectedEditionId || !selectedEdition) return;
+    setSeeding(true);
+    try {
+      // 1. Fetch template online sessions for this cohort type
+      const { data: templates, error } = await supabase
+        .from('roadmap_days')
+        .select('*')
+        .lt('day_number', 0)
+        .eq('cohort_type', selectedEdition.cohort_type)
+        .eq('is_template', true)
+        .order('day_number', { ascending: true });
+
+      if (error) throw error;
+      if (!templates || templates.length === 0) {
+        toast.error(`No template online sessions found for cohort type "${selectedEdition.cohort_type}". Create template days first.`);
+        return;
+      }
+
+      // 2. Create per-edition copies — blank date + zoom fields
+      const { error: insertError } = await supabase
+        .from('roadmap_days')
+        .insert(
+          templates.map(({ id: _id, created_at: _ca, updated_at: _ua, ...t }) => ({
+            ...t,
+            edition_id: selectedEditionId,
+            date: null,
+            meeting_url: null,
+            meeting_id: null,
+            meeting_passcode: null,
+            session_start_time: null,
+            is_template: false,
+          }))
+        );
+
+      if (insertError) throw insertError;
+      queryClient.invalidateQueries({ queryKey: ['admin-online-sessions', selectedEditionId] });
+      toast.success(`Created ${templates.length} online session${templates.length > 1 ? 's' : ''} for this edition. Fill in dates and Zoom links below.`);
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to seed sessions');
+    } finally {
+      setSeeding(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -330,11 +411,18 @@ function EditionOnlineSessions() {
       )}
 
       {selectedEditionId && !sessionsLoading && (!onlineSessions || onlineSessions.length === 0) && (
-        <Card className="bg-card/50 border-border/50">
-          <CardContent className="py-12 text-center text-muted-foreground">
-            No online sessions found for this edition. Online sessions are created from the template when an edition is set up.
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border border-dashed border-border/40 p-8 text-center space-y-3">
+          <p className="text-sm font-medium text-foreground">No online sessions set up for this edition yet</p>
+          <p className="text-xs text-muted-foreground">
+            This will copy the template online sessions for{' '}
+            <span className="font-semibold text-primary">{selectedEdition?.cohort_type}</span>{' '}
+            and create blank rows for this edition. You can then fill in dates and Zoom links below.
+          </p>
+          <Button onClick={handleSeedSessions} disabled={seeding} className="gap-2 mt-1">
+            {seeding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            {seeding ? 'Creating sessions…' : 'Set up online sessions from template'}
+          </Button>
+        </div>
       )}
 
       {onlineSessions && onlineSessions.length > 0 && (
@@ -509,12 +597,14 @@ function RoadmapDayDialog({
   open,
   onOpenChange,
   day,
+  defaultCohortType,
   onSubmit,
   isLoading
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   day: RoadmapDay | null;
+  defaultCohortType?: CohortType;
   onSubmit: (data: Partial<RoadmapDay>) => void;
   isLoading: boolean;
 }) {
@@ -526,6 +616,7 @@ function RoadmapDayDialog({
     location: '',
     is_active: false,
     checklist: [] as string[],
+    cohort_type: '' as '' | 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS',
     // Virtual meeting fields
     is_virtual: false,
     meeting_url: '',
@@ -547,6 +638,7 @@ function RoadmapDayDialog({
         location: day.location || '',
         is_active: day.is_active,
         checklist: (day.checklist as string[]) || [],
+        cohort_type: (day.cohort_type as '' | 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS') || '',
         is_virtual: day.is_virtual || false,
         meeting_url: day.meeting_url || '',
         meeting_id: day.meeting_id || '',
@@ -563,6 +655,7 @@ function RoadmapDayDialog({
         location: '',
         is_active: false,
         checklist: [],
+        cohort_type: defaultCohortType || '',
         is_virtual: false,
         meeting_url: '',
         meeting_id: '',
@@ -592,12 +685,18 @@ function RoadmapDayDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.cohort_type) {
+      toast.error('Please select a cohort type for this template day.');
+      return;
+    }
     onSubmit({
-      edition_id: null, // Template days have no edition
+      edition_id: null,        // Template days have no edition
+      is_template: true,       // Required by useRoadmapData template query
+      cohort_type: formData.cohort_type,
       day_number: formData.day_number,
       title: formData.title,
       description: formData.description || null,
-      date: null, // Dates are calculated dynamically
+      date: null,              // Dates are calculated dynamically (bootcamp) or set per-edition (online)
       call_time: formData.call_time || null,
       location: formData.location || null,
       is_active: formData.is_active,
@@ -618,17 +717,37 @@ function RoadmapDayDialog({
           <DialogTitle>{day ? 'Edit Day' : 'Add Day'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Cohort Type — required for template query to find this day */}
+          <div className="space-y-2">
+            <Label>Cohort Type *</Label>
+            <Select
+              value={formData.cohort_type}
+              onValueChange={(v) => setFormData(prev => ({ ...prev, cohort_type: v as typeof formData.cohort_type }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select which cohort this template is for…" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="FORGE">FORGE — Filmmaking (8-day bootcamp)</SelectItem>
+                <SelectItem value="FORGE_CREATORS">FORGE_CREATORS — Creators (7-day bootcamp)</SelectItem>
+                <SelectItem value="FORGE_WRITING">FORGE_WRITING — Writing</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Only shown to users in this cohort. Online sessions use negative day numbers (e.g. −6 to −1).
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Day Number *</Label>
               <Input
                 type="number"
                 required
-                min={0}
                 value={formData.day_number}
                 onChange={(e) => setFormData({ ...formData, day_number: parseInt(e.target.value) })}
               />
-              <p className="text-xs text-muted-foreground">0 = Pre-Forge</p>
+              <p className="text-xs text-muted-foreground">Negative = online session · 0 = Pre-Forge · Positive = bootcamp day</p>
             </div>
             <div className="space-y-2 flex items-center gap-3 pt-6">
               <Switch
