@@ -450,27 +450,64 @@ export default function AdminUsers() {
       edition_id?: string;
       specialty?: string;
       payment_status: PaymentStatus;
+      // Mentor branch: when isMentor is true, the cohort / payment fields
+      // are ignored after creation and the user is promoted to mentor.
+      isMentor?: boolean;
+      mentorCapacity?: number;
     }) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
+      const { isMentor, mentorCapacity, ...payload } = userData;
+
       const response = await supabase.functions.invoke('create-user', {
-        body: userData
+        body: payload,
       });
 
       if (response.error) throw new Error(response.error.message);
       if (response.data?.error) throw new Error(response.data.error);
-      
+
+      // Mentor follow-up: grant the role + detach the new account from
+      // any student-lifecycle fields the edge function defaulted to.
+      if (isMentor) {
+        const newUserId = response.data?.user_id as string | undefined;
+        if (!newUserId) {
+          throw new Error("create-user didn't return a user_id");
+        }
+        try {
+          await grantMentorRole.mutateAsync({
+            userId: newUserId,
+            capacity: mentorCapacity ?? 5,
+          });
+        } catch (e) {
+          throw new Error(`User created but mentor role failed: ${errMessage(e)}`);
+        }
+        // Detach from student lifecycle. Failure here is non-fatal; admin
+        // can clean up via the user editor.
+        const { error: detachErr } = await supabase
+          .from('profiles')
+          .update({
+            edition_id: null,
+            payment_status: null,
+            unlock_level: null,
+          })
+          .eq('id', newUserId);
+        if (detachErr) console.warn('Could not detach mentor from cohort fields', detachErr);
+      }
+
       return response.data;
     },
-    onSuccess: () => {
-      toast.success('User created successfully');
+    onSuccess: (_data, vars) => {
+      toast.success(
+        vars.isMentor ? 'Mentor created' : 'User created successfully',
+      );
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'mentor-role-set'] });
       setIsCreateOpen(false);
       setSearchParams({});
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast.error(errMessage(error));
     }
   });
 
@@ -2460,9 +2497,28 @@ function CreateUserDialog({
     specialty: '',
     payment_status: 'CONFIRMED_15K' as PaymentStatus
   });
+  const [isMentor, setIsMentor] = useState(false);
+  const [mentorCapacity, setMentorCapacity] = useState<number>(5);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isMentor) {
+      // Mentor branch: cohort / specialty / payment are ignored. The mutation
+      // will grant the role and clear the student-lifecycle fields after
+      // create-user completes.
+      onSubmit({
+        email: formData.email,
+        password: formData.password,
+        full_name: formData.full_name,
+        phone: formData.phone || undefined,
+        city: formData.city || undefined,
+        // The edge function still requires payment_status — pass a placeholder.
+        payment_status: 'CONFIRMED_15K' as PaymentStatus,
+        isMentor: true,
+        mentorCapacity,
+      });
+      return;
+    }
     onSubmit({
       ...formData,
       edition_id: formData.edition_id || undefined,
@@ -2478,6 +2534,35 @@ function CreateUserDialog({
         <DialogHeader>
           <DialogTitle>Create New User</DialogTitle>
         </DialogHeader>
+        {/* Role switcher — mentors don't need cohort / payment fields. */}
+        <div className="mb-1 flex items-start gap-3 rounded-md border border-border bg-muted/40 p-3">
+          <div className="flex-1">
+            <Label htmlFor="create-as-mentor" className="font-medium">
+              Create as mentor
+            </Label>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {isMentor
+                ? "Skips cohort / payment / specialty. They'll get the mentor role and a profile with the capacity below."
+                : 'Toggle on for staff/mentor accounts that don\'t belong to a cohort.'}
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            id="create-as-mentor"
+            aria-checked={isMentor}
+            onClick={() => setIsMentor((v) => !v)}
+            className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
+              isMentor ? 'bg-primary border-primary' : 'bg-muted border-border'
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform ${
+                isMentor ? 'translate-x-5' : ''
+              }`}
+            />
+          </button>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Email *</Label>
@@ -2521,50 +2606,76 @@ function CreateUserDialog({
               />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label>Edition</Label>
-            <Select
-              value={formData.edition_id}
-              onValueChange={(value) => setFormData({ ...formData, edition_id: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select edition" />
-              </SelectTrigger>
-              <SelectContent>
-                {editions.map((edition) => (
-                  <SelectItem key={edition.id} value={edition.id}>
-                    {edition.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Specialty</Label>
-            <Input
-              value={formData.specialty}
-              onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
-              placeholder="e.g., Filmmaking, Writing"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Payment Status</Label>
-            <Select
-              value={formData.payment_status}
-              onValueChange={(value: PaymentStatus) => setFormData({ ...formData, payment_status: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="CONFIRMED_15K">₹15K Confirmed</SelectItem>
-                <SelectItem value="BALANCE_PAID">Balance Paid</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {!isMentor && (
+            <>
+              <div className="space-y-2">
+                <Label>Edition</Label>
+                <Select
+                  value={formData.edition_id}
+                  onValueChange={(value) => setFormData({ ...formData, edition_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select edition" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {editions.map((edition) => (
+                      <SelectItem key={edition.id} value={edition.id}>
+                        {edition.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Specialty</Label>
+                <Input
+                  value={formData.specialty}
+                  onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
+                  placeholder="e.g., Filmmaking, Writing"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Payment Status</Label>
+                <Select
+                  value={formData.payment_status}
+                  onValueChange={(value: PaymentStatus) => setFormData({ ...formData, payment_status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CONFIRMED_15K">₹15K Confirmed</SelectItem>
+                    <SelectItem value="BALANCE_PAID">Balance Paid</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
+
+          {isMentor && (
+            <div className="space-y-2">
+              <Label htmlFor="mentor-create-cap">Mentor capacity (1–20)</Label>
+              <Input
+                id="mentor-create-cap"
+                type="number"
+                min={1}
+                max={20}
+                value={mentorCapacity}
+                onChange={(e) =>
+                  setMentorCapacity(Math.max(1, Math.min(20, Number(e.target.value) || 5)))
+                }
+                className="w-24"
+              />
+              <p className="text-xs text-muted-foreground">
+                Default students this mentor can take on. Editable later inline on the users
+                table or on Mentor assignments.
+              </p>
+            </div>
+          )}
+
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Create User
+            {isMentor ? 'Create mentor' : 'Create User'}
           </Button>
         </form>
       </DialogContent>
