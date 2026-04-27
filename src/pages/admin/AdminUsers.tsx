@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload, Users, LayoutGrid, List, Download, Crown, IndianRupee, FileSpreadsheet, FileUp } from 'lucide-react';
+import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload, Users, LayoutGrid, List, Download, Crown, IndianRupee, FileSpreadsheet, FileUp, UserMinus } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -340,6 +340,7 @@ export default function AdminUsers() {
   const [isCreateOpen, setIsCreateOpen] = useState(searchParams.get('action') === 'create');
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [userToDelete, setUserToDelete] = useState<Profile | null>(null);
+  const [userToWaitlist, setUserToWaitlist] = useState<Profile | null>(null);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
@@ -485,6 +486,30 @@ export default function AdminUsers() {
       toast.success('User updated successfully');
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       setEditingUser(null);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    }
+  });
+
+  // Move to waitlist mutation — clears edition_id, resets forge_mode to PRE_FORGE
+  const moveToWaitlistMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          edition_id: null,
+          forge_mode: 'PRE_FORGE',
+          // Ensure payment_status is set so they appear in the Waitlist card
+          payment_status: 'CONFIRMED_15K',
+        })
+        .eq('id', userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('User moved to waitlist');
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      setUserToWaitlist(null);
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -1666,6 +1691,16 @@ export default function AdminUsers() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="text-amber-400 hover:text-amber-400 hover:bg-amber-400/10"
+                            onClick={() => setUserToWaitlist(user)}
+                            disabled={isAdmin || !user.edition_id}
+                            title={!user.edition_id ? 'Already not in an edition' : 'Move to waitlist'}
+                          >
+                            <UserMinus className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             onClick={() => setUserToDelete(user)}
                             disabled={isAdmin}
@@ -1722,6 +1757,31 @@ export default function AdminUsers() {
               disabled={deleteUserMutation.isPending}
             >
               {deleteUserMutation.isPending ? 'Deleting...' : 'Delete User'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Move to Waitlist Confirmation Dialog */}
+      <AlertDialog open={!!userToWaitlist} onOpenChange={() => setUserToWaitlist(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <UserMinus className="w-5 h-5 text-amber-400" />
+              Move to Waitlist
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove <strong>{userToWaitlist?.full_name || userToWaitlist?.email}</strong> from their current edition and place them in the waitlist. Their payment status will be set to <strong>₹15K Confirmed</strong> and they will not see any cohort content until reassigned to an edition.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-amber-500 text-white hover:bg-amber-600"
+              onClick={() => userToWaitlist && moveToWaitlistMutation.mutate(userToWaitlist.id)}
+              disabled={moveToWaitlistMutation.isPending}
+            >
+              {moveToWaitlistMutation.isPending ? 'Moving...' : 'Move to Waitlist'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
