@@ -358,11 +358,26 @@ function EditionOnlineSessions() {
         return;
       }
 
-      // 2. Create per-edition copies — blank date + zoom fields
+      // 2. Check which day_numbers already exist for this edition to avoid duplicates
+      const { data: existing } = await supabase
+        .from('roadmap_days')
+        .select('day_number')
+        .eq('edition_id', selectedEditionId)
+        .lt('day_number', 0);
+
+      const existingDayNums = new Set((existing || []).map(e => e.day_number));
+      const toInsert = templates.filter(t => !existingDayNums.has(t.day_number));
+
+      if (toInsert.length === 0) {
+        toast.info('All sessions already exist for this edition.');
+        return;
+      }
+
+      // 3. Create per-edition copies — blank date + zoom fields
       const { error: insertError } = await supabase
         .from('roadmap_days')
         .insert(
-          templates.map(({ id: _id, created_at: _ca, updated_at: _ua, ...t }) => ({
+          toInsert.map(({ id: _id, created_at: _ca, updated_at: _ua, ...t }) => ({
             ...t,
             edition_id: selectedEditionId,
             date: null,
@@ -376,7 +391,7 @@ function EditionOnlineSessions() {
 
       if (insertError) throw insertError;
       queryClient.invalidateQueries({ queryKey: ['admin-online-sessions', selectedEditionId] });
-      toast.success(`Created ${templates.length} online session${templates.length > 1 ? 's' : ''} for this edition. Fill in dates and Zoom links below.`);
+      toast.success(`Created ${toInsert.length} online session${toInsert.length > 1 ? 's' : ''} for this edition. Fill in dates and Zoom links below.`);
     } catch (e: any) {
       toast.error(e.message || 'Failed to seed sessions');
     } finally {
