@@ -148,6 +148,15 @@ const CREATORS_E2_GOA_STUDENTS = [
 
 const CREATORS_E2_GOA_ID = "995324e9-5a14-4d36-8c99-fec40fd35d70";
 
+// Creators Edition 5 Students
+const CREATORS_E5_STUDENTS = [
+  { full_name: "Ashish Kamble",  email: "ak9829@gmail.com",             phone: "9881652552",    password: "Ashish@Forge!"  },
+  { full_name: "Apoorav Vyas",   email: "apoorav57@gmail.com",          phone: "917620380247",  password: "Apoorav@Forge!" },
+  { full_name: "Aditya Jha",     email: "adityajha141193@gmail.com",    phone: "9513211310",    password: "Aditya@Forge!"  },
+  { full_name: "Amit P Nahar",   email: "amitpnahar@probit.in",         phone: "9543103254",    password: "Amit@Forge!"    },
+];
+const CREATORS_E5_ID = "fde7dc65-0a21-492f-989b-6256eaa011f3";
+
 // Writing Edition 5 Goa Students
 const WRITING_E5_STUDENTS = [
   { full_name: "Rupashri", email: "yrupashri@gmail.com", phone: "7619673337" },
@@ -815,6 +824,67 @@ export default function AdminUsers() {
     }
   });
 
+  // Bulk import Creators Edition 5 students (4 students)
+  const importCreatorsE5Mutation = useMutation({
+    mutationFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const results = { success: 0, failed: 0, errors: [] as { name: string; error: string }[] };
+
+      for (let i = 0; i < CREATORS_E5_STUDENTS.length; i++) {
+        const student = CREATORS_E5_STUDENTS[i];
+        setImportProgress({ current: i + 1, total: CREATORS_E5_STUDENTS.length });
+
+        try {
+          const response = await supabase.functions.invoke('create-user', {
+            body: {
+              email: student.email,
+              password: student.password,
+              full_name: student.full_name,
+              phone: student.phone,
+              edition_id: CREATORS_E5_ID,
+              payment_status: "CONFIRMED_15K"
+            }
+          });
+
+          if (response.error || response.data?.error) {
+            results.failed++;
+            results.errors.push({
+              name: student.full_name,
+              error: response.data?.error || response.error?.message || 'Unknown error'
+            });
+          } else {
+            results.success++;
+          }
+        } catch (err) {
+          results.failed++;
+          results.errors.push({
+            name: student.full_name,
+            error: err instanceof Error ? err.message : 'Unknown error'
+          });
+        }
+      }
+
+      return results;
+    },
+    onSuccess: (data) => {
+      setImportProgress(null);
+      if (data.failed > 0) {
+        toast.error(`Imported ${data.success} students, ${data.failed} failed`, {
+          description: data.errors.slice(0, 3).map(e => `${e.name}: ${e.error}`).join('\n')
+        });
+      } else {
+        toast.success(`Successfully imported all ${data.success} Creators E5 students!`);
+      }
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+    onError: (error: Error) => {
+      setImportProgress(null);
+      toast.error(error.message);
+    }
+  });
+
   // Bulk import Writing Edition 5 Goa students (27 students)
   const importWritingE5Mutation = useMutation({
     mutationFn: async () => {
@@ -1426,9 +1496,27 @@ export default function AdminUsers() {
               </>
             )}
           </Button>
-          <Button 
+          <Button
             variant="outline"
-            onClick={() => importWritingE5Mutation.mutate()} 
+            onClick={() => importCreatorsE5Mutation.mutate()}
+            className="gap-2"
+            disabled={importCreatorsE5Mutation.isPending || importCreatorsE2GoaMutation.isPending || importCreatorsE1Mutation.isPending || importEdition15Mutation.isPending || importEdition14Mutation.isPending}
+          >
+            {importCreatorsE5Mutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Importing {importProgress?.current}/{importProgress?.total}...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                Import Creators E5 (4)
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => importWritingE5Mutation.mutate()}
             className="gap-2"
             disabled={importWritingE5Mutation.isPending || importWritingE4Mutation.isPending || importCreatorsE2GoaMutation.isPending || importCreatorsE1Mutation.isPending || importEdition15Mutation.isPending || importEdition14Mutation.isPending}
           >
