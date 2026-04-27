@@ -165,16 +165,11 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
     return map;
   }, [kyfData]);
 
-  // Loading skeleton — two shimmer rows
+  // Loading skeleton
   if (loadingProfiles) {
     return (
       <div className="space-y-3">
         <Skeleton className="h-6 w-48" />
-        <div className="flex gap-3 overflow-hidden">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="w-32 flex-shrink-0 rounded-2xl" style={{ aspectRatio: '3/4' }} />
-          ))}
-        </div>
         <div className="flex gap-3 overflow-hidden">
           {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="w-32 flex-shrink-0 rounded-2xl" style={{ aspectRatio: '3/4' }} />
@@ -186,9 +181,8 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
 
   if (batchmates.length === 0) return null;
 
-  // Duplicate arrays enough times for a seamless infinite loop
+  // Duplicate array enough times for a seamless infinite loop
   const row1 = ensureEnough(batchmates, 16);
-  const row2 = ensureEnough([...batchmates].reverse(), 16);
 
   return (
     <section className="space-y-4">
@@ -212,30 +206,14 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
         </Button>
       </div>
 
-      {/* Marquee container — hover pauses both rows */}
-      <div className="marquee-pause overflow-hidden space-y-3 -mx-1">
-        {/* Row 1 — scrolls left */}
+      {/* Marquee container — single row, hover pauses */}
+      <div className="marquee-pause overflow-hidden -mx-1">
         <div className="flex gap-3">
           <div className="flex gap-3 animate-marquee">
             {row1.map((member, i) => (
               <BatchmateCard
                 key={`r1-${member.id}-${i}`}
                 cardKey={`r1-${member.id}-${i}`}
-                member={member}
-                headshot={headshotMap[member.id] ?? null}
-                onClick={() => setSelectedMember(member)}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Row 2 — scrolls right */}
-        <div className="flex gap-3">
-          <div className="flex gap-3 animate-marquee-reverse">
-            {row2.map((member, i) => (
-              <BatchmateCard
-                key={`r2-${member.id}-${i}`}
-                cardKey={`r2-${member.id}-${i}`}
                 member={member}
                 headshot={headshotMap[member.id] ?? null}
                 onClick={() => setSelectedMember(member)}
