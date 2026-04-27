@@ -15,12 +15,18 @@ const sb = supabase as any;
  * If a Supabase error matches a known "migrations not applied" failure mode,
  * re-throw it as a friendly Error explaining which migration to apply.
  * Otherwise re-throw as-is.
+ *
+ * Covers:
+ *   - Postgres 22P02 ("invalid input syntax") for missing enum value
+ *   - Postgres 42P01 ("undefined_table")
+ *   - PostgREST PGRST205 ("Could not find the table ... in the schema cache")
  */
 const guardMentorSchemaError = (err: unknown): never => {
   const e = (err ?? {}) as { code?: string; message?: string };
   const msg = e.message ?? '';
-  // Postgres 22P02 "invalid input syntax" — fires when 'mentor' enum value is missing.
-  if (e.code === '22P02' || /enum app_role|mentor/i.test(msg)) {
+
+  // Missing enum value — Postgres 22P02.
+  if (e.code === '22P02' || /enum app_role/i.test(msg)) {
     if (/mentor/i.test(msg) && /enum/i.test(msg)) {
       throw new Error(
         "The 'mentor' role isn't in the app_role enum yet. Apply migration " +
@@ -28,22 +34,49 @@ const guardMentorSchemaError = (err: unknown): never => {
       );
     }
   }
-  // Postgres 42P01 "undefined_table".
-  if (e.code === '42P01' || /relation .*does not exist/i.test(msg)) {
-    if (/mentor_profiles/i.test(msg)) {
+
+  // Missing table — Postgres 42P01 OR PostgREST PGRST205 (schema cache miss).
+  const isMissingTable =
+    e.code === '42P01' ||
+    e.code === 'PGRST205' ||
+    /relation .*does not exist/i.test(msg) ||
+    /could not find the table .* in the schema cache/i.test(msg);
+
+  if (isMissingTable) {
+    if (/mentor_profiles|mentor_assignments/i.test(msg)) {
       throw new Error(
-        "The mentor_profiles table doesn't exist yet. Apply migration " +
-        '20260424100100_mentor_assignments.sql and try again.',
+        "The mentor tables don't exist yet. Apply migration " +
+        '20260424100100_mentor_assignments.sql in the Supabase SQL editor, ' +
+        "then run NOTIFY pgrst, 'reload schema'; and try again.",
       );
     }
-    if (/mentor_assignments/i.test(msg)) {
+    if (/mentor_notes/i.test(msg)) {
       throw new Error(
-        "The mentor_assignments table doesn't exist yet. Apply migration " +
-        '20260424100100_mentor_assignments.sql and try again.',
+        "The mentor_notes table doesn't exist yet. Apply migration " +
+        '20260424100200_mentor_notes.sql and try again.',
+      );
+    }
+    if (/doubts|doubt_replies/i.test(msg)) {
+      throw new Error(
+        "The doubts tables don't exist yet. Apply migration " +
+        '20260424100300_doubts.sql and try again.',
+      );
+    }
+    if (/submissions|submission_feedback/i.test(msg)) {
+      throw new Error(
+        "The submissions tables don't exist yet. Apply migration " +
+        '20260424100400_submissions.sql and try again.',
+      );
+    }
+    if (/targeted_cards/i.test(msg)) {
+      throw new Error(
+        "The targeted_cards table doesn't exist yet. Apply migration " +
+        '20260424100500_targeted_cards.sql and try again.',
       );
     }
   }
-  // Pass-through: unhandled errors become Error so the toast helper can read .message.
+
+  // Pass-through: preserve message + code so the toast helper has something useful.
   if (typeof e === 'object' && msg) throw new Error(msg + (e.code ? ` [${e.code}]` : ''));
   throw err;
 };
