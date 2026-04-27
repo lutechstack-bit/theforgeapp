@@ -10,7 +10,7 @@ import {
   useUpdateMentorCapacity,
 } from '@/hooks/useMentorAdminData';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { errMessage } from '@/lib/errMessage';
+import { errMessage, unwrapEdgeError } from '@/lib/errMessage';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -464,7 +464,11 @@ export default function AdminUsers() {
         body: payload,
       });
 
-      if (response.error) throw new Error(response.error.message);
+      // Supabase wraps non-2xx in a FunctionsHttpError with a generic .message
+      // and the real server JSON in .context — unwrap it before throwing so
+      // the toast shows e.g. "Admin access required" instead of
+      // "Edge function returned a non-2xx status code".
+      if (response.error) throw new Error(await unwrapEdgeError(response.error));
       if (response.data?.error) throw new Error(response.data.error);
 
       // Mentor follow-up: grant the role + detach the new account from
@@ -547,7 +551,7 @@ export default function AdminUsers() {
         body: { user_id: userId }
       });
 
-      if (response.error) throw new Error(response.error.message);
+      if (response.error) throw new Error(await unwrapEdgeError(response.error));
       if (response.data?.error) throw new Error(response.data.error);
       
       return response.data;
