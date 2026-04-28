@@ -82,6 +82,7 @@ export const useRoadmapData = () => {
             .select('*')
             .eq('cohort_type', userCohortType)
             .eq('is_template', true)
+            .is('edition_id', null)
             .order('day_number', { ascending: true })
             .then(res => res),
           ROADMAP_QUERY_TIMEOUT,
