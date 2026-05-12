@@ -6,7 +6,7 @@ import {
   ListTodo, Megaphone, History, PanelLeft, PanelLeftClose, Home, Target, Gift,
   Handshake, ExternalLink, Film, CreditCard, Activity, ChevronRight, BarChart3,
   Settings, Users2, MonitorSmartphone, GraduationCap, Search, Plus, RefreshCw, Video,
-  Mail, Send, AtSign
+  Mail, Send, AtSign, BookMarked
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -92,6 +92,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: '/admin/email', icon: LayoutDashboard, label: 'Dashboard', end: true },
       { to: '/admin/email/templates', icon: FileText, label: 'Templates' },
+      { to: '/admin/email/audiences', icon: BookMarked, label: 'Audiences' },
       { to: '/admin/email/send', icon: Send, label: 'Compose & Send' },
       { to: '/admin/email/history', icon: History, label: 'History' },
       { to: '/admin/email/senders', icon: AtSign, label: 'Senders' },

@@ -3,24 +3,30 @@
 // Resend POSTs events to this function at:
 //   https://<project-ref>.supabase.co/functions/v1/resend-webhook
 //
-// Configure that URL in the Resend dashboard → Webhooks. Resend signs each
-// request with an HMAC-SHA256 over the raw body using a shared secret. We
-// verify the signature BEFORE trusting any event data.
+// Resend signs each request using Svix HMAC-SHA256. We verify the
+// svix-id / svix-timestamp / svix-signature headers against the raw body
+// using the RESEND_WEBHOOK_SECRET (starts with whsec_) before trusting
+// any event data. Unverified requests are logged and rejected with 401.
 //
-// Supported event types -> email_sends status transition:
-//   email.sent       -> status 'sent'        (redundant — we set on send)
-//   email.delivered  -> status 'delivered'   + delivered_at
-//   email.opened     -> status 'opened'      + opened_at (first open only)
-//   email.clicked    -> status 'clicked'     + clicked_at (first click only)
-//   email.bounced    -> status 'bounced'     + bounced_at + error_message
-//   email.complained -> status 'complained'  + error_message
+// Every inbound request (verified or not) is written to webhook_events_log
+// for audit and debugging.
+//
+// Supported event types → email_sends status transition:
+//   email.sent       → status 'sent'        (redundant — we set on send)
+//   email.delivered  → status 'delivered'   + delivered_at
+//   email.opened     → status 'opened'      + opened_at  (first open only)
+//   email.clicked    → status 'clicked'     + clicked_at (first click only)
+//   email.bounced    → status 'bounced'     + bounced_at + error_message
+//   email.complained → status 'complained'  + error_message
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { Webhook } from 'https://esm.sh/svix@1.21.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, resend-signature, svix-signature, svix-timestamp, svix-id',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type, svix-id, svix-timestamp, svix-signature',
 };
 
 serve(async (req) => {
@@ -31,25 +37,72 @@ serve(async (req) => {
 
   const rawBody = await req.text();
 
-  // Resend uses Svix under the hood. They send these headers:
-  //   svix-id, svix-timestamp, svix-signature
-  // For now we support an optional simple shared-secret mode via
-  // RESEND_WEBHOOK_SECRET — if set, we require that exact value in the
-  // 'x-resend-secret' header (easier to bootstrap than HMAC).
-  // Signature verification can be tightened later.
-  const sharedSecret = Deno.env.get('RESEND_WEBHOOK_SECRET');
-  if (sharedSecret) {
-    const provided = req.headers.get('x-resend-secret');
-    if (provided !== sharedSecret) {
-      console.warn('[resend-webhook] rejected: bad secret');
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const admin = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  // Extract Svix signature headers
+  const svixId = req.headers.get('svix-id') ?? '';
+  const svixTimestamp = req.headers.get('svix-timestamp') ?? '';
+  const svixSignature = req.headers.get('svix-signature') ?? '';
+
+  // Source IP (best-effort)
+  const sourceIp =
+    req.headers.get('cf-connecting-ip') ||
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    null;
+
+  // ── Svix HMAC verification ────────────────────────────────────────────────────
+  const signingSecret = Deno.env.get('RESEND_WEBHOOK_SECRET');
+  let verificationStatus: 'verified' | 'rejected' | 'skipped' = 'skipped';
+  let event: any = null;
+
+  // Pre-parse body for logging (even on rejection)
+  try { event = JSON.parse(rawBody); } catch { /* handled below */ }
+
+  if (signingSecret) {
+    if (!svixId || !svixTimestamp || !svixSignature) {
+      console.warn('[resend-webhook] rejected: missing Svix headers');
+      await logEvent(admin, {
+        sourceIp, svixId, svixTimestamp, eventType: event?.type ?? null,
+        resendMessageId: event?.data?.email_id ?? null,
+        verificationStatus: 'rejected',
+        rawPayload: event,
+        processingError: 'Missing Svix headers',
+      });
       return new Response('Unauthorized', { status: 401, headers: corsHeaders });
     }
+
+    try {
+      const wh = new Webhook(signingSecret);
+      // verify() throws if the signature is invalid or timestamp is stale (> 5 min)
+      wh.verify(rawBody, {
+        'svix-id': svixId,
+        'svix-timestamp': svixTimestamp,
+        'svix-signature': svixSignature,
+      });
+      verificationStatus = 'verified';
+    } catch (err) {
+      console.warn('[resend-webhook] rejected: Svix verification failed', err);
+      await logEvent(admin, {
+        sourceIp, svixId, svixTimestamp, eventType: event?.type ?? null,
+        resendMessageId: event?.data?.email_id ?? null,
+        verificationStatus: 'rejected',
+        rawPayload: event,
+        processingError: String(err),
+      });
+      return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+    }
+  } else {
+    // No secret configured — accept but flag as skipped (local dev / bootstrapping)
+    console.warn('[resend-webhook] RESEND_WEBHOOK_SECRET not set — skipping verification');
+    verificationStatus = 'skipped';
   }
 
-  let event: any;
-  try {
-    event = JSON.parse(rawBody);
-  } catch {
+  // ── Parse event ───────────────────────────────────────────────────────────────
+  if (!event) {
     return new Response('Invalid JSON', { status: 400, headers: corsHeaders });
   }
 
@@ -57,16 +110,19 @@ serve(async (req) => {
   const data = event?.data || {};
   const messageId: string | undefined = data?.email_id || data?.id;
 
+  // Log every verified / skipped event before processing
+  await logEvent(admin, {
+    sourceIp, svixId, svixTimestamp, eventType: type,
+    resendMessageId: messageId ?? null,
+    verificationStatus,
+    rawPayload: event,
+    processingError: null,
+  });
+
   if (!messageId) {
     console.warn('[resend-webhook] event missing email_id:', type);
     return new Response('No email_id', { status: 200, headers: corsHeaders });
   }
-
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const admin = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
 
   const now = new Date().toISOString();
   const updates: Record<string, unknown> = {};
@@ -81,7 +137,6 @@ serve(async (req) => {
       updates.delivered_at = data.created_at || now;
       break;
     case 'email.opened':
-      // Only set opened_at on first open (preserve first-touch timestamp).
       updates.status = 'opened';
       updates.opened_at = data.created_at || now;
       break;
@@ -99,7 +154,6 @@ serve(async (req) => {
       updates.error_message = 'Recipient marked as spam';
       break;
     case 'email.delivery_delayed':
-      // Keep status, just log — no column change.
       console.log('[resend-webhook] delivery delayed for', messageId);
       return new Response('OK', { status: 200, headers: corsHeaders });
     default:
@@ -107,7 +161,7 @@ serve(async (req) => {
       return new Response('OK', { status: 200, headers: corsHeaders });
   }
 
-  // For opened/clicked, don't overwrite first-event timestamps: only set if null.
+  // For opened/clicked: preserve first-touch timestamps — don't overwrite
   if (type === 'email.opened') {
     const { data: existing } = await admin
       .from('email_sends')
@@ -132,10 +186,40 @@ serve(async (req) => {
 
   if (error) {
     console.error('[resend-webhook] update error:', error);
-    // Still 200 — Resend will retry on non-2xx. We don't want infinite
-    // retries on a DB blip.
+    // Return 200 so Resend doesn't retry indefinitely on a transient DB blip
     return new Response('DB error logged', { status: 200, headers: corsHeaders });
   }
 
   return new Response('OK', { status: 200, headers: corsHeaders });
 });
+
+// ── Audit log helper ──────────────────────────────────────────────────────────
+async function logEvent(
+  admin: ReturnType<typeof createClient>,
+  opts: {
+    sourceIp: string | null;
+    svixId: string;
+    svixTimestamp: string;
+    eventType: string | null;
+    resendMessageId: string | null;
+    verificationStatus: 'verified' | 'rejected' | 'skipped';
+    rawPayload: unknown;
+    processingError: string | null;
+  }
+) {
+  try {
+    await admin.from('webhook_events_log').insert({
+      source_ip: opts.sourceIp,
+      svix_id: opts.svixId || null,
+      svix_timestamp: opts.svixTimestamp || null,
+      event_type: opts.eventType,
+      resend_message_id: opts.resendMessageId,
+      verification_status: opts.verificationStatus,
+      raw_payload: opts.rawPayload ? JSON.parse(JSON.stringify(opts.rawPayload)) : null,
+      processing_error: opts.processingError,
+    });
+  } catch (e) {
+    // Never let audit logging crash the main flow
+    console.error('[resend-webhook] log error:', e);
+  }
+}

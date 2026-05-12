@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { PreviewIframe } from '@/components/admin/email/PreviewIframe';
 import { buildMergeValues, extractTags, resolveMergeTags } from '@/lib/mergeTags';
-import { Send, Users, Mail, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Send, Users, Mail, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const COHORT_TYPES = ['FORGE', 'FORGE_WRITING', 'FORGE_CREATORS'] as const;
@@ -34,11 +34,14 @@ export default function AdminEmailSend() {
   const navigate = useNavigate();
 
   const [templateId, setTemplateId] = useState<string>('');
-  const [tab, setTab] = useState<'filter' | 'individuals'>('filter');
+  const [tab, setTab] = useState<'filter' | 'audience' | 'individuals'>('filter');
 
   // Filter tab
   const [editionIds, setEditionIds] = useState<string[]>([]);
   const [cohortTypes, setCohortTypes] = useState<string[]>([]);
+
+  // Audience tab
+  const [selectedAudienceId, setSelectedAudienceId] = useState<string>('');
 
   // Individuals tab
   const [emailsInput, setEmailsInput] = useState('');
@@ -74,6 +77,39 @@ export default function AdminEmailSend() {
       if (error) throw error;
       return data || [];
     },
+  });
+
+  // Saved audiences for the Audience tab
+  const { data: audiences = [] } = useQuery({
+    queryKey: ['admin-email-audiences'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('email_audiences')
+        .select('id, name, filter_criteria')
+        .order('name');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const selectedAudience = useMemo(
+    () => (audiences as any[]).find((a) => a.id === selectedAudienceId) || null,
+    [audiences, selectedAudienceId]
+  );
+
+  // Resolve selected audience to user list
+  const { data: audienceResolved, isLoading: audienceLoading } = useQuery({
+    queryKey: ['audience-resolve-send', selectedAudienceId],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('resolve-audience', {
+        body: { filter_criteria: selectedAudience.filter_criteria },
+      });
+      if (error) throw error;
+      return data as { count: number; users: { id: string; email: string; full_name: string | null }[] };
+    },
+    enabled: !!selectedAudience,
+    staleTime: 60_000,
+    retry: false,
   });
 
   const template = useMemo(
@@ -143,8 +179,15 @@ export default function AdminEmailSend() {
         name: r.full_name || r.email || '',
       }));
     }
+    if (tab === 'audience') {
+      return (audienceResolved?.users || []).map(u => ({
+        id: u.id,
+        email: (u.email || '').toLowerCase(),
+        name: u.full_name || u.email || '',
+      }));
+    }
     return parsedEmails.map(email => ({ id: null, email, name: email }));
-  }, [tab, filterRecipients, parsedEmails]);
+  }, [tab, filterRecipients, parsedEmails, audienceResolved]);
 
   // Parse per-recipient `email,temp_password` lines
   const perRecipientMap = useMemo(() => {
@@ -287,8 +330,47 @@ export default function AdminEmailSend() {
           <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
             <TabsList>
               <TabsTrigger value="filter">Filter</TabsTrigger>
+              <TabsTrigger value="audience">Audience</TabsTrigger>
               <TabsTrigger value="individuals">Individuals</TabsTrigger>
             </TabsList>
+
+            {/* ── Audience tab ── */}
+            <TabsContent value="audience" className="space-y-3 pt-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Saved audience</Label>
+                <Select value={selectedAudienceId} onValueChange={setSelectedAudienceId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pick a saved audience…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(audiences as any[]).map((a) => (
+                      <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {audienceLoading && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Resolving audience…
+                </p>
+              )}
+              {audienceResolved && !audienceLoading && (
+                <p className="text-[11px] text-muted-foreground">
+                  {audienceResolved.count} recipient{audienceResolved.count === 1 ? '' : 's'} in this audience.
+                </p>
+              )}
+              {audiences.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No saved audiences yet.{' '}
+                  <button
+                    className="underline text-primary"
+                    onClick={() => navigate('/admin/email/audiences/new')}
+                  >
+                    Create one
+                  </button>
+                </p>
+              )}
+            </TabsContent>
 
             <TabsContent value="filter" className="space-y-3 pt-3">
               <div className="space-y-1.5">

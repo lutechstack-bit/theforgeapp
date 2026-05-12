@@ -89,6 +89,8 @@ const AdminEmailTemplateEdit = lazy(() => import("./pages/admin/AdminEmailTempla
 const AdminEmailSend = lazy(() => import("./pages/admin/AdminEmailSend"));
 const AdminEmailHistory = lazy(() => import("./pages/admin/AdminEmailHistory"));
 const AdminEmailSenders = lazy(() => import("./pages/admin/AdminEmailSenders"));
+const AdminEmailAudiences = lazy(() => import("./pages/admin/AdminEmailAudiences"));
+const AdminEmailAudienceEdit = lazy(() => import("./pages/admin/AdminEmailAudienceEdit"));
 
 
 const queryClient = new QueryClient({
@@ -334,13 +336,16 @@ const AppRoutes = () => {
         <Route path="activity" element={<AdminActivity />} />
         <Route path="live-sessions" element={<AdminLiveSessions />} />
 
-        {/* Email infrastructure (Phase 1 thin-slice) */}
+        {/* Email infrastructure */}
         <Route path="email" element={<AdminEmailDashboard />} />
         <Route path="email/templates" element={<AdminEmailTemplates />} />
         <Route path="email/templates/:id" element={<AdminEmailTemplateEdit />} />
         <Route path="email/send" element={<AdminEmailSend />} />
         <Route path="email/history" element={<AdminEmailHistory />} />
         <Route path="email/senders" element={<AdminEmailSenders />} />
+        <Route path="email/audiences" element={<AdminEmailAudiences />} />
+        <Route path="email/audiences/new" element={<AdminEmailAudienceEdit />} />
+        <Route path="email/audiences/:id/edit" element={<AdminEmailAudienceEdit />} />
       </Route>
       
       {/* Legacy KY form redirects */}
