@@ -14,7 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { HtmlEditorPane } from '@/components/admin/email/HtmlEditorPane';
 import { extractTags } from '@/lib/mergeTags';
-import { ArrowLeft, Save } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { ArrowLeft, History, RotateCcw, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 const CATEGORIES = ['onboarding', 'reminder', 'announcement', 'alumni'] as const;
@@ -59,6 +61,7 @@ export default function AdminEmailTemplateEdit() {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [changeNote, setChangeNote] = useState('');
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   // Load senders
   const { data: senders = [] } = useQuery({
@@ -107,6 +110,21 @@ export default function AdminEmailTemplateEdit() {
       setForm(f => ({ ...f, default_sender_id: defaultSender.id }));
     }
   }, [existing, isNew, senders.length]);
+
+  // Version history
+  const { data: versions = [] } = useQuery({
+    queryKey: ['admin-email-template-versions', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('email_template_versions')
+        .select('id, version, subject, preview_text, html_content, change_note, created_at, changed_by')
+        .eq('template_id', id)
+        .order('version', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !isNew && showHistory,
+  });
 
   // Sample profile for the preview iframe
   const { data: sample } = useQuery({
@@ -246,6 +264,11 @@ export default function AdminEmailTemplateEdit() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {!isNew && (
+            <Button variant="outline" onClick={() => setShowHistory(true)} className="gap-1.5">
+              <History className="h-4 w-4" /> History
+            </Button>
+          )}
           <Button
             onClick={() => saveMutation.mutate()}
             disabled={saveMutation.isPending}
@@ -256,6 +279,68 @@ export default function AdminEmailTemplateEdit() {
           </Button>
         </div>
       </div>
+
+      {/* Version history sheet */}
+      <Sheet open={showHistory} onOpenChange={setShowHistory}>
+        <SheetContent className="w-[420px] sm:w-[480px] flex flex-col p-0">
+          <SheetHeader className="px-5 py-4 border-b">
+            <SheetTitle className="flex items-center gap-2">
+              <History className="h-4 w-4" /> Version history
+            </SheetTitle>
+            <p className="text-xs text-muted-foreground">
+              Restoring loads that version into the editor — save to make it the new current version.
+            </p>
+          </SheetHeader>
+          <ScrollArea className="flex-1">
+            <div className="divide-y">
+              {versions.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-10">No versions yet.</p>
+              )}
+              {versions.map((v: any) => (
+                <div key={v.id} className="px-5 py-4 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold">v{v.version}</span>
+                      {v.version === existing?.current_version && (
+                        <span className="text-[10px] bg-primary/20 text-primary border border-primary/30 rounded px-1.5 py-0.5 font-medium">
+                          current
+                        </span>
+                      )}
+                    </div>
+                    {v.version !== existing?.current_version && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs gap-1"
+                        onClick={() => {
+                          setForm(f => ({
+                            ...f,
+                            subject: v.subject,
+                            preview_text: v.preview_text || '',
+                            html_content: v.html_content,
+                          }));
+                          setChangeNote(`Restored from v${v.version}`);
+                          setShowHistory(false);
+                          toast.info(`Loaded v${v.version} into editor — save to publish`);
+                        }}
+                      >
+                        <RotateCcw className="h-3 w-3" /> Restore
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {v.created_at ? format(new Date(v.created_at), 'MMM d, yyyy · h:mm a') : '—'}
+                  </p>
+                  {v.change_note && (
+                    <p className="text-xs text-foreground/80 italic">"{v.change_note}"</p>
+                  )}
+                  <p className="text-xs text-muted-foreground/60 font-mono truncate">{v.subject}</p>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
 
       {/* Form fields */}
       <Card>
