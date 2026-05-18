@@ -91,6 +91,10 @@ const AdminEmailHistory = lazy(() => import("./pages/admin/AdminEmailHistory"));
 const AdminEmailSenders = lazy(() => import("./pages/admin/AdminEmailSenders"));
 const AdminEmailAudiences = lazy(() => import("./pages/admin/AdminEmailAudiences"));
 const AdminEmailAudienceEdit = lazy(() => import("./pages/admin/AdminEmailAudienceEdit"));
+const AdminAutomationSettings = lazy(() => import("./pages/admin/AdminAutomationSettings"));
+const AdminAutomationProductMapping = lazy(() => import("./pages/admin/AdminAutomationProductMapping"));
+const AdminAutomationHistory = lazy(() => import("./pages/admin/AdminAutomationHistory"));
+const AdminAutomationManualTrigger = lazy(() => import("./pages/admin/AdminAutomationManualTrigger"));
 
 
 const queryClient = new QueryClient({
@@ -346,6 +350,10 @@ const AppRoutes = () => {
         <Route path="email/audiences" element={<AdminEmailAudiences />} />
         <Route path="email/audiences/new" element={<AdminEmailAudienceEdit />} />
         <Route path="email/audiences/:id/edit" element={<AdminEmailAudienceEdit />} />
+        <Route path="automation-settings" element={<AdminAutomationSettings />} />
+        <Route path="automation-product-mapping" element={<AdminAutomationProductMapping />} />
+        <Route path="automation-history" element={<AdminAutomationHistory />} />
+        <Route path="automation-manual-trigger" element={<AdminAutomationManualTrigger />} />
       </Route>
       
       {/* Legacy KY form redirects */}

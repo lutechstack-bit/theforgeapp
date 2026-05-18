@@ -309,6 +309,11 @@ serve(async (req) => {
             headers: {
               'X-Template-Id': template.id,
               'X-Template-Slug': template.slug,
+              // Gmail/Yahoo bulk sender compliance (Feb 2024 requirement).
+              // One-click unsubscribe keeps us out of spam for transactional
+              // and marketing mail alike.
+              'List-Unsubscribe': `<mailto:unsubscribe@leveluplearning.in?subject=unsubscribe&body=${encodeURIComponent(rec.email)}>`,
+              'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
             },
           }),
         });
