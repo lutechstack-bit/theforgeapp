@@ -9,9 +9,20 @@
 //   2. Load onboarding_automation_config; bail early if disabled.
 //   3. Validate + deduplicate student data.
 //   4. Resolve product → edition via product_mappings in config.
+//      If no mapping exists BUT edition details are provided in the payload,
+//      auto-create the edition + save the mapping (first-entry auto-provision).
 //   5. Create auth account + update profile (idempotent — resets pw if user exists).
-//   6. Generate magic link / temp password and send welcome email.
+//   6. Send welcome email via Resend.
 //   7. Log every outcome to onboarding_automation_logs.
+//
+// Sheet columns for auto-edition creation (only needed for first student of a new edition):
+//   edition_name      e.g. "Forge Filmmaking - Edition 15 - Mumbai"
+//   edition_city      e.g. "Mumbai"
+//   cohort_type       e.g. "FORGE" | "FORGE_CREATORS" | "FORGE_WRITING"
+//   forge_start_date  e.g. "2026-07-01"  (optional)
+//   forge_end_date    e.g. "2026-07-14"  (optional)
+//   online_start_date e.g. "2026-06-01"  (optional)
+//   online_end_date   e.g. "2026-06-30"  (optional)
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -33,6 +44,14 @@ interface StudentData {
   batch?: string;
   product: string;
   payment_amount?: number;
+  // Edition auto-creation fields (only needed for first student of a new edition)
+  edition_name?: string;
+  edition_city?: string;
+  cohort_type?: string;
+  forge_start_date?: string;
+  forge_end_date?: string;
+  online_start_date?: string;
+  online_end_date?: string;
 }
 
 interface ProductMapping {
@@ -62,7 +81,6 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-/** Generates a random 10-char alphanumeric temp password. */
 function generateTempPassword(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
   return Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
@@ -108,16 +126,16 @@ async function logOnboardingAttempt(
       trigger_source: result.trigger_source ?? 'google_sheet',
       triggered_by: result.triggered_by ?? null,
     });
-    console.log(`📝 Logged onboarding attempt: ${result.status}`);
+    console.log(`📝 Logged: ${result.status}`);
   } catch (err) {
-    // Never let a logging failure block the main flow.
-    console.error('❌ Failed to log onboarding attempt:', err);
+    console.error('❌ Log failed (non-fatal):', err);
   }
 }
 
 // ═══════════════════════ Input validation ════════════════════════════════════
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const VALID_COHORT_TYPES = ['FORGE', 'FORGE_CREATORS', 'FORGE_WRITING'];
 
 function validateStudentData(body: Record<string, unknown>): { data: StudentData; error: string | null } {
   const email = (body.email as string | undefined)?.trim().toLowerCase() || '';
@@ -130,6 +148,15 @@ function validateStudentData(body: Record<string, unknown>): { data: StudentData
   if (!full_name) return { data: {} as StudentData, error: 'full_name is required' };
   if (!product) return { data: {} as StudentData, error: 'product is required' };
 
+  // Validate cohort_type if provided
+  const cohort_type = (body.cohort_type as string | undefined)?.trim().toUpperCase();
+  if (cohort_type && !VALID_COHORT_TYPES.includes(cohort_type)) {
+    return {
+      data: {} as StudentData,
+      error: `cohort_type must be one of: ${VALID_COHORT_TYPES.join(', ')}`,
+    };
+  }
+
   return {
     data: {
       student_id,
@@ -140,9 +167,113 @@ function validateStudentData(body: Record<string, unknown>): { data: StudentData
       batch: (body.batch as string | undefined)?.trim() || undefined,
       product,
       payment_amount: body.payment_amount != null ? Number(body.payment_amount) : 15000,
+      // Edition auto-creation fields
+      edition_name: (body.edition_name as string | undefined)?.trim() || undefined,
+      edition_city: (body.edition_city as string | undefined)?.trim() || undefined,
+      cohort_type: cohort_type || undefined,
+      forge_start_date: (body.forge_start_date as string | undefined)?.trim() || undefined,
+      forge_end_date: (body.forge_end_date as string | undefined)?.trim() || undefined,
+      online_start_date: (body.online_start_date as string | undefined)?.trim() || undefined,
+      online_end_date: (body.online_end_date as string | undefined)?.trim() || undefined,
     },
     error: null,
   };
+}
+
+// ═══════════════════════ Auto-provision edition + mapping ═════════════════════
+//
+// Called when no active product mapping exists for studentData.product but the
+// sheet row includes enough fields to create one (edition_name + edition_city +
+// cohort_type at minimum).  Returns the newly-created (or pre-existing) edition.
+
+async function autoProvisionEdition(
+  admin: ReturnType<typeof createClient>,
+  config: AutomationConfig,
+  studentData: StudentData
+): Promise<{ edition: Record<string, unknown> | null; error: string | null }> {
+  const { edition_name, edition_city, cohort_type, product } = studentData;
+
+  if (!edition_name || !edition_city || !cohort_type) {
+    return {
+      edition: null,
+      error: `No active mapping for product "${product}" and no edition details provided. ` +
+        'Add edition_name, edition_city, and cohort_type columns to the sheet for auto-provisioning.',
+    };
+  }
+
+  console.log(`🏗️  Auto-provisioning edition "${edition_name}" for product "${product}"…`);
+
+  // ── Step 1: Check if an edition with this name already exists ─────────
+  const { data: existingEditions } = await admin
+    .from('editions')
+    .select('*')
+    .eq('name', edition_name)
+    .limit(1);
+
+  let edition: Record<string, unknown>;
+
+  if (existingEditions && existingEditions.length > 0) {
+    edition = existingEditions[0];
+    console.log(`♻️  Edition already exists: ${edition.id} — reusing`);
+  } else {
+    // ── Step 2: Create the edition ─────────────────────────────────────
+    const insertPayload: Record<string, unknown> = {
+      name: edition_name,
+      city: edition_city,
+      cohort_type,
+      is_archived: false,
+    };
+    if (studentData.forge_start_date) insertPayload.forge_start_date = studentData.forge_start_date;
+    if (studentData.forge_end_date) insertPayload.forge_end_date = studentData.forge_end_date;
+    if (studentData.online_start_date) insertPayload.online_start_date = studentData.online_start_date;
+    if (studentData.online_end_date) insertPayload.online_end_date = studentData.online_end_date;
+
+    const { data: newEdition, error: editionErr } = await admin
+      .from('editions')
+      .insert(insertPayload)
+      .select('*')
+      .single();
+
+    if (editionErr || !newEdition) {
+      return { edition: null, error: `Failed to create edition: ${editionErr?.message}` };
+    }
+
+    edition = newEdition;
+    console.log(`✅ Edition created: ${edition.id} — ${edition_name}`);
+  }
+
+  // ── Step 3: Save the product mapping so subsequent students skip this step ─
+  const newMapping: ProductMapping = {
+    product,
+    edition_id: edition.id as string,
+    edition_name: edition.name as string,
+    cohort_type: edition.cohort_type as string,
+    is_active: true,
+  };
+
+  const existingMappings = (config.product_mappings || []) as ProductMapping[];
+  // Replace stale mapping for same product if any, otherwise append.
+  const updatedMappings = [
+    ...existingMappings.filter((m) => m.product !== product),
+    newMapping,
+  ];
+
+  const { error: cfgErr } = await admin
+    .from('onboarding_automation_config')
+    .update({
+      product_mappings: updatedMappings,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', config.id);
+
+  if (cfgErr) {
+    console.error('⚠️  Mapping save failed (non-fatal):', cfgErr);
+    // Don't abort — edition is created, student can still be onboarded.
+  } else {
+    console.log(`🗺️  Mapping saved: ${product} → ${edition_name}`);
+  }
+
+  return { edition, error: null };
 }
 
 // ═══════════════════════ Main handler ════════════════════════════════════════
@@ -158,9 +289,6 @@ serve(async (req) => {
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
 
     // ── Auth gate ─────────────────────────────────────────────────────────
-    // Accept either:
-    //   (a) x-forge-secret header  →  Google Sheet / cron automation
-    //   (b) valid admin JWT         →  Manual admin trigger from the app
     let triggerSource: 'google_sheet' | 'manual_admin' = 'google_sheet';
     let triggeredBy: string | null = null;
 
@@ -168,13 +296,11 @@ serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
 
     if (forgeSecret) {
-      // Path (a): sheet automation secret
       if (!automationSecret || forgeSecret !== automationSecret) {
         return json({ error: 'Invalid automation secret' }, 401);
       }
       triggerSource = 'google_sheet';
     } else if (authHeader) {
-      // Path (b): admin JWT
       const userClient = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: authHeader } },
       });
@@ -194,7 +320,6 @@ serve(async (req) => {
       return json({ error: 'Authentication required (x-forge-secret or Authorization header)' }, 401);
     }
 
-    // ── Service-role client for all privileged DB operations ─────────────
     const admin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
@@ -206,32 +331,23 @@ serve(async (req) => {
       .single() as { data: AutomationConfig | null; error: unknown };
 
     if (configErr || !config) {
-      console.error('❌ Failed to load automation config:', configErr);
       return json({ error: 'Automation configuration not found' }, 500);
     }
 
     if (!config.is_enabled) {
-      console.log('⏸️  Automation is disabled');
       return json({ message: 'Automation is currently disabled', automation_enabled: false }, 200);
     }
 
-    // ── Parse + validate request body ─────────────────────────────────────
+    // ── Parse + validate body ─────────────────────────────────────────────
     let body: Record<string, unknown>;
-    try {
-      body = await req.json();
-    } catch {
-      return json({ error: 'Invalid JSON body' }, 400);
-    }
+    try { body = await req.json(); } catch { return json({ error: 'Invalid JSON body' }, 400); }
 
     const { data: studentData, error: validationError } = validateStudentData(body);
-    if (validationError) {
-      return json({ error: validationError }, 400);
-    }
+    if (validationError) return json({ error: validationError }, 400);
 
-    console.log(`📋 Processing student: ${studentData.email} | product: ${studentData.product}`);
+    console.log(`📋 Processing: ${studentData.email} | product: ${studentData.product}`);
 
     // ── Duplicate check ───────────────────────────────────────────────────
-    // Check if a user with this email already has a profile linked to an edition.
     const { data: existingProfiles } = await admin
       .from('profiles')
       .select('id, full_name, edition_id')
@@ -239,7 +355,7 @@ serve(async (req) => {
       .not('edition_id', 'is', null);
 
     if (existingProfiles && existingProfiles.length > 0) {
-      console.log(`⚠️  Duplicate — ${studentData.email} already has an edition assigned`);
+      console.log(`⚠️  Duplicate: ${studentData.email}`);
       await logOnboardingAttempt(admin, studentData, null, {
         status: 'duplicate',
         error_message: 'Account already exists with an edition assigned',
@@ -254,52 +370,53 @@ serve(async (req) => {
       }, 200);
     }
 
-    // ── Resolve product → edition via config product_mappings ──────────────
+    // ── Resolve product → edition ─────────────────────────────────────────
+    // First try existing product_mappings in config.
     const productMappings = (config.product_mappings || []) as ProductMapping[];
-    const mapping = productMappings.find(
+    const existingMapping = productMappings.find(
       (m) => m.product === studentData.product && m.is_active
     );
 
-    if (!mapping) {
-      console.warn(`⚠️  No active mapping for product: ${studentData.product}`);
-      await logOnboardingAttempt(admin, studentData, null, {
-        status: 'skipped',
-        error_message: `No active mapping found for product: ${studentData.product}`,
-        trigger_source: triggerSource,
-        triggered_by: triggeredBy,
-      });
-      return json({
-        error: `No edition mapping configured for product: ${studentData.product}`,
-        hint: 'Configure product mappings in Admin → Automation → Product Mapping',
-      }, 400);
+    let edition: Record<string, unknown> | null = null;
+
+    if (existingMapping) {
+      // Happy path — mapping already exists, just verify edition is still in DB.
+      const { data: dbEdition, error: editionErr } = await admin
+        .from('editions')
+        .select('id, name, cohort_type, city, forge_start_date, forge_end_date')
+        .eq('id', existingMapping.edition_id)
+        .single();
+
+      if (editionErr || !dbEdition) {
+        // Mapping points to a deleted edition — fall through to auto-provision.
+        console.warn(`⚠️  Mapped edition ${existingMapping.edition_id} not found — will auto-provision`);
+      } else {
+        edition = dbEdition;
+        console.log(`✅ Mapped: ${studentData.product} → ${edition.name}`);
+      }
     }
 
-    // Verify the mapped edition still exists in DB.
-    const { data: edition, error: editionErr } = await admin
-      .from('editions')
-      .select('id, name, cohort_type, city, forge_start_date, forge_end_date')
-      .eq('id', mapping.edition_id)
-      .single();
+    if (!edition) {
+      // No valid mapping — try to auto-provision from sheet data.
+      const { edition: provisioned, error: provisionErr } = await autoProvisionEdition(
+        admin, config, studentData
+      );
 
-    if (editionErr || !edition) {
-      console.error(`❌ Mapped edition not found: ${mapping.edition_id}`);
-      await logOnboardingAttempt(admin, studentData, null, {
-        status: 'failed',
-        error_message: `Edition not found: ${mapping.edition_id}`,
-        trigger_source: triggerSource,
-        triggered_by: triggeredBy,
-      });
-      return json({
-        error: 'Mapped edition not found in database',
-        edition_id: mapping.edition_id,
-      }, 404);
+      if (provisionErr || !provisioned) {
+        await logOnboardingAttempt(admin, studentData, null, {
+          status: 'skipped',
+          error_message: provisionErr ?? 'Could not resolve or create edition',
+          trigger_source: triggerSource,
+          triggered_by: triggeredBy,
+        });
+        return json({ error: provisionErr ?? 'Edition not found', status: 'skipped' }, 400);
+      }
+
+      edition = provisioned;
     }
-
-    console.log(`✅ Mapped product ${studentData.product} → Edition: ${edition.name}`);
 
     // ── Create auth user (idempotent) ─────────────────────────────────────
     const tempPassword = generateTempPassword();
-
     let userId: string | null = null;
     let userAction: 'created' | 'updated' = 'created';
 
@@ -319,19 +436,16 @@ serve(async (req) => {
         (createError as { status?: number }).status === 422;
 
       if (!alreadyExists) {
-        console.error('❌ createUser error:', createError);
         await logOnboardingAttempt(admin, studentData, edition, {
           status: 'failed',
           error_message: createError.message,
-          error_details: { code: (createError as { status?: number }).status },
           trigger_source: triggerSource,
           triggered_by: triggeredBy,
         });
-        return json({ error: createError.message || 'Failed to create user account' }, 400);
+        return json({ error: createError.message }, 400);
       }
 
-      // User already exists — reset password + re-sync.
-      console.log(`♻️  User exists, resetting password for ${studentData.email}`);
+      // Reset existing user's password.
       let foundId: string | null = null;
       const perPage = 1000;
       for (let page = 1; page <= 10 && !foundId; page++) {
@@ -346,27 +460,18 @@ serve(async (req) => {
       if (!foundId) {
         await logOnboardingAttempt(admin, studentData, edition, {
           status: 'failed',
-          error_message: 'User exists but could not be located by email',
+          error_message: 'User exists but lookup failed',
           trigger_source: triggerSource,
           triggered_by: triggeredBy,
         });
         return json({ error: 'User exists but lookup failed' }, 500);
       }
 
-      const { error: updateErr } = await admin.auth.admin.updateUserById(foundId, {
+      await admin.auth.admin.updateUserById(foundId, {
         password: tempPassword,
         email_confirm: true,
         user_metadata: { full_name: studentData.full_name },
       });
-      if (updateErr) {
-        await logOnboardingAttempt(admin, studentData, edition, {
-          status: 'failed',
-          error_message: updateErr.message,
-          trigger_source: triggerSource,
-          triggered_by: triggeredBy,
-        });
-        return json({ error: 'Could not reset password: ' + updateErr.message }, 500);
-      }
 
       userId = foundId;
       userAction = 'updated';
@@ -384,7 +489,7 @@ serve(async (req) => {
         edition_id: edition.id,
         payment_status: 'CONFIRMED_15K',
         unlock_level: 'PREVIEW',
-        profile_setup_completed: false, // student completes this after login
+        profile_setup_completed: false,
       })
       .eq('id', userId);
 
@@ -392,21 +497,20 @@ serve(async (req) => {
       console.error('⚠️  Profile update error (non-fatal):', profileError);
     }
 
-    // ── Send welcome email via Resend (if API key is available) ───────────
+    // ── Send welcome email ─────────────────────────────────────────────────
     let emailSent = false;
     let emailMessageId: string | undefined;
 
     if (resendApiKey) {
       try {
-        // Find the welcome/onboarding template from email_templates.
         const { data: template } = await admin
           .from('email_templates')
-          .select('id, subject, html_content, default_sender_id, slug')
+          .select('id, subject, html_content, default_sender_id, slug, current_version')
           .eq('slug', 'student-welcome')
           .eq('is_active', true)
           .single();
 
-        if (template && template.default_sender_id) {
+        if (template?.default_sender_id) {
           const { data: sender } = await admin
             .from('email_sender_identities')
             .select('display_name, email, reply_to_email')
@@ -415,13 +519,10 @@ serve(async (req) => {
             .single();
 
           if (sender) {
-            // Simple merge tag resolution for welcome email.
             const formatDate = (iso: string | null) => {
               if (!iso) return '';
               try {
-                return new Date(iso).toLocaleDateString('en-US', {
-                  month: 'short', day: 'numeric', year: 'numeric',
-                });
+                return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
               } catch { return iso; }
             };
 
@@ -430,11 +531,11 @@ serve(async (req) => {
               'user.full_name': studentData.full_name,
               'user.email': studentData.email,
               'user.temp_password': tempPassword,
-              'edition.name': edition.name || '',
-              'edition.cohort_type': edition.cohort_type || '',
-              'edition.city': edition.city || '',
-              'edition.forge_start_date': formatDate(edition.forge_start_date),
-              'edition.forge_end_date': formatDate(edition.forge_end_date),
+              'edition.name': (edition.name as string) || '',
+              'edition.cohort_type': (edition.cohort_type as string) || '',
+              'edition.city': (edition.city as string) || '',
+              'edition.forge_start_date': formatDate(edition.forge_start_date as string),
+              'edition.forge_end_date': formatDate(edition.forge_end_date as string),
               'app.login_url': 'https://app.forgebylevelup.com/auth',
               'app.name': 'The Forge',
             };
@@ -444,10 +545,7 @@ serve(async (req) => {
 
             const resendRes = await fetch('https://api.resend.com/emails', {
               method: 'POST',
-              headers: {
-                Authorization: `Bearer ${resendApiKey}`,
-                'Content-Type': 'application/json',
-              },
+              headers: { Authorization: `Bearer ${resendApiKey}`, 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 from: `${sender.display_name} <${sender.email}>`,
                 to: [studentData.email],
@@ -466,15 +564,14 @@ serve(async (req) => {
             if (resendRes.ok) {
               emailSent = true;
               emailMessageId = resendBody.id;
-              console.log(`📧 Welcome email sent → ${studentData.email} (${resendBody.id})`);
+              console.log(`📧 Welcome email sent → ${studentData.email}`);
             } else {
-              console.error('⚠️  Resend error (non-fatal):', resendBody);
+              console.error('⚠️  Resend error:', resendBody);
             }
 
-            // Log to email_sends for audit trail.
             await admin.from('email_sends').insert({
               template_id: template.id,
-              template_version: 1,
+              template_version: template.current_version ?? 1,
               sender_identity_id: template.default_sender_id,
               recipient_email: studentData.email,
               recipient_user_id: userId,
@@ -486,15 +583,10 @@ serve(async (req) => {
               trigger_type: 'automated',
             });
           }
-        } else {
-          console.log('ℹ️  No active student-welcome template found — skipping email');
         }
       } catch (emailErr) {
-        // Email failure is non-fatal — student can be sent credentials manually.
-        console.error('⚠️  Email send failed (non-fatal):', emailErr);
+        console.error('⚠️  Email error (non-fatal):', emailErr);
       }
-    } else {
-      console.log('ℹ️  RESEND_API_KEY not set — skipping email');
     }
 
     // ── Log success ────────────────────────────────────────────────────────
@@ -508,18 +600,15 @@ serve(async (req) => {
       triggered_by: triggeredBy,
     });
 
-    console.log(`🎉 Onboarded ${studentData.full_name} (${studentData.email}) → ${edition.name} [${userAction}]`);
+    console.log(`🎉 Onboarded ${studentData.full_name} → ${edition.name} [${userAction}]`);
 
     return json({
       success: true,
       status: 'success',
       action: userAction,
       user_id: userId,
-      edition: {
-        id: edition.id,
-        name: edition.name,
-        cohort_type: edition.cohort_type,
-      },
+      edition: { id: edition.id, name: edition.name, cohort_type: edition.cohort_type },
+      edition_created: !existingMapping,
       email_sent: emailSent,
       message: userAction === 'created'
         ? 'Student account created and onboarded successfully'
@@ -527,9 +616,6 @@ serve(async (req) => {
     });
   } catch (err) {
     console.error('[forge-onboard-student] unexpected error:', err);
-    return json({
-      error: 'Internal server error',
-      detail: err instanceof Error ? err.message : String(err),
-    }, 500);
+    return json({ error: 'Internal server error', detail: err instanceof Error ? err.message : String(err) }, 500);
   }
 });
