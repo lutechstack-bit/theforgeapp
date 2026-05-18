@@ -2513,6 +2513,132 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_automation_config: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          min_payment: number | null
+          notification_email: string | null
+          notify_on_failure: boolean | null
+          notify_on_success: boolean | null
+          product_mappings: Json | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          min_payment?: number | null
+          notification_email?: string | null
+          notify_on_failure?: boolean | null
+          notify_on_success?: boolean | null
+          product_mappings?: Json | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          min_payment?: number | null
+          notification_email?: string | null
+          notify_on_failure?: boolean | null
+          notify_on_success?: boolean | null
+          product_mappings?: Json | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      onboarding_automation_logs: {
+        Row: {
+          created_at: string | null
+          created_profile_id: string | null
+          created_user_id: string | null
+          email_message_id: string | null
+          email_sent: boolean | null
+          error_details: Json | null
+          error_message: string | null
+          id: string
+          matched_cohort_type: string | null
+          matched_edition_id: string | null
+          matched_edition_name: string | null
+          payment_amount: number | null
+          sheet_batch: string | null
+          sheet_product: string | null
+          status: string
+          student_email: string
+          student_id: string
+          student_name: string | null
+          student_phone: string | null
+          trigger_source: string | null
+          triggered_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_profile_id?: string | null
+          created_user_id?: string | null
+          email_message_id?: string | null
+          email_sent?: boolean | null
+          error_details?: Json | null
+          error_message?: string | null
+          id?: string
+          matched_cohort_type?: string | null
+          matched_edition_id?: string | null
+          matched_edition_name?: string | null
+          payment_amount?: number | null
+          sheet_batch?: string | null
+          sheet_product?: string | null
+          status: string
+          student_email: string
+          student_id: string
+          student_name?: string | null
+          student_phone?: string | null
+          trigger_source?: string | null
+          triggered_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_profile_id?: string | null
+          created_user_id?: string | null
+          email_message_id?: string | null
+          email_sent?: boolean | null
+          error_details?: Json | null
+          error_message?: string | null
+          id?: string
+          matched_cohort_type?: string | null
+          matched_edition_id?: string | null
+          matched_edition_name?: string | null
+          payment_amount?: number | null
+          sheet_batch?: string | null
+          sheet_product?: string | null
+          status?: string
+          student_email?: string
+          student_id?: string
+          student_name?: string | null
+          student_phone?: string | null
+          trigger_source?: string | null
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_automation_logs_created_profile_id_fkey"
+            columns: ["created_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_automation_logs_matched_edition_id_fkey"
+            columns: ["matched_edition_id"]
+            isOneToOne: false
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_checklist: {
         Row: {
           completed_at: string | null
