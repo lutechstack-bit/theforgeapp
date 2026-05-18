@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The Forge — Live Data · FC E5 · Day 5 of 7</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @font-face { font-family: 'OpenSauceOne'; src: url('public/fonts/OpenSauceOne-Light.woff2') format('woff2'); font-weight: 300; font-display: swap; }
+  @font-face { font-family: 'OpenSauceOne'; src: url('public/fonts/OpenSauceOne-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+  @font-face { font-family: 'OpenSauceOne'; src: url('public/fonts/OpenSauceOne-Medium.woff2') format('woff2'); font-weight: 500; font-display: swap; }
+  @font-face { font-family: 'OpenSauceOne'; src: url('public/fonts/OpenSauceOne-SemiBold.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+  @font-face { font-family: 'OpenSauceOne'; src: url('public/fonts/OpenSauceOne-Bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+  @font-face { font-family: 'OpenSauceOne'; src: url('public/fonts/OpenSauceOne-ExtraBold.woff2') format('woff2'); font-weight: 800; font-display: swap; }
+  @font-face { font-family: 'OpenSauceOne'; src: url('public/fonts/OpenSauceOne-Black.woff2') format('woff2'); font-weight: 900; font-display: swap; }
+
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 40 68% 96%;
+    --primary: 41 100% 62%;
+    --primary-foreground: 0 0% 0%;
+    --accent: 39 90% 44%;
+    --forge-yellow: 41 100% 62%;
+    --forge-gold: 39 90% 44%;
+    --forge-orange: 27 85% 48%;
+    --forge-cream: 40 68% 96%;
+    --bg: hsl(var(--background));
+    --fg: hsl(var(--foreground));
+    --yellow: hsl(var(--forge-yellow));
+    --gold: hsl(var(--forge-gold));
+    --orange: hsl(var(--forge-orange));
+    --line: hsl(var(--forge-cream) / 0.08);
+    --line-2: hsl(var(--forge-cream) / 0.14);
+    --muted: hsl(var(--forge-cream) / 0.55);
+    --muted-2: hsl(var(--forge-cream) / 0.35);
+    --surface: hsl(var(--forge-cream) / 0.025);
+    --surface-2: hsl(var(--forge-cream) / 0.04);
+    --shadow-glow: 0 0 30px hsl(var(--primary) / 0.25);
+    --emerald: 158 64% 52%;
+    --rose: 351 95% 71%;
+    --blue: 217 91% 60%;
+    --purple: 270 76% 66%;
+    --amber: 38 92% 50%;
+  }
+  * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  html, body { font-family: 'OpenSauceOne', system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; }
+  .dot { width: 6px; height: 6px; border-radius: 999px; }
+  .gradient-text { background: linear-gradient(135deg, var(--yellow) 0%, var(--orange) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; border-radius: 8px; font-size: 14px; font-weight: 500; transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; border: 1px solid transparent; user-select: none; font-family: inherit; }
+  .btn:active { transform: scale(0.98); }
+  .btn:focus-visible { outline: 2px solid hsl(var(--primary) / 0.7); outline-offset: 2px; }
+  .btn-primary { background: var(--yellow); color: #000; box-shadow: var(--shadow-glow); }
+  .btn-primary:hover { background: hsl(var(--forge-yellow) / 0.9); transform: scale(1.01); box-shadow: 0 0 40px hsl(var(--primary) / 0.45); }
+  .btn-outline { background: transparent; color: var(--fg); border-color: var(--line-2); }
+  .btn-outline:hover { background: var(--surface-2); border-color: hsl(var(--primary) / 0.3); }
+  .btn-ghost { background: transparent; color: var(--fg); }
+  .btn-ghost:hover { background: var(--surface); }
+  .btn-glass { background: hsl(var(--forge-cream) / 0.06); backdrop-filter: blur(8px); color: var(--fg); border-color: hsl(var(--forge-cream) / 0.18); }
+  .btn-glass:hover { background: hsl(var(--forge-cream) / 0.12); border-color: hsl(var(--forge-cream) / 0.28); }
+  .btn-sm { height: 32px; padding: 0 12px; font-size: 12px; border-radius: 6px; }
+  .btn-md { height: 40px; padding: 0 16px; }
+  .btn-lg { height: 48px; padding: 0 24px; font-size: 15px; }
+  .btn-icon { height: 36px; width: 36px; padding: 0; }
+
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 500; border: 1px solid var(--line-2); background: transparent; color: var(--muted); cursor: pointer; transition: all 200ms; user-select: none; font-family: inherit; }
+  .chip:hover { color: var(--fg); border-color: hsl(var(--primary) / 0.4); }
+  .chip[aria-pressed="true"] { background: var(--yellow); color: #000; border-color: var(--yellow); box-shadow: 0 0 20px hsl(var(--primary) / 0.3); }
+
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 10px; color: var(--muted); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 200ms; user-select: none; }
+  .nav-item:hover { background: var(--surface); color: var(--fg); }
+  .nav-item.active { background: hsl(var(--primary) / 0.1); color: var(--yellow); }
+  .nav-item.active svg { filter: drop-shadow(0 0 6px hsl(var(--primary) / 0.4)); }
+
+  .tab { padding: 14px 16px; font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 200ms; user-select: none; font-family: inherit; background: transparent; border-left: 0; border-right: 0; border-top: 0; }
+  .tab:hover { color: var(--fg); }
+  .tab.active { color: var(--yellow); border-bottom-color: var(--yellow); }
+
+  .date-pill { flex: 0 0 auto; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line-2); background: var(--surface); display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 68px; cursor: pointer; transition: all 200ms; user-select: none; font-family: inherit; }
+  .date-pill:hover { border-color: hsl(var(--primary) / 0.4); }
+  .date-pill.active { background: var(--yellow); color: #000; border-color: var(--yellow); box-shadow: 0 0 24px hsl(var(--primary) / 0.35); }
+  .date-pill.done { opacity: 0.5; }
+  .date-pill .dom { font-size: 18px; font-weight: 600; line-height: 1; }
+  .date-pill .dow { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7; }
+
+  .check { width: 20px; height: 20px; border-radius: 5px; border: 1.5px solid hsl(var(--forge-cream) / 0.25); display: inline-grid; place-items: center; flex-shrink: 0; cursor: pointer; transition: all 200ms; background: transparent; }
+  .check:hover { border-color: var(--yellow); }
+  .check[aria-checked="true"] { background: var(--yellow); border-color: var(--yellow); box-shadow: 0 0 12px hsl(var(--primary) / 0.4); }
+  .check svg { opacity: 0; transition: opacity 150ms; }
+  .check[aria-checked="true"] svg { opacity: 1; }
+
+  .switcher { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 100; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); border: 1px solid var(--line-2); border-radius: 999px; padding: 4px; display: flex; gap: 2px; }
+  .switcher button { padding: 7px 14px; border-radius: 999px; font-size: 12px; font-weight: 500; color: var(--muted); transition: all 200ms; cursor: pointer; border: none; background: transparent; font-family: inherit; }
+  .switcher button:hover { color: var(--fg); }
+  .switcher button.active { background: var(--yellow); color: #000; }
+
+  #toast-host { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+  .toast { background: var(--bg); color: var(--fg); border: 1px solid var(--line-2); border-radius: 10px; padding: 10px 16px; font-size: 13px; font-weight: 500; box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 24px hsl(var(--primary) / 0.15); display: flex; align-items: center; gap: 10px; opacity: 0; transform: translateY(8px); transition: opacity 200ms, transform 200ms; pointer-events: auto; }
+  .toast.in { opacity: 1; transform: translateY(0); }
+  .toast .dot-yellow { width: 8px; height: 8px; border-radius: 999px; background: var(--yellow); box-shadow: 0 0 10px var(--yellow); }
+  .toast.live { border-color: hsl(var(--rose) / 0.4); }
+  .toast.live .dot-yellow { background: hsl(var(--rose)); box-shadow: 0 0 10px hsl(var(--rose)); }
+
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+  .scrollbar-none { scrollbar-width: none; }
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display: none; }
+  .hidden-screen { display: none; }
+  .visible-screen { display: block; }
+  .glow-yellow { box-shadow: 0 0 0 1px hsl(var(--primary) / 0.3), 0 0 30px hsl(var(--primary) / 0.25); }
+  .glow-rose { box-shadow: 0 0 0 1px hsl(var(--rose) / 0.4), 0 0 30px hsl(var(--rose) / 0.3); }
+  .grain::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.4; background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 3px 3px; }
+
+  .hero-grad-physical {
+    background:
+      radial-gradient(ellipse 80% 70% at 70% 0%, hsl(var(--rose) / 0.45) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 20% 30%, hsl(var(--forge-orange) / 0.35) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 40% at 50% 100%, hsl(var(--forge-yellow) / 0.2) 0%, transparent 60%),
+      #000;
+  }
+  .mesh-day {
+    background:
+      radial-gradient(circle at 30% 30%, hsl(var(--forge-yellow) / 0.5) 0%, transparent 45%),
+      radial-gradient(circle at 80% 80%, hsl(var(--rose) / 0.4) 0%, transparent 45%),
+      linear-gradient(135deg, #1a0900 0%, #000 100%);
+  }
+  .mesh-2 {
+    background:
+      radial-gradient(circle at 70% 30%, hsl(var(--forge-yellow) / 0.35) 0%, transparent 45%),
+      radial-gradient(circle at 30% 70%, hsl(var(--forge-gold) / 0.3) 0%, transparent 45%),
+      #000;
+  }
+  .mesh-3 {
+    background:
+      radial-gradient(circle at 50% 100%, hsl(var(--forge-orange) / 0.4) 0%, transparent 50%),
+      radial-gradient(circle at 0% 0%, hsl(var(--forge-cream) / 0.05) 0%, transparent 30%),
+      #000;
+  }
+
+  .photo-mood-1 { background: linear-gradient(160deg, #fbbf24 0%, #92400e 50%, #1c1917 100%); position: relative; overflow: hidden; }
+  .photo-mood-2 { background: linear-gradient(140deg, #831843 0%, #44403c 50%, #0c0a09 100%); }
+  .photo-mood-3 { background: linear-gradient(180deg, #fcd34d 0%, #b45309 50%, #1c1917 100%); }
+  .photo-mood-4 { background: linear-gradient(120deg, #064e3b 0%, #1e293b 60%, #000 100%); }
+
+  .ring-bg { stroke: hsl(var(--forge-cream) / 0.1); }
+  .ring-fg { stroke: var(--yellow); transform: rotate(-90deg); transform-origin: center; }
+
+  a.link { color: var(--yellow); cursor: pointer; transition: opacity 150ms; }
+  a.link:hover { opacity: 0.85; text-decoration: underline; text-underline-offset: 4px; }
+
+  /* live data badge */
+  .live-data-badge {
+    position: fixed; bottom: 16px; right: 16px; z-index: 90;
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+    border: 1px solid hsl(var(--rose) / 0.3);
+    border-radius: 999px; padding: 6px 12px;
+    font-size: 11px; font-weight: 500;
+    color: var(--muted);
+  }
+  .live-data-badge .dot { background: hsl(var(--rose)); box-shadow: 0 0 8px hsl(var(--rose)); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* stage color helpers (matching journey_stages.color) */
+  .stage-color-emerald { color: hsl(var(--emerald)); }
+  .stage-color-amber { color: hsl(var(--amber)); }
+  .stage-color-blue { color: hsl(var(--blue)); }
+  .stage-color-purple { color: hsl(var(--purple)); }
+  .stage-color-rose { color: hsl(var(--rose)); }
+  .stage-color-primary { color: var(--yellow); }
+</style>
+</head>
+<body>
+
+<div id="toast-host"></div>
+
+<div class="live-data-badge">
+  <span class="dot"></span>
+  Live data · Forge Creator Residency E5 · Day 5 of 7
+</div>
+
+<div class="switcher">
+  <button onclick="show('home')" id="btn-home" class="active">Home</button>
+  <button onclick="show('journey')" id="btn-journey">Roadmap · Journey</button>
+  <button onclick="show('tasks')" id="btn-tasks">Roadmap · Tasks</button>
+  <button onclick="show('profile')" id="btn-profile">Profile</button>
+</div>
+
+<div class="flex min-h-screen">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="hidden lg:flex flex-col w-[240px] border-r border-[var(--line)] py-5 px-3 sticky top-0 h-screen">
+    <div class="px-3 mb-8">
+      <img src="src/assets/forge-logo-light.png" alt="The Forge" class="h-10 w-auto" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"/>
+      <div class="hidden items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-[var(--yellow)] grid place-items-center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#000"><path d="M12 2 L4 13 H10 L8 22 L20 9 H14 L16 2 Z"/></svg>
+        </div>
+        <span class="text-xl font-semibold tracking-tight">The Forge</span>
+      </div>
+    </div>
+
+    <nav class="flex flex-col gap-1" id="sidebar-nav">
+      <div class="nav-item active" data-screen="home">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 9.5V21h14V9.5"/></svg>Home
+      </div>
+      <div class="nav-item" onclick="toast('Community')">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Community
+      </div>
+      <div class="nav-item" data-screen="journey">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 20l-5-5 5-5M15 4l5 5-5 5"/><path d="M4 15h12a4 4 0 004-4V9"/></svg>Roadmap
+      </div>
+      <div class="nav-item" onclick="toast('Learn')">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2zM22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>Learn
+      </div>
+      <div class="nav-item" onclick="toast('Perks')">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20 12v10H4V12M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>Perks
+      </div>
+      <div class="nav-item" onclick="toast('Events · 3 visible')">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Events
+      </div>
+      <div class="nav-item" onclick="toast('Updates · v1.4.0 latest')">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>Updates
+      </div>
+    </nav>
+
+    <div class="mt-auto px-2 pt-4 border-t border-[var(--line)]">
+      <div class="nav-item" data-screen="profile">
+        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--yellow)] to-[var(--orange)] grid place-items-center text-[11px] font-semibold text-black">FC</div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm truncate text-[var(--fg)]">Forge Creator</p>
+          <p class="text-[11px] text-[var(--muted)]">FC E5 · Goa</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="flex-1 min-w-0">
+
+    <!-- ============================================================ -->
+    <!-- SCREEN 1 · HOME (DAY 5 — IN BOOTCAMP)                          -->
+    <!-- ============================================================ -->
+    <div id="screen-home" class="visible-screen">
+
+      <!-- HERO -->
+      <section class="relative hero-grad-physical grain border-b border-[var(--line)] overflow-hidden">
+        <div class="absolute inset-0 opacity-30 pointer-events-none">
+          <div class="absolute -top-32 -right-20 w-[500px] h-[500px] rounded-full bg-[hsl(var(--rose))] blur-[120px]"></div>
+          <div class="absolute -bottom-40 -left-20 w-[400px] h-[400px] rounded-full bg-[var(--orange)] blur-[120px]"></div>
+        </div>
+        <div class="relative max-w-7xl mx-auto px-8 py-20">
+          <div class="flex items-center gap-2 mb-6 text-xs uppercase tracking-[0.2em] font-medium" style="color: hsl(var(--rose));">
+            <span class="dot" style="background: hsl(var(--rose));"></span>
+            Forge Creator Residency · Edition 5 · Goa · Day 5 of 7
+          </div>
+          <h1 class="text-[clamp(48px,8vw,96px)] font-extrabold leading-[1.0] tracking-[-0.03em] mb-6 max-w-4xl">
+            Halfway through. <span class="gradient-text font-black">Demo Day in 2.</span>
+          </h1>
+          <p class="text-lg text-[var(--muted)] max-w-xl mb-10">You're in the Physical Forge stage. Today is Thursday, May 8 — the second-to-last shoot day before Demo Day on Saturday.</p>
+
+          <div class="flex flex-wrap items-end gap-x-10 gap-y-6">
+            <div>
+              <p class="text-[11px] uppercase tracking-[0.15em] text-[var(--muted)] mb-2 font-medium">Demo Day in</p>
+              <div class="flex items-baseline gap-3">
+                <div><span class="text-6xl font-extrabold">02</span><span class="text-sm text-[var(--muted)] ml-1">d</span></div>
+                <div><span class="text-4xl font-bold text-[var(--muted)]">14</span><span class="text-sm text-[var(--muted)] ml-1">h</span></div>
+                <div><span class="text-4xl font-bold text-[var(--muted)]">22</span><span class="text-sm text-[var(--muted)] ml-1">m</span></div>
+              </div>
+            </div>
+            <div class="h-12 w-px bg-[var(--line-2)]"></div>
+            <div>
+              <p class="text-[11px] uppercase tracking-[0.15em] text-[var(--muted)] mb-2 font-medium">Stage 5 of 6</p>
+              <div class="flex items-center gap-3">
+                <span class="text-2xl font-bold" style="color: hsl(var(--rose));">Physical Forge</span>
+                <div class="w-32 h-1 bg-[var(--line)] rounded-full overflow-hidden">
+                  <div class="h-full bg-gradient-to-r from-[var(--yellow)] to-[hsl(var(--rose))]" style="width:71%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="max-w-7xl mx-auto px-8 py-12 space-y-12">
+
+        <!-- ONBOARDING STEPS (real Pre-Registration tasks from journey_tasks) -->
+        <section>
+          <div class="flex items-end justify-between mb-5">
+            <div>
+              <h2 class="text-3xl font-bold">Pre-Registration · all done</h2>
+              <p class="text-sm text-[var(--muted)] mt-1">From your <code class="text-xs bg-[var(--surface)] px-2 py-0.5 rounded">journey_stages</code> · stage_key <code class="text-xs bg-[var(--surface)] px-2 py-0.5 rounded">pre_registration</code></p>
+            </div>
+            <span class="text-sm text-[var(--muted)]">6 of 6 complete</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="onboarding-grid"></div>
+        </section>
+
+        <!-- TODAY'S BOOTCAMP CARD (replaces live session — they're already in physical) -->
+        <section>
+          <div class="panel p-7 grid grid-cols-12 gap-6 relative overflow-hidden">
+            <div class="absolute -top-20 -right-20 w-64 h-64 rounded-full blur-3xl pointer-events-none" style="background: hsl(var(--rose) / 0.15);"></div>
+            <div class="col-span-12 md:col-span-7 relative">
+              <div class="flex items-center gap-2 mb-3 flex-wrap">
+                <span class="pill border font-medium" style="background: hsl(var(--rose) / 0.15); color: hsl(var(--rose)); border-color: hsl(var(--rose) / 0.3);">
+                  <span class="dot" style="background: hsl(var(--rose));"></span>BAMBOLIM · LIVE NOW
+                </span>
+                <span class="text-xs text-[var(--muted)]">May 8 · Day 5 of 7 · Bambolim Beach Resort</span>
+              </div>
+              <p class="text-[10px] uppercase tracking-[0.18em] text-[var(--muted)] mb-1 font-medium">Physical Forge · stage 5 of 6</p>
+              <h3 class="text-3xl font-bold mb-3 leading-tight">Day 5 — your second shoot day</h3>
+              <p class="text-sm text-[var(--muted)] mb-5 max-w-md">Continue with your scheduled production blocks. Don't forget to share BTS in community and complete your daily reflection.</p>
+              <div class="flex items-center gap-3 flex-wrap">
+                <button class="btn btn-primary btn-md" onclick="toast('Opening today&apos;s schedule')">View today's schedule →</button>
+                <button class="btn btn-outline btn-md" data-screen="tasks">Open today's tasks</button>
+              </div>
+            </div>
+            <div class="col-span-12 md:col-span-5 relative">
+              <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-3 font-medium">Today's Physical Forge tasks</p>
+              <div class="space-y-2 text-sm" id="today-tasks-card"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- JOURNEY TIMELINE (real 6 stages from journey_stages) -->
+        <section>
+          <div class="flex items-end justify-between mb-5">
+            <div>
+              <h2 class="text-3xl font-bold">Your journey</h2>
+              <p class="text-sm text-[var(--muted)] mt-1">6 stages · sourced from <code class="text-xs bg-[var(--surface)] px-2 py-0.5 rounded">journey_stages</code></p>
+            </div>
+            <a class="link text-sm" data-screen="journey">Open full roadmap →</a>
+          </div>
+
+          <div class="panel p-6">
+            <div class="relative">
+              <div class="absolute left-0 right-0 top-7 h-px bg-[var(--line)]"></div>
+              <div class="absolute left-0 top-7 h-px bg-gradient-to-r from-[var(--yellow)] to-[hsl(var(--rose))]" style="width:75%"></div>
+              <div class="grid grid-cols-3 lg:grid-cols-6 gap-2 relative" id="journey-stages-strip"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- MENTORS STRIP (real mentors from mentors table) -->
+        <section>
+          <div class="flex items-end justify-between mb-5">
+            <div>
+              <h2 class="text-3xl font-bold">Your mentors here</h2>
+              <p class="text-sm text-[var(--muted)] mt-1">From <code class="text-xs bg-[var(--surface)] px-2 py-0.5 rounded">mentors</code> table</p>
+            </div>
+            <a class="link text-sm" onclick="toast('Opening mentor directory')">See all mentors →</a>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="mentors-grid"></div>
+        </section>
+
+        <!-- ALUMNI SHOWCASE (real Vimeo reels for FORGE_CREATORS) -->
+        <section>
+          <div class="flex items-end justify-between mb-5">
+            <div>
+              <p class="text-[10px] uppercase tracking-[0.18em] text-[var(--gold)] mb-1 font-semibold">Past editions</p>
+              <h2 class="text-3xl font-bold">Alumni showcase</h2>
+              <p class="text-xs text-[var(--muted)] mt-1">4 reels from <code class="text-xs bg-[var(--surface)] px-2 py-0.5 rounded">alumni_showcase</code> · cohort_type FORGE_CREATORS</p>
+            </div>
+            <a class="link text-sm" onclick="toast('Opening alumni gallery')">View all →</a>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="alumni-grid"></div>
+        </section>
+
+        <!-- TRAVEL & STAY (real edition data) -->
+        <section class="grid grid-cols-12 gap-6">
+          <div class="col-span-12 lg:col-span-8 panel overflow-hidden">
+            <div class="aspect-[16/8] photo-mood-3 relative">
+              <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+              <div class="absolute bottom-6 left-6 right-6">
+                <p class="text-[10px] uppercase tracking-[0.2em] text-[var(--yellow)] mb-2 font-semibold">Where you are now</p>
+                <h3 class="text-3xl font-bold mb-1">Goa · Forge Creator Residency E5</h3>
+                <p class="text-sm text-[var(--muted)]">May 4 → May 10 · 7 nights · today is day 5</p>
+              </div>
+            </div>
+            <div class="p-5 grid grid-cols-3 gap-4 text-sm">
+              <div><p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-1 font-medium">Started</p><p>Sun, May 4</p></div>
+              <div><p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-1 font-medium">Today</p><p style="color: hsl(var(--rose));">Thu, May 8 · D5</p></div>
+              <div><p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-1 font-medium">Demo Day</p><p>Sat, May 10</p></div>
+            </div>
+          </div>
+          <div class="col-span-12 lg:col-span-4 panel p-6 flex flex-col">
+            <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-3 font-medium">Other active editions</p>
+            <div class="space-y-2 text-sm flex-1" id="other-editions"></div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+
+    <!-- ============================================================ -->
+    <!-- SCREEN 2 · ROADMAP / JOURNEY                                   -->
+    <!-- ============================================================ -->
+    <div id="screen-journey" class="hidden-screen">
+
+      <div class="border-b border-[var(--line)] sticky top-0 bg-black/85 backdrop-blur z-20">
+        <div class="max-w-7xl mx-auto px-8 pt-5">
+          <p class="text-[10px] uppercase tracking-[0.2em] text-[var(--gold)] mb-1 font-semibold">Forge Creator Residency · Edition 5 · Goa</p>
+          <h1 class="text-3xl font-bold mb-5">Your Roadmap</h1>
+          <nav class="flex items-center gap-1 overflow-x-auto scrollbar-none" id="roadmap-tabs">
+            <button class="tab active" data-tab="journey">Journey</button>
+            <button class="tab" data-tab="tasks" data-screen-target="tasks">Tasks</button>
+            <button class="tab" data-tab="prep">Prep</button>
+            <button class="tab" data-tab="equipment">Equipment</button>
+            <button class="tab" data-tab="rules">Rules</button>
+            <button class="tab" data-tab="gallery">Gallery</button>
+            <button class="tab" data-tab="films">Films</button>
+          </nav>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-8 py-8 space-y-8">
+
+        <div class="flex items-center gap-2" id="phase-tabs">
+          <button class="chip" aria-pressed="false" data-phase="online">Online Sessions</button>
+          <button class="chip" aria-pressed="true" data-phase="bootcamp">Bootcamp Days <span class="opacity-60">· 7</span></button>
+        </div>
+
+        <div class="panel p-5">
+          <div class="flex items-center justify-between mb-4">
+            <p class="text-sm text-[var(--muted)]">May 4 – May 10 · Bambolim, Goa</p>
+            <div class="flex items-center gap-1">
+              <button class="btn btn-ghost btn-icon" onclick="toast('Previous')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+              <button class="btn btn-ghost btn-icon" onclick="toast('Next')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+            </div>
+          </div>
+          <div class="flex gap-2 overflow-x-auto scrollbar-none pb-1" id="date-pills"></div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-6">
+
+          <div class="col-span-12 lg:col-span-8 panel overflow-hidden">
+            <div class="aspect-[16/7] mesh-day relative">
+              <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+              <div class="absolute top-4 left-5 right-5 flex items-start justify-between">
+                <span class="pill border font-medium" style="background: hsl(var(--rose) / 0.2); color: hsl(var(--rose)); border-color: hsl(var(--rose) / 0.3);">
+                  <span class="dot" style="background: hsl(var(--rose));"></span>TODAY · MAY 8
+                </span>
+                <span class="pill bg-black/60 backdrop-blur">Day 5 of 7</span>
+              </div>
+              <div class="absolute bottom-5 left-5 right-5">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-[var(--yellow)] mb-1 font-semibold" id="session-stage">Physical Forge · Stage 5 of 6</p>
+                <h2 class="text-4xl font-bold leading-tight" id="session-title">Day 5 — Shoot Day 2</h2>
+              </div>
+            </div>
+
+            <div class="p-7">
+              <p class="text-[var(--muted)] leading-relaxed mb-6 max-w-2xl" id="session-desc">
+                Your second full shoot day at Bambolim. Continue capturing the footage you need for your final edit. Daily reflection and BTS post are required check-ins.
+              </p>
+
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 pb-6 border-b border-[var(--line)]" id="session-meta">
+                <div>
+                  <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-1 font-medium">Date</p>
+                  <p class="text-sm">Thu, May 8</p>
+                </div>
+                <div>
+                  <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-1 font-medium">Cohort</p>
+                  <p class="text-sm">Forge Creators</p>
+                </div>
+                <div>
+                  <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-1 font-medium">Edition</p>
+                  <p class="text-sm">E5 · Goa</p>
+                </div>
+                <div>
+                  <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-1 font-medium">Location</p>
+                  <p class="text-sm">Bambolim Beach Resort</p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3 mb-7 flex-wrap">
+                <button class="btn btn-primary btn-md" onclick="toast('Opening community to share BTS')">Share BTS in community →</button>
+                <button class="btn btn-outline btn-md" data-screen="tasks">Open today's tasks</button>
+              </div>
+
+              <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-3 font-medium">Today's required tasks (from journey_tasks)</p>
+              <ol class="space-y-3 text-sm" id="day-tasks-list"></ol>
+            </div>
+          </div>
+
+          <aside class="col-span-12 lg:col-span-4 space-y-4">
+            <div class="panel p-5">
+              <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-4 font-medium">Mentors on site</p>
+              <div class="space-y-3" id="mentor-rail"></div>
+            </div>
+
+            <div class="panel p-5">
+              <div class="flex items-center justify-between mb-3">
+                <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] font-medium">What's next</p>
+              </div>
+              <div class="space-y-2.5 text-sm" id="next-days"></div>
+            </div>
+          </aside>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ============================================================ -->
+    <!-- SCREEN 3 · ROADMAP / TASKS                                     -->
+    <!-- ============================================================ -->
+    <div id="screen-tasks" class="hidden-screen">
+
+      <div class="border-b border-[var(--line)] sticky top-0 bg-black/85 backdrop-blur z-20">
+        <div class="max-w-7xl mx-auto px-8 pt-5">
+          <p class="text-[10px] uppercase tracking-[0.2em] text-[var(--gold)] mb-1 font-semibold">Forge Creator Residency · Edition 5 · Goa</p>
+          <h1 class="text-3xl font-bold mb-5">Your Roadmap</h1>
+          <nav class="flex items-center gap-1 overflow-x-auto scrollbar-none">
+            <button class="tab" onclick="show('journey')">Journey</button>
+            <button class="tab active">Tasks</button>
+            <button class="tab" onclick="toast('Prep tab')">Prep</button>
+            <button class="tab" onclick="toast('Equipment tab')">Equipment</button>
+            <button class="tab" onclick="toast('Rules tab')">Rules</button>
+            <button class="tab" onclick="toast('Gallery tab')">Gallery</button>
+            <button class="tab" onclick="toast('Films tab')">Films</button>
+          </nav>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-8 py-8">
+
+        <div class="panel p-7 mb-6 grid grid-cols-12 gap-6 items-center">
+          <div class="col-span-12 md:col-span-3 flex items-center gap-5">
+            <div class="relative w-24 h-24 shrink-0">
+              <svg viewBox="0 0 100 100" class="w-full h-full">
+                <circle cx="50" cy="50" r="44" fill="none" class="ring-bg" stroke-width="6"/>
+                <circle cx="50" cy="50" r="44" fill="none" class="ring-fg" stroke-width="6" stroke-linecap="round" stroke-dasharray="276" stroke-dashoffset="92" id="progress-ring"/>
+              </svg>
+              <div class="absolute inset-0 grid place-items-center">
+                <div class="text-center">
+                  <p class="text-2xl font-bold leading-none" id="ring-done">17</p>
+                  <p class="text-[9px] uppercase tracking-wider text-[var(--muted)] font-medium">/ 25</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-1 font-medium">Tasks</p>
+              <p class="text-3xl font-bold leading-none" id="ring-pct">68%</p>
+              <p class="text-xs text-[var(--muted)] mt-1" id="ring-detail">17 done · 8 to go</p>
+            </div>
+          </div>
+
+          <div class="col-span-12 md:col-span-6 border-l border-[var(--line)] pl-6">
+            <p class="text-[10px] uppercase tracking-wider mb-1 font-semibold stage-color-rose">Current stage</p>
+            <p class="text-2xl font-bold mb-1.5">Physical Forge</p>
+            <div class="flex items-center gap-3 mb-3">
+              <div class="flex-1 h-1.5 bg-[var(--line)] rounded-full overflow-hidden">
+                <div class="h-full" style="width:60%; background: hsl(var(--rose));" id="stage-bar"></div>
+              </div>
+              <span class="text-xs text-[var(--muted)]" id="stage-count">3 / 5</span>
+            </div>
+            <p class="text-xs text-[var(--muted)]">Stage 5 of 6 · the immersive in-person experience</p>
+          </div>
+
+          <div class="col-span-12 md:col-span-3 border-l border-[var(--line)] pl-6">
+            <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-1 font-medium">Demo Day in</p>
+            <p class="text-3xl font-bold leading-none">02 days</p>
+            <p class="text-xs text-[var(--muted)] mt-1">May 10 · Saturday</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 mb-6 flex-wrap" id="task-filters">
+          <button class="chip" aria-pressed="true" data-filter="all">All Tasks <span class="opacity-60">· <span data-count-all>25</span></span></button>
+          <button class="chip" aria-pressed="false" data-filter="required">Required <span class="opacity-60">· <span data-count-req>25</span></span></button>
+          <button class="chip" aria-pressed="false" data-filter="optional">Optional <span class="opacity-60">· <span data-count-opt>0</span></span></button>
+          <span class="ml-auto text-xs text-[var(--muted)] hidden md:block">All 6 stages from journey_stages · 25 tasks for FORGE_CREATORS</span>
+        </div>
+
+        <div class="space-y-4" id="stages"></div>
+
+      </div>
+    </div>
+
+
+    <!-- ============================================================ -->
+    <!-- SCREEN 4 · PROFILE                                             -->
+    <!-- ============================================================ -->
+    <div id="screen-profile" class="hidden-screen">
+
+      <div class="max-w-7xl mx-auto px-8 py-8">
+        <div class="grid grid-cols-12 gap-4 auto-rows-[minmax(120px,auto)]">
+
+          <div class="col-span-12 lg:col-span-8 lg:row-span-2 panel mesh-2 grain relative overflow-hidden p-8 flex flex-col justify-end min-h-[320px]">
+            <div class="absolute top-6 right-6 flex items-center gap-2">
+              <button class="btn btn-glass btn-sm" onclick="toast('Edit profile')">Edit profile</button>
+              <button class="btn btn-glass btn-icon" onclick="toast('Share')">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              </button>
+            </div>
+            <div class="flex items-end gap-5 relative">
+              <div class="w-28 h-28 rounded-full bg-gradient-to-br from-[var(--yellow)] to-[var(--orange)] border-4 border-black grid place-items-center text-black text-3xl font-extrabold">FC</div>
+              <div class="pb-1">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-[var(--yellow)] mb-1 font-semibold">Forge Creator Residency · Edition 5</p>
+                <h1 class="text-4xl font-extrabold leading-none mb-2">Forge Creator</h1>
+                <p class="text-[var(--muted)]">Goa · May 4 – 10 · Day 5 of 7</p>
+                <p class="text-[11px] text-[var(--muted-2)] mt-1">profiles table is RLS-protected · using cohort placeholder</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-span-6 lg:col-span-4 panel p-5">
+            <div class="flex items-center justify-between mb-4">
+              <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] font-medium">Cohort progress</p>
+              <span class="text-[10px] text-[var(--muted)]">Stage 5 of 6</span>
+            </div>
+            <div class="space-y-2" id="profile-stages"></div>
+          </div>
+
+          <div class="col-span-6 lg:col-span-4 panel p-5 flex flex-col justify-between">
+            <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] font-medium">App version</p>
+            <div>
+              <p class="text-xl font-semibold mb-1">v1.4.0</p>
+              <p class="text-xs text-[var(--muted)] mb-3">Compact Countdown Timer · Jan 28, 2026</p>
+              <div class="flex gap-2">
+                <button class="btn btn-outline btn-sm" onclick="toast('Opening Updates · v1.4.0')">View changelog</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-span-12 lg:col-span-6 panel p-6">
+            <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-3 font-medium">About this edition</p>
+            <p class="text-xl leading-snug font-medium">
+              7-night creator residency at Bambolim, Goa. Six journey stages from pre-registration through demo day. 25 active tasks for the FORGE_CREATORS cohort.
+            </p>
+          </div>
+
+          <div class="col-span-12 lg:col-span-6 panel p-6 grid grid-cols-2 gap-x-6 gap-y-4">
+            <div>
+              <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-1 font-medium">City</p>
+              <p>Goa</p>
+            </div>
+            <div>
+              <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-1 font-medium">Cohort type</p>
+              <p>FORGE_CREATORS</p>
+            </div>
+            <div>
+              <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-1 font-medium">Started</p>
+              <p>Sun, May 4 2026</p>
+            </div>
+            <div>
+              <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-1 font-medium">Ends</p>
+              <p>Sat, May 10 2026</p>
+            </div>
+          </div>
+
+          <div class="col-span-12 panel p-6">
+            <div class="flex items-center justify-between mb-5">
+              <p class="text-[10px] uppercase tracking-wider text-[var(--muted)] font-medium">Cohort alumni works (FORGE_CREATORS)</p>
+              <span class="text-xs text-[var(--muted)]">From alumni_showcase · 4 reels</span>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="profile-alumni"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  /* ============ REAL DATA from Supabase ============ */
+  const TODAY = new Date('2026-05-08');
+  const EDITION = {
+    id: 'fde7dc65-0a21-492f-989b-6256eaa011f3',
+    name: 'Forge Creator Residency - E5',
+    city: 'Goa',
+    cohort_type: 'FORGE_CREATORS',
+    forge_start_date: '2026-05-04',
+    forge_end_date: '2026-05-10'
+  };
+
+  const OTHER_EDITIONS = [
+    { name: 'Forge Filmmaking E17', city: 'Goa', cohort_type: 'FORGE', dates: 'Apr 27 – May 4' },
+    { name: 'Forge Filmmaking E16', city: 'Goa', cohort_type: 'FORGE', dates: 'Apr 25 – May 2' },
+    { name: 'Forge Creators E7', city: 'Bali', cohort_type: 'FORGE_CREATORS', dates: 'Jun 1 – 7' },
+  ];
+
+  const STAGES = [
+    { id: '61c2c970-088c-499b-b096-4b386ce7a641', stage_key: 'pre_registration', title: 'Pre-Registration', description: 'Get your spot confirmed and start connecting', order_index: 0, icon: 'UserPlus', color: 'emerald', status: 'done' },
+    { id: 'd433c6db-bff2-4046-9f51-aa8aefecd0ec', stage_key: 'pre_travel', title: 'Pre-Travel', description: 'Plan your journey and prepare for the experience', order_index: 1, icon: 'Plane', color: 'amber', status: 'done' },
+    { id: 'eee55008-a137-493a-8877-592e0e07089a', stage_key: 'final_prep', title: 'Final Prep', description: 'Last-minute preparations before you arrive', order_index: 2, icon: 'CheckSquare', color: 'blue', status: 'done' },
+    { id: '6ddc8c9a-3be9-49c6-bf9f-873a260ada44', stage_key: 'online_forge', title: 'Online Forge', description: 'Virtual sessions to kickstart your journey', order_index: 3, icon: 'Video', color: 'purple', status: 'done' },
+    { id: 'fa5cb616-c538-4263-9052-605950f5e704', stage_key: 'physical_forge', title: 'Physical Forge', description: 'The immersive in-person experience', order_index: 4, icon: 'MapPin', color: 'rose', status: 'current' },
+    { id: '9158db37-0e0f-4c07-adc6-d5a9b0c5841e', stage_key: 'post_forge', title: 'Post Forge', description: 'Celebrate, share, and stay connected', order_index: 5, icon: 'Award', color: 'primary', status: 'locked' }
+  ];
+
+  // Tasks from journey_tasks for FORGE_CREATORS
+  const TASKS = [
+    // Pre-Registration (all done)
+    { id: 'ea2262d1', stage_id: '61c2c970-088c-499b-b096-4b386ce7a641', title: 'Complete your Forge form', description: 'Fill out KYF/KYW/KYC to confirm your spot', deep_link: '/kyf', is_required: true, done: true },
+    { id: 'e2733e40', stage_id: '61c2c970-088c-499b-b096-4b386ce7a641', title: 'Set up your profile with photo', description: 'Help your batchmates recognize you', deep_link: '/profile', is_required: true, done: true },
+    { id: 'cfc24810', stage_id: '61c2c970-088c-499b-b096-4b386ce7a641', title: 'Pay remaining balance', description: 'Secure your slot and get peace of mind', is_required: true, done: true },
+    { id: 'aa662fb4', stage_id: '61c2c970-088c-499b-b096-4b386ce7a641', title: 'Introduce yourself in community', description: 'Start building connections early', deep_link: '/community', is_required: true, done: true },
+    { id: '4dde025b', stage_id: '61c2c970-088c-499b-b096-4b386ce7a641', title: 'Watch the orientation video', description: 'Know what to expect at Forge', deep_link: '/learn', is_required: true, done: true },
+    { id: '1409423e', stage_id: '61c2c970-088c-499b-b096-4b386ce7a641', title: 'Connect your Instagram', description: 'Boost your portfolio visibility', deep_link: '/profile', is_required: true, done: true },
+
+    // Pre-Travel
+    { id: '229e1f68', stage_id: 'd433c6db-bff2-4046-9f51-aa8aefecd0ec', title: 'Book your travel', description: 'Sort out your flight or train tickets', deep_link: '/roadmap/prep#technical', is_required: true, done: true },
+    { id: 'be2134cf', stage_id: 'd433c6db-bff2-4046-9f51-aa8aefecd0ec', title: 'Review the complete roadmap', description: 'Know the schedule and plan ahead', deep_link: '/roadmap', is_required: true, done: true },
+    { id: '0d7b74db', stage_id: 'd433c6db-bff2-4046-9f51-aa8aefecd0ec', title: 'Check packing essentials list', description: "Don't forget anything important", deep_link: '/roadmap/prep#packing', is_required: true, done: true },
+    { id: 'c304c4a1', stage_id: 'd433c6db-bff2-4046-9f51-aa8aefecd0ec', title: 'Start a conversation with a batchmate', description: 'Know someone before arriving', deep_link: '/community', is_required: true, done: true },
+    { id: 'b574619e', stage_id: 'd433c6db-bff2-4046-9f51-aa8aefecd0ec', title: 'Watch at least 1 masterclass', description: 'Come prepared with context', deep_link: '/learn', is_required: true, done: true },
+    { id: 'ef006f3e', stage_id: 'd433c6db-bff2-4046-9f51-aa8aefecd0ec', title: 'Add Forge dates to your calendar', description: 'Block time and avoid conflicts', deep_link: '/roadmap', is_required: true, done: true },
+
+    // Final Prep
+    { id: '4d3c8c27', stage_id: 'eee55008-a137-493a-8877-592e0e07089a', title: 'Complete script/content prep', description: 'Get your creative work ready', deep_link: '/roadmap/prep#script_prep', is_required: true, done: true },
+    { id: '1b89910b', stage_id: 'eee55008-a137-493a-8877-592e0e07089a', title: 'Review Day 0 arrival instructions', description: 'Ensure a smooth first day', deep_link: '/roadmap', is_required: true, done: true },
+    { id: 'a58e12e6', stage_id: 'eee55008-a137-493a-8877-592e0e07089a', title: 'Note emergency contacts', description: 'Be prepared for any situation', deep_link: '/roadmap/prep#mindset', is_required: true, done: true },
+    { id: 'd324dfda', stage_id: 'eee55008-a137-493a-8877-592e0e07089a', title: 'Download offline content', description: 'Access materials without WiFi', deep_link: '/learn', is_required: true, done: true },
+    { id: '8aa24230', stage_id: 'eee55008-a137-493a-8877-592e0e07089a', title: 'Pack your bags using checklist', description: 'Final check before departure', deep_link: '/roadmap/prep#packing', is_required: true, done: true },
+
+    // Online Forge (FC has this)
+    { id: '3d15305b', stage_id: '6ddc8c9a-3be9-49c6-bf9f-873a260ada44', title: 'Attend Day 1 online session', description: 'Start the program strong', deep_link: '/events', is_required: true, done: true },
+    { id: '1c91b395', stage_id: '6ddc8c9a-3be9-49c6-bf9f-873a260ada44', title: 'Submit your script/content draft', description: 'Get mentor feedback early', is_required: true, done: true },
+    { id: 'a30252ca', stage_id: '6ddc8c9a-3be9-49c6-bf9f-873a260ada44', title: 'Pick your slot/team', description: 'Know your group assignment', is_required: true, done: true },
+    { id: 'bfc3b817', stage_id: '6ddc8c9a-3be9-49c6-bf9f-873a260ada44', title: 'Connect with your team in chat', description: 'Build team rapport early', deep_link: '/community', is_required: true, done: true },
+
+    // Physical Forge (CURRENT — Day 5 of 7)
+    { id: '6fd74711', stage_id: 'fa5cb616-c538-4263-9052-605950f5e704', title: 'Check-in at location', description: 'Confirm your arrival', deep_link: '/roadmap', is_required: true, done: true },
+    { id: 'b23f3ed8', stage_id: 'fa5cb616-c538-4263-9052-605950f5e704', title: 'Complete daily reflections', description: 'Process your learnings', is_required: true, done: true },
+    { id: '5140ac8b', stage_id: 'fa5cb616-c538-4263-9052-605950f5e704', title: 'Share BTS in community', description: 'Document your experience', deep_link: '/community', is_required: true, done: false },
+    { id: '9513bf38', stage_id: 'fa5cb616-c538-4263-9052-605950f5e704', title: 'Submit your final work', description: 'Complete the program', is_required: true, done: false },
+
+    // Post Forge (locked)
+    { id: '0478bc37', stage_id: '9158db37-0e0f-4c07-adc6-d5a9b0c5841e', title: 'Download your certificate', description: 'Proof of your achievement', deep_link: '/profile', is_required: true, done: false },
+    { id: '3338afad', stage_id: '9158db37-0e0f-4c07-adc6-d5a9b0c5841e', title: 'Add work to your portfolio', description: 'Showcase your achievements', deep_link: '/profile', is_required: true, done: false },
+    { id: '4cae268d', stage_id: '9158db37-0e0f-4c07-adc6-d5a9b0c5841e', title: 'Submit feedback/testimonial', description: 'Share your experience', is_required: true, done: false },
+    { id: 'f98d3492', stage_id: '9158db37-0e0f-4c07-adc6-d5a9b0c5841e', title: 'Join alumni network', description: 'Stay connected with your batch', deep_link: '/community', is_required: true, done: false },
+    { id: 'eebf68eb', stage_id: '9158db37-0e0f-4c07-adc6-d5a9b0c5841e', title: 'Share your work on socials', description: 'Promote your creation', is_required: true, done: false }
+  ];
+
+  // alumni_showcase rows for FORGE_CREATORS
+  const ALUMNI = [
+    { id: 'b4757e1b', title: 'The Joy of Being', author_name: 'Forge Creator', media_type: 'reel', media_url: 'https://player.vimeo.com/video/1173914736', order_index: 1 },
+    { id: '56ac44dd', title: 'Bhringraj Hair Oil', author_name: 'Forge Creator', media_type: 'reel', media_url: 'https://player.vimeo.com/video/1173914672', order_index: 2 },
+    { id: '5e045efd', title: 'Project Goa', author_name: 'Forge Creator', media_type: 'reel', media_url: 'https://player.vimeo.com/video/1173914637', order_index: 3 },
+    { id: 'ae85b9ae', title: 'Vaksana Farms', author_name: 'Forge Creator', media_type: 'reel', media_url: 'https://player.vimeo.com/video/1173914704', order_index: 4 }
+  ];
+
+  // mentors table
+  const MENTORS = [
+    { name: 'Ranjini Ramesh', title: 'Director | Editor | Photographer', roles: ['Director','Editor','Photographer'], image_url: '/images/mentors/ranjini-full.png' },
+    { name: 'Prakriti Madan', title: 'Social Media Growth Coach', roles: ['84.3K+ Followers','20M+ Views'], image_url: 'https://tprvyhzpecopryylxznm.supabase.co/storage/v1/object/public/user-uploads/1768647669904-rvbaj.jpg' },
+    { name: 'Bavithravanan J', title: 'Cinematographer | Creative Director | Photographer', roles: ['Cinematographer','Creative Director','Photographer'], image_url: '/images/mentors/bavithravanan-20260104.png' }
+  ];
+
+  /* ============ Helpers ============ */
+  const $ = (q, r=document) => r.querySelector(q);
+  const $$ = (q, r=document) => Array.from(r.querySelectorAll(q));
+  function el(html) { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; }
+
+  function stageDot(color) {
+    return `background: hsl(var(--${color === 'primary' ? 'forge-yellow' : color}));`;
+  }
+
+  /* ============ Render: Onboarding (pre_registration tasks) ============ */
+  (function renderOnboarding() {
+    const stage = STAGES[0];
+    const stageTasks = TASKS.filter(t => t.stage_id === stage.id);
+    const grid = $('#onboarding-grid');
+    stageTasks.slice(0, 3).forEach((t, i) => {
+      grid.appendChild(el(`
+        <div class="panel p-5 flex items-start gap-3 ${t.done ? 'opacity-70' : ''}">
+          <div class="check" role="checkbox" aria-checked="${t.done}" tabindex="0" data-onboarding>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="4"><polyline points="5 12 10 17 19 8"/></svg>
+          </div>
+          <div>
+            <p class="text-[10px] uppercase tracking-wider mb-0.5 font-medium" style="color: hsl(var(--emerald));">Step ${String(i+1).padStart(2,'0')} ${t.done ? '· Done' : ''}</p>
+            <p class="font-medium ${t.done ? 'line-through opacity-70' : ''}">${t.title}</p>
+            <p class="text-[11px] text-[var(--muted)] mt-1">${t.description}</p>
+          </div>
+        </div>
+      `));
+    });
+  })();
+
+  /* ============ Render: Today tasks card on Home ============ */
+  (function renderTodayCard() {
+    const physical = STAGES[4];
+    const ts = TASKS.filter(t => t.stage_id === physical.id);
+    const c = $('#today-tasks-card');
+    ts.forEach(t => {
+      c.appendChild(el(`
+        <button class="w-full flex items-center gap-3 p-2.5 rounded-lg text-left hover:bg-[var(--surface)] transition" data-screen="tasks">
+          <span class="check" role="checkbox" aria-checked="${t.done}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="4"><polyline points="5 12 10 17 19 8"/></svg></span>
+          <span class="${t.done ? 'line-through opacity-50' : ''}">${t.title}</span>
+        </button>
+      `));
+    });
+  })();
+
+  /* ============ Render: Journey stages strip on Home ============ */
+  (function renderJourneyStrip() {
+    const grid = $('#journey-stages-strip');
+    STAGES.forEach((s, i) => {
+      const isCurrent = s.status === 'current';
+      const isDone = s.status === 'done';
+      const isLocked = s.status === 'locked';
+      grid.appendChild(el(`
+        <div class="flex flex-col items-center text-center cursor-pointer group" onclick="toast('${s.title} · ${s.description.replace(/'/g, '&apos;')}')">
+          <div class="relative mb-2 z-10">
+            ${isCurrent ? `<div class="absolute inset-0 rounded-full pulse-ring" style="background: hsl(var(--rose) / 0.4); animation: pulse 2s infinite;"></div>` : ''}
+            <div class="relative w-12 h-12 rounded-full grid place-items-center group-hover:scale-110 transition ${isCurrent ? 'glow-rose' : ''}"
+              style="${isDone ? 'background: var(--yellow); color: #000;' :
+                      isCurrent ? `background: hsl(var(--rose)); color: #000;` :
+                      'background: var(--surface); border: 1px solid var(--line-2); color: var(--muted);'}">
+              ${isDone ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="5 12 10 17 19 8"/></svg>' : (i + 1)}
+            </div>
+          </div>
+          <p class="text-[10px] uppercase tracking-wider font-semibold ${isCurrent ? 'stage-color-rose' : isDone ? 'text-[var(--muted)]' : 'text-[var(--muted-2)]'}">${s.title}</p>
+          <p class="text-[10px] text-[var(--muted-2)] mt-0.5">${isCurrent ? 'YOU ARE HERE' : isDone ? 'DONE' : 'LOCKED'}</p>
+        </div>
+      `));
+    });
+  })();
+
+  /* ============ Render: Mentors grid ============ */
+  (function renderMentors() {
+    const grid = $('#mentors-grid');
+    MENTORS.forEach(m => {
+      const initials = m.name.split(' ').map(s => s[0]).slice(0, 2).join('');
+      grid.appendChild(el(`
+        <button class="panel p-5 hover:border-[var(--yellow)]/30 transition text-left flex items-center gap-4" onclick="toast('${m.name} · ${m.title.replace(/'/g, '&apos;')}')">
+          <div class="w-14 h-14 rounded-full bg-gradient-to-br from-[var(--yellow)] to-[var(--orange)] grid place-items-center text-black font-bold shrink-0">${initials}</div>
+          <div class="min-w-0">
+            <p class="font-semibold truncate">${m.name}</p>
+            <p class="text-xs text-[var(--muted)] line-clamp-2">${m.title}</p>
+          </div>
+        </button>
+      `));
+    });
+  })();
+
+  /* ============ Render: Mentor rail (journey screen) ============ */
+  (function renderMentorRail() {
+    const r = $('#mentor-rail');
+    if (!r) return;
+    MENTORS.forEach(m => {
+      const initials = m.name.split(' ').map(s => s[0]).slice(0, 2).join('');
+      r.appendChild(el(`
+        <button class="w-full flex items-center gap-3 hover:opacity-80 transition text-left" onclick="toast('${m.name}')">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--yellow)] to-[var(--orange)] grid place-items-center text-black text-xs font-bold shrink-0">${initials}</div>
+          <div class="min-w-0">
+            <p class="text-sm font-semibold truncate">${m.name}</p>
+            <p class="text-[11px] text-[var(--muted)] truncate">${m.roles[0]}</p>
+          </div>
+        </button>
+      `));
+    });
+  })();
+
+  /* ============ Render: Alumni ============ */
+  function renderAlumni(target) {
+    const moods = ['photo-mood-1','photo-mood-2','photo-mood-3','photo-mood-4'];
+    target.innerHTML = '';
+    ALUMNI.forEach((a, i) => {
+      target.appendChild(el(`
+        <button class="panel overflow-hidden group cursor-pointer text-left" onclick="window.open('${a.media_url.replace('/embed/','/').replace('/embed','')}', '_blank')">
+          <div class="aspect-[4/5] ${moods[i % moods.length]} relative">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+            <span class="absolute top-3 left-3 pill bg-black/60 backdrop-blur text-white">FC · Reel</span>
+            <div class="absolute inset-0 grid place-items-center opacity-0 group-hover:opacity-100 transition">
+              <div class="w-12 h-12 rounded-full bg-[var(--yellow)] grid place-items-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#000"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+            </div>
+            <div class="absolute bottom-3 left-3 right-3">
+              <p class="text-lg font-semibold leading-tight mb-1">${a.title}</p>
+              <p class="text-xs text-[var(--muted)]">${a.author_name}</p>
+            </div>
+          </div>
+        </button>
+      `));
+    });
+  }
+  renderAlumni($('#alumni-grid'));
+
+  /* ============ Render: Other editions ============ */
+  (function renderOtherEditions() {
+    const t = $('#other-editions');
+    OTHER_EDITIONS.forEach(e => {
+      t.appendChild(el(`
+        <button class="w-full flex items-center justify-between p-3 rounded-lg bg-[var(--surface)] hover:bg-[var(--surface-2)] transition text-left" onclick="toast('${e.name} · ${e.dates}')">
+          <div>
+            <p class="font-semibold text-sm truncate">${e.name}</p>
+            <p class="text-xs text-[var(--muted)]">${e.city} · ${e.dates}</p>
+          </div>
+          <span class="text-xs pill" style="background: var(--surface-2);">${e.cohort_type.replace('FORGE_','').replace('FORGE','FORGE')}</span>
+        </button>
+      `));
+    });
+  })();
+
+  /* ============ Render: Date pills (Bootcamp days) ============ */
+  (function renderDatePills() {
+    const wrap = $('#date-pills');
+    const days = [
+      { num: 4, dow: 'Sun', label: 'D1', status: 'done', title: 'Day 1 — Arrival & kickoff' },
+      { num: 5, dow: 'Mon', label: 'D2', status: 'done', title: 'Day 2 — Shoot Day 1' },
+      { num: 6, dow: 'Tue', label: 'D3', status: 'done', title: 'Day 3 — Edit Lab' },
+      { num: 7, dow: 'Wed', label: 'D4', status: 'done', title: 'Day 4 — Mid-bootcamp showcase' },
+      { num: 8, dow: 'Thu', label: 'D5', status: 'active', title: 'Day 5 — Shoot Day 2' },
+      { num: 9, dow: 'Fri', label: 'D6', status: 'upcoming', title: 'Day 6 — Distribution & algorithm' },
+      { num: 10, dow: 'Sat', label: 'D7', status: 'upcoming', title: 'Day 7 — Demo Day & closing' }
+    ];
+    days.forEach(d => {
+      wrap.appendChild(el(`
+        <button class="date-pill ${d.status === 'done' ? 'done' : ''} ${d.status === 'active' ? 'active' : ''}" data-day="${d.label}" data-title="${d.title}">
+          <span class="dow">${d.dow}</span>
+          <span class="dom">${String(d.num).padStart(2,'0')}</span>
+          <span class="text-[9px] uppercase tracking-wider ${d.status === 'active' ? 'font-semibold' : 'opacity-60'}">${d.label}${d.status === 'active' ? ' · TODAY' : ''}</span>
+        </button>
+      `));
+    });
+  })();
+
+  /* ============ Render: Today's task list (Physical Forge) on journey screen ============ */
+  (function renderDayTasks() {
+    const list = $('#day-tasks-list');
+    const physical = TASKS.filter(t => t.stage_id === 'fa5cb616-c538-4263-9052-605950f5e704');
+    physical.forEach((t, i) => {
+      list.appendChild(el(`
+        <li class="flex gap-4 ${i < physical.length - 1 ? 'pb-3 border-b border-[var(--line)]' : ''}">
+          <span class="font-mono text-xs ${t.done ? 'text-[var(--muted)]' : 'text-[var(--gold)]'} w-12">${t.done ? '✓' : '·'}</span>
+          <div class="flex-1">
+            <p class="${t.done ? 'opacity-60 line-through' : ''}">${t.title}</p>
+            <p class="text-xs text-[var(--muted)] mt-0.5">${t.description}</p>
+          </div>
+        </li>
+      `));
+    });
+  })();
+
+  /* ============ Render: What's next (D6, D7) ============ */
+  (function renderNextDays() {
+    const c = $('#next-days');
+    const next = [
+      { d: 'D6', dow: 'Fri · May 9', t: 'Distribution & algorithm' },
+      { d: 'D7', dow: 'Sat · May 10', t: 'Demo Day & closing', highlight: true }
+    ];
+    next.forEach(n => {
+      c.appendChild(el(`
+        <div class="flex items-center gap-3 p-2.5 rounded-lg ${n.highlight ? 'bg-[hsl(var(--forge-orange)/0.08)] border border-[hsl(var(--forge-orange)/0.3)]' : 'hover:bg-[var(--surface)]'}">
+          <span class="text-xs font-mono ${n.highlight ? 'text-[var(--orange)]' : 'text-[var(--muted)]'}">${n.d}</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm truncate">${n.t}</p>
+            <p class="text-[10px] text-[var(--muted)]">${n.dow}</p>
+          </div>
+          ${n.highlight ? '<span class="text-[var(--orange)]">★</span>' : ''}
+        </div>
+      `));
+    });
+  })();
+
+  /* ============ Render: Stages with tasks (Tasks screen) ============ */
+  (function renderStages() {
+    const wrap = $('#stages');
+    STAGES.forEach((s, i) => {
+      const stageTasks = TASKS.filter(t => t.stage_id === s.id);
+      const done = stageTasks.filter(t => t.done).length;
+      const total = stageTasks.length;
+      const pct = total > 0 ? (done / total) * 100 : 0;
+      const isCurrent = s.status === 'current';
+      const isLocked = s.status === 'locked';
+
+      const barColor = s.color === 'primary' ? 'var(--yellow)' : `hsl(var(--${s.color}))`;
+
+      const stage = el(`
+        <details class="panel ${isCurrent ? 'border-[hsl(var(--rose)/0.3)]' : ''}" ${isCurrent ? 'open' : ''} data-stage="${s.stage_key}">
+          <summary class="p-5 flex items-center gap-5 flex-wrap">
+            <span class="text-3xl font-bold w-10 ${isCurrent ? 'stage-color-rose' : isLocked ? 'text-[var(--muted-2)]' : 'text-[var(--muted)]'}">${String(i + 1).padStart(2, '0')}</span>
+            <div class="flex-1 min-w-[200px]">
+              <p class="font-semibold flex items-center gap-2 flex-wrap ${isLocked ? 'text-[var(--muted)]' : ''}">
+                ${s.title}
+                ${isCurrent ? `<span class="pill font-semibold" style="background: hsl(var(--rose) / 0.2); color: hsl(var(--rose));">CURRENT</span>` : ''}
+                ${isLocked ? `<span class="pill bg-[var(--surface)] text-[var(--muted-2)]">LOCKED</span>` : ''}
+              </p>
+              <p class="text-xs ${isLocked ? 'text-[var(--muted-2)]' : 'text-[var(--muted)]'} mt-0.5">${s.description}</p>
+            </div>
+            <div class="flex items-center gap-3 ml-auto">
+              <div class="w-32 h-1 bg-[var(--line)] rounded-full overflow-hidden">
+                <div class="h-full" style="width:${pct}%; background: ${barColor};"></div>
+              </div>
+              <span class="text-xs ${isLocked ? 'text-[var(--muted-2)]' : 'text-[var(--muted)]'}">${done} / ${total}</span>
+              ${pct === 100 ? '<span class="text-[var(--yellow)]">✓</span>' : ''}
+            </div>
+          </summary>
+          ${stageTasks.length ? `<div class="px-5 pb-5 space-y-1" data-stage-tasks="${s.id}"></div>` : ''}
+        </details>
+      `);
+      wrap.appendChild(stage);
+
+      // populate tasks
+      const tasksWrap = stage.querySelector(`[data-stage-tasks="${s.id}"]`);
+      if (tasksWrap) {
+        stageTasks.forEach(t => {
+          tasksWrap.appendChild(el(`
+            <button class="w-full flex items-center gap-4 p-3 rounded-lg ${t.done ? 'hover:bg-[var(--surface)]' : isCurrent ? 'bg-[hsl(var(--rose)/0.05)] border border-[hsl(var(--rose)/0.2)]' : 'hover:bg-[var(--surface)]'} transition text-left task-row" data-task data-required="${t.is_required}" data-task-id="${t.id}">
+              <span class="check" role="checkbox" aria-checked="${t.done}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="4"><polyline points="5 12 10 17 19 8"/></svg></span>
+              <div class="flex-1">
+                <p class="text-sm task-label ${t.done ? 'line-through opacity-55' : ''}">${t.title}</p>
+                <p class="text-[11px] text-[var(--muted)] mt-0.5">${t.description}</p>
+              </div>
+              <div class="flex items-center gap-2">
+                ${t.deep_link ? `<span class="text-[10px] font-mono text-[var(--muted-2)]">${t.deep_link}</span>` : ''}
+                <span class="text-[10px] uppercase tracking-wider text-[var(--muted-2)] font-medium">${t.is_required ? 'REQUIRED' : 'OPTIONAL'}</span>
+              </div>
+            </button>
+          `));
+        });
+      }
+    });
+  })();
+
+  /* ============ Render: Profile stages mini ============ */
+  (function renderProfileStages() {
+    const c = $('#profile-stages');
+    STAGES.forEach((s, i) => {
+      const isCurrent = s.status === 'current';
+      const isDone = s.status === 'done';
+      const stageTasks = TASKS.filter(t => t.stage_id === s.id);
+      const done = stageTasks.filter(t => t.done).length;
+      const total = stageTasks.length;
+      c.appendChild(el(`
+        <div class="flex items-center gap-2 text-xs">
+          <span class="w-5 h-5 rounded-full grid place-items-center text-[10px] ${isCurrent ? 'glow-rose' : ''}"
+            style="${isDone ? 'background: var(--yellow); color: #000;' :
+                    isCurrent ? 'background: hsl(var(--rose)); color: #000;' :
+                    'background: var(--surface); border: 1px solid var(--line-2); color: var(--muted);'}">${i + 1}</span>
+          <span class="flex-1 truncate ${isCurrent ? 'font-semibold' : ''}">${s.title}</span>
+          <span class="text-[10px] text-[var(--muted)]">${done}/${total}</span>
+        </div>
+      `));
+    });
+  })();
+
+  /* ============ Render: Profile alumni (small) ============ */
+  renderAlumni($('#profile-alumni'));
+
+  /* ============ Toast ============ */
+  function toast(msg, kind = '') {
+    const host = $('#toast-host');
+    const t = document.createElement('div');
+    t.className = 'toast' + (kind ? ' ' + kind : '');
+    t.innerHTML = `<span class="dot-yellow"></span><span>${msg}</span>`;
+    host.appendChild(t);
+    requestAnimationFrame(() => t.classList.add('in'));
+    setTimeout(() => { t.classList.remove('in'); setTimeout(() => t.remove(), 250); }, 2400);
+  }
+  window.toast = toast;
+
+  /* ============ Screen switching ============ */
+  function show(which) {
+    ['home','journey','tasks','profile'].forEach(k => {
+      const sec = document.getElementById('screen-' + k);
+      const btn = document.getElementById('btn-' + k);
+      if (k === which) {
+        sec.classList.remove('hidden-screen'); sec.classList.add('visible-screen');
+        btn.classList.add('active');
+      } else {
+        sec.classList.add('hidden-screen'); sec.classList.remove('visible-screen');
+        btn.classList.remove('active');
+      }
+    });
+    $$('#sidebar-nav .nav-item').forEach(n => {
+      const t = n.dataset.screen;
+      n.classList.toggle('active', t === which || (t === 'journey' && which === 'tasks'));
+    });
+    window.scrollTo(0, 0);
+  }
+  window.show = show;
+
+  /* ============ Wire up clicks (delegation friendly) ============ */
+  document.addEventListener('click', e => {
+    const screenLink = e.target.closest('[data-screen]');
+    if (screenLink && screenLink.dataset.screen) {
+      e.preventDefault();
+      show(screenLink.dataset.screen);
+      return;
+    }
+  });
+
+  /* ============ Onboarding checkboxes ============ */
+  function toggleCheck(check) {
+    const next = check.getAttribute('aria-checked') !== 'true';
+    check.setAttribute('aria-checked', next ? 'true' : 'false');
+    return next;
+  }
+  $$('[data-onboarding]').forEach(c => {
+    c.addEventListener('click', e => {
+      e.stopPropagation();
+      const checked = toggleCheck(c);
+      toast(checked ? 'Step marked done' : 'Step un-checked');
+    });
+  });
+
+  /* ============ Phase chips ============ */
+  $$('#phase-tabs .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      $$('#phase-tabs .chip').forEach(c => c.setAttribute('aria-pressed', 'false'));
+      chip.setAttribute('aria-pressed', 'true');
+      toast(chip.dataset.phase === 'online' ? 'Online sessions · already complete' : 'Bootcamp days · today is D5');
+    });
+  });
+
+  /* ============ Date pills ============ */
+  document.addEventListener('click', e => {
+    const pill = e.target.closest('#date-pills .date-pill');
+    if (!pill) return;
+    $$('#date-pills .date-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    const title = pill.dataset.title;
+    if (title) {
+      $('#session-title').textContent = title.split(' — ')[1] || title;
+      toast(`Loaded · ${title}`);
+    }
+  });
+
+  /* ============ Roadmap top tabs ============ */
+  $$('#roadmap-tabs .tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.screenTarget;
+      if (target) { show(target); return; }
+      $$('#roadmap-tabs .tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      if (tab.dataset.tab !== 'journey') toast(`${tab.textContent.trim()} · coming soon`);
+    });
+  });
+
+  /* ============ Task rows ============ */
+  function recomputeTasks() {
+    const all = $$('.task-row');
+    const done = $$('.task-row .check[aria-checked="true"]').length;
+    const total = all.length;
+    const pct = Math.round((done / total) * 100);
+    $('#ring-done').textContent = String(done);
+    $('#ring-pct').textContent = pct + '%';
+    $('#ring-detail').textContent = `${done} done · ${total - done} to go`;
+    const ring = $('#progress-ring');
+    if (ring) ring.setAttribute('stroke-dashoffset', String(276 * (1 - done / total)));
+    // current stage progress
+    const physical = $$('[data-stage="physical_forge"] .task-row');
+    const physicalDone = $$('[data-stage="physical_forge"] .task-row .check[aria-checked="true"]').length;
+    const sBar = $('#stage-bar');
+    if (sBar) sBar.style.width = `${(physicalDone / physical.length) * 100}%`;
+    $('#stage-count').textContent = `${physicalDone} / ${physical.length}`;
+  }
+
+  document.addEventListener('click', e => {
+    const row = e.target.closest('.task-row');
+    if (!row) return;
+    const c = row.querySelector('.check');
+    const next = toggleCheck(c);
+    const labelEl = row.querySelector('.task-label');
+    labelEl.style.textDecoration = next ? 'line-through' : 'none';
+    labelEl.style.opacity = next ? '0.55' : '1';
+    recomputeTasks();
+    toast(next ? `Done · ${labelEl.textContent}` : `Un-checked`);
+  });
+
+  /* ============ Filter chips ============ */
+  $$('#task-filters .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      $$('#task-filters .chip').forEach(c => c.setAttribute('aria-pressed', 'false'));
+      chip.setAttribute('aria-pressed', 'true');
+      const filter = chip.dataset.filter;
+      $$('.task-row').forEach(r => {
+        if (filter === 'all') r.style.display = 'flex';
+        else if (filter === 'required') r.style.display = r.dataset.required === 'true' ? 'flex' : 'none';
+        else r.style.display = r.dataset.required === 'true' ? 'none' : 'flex';
+      });
+      toast(`Filter · ${chip.textContent.trim().split('·')[0].trim()}`);
+    });
+  });
+
+  // initial toast confirming live data
+  setTimeout(() => toast('Loaded live data · Forge Creator Residency E5 · Day 5 of 7', 'live'), 600);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The Forge — 3 Design Directions</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; }
+  .serif { font-family: 'Instrument Serif', serif; }
+  .display { font-family: 'Fraunces', serif; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .grain::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image: radial-gradient(rgba(0,0,0,0.04) 1px, transparent 1px);
+    background-size: 3px 3px; opacity: 0.6;
+  }
+  .grain-dark::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image: radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+  details > summary { list-style: none; }
+  details > summary::-webkit-details-marker { display: none; }
+  .hidden-design { display: none; }
+  .visible-design { display: block; }
+  .hero-img-1 { background: linear-gradient(135deg, #d97706 0%, #92400e 50%, #1c1917 100%); }
+  .hero-img-2 { background: linear-gradient(180deg, #fbbf24 0%, #fb923c 35%, #0891b2 100%); }
+  .hero-img-3 { background: radial-gradient(circle at 30% 30%, #fb923c 0%, #b45309 35%, #1c1917 70%, #0c0a09 100%); }
+  .photo-placeholder {
+    background: linear-gradient(135deg, #fde68a 0%, #fb923c 50%, #b45309 100%);
+    position: relative; overflow: hidden;
+  }
+  .photo-placeholder::after {
+    content: ""; position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 80%, rgba(255,255,255,0.35) 0%, transparent 30%),
+      radial-gradient(circle at 80% 20%, rgba(255,255,255,0.25) 0%, transparent 25%);
+  }
+  .photo-2 { background: linear-gradient(160deg, #38bdf8 0%, #0c4a6e 60%, #1e293b 100%); }
+  .photo-3 { background: linear-gradient(160deg, #a3e635 0%, #65a30d 50%, #14532d 100%); }
+  .photo-4 { background: linear-gradient(160deg, #f472b6 0%, #be185d 50%, #4c1d95 100%); }
+  .photo-5 { background: linear-gradient(160deg, #fcd34d 0%, #d97706 50%, #7c2d12 100%); }
+  .photo-6 { background: linear-gradient(160deg, #c084fc 0%, #6d28d9 50%, #1e1b4b 100%); }
+  .photo-7 { background: linear-gradient(160deg, #fda4af 0%, #be123c 50%, #4a044e 100%); }
+  .map-bg {
+    background-color: #f5f4f0;
+    background-image:
+      linear-gradient(0deg, transparent 24%, rgba(0, 0, 0, 0.02) 25%, rgba(0, 0, 0, 0.02) 26%, transparent 27%, transparent 74%, rgba(0, 0, 0, 0.02) 75%, rgba(0, 0, 0, 0.02) 76%, transparent 77%, transparent),
+      linear-gradient(90deg, transparent 24%, rgba(0, 0, 0, 0.02) 25%, rgba(0, 0, 0, 0.02) 26%, transparent 27%, transparent 74%, rgba(0, 0, 0, 0.02) 75%, rgba(0, 0, 0, 0.02) 76%, transparent 77%, transparent);
+    background-size: 40px 40px;
+  }
+  .map-coast {
+    background:
+      radial-gradient(ellipse 60% 80% at 30% 50%, #d4e9d8 0%, #d4e9d8 35%, #c8e6cd 36%, transparent 60%),
+      linear-gradient(90deg, #cee9d2 0%, #cee9d2 38%, #b3d7ec 38%, #b3d7ec 100%);
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(0.8); opacity: 0.6; }
+    100% { transform: scale(2); opacity: 0; }
+  }
+  .pulse-ring { animation: pulse-ring 2s ease-out infinite; }
+  .marquee {
+    display: flex; gap: 2rem; white-space: nowrap; overflow: hidden;
+  }
+  .marquee-track {
+    display: flex; gap: 2rem; animation: marquee 40s linear infinite;
+  }
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ DIRECTION SWITCHER ============ -->
+<div class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-white/90 backdrop-blur border border-stone-200 rounded-full shadow-xl px-2 py-1.5 flex items-center gap-1">
+  <button onclick="show('a')" id="btn-a" class="text-xs font-medium px-4 py-1.5 rounded-full transition-all">01 · Editorial</button>
+  <button onclick="show('b')" id="btn-b" class="text-xs font-medium px-4 py-1.5 rounded-full transition-all">02 · Itinerary</button>
+  <button onclick="show('c')" id="btn-c" class="text-xs font-medium px-4 py-1.5 rounded-full transition-all">03 · Conference</button>
+</div>
+
+<!-- ================================================================ -->
+<!-- DIRECTION A: EDITORIAL / MAGAZINE                                 -->
+<!-- ================================================================ -->
+<section id="design-a" class="visible-design bg-[#f5f1eb] text-stone-900 min-h-screen">
+
+  <!-- top bar -->
+  <header class="border-b border-stone-300/60">
+    <div class="max-w-[1280px] mx-auto px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 grid place-items-center bg-stone-900 rounded">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2 L4 13 H10 L8 22 L20 9 H14 L16 2 Z"/></svg>
+        </div>
+        <span class="display text-2xl tracking-tight">The Forge</span>
+        <span class="mono text-[10px] uppercase tracking-[0.2em] text-stone-500 ml-3 pl-3 border-l border-stone-300">Vol. 5 · 2026</span>
+      </div>
+      <nav class="flex items-center gap-6 text-sm">
+        <a class="border-b-2 border-stone-900 pb-1">The Roadmap</a>
+        <a class="text-stone-500 hover:text-stone-900">Sessions</a>
+        <a class="text-stone-500 hover:text-stone-900">Library</a>
+        <a class="text-stone-500 hover:text-stone-900">Cohort</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <span class="mono text-xs uppercase tracking-wider text-stone-600">AR</span>
+        <div class="w-9 h-9 rounded-full bg-stone-900 text-amber-400 grid place-items-center text-xs font-semibold display">A</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- masthead headline -->
+  <section class="border-b border-stone-300/60 relative grain">
+    <div class="max-w-[1280px] mx-auto px-8 py-16">
+      <p class="mono text-[11px] uppercase tracking-[0.25em] text-amber-700 mb-6">Forge Creators · Edition Five · Goa, May 2026</p>
+      <h1 class="display text-[clamp(48px,9vw,128px)] leading-[0.95] tracking-[-0.04em] mb-8 max-w-5xl">
+        Twelve&nbsp;days to&nbsp;forge<br/>
+        <em class="font-light">your voice.</em>
+      </h1>
+      <div class="flex items-end justify-between">
+        <p class="text-stone-700 max-w-md text-[17px] leading-relaxed">
+          A curated 5-session online intensive followed by 7 days at Bambolim Beach. By Demo Day you ship your first series.
+        </p>
+        <div class="text-right">
+          <p class="mono text-[11px] uppercase tracking-wider text-stone-500 mb-1">Progress</p>
+          <p class="display text-5xl">02 <span class="text-stone-400">/ 13</span></p>
+        </div>
+      </div>
+    </div>
+    <!-- marquee strip -->
+    <div class="border-t border-stone-300/60 bg-stone-900 text-amber-400 py-2.5 overflow-hidden">
+      <div class="marquee-track mono text-[11px] uppercase tracking-[0.2em]">
+        <span>★ Session 3 begins in 04:12:33</span>
+        <span>★ Bambolim Beach Resort, Goa</span>
+        <span>★ Cohort of 24 creators</span>
+        <span>★ 11 mentors · 6 industry guests</span>
+        <span>★ Session 3 begins in 04:12:33</span>
+        <span>★ Bambolim Beach Resort, Goa</span>
+        <span>★ Cohort of 24 creators</span>
+        <span>★ 11 mentors · 6 industry guests</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- featured: today's session as cover story -->
+  <section class="border-b border-stone-300/60">
+    <div class="max-w-[1280px] mx-auto px-8 py-12 grid grid-cols-12 gap-8">
+      <div class="col-span-12 lg:col-span-7">
+        <div class="hero-img-3 aspect-[4/3] rounded-sm relative overflow-hidden">
+          <div class="absolute top-4 left-4 mono text-[10px] uppercase tracking-[0.2em] text-amber-300 bg-stone-900/60 backdrop-blur px-2 py-1 rounded">Today · Live in 4h 12m</div>
+          <div class="absolute bottom-6 left-6 right-6">
+            <p class="mono text-[10px] uppercase tracking-[0.2em] text-amber-200 mb-2">Session 03 of 05</p>
+            <h2 class="display text-white text-5xl leading-tight">Positioning &amp; Content Pillars</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-span-12 lg:col-span-5 flex flex-col justify-between">
+        <div>
+          <p class="mono text-[11px] uppercase tracking-[0.2em] text-amber-700 mb-3">The cover story</p>
+          <h3 class="display text-3xl leading-tight mb-4">Find the gap only you can fill.</h3>
+          <p class="text-stone-700 text-[15px] leading-relaxed mb-6">
+            Riya Kapoor walks through the framework she used to build a 200K-follower audience from zero. By the end of the session you'll have three pillars and a lane no one else owns.
+          </p>
+          <ul class="space-y-2 text-sm text-stone-600 mb-6">
+            <li class="flex gap-3"><span class="mono text-amber-700">01</span><span>Watch the positioning primer (12 min)</span><span class="text-emerald-600 ml-auto">✓</span></li>
+            <li class="flex gap-3"><span class="mono text-amber-700">02</span><span>Draft 3 content pillar ideas</span><span class="text-emerald-600 ml-auto">✓</span></li>
+            <li class="flex gap-3"><span class="mono text-amber-700">03</span><span>Submit competitor analysis</span><span class="text-stone-400 ml-auto">—</span></li>
+          </ul>
+        </div>
+        <div class="flex gap-3">
+          <button class="bg-stone-900 text-white text-sm px-5 py-3 rounded-full hover:bg-amber-600">Join the live workshop →</button>
+          <button class="border border-stone-400 text-sm px-5 py-3 rounded-full">Pre-read</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- the journey: editorial issue list -->
+  <section class="border-b border-stone-300/60">
+    <div class="max-w-[1280px] mx-auto px-8 py-16">
+      <div class="flex items-end justify-between mb-10">
+        <div>
+          <p class="mono text-[11px] uppercase tracking-[0.25em] text-amber-700 mb-2">The Issue</p>
+          <h2 class="display text-5xl">Your twelve-day arc.</h2>
+        </div>
+        <p class="text-stone-500 text-sm">Apr 28 — May 10</p>
+      </div>
+
+      <!-- two-column issue list -->
+      <div class="grid grid-cols-12 gap-8">
+        <!-- ONLINE chapter -->
+        <div class="col-span-12 lg:col-span-6 border-t-2 border-stone-900 pt-6">
+          <div class="flex items-baseline justify-between mb-6">
+            <p class="display text-2xl">Chapter I — Online</p>
+            <p class="mono text-xs text-stone-500">5 SESSIONS</p>
+          </div>
+          <div class="space-y-1">
+            <div class="grid grid-cols-12 py-4 border-b border-stone-300/60 items-center">
+              <span class="col-span-1 display text-2xl text-stone-400">01</span>
+              <div class="col-span-7">
+                <p class="font-medium">Orientation</p>
+                <p class="text-xs text-stone-500">Apr 28 · 1 hr · with Riya Kapoor</p>
+              </div>
+              <span class="col-span-3 text-right text-sm text-emerald-700">Completed</span>
+              <span class="col-span-1 text-right text-emerald-600">✓</span>
+            </div>
+            <div class="grid grid-cols-12 py-4 border-b border-stone-300/60 items-center">
+              <span class="col-span-1 display text-2xl text-stone-400">02</span>
+              <div class="col-span-7">
+                <p class="font-medium">Niche Discovery + Competitor Analysis</p>
+                <p class="text-xs text-stone-500">Apr 29 · 2 hrs</p>
+              </div>
+              <span class="col-span-3 text-right text-sm text-emerald-700">Completed</span>
+              <span class="col-span-1 text-right text-emerald-600">✓</span>
+            </div>
+            <div class="grid grid-cols-12 py-4 border-b-2 border-amber-600 items-center bg-amber-50/40 -mx-2 px-2">
+              <span class="col-span-1 display text-2xl text-amber-700">03</span>
+              <div class="col-span-7">
+                <p class="font-medium">Positioning &amp; Content Pillars</p>
+                <p class="text-xs text-amber-700">Apr 30 · 2 hrs · live in 4h 12m</p>
+              </div>
+              <span class="col-span-3 text-right text-sm font-medium text-amber-700">Today</span>
+              <span class="col-span-1 text-right">→</span>
+            </div>
+            <div class="grid grid-cols-12 py-4 border-b border-stone-300/60 items-center">
+              <span class="col-span-1 display text-2xl text-stone-300">04</span>
+              <div class="col-span-7 text-stone-500">
+                <p class="font-medium">Videography Theory</p>
+                <p class="text-xs">May 1 · 2 hrs</p>
+              </div>
+              <span class="col-span-3 text-right text-sm text-stone-400">Upcoming</span>
+              <span class="col-span-1 text-right text-stone-300">○</span>
+            </div>
+            <div class="grid grid-cols-12 py-4 items-center">
+              <span class="col-span-1 display text-2xl text-stone-300">05</span>
+              <div class="col-span-7 text-stone-500">
+                <p class="font-medium">Video Editing Theory</p>
+                <p class="text-xs">May 2 · 2 hrs</p>
+              </div>
+              <span class="col-span-3 text-right text-sm text-stone-400">Upcoming</span>
+              <span class="col-span-1 text-right text-stone-300">○</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOOTCAMP chapter -->
+        <div class="col-span-12 lg:col-span-6 border-t-2 border-stone-900 pt-6">
+          <div class="flex items-baseline justify-between mb-6">
+            <p class="display text-2xl">Chapter II — Bambolim</p>
+            <p class="mono text-xs text-stone-500">7 DAYS · GOA</p>
+          </div>
+          <div class="space-y-1">
+            <div class="grid grid-cols-12 py-4 border-b border-stone-300/60 items-center">
+              <span class="col-span-1 mono text-xs text-stone-400">D1</span>
+              <div class="col-span-7">
+                <p class="font-medium">Arrival &amp; Kickoff</p>
+                <p class="text-xs text-stone-500">May 4 · welcome dinner</p>
+              </div>
+              <span class="col-span-4 text-right text-xs text-stone-400">in 4 days</span>
+            </div>
+            <div class="grid grid-cols-12 py-4 border-b border-stone-300/60 items-center">
+              <span class="col-span-1 mono text-xs text-stone-400">D2</span>
+              <div class="col-span-7">
+                <p class="font-medium">Shoot Day 1 — Hook &amp; Story</p>
+                <p class="text-xs text-stone-500">May 5 · field session</p>
+              </div>
+              <span class="col-span-4 text-right text-xs text-stone-400">in 5 days</span>
+            </div>
+            <div class="grid grid-cols-12 py-4 border-b border-stone-300/60 items-center">
+              <span class="col-span-1 mono text-xs text-stone-400">D3</span>
+              <div class="col-span-7">
+                <p class="font-medium">Edit Lab — Footage to Cut</p>
+                <p class="text-xs text-stone-500">May 6 · paired studio</p>
+              </div>
+              <span class="col-span-4 text-right text-xs text-stone-400">in 6 days</span>
+            </div>
+            <div class="grid grid-cols-12 py-4 border-b border-stone-300/60 items-center bg-amber-50/40 -mx-2 px-2">
+              <span class="col-span-1 mono text-xs text-amber-700">D4</span>
+              <div class="col-span-7">
+                <p class="font-medium">★ Mid-Bootcamp Showcase</p>
+                <p class="text-xs text-amber-700">May 7 · milestone</p>
+              </div>
+              <span class="col-span-4 text-right text-xs text-amber-700 font-medium">Submission · 6PM</span>
+            </div>
+            <div class="grid grid-cols-12 py-4 border-b border-stone-300/60 items-center">
+              <span class="col-span-1 mono text-xs text-stone-400">D5</span>
+              <div class="col-span-7">
+                <p class="font-medium">Shoot Day 2 — Series Thinking</p>
+                <p class="text-xs text-stone-500">May 8 · field session</p>
+              </div>
+              <span class="col-span-4 text-right text-xs text-stone-400">in 9 days</span>
+            </div>
+            <div class="grid grid-cols-12 py-4 border-b border-stone-300/60 items-center">
+              <span class="col-span-1 mono text-xs text-stone-400">D6</span>
+              <div class="col-span-7">
+                <p class="font-medium">Distribution &amp; Algorithm</p>
+                <p class="text-xs text-stone-500">May 9 · workshop</p>
+              </div>
+              <span class="col-span-4 text-right text-xs text-stone-400">in 10 days</span>
+            </div>
+            <div class="grid grid-cols-12 py-4 items-center bg-stone-900 text-white -mx-2 px-2 rounded">
+              <span class="col-span-1 mono text-xs text-amber-400">D7</span>
+              <div class="col-span-7">
+                <p class="font-medium">Demo Day &amp; Closing Ceremony</p>
+                <p class="text-xs text-stone-400">May 10 · finale</p>
+              </div>
+              <span class="col-span-4 text-right text-xs text-amber-400">Graduation</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- mentors / colophon -->
+  <section>
+    <div class="max-w-[1280px] mx-auto px-8 py-12">
+      <p class="mono text-[11px] uppercase tracking-[0.25em] text-amber-700 mb-6">The Colophon</p>
+      <div class="grid grid-cols-12 gap-8">
+        <div class="col-span-12 lg:col-span-8">
+          <p class="display text-2xl leading-snug max-w-2xl">
+            <em class="text-stone-500">Made with</em> Riya Kapoor, Devansh Mehta, Anaika Sen and 8 other mentors who've built audiences from zero. Cohort of 24 creators · curated by The Forge.
+          </p>
+        </div>
+        <div class="col-span-12 lg:col-span-4 flex items-end">
+          <div class="flex -space-x-2">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-amber-600 border-2 border-[#f5f1eb]"></div>
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-700 border-2 border-[#f5f1eb]"></div>
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-rose-700 border-2 border-[#f5f1eb]"></div>
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-700 border-2 border-[#f5f1eb]"></div>
+            <div class="w-10 h-10 rounded-full bg-stone-900 text-amber-400 border-2 border-[#f5f1eb] grid place-items-center text-xs">+7</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</section>
+
+
+<!-- ================================================================ -->
+<!-- DIRECTION B: TRAVEL ITINERARY (Mindtrip / Tripadvisor)            -->
+<!-- ================================================================ -->
+<section id="design-b" class="hidden-design bg-white text-stone-900 min-h-screen">
+
+  <!-- top bar -->
+  <header class="border-b border-stone-200 bg-white/95 backdrop-blur sticky top-0 z-30">
+    <div class="px-6 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-md bg-orange-600 grid place-items-center">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M12 2 L4 13 H10 L8 22 L20 9 H14 L16 2 Z"/></svg>
+        </div>
+        <span class="font-semibold tracking-tight">Forge</span>
+        <span class="text-stone-300 mx-1">/</span>
+        <span class="text-sm text-stone-600">Forge Creators · Edition 5</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="text-xs px-3 py-1.5 rounded-full bg-stone-100 hover:bg-stone-200">Invite</button>
+        <button class="text-xs px-3 py-1.5 rounded-full bg-stone-900 text-white">Trip · 24 saves</button>
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-rose-600 grid place-items-center text-xs font-semibold text-white">A</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid grid-cols-12 h-[calc(100vh-56px)]">
+    <!-- LEFT: itinerary -->
+    <div class="col-span-12 lg:col-span-7 overflow-y-auto">
+      <!-- hero photo -->
+      <div class="relative h-72 photo-placeholder">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+        <div class="absolute top-4 left-6 right-6 flex items-start justify-between text-white">
+          <div class="flex items-center gap-2 bg-white/15 backdrop-blur px-3 py-1.5 rounded-full text-xs">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            Live · S3 in 4h 12m
+          </div>
+          <div class="flex gap-2">
+            <button class="w-8 h-8 rounded-full bg-white/20 backdrop-blur grid place-items-center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+            <button class="w-8 h-8 rounded-full bg-white/20 backdrop-blur grid place-items-center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
+          </div>
+        </div>
+        <div class="absolute bottom-6 left-6 text-white">
+          <h1 class="display text-5xl leading-none mb-2">Forge in Goa</h1>
+          <div class="flex items-center gap-3 text-sm">
+            <span class="flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>Apr 28 → May 10</span>
+            <span>·</span>
+            <span class="flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 21s-7-4.5-7-10a7 7 0 1114 0c0 5.5-7 10-7 10z"/></svg>Bambolim Beach</span>
+            <span>·</span>
+            <span>24 creators</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- tabs -->
+      <div class="border-b border-stone-200 px-6">
+        <div class="flex items-center gap-6 text-sm">
+          <a class="py-3 border-b-2 border-orange-600 font-medium">Itinerary</a>
+          <a class="py-3 text-stone-500">Sessions</a>
+          <a class="py-3 text-stone-500">Cohort</a>
+          <a class="py-3 text-stone-500">Resources</a>
+        </div>
+      </div>
+
+      <!-- segmented chip nav -->
+      <div class="px-6 py-4 flex items-center gap-2 overflow-x-auto">
+        <button class="text-xs px-3 py-1.5 rounded-full border border-stone-300 bg-white">All 13</button>
+        <button class="text-xs px-3 py-1.5 rounded-full border border-stone-300 bg-stone-900 text-white">S1</button>
+        <button class="text-xs px-3 py-1.5 rounded-full border border-stone-300 bg-stone-900 text-white">S2</button>
+        <button class="text-xs px-3 py-1.5 rounded-full border-2 border-orange-600 text-orange-600 font-medium">S3</button>
+        <button class="text-xs px-3 py-1.5 rounded-full border border-stone-300">S4</button>
+        <button class="text-xs px-3 py-1.5 rounded-full border border-stone-300">S5</button>
+        <span class="w-px h-5 bg-stone-300 mx-1"></span>
+        <button class="text-xs px-3 py-1.5 rounded-full border border-stone-300">D1</button>
+        <button class="text-xs px-3 py-1.5 rounded-full border border-stone-300">D2</button>
+        <button class="text-xs px-3 py-1.5 rounded-full border border-stone-300">D3</button>
+        <button class="text-xs px-3 py-1.5 rounded-full border border-stone-300">D4</button>
+        <button class="text-xs px-3 py-1.5 rounded-full border border-stone-300">D5</button>
+        <button class="text-xs px-3 py-1.5 rounded-full border border-stone-300">D6</button>
+        <button class="text-xs px-3 py-1.5 rounded-full border border-stone-300">D7</button>
+      </div>
+
+      <!-- DAY CARDS -->
+      <div class="px-6 pb-12 space-y-8">
+
+        <!-- Day group: Online -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold flex items-center gap-2">
+              <span class="text-orange-600">●</span>
+              Online · Apr 28 – May 2
+            </h2>
+            <span class="text-xs text-stone-500">5 sessions · 2 of 5 done</span>
+          </div>
+          <div class="space-y-3">
+            <!-- S3 today -->
+            <div class="border-2 border-orange-500 rounded-xl p-4 flex gap-4 bg-orange-50/40">
+              <div class="w-24 h-24 rounded-lg photo-3 shrink-0 grid place-items-center">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-semibold uppercase tracking-wider text-orange-600">S3 · Today</span>
+                  <span class="text-xs text-stone-500">·</span>
+                  <span class="text-xs text-stone-500">Apr 30 · 6:30 PM IST · 2 hrs</span>
+                </div>
+                <h3 class="font-semibold text-lg mb-1">Positioning &amp; Content Pillars</h3>
+                <p class="text-sm text-stone-600 mb-3">With Riya Kapoor. Find the gap only you can fill — three content pillars by end of session.</p>
+                <div class="flex items-center gap-2">
+                  <button class="text-xs bg-orange-600 text-white px-3 py-1.5 rounded-full font-medium">Join Zoom →</button>
+                  <button class="text-xs border border-stone-300 px-3 py-1.5 rounded-full">Pre-read (2)</button>
+                  <span class="text-xs text-stone-500 ml-auto">Live in 4h 12m</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- S1 done -->
+            <div class="border border-stone-200 rounded-xl p-4 flex gap-4 opacity-70">
+              <div class="w-24 h-24 rounded-lg photo-2 shrink-0 grid place-items-center">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="5 12 10 17 19 8"/></svg>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600">S1 · Done</span>
+                  <span class="text-xs text-stone-500">· Apr 28</span>
+                </div>
+                <h3 class="font-semibold mb-1">Orientation</h3>
+                <p class="text-sm text-stone-600">Recording available · 47 min</p>
+              </div>
+            </div>
+
+            <!-- S2 done -->
+            <div class="border border-stone-200 rounded-xl p-4 flex gap-4 opacity-70">
+              <div class="w-24 h-24 rounded-lg photo-4 shrink-0 grid place-items-center">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="5 12 10 17 19 8"/></svg>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600">S2 · Done</span>
+                  <span class="text-xs text-stone-500">· Apr 29</span>
+                </div>
+                <h3 class="font-semibold mb-1">Niche Discovery + Competitor Analysis</h3>
+                <p class="text-sm text-stone-600">Worksheet submitted · feedback from Riya pending</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bootcamp days -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold flex items-center gap-2">
+              <span class="text-cyan-600">●</span>
+              Bootcamp · Bambolim Beach Resort
+            </h2>
+            <span class="text-xs text-stone-500">7 days · May 4 – 10</span>
+          </div>
+
+          <div class="space-y-3">
+            <!-- Day 1 -->
+            <div class="border border-stone-200 rounded-xl p-4 flex gap-4">
+              <div class="w-24 h-24 rounded-lg photo-5 shrink-0"></div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-semibold uppercase tracking-wider text-stone-500">D1 · Sun</span>
+                  <span class="text-xs text-stone-500">· May 4</span>
+                </div>
+                <h3 class="font-semibold mb-1">Arrival &amp; Welcome Dinner</h3>
+                <p class="text-sm text-stone-600 mb-2">Check in by 4 PM · cohort dinner at the beachside lawn from 7:30 PM.</p>
+                <div class="flex items-center gap-3 text-xs text-stone-500">
+                  <span class="flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.5-7-10a7 7 0 1114 0c0 5.5-7 10-7 10z"/></svg>Bambolim Lawn</span>
+                  <span class="flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>4:00 – 22:00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Day 2 -->
+            <div class="border border-stone-200 rounded-xl p-4 flex gap-4">
+              <div class="w-24 h-24 rounded-lg photo-2 shrink-0"></div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-semibold uppercase tracking-wider text-stone-500">D2 · Mon</span>
+                  <span class="text-xs text-stone-500">· May 5</span>
+                </div>
+                <h3 class="font-semibold mb-1">Shoot Day 1 — Hook &amp; Story</h3>
+                <p class="text-sm text-stone-600 mb-2">Field session at Bambolim Beach. Capture 60s reels solo &amp; in pairs.</p>
+                <div class="flex items-center gap-3 text-xs text-stone-500">
+                  <span>📷 Equipment provided</span>
+                  <span>· 6 hrs</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Day 4 milestone -->
+            <div class="border-2 border-amber-400 bg-amber-50/40 rounded-xl p-4 flex gap-4">
+              <div class="w-24 h-24 rounded-lg photo-placeholder shrink-0 grid place-items-center">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M12 2L15 8.5L22 9.3L17 14.4L18.2 21.5L12 18.1L5.8 21.5L7 14.4L2 9.3L9 8.5L12 2Z"/></svg>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-semibold uppercase tracking-wider text-amber-700">D4 · Wed · Milestone</span>
+                  <span class="text-xs text-stone-500">· May 7</span>
+                </div>
+                <h3 class="font-semibold mb-1">Mid-Bootcamp Showcase</h3>
+                <p class="text-sm text-stone-700 mb-2">Present your first edit. Mentor critique round + cohort feedback.</p>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs px-2 py-1 rounded-full bg-amber-200 text-amber-900 font-medium">Submission · 6 PM</span>
+                  <span class="text-xs text-stone-500">In 9 days</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Day 7 finale -->
+            <div class="bg-stone-900 text-white rounded-xl p-4 flex gap-4 relative overflow-hidden">
+              <div class="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-amber-500/20 blur-2xl"></div>
+              <div class="w-24 h-24 rounded-lg photo-placeholder shrink-0 grid place-items-center relative">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="#0c0a09"><path d="M12 2 L4 13 H10 L8 22 L20 9 H14 L16 2 Z"/></svg>
+              </div>
+              <div class="flex-1 relative">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-semibold uppercase tracking-wider text-amber-400">D7 · Sat · Finale</span>
+                  <span class="text-xs text-stone-400">· May 10</span>
+                </div>
+                <h3 class="font-semibold mb-1">Demo Day &amp; Closing Ceremony</h3>
+                <p class="text-sm text-stone-300 mb-2">Final showcase to invited guests · graduation · closing party.</p>
+                <span class="text-xs px-2 py-1 rounded-full bg-amber-400 text-stone-900 font-semibold">★ Graduation</span>
+              </div>
+            </div>
+
+            <!-- collapsed days hint -->
+            <button class="w-full border border-dashed border-stone-300 rounded-xl py-3 text-sm text-stone-500 hover:bg-stone-50">
+              + Show 4 more bootcamp days (D3, D5, D6)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: map -->
+    <div class="col-span-12 lg:col-span-5 sticky top-14 h-[calc(100vh-56px)] map-bg relative overflow-hidden">
+      <div class="absolute inset-0 map-coast"></div>
+
+      <!-- map controls -->
+      <div class="absolute top-4 right-4 flex flex-col gap-2 z-10">
+        <button class="w-9 h-9 bg-white border border-stone-200 rounded-md shadow-sm grid place-items-center">+</button>
+        <button class="w-9 h-9 bg-white border border-stone-200 rounded-md shadow-sm grid place-items-center">−</button>
+      </div>
+
+      <!-- venue label -->
+      <div class="absolute top-4 left-4 bg-white border border-stone-200 rounded-full pl-1 pr-3 py-1 flex items-center gap-2 shadow-sm">
+        <div class="w-6 h-6 rounded-full bg-orange-600 grid place-items-center text-white text-[10px]">★</div>
+        <span class="text-xs font-medium">Bambolim, Goa</span>
+      </div>
+
+      <!-- pulsing pin (venue) -->
+      <div class="absolute top-1/2 left-[35%] -translate-x-1/2 -translate-y-1/2">
+        <div class="relative">
+          <div class="absolute inset-0 w-12 h-12 -ml-2 -mt-2 rounded-full bg-orange-500/40 pulse-ring"></div>
+          <div class="relative w-8 h-8 rounded-full bg-orange-600 border-3 border-white grid place-items-center text-white text-xs shadow-lg">
+            ★
+          </div>
+        </div>
+        <div class="mt-2 bg-white border border-stone-200 rounded-lg shadow-md p-3 w-56">
+          <p class="text-xs font-semibold mb-0.5">Bambolim Beach Resort</p>
+          <p class="text-[11px] text-stone-500 mb-2">Goa · 7 nights · May 4 – 10</p>
+          <div class="flex gap-1">
+            <div class="w-12 h-9 rounded photo-placeholder"></div>
+            <div class="w-12 h-9 rounded photo-2"></div>
+            <div class="w-12 h-9 rounded photo-3"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- nearby pins -->
+      <div class="absolute top-[30%] left-[55%]">
+        <div class="w-7 h-7 rounded-full bg-white border-2 border-cyan-600 grid place-items-center text-xs">📷</div>
+        <div class="text-[10px] mt-1 bg-white px-1.5 py-0.5 rounded shadow-sm">Shoot Spot</div>
+      </div>
+      <div class="absolute top-[60%] left-[58%]">
+        <div class="w-7 h-7 rounded-full bg-white border-2 border-violet-600 grid place-items-center text-xs">🍽</div>
+        <div class="text-[10px] mt-1 bg-white px-1.5 py-0.5 rounded shadow-sm">Demo Day</div>
+      </div>
+      <div class="absolute top-[20%] left-[20%]">
+        <div class="w-7 h-7 rounded-full bg-white border-2 border-emerald-600 grid place-items-center text-xs">✈</div>
+        <div class="text-[10px] mt-1 bg-white px-1.5 py-0.5 rounded shadow-sm">GOI Airport</div>
+      </div>
+
+      <!-- distance line preview -->
+      <div class="absolute bottom-4 left-4 right-4 bg-white border border-stone-200 rounded-xl p-3 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-orange-100 grid place-items-center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2"><path d="M12 2 L4 13 H10 L8 22 L20 9 H14 L16 2 Z"/></svg>
+        </div>
+        <div class="flex-1">
+          <p class="text-xs font-semibold">Bootcamp begins in 4 days</p>
+          <p class="text-[11px] text-stone-500">Travel from Bangalore · book by May 1</p>
+        </div>
+        <button class="text-xs bg-stone-900 text-white px-3 py-1.5 rounded-full">Travel info</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ================================================================ -->
+<!-- DIRECTION C: CONFERENCE / EVENT (Stripe Sessions / Jasper)        -->
+<!-- ================================================================ -->
+<section id="design-c" class="hidden-design bg-stone-950 text-stone-100 min-h-screen relative">
+
+  <!-- top nav -->
+  <header class="border-b border-white/5">
+    <div class="max-w-[1400px] mx-auto px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-7 h-7 grid place-items-center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#fb923c"><path d="M12 2 L4 13 H10 L8 22 L20 9 H14 L16 2 Z"/></svg>
+        </div>
+        <div>
+          <p class="display text-xl leading-none">FORGE<span class="text-orange-400">.</span></p>
+          <p class="mono text-[9px] uppercase tracking-[0.25em] text-stone-500 mt-1">Creators · E5</p>
+        </div>
+      </div>
+      <nav class="flex items-center gap-6 text-sm text-stone-400">
+        <a class="text-white">Why Forge</a>
+        <a class="hover:text-white">Mentors</a>
+        <a class="hover:text-white">Agenda</a>
+        <a class="hover:text-white">Venue</a>
+        <a class="hover:text-white">FAQ</a>
+      </nav>
+      <button class="text-sm bg-white text-stone-900 font-medium px-5 py-2 rounded-full hover:bg-orange-400 flex items-center gap-2">
+        Your Pass <span>→</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- HERO with countdown -->
+  <section class="relative overflow-hidden border-b border-white/5">
+    <div class="absolute inset-0 hero-img-3 opacity-90"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-stone-950/70 to-stone-950"></div>
+
+    <div class="relative max-w-[1400px] mx-auto px-8 pt-16 pb-10">
+      <p class="mono text-[11px] uppercase tracking-[0.3em] text-orange-300 mb-6">Bambolim Beach Resort · Goa · May 4 — 10, 2026</p>
+      <h1 class="display text-[clamp(60px,11vw,180px)] leading-[0.85] tracking-[-0.04em] mb-8">
+        Forge<br/>your voice.
+      </h1>
+
+      <!-- COUNTDOWN -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+        <div class="lg:col-span-7 bg-white/5 backdrop-blur border border-white/10 rounded-3xl p-6">
+          <div class="flex items-center justify-between mb-4">
+            <p class="mono text-[10px] uppercase tracking-[0.25em] text-stone-400">Bootcamp begins in</p>
+            <span class="text-xs px-2 py-1 rounded-full bg-orange-500/20 text-orange-300 mono">LIVE COUNTDOWN</span>
+          </div>
+          <div class="grid grid-cols-4 gap-4">
+            <div class="text-center">
+              <p class="display text-[clamp(48px,8vw,120px)] leading-none text-white">04</p>
+              <p class="mono text-[10px] uppercase tracking-[0.25em] text-stone-500 mt-2">Days</p>
+            </div>
+            <div class="text-center">
+              <p class="display text-[clamp(48px,8vw,120px)] leading-none text-white">12</p>
+              <p class="mono text-[10px] uppercase tracking-[0.25em] text-stone-500 mt-2">Hours</p>
+            </div>
+            <div class="text-center">
+              <p class="display text-[clamp(48px,8vw,120px)] leading-none text-white">37</p>
+              <p class="mono text-[10px] uppercase tracking-[0.25em] text-stone-500 mt-2">Min</p>
+            </div>
+            <div class="text-center">
+              <p class="display text-[clamp(48px,8vw,120px)] leading-none text-orange-400">42</p>
+              <p class="mono text-[10px] uppercase tracking-[0.25em] text-stone-500 mt-2">Sec</p>
+            </div>
+          </div>
+        </div>
+        <div class="lg:col-span-5 space-y-3">
+          <div class="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-5">
+            <p class="mono text-[10px] uppercase tracking-[0.25em] text-orange-300 mb-1">Up next · Today</p>
+            <p class="display text-2xl mb-1">Session 03 · Positioning &amp; Content Pillars</p>
+            <p class="text-sm text-stone-400 mb-4">With Riya Kapoor · 6:30 PM IST · 2 hrs</p>
+            <button class="w-full bg-orange-500 hover:bg-orange-400 text-stone-900 font-semibold py-3 rounded-xl flex items-center justify-center gap-2">
+              Join Zoom · Live in 4h 12m →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ticker -->
+    <div class="border-t border-white/10 bg-stone-950 py-3 overflow-hidden">
+      <div class="marquee-track mono text-[11px] uppercase tracking-[0.3em] text-stone-500">
+        <span><span class="text-orange-400">●</span> Cohort 24/24 sold</span>
+        <span><span class="text-orange-400">●</span> 5 online sessions</span>
+        <span><span class="text-orange-400">●</span> 7 days in Goa</span>
+        <span><span class="text-orange-400">●</span> 11 mentors</span>
+        <span><span class="text-orange-400">●</span> Demo Day · May 10</span>
+        <span><span class="text-orange-400">●</span> Cohort 24/24 sold</span>
+        <span><span class="text-orange-400">●</span> 5 online sessions</span>
+        <span><span class="text-orange-400">●</span> 7 days in Goa</span>
+        <span><span class="text-orange-400">●</span> 11 mentors</span>
+        <span><span class="text-orange-400">●</span> Demo Day · May 10</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- AGENDA -->
+  <section class="border-b border-white/5">
+    <div class="max-w-[1400px] mx-auto px-8 py-20">
+      <div class="grid grid-cols-12 gap-8 items-end mb-12">
+        <div class="col-span-12 lg:col-span-8">
+          <p class="mono text-[11px] uppercase tracking-[0.3em] text-orange-300 mb-4">The Agenda</p>
+          <h2 class="display text-[clamp(40px,6vw,80px)] leading-[0.95]">12 days. 13 stages.<br/><em class="text-stone-500">One you.</em></h2>
+        </div>
+        <div class="col-span-12 lg:col-span-4 text-stone-400 text-sm">
+          <p>The first five evenings prepare you. The next seven days break you open. By the finale you've shipped a series and built lifelong cohort ties.</p>
+        </div>
+      </div>
+
+      <!-- Day rows -->
+      <div class="space-y-px">
+        <!-- S3 highlighted today -->
+        <div class="grid grid-cols-12 gap-6 py-6 border-y border-orange-500/40 bg-orange-500/[0.04] -mx-4 px-4 rounded-lg">
+          <div class="col-span-2 lg:col-span-1">
+            <p class="mono text-xs text-orange-300">TODAY</p>
+            <p class="display text-3xl">S3</p>
+            <p class="mono text-[10px] text-stone-500">APR 30</p>
+          </div>
+          <div class="col-span-7 lg:col-span-7">
+            <p class="display text-2xl mb-1">Positioning &amp; Content Pillars</p>
+            <p class="text-stone-400 text-sm mb-3">Find the gap only you can fill. Walk away with three pillars and a lane no one else owns.</p>
+            <div class="flex items-center gap-3">
+              <div class="flex items-center gap-2 text-xs">
+                <div class="w-6 h-6 rounded-full bg-gradient-to-br from-rose-400 to-amber-600"></div>
+                <span class="text-stone-300">Riya Kapoor</span>
+                <span class="text-stone-500">· Lead Mentor</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-span-3 lg:col-span-4 text-right flex flex-col items-end justify-between">
+            <span class="text-xs px-2 py-1 rounded-full bg-orange-500/20 text-orange-300 mono uppercase tracking-wider">Live in 4h 12m</span>
+            <button class="text-sm bg-orange-500 text-stone-900 font-semibold px-4 py-2 rounded-full">Join Zoom →</button>
+          </div>
+        </div>
+
+        <!-- S1, S2 -->
+        <div class="grid grid-cols-12 gap-6 py-5 border-b border-white/5 opacity-60">
+          <div class="col-span-2 lg:col-span-1">
+            <p class="mono text-xs text-emerald-400">DONE</p>
+            <p class="display text-3xl">S1</p>
+            <p class="mono text-[10px] text-stone-500">APR 28</p>
+          </div>
+          <div class="col-span-7 lg:col-span-7">
+            <p class="display text-2xl mb-1">Orientation</p>
+            <p class="text-stone-500 text-sm">Welcome session · meet your cohort and mentors</p>
+          </div>
+          <div class="col-span-3 lg:col-span-4 text-right text-xs text-stone-500">
+            <p>1 hr · Recording available</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-12 gap-6 py-5 border-b border-white/5 opacity-60">
+          <div class="col-span-2 lg:col-span-1">
+            <p class="mono text-xs text-emerald-400">DONE</p>
+            <p class="display text-3xl">S2</p>
+            <p class="mono text-[10px] text-stone-500">APR 29</p>
+          </div>
+          <div class="col-span-7 lg:col-span-7">
+            <p class="display text-2xl mb-1">Niche Discovery + Competitor Analysis</p>
+            <p class="text-stone-500 text-sm">Worksheet submitted · feedback pending</p>
+          </div>
+          <div class="col-span-3 lg:col-span-4 text-right text-xs text-stone-500">
+            <p>2 hrs · Recording available</p>
+          </div>
+        </div>
+
+        <!-- S4 -->
+        <div class="grid grid-cols-12 gap-6 py-5 border-b border-white/5">
+          <div class="col-span-2 lg:col-span-1">
+            <p class="mono text-xs text-stone-500">UPCOMING</p>
+            <p class="display text-3xl">S4</p>
+            <p class="mono text-[10px] text-stone-500">MAY 1</p>
+          </div>
+          <div class="col-span-7 lg:col-span-7">
+            <p class="display text-2xl mb-1">Videography Theory</p>
+            <p class="text-stone-400 text-sm mb-3">Composition, light, the discipline of seeing.</p>
+            <div class="flex items-center gap-2 text-xs">
+              <div class="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-700"></div>
+              <span class="text-stone-300">Devansh Mehta</span>
+            </div>
+          </div>
+          <div class="col-span-3 lg:col-span-4 text-right text-xs text-stone-400">
+            <p>2 hrs · 6:30 PM IST</p>
+          </div>
+        </div>
+
+        <!-- divider -->
+        <div class="py-8 flex items-center gap-4">
+          <div class="flex-1 h-px bg-white/10"></div>
+          <span class="mono text-[10px] uppercase tracking-[0.3em] text-stone-500">Travel · May 3</span>
+          <div class="flex-1 h-px bg-white/10"></div>
+        </div>
+
+        <!-- D1-D7 abridged -->
+        <div class="grid grid-cols-12 gap-6 py-5 border-b border-white/5">
+          <div class="col-span-2 lg:col-span-1">
+            <p class="mono text-xs text-cyan-400">GOA</p>
+            <p class="display text-3xl">D1</p>
+            <p class="mono text-[10px] text-stone-500">MAY 4</p>
+          </div>
+          <div class="col-span-7 lg:col-span-7">
+            <p class="display text-2xl mb-1">Arrival &amp; Welcome Dinner</p>
+            <p class="text-stone-500 text-sm">Bambolim Lawn · 7:30 PM</p>
+          </div>
+          <div class="col-span-3 lg:col-span-4 text-right text-xs text-stone-400">In 4 days</div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-6 py-5 border-b border-white/5">
+          <div class="col-span-2 lg:col-span-1">
+            <p class="mono text-xs text-cyan-400">GOA</p>
+            <p class="display text-3xl">D2</p>
+            <p class="mono text-[10px] text-stone-500">MAY 5</p>
+          </div>
+          <div class="col-span-7 lg:col-span-7">
+            <p class="display text-2xl mb-1">Shoot Day 1 — Hook &amp; Story</p>
+            <p class="text-stone-500 text-sm">Field session · 6 hrs</p>
+          </div>
+          <div class="col-span-3 lg:col-span-4 text-right text-xs text-stone-400">In 5 days</div>
+        </div>
+
+        <!-- D4 milestone -->
+        <div class="grid grid-cols-12 gap-6 py-6 border-y border-amber-500/30 bg-amber-500/[0.04] -mx-4 px-4 rounded-lg">
+          <div class="col-span-2 lg:col-span-1">
+            <p class="mono text-xs text-amber-400">★ MILESTONE</p>
+            <p class="display text-3xl text-amber-300">D4</p>
+            <p class="mono text-[10px] text-stone-500">MAY 7</p>
+          </div>
+          <div class="col-span-7 lg:col-span-7">
+            <p class="display text-2xl mb-1">Mid-Bootcamp Showcase</p>
+            <p class="text-stone-400 text-sm">Present your first edit · mentor critique · cohort feedback</p>
+          </div>
+          <div class="col-span-3 lg:col-span-4 text-right">
+            <span class="text-xs px-2 py-1 rounded-full bg-amber-500/20 text-amber-300 mono uppercase">Submission · 6 PM</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-6 py-5 border-b border-white/5">
+          <div class="col-span-2 lg:col-span-1">
+            <p class="mono text-xs text-cyan-400">GOA</p>
+            <p class="display text-3xl">D5</p>
+            <p class="mono text-[10px] text-stone-500">MAY 8</p>
+          </div>
+          <div class="col-span-7 lg:col-span-7">
+            <p class="display text-2xl mb-1">Shoot Day 2 — Series Thinking</p>
+            <p class="text-stone-500 text-sm">Field session · 6 hrs</p>
+          </div>
+          <div class="col-span-3 lg:col-span-4 text-right text-xs text-stone-400">In 8 days</div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-6 py-5 border-b border-white/5">
+          <div class="col-span-2 lg:col-span-1">
+            <p class="mono text-xs text-cyan-400">GOA</p>
+            <p class="display text-3xl">D6</p>
+            <p class="mono text-[10px] text-stone-500">MAY 9</p>
+          </div>
+          <div class="col-span-7 lg:col-span-7">
+            <p class="display text-2xl mb-1">Distribution &amp; Algorithm Mechanics</p>
+            <p class="text-stone-500 text-sm">Workshop · 4 hrs</p>
+          </div>
+          <div class="col-span-3 lg:col-span-4 text-right text-xs text-stone-400">In 9 days</div>
+        </div>
+
+        <!-- D7 finale -->
+        <div class="grid grid-cols-12 gap-6 py-8 bg-gradient-to-r from-orange-500/20 via-orange-500/5 to-transparent rounded-lg -mx-4 px-4 border-y-2 border-orange-500/40">
+          <div class="col-span-2 lg:col-span-1">
+            <p class="mono text-xs text-orange-300">FINALE</p>
+            <p class="display text-3xl text-orange-300">D7</p>
+            <p class="mono text-[10px] text-stone-500">MAY 10</p>
+          </div>
+          <div class="col-span-7 lg:col-span-7">
+            <p class="display text-3xl mb-1">Demo Day &amp; Closing Ceremony</p>
+            <p class="text-stone-300 text-sm">Final showcase to invited guests · graduation · closing party with the entire cohort.</p>
+          </div>
+          <div class="col-span-3 lg:col-span-4 text-right flex flex-col items-end justify-center">
+            <span class="text-xs px-3 py-1 rounded-full bg-orange-400 text-stone-900 font-semibold mono uppercase">★ Graduation</span>
+            <p class="mono text-[10px] uppercase tracking-wider text-stone-500 mt-2">In 12 days</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- mentors strip -->
+  <section class="border-b border-white/5">
+    <div class="max-w-[1400px] mx-auto px-8 py-16">
+      <div class="flex items-end justify-between mb-10">
+        <div>
+          <p class="mono text-[11px] uppercase tracking-[0.3em] text-orange-300 mb-4">The Mentors</p>
+          <h2 class="display text-5xl">Eleven who've been there.</h2>
+        </div>
+        <button class="text-sm text-stone-400 hover:text-white">View all 11 →</button>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white/5 border border-white/5 rounded-2xl p-5 hover:border-orange-500/40 transition">
+          <div class="w-14 h-14 rounded-full bg-gradient-to-br from-rose-400 to-amber-600 mb-3"></div>
+          <p class="display text-xl mb-1">Riya Kapoor</p>
+          <p class="text-xs text-stone-500">Content Strategy · 200K+</p>
+        </div>
+        <div class="bg-white/5 border border-white/5 rounded-2xl p-5 hover:border-orange-500/40 transition">
+          <div class="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-700 mb-3"></div>
+          <p class="display text-xl mb-1">Devansh Mehta</p>
+          <p class="text-xs text-stone-500">Videography · 1.2M</p>
+        </div>
+        <div class="bg-white/5 border border-white/5 rounded-2xl p-5 hover:border-orange-500/40 transition">
+          <div class="w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-rose-700 mb-3"></div>
+          <p class="display text-xl mb-1">Anaika Sen</p>
+          <p class="text-xs text-stone-500">Editing · YouTube creator</p>
+        </div>
+        <div class="bg-white/5 border border-white/5 rounded-2xl p-5 hover:border-orange-500/40 transition">
+          <div class="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-orange-700 mb-3"></div>
+          <p class="display text-xl mb-1">Karan Iyer</p>
+          <p class="text-xs text-stone-500">Distribution · ex-Instagram</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- footer -->
+  <footer class="max-w-[1400px] mx-auto px-8 py-10 flex items-center justify-between text-stone-600 text-xs mono uppercase tracking-wider">
+    <p>© The Forge · Edition Five</p>
+    <p>Bambolim · Goa · India</p>
+    <p>Made for creators</p>
+  </footer>
+</section>
+
+
+<script>
+  function show(which) {
+    ['a','b','c'].forEach(k => {
+      const sec = document.getElementById('design-' + k);
+      const btn = document.getElementById('btn-' + k);
+      if (k === which) {
+        sec.classList.remove('hidden-design');
+        sec.classList.add('visible-design');
+        btn.classList.add('bg-stone-900', 'text-white');
+        btn.classList.remove('text-stone-600', 'hover:bg-stone-100');
+      } else {
+        sec.classList.add('hidden-design');
+        sec.classList.remove('visible-design');
+        btn.classList.remove('bg-stone-900', 'text-white');
+        btn.classList.add('text-stone-600', 'hover:bg-stone-100');
+      }
+    });
+    window.scrollTo(0, 0);
+  }
+  show('a');
+</script>
+
+</body>
+</html>
