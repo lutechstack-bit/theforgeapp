@@ -1,4 +1,4 @@
-project_id = "tprvyhzpecopryylxznm"
+project_id = "xpnuwzftifytvbygprvn"
 
 [functions.create-user]
 verify_jwt = false
@@ -22,4 +22,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.zoom-signature]
+verify_jwt = false
+
+[functions.forge-onboard-student]
 verify_jwt = false
