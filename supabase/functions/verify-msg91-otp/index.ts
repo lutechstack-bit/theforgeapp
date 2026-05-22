@@ -47,8 +47,13 @@ serve(async (req) => {
       });
     }
 
-    if (msg91Data.type !== 'success') {
-      return new Response(JSON.stringify({ success: false, error: 'MSG91 rejected token: ' + JSON.stringify(msg91Data) }), {
+    // Accept both 'success' and 'already verified' — widget consumes the token
+    // on client-side verification, so server-side re-check returns "already verified"
+    const isVerified = msg91Data.type === 'success' ||
+      (msg91Data.message || '').toLowerCase().includes('already verif');
+
+    if (!isVerified) {
+      return new Response(JSON.stringify({ success: false, error: msg91Data.message || 'OTP verification failed' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
