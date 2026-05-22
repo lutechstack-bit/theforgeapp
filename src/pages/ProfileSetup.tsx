@@ -39,6 +39,9 @@ const formatDateRange = (start: string, end: string) => {
   return `${format(startDate, 'MMM d')} - ${format(endDate, 'MMM d, yyyy')}`;
 };
 
+const isPhoneOtpEmail = (email: string | undefined) =>
+  !email || /^phone_\d+@forge\.local$/.test(email);
+
 const ProfileSetup: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -50,6 +53,8 @@ const ProfileSetup: React.FC = () => {
     edition_id: '',
     avatar_url: '',
   });
+  const [realEmail, setRealEmail] = useState('');
+  const [realEmailError, setRealEmailError] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -117,6 +122,10 @@ const ProfileSetup: React.FC = () => {
     }
   };
 
+  const isPhoneUser =
+    user?.user_metadata?.signup_method === 'phone_otp' ||
+    isPhoneOtpEmail(user?.email);
+
   const selectedEdition = editions?.find(e => e.id === formData.edition_id);
   const hasPreAssignedEdition = !!profile?.edition_id;
   const preAssignedEdition = editions?.find(e => e.id === profile?.edition_id);
@@ -133,13 +142,37 @@ const ProfileSetup: React.FC = () => {
       return;
     }
 
+    // Phone-signup users must provide a real email
+    if (isPhoneUser) {
+      setRealEmailError('');
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!realEmail || !emailRegex.test(realEmail) || isPhoneOtpEmail(realEmail)) {
+        setRealEmailError('Please enter a valid email address.');
+        return;
+      }
+    }
+
     setLoading(true);
+
+    // For phone users: update auth email before saving profile
+    if (isPhoneUser && realEmail) {
+      const { error: emailErr } = await supabase.auth.updateUser({ email: realEmail });
+      if (emailErr) {
+        setLoading(false);
+        toast({
+          title: 'Email update failed',
+          description: emailErr.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
 
     const { error } = await supabase
       .from('profiles')
       .update({
         full_name: formData.full_name,
-        email: formData.email,
+        email: isPhoneUser ? realEmail : formData.email,
         phone: formData.phone,
         city: formData.city,
         avatar_url: formData.avatar_url || null,
@@ -168,7 +201,12 @@ const ProfileSetup: React.FC = () => {
     navigate('/welcome');
   };
 
-  const canSubmit = formData.full_name && formData.email && formData.phone && formData.city && formData.edition_id;
+  const canSubmit =
+    formData.full_name &&
+    formData.phone &&
+    formData.city &&
+    formData.edition_id &&
+    (isPhoneUser ? !!realEmail : !!formData.email);
 
   return (
     <div className="min-h-[100dvh] flex flex-col items-center justify-center p-4 sm:p-6 bg-background">
@@ -229,23 +267,42 @@ const ProfileSetup: React.FC = () => {
             className="bg-secondary/50"
           />
 
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm text-muted-foreground">Your Email ID</span>
-              <span className="inline-flex items-center gap-1 text-xs text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                <CheckCircle2 className="h-3 w-3" />
-                Verified
-              </span>
+          {isPhoneUser ? (
+            <div>
+              <FloatingInput
+                id="real_email"
+                label="Your email address *"
+                type="email"
+                value={realEmail}
+                onChange={(e) => { setRealEmail(e.target.value); setRealEmailError(''); }}
+                className="bg-secondary/50"
+              />
+              <p className="text-xs text-muted-foreground mt-1 ml-1">
+                We'll use this for password recovery and important account updates.
+              </p>
+              {realEmailError && (
+                <p className="text-xs text-destructive mt-1 ml-1">{realEmailError}</p>
+              )}
             </div>
-            <FloatingInput
-              id="email"
-              label="Email"
-              type="email"
-              value={formData.email}
-              disabled
-              className="bg-secondary/30 text-muted-foreground cursor-not-allowed"
-            />
-          </div>
+          ) : (
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-sm text-muted-foreground">Your Email ID</span>
+                <span className="inline-flex items-center gap-1 text-xs text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Verified
+                </span>
+              </div>
+              <FloatingInput
+                id="email"
+                label="Email"
+                type="email"
+                value={formData.email}
+                disabled
+                className="bg-secondary/30 text-muted-foreground cursor-not-allowed"
+              />
+            </div>
+          )}
 
           <div>
             <PhoneInput
