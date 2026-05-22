@@ -153,38 +153,28 @@ const Auth: React.FC = () => {
     setOtpLoading(true);
     try {
       const verifyResult = await verifyOtp(otp);
-      // Log so we can see exactly what MSG91 widget returns
       console.log('[OTP] verifyResult:', JSON.stringify(verifyResult));
       const accessToken = (verifyResult as any).access_token ?? (verifyResult as any).token ?? verifyResult.message;
-      console.log('[OTP] accessToken prefix:', String(accessToken).slice(0, 30));
+      console.log('[OTP] accessToken prefix:', String(accessToken).slice(0, 40));
 
       const digits = phone.replace(/\D/g, '');
       const normalized = digits.length === 10 ? `91${digits}` : digits;
 
-      const { data, error } = await supabase.functions.invoke('verify-msg91-otp', {
-        body: { accessToken, phone: normalized },
+      // Use fetch directly so we always get the response body even on non-2xx
+      const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-msg91-otp`;
+      const fnRes = await fetch(fnUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ accessToken, phone: normalized }),
       });
+      const data = await fnRes.json();
+      console.log('[OTP] function status:', fnRes.status, 'body:', JSON.stringify(data));
 
-      console.log('[OTP] function response:', { data, error });
-
-      // Extract the real error message from the function response body
-      let errMsg = 'Verification failed';
-      if (error) {
-        try {
-          const ctx = (error as any).context;
-          if (ctx) {
-            const body = typeof ctx.json === 'function' ? await ctx.json() : null;
-            errMsg = body?.error || error.message;
-          } else {
-            errMsg = error.message;
-          }
-        } catch { errMsg = error.message; }
-      } else if (!data?.success) {
-        errMsg = data?.error || 'Verification failed';
-      }
-
-      if (error || !data?.success) {
-        throw new Error(errMsg);
+      if (!fnRes.ok || !data?.success) {
+        throw new Error(data?.error || `Edge function error (${fnRes.status})`);
       }
 
       // Sign in via magic link token_hash
