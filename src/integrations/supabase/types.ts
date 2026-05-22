@@ -524,6 +524,100 @@ export type Database = {
           },
         ]
       }
+      doubt_replies: {
+        Row: {
+          author_role: string
+          author_user_id: string
+          body: string
+          cc_mentor: boolean
+          created_at: string
+          doubt_id: string
+          id: string
+        }
+        Insert: {
+          author_role: string
+          author_user_id: string
+          body: string
+          cc_mentor?: boolean
+          created_at?: string
+          doubt_id: string
+          id?: string
+        }
+        Update: {
+          author_role?: string
+          author_user_id?: string
+          body?: string
+          cc_mentor?: boolean
+          created_at?: string
+          doubt_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doubt_replies_doubt_id_fkey"
+            columns: ["doubt_id"]
+            isOneToOne: false
+            referencedRelation: "doubts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doubts: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          current_mentor_user_id: string
+          edition_id: string | null
+          escalated_at: string | null
+          escalated_to_admin: boolean
+          escalation_note: string | null
+          id: string
+          original_mentor_user_id: string
+          question: string
+          status: Database["public"]["Enums"]["doubt_status"]
+          student_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          current_mentor_user_id: string
+          edition_id?: string | null
+          escalated_at?: string | null
+          escalated_to_admin?: boolean
+          escalation_note?: string | null
+          id?: string
+          original_mentor_user_id: string
+          question: string
+          status?: Database["public"]["Enums"]["doubt_status"]
+          student_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          current_mentor_user_id?: string
+          edition_id?: string | null
+          escalated_at?: string | null
+          escalated_to_admin?: boolean
+          escalation_note?: string | null
+          id?: string
+          original_mentor_user_id?: string
+          question?: string
+          status?: Database["public"]["Enums"]["doubt_status"]
+          student_user_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doubts_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       editions: {
         Row: {
           archived_at: string | null
@@ -568,6 +662,265 @@ export type Database = {
           show_batchmates?: boolean
         }
         Relationships: []
+      }
+      email_audiences: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          filter_criteria: Json
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          filter_criteria: Json
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          filter_criteria?: Json
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      email_sender_identities: {
+        Row: {
+          cohort_types: string[] | null
+          created_at: string | null
+          created_by: string | null
+          display_name: string
+          domain: string
+          email: string
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          reply_to_email: string | null
+        }
+        Insert: {
+          cohort_types?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          display_name: string
+          domain: string
+          email: string
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          reply_to_email?: string | null
+        }
+        Update: {
+          cohort_types?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          display_name?: string
+          domain?: string
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          reply_to_email?: string | null
+        }
+        Relationships: []
+      }
+      email_sends: {
+        Row: {
+          bounced_at: string | null
+          clicked_at: string | null
+          created_at: string | null
+          delivered_at: string | null
+          error_message: string | null
+          id: string
+          opened_at: string | null
+          recipient_email: string
+          recipient_user_id: string | null
+          resend_message_id: string | null
+          sender_identity_id: string | null
+          sent_at: string | null
+          status: string
+          subject_rendered: string | null
+          template_id: string | null
+          template_version: number | null
+          trigger_reference: string | null
+          trigger_type: string | null
+          variables_used: Json | null
+        }
+        Insert: {
+          bounced_at?: string | null
+          clicked_at?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          opened_at?: string | null
+          recipient_email: string
+          recipient_user_id?: string | null
+          resend_message_id?: string | null
+          sender_identity_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject_rendered?: string | null
+          template_id?: string | null
+          template_version?: number | null
+          trigger_reference?: string | null
+          trigger_type?: string | null
+          variables_used?: Json | null
+        }
+        Update: {
+          bounced_at?: string | null
+          clicked_at?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          opened_at?: string | null
+          recipient_email?: string
+          recipient_user_id?: string | null
+          resend_message_id?: string | null
+          sender_identity_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject_rendered?: string | null
+          template_id?: string | null
+          template_version?: number | null
+          trigger_reference?: string | null
+          trigger_type?: string | null
+          variables_used?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_sends_sender_identity_id_fkey"
+            columns: ["sender_identity_id"]
+            isOneToOne: false
+            referencedRelation: "email_sender_identities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_sends_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_template_versions: {
+        Row: {
+          change_note: string | null
+          changed_at: string | null
+          changed_by: string | null
+          html_content: string
+          id: string
+          preview_text: string | null
+          subject: string
+          template_id: string | null
+          variables: Json | null
+          version: number
+        }
+        Insert: {
+          change_note?: string | null
+          changed_at?: string | null
+          changed_by?: string | null
+          html_content: string
+          id?: string
+          preview_text?: string | null
+          subject: string
+          template_id?: string | null
+          variables?: Json | null
+          version: number
+        }
+        Update: {
+          change_note?: string | null
+          changed_at?: string | null
+          changed_by?: string | null
+          html_content?: string
+          id?: string
+          preview_text?: string | null
+          subject?: string
+          template_id?: string | null
+          variables?: Json | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_templates: {
+        Row: {
+          category: string | null
+          cohort_types: string[] | null
+          created_at: string | null
+          created_by: string | null
+          current_version: number | null
+          default_sender_id: string | null
+          forge_mode: string | null
+          html_content: string
+          id: string
+          is_active: boolean | null
+          name: string
+          preview_text: string | null
+          slug: string
+          subject: string
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          category?: string | null
+          cohort_types?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          current_version?: number | null
+          default_sender_id?: string | null
+          forge_mode?: string | null
+          html_content: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          preview_text?: string | null
+          slug: string
+          subject: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          category?: string | null
+          cohort_types?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          current_version?: number | null
+          default_sender_id?: string | null
+          forge_mode?: string | null
+          html_content?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          preview_text?: string | null
+          slug?: string
+          subject?: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_default_sender_id_fkey"
+            columns: ["default_sender_id"]
+            isOneToOne: false
+            referencedRelation: "email_sender_identities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       event_registrations: {
         Row: {
@@ -1880,6 +2233,98 @@ export type Database = {
           },
         ]
       }
+      mentor_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          edition_id: string | null
+          id: string
+          mentor_user_id: string
+          student_user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          edition_id?: string | null
+          id?: string
+          mentor_user_id: string
+          student_user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          edition_id?: string | null
+          id?: string
+          mentor_user_id?: string
+          student_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentor_assignments_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mentor_notes: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          mentor_user_id: string
+          student_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          mentor_user_id: string
+          student_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          mentor_user_id?: string
+          student_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      mentor_profiles: {
+        Row: {
+          bio: string | null
+          capacity: number
+          created_at: string
+          expertise: string[]
+          is_accepting_students: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bio?: string | null
+          capacity?: number
+          created_at?: string
+          expertise?: string[]
+          is_accepting_students?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bio?: string | null
+          capacity?: number
+          created_at?: string
+          expertise?: string[]
+          is_accepting_students?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mentors: {
         Row: {
           bio: string[] | null
@@ -2067,6 +2512,132 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      onboarding_automation_config: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          min_payment: number | null
+          notification_email: string | null
+          notify_on_failure: boolean | null
+          notify_on_success: boolean | null
+          product_mappings: Json | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          min_payment?: number | null
+          notification_email?: string | null
+          notify_on_failure?: boolean | null
+          notify_on_success?: boolean | null
+          product_mappings?: Json | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          min_payment?: number | null
+          notification_email?: string | null
+          notify_on_failure?: boolean | null
+          notify_on_success?: boolean | null
+          product_mappings?: Json | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      onboarding_automation_logs: {
+        Row: {
+          created_at: string | null
+          created_profile_id: string | null
+          created_user_id: string | null
+          email_message_id: string | null
+          email_sent: boolean | null
+          error_details: Json | null
+          error_message: string | null
+          id: string
+          matched_cohort_type: string | null
+          matched_edition_id: string | null
+          matched_edition_name: string | null
+          payment_amount: number | null
+          sheet_batch: string | null
+          sheet_product: string | null
+          status: string
+          student_email: string
+          student_id: string
+          student_name: string | null
+          student_phone: string | null
+          trigger_source: string | null
+          triggered_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_profile_id?: string | null
+          created_user_id?: string | null
+          email_message_id?: string | null
+          email_sent?: boolean | null
+          error_details?: Json | null
+          error_message?: string | null
+          id?: string
+          matched_cohort_type?: string | null
+          matched_edition_id?: string | null
+          matched_edition_name?: string | null
+          payment_amount?: number | null
+          sheet_batch?: string | null
+          sheet_product?: string | null
+          status: string
+          student_email: string
+          student_id: string
+          student_name?: string | null
+          student_phone?: string | null
+          trigger_source?: string | null
+          triggered_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_profile_id?: string | null
+          created_user_id?: string | null
+          email_message_id?: string | null
+          email_sent?: boolean | null
+          error_details?: Json | null
+          error_message?: string | null
+          id?: string
+          matched_cohort_type?: string | null
+          matched_edition_id?: string | null
+          matched_edition_name?: string | null
+          payment_amount?: number | null
+          sheet_batch?: string | null
+          sheet_product?: string | null
+          status?: string
+          student_email?: string
+          student_id?: string
+          student_name?: string | null
+          student_phone?: string | null
+          trigger_source?: string | null
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_automation_logs_created_profile_id_fkey"
+            columns: ["created_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_automation_logs_matched_edition_id_fkey"
+            columns: ["matched_edition_id"]
+            isOneToOne: false
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       onboarding_checklist: {
         Row: {
@@ -2947,6 +3518,190 @@ export type Database = {
           },
         ]
       }
+      submission_feedback: {
+        Row: {
+          body: string | null
+          created_at: string
+          decision: Database["public"]["Enums"]["submission_status"]
+          id: string
+          mentor_user_id: string
+          submission_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          decision: Database["public"]["Enums"]["submission_status"]
+          id?: string
+          mentor_user_id: string
+          submission_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          decision?: Database["public"]["Enums"]["submission_status"]
+          id?: string
+          mentor_user_id?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submission_feedback_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      submissions: {
+        Row: {
+          created_at: string
+          edition_id: string | null
+          form_key: Database["public"]["Enums"]["submission_form_key"]
+          id: string
+          mentor_user_id: string | null
+          reviewed_at: string | null
+          revision_of: string | null
+          status: Database["public"]["Enums"]["submission_status"]
+          student_user_id: string
+          tally_form_id: string | null
+          tally_response_id: string | null
+          tally_submitted_at: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          edition_id?: string | null
+          form_key: Database["public"]["Enums"]["submission_form_key"]
+          id?: string
+          mentor_user_id?: string | null
+          reviewed_at?: string | null
+          revision_of?: string | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          student_user_id: string
+          tally_form_id?: string | null
+          tally_response_id?: string | null
+          tally_submitted_at?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          edition_id?: string | null
+          form_key?: Database["public"]["Enums"]["submission_form_key"]
+          id?: string
+          mentor_user_id?: string | null
+          reviewed_at?: string | null
+          revision_of?: string | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          student_user_id?: string
+          tally_form_id?: string | null
+          tally_response_id?: string | null
+          tally_submitted_at?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submissions_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_revision_of_fkey"
+            columns: ["revision_of"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      targeted_cards: {
+        Row: {
+          body: string
+          created_at: string
+          cta_label: string | null
+          cta_url: string | null
+          delivered_as_card: boolean
+          delivered_as_push: boolean
+          dismissed_at: string | null
+          expires_at: string | null
+          icon: string | null
+          id: string
+          is_auto_expired: boolean
+          is_dismissed: boolean
+          linked_form_key:
+            | Database["public"]["Enums"]["submission_form_key"]
+            | null
+          linked_submission_id: string | null
+          source: Database["public"]["Enums"]["card_source"]
+          source_user_id: string
+          target_user_id: string
+          template_key: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          delivered_as_card?: boolean
+          delivered_as_push?: boolean
+          dismissed_at?: string | null
+          expires_at?: string | null
+          icon?: string | null
+          id?: string
+          is_auto_expired?: boolean
+          is_dismissed?: boolean
+          linked_form_key?:
+            | Database["public"]["Enums"]["submission_form_key"]
+            | null
+          linked_submission_id?: string | null
+          source: Database["public"]["Enums"]["card_source"]
+          source_user_id: string
+          target_user_id: string
+          template_key?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          delivered_as_card?: boolean
+          delivered_as_push?: boolean
+          dismissed_at?: string | null
+          expires_at?: string | null
+          icon?: string | null
+          id?: string
+          is_auto_expired?: boolean
+          is_dismissed?: boolean
+          linked_form_key?:
+            | Database["public"]["Enums"]["submission_form_key"]
+            | null
+          linked_submission_id?: string | null
+          source?: Database["public"]["Enums"]["card_source"]
+          source_user_id?: string
+          target_user_id?: string
+          template_key?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "targeted_cards_linked_submission_id_fkey"
+            columns: ["linked_submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       today_focus_cards: {
         Row: {
           auto_detect_field: string | null
@@ -3289,11 +4044,57 @@ export type Database = {
           },
         ]
       }
+      webhook_events_log: {
+        Row: {
+          created_at: string | null
+          event_type: string | null
+          id: string
+          processing_error: string | null
+          raw_payload: Json | null
+          received_at: string | null
+          resend_message_id: string | null
+          source_ip: string | null
+          svix_id: string | null
+          svix_timestamp: string | null
+          verification_status: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          processing_error?: string | null
+          raw_payload?: Json | null
+          received_at?: string | null
+          resend_message_id?: string | null
+          source_ip?: string | null
+          svix_id?: string | null
+          svix_timestamp?: string | null
+          verification_status: string
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          processing_error?: string | null
+          raw_payload?: Json | null
+          received_at?: string | null
+          resend_message_id?: string | null
+          source_ip?: string | null
+          svix_id?: string | null
+          svix_timestamp?: string | null
+          verification_status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      can_read_submission: {
+        Args: { _submission_id: string }
+        Returns: boolean
+      }
       get_batchmate_details: { Args: { member_id: string }; Returns: Json }
       get_batchmates_for_my_edition: {
         Args: never
@@ -3314,10 +4115,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_doubt_participant: { Args: { _doubt_id: string }; Returns: boolean }
+      is_my_student: { Args: { _student_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "mentor"
+      card_source: "admin" | "mentor"
       cohort_type: "FORGE" | "FORGE_WRITING" | "FORGE_CREATORS"
+      doubt_status:
+        | "open"
+        | "replied"
+        | "closed"
+        | "escalated"
+        | "cancelled"
+        | "reassigned"
       forge_mode: "PRE_FORGE" | "DURING_FORGE" | "POST_FORGE"
       form_field_type:
         | "text"
@@ -3334,6 +4145,8 @@ export type Database = {
         | "photo_upload"
       notification_type: "COMMUNITY" | "LEARN" | "EVENTS" | "ROADMAP" | "SYSTEM"
       payment_status: "CONFIRMED_15K" | "BALANCE_PAID"
+      submission_form_key: "premise" | "script" | "production"
+      submission_status: "pending" | "approved" | "revisions" | "withdrawn"
       unlock_level: "PREVIEW" | "FULL"
     }
     CompositeTypes: {
@@ -3462,8 +4275,17 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "mentor"],
+      card_source: ["admin", "mentor"],
       cohort_type: ["FORGE", "FORGE_WRITING", "FORGE_CREATORS"],
+      doubt_status: [
+        "open",
+        "replied",
+        "closed",
+        "escalated",
+        "cancelled",
+        "reassigned",
+      ],
       forge_mode: ["PRE_FORGE", "DURING_FORGE", "POST_FORGE"],
       form_field_type: [
         "text",
@@ -3481,6 +4303,8 @@ export const Constants = {
       ],
       notification_type: ["COMMUNITY", "LEARN", "EVENTS", "ROADMAP", "SYSTEM"],
       payment_status: ["CONFIRMED_15K", "BALANCE_PAID"],
+      submission_form_key: ["premise", "script", "production"],
+      submission_status: ["pending", "approved", "revisions", "withdrawn"],
       unlock_level: ["PREVIEW", "FULL"],
     },
   },
