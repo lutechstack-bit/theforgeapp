@@ -12,10 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
-    const { accessToken, phone } = body;
-
-    console.log('Request received:', { phone, hasAccessToken: !!accessToken, tokenPrefix: accessToken?.slice(0, 20) });
+    const { accessToken, phone } = await req.json();
 
     if (!accessToken || !phone) {
       return new Response(JSON.stringify({ success: false, error: 'Missing accessToken or phone' }), {
@@ -24,33 +21,16 @@ serve(async (req) => {
     }
 
     // 1. Server-side verify MSG91 token
-    let msg91Data: any;
-    try {
-      const authkey = Deno.env.get('MSG91_AUTHKEY');
-      console.log('Calling MSG91 verify, authkey present:', !!authkey);
+    const msg91Res = await fetch('https://control.msg91.com/api/v5/widget/verifyAccessToken', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ authkey: Deno.env.get('MSG91_AUTHKEY'), 'access-token': accessToken }),
+    });
+    const msg91Data = await msg91Res.json().catch(() => ({}));
 
-      const msg91Res = await fetch('https://control.msg91.com/api/v5/widget/verifyAccessToken', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          authkey,
-          'access-token': accessToken,
-        }),
-      });
-      const rawText = await msg91Res.text();
-      console.log('MSG91 raw response status:', msg91Res.status, 'body:', rawText.slice(0, 200));
-      msg91Data = JSON.parse(rawText);
-    } catch (fetchErr) {
-      console.error('MSG91 fetch error:', fetchErr);
-      return new Response(JSON.stringify({ success: false, error: 'MSG91 request failed: ' + String(fetchErr) }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Accept both 'success' and 'already verified' — widget consumes the token
-    // on client-side verification, so server-side re-check returns "already verified"
+    // Accept 'success' OR 'already verified' — widget consumes the token client-side
     const isVerified = msg91Data.type === 'success' ||
-      (msg91Data.message || '').toLowerCase().includes('already verif');
+      String(msg91Data.message || '').toLowerCase().includes('already verif');
 
     if (!isVerified) {
       return new Response(JSON.stringify({ success: false, error: msg91Data.message || 'OTP verification failed' }), {
@@ -58,7 +38,7 @@ serve(async (req) => {
       });
     }
 
-    // 2. Normalize phone
+    // 2. Normalize phone to E.164 digits (91XXXXXXXXXX)
     const digits = phone.replace(/\D/g, '');
     const normalized = digits.length === 10 ? `91${digits}` : digits;
     if (normalized.length < 11) {
@@ -73,70 +53,28 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // 3. Look up profile by phone
-    const { data: profile, error: profileLookupErr } = await supabase
+    // 3. Look up existing profile by phone — OTP login is for existing users only
+    const { data: profile } = await supabase
       .from('profiles')
       .select('id')
       .eq('phone', normalized)
       .single();
 
-    console.log('Profile lookup:', { normalized, found: !!profile, error: profileLookupErr?.message });
-
-    let userId: string;
-    let isNewUser = false;
-
-    if (profile) {
-      userId = profile.id;
-    } else {
-      isNewUser = true;
-      const phoneEmail = `phone_${normalized}@forge.local`;
-
-      // Check if a phone user was already created from a previous attempt
-      const { data: existingList } = await supabase.auth.admin.listUsers();
-      const existingPhoneUser = existingList?.users?.find(u => u.email === phoneEmail);
-
-      let newUserId: string;
-      if (existingPhoneUser) {
-        newUserId = existingPhoneUser.id;
-      } else {
-        const { data: newUser, error: createErr } = await supabase.auth.admin.createUser({
-          email: phoneEmail,
-          email_confirm: true,
-          phone: normalized,
-          phone_confirm: true,
-          user_metadata: { signup_method: 'phone_otp', phone: normalized },
-        });
-        if (createErr || !newUser.user) {
-          console.error('User creation error:', createErr);
-          return new Response(JSON.stringify({ success: false, error: createErr?.message || 'User creation failed' }), {
-            status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-        newUserId = newUser.user.id;
-      }
-      userId = newUserId;
-
-      // Use upsert — handle_new_user trigger may have already created the row
-      const { error: profileErr } = await supabase
-        .from('profiles')
-        .upsert(
-          { id: userId, phone: normalized, profile_setup_completed: false },
-          { onConflict: 'id' }
-        );
-
-      if (profileErr) {
-        console.error('Profile upsert error:', profileErr);
-        await supabase.auth.admin.deleteUser(userId);
-        return new Response(JSON.stringify({ success: false, error: 'Profile setup failed: ' + profileErr.message }), {
-          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+    if (!profile) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'No account found with this number. Please contact your program coordinator.',
+      }), {
+        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // 4. Generate magic link
+    const userId = profile.id;
+
+    // 4. Generate magic link for passwordless session
     const { data: userData } = await supabase.auth.admin.getUserById(userId);
     if (!userData?.user?.email) {
-      return new Response(JSON.stringify({ success: false, error: 'Failed to get user email' }), {
+      return new Response(JSON.stringify({ success: false, error: 'Failed to get user account' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -146,7 +84,6 @@ serve(async (req) => {
       email: userData.user.email,
     });
     if (linkErr || !linkData) {
-      console.error('Magic link error:', linkErr);
       return new Response(JSON.stringify({ success: false, error: 'Failed to generate session: ' + linkErr?.message }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -154,16 +91,13 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      isNewUser,
+      isNewUser: false,
       userId,
       token_hash: linkData.properties?.hashed_token,
       type: 'magiclink',
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (err) {
-    console.error('Unhandled error:', err);
     return new Response(JSON.stringify({ success: false, error: String(err) }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
