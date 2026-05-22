@@ -89,29 +89,45 @@ serve(async (req) => {
       userId = profile.id;
     } else {
       isNewUser = true;
-      const { data: newUser, error: createErr } = await supabase.auth.admin.createUser({
-        email: `phone_${normalized}@forge.local`,
-        email_confirm: true,
-        phone: normalized,
-        phone_confirm: true,
-        user_metadata: { signup_method: 'phone_otp', phone: normalized },
-      });
-      if (createErr || !newUser.user) {
-        console.error('User creation error:', createErr);
-        return new Response(JSON.stringify({ success: false, error: createErr?.message || 'User creation failed' }), {
-          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      userId = newUser.user.id;
+      const phoneEmail = `phone_${normalized}@forge.local`;
 
+      // Check if a phone user was already created from a previous attempt
+      const { data: existingList } = await supabase.auth.admin.listUsers();
+      const existingPhoneUser = existingList?.users?.find(u => u.email === phoneEmail);
+
+      let newUserId: string;
+      if (existingPhoneUser) {
+        newUserId = existingPhoneUser.id;
+      } else {
+        const { data: newUser, error: createErr } = await supabase.auth.admin.createUser({
+          email: phoneEmail,
+          email_confirm: true,
+          phone: normalized,
+          phone_confirm: true,
+          user_metadata: { signup_method: 'phone_otp', phone: normalized },
+        });
+        if (createErr || !newUser.user) {
+          console.error('User creation error:', createErr);
+          return new Response(JSON.stringify({ success: false, error: createErr?.message || 'User creation failed' }), {
+            status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        newUserId = newUser.user.id;
+      }
+      userId = newUserId;
+
+      // Use upsert — handle_new_user trigger may have already created the row
       const { error: profileErr } = await supabase
         .from('profiles')
-        .insert({ id: userId, phone: normalized, profile_setup_completed: false });
+        .upsert(
+          { id: userId, phone: normalized, profile_setup_completed: false },
+          { onConflict: 'id' }
+        );
 
       if (profileErr) {
-        console.error('Profile insert error:', profileErr);
+        console.error('Profile upsert error:', profileErr);
         await supabase.auth.admin.deleteUser(userId);
-        return new Response(JSON.stringify({ success: false, error: 'Profile creation failed: ' + profileErr.message }), {
+        return new Response(JSON.stringify({ success: false, error: 'Profile setup failed: ' + profileErr.message }), {
           status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
