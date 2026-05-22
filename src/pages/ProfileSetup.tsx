@@ -58,7 +58,7 @@ const ProfileSetup: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, signOut } = useAuth();
   const { toast } = useToast();
 
   const { data: editions, isLoading: editionsLoading } = useQuery({
@@ -216,6 +216,16 @@ const ProfileSetup: React.FC = () => {
       </div>
 
       <div className="relative w-full max-w-lg space-y-8">
+        {/* Sign out link */}
+        <div className="text-right">
+          <button
+            onClick={() => signOut()}
+            className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2"
+          >
+            Sign out
+          </button>
+        </div>
+
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-foreground">Confirm your details</h1>
