@@ -12,7 +12,10 @@ serve(async (req) => {
   }
 
   try {
-    const { accessToken, phone } = await req.json();
+    const body = await req.json();
+    const { accessToken, phone } = body;
+
+    console.log('Request received:', { phone, hasAccessToken: !!accessToken, tokenPrefix: accessToken?.slice(0, 20) });
 
     if (!accessToken || !phone) {
       return new Response(JSON.stringify({ success: false, error: 'Missing accessToken or phone' }), {
@@ -20,18 +23,32 @@ serve(async (req) => {
       });
     }
 
-    // 1. Server-side re-verify the MSG91 access token
-    const msg91Res = await fetch('https://control.msg91.com/api/v5/widget/verifyAccessToken', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        authkey: Deno.env.get('MSG91_AUTHKEY'),
-        'access-token': accessToken,
-      }),
-    });
-    const msg91Data = await msg91Res.json();
+    // 1. Server-side verify MSG91 token
+    let msg91Data: any;
+    try {
+      const authkey = Deno.env.get('MSG91_AUTHKEY');
+      console.log('Calling MSG91 verify, authkey present:', !!authkey);
+
+      const msg91Res = await fetch('https://control.msg91.com/api/v5/widget/verifyAccessToken', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          authkey,
+          'access-token': accessToken,
+        }),
+      });
+      const rawText = await msg91Res.text();
+      console.log('MSG91 raw response status:', msg91Res.status, 'body:', rawText.slice(0, 200));
+      msg91Data = JSON.parse(rawText);
+    } catch (fetchErr) {
+      console.error('MSG91 fetch error:', fetchErr);
+      return new Response(JSON.stringify({ success: false, error: 'MSG91 request failed: ' + String(fetchErr) }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (msg91Data.type !== 'success') {
-      return new Response(JSON.stringify({ success: false, error: 'OTP verification failed' }), {
+      return new Response(JSON.stringify({ success: false, error: 'MSG91 rejected token: ' + JSON.stringify(msg91Data) }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -52,11 +69,13 @@ serve(async (req) => {
     );
 
     // 3. Look up profile by phone
-    const { data: profile } = await supabase
+    const { data: profile, error: profileLookupErr } = await supabase
       .from('profiles')
       .select('id')
       .eq('phone', normalized)
       .single();
+
+    console.log('Profile lookup:', { normalized, found: !!profile, error: profileLookupErr?.message });
 
     let userId: string;
     let isNewUser = false;
@@ -64,7 +83,6 @@ serve(async (req) => {
     if (profile) {
       userId = profile.id;
     } else {
-      // Create new auth user
       isNewUser = true;
       const { data: newUser, error: createErr } = await supabase.auth.admin.createUser({
         email: `phone_${normalized}@forge.local`,
@@ -74,30 +92,30 @@ serve(async (req) => {
         user_metadata: { signup_method: 'phone_otp', phone: normalized },
       });
       if (createErr || !newUser.user) {
+        console.error('User creation error:', createErr);
         return new Response(JSON.stringify({ success: false, error: createErr?.message || 'User creation failed' }), {
           status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       userId = newUser.user.id;
 
-      // Create profile
       const { error: profileErr } = await supabase
         .from('profiles')
         .insert({ id: userId, phone: normalized, profile_setup_completed: false });
 
       if (profileErr) {
-        // Rollback — delete the auth user to avoid orphans
+        console.error('Profile insert error:', profileErr);
         await supabase.auth.admin.deleteUser(userId);
-        return new Response(JSON.stringify({ success: false, error: 'Profile creation failed' }), {
+        return new Response(JSON.stringify({ success: false, error: 'Profile creation failed: ' + profileErr.message }), {
           status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
     }
 
-    // 4. Get user email and generate magic link
-    const { data: userData, error: userErr } = await supabase.auth.admin.getUserById(userId);
-    if (userErr || !userData.user?.email) {
-      return new Response(JSON.stringify({ success: false, error: 'Failed to get user' }), {
+    // 4. Generate magic link
+    const { data: userData } = await supabase.auth.admin.getUserById(userId);
+    if (!userData?.user?.email) {
+      return new Response(JSON.stringify({ success: false, error: 'Failed to get user email' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -107,7 +125,8 @@ serve(async (req) => {
       email: userData.user.email,
     });
     if (linkErr || !linkData) {
-      return new Response(JSON.stringify({ success: false, error: 'Failed to generate session link' }), {
+      console.error('Magic link error:', linkErr);
+      return new Response(JSON.stringify({ success: false, error: 'Failed to generate session: ' + linkErr?.message }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -123,6 +142,7 @@ serve(async (req) => {
     });
 
   } catch (err) {
+    console.error('Unhandled error:', err);
     return new Response(JSON.stringify({ success: false, error: String(err) }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
