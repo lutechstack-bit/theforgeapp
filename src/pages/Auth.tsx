@@ -153,8 +153,10 @@ const Auth: React.FC = () => {
     setOtpLoading(true);
     try {
       const verifyResult = await verifyOtp(otp);
-      // verifyResult.message is the access token from MSG91
-      const accessToken = (verifyResult as any).access_token ?? verifyResult.message;
+      // Log so we can see exactly what MSG91 widget returns
+      console.log('[OTP] verifyResult:', JSON.stringify(verifyResult));
+      const accessToken = (verifyResult as any).access_token ?? (verifyResult as any).token ?? verifyResult.message;
+      console.log('[OTP] accessToken prefix:', String(accessToken).slice(0, 30));
 
       const digits = phone.replace(/\D/g, '');
       const normalized = digits.length === 10 ? `91${digits}` : digits;
@@ -163,8 +165,26 @@ const Auth: React.FC = () => {
         body: { accessToken, phone: normalized },
       });
 
+      console.log('[OTP] function response:', { data, error });
+
+      // Extract the real error message from the function response body
+      let errMsg = 'Verification failed';
+      if (error) {
+        try {
+          const ctx = (error as any).context;
+          if (ctx) {
+            const body = typeof ctx.json === 'function' ? await ctx.json() : null;
+            errMsg = body?.error || error.message;
+          } else {
+            errMsg = error.message;
+          }
+        } catch { errMsg = error.message; }
+      } else if (!data?.success) {
+        errMsg = data?.error || 'Verification failed';
+      }
+
       if (error || !data?.success) {
-        throw new Error(data?.error || error?.message || 'Verification failed');
+        throw new Error(errMsg);
       }
 
       // Sign in via magic link token_hash
