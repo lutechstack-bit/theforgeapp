@@ -146,8 +146,8 @@ const Auth: React.FC = () => {
 
   // ── OTP: Verify ─────────────────────────────────────────────────────────
   const handleVerifyOtp = async () => {
-    if (otp.length !== 6) {
-      toast({ title: 'Invalid OTP', description: 'Please enter the 6-digit OTP.', variant: 'destructive' });
+    if (otp.length !== 4) {
+      toast({ title: 'Invalid OTP', description: 'Please enter the 4-digit OTP.', variant: 'destructive' });
       return;
     }
     setOtpLoading(true);
@@ -499,8 +499,8 @@ const Auth: React.FC = () => {
                         type="tel"
                         inputMode="numeric"
                         pattern="[0-9]*"
-                        maxLength={6}
-                        placeholder="------"
+                        maxLength={4}
+                        placeholder="----"
                         value={otp}
                         onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                         className="w-full h-14 bg-[#1C1C1C] border border-primary/20 rounded-xl text-center text-2xl tracking-[0.5em] text-foreground placeholder:text-primary/20 transition-colors focus:outline-none focus:border-primary/60 focus:bg-[#1F1F1F]"
