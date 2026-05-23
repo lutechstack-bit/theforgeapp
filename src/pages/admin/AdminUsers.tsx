@@ -2146,7 +2146,7 @@ function AdminAccountsTab({
       // Step 2: Grant admin role on the profile
       const { error: adminErr } = await supabase
         .from('profiles')
-        .update({ is_admin: true, edition_id: null, payment_status: null, unlock_level: null })
+        .update({ is_admin: true, edition_id: null, unlock_level: null })
         .eq('id', userId);
       if (adminErr) throw adminErr;
 
