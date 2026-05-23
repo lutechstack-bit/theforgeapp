@@ -54,11 +54,12 @@ serve(async (req) => {
     );
 
     // 3. Look up existing profile by phone — OTP login is for existing users only
-    const { data: profile } = await supabase
+    const { data: profiles } = await supabase
       .from('profiles')
       .select('id')
       .eq('phone', normalized)
-      .single();
+      .limit(1);
+    const profile = profiles?.[0] ?? null;
 
     if (!profile) {
       return new Response(JSON.stringify({
