@@ -2113,6 +2113,12 @@ function AdminAccountsTab({
   const [createAdminLoading, setCreateAdminLoading] = useState(false);
   const [createAdminForm, setCreateAdminForm] = useState({ full_name: '', email: '', password: '', phone: '' });
 
+  const normalizePhone = (raw: string): string => {
+    const digits = raw.replace(/\D/g, ''); // strip +, spaces, dashes, brackets etc.
+    if (!digits) return '';
+    return digits.length === 10 ? `91${digits}` : digits; // add 91 prefix if bare 10-digit number
+  };
+
   const handleCreateAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreateAdminLoading(true);
@@ -2120,13 +2126,15 @@ function AdminAccountsTab({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
+      const normalizedPhone = normalizePhone(createAdminForm.phone);
+
       // Step 1: Create the auth user + profile via existing edge function
       const response = await supabase.functions.invoke('create-user', {
         body: {
           email: createAdminForm.email,
           password: createAdminForm.password,
           full_name: createAdminForm.full_name,
-          phone: createAdminForm.phone || undefined,
+          phone: normalizedPhone || undefined,
         },
       });
       if (response.error) throw new Error(response.error.message);
@@ -2378,12 +2386,18 @@ function CreateUserDialog({
     payment_status: 'CONFIRMED_15K' as PaymentStatus
   });
 
+  const normalizePhone = (raw: string): string => {
+    const digits = raw.replace(/\D/g, '');
+    if (!digits) return '';
+    return digits.length === 10 ? `91${digits}` : digits;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
       ...formData,
       edition_id: formData.edition_id || undefined,
-      phone: formData.phone || undefined,
+      phone: normalizePhone(formData.phone) || undefined,
       city: formData.city || undefined,
       specialty: formData.specialty || undefined
     });
