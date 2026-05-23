@@ -2108,8 +2108,118 @@ function AdminAccountsTab({
   isGranting: boolean;
   isRevoking: boolean;
 }) {
+  const queryClient = useQueryClient();
+  const [isCreateAdminOpen, setIsCreateAdminOpen] = useState(false);
+  const [createAdminLoading, setCreateAdminLoading] = useState(false);
+  const [createAdminForm, setCreateAdminForm] = useState({ full_name: '', email: '', password: '', phone: '' });
+
+  const handleCreateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateAdminLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      // Step 1: Create the auth user + profile via existing edge function
+      const response = await supabase.functions.invoke('create-user', {
+        body: {
+          email: createAdminForm.email,
+          password: createAdminForm.password,
+          full_name: createAdminForm.full_name,
+          phone: createAdminForm.phone || undefined,
+        },
+      });
+      if (response.error) throw new Error(response.error.message);
+      if (response.data?.error) throw new Error(response.data.error);
+
+      const userId = response.data?.user_id;
+      if (!userId) throw new Error('No user ID returned');
+
+      // Step 2: Grant admin role on the profile
+      const { error: adminErr } = await supabase
+        .from('profiles')
+        .update({ is_admin: true, edition_id: null, payment_status: null, unlock_level: null })
+        .eq('id', userId);
+      if (adminErr) throw adminErr;
+
+      toast.success(`Admin account created for ${createAdminForm.full_name || createAdminForm.email}`);
+      setIsCreateAdminOpen(false);
+      setCreateAdminForm({ full_name: '', email: '', password: '', phone: '' });
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-list'] });
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to create admin user');
+    } finally {
+      setCreateAdminLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 pt-4">
+      {/* Create Admin User Dialog */}
+      <Dialog open={isCreateAdminOpen} onOpenChange={setIsCreateAdminOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Crown className="w-4 h-4 text-amber-400" />
+              Create Admin User
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreateAdmin} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Full Name</Label>
+              <Input
+                value={createAdminForm.full_name}
+                onChange={(e) => setCreateAdminForm({ ...createAdminForm, full_name: e.target.value })}
+                placeholder="Jane Smith"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Email *</Label>
+              <Input
+                type="email"
+                required
+                value={createAdminForm.email}
+                onChange={(e) => setCreateAdminForm({ ...createAdminForm, email: e.target.value })}
+                placeholder="jane@example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Password *</Label>
+              <Input
+                type="password"
+                required
+                minLength={8}
+                value={createAdminForm.password}
+                onChange={(e) => setCreateAdminForm({ ...createAdminForm, password: e.target.value })}
+                placeholder="Min 8 characters"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Phone</Label>
+              <Input
+                value={createAdminForm.phone}
+                onChange={(e) => setCreateAdminForm({ ...createAdminForm, phone: e.target.value })}
+                placeholder="91XXXXXXXXXX"
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={createAdminLoading}>
+              {createAdminLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Create Admin User
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Header row with Create button */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium text-muted-foreground">Manage admin access</h3>
+        <Button size="sm" className="gap-2" onClick={() => setIsCreateAdminOpen(true)}>
+          <Plus className="w-4 h-4" />
+          Create Admin User
+        </Button>
+      </div>
+
       {/* Grant Admin Access */}
       <Card className="border-border/50">
         <CardHeader>
