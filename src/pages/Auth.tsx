@@ -210,9 +210,9 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <main className="h-[100svh] lg:h-[100dvh] w-full grid grid-cols-1 lg:grid-cols-[35fr_65fr] bg-black text-foreground overflow-hidden">
+    <main className="min-h-[100svh] lg:h-[100dvh] w-full grid grid-cols-1 lg:grid-cols-[35fr_65fr] bg-black text-foreground overflow-y-auto lg:overflow-hidden">
       {/* ─────────────── Video pane (right on desktop, top on mobile) ─────────────── */}
-      <section className="relative overflow-hidden bg-black order-1 lg:order-2 h-[42vh] lg:h-full">
+      <section className="relative overflow-hidden bg-black order-1 lg:order-2 h-[38vh] lg:h-full flex-none">
         <video
           ref={videoRef}
           src="/login/Forge_website.mp4"
@@ -275,7 +275,7 @@ const Auth: React.FC = () => {
 
       {/* ─────────────── Login pane (left on desktop, bottom on mobile) ─────────────── */}
       <section
-        className="relative flex flex-col items-center justify-center bg-black px-5 py-3 lg:px-16 lg:py-10 order-2 lg:order-1 z-[4] lg:z-auto lg:h-full lg:overflow-hidden"
+        className="relative flex flex-col items-center justify-center bg-black px-5 py-8 pb-12 lg:px-16 lg:py-10 order-2 lg:order-1 z-[4] lg:z-auto lg:h-full lg:overflow-y-auto"
       >
         <div className="relative w-full max-w-[420px] flex flex-col items-center animate-fade-up">
           {/* Desktop logo with radial glow (hidden on mobile — replaced by overlay above) */}
