@@ -81,17 +81,26 @@ const STEP_COPY: StepCopy[] = [
  */
 function buildSteps(isMobile: boolean): Step[] {
   const navAttr = isMobile ? 'data-tour-mobile' : 'data-tour-desktop';
-  const navPlacement: Step['placement'] = isMobile ? 'top-start' : 'right-start';
+  // On mobile every step uses 'center' — tooltip floats in the middle of the
+  // viewport and is never clipped by the edge. On desktop we can anchor to the
+  // sidebar ('right-start') or the profile menu ('bottom-end') safely because
+  // there is plenty of horizontal space on either side.
   return STEP_COPY.map<Step>(s => {
     if (s.key === 'welcome') {
       return { target: 'body', placement: 'center', title: s.title, content: s.content, disableBeacon: true };
     }
     if (s.key === 'profile') {
-      return { target: '[data-tour="profile-menu"]', placement: 'bottom-end', title: s.title, content: s.content, disableBeacon: true };
+      return {
+        target: '[data-tour="profile-menu"]',
+        placement: isMobile ? 'center' : 'bottom-end',
+        title: s.title,
+        content: s.content,
+        disableBeacon: true,
+      };
     }
     return {
       target: `[${navAttr}="${s.key}"]`,
-      placement: navPlacement,
+      placement: isMobile ? 'center' : 'right-start',
       title: s.title,
       content: s.content,
       disableBeacon: true,

@@ -39,8 +39,8 @@ export const ForgeTooltip: React.FC<TooltipRenderProps> = ({
       aria-modal="true"
       className="relative bg-[#0F0F10] text-[#F5F5F5] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,191,0,0.12)]
         border border-[rgba(255,191,0,0.18)]
-        w-[min(92vw,440px)]
-        p-6 sm:p-7"
+        w-[min(88vw,440px)] max-h-[80vh] overflow-y-auto
+        p-5 sm:p-7"
       style={{ fontFamily: 'inherit' }}
     >
       {/* Close X (top right) */}
