@@ -2143,10 +2143,10 @@ function AdminAccountsTab({
       const userId = response.data?.user_id;
       if (!userId) throw new Error('No user ID returned');
 
-      // Step 2: Grant admin role on the profile
+      // Step 2: Grant admin role on the profile (only flip the flag — leave other columns as-is)
       const { error: adminErr } = await supabase
         .from('profiles')
-        .update({ is_admin: true, edition_id: null, unlock_level: null })
+        .update({ is_admin: true })
         .eq('id', userId);
       if (adminErr) throw adminErr;
 
