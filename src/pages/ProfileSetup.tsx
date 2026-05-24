@@ -220,7 +220,7 @@ const ProfileSetup: React.FC = () => {
         <div className="text-right">
           <button
             onClick={() => signOut()}
-            className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2"
+            className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2 min-h-[44px] px-2 inline-flex items-center"
           >
             Sign out
           </button>
@@ -248,7 +248,7 @@ const ProfileSetup: React.FC = () => {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors"
+              className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors"
             >
               {uploading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

@@ -349,7 +349,7 @@ const Auth: React.FC = () => {
                         </label>
                         <Link
                           to="/forgot-password"
-                          className="text-[13px] font-medium text-primary/90 hover:text-primary hover:underline underline-offset-[3px] transition-opacity"
+                          className="text-[13px] font-medium text-primary/90 hover:text-primary hover:underline underline-offset-[3px] transition-opacity inline-flex items-center min-h-[44px]"
                         >
                           Forgot password?
                         </Link>
@@ -369,7 +369,7 @@ const Auth: React.FC = () => {
                           type="button"
                           onClick={() => setShowPassword((v) => !v)}
                           aria-label={showPassword ? 'Hide password' : 'Show password'}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-primary transition-colors"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 text-muted-foreground hover:text-primary transition-colors"
                         >
                           {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </button>
@@ -429,7 +429,7 @@ const Auth: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setMode('email')}
-                      className="text-[13px] text-primary/70 hover:text-primary transition-colors mb-4 flex items-center gap-1"
+                      className="text-[13px] text-primary/70 hover:text-primary transition-colors mb-2 flex items-center gap-1 min-h-[44px] py-2"
                     >
                       ← Back to email login
                     </button>
@@ -493,7 +493,7 @@ const Auth: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => { setMode('phone-enter'); setOtp(''); }}
-                      className="text-[13px] text-primary/70 hover:text-primary transition-colors mb-4 flex items-center gap-1"
+                      className="text-[13px] text-primary/70 hover:text-primary transition-colors mb-2 flex items-center gap-1 min-h-[44px] py-2"
                     >
                       ← Change number
                     </button>

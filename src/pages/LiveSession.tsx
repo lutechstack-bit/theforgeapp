@@ -254,7 +254,8 @@ const LiveSession: React.FC = () => {
           variant="destructive"
           size="sm"
           onClick={handleLeave}
-          className="fixed top-4 right-4 z-[60] gap-2 shadow-lg"
+          className="fixed right-4 z-[60] gap-2 shadow-lg"
+          style={{ top: 'max(1rem, env(safe-area-inset-top))' }}
         >
           <LogOut className="w-4 h-4" /> Leave
         </Button>
@@ -297,7 +298,7 @@ const LiveSession: React.FC = () => {
           <div className="page-container max-w-4xl mx-auto space-y-6">
             <button
               onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors pt-2"
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors min-h-[44px] py-2"
             >
               <ArrowLeft className="w-4 h-4" /> Back
             </button>

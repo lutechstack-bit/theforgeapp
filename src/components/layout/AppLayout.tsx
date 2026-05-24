@@ -30,7 +30,7 @@ const AppLayoutContent: React.FC = () => {
       {showNav && <OnboardingTour />}
       {showNav && <SideNav />}
       <main className={cn(
-        "relative pb-24 md:pb-0 transition-all duration-300 ease-in-out safe-area-pb",
+        "relative pb-24 md:pb-0 transition-all duration-300 ease-in-out",
         showNav && (collapsed ? "md:ml-[72px]" : "md:ml-72")
       )}>
         {showNav && isHome && !isScrolled && (

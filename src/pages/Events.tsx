@@ -70,7 +70,7 @@ const Events: React.FC = () => {
   const hasNoResults = !isLoading && filteredEvents.length === 0;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-4">
       <div className="page-container space-y-5 sm:space-y-6 max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto">
         {/* Header */}
         <div className="space-y-1">

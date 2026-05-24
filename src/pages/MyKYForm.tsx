@@ -66,13 +66,15 @@ const MyKYForm: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen pb-24 md:pb-8">
+    <div className="min-h-screen pb-4 md:pb-8">
       {/* Hero Header */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-primary/10 via-primary/5 to-background pt-4 pb-8">
-        {/* Glow Orbs */}
-        <div className="absolute top-0 left-1/4 w-64 h-64 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-10 right-1/4 w-48 h-48 bg-accent/15 rounded-full blur-2xl pointer-events-none" />
-        
+      <div className="relative bg-gradient-to-b from-primary/10 via-primary/5 to-background pt-4 pb-8">
+        {/* Glow Orbs — clipped in their own layer so the card shadow isn't clipped */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-64 h-64 bg-primary/20 rounded-full blur-3xl" />
+        <div className="absolute top-10 right-1/4 w-48 h-48 bg-accent/15 rounded-full blur-2xl" />
+        </div>
+
         {/* Back Button */}
         <div className="relative z-10 px-4 mb-6">
           <Button variant="ghost" size="sm" onClick={() => navigate('/profile')} className="gap-2">
@@ -479,7 +481,7 @@ const DataRow: React.FC<{ icon?: React.ReactNode; label: string; value: any }> =
         {icon && <span className="text-primary/60">{icon}</span>}
         {label}
       </span>
-      <span className="text-sm font-medium text-foreground text-right max-w-[55%] break-words">
+      <span className="text-sm font-medium text-foreground text-right max-w-[60%] break-all">
         {value}
       </span>
     </div>

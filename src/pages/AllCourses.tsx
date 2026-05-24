@@ -86,9 +86,9 @@ const AllCourses: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-4">
       {/* Sticky Header */}
-      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border/50">
+      <div className="sticky top-14 z-30 bg-background/80 backdrop-blur-md border-b border-border/50">
         <div className="p-4">
           <div className="flex items-center gap-3">
             <button
@@ -102,13 +102,13 @@ const AllCourses: React.FC = () => {
         </div>
 
         {/* Filter Tabs */}
-        <div className="px-4 pb-3 grid grid-cols-3 gap-2">
+        <div className="px-4 pb-3 flex gap-2">
           {FILTER_OPTIONS.map((filter) => (
             <button
               key={filter.id}
               onClick={() => setActiveFilter(filter.id)}
               className={cn(
-                "w-full min-w-0 px-2 py-2 rounded-full text-xs font-medium leading-tight text-center transition-colors",
+                "flex-1 min-w-0 px-2 py-2.5 rounded-full text-xs font-medium leading-tight text-center transition-colors",
                 activeFilter === filter.id
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"

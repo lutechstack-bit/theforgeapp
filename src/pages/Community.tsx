@@ -122,7 +122,7 @@ const Community = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] pt-4 sm:pt-5 md:pt-6 px-4 sm:px-5 md:px-6 gap-3 sm:gap-4 max-w-6xl mx-auto w-full">
+      <div className="flex flex-col h-[calc(100dvh-8rem)] md:h-[calc(100dvh-4rem)] pt-4 sm:pt-5 md:pt-6 px-4 sm:px-5 md:px-6 gap-3 sm:gap-4 max-w-6xl mx-auto w-full">
         <Skeleton className="h-10 w-48 rounded-xl" />
         <div className="flex gap-2">
           <Skeleton className="h-9 w-24 rounded-full" />
@@ -138,7 +138,7 @@ const Community = () => {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-7rem)] md:h-[calc(100dvh-4rem)] pt-4 sm:pt-5 md:pt-6 px-4 sm:px-5 md:px-6 gap-3 sm:gap-4 max-w-6xl mx-auto w-full">
+    <div className="flex flex-col h-[calc(100dvh-8rem)] md:h-[calc(100dvh-4rem)] pt-4 sm:pt-5 md:pt-6 px-4 sm:px-5 md:px-6 gap-3 sm:gap-4 max-w-6xl mx-auto w-full">
       {/* Top row: pills + inbox */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex gap-1 p-1 rounded-full bg-card border border-border/30 overflow-x-auto scrollbar-hide">
@@ -181,13 +181,13 @@ const Community = () => {
 
       {/* Content */}
       {activeTab === 'creatives' && (
-        <div className="flex-1 min-h-0 overflow-y-auto pb-24">
+        <div className="flex-1 min-h-0 overflow-y-auto pb-4">
           <CreativesDirectory onSetupProfile={() => navigate('/ky-section/community_profile')} />
         </div>
       )}
 
       {activeTab === 'gigs' && (
-        <div className="flex-1 min-h-0 overflow-y-auto pb-24">
+        <div className="flex-1 min-h-0 overflow-y-auto pb-4">
           <GigsBoard />
         </div>
       )}

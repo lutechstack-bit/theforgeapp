@@ -610,13 +610,7 @@
   padding-right: env(safe-area-inset-right, 0px);
 }
 
-/* Glass nav for sticky headers on mobile */
-.glass-nav {
-  background: hsl(var(--background) / 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid hsl(var(--border) / 0.3);
-}
+/* glass-nav is defined in @layer utilities above — this duplicate is removed */
 
 /* Mobile touch-friendly minimum sizing */
 @media (hover: none) and (pointer: coarse) {

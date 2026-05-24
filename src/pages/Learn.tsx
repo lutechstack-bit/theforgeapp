@@ -234,7 +234,7 @@ const Learn: React.FC = () => {
     .sort((a, b) => b.progress_percent - a.progress_percent);
 
   return (
-    <div className="min-h-screen bg-background pb-24 overflow-x-clip">
+    <div className="min-h-screen bg-background pb-4 overflow-x-hidden">
       <div className="page-container space-y-5 sm:space-y-6 max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto">
         {/* Hero */}
         <CinematicHero
@@ -305,7 +305,7 @@ const Learn: React.FC = () => {
               <span className="text-base font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
                 More from
               </span>
-              <img src={levelUpLogo} alt="LevelUp" className="h-28 md:h-36 invert opacity-90 object-contain shrink-0" />
+              <img src={levelUpLogo} alt="LevelUp" className="h-14 md:h-24 invert opacity-90 object-contain shrink-0" />
             </div>
             <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#FFBF00]/40 to-transparent" />
           </div>
@@ -362,7 +362,7 @@ const Learn: React.FC = () => {
                   <button
                     key={tab}
                     onClick={() => setProgramTab(tab)}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    className={`px-4 py-2.5 min-h-[44px] rounded-full text-sm font-medium transition-all ${
                       programTab === tab
                         ? 'bg-primary text-primary-foreground shadow-sm'
                         : 'text-muted-foreground hover:text-foreground'
