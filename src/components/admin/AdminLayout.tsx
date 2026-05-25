@@ -6,7 +6,7 @@ import {
   ListTodo, Megaphone, History, PanelLeft, PanelLeftClose, Home, Target, Gift,
   Handshake, ExternalLink, Film, CreditCard, Activity, ChevronRight, BarChart3,
   Settings, Users2, MonitorSmartphone, GraduationCap, Search, Plus, RefreshCw, Video,
-  Mail, Send, AtSign, BookMarked, Zap, ArrowLeftRight, ScrollText
+  Mail, Send, AtSign, BookMarked, Zap, ArrowLeftRight, ScrollText, FileSpreadsheet
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -106,6 +106,7 @@ const navGroups: NavGroup[] = [
       { to: '/admin/automation-product-mapping', icon: ArrowLeftRight, label: 'Product Mapping' },
       { to: '/admin/automation-manual-trigger', icon: Zap, label: 'Manual Trigger' },
       { to: '/admin/automation-history', icon: ScrollText, label: 'History' },
+      { to: '/admin/sheet-viewer', icon: FileSpreadsheet, label: 'Sheet Viewer' },
     ],
   },
   {

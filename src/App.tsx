@@ -95,6 +95,7 @@ const AdminAutomationSettings = lazy(() => import("./pages/admin/AdminAutomation
 const AdminAutomationProductMapping = lazy(() => import("./pages/admin/AdminAutomationProductMapping"));
 const AdminAutomationHistory = lazy(() => import("./pages/admin/AdminAutomationHistory"));
 const AdminAutomationManualTrigger = lazy(() => import("./pages/admin/AdminAutomationManualTrigger"));
+const AdminSheetViewer = lazy(() => import("./pages/admin/AdminSheetViewer"));
 
 
 const queryClient = new QueryClient({
@@ -354,6 +355,7 @@ const AppRoutes = () => {
         <Route path="automation-product-mapping" element={<AdminAutomationProductMapping />} />
         <Route path="automation-history" element={<AdminAutomationHistory />} />
         <Route path="automation-manual-trigger" element={<AdminAutomationManualTrigger />} />
+        <Route path="sheet-viewer" element={<AdminSheetViewer />} />
       </Route>
       
       {/* Legacy KY form redirects */}
