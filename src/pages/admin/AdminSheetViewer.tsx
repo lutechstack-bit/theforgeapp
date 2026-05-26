@@ -413,12 +413,19 @@ function OnboardDialog({
 
 const ALL = '__all__';
 
+// Auto-detect which column is the "cohort / batch / product" column
+function guessCohortCol(headers: string[]): string {
+  return headers.find(h => /batch|cohort|product|program|course|edition/i.test(h)) ?? '';
+}
+
 export default function AdminSheetViewer() {
   const [sheetId, setSheetId]       = useState(() => localStorage.getItem(SHEET_ID_KEY) ?? '');
   const [sheetName, setSheetName]   = useState(() => localStorage.getItem(SHEET_NAME_KEY) ?? '');
   const [showConfig, setShowConfig] = useState(!localStorage.getItem(SHEET_ID_KEY));
   const [search, setSearch]         = useState('');
-  const [statusFilter, setStatusFilter] = useState(ALL);
+  const [statusFilter, setStatusFilter]   = useState(ALL);
+  const [cohortFilter, setCohortFilter]   = useState(ALL);
+  const [cohortCol, setCohortCol]         = useState(''); // which column drives cohort chips
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedIdxs, setSelectedIdxs] = useState<Set<number>>(new Set());
   const [onboardOpen, setOnboardOpen]   = useState(false);
@@ -446,21 +453,37 @@ export default function AdminSheetViewer() {
   const allRows  = data?.rows    ?? [];
   const statusHeader = headers.find(h => isStatusCol(h));
 
+  // Auto-set cohortCol when headers load (once)
+  useMemo(() => {
+    if (headers.length && !cohortCol) {
+      const detected = guessCohortCol(headers);
+      if (detected) setCohortCol(detected);
+    }
+  }, [headers]);
+
   const uniqueStatuses = useMemo(() => {
     if (!statusHeader) return [];
     return [...new Set(allRows.map(r => r[statusHeader]?.trim()).filter(Boolean))].sort();
   }, [allRows, statusHeader]);
 
+  // Unique values for the cohort column
+  const uniqueCohorts = useMemo(() => {
+    if (!cohortCol) return [];
+    return [...new Set(allRows.map(r => r[cohortCol]?.trim()).filter(Boolean))].sort();
+  }, [allRows, cohortCol]);
+
   const filteredRows = useMemo(() => {
     let rows = allRows;
     if (statusFilter !== ALL && statusHeader)
       rows = rows.filter(r => r[statusHeader]?.trim().toLowerCase() === statusFilter.toLowerCase());
+    if (cohortFilter !== ALL && cohortCol)
+      rows = rows.filter(r => r[cohortCol]?.trim() === cohortFilter);
     if (search.trim()) {
       const q = search.toLowerCase();
       rows = rows.filter(r => Object.values(r).some(v => v.toLowerCase().includes(q)));
     }
     return rows;
-  }, [allRows, statusHeader, statusFilter, search]);
+  }, [allRows, statusHeader, statusFilter, cohortCol, cohortFilter, search]);
 
   // Counts per status (on the unfiltered full set)
   const statusCounts = useMemo(() => {
@@ -469,6 +492,14 @@ export default function AdminSheetViewer() {
     allRows.forEach(r => { const s = r[statusHeader]?.trim(); if (s) c[s] = (c[s] ?? 0) + 1; });
     return c;
   }, [allRows, statusHeader]);
+
+  // Counts per cohort (on the unfiltered full set)
+  const cohortCounts = useMemo(() => {
+    if (!cohortCol) return {} as Record<string, number>;
+    const c: Record<string, number> = {};
+    allRows.forEach(r => { const s = r[cohortCol]?.trim(); if (s) c[s] = (c[s] ?? 0) + 1; });
+    return c;
+  }, [allRows, cohortCol]);
 
   // Selection helpers — indices are relative to filteredRows
   const toggleRow = (idx: number) => {
@@ -497,7 +528,13 @@ export default function AdminSheetViewer() {
     setRefreshKey(k => k + 1);
   };
 
-  const handleRefresh = () => { setRefreshKey(k => k + 1); setSelectedIdxs(new Set()); toast.info('Refreshing…'); };
+  const handleRefresh = () => {
+    setRefreshKey(k => k + 1);
+    setSelectedIdxs(new Set());
+    setStatusFilter(ALL);
+    setCohortFilter(ALL);
+    toast.info('Refreshing…');
+  };;
 
   const handleDownloadCSV = () => {
     const csvLines = [headers.join(','), ...filteredRows.map(row =>
@@ -583,22 +620,55 @@ export default function AdminSheetViewer() {
         </Card>
       )}
 
+      {/* Cohort / Batch filter */}
+      {uniqueCohorts.length > 0 && (
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Cohort / Batch</p>
+            {/* Let admin change which column drives this */}
+            <Select value={cohortCol} onValueChange={v => { setCohortCol(v); setCohortFilter(ALL); }}>
+              <SelectTrigger className="h-6 w-auto text-[10px] border-none bg-transparent text-muted-foreground/60 hover:text-foreground gap-1 px-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {headers.map(h => <SelectItem key={h} value={h} className="text-xs">{h}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button onClick={() => setCohortFilter(ALL)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${cohortFilter === ALL ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
+              All ({allRows.length})
+            </button>
+            {uniqueCohorts.map(c => (
+              <button key={c} onClick={() => setCohortFilter(cohortFilter === c ? ALL : c)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${cohortFilter === c ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 font-semibold' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
+                {c} ({cohortCounts[c] ?? 0})
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Status chips */}
       {uniqueStatuses.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={() => setStatusFilter(ALL)}
-            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${statusFilter === ALL ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
-            All ({allRows.length})
-          </button>
-          {uniqueStatuses.map(s => {
-            const cfg = STATUS_CFG[s.toLowerCase().trim()];
-            return (
-              <button key={s} onClick={() => setStatusFilter(statusFilter === s ? ALL : s)}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${statusFilter === s ? (cfg?.cls ?? '') + ' font-semibold' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
-                {s} ({statusCounts[s] ?? 0})
-              </button>
-            );
-          })}
+        <div className="space-y-1.5">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button onClick={() => setStatusFilter(ALL)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${statusFilter === ALL ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
+              All
+            </button>
+            {uniqueStatuses.map(s => {
+              const cfg = STATUS_CFG[s.toLowerCase().trim()];
+              return (
+                <button key={s} onClick={() => setStatusFilter(statusFilter === s ? ALL : s)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${statusFilter === s ? (cfg?.cls ?? '') + ' font-semibold' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
+                  {s} ({statusCounts[s] ?? 0})
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
