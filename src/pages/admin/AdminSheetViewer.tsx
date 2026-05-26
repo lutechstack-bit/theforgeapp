@@ -424,6 +424,7 @@ export default function AdminSheetViewer() {
   const [showConfig, setShowConfig] = useState(!localStorage.getItem(SHEET_ID_KEY));
   const [search, setSearch]         = useState('');
   const [statusFilter, setStatusFilter]   = useState(ALL);
+  const [editionFilter, setEditionFilter] = useState(ALL); // 'ALL' | edition_id | '__none__'
   const [cohortFilter, setCohortFilter]   = useState(ALL);
   const [cohortCol, setCohortCol]         = useState(''); // which column drives cohort chips
   const [refreshKey, setRefreshKey] = useState(0);
@@ -449,9 +450,31 @@ export default function AdminSheetViewer() {
     },
   });
 
+  // Load all enrolled users (email + edition_id) for cross-reference
+  const { data: appUsers = [] } = useQuery<{ email: string; edition_id: string | null }[]>({
+    queryKey: ['sheet-viewer-app-users'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('email, edition_id')
+        .or('is_admin.is.null,is_admin.eq.false');
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 60_000,
+  });
+
+  // Build lookup: lowercase email → edition_id
+  const emailToEdition = useMemo(() => {
+    const map = new Map<string, string | null>();
+    appUsers.forEach(u => { if (u.email) map.set(u.email.toLowerCase().trim(), u.edition_id); });
+    return map;
+  }, [appUsers]);
+
   const headers  = data?.headers ?? [];
   const allRows  = data?.rows    ?? [];
   const statusHeader = headers.find(h => isStatusCol(h));
+  const emailHeader  = headers.find(h => isEmailCol(h));
 
   // Auto-set cohortCol when headers load (once)
   useMemo(() => {
@@ -474,16 +497,38 @@ export default function AdminSheetViewer() {
 
   const filteredRows = useMemo(() => {
     let rows = allRows;
+
+    // Edition filter — cross-reference sheet email against enrolled users
+    if (editionFilter !== ALL && emailHeader) {
+      if (editionFilter === '__none__') {
+        // "Not in app" — email not found in any enrolled user
+        rows = rows.filter(r => {
+          const email = r[emailHeader]?.toLowerCase().trim();
+          return email ? !emailToEdition.has(email) : true;
+        });
+      } else {
+        rows = rows.filter(r => {
+          const email = r[emailHeader]?.toLowerCase().trim();
+          return email ? emailToEdition.get(email) === editionFilter : false;
+        });
+      }
+    }
+
+    // Status filter
     if (statusFilter !== ALL && statusHeader)
       rows = rows.filter(r => r[statusHeader]?.trim().toLowerCase() === statusFilter.toLowerCase());
+
+    // Cohort column filter
     if (cohortFilter !== ALL && cohortCol)
       rows = rows.filter(r => r[cohortCol]?.trim() === cohortFilter);
+
+    // Search
     if (search.trim()) {
       const q = search.toLowerCase();
       rows = rows.filter(r => Object.values(r).some(v => v.toLowerCase().includes(q)));
     }
     return rows;
-  }, [allRows, statusHeader, statusFilter, cohortCol, cohortFilter, search]);
+  }, [allRows, emailHeader, emailToEdition, editionFilter, statusHeader, statusFilter, cohortCol, cohortFilter, search]);
 
   // Counts per status (on the unfiltered full set)
   const statusCounts = useMemo(() => {
@@ -528,10 +573,31 @@ export default function AdminSheetViewer() {
     setRefreshKey(k => k + 1);
   };
 
+  // Per-edition count of sheet rows (by email cross-reference)
+  const editionRowCounts = useMemo(() => {
+    if (!emailHeader) return new Map<string, number>();
+    const counts = new Map<string, number>();
+    counts.set('__none__', 0);
+    allRows.forEach(r => {
+      const email = r[emailHeader]?.toLowerCase().trim();
+      const edId  = email ? emailToEdition.get(email) : undefined;
+      if (edId) counts.set(edId, (counts.get(edId) ?? 0) + 1);
+      else      counts.set('__none__', (counts.get('__none__') ?? 0) + 1);
+    });
+    return counts;
+  }, [allRows, emailHeader, emailToEdition]);
+
+  // Only show edition chips that have at least 1 matching sheet row
+  const activeEditions = useMemo(
+    () => editions.filter(e => (editionRowCounts.get(e.id) ?? 0) > 0),
+    [editions, editionRowCounts],
+  );
+
   const handleRefresh = () => {
     setRefreshKey(k => k + 1);
     setSelectedIdxs(new Set());
     setStatusFilter(ALL);
+    setEditionFilter(ALL);
     setCohortFilter(ALL);
     toast.info('Refreshing…');
   };;
@@ -620,37 +686,35 @@ export default function AdminSheetViewer() {
         </Card>
       )}
 
-      {/* Cohort / Batch filter */}
-      {uniqueCohorts.length > 0 && (
+      {/* ── Edition filter (cross-referenced with enrolled app users) ── */}
+      {(activeEditions.length > 0 || emailHeader) && (
         <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Cohort / Batch</p>
-            {/* Let admin change which column drives this */}
-            <Select value={cohortCol} onValueChange={v => { setCohortCol(v); setCohortFilter(ALL); }}>
-              <SelectTrigger className="h-6 w-auto text-[10px] border-none bg-transparent text-muted-foreground/60 hover:text-foreground gap-1 px-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {headers.map(h => <SelectItem key={h} value={h} className="text-xs">{h}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Filter by Edition
+            {!emailHeader && <span className="ml-2 text-amber-400 normal-case font-normal">— no email column detected in sheet</span>}
+          </p>
           <div className="flex items-center gap-2 flex-wrap">
-            <button onClick={() => setCohortFilter(ALL)}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${cohortFilter === ALL ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
+            <button onClick={() => setEditionFilter(ALL)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${editionFilter === ALL ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
               All ({allRows.length})
             </button>
-            {uniqueCohorts.map(c => (
-              <button key={c} onClick={() => setCohortFilter(cohortFilter === c ? ALL : c)}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${cohortFilter === c ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 font-semibold' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
-                {c} ({cohortCounts[c] ?? 0})
+            {activeEditions.map(e => (
+              <button key={e.id} onClick={() => setEditionFilter(editionFilter === e.id ? ALL : e.id)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${editionFilter === e.id ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 font-semibold' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
+                {e.name} ({editionRowCounts.get(e.id) ?? 0})
               </button>
             ))}
+            {(editionRowCounts.get('__none__') ?? 0) > 0 && (
+              <button onClick={() => setEditionFilter(editionFilter === '__none__' ? ALL : '__none__')}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${editionFilter === '__none__' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-semibold' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
+                Not in app ({editionRowCounts.get('__none__') ?? 0})
+              </button>
+            )}
           </div>
         </div>
       )}
 
-      {/* Status chips */}
+      {/* ── Status chips ── */}
       {uniqueStatuses.length > 0 && (
         <div className="space-y-1.5">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</p>
