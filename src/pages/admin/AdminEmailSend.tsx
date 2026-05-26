@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase as supabaseTyped } from '@/integrations/supabase/client';
 const supabase = supabaseTyped as any;
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +32,7 @@ interface Profile {
 
 export default function AdminEmailSend() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [templateId, setTemplateId] = useState<string>('');
   const [tab, setTab] = useState<'filter' | 'audience' | 'individuals'>('filter');
@@ -45,6 +46,15 @@ export default function AdminEmailSend() {
 
   // Individuals tab
   const [emailsInput, setEmailsInput] = useState('');
+
+  // Pre-fill from URL params (e.g. navigating from Admin Users with selected emails)
+  useEffect(() => {
+    const preEmails = searchParams.get('recipientEmails');
+    if (preEmails) {
+      setEmailsInput(preEmails.replace(/,/g, '\n'));
+      setTab('individuals');
+    }
+  }, []);
 
   // Per-recipient variables (e.g. temp passwords)
   const [perRecipientInput, setPerRecipientInput] = useState('');

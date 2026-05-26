@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload, Users, LayoutGrid, List, Download, Crown, IndianRupee, FileSpreadsheet, FileUp, UserMinus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload, Users, LayoutGrid, List, Download, Crown, IndianRupee, FileSpreadsheet, FileUp, UserMinus, Mail, UserCheck } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -344,6 +345,7 @@ function CohortCard({
 
 
 export default function AdminUsers() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(searchParams.get('action') === 'create');
@@ -351,6 +353,8 @@ export default function AdminUsers() {
   const [userToDelete, setUserToDelete] = useState<Profile | null>(null);
   const [userToWaitlist, setUserToWaitlist] = useState<Profile | null>(null);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [showBulkAssignDialog, setShowBulkAssignDialog] = useState(false);
+  const [bulkAssignEditionId, setBulkAssignEditionId] = useState<string>('');
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'cohort'>('list');
@@ -575,6 +579,38 @@ export default function AdminUsers() {
       toast.error(error.message);
     }
   });
+
+  // Bulk assign to edition mutation
+  const bulkAssignEditionMutation = useMutation({
+    mutationFn: async ({ userIds, editionId }: { userIds: string[]; editionId: string | null }) => {
+      const { error } = await (supabase as any)
+        .from('profiles')
+        .update({ edition_id: editionId })
+        .in('id', userIds);
+      if (error) throw error;
+      return userIds.length;
+    },
+    onSuccess: (count, { editionId }) => {
+      const editionName = allEditions?.find(e => e.id === editionId)?.name ?? 'waitlist';
+      toast.success(`${count} student${count !== 1 ? 's' : ''} assigned to ${editionName}`);
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      setShowBulkAssignDialog(false);
+      setSelectedUserIds(new Set());
+      setBulkAssignEditionId('');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // Navigate to email compose with selected user IDs pre-filled via URL
+  const handleEmailSelected = () => {
+    const selectedList = Array.from(selectedUserIds);
+    const emails = (users || [])
+      .filter(u => selectedList.includes(u.id))
+      .map(u => u.email)
+      .filter(Boolean)
+      .join(',');
+    navigate(`/admin/email/send?recipientEmails=${encodeURIComponent(emails)}`);
+  };
 
   // Bulk import Edition 14 students
   const importEdition14Mutation = useMutation({
@@ -1413,16 +1449,33 @@ export default function AdminUsers() {
             <FileSpreadsheet className="w-4 h-4" />
             Bulk Import (CSV)
           </Button>
-          {viewMode === 'list' && (
-            <Button
-              variant="destructive"
-              onClick={() => setShowBulkDeleteConfirm(true)}
-              className="gap-2"
-              disabled={selectedUserIds.size === 0}
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete Selected ({selectedUserIds.size})
-            </Button>
+          {viewMode === 'list' && selectedUserIds.size > 0 && (
+            <>
+              <Button
+                variant="outline"
+                onClick={handleEmailSelected}
+                className="gap-2 border-primary/40 text-primary hover:bg-primary/10"
+              >
+                <Mail className="w-4 h-4" />
+                Email Selected ({selectedUserIds.size})
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowBulkAssignDialog(true)}
+                className="gap-2 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+              >
+                <UserCheck className="w-4 h-4" />
+                Assign Edition ({selectedUserIds.size})
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => setShowBulkDeleteConfirm(true)}
+                className="gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete ({selectedUserIds.size})
+              </Button>
+            </>
           )}
           <Button 
             variant="outline"
@@ -1901,11 +1954,64 @@ export default function AdminUsers() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Bulk Assign Edition Dialog */}
+      <Dialog open={showBulkAssignDialog} onOpenChange={setShowBulkAssignDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserCheck className="w-5 h-5 text-emerald-400" />
+              Assign {selectedUserIds.size} Student{selectedUserIds.size !== 1 ? 's' : ''} to Edition
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <p className="text-sm text-muted-foreground">
+              Pick which edition to move these students into. Their current edition (if any) will be replaced.
+            </p>
+            <Select value={bulkAssignEditionId} onValueChange={setBulkAssignEditionId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select edition…" />
+              </SelectTrigger>
+              <SelectContent>
+                {allEditions?.map(ed => (
+                  <SelectItem key={ed.id} value={ed.id}>
+                    {ed.name} {ed.is_archived ? '[Archived]' : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => setShowBulkAssignDialog(false)}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                className="gap-2 bg-emerald-600 hover:bg-emerald-700"
+                disabled={!bulkAssignEditionId || bulkAssignEditionMutation.isPending}
+                onClick={() => bulkAssignEditionMutation.mutate({
+                  userIds: Array.from(selectedUserIds),
+                  editionId: bulkAssignEditionId,
+                })}
+              >
+                {bulkAssignEditionMutation.isPending
+                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Assigning…</>
+                  : <><UserCheck className="w-3.5 h-3.5" /> Assign</>}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Floating Bulk Actions Toolbar */}
       {selectedUserIds.size > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-xl bg-card border border-border shadow-2xl animate-in slide-in-from-bottom-4">
           <span className="text-sm font-medium text-foreground">{selectedUserIds.size} selected</span>
           <div className="w-px h-6 bg-border" />
+          <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs text-primary border-primary/40 hover:bg-primary/10" onClick={handleEmailSelected}>
+            <Mail className="w-3.5 h-3.5" /> Email
+          </Button>
+          <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/10" onClick={() => setShowBulkAssignDialog(true)}>
+            <UserCheck className="w-3.5 h-3.5" /> Assign Edition
+          </Button>
           <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={() => {
             const selected = (users || []).filter(u => selectedUserIds.has(u.id));
             const csv = ['Name,Email,City,Payment,KYF'].concat(
@@ -1917,7 +2023,7 @@ export default function AdminUsers() {
             URL.revokeObjectURL(url);
             toast.success(`Exported ${selected.length} users`);
           }}>
-            <Download className="w-3.5 h-3.5" /> Export CSV
+            <Download className="w-3.5 h-3.5" /> Export
           </Button>
           <Button size="sm" variant="destructive" className="gap-1.5 h-8 text-xs" onClick={() => setShowBulkDeleteConfirm(true)}>
             <Trash2 className="w-3.5 h-3.5" /> Delete
