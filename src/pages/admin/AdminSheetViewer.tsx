@@ -627,6 +627,7 @@ export default function AdminSheetViewer() {
           <p className="text-muted-foreground text-sm mt-0.5">
             Select students from your sheet and onboard them directly
             {allRows.length > 0 && <span className="ml-2 text-muted-foreground/50 text-xs">— {allRows.length} rows</span>}
+            {sheetName && <span className="ml-2 text-blue-400/70 text-xs">tab: {sheetName}</span>}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -687,12 +688,9 @@ export default function AdminSheetViewer() {
       )}
 
       {/* ── Edition filter (cross-referenced with enrolled app users) ── */}
-      {(activeEditions.length > 0 || emailHeader) && (
+      {canFetch && !isLoading && data && (
         <div className="space-y-1.5">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Filter by Edition
-            {!emailHeader && <span className="ml-2 text-amber-400 normal-case font-normal">— no email column detected in sheet</span>}
-          </p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filter by Edition</p>
           <div className="flex items-center gap-2 flex-wrap">
             <button onClick={() => setEditionFilter(ALL)}
               className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${editionFilter === ALL ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
@@ -707,9 +705,50 @@ export default function AdminSheetViewer() {
             {(editionRowCounts.get('__none__') ?? 0) > 0 && (
               <button onClick={() => setEditionFilter(editionFilter === '__none__' ? ALL : '__none__')}
                 className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${editionFilter === '__none__' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-semibold' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
-                Not in app ({editionRowCounts.get('__none__') ?? 0})
+                🔴 Not in app ({editionRowCounts.get('__none__') ?? 0})
               </button>
             )}
+          </div>
+          {activeEditions.length === 0 && emailHeader && (
+            <p className="text-[11px] text-muted-foreground/60">
+              None of these {allRows.length} students have app accounts yet — they all show under "Not in app".
+              Once onboarded, their edition chips will appear here.
+            </p>
+          )}
+          {!emailHeader && (
+            <p className="text-[11px] text-amber-400/80">No email column detected — edition cross-reference unavailable.</p>
+          )}
+        </div>
+      )}
+
+      {/* ── Program filter — auto-detected from Student ID or batch column ── */}
+      {uniqueCohorts.length > 0 && (
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Program</p>
+            <Select value={cohortCol} onValueChange={v => { setCohortCol(v); setCohortFilter(ALL); }}>
+              <SelectTrigger className="h-6 w-auto text-[10px] border-none bg-transparent text-muted-foreground/50 hover:text-foreground px-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {headers.map(h => <SelectItem key={h} value={h} className="text-xs">{h}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button onClick={() => setCohortFilter(ALL)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${cohortFilter === ALL ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
+              All
+            </button>
+            {uniqueCohorts.map(c => {
+              const label = c === 'FFM' ? 'Filmmaking' : c === 'FC' ? 'Creators' : c === 'FW' ? 'Writing' : c;
+              return (
+                <button key={c} onClick={() => setCohortFilter(cohortFilter === c ? ALL : c)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${cohortFilter === c ? 'bg-violet-500/20 text-violet-300 border-violet-500/40 font-semibold' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
+                  {label} ({cohortCounts[c] ?? 0})
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
