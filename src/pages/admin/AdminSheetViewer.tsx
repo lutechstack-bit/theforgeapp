@@ -414,10 +414,20 @@ function OnboardDialog({
 
 const ALL = '__all__';
 
-// Auto-detect which column is the "cohort / batch / product" column
-function guessCohortCol(headers: string[]): string {
-  return headers.find(h => /batch|cohort|product|program|course|edition/i.test(h)) ?? '';
+// Auto-detect columns by purpose
+function guessProductCol(headers: string[]): string {
+  return headers.find(h => /^product$/i.test(h.trim())) ??
+         headers.find(h => /product|program|course|cohort/i.test(h)) ?? '';
 }
+function guessBatchCol(headers: string[]): string {
+  return headers.find(h => /^batch$/i.test(h.trim())) ??
+         headers.find(h => /batch|edition/i.test(h)) ?? '';
+}
+
+const PRODUCT_LABELS: Record<string, string> = {
+  FFM: 'Filmmaking', FC: 'Creators', FW: 'Writing',
+};
+const productLabel = (code: string) => PRODUCT_LABELS[code?.toUpperCase()] ?? code;
 
 export default function AdminSheetViewer() {
   const [sheetId, setSheetId]       = useState(() => localStorage.getItem(SHEET_ID_KEY) ?? '');
@@ -426,8 +436,13 @@ export default function AdminSheetViewer() {
   const [search, setSearch]         = useState('');
   const [statusFilter, setStatusFilter]   = useState(ALL);
   const [editionFilter, setEditionFilter] = useState(ALL); // 'ALL' | edition_id | '__none__'
-  const [cohortFilter, setCohortFilter]   = useState(ALL);
-  const [cohortCol, setCohortCol]         = useState(''); // which column drives cohort chips
+  const [productFilter, setProductFilter] = useState(ALL); // FFM / FC / FW
+  const [batchFilter, setBatchFilter]     = useState(ALL); // E6 / E17 / etc.
+  const [productCol, setProductCol]       = useState('');
+  const [batchCol, setBatchCol]           = useState('');
+  // keep cohortFilter/cohortCol as aliases for backwards-compat with filteredRows
+  const cohortFilter = ALL; // unused — replaced by productFilter + batchFilter
+  const cohortCol    = '';  // unused
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedIdxs, setSelectedIdxs] = useState<Set<number>>(new Set());
   const [onboardOpen, setOnboardOpen]   = useState(false);
@@ -477,12 +492,11 @@ export default function AdminSheetViewer() {
   const statusHeader = headers.find(h => isStatusCol(h));
   const emailHeader  = headers.find(h => isEmailCol(h));
 
-  // Auto-set cohortCol when headers load (once)
+  // Auto-detect product + batch columns when headers load
   useMemo(() => {
-    if (headers.length && !cohortCol) {
-      const detected = guessCohortCol(headers);
-      if (detected) setCohortCol(detected);
-    }
+    if (!headers.length) return;
+    if (!productCol) { const d = guessProductCol(headers); if (d) setProductCol(d); }
+    if (!batchCol)   { const d = guessBatchCol(headers);   if (d) setBatchCol(d); }
   }, [headers]);
 
   const uniqueStatuses = useMemo(() => {
@@ -490,11 +504,25 @@ export default function AdminSheetViewer() {
     return [...new Set(allRows.map(r => r[statusHeader]?.trim()).filter(Boolean))].sort();
   }, [allRows, statusHeader]);
 
-  // Unique values for the cohort column
-  const uniqueCohorts = useMemo(() => {
-    if (!cohortCol) return [];
-    return [...new Set(allRows.map(r => r[cohortCol]?.trim()).filter(Boolean))].sort();
-  }, [allRows, cohortCol]);
+  // Unique product codes (FFM / FC / FW) and batch values (E6 / E17...)
+  const uniqueProducts = useMemo(() => {
+    if (!productCol) return [] as string[];
+    return [...new Set(allRows.map(r => r[productCol]?.trim().toUpperCase()).filter(Boolean))].sort();
+  }, [allRows, productCol]);
+
+  const uniqueBatches = useMemo(() => {
+    if (!batchCol) return [] as string[];
+    // Filter by current product selection first so batches are relevant
+    const base = productFilter !== ALL && productCol
+      ? allRows.filter(r => r[productCol]?.trim().toUpperCase() === productFilter)
+      : allRows;
+    return [...new Set(base.map(r => r[batchCol]?.trim()).filter(Boolean))].sort((a, b) => {
+      // Sort batch codes: numeric part ascending, then alpha
+      const na = parseInt(a.replace(/\D/g, '')) || 0;
+      const nb = parseInt(b.replace(/\D/g, '')) || 0;
+      return na !== nb ? na - nb : a.localeCompare(b);
+    });
+  }, [allRows, batchCol, productCol, productFilter]);
 
   const filteredRows = useMemo(() => {
     let rows = allRows;
@@ -519,9 +547,12 @@ export default function AdminSheetViewer() {
     if (statusFilter !== ALL && statusHeader)
       rows = rows.filter(r => r[statusHeader]?.trim().toLowerCase() === statusFilter.toLowerCase());
 
-    // Cohort column filter
-    if (cohortFilter !== ALL && cohortCol)
-      rows = rows.filter(r => r[cohortCol]?.trim() === cohortFilter);
+    // Product filter (FFM / FC / FW)
+    if (productFilter !== ALL && productCol)
+      rows = rows.filter(r => r[productCol]?.trim().toUpperCase() === productFilter);
+    // Batch filter (E6 / E17 / ...)
+    if (batchFilter !== ALL && batchCol)
+      rows = rows.filter(r => r[batchCol]?.trim() === batchFilter);
 
     // Search
     if (search.trim()) {
@@ -529,7 +560,7 @@ export default function AdminSheetViewer() {
       rows = rows.filter(r => Object.values(r).some(v => v.toLowerCase().includes(q)));
     }
     return rows;
-  }, [allRows, emailHeader, emailToEdition, editionFilter, statusHeader, statusFilter, cohortCol, cohortFilter, search]);
+  }, [allRows, emailHeader, emailToEdition, editionFilter, statusHeader, statusFilter, productCol, productFilter, batchCol, batchFilter, search]);
 
   // Counts per status (on the unfiltered full set)
   const statusCounts = useMemo(() => {
@@ -539,13 +570,24 @@ export default function AdminSheetViewer() {
     return c;
   }, [allRows, statusHeader]);
 
-  // Counts per cohort (on the unfiltered full set)
-  const cohortCounts = useMemo(() => {
-    if (!cohortCol) return {} as Record<string, number>;
+  // Counts per product/batch (on unfiltered full set)
+  const productCounts = useMemo(() => {
     const c: Record<string, number> = {};
-    allRows.forEach(r => { const s = r[cohortCol]?.trim(); if (s) c[s] = (c[s] ?? 0) + 1; });
+    if (productCol) allRows.forEach(r => { const s = r[productCol]?.trim().toUpperCase(); if (s) c[s] = (c[s] ?? 0) + 1; });
     return c;
-  }, [allRows, cohortCol]);
+  }, [allRows, productCol]);
+
+  const batchCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    if (batchCol) {
+      // Count within current product filter
+      const base = productFilter !== ALL && productCol
+        ? allRows.filter(r => r[productCol]?.trim().toUpperCase() === productFilter)
+        : allRows;
+      base.forEach(r => { const s = r[batchCol]?.trim(); if (s) c[s] = (c[s] ?? 0) + 1; });
+    }
+    return c;
+  }, [allRows, batchCol, productCol, productFilter]);
 
   // Selection helpers — indices are relative to filteredRows
   const toggleRow = (idx: number) => {
@@ -599,7 +641,8 @@ export default function AdminSheetViewer() {
     setSelectedIdxs(new Set());
     setStatusFilter(ALL);
     setEditionFilter(ALL);
-    setCohortFilter(ALL);
+    setProductFilter(ALL);
+    setBatchFilter(ALL);
     toast.info('Refreshing…');
   };;
 
@@ -722,35 +765,68 @@ export default function AdminSheetViewer() {
         </div>
       )}
 
-      {/* ── Program filter — auto-detected from Student ID or batch column ── */}
-      {uniqueCohorts.length > 0 && (
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Program</p>
-            <Select value={cohortCol || '__placeholder__'} onValueChange={v => { if (v !== '__placeholder__') { setCohortCol(v); setCohortFilter(ALL); } }}>
-              <SelectTrigger className="h-6 w-auto text-[10px] border-none bg-transparent text-muted-foreground/50 hover:text-foreground px-1">
-                <SelectValue placeholder="column…" />
-              </SelectTrigger>
-              <SelectContent>
-                {headers.filter(h => h.trim()).map(h => <SelectItem key={h} value={h} className="text-xs">{h}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button onClick={() => setCohortFilter(ALL)}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${cohortFilter === ALL ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
-              All
-            </button>
-            {uniqueCohorts.map(c => {
-              const label = c === 'FFM' ? 'Filmmaking' : c === 'FC' ? 'Creators' : c === 'FW' ? 'Writing' : c;
-              return (
-                <button key={c} onClick={() => setCohortFilter(cohortFilter === c ? ALL : c)}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${cohortFilter === c ? 'bg-violet-500/20 text-violet-300 border-violet-500/40 font-semibold' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
-                  {label} ({cohortCounts[c] ?? 0})
+      {/* ── Cohort (Product) filter ── */}
+      {(uniqueProducts.length > 0 || canFetch) && !isLoading && data && (
+        <div className="space-y-3">
+          {/* Row 1: Cohort type */}
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Cohort</p>
+              {headers.filter(h => h.trim()).length > 0 && (
+                <Select value={productCol || '__placeholder__'} onValueChange={v => { if (v !== '__placeholder__') { setProductCol(v); setProductFilter(ALL); setBatchFilter(ALL); } }}>
+                  <SelectTrigger className="h-5 w-auto text-[10px] border-none bg-transparent text-muted-foreground/40 px-1 gap-0.5">
+                    <SelectValue placeholder="col?" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {headers.filter(h => h.trim()).map(h => <SelectItem key={h} value={h} className="text-xs">{h}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button onClick={() => { setProductFilter(ALL); setBatchFilter(ALL); }}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${productFilter === ALL ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
+                All
+              </button>
+              {uniqueProducts.map(p => (
+                <button key={p} onClick={() => { setProductFilter(productFilter === p ? ALL : p); setBatchFilter(ALL); }}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium ${productFilter === p ? 'bg-violet-500/20 text-violet-300 border-violet-500/40' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
+                  {productLabel(p)} ({productCounts[p] ?? 0})
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
+
+          {/* Row 2: Batch — only when a cohort is selected or batches exist */}
+          {uniqueBatches.length > 0 && (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Batch / Edition</p>
+                {headers.filter(h => h.trim()).length > 0 && (
+                  <Select value={batchCol || '__placeholder__'} onValueChange={v => { if (v !== '__placeholder__') { setBatchCol(v); setBatchFilter(ALL); } }}>
+                    <SelectTrigger className="h-5 w-auto text-[10px] border-none bg-transparent text-muted-foreground/40 px-1 gap-0.5">
+                      <SelectValue placeholder="col?" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {headers.filter(h => h.trim()).map(h => <SelectItem key={h} value={h} className="text-xs">{h}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button onClick={() => setBatchFilter(ALL)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${batchFilter === ALL ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
+                  All
+                </button>
+                {uniqueBatches.map(b => (
+                  <button key={b} onClick={() => setBatchFilter(batchFilter === b ? ALL : b)}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${batchFilter === b ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-semibold' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
+                    {productFilter !== ALL ? `${productLabel(productFilter)} ` : ''}{b} ({batchCounts[b] ?? 0})
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
