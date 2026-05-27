@@ -201,10 +201,11 @@ function OnboardDialog({
       const out: OnboardResult[] = [];
 
       for (const row of selectedRows) {
-        const name  = row[colMap.name]?.trim()  || '';
-        const email = row[colMap.email]?.trim()?.toLowerCase() || '';
-        const phone = row[colMap.phone]?.trim()  || '';
-        const city  = row[colMap.city]?.trim()   || '';
+        const colVal = (col: string) => (col && col !== '__skip__' ? row[col]?.trim() : '') || '';
+        const name  = colVal(colMap.name);
+        const email = colVal(colMap.email).toLowerCase();
+        const phone = colVal(colMap.phone);
+        const city  = colVal(colMap.city);
 
         if (!email) {
           out.push({ row, name, email, status: 'failed', error: 'No email found in selected column' });
@@ -267,18 +268,18 @@ function OnboardDialog({
     onOpenChange(v);
   };
 
-  const canProceed = colMap.email && editionId;
+  const canProceed = colMap.email && colMap.email !== '__skip__' && editionId;
 
   const ColSelect = ({ field, label }: { field: keyof ColMap; label: string }) => (
     <div className="space-y-1">
       <Label className="text-xs text-muted-foreground">{label}</Label>
-      <Select value={colMap[field]} onValueChange={v => setColMap(prev => ({ ...prev, [field]: v }))}>
+      <Select value={colMap[field] || '__skip__'} onValueChange={v => setColMap(prev => ({ ...prev, [field]: v === '__skip__' ? '' : v }))}>
         <SelectTrigger className="h-8 text-xs">
           <SelectValue placeholder="— skip —" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">— skip —</SelectItem>
-          {headers.map(h => <SelectItem key={h} value={h} className="text-xs">{h}</SelectItem>)}
+          <SelectItem value="__skip__">— skip —</SelectItem>
+          {headers.filter(h => h.trim()).map(h => <SelectItem key={h} value={h} className="text-xs">{h}</SelectItem>)}
         </SelectContent>
       </Select>
     </div>
@@ -314,7 +315,7 @@ function OnboardDialog({
               <p className="text-xs font-medium text-muted-foreground">Preview — first selected student</p>
               <div className="bg-muted/30 rounded p-3 text-xs space-y-1 font-mono">
                 {(['name','email','phone','city'] as (keyof ColMap)[]).map(f => (
-                  colMap[f] ? (
+                  colMap[f] && colMap[f] !== '__skip__' ? (
                     <div key={f} className="flex gap-2">
                       <span className="text-muted-foreground w-12">{f}:</span>
                       <span className="text-foreground truncate">{selectedRows[0]?.[colMap[f]] || '—'}</span>
@@ -726,12 +727,12 @@ export default function AdminSheetViewer() {
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Program</p>
-            <Select value={cohortCol} onValueChange={v => { setCohortCol(v); setCohortFilter(ALL); }}>
+            <Select value={cohortCol || '__placeholder__'} onValueChange={v => { if (v !== '__placeholder__') { setCohortCol(v); setCohortFilter(ALL); } }}>
               <SelectTrigger className="h-6 w-auto text-[10px] border-none bg-transparent text-muted-foreground/50 hover:text-foreground px-1">
-                <SelectValue />
+                <SelectValue placeholder="column…" />
               </SelectTrigger>
               <SelectContent>
-                {headers.map(h => <SelectItem key={h} value={h} className="text-xs">{h}</SelectItem>)}
+                {headers.filter(h => h.trim()).map(h => <SelectItem key={h} value={h} className="text-xs">{h}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
