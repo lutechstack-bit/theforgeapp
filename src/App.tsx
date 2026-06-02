@@ -27,7 +27,10 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 const ProfileSetup = lazy(() => import("./pages/ProfileSetup"));
 const Home = lazy(() => import("./pages/Home"));
-const Community = lazy(() => import("./pages/Community"));
+const Community = lazy(() => import("./pages/CommunityRedesign"));
+const CreativeProfile = lazy(() => import("./pages/CreativeProfile"));
+const CommunityPostGig = lazy(() => import("./pages/CommunityPostGig"));
+const CommunityOnboarding = lazy(() => import("./pages/CommunityOnboarding"));
 const Learn = lazy(() => import("./pages/Learn"));
 const AllCourses = lazy(() => import("./pages/AllCourses"));
 const CourseDetail = lazy(() => import("./pages/CourseDetail"));
@@ -288,6 +291,9 @@ const AppRoutes = () => {
       }>
         <Route path="/" element={<Home />} />
         <Route path="/community" element={<Community />} />
+        <Route path="/community/creative/:id" element={<CreativeProfile />} />
+        <Route path="/community/post-gig" element={<CommunityPostGig />} />
+        <Route path="/community/onboarding" element={<CommunityOnboarding />} />
         <Route path="/learn" element={<Learn />} />
         <Route path="/learn/all" element={<AllCourses />} />
         <Route path="/learn/:id" element={<CourseDetail />} />
