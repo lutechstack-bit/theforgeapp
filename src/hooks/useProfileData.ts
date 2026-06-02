@@ -10,6 +10,7 @@ export interface ProfileData {
   cohortType: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS' | null;
   messageCount: number;
   worksCount: number;
+  collaboratorProfile: any | null; // community profile data (tagline, occupations, about, etc.)
 }
 
 export const useProfileData = (userId?: string) => {
@@ -85,6 +86,13 @@ export const useProfileData = (userId?: string) => {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', targetUserId);
 
+      // Get community/collaborator profile (set up via community onboarding)
+      const { data: collaboratorProfile } = await supabase
+        .from('collaborator_profiles')
+        .select('tagline, occupations, about, intro, available_for_hire, open_to_remote, portfolio_url, is_published')
+        .eq('user_id', targetUserId)
+        .maybeSingle();
+
       return {
         profile: profileData,
         kyfResponse,
@@ -93,6 +101,7 @@ export const useProfileData = (userId?: string) => {
         cohortType,
         messageCount: messageCount || 0,
         worksCount: worksCount || 0,
+        collaboratorProfile: collaboratorProfile || null,
       };
     },
     enabled: !!targetUserId,

@@ -2,22 +2,15 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import forgeLogo from '@/assets/forge-logo.png';
-import forgeIcon from '@/assets/forge-icon.png';
 import {
   Search,
   MapPin,
   Sparkles,
-  Bell,
   ArrowUpRight,
   Briefcase,
-  MessageCircle,
   Users,
-  Calendar,
   Star,
-  ChevronRight,
   ChevronDown,
-  TrendingUp,
   Clock,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -67,18 +60,28 @@ type Gig = {
   status: 'open' | 'closing' | 'closed';
 };
 
-const RECENT_JOINERS = [
-  { name: 'Tara Sen', role: 'Production Designer', city: 'Mumbai' },
-  { name: 'Vikram Joshi', role: 'Director', city: 'Delhi' },
-  { name: 'Aditi Nair', role: 'Casting', city: 'Mumbai' },
-];
-
-const TRENDING_ROLES: Array<{ role: string; count: number; delta: string }> = [
-  { role: 'DOP', count: 34, delta: '+8' },
-  { role: 'Editor', count: 41, delta: '+5' },
-  { role: 'Writer', count: 28, delta: '+3' },
-  { role: 'Sound', count: 19, delta: '+2' },
-];
+// ---------- Recent joiners hook ----------
+function useRecentJoiners() {
+  return useQuery({
+    queryKey: ['recent-joiners'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url, city, specialty, collaborator_profiles(occupations)')
+        .or('is_admin.is.null,is_admin.eq.false')
+        .not('full_name', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      return (data || []).map((p: any) => ({
+        id: p.id,
+        name: p.full_name,
+        role: p.collaborator_profiles?.[0]?.occupations?.[0] || p.specialty || 'Creator',
+        city: p.city || '',
+        avatar: p.avatar_url,
+      }));
+    },
+  });
+}
 
 // ---------- Hooks ----------
 function useCreatives() {
@@ -184,8 +187,10 @@ function useGigs() {
 }
 
 // ---------- Helpers ----------
-const initialsOf = (name: string) =>
-  name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+function initialsOf(name?: string | null) {
+  if (!name?.trim()) return '?';
+  return name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+}
 
 // ---------- Page ----------
 const CommunityRedesign: React.FC = () => {
@@ -255,40 +260,31 @@ const TopBar: React.FC<{ tab: 'creatives' | 'gigs'; setTab: (t: 'creatives' | 'g
       </div>
     </div>
 
-    {/* Mobile bottom tab nav */}
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/40 bg-background/95 backdrop-blur-xl md:hidden">
-      <ul className="flex">
-        {items.map(it => {
-          const active = tab === it.key;
-          return (
-            <li key={it.key} className="flex-1">
-              <button
-                onClick={() => setTab(it.key)}
-                className={cn(
-                  'relative flex w-full flex-col items-center gap-1 py-3 text-[11px] font-medium transition-colors',
-                  active ? 'text-primary' : 'text-muted-foreground'
-                )}
-              >
-                {it.icon}
-                {it.label}
-                {active && <span className="absolute top-0 left-1/2 h-[2px] w-8 -translate-x-1/2 bg-primary shadow-[0_0_8px_hsl(41_100%_62%/0.7)]" />}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+    {/* Mobile inline tab switcher — shown instead of bottom nav */}
+    <div className="flex gap-2 px-4 pt-3 md:hidden">
+      {items.map(it => (
+        <button key={it.key} onClick={() => setTab(it.key)}
+          className={cn('flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors',
+            tab === it.key ? 'bg-primary text-black' : 'bg-card/60 text-muted-foreground border border-border/40'
+          )}>
+          {it.icon}{it.label}
+        </button>
+      ))}
+    </div>
     </>
   );
 };
 
 // ---------- Creatives ----------
+const INITIAL_VISIBLE = 12;
+
 const CreativesView: React.FC = () => {
   const { profile } = useAuth();
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('All');
   const [scope, setScope] = useState<'all' | 'cohort'>('all');
   const [selected, setSelected] = useState<Creative | null>(null);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
 
   const { data: creatives = [], isLoading: creativesLoading } = useCreatives();
 
@@ -315,7 +311,6 @@ const CreativesView: React.FC = () => {
             <h1 className="mt-3 text-[44px] sm:text-[56px] lg:text-[64px] xl:text-[80px] leading-[0.92] tracking-tight text-foreground">
               <span className="block">The</span>
               <span className="mt-1 flex items-center gap-2 sm:gap-3">
-                <img src={forgeIcon} alt="" className="inline-block h-[0.7em] w-auto" aria-hidden />
                 <span className="italic text-primary">Community</span>
                 <span>.</span>
               </span>
@@ -384,17 +379,28 @@ const CreativesView: React.FC = () => {
           <div className="text-muted-foreground text-sm p-8 text-center">Loading...</div>
         ) : (
           <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 lg:gap-5">
-            {filtered.map((c, idx) => (
+            {!creativesLoading && filtered.length === 0 && (
+              <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
+                <p className="text-2xl font-semibold text-foreground mb-2">No creatives found</p>
+                <p className="text-muted-foreground text-sm">Try a different search or filter</p>
+              </div>
+            )}
+            {filtered.slice(0, visibleCount).map((c, idx) => (
               <CreativeTile key={c.id} c={c} large={false} accentIndex={idx} onOpen={setSelected} />
             ))}
           </div>
         )}
 
-        <div className="mt-10 flex justify-center">
-          <button className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors border-b border-border/60 pb-1">
-            Show more creatives
-          </button>
-        </div>
+        {filtered.length > visibleCount && (
+          <div className="mt-10 flex justify-center">
+            <button
+              onClick={() => setVisibleCount(v => v + INITIAL_VISIBLE)}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors border-b border-border/60 pb-1"
+            >
+              Show more creatives
+            </button>
+          </div>
+        )}
       </section>
 
       <CreativeSheet c={selected} onClose={() => setSelected(null)} />
@@ -653,42 +659,41 @@ const FilterPanel: React.FC<{
   </div>
 );
 
-const TrendingPanel: React.FC = () => (
-  <div className="border-t border-border/40 pt-6">
-    <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-4">
-      <TrendingUp className="h-3 w-3 text-primary" /> Trending crafts
-    </div>
-    <ul className="space-y-2.5">
-      {TRENDING_ROLES.map(r => (
-        <li key={r.role} className="flex items-center justify-between text-sm">
-          <span className="text-foreground">{r.role}</span>
-          <span className="text-xs text-primary">↑ trending</span>
-        </li>
-      ))}
-    </ul>
+const PostGigCTA: React.FC = () => (
+  <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5">
+    <p className="text-xs uppercase tracking-[0.18em] text-primary/80 mb-2">For members</p>
+    <h3 className="text-lg font-semibold text-foreground mb-1">Got work to share?</h3>
+    <p className="text-sm text-muted-foreground mb-4">Post a gig in 60 seconds. Every listing is verified by the Forge team.</p>
+    <Link to="/community/post-gig" className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-black hover:bg-primary/90 transition-colors">
+      Post a gig <ArrowUpRight className="h-3.5 w-3.5" />
+    </Link>
   </div>
 );
 
-const RecentJoinersPanel: React.FC = () => (
-  <div className="border-t border-border/40 pt-6">
-    <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-4">
-      <Clock className="h-3 w-3 text-primary" /> Just joined
+const RecentJoinersPanel: React.FC = () => {
+  const { data: joiners = [] } = useRecentJoiners();
+  return (
+    <div className="border-t border-border/40 pt-6">
+      <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-4">
+        <Clock className="h-3 w-3 text-primary" /> Just joined
+      </div>
+      <ul className="space-y-3">
+        {joiners.map(j => (
+          <li key={j.id} className="flex items-center gap-3">
+            <Avatar className="h-8 w-8 ring-1 ring-border/50">
+              <AvatarImage src={j.avatar} />
+              <AvatarFallback className="bg-primary/10 text-primary text-xs">{initialsOf(j.name)}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm text-foreground truncate">{j.name}</div>
+              <div className="text-[11px] text-muted-foreground">{j.role} · {j.city}</div>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
-    <ul className="space-y-3">
-      {RECENT_JOINERS.map(j => (
-        <li key={j.name} className="flex items-center gap-3">
-          <Avatar className="h-8 w-8 ring-1 ring-border/50">
-            <AvatarFallback className="bg-primary/10 text-primary text-xs">{initialsOf(j.name)}</AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <div className="text-sm text-foreground truncate">{j.name}</div>
-            <div className="text-[11px] text-muted-foreground">{j.role} · {j.city}</div>
-          </div>
-        </li>
-      ))}
-    </ul>
-  </div>
-);
+  );
+};
 
 const CreativeTile: React.FC<{ c: Creative; large?: boolean; accentIndex?: number; onOpen?: (c: Creative) => void }> = ({ c, onOpen }) => {
   const navigate = useNavigate();
@@ -1259,8 +1264,8 @@ const PosterBadge: React.FC<{ poster: Poster }> = ({ poster }) => {
   if (poster.kind === 'levelup') {
     return (
       <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 pl-1 pr-3 py-1">
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
-          <img src={forgeIcon} alt="" className="h-3.5 w-auto" />
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+          LU
         </span>
         <span className="inline-flex items-center gap-1.5 text-xs">
           <span className="font-medium text-foreground">{poster.name}</span>

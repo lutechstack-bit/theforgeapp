@@ -166,7 +166,12 @@ const Profile: React.FC = () => {
     <div className="max-w-6xl mx-auto pb-24 md:pb-6">
       {/* Cinematic Hero */}
       <BentoProfileHero
-        profile={profile}
+        profile={{
+          ...profile,
+          // Merge community profile fields so tagline/avatar from onboarding show here too
+          tagline: profile?.tagline || profileData?.collaboratorProfile?.tagline || undefined,
+          avatar_url: profile?.avatar_url || undefined,
+        }}
         edition={edition}
         isOwner={true}
         onEdit={() => setEditSheetOpen(true)}
@@ -202,7 +207,12 @@ const Profile: React.FC = () => {
       {/* Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 px-4 sm:px-6 md:px-0">
         <BentoAboutTile
-          bio={profile?.bio}
+          bio={
+            profile?.bio ||
+            profileData?.collaboratorProfile?.about ||
+            profileData?.collaboratorProfile?.intro ||
+            undefined
+          }
           isOwner={true}
           onEdit={() => openEditSheet('about')}
         />

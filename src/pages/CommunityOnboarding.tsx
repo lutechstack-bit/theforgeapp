@@ -6,7 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import forgeLogo from '@/assets/forge-logo.png';
-import forgeIcon from '@/assets/forge-icon.png';
 import {
   ArrowLeft,
   ArrowRight,
@@ -22,15 +21,6 @@ import {
   Upload,
   Trash2,
 } from 'lucide-react';
-
-// ---------- Mock alumni context (in app this comes from useAuth) ----------
-const ALUMNI = {
-  full_name: 'Aanya Mehra',
-  first_name: 'Aanya',
-  city: 'Mumbai',
-  edition: { name: 'Cohort 04', city: 'Mumbai', cohort_type: 'Filmmaking' },
-  avatar: 'https://i.pravatar.cc/600?u=aanya-mehra',
-};
 
 // Mirrors the seeded `collaborator_occupations` table
 const OCCUPATIONS = [
@@ -157,24 +147,59 @@ const CommunityOnboarding: React.FC = () => {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!user?.id) throw new Error('Not authenticated');
-      // Upsert collaborator_profiles
+
+      // --- 1. Upload avatar if user picked a new file (blob: URL) ---
+      let finalAvatarUrl: string | null = data.avatar_url;
+      if (data.avatar_url?.startsWith('blob:')) {
+        try {
+          const blob = await fetch(data.avatar_url).then(r => r.blob());
+          const ext = blob.type.split('/')[1] || 'jpg';
+          const path = `${user.id}/avatar.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from('avatars')
+            .upload(path, blob, { upsert: true, contentType: blob.type });
+          if (!upErr) {
+            const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+            finalAvatarUrl = urlData.publicUrl;
+          }
+          URL.revokeObjectURL(data.avatar_url);
+        } catch {
+          // Avatar upload failed — continue without it, don't block save
+          finalAvatarUrl = (profile as any)?.avatar_url ?? null;
+        }
+      }
+
+      // --- 2. Upsert collaborator_profiles (ALL fields) ---
       const { error: cpError } = await supabase
         .from('collaborator_profiles')
         .upsert({
           user_id: user.id,
           tagline: data.tagline,
+          intro: data.intro,
           occupations: data.occupations,
           about: data.about,
           portfolio_url: data.portfolio_links[0]?.url ?? null,
           is_published: true,
           available_for_hire: data.available_for_hire,
+          open_to_remote: data.open_to_remote,
         }, { onConflict: 'user_id' });
       if (cpError) throw cpError;
-      // Update profile city if provided
-      if (data.city.trim()) {
+
+      // --- 3. Update profiles table ---
+      // tagline + bio are mirrored here so the main /profile page
+      // reflects whatever the student fills in the community onboarding.
+      const profileUpdate: Record<string, any> = {};
+      if (data.full_name.trim()) profileUpdate.full_name = data.full_name.trim();
+      if (data.city.trim())      profileUpdate.city      = data.city.trim();
+      if (finalAvatarUrl)        profileUpdate.avatar_url = finalAvatarUrl;
+      // Mirror community fields → main profile page fields
+      if (data.tagline.trim())   profileUpdate.tagline   = data.tagline.trim();
+      if (data.about.trim())     profileUpdate.bio       = data.about.trim();
+      if (data.intro.trim())     profileUpdate.bio       = data.intro.trim(); // intro is shorter, prefer it for the bio pill
+      if (Object.keys(profileUpdate).length > 0) {
         const { error: pError } = await supabase
           .from('profiles')
-          .update({ city: data.city.trim() })
+          .update(profileUpdate)
           .eq('id', user.id);
         if (pError) throw pError;
       }
@@ -1049,7 +1074,7 @@ const ToggleRow: React.FC<{
 );
 
 const ForgeMark: React.FC = () => (
-  <img src={forgeIcon} alt="" className="h-3.5 w-auto" aria-hidden />
+  <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary/20 text-[8px] font-bold text-primary" aria-hidden>F</span>
 );
 
 export default CommunityOnboarding;

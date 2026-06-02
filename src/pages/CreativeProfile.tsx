@@ -8,8 +8,6 @@ import {
   Plus,
   Share2,
   Briefcase,
-  Bell,
-  Flame,
   Play,
   ArrowUpRight,
   Globe,
@@ -66,20 +64,13 @@ const initialsOf = (name: string) =>
 type Work = {
   id: string;
   title: string;
-  type: 'Film' | 'Short' | 'Music Video' | 'Ad' | 'Photo Series' | 'Doc';
+  type: string;
   year: string;
   duration?: string;
   role: string;
   thumb: string;
   status?: 'new' | 'featured';
 };
-
-const DEFAULT_WORKS: Work[] = [
-  { id:'w1', title:'Untitled #1', type:'Short', year:'2025', duration:'06:12', role:'—', thumb:'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800' },
-  { id:'w2', title:'Untitled #2', type:'Ad', year:'2024', duration:'00:60', role:'—', thumb:'https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=800' },
-  { id:'w3', title:'Untitled #3', type:'Music Video', year:'2024', duration:'03:40', role:'—', thumb:'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800' },
-  { id:'w4', title:'Untitled #4', type:'Photo Series', year:'2023', duration:'—', role:'—', thumb:'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800' },
-];
 
 // --- Page ---
 const CreativeProfile: React.FC = () => {
@@ -146,6 +137,35 @@ const CreativeProfile: React.FC = () => {
     },
   });
 
+  const { data: works = [] } = useQuery({
+    queryKey: ['creative-works', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('collaborator_works')
+        .select('id, title, description, year, work_type')
+        .eq('user_id', id!)
+        .order('order_index', { ascending: true });
+      // Craft-based cover images as fallback thumbnails (no thumbnail_url in DB yet)
+      const craftThumbs: Record<string, string> = {
+        Film:  'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800',
+        Short: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800',
+        Music: 'https://images.unsplash.com/photo-1598653222000-6b7b7a552625?w=800',
+        Ad:    'https://images.unsplash.com/photo-1542204625-ca960aabb8e7?w=800',
+        Doc:   'https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=800',
+        Photo: 'https://images.unsplash.com/photo-1461773518188-b3e86f98242f?w=800',
+      };
+      return (data || []).map((w: any) => ({
+        id: w.id,
+        title: w.title || 'Untitled',
+        type: w.work_type || 'Film',
+        year: w.year ? String(w.year) : '',
+        role: '—',
+        thumb: craftThumbs[w.work_type] || craftThumbs['Film'],
+      }));
+    },
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -163,13 +183,16 @@ const CreativeProfile: React.FC = () => {
     );
   }
 
-  const works = DEFAULT_WORKS;
   const cover = coverFor(c.occupations.length > 0 ? c.occupations : ['Director']);
   const isOwnProfile = user?.id === id;
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased">
-      <TopBar onBack={() => navigate('/community')} />
+      <div className="flex items-center gap-3 px-4 py-3 md:px-8">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-4 w-4" /> Back to community
+        </button>
+      </div>
 
       {/* Hero banner — standardised cover per craft group */}
       <div className="relative h-[320px] overflow-hidden md:h-[380px]">
@@ -338,11 +361,18 @@ const CreativeProfile: React.FC = () => {
             <span className="ml-3 text-sm font-normal text-muted-foreground">— shot, cut, scored, or shipped by {c.name.split(' ')[0]}.</span>
           </h2>
 
-          <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
-            {works.map((w, i) => (
-              <WorkCard key={w.id} w={w} feature={i === 0} />
-            ))}
-          </div>
+          {works.length === 0 ? (
+            <div className="mt-6 flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-border/50 bg-card/30">
+              <p className="text-lg font-semibold text-foreground mb-1">No works yet</p>
+              <p className="text-sm text-muted-foreground">{c.name.split(' ')[0]} hasn't added any works to their profile.</p>
+            </div>
+          ) : (
+            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
+              {works.map((w, i) => (
+                <WorkCard key={w.id} w={w} feature={i === 0} />
+              ))}
+            </div>
+          )}
 
           {/* Empty CTA at bottom */}
           <div className="mt-10 flex items-center justify-between rounded-2xl border border-dashed border-border/50 bg-card/30 p-6">
@@ -360,32 +390,6 @@ const CreativeProfile: React.FC = () => {
   );
 };
 
-// --- Top bar ---
-const TopBar: React.FC<{ onBack: () => void }> = ({ onBack }) => (
-  <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-    <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between gap-4 px-6 lg:px-12">
-      <button onClick={onBack} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-        <ArrowLeft className="h-4 w-4" /> The Circle
-      </button>
-      <div className="flex items-center gap-3">
-        <Flame className="h-4 w-4 text-primary" />
-        <span className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">The Forge</span>
-      </div>
-      <div className="flex items-center gap-3">
-        <button className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors hidden sm:inline">
-          Edit profile
-        </button>
-        <button
-          aria-label="Inbox"
-          className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/40 bg-card/60 text-foreground backdrop-blur transition-all hover:border-primary/40 hover:text-primary"
-        >
-          <Bell className="h-4 w-4" />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary shadow-[0_0_10px_hsl(41_100%_62%)]" />
-        </button>
-      </div>
-    </div>
-  </header>
-);
 
 // --- Work card ---
 const WorkCard: React.FC<{ w: Work; feature?: boolean }> = ({ w, feature }) => (

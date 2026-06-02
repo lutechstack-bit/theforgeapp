@@ -19,13 +19,6 @@ import {
   Clock,
 } from 'lucide-react';
 
-// --- Mock alumni context (in real app: useAuth) ---
-const ALUMNI = {
-  full_name: 'Aanya Mehra',
-  first_name: 'Aanya',
-  cohort: 'Cohort 04',
-  avatar: 'https://i.pravatar.cc/200?u=aanya-mehra',
-};
 
 // --- Options ---
 const ROLE_OPTIONS = [
@@ -73,7 +66,7 @@ const INITIAL_DATA: FormData = {
 
 const CommunityPostGig: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [data, setData] = useState<FormData>(INITIAL_DATA);
   const [published, setPublished] = useState(false);
 
@@ -153,7 +146,7 @@ const CommunityPostGig: React.FC = () => {
           {/* Left — form */}
           <main className="flex-1 overflow-y-auto px-6 sm:px-8 py-7">
             {!published ? (
-              <FormBody data={data} update={update} />
+              <FormBody data={data} update={update} profile={profile as any} />
             ) : (
               <PublishedSuccess data={data} />
             )}
@@ -161,7 +154,7 @@ const CommunityPostGig: React.FC = () => {
 
           {/* Right — live preview */}
           <aside className="border-t border-border/40 lg:border-t-0 lg:border-l lg:w-[400px] xl:w-[440px] overflow-y-auto bg-[radial-gradient(at_top_right,hsl(41_100%_62%/0.08),transparent_60%)]">
-            <LivePreview data={data} />
+            <LivePreview data={data} profile={profile as any} />
           </aside>
         </div>
 
@@ -204,7 +197,8 @@ const CommunityPostGig: React.FC = () => {
 const FormBody: React.FC<{
   data: FormData;
   update: <K extends keyof FormData>(k: K, v: FormData[K]) => void;
-}> = ({ data, update }) => (
+  profile: any;
+}> = ({ data, update, profile }) => (
   <div className="space-y-7">
     <header>
       <div className="text-[10px] uppercase tracking-[0.22em] text-primary/80">— Tell the community</div>
@@ -219,13 +213,15 @@ const FormBody: React.FC<{
     {/* Posting-as banner */}
     <div className="flex items-center gap-3 rounded-2xl border border-border/40 bg-card/60 px-4 py-3">
       <Avatar className="h-9 w-9 ring-1 ring-border/50">
-        <AvatarImage src={ALUMNI.avatar} />
-        <AvatarFallback className="bg-primary/15 text-primary text-xs">AM</AvatarFallback>
+        <AvatarImage src={profile?.avatar_url || undefined} />
+        <AvatarFallback className="bg-primary/15 text-primary text-xs">
+          {(profile?.full_name || 'Y').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
+        </AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
-        <div className="text-sm text-foreground">Posting as <span className="font-medium">{ALUMNI.full_name}</span></div>
+        <div className="text-sm text-foreground">Posting as <span className="font-medium">{profile?.full_name || 'You'}</span></div>
         <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
-          <Star className="h-3 w-3 text-primary" /> Alumni · {ALUMNI.cohort}
+          <Star className="h-3 w-3 text-primary" /> Alumni
         </div>
       </div>
       <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-primary">
@@ -334,7 +330,7 @@ const FormBody: React.FC<{
           active={data.contact === 'email'}
           onClick={() => update('contact', 'email')}
           title="Email"
-          helper={ALUMNI.first_name.toLowerCase() + '@theforge.in'}
+          helper={(profile?.full_name?.split(' ')[0] || 'you').toLowerCase() + '@theforge.in'}
         />
       </div>
     </FieldGroup>
@@ -342,7 +338,7 @@ const FormBody: React.FC<{
 );
 
 // ---------- Live preview (mirrors GigRow in the directory) ----------
-const LivePreview: React.FC<{ data: FormData }> = ({ data }) => (
+const LivePreview: React.FC<{ data: FormData; profile: any }> = ({ data, profile }) => (
   <div className="p-6 space-y-5">
     <div className="flex items-center justify-between">
       <div className="text-[10px] uppercase tracking-[0.22em] text-primary/80">Live preview</div>
@@ -384,15 +380,17 @@ const LivePreview: React.FC<{ data: FormData }> = ({ data }) => (
       {/* Poster badge */}
       <div className="mt-3 inline-flex items-center gap-2">
         <Avatar className="h-6 w-6 ring-1 ring-border/50">
-          <AvatarImage src={ALUMNI.avatar} />
-          <AvatarFallback className="bg-primary/15 text-primary text-[10px]">AM</AvatarFallback>
+          <AvatarImage src={profile?.avatar_url || undefined} />
+          <AvatarFallback className="bg-primary/15 text-primary text-[10px]">
+            {(profile?.full_name || 'Y').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
+          </AvatarFallback>
         </Avatar>
         <div className="inline-flex items-center gap-1.5 text-xs">
           <span className="text-muted-foreground">Posted by</span>
-          <span className="font-medium text-foreground">{ALUMNI.full_name}</span>
+          <span className="font-medium text-foreground">{profile?.full_name || 'You'}</span>
           <span className="text-muted-foreground/50">·</span>
           <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-            <Star className="h-2.5 w-2.5 text-primary" /> Alumni · {ALUMNI.cohort}
+            <Star className="h-2.5 w-2.5 text-primary" /> Alumni
           </span>
         </div>
       </div>
