@@ -65,9 +65,10 @@ function useRecentJoiners() {
   return useQuery({
     queryKey: ['recent-joiners'],
     queryFn: async () => {
+      // Simple query — no FK join needed
       const { data } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url, city, specialty, collaborator_profiles(occupations)')
+        .select('id, full_name, avatar_url, city, specialty')
         .or('is_admin.is.null,is_admin.eq.false')
         .not('full_name', 'is', null)
         .order('created_at', { ascending: false })
@@ -75,7 +76,7 @@ function useRecentJoiners() {
       return (data || []).map((p: any) => ({
         id: p.id,
         name: p.full_name,
-        role: p.collaborator_profiles?.[0]?.occupations?.[0] || p.specialty || 'Creator',
+        role: p.specialty || 'Creator',
         city: p.city || '',
         avatar: p.avatar_url,
       }));
@@ -88,39 +89,33 @@ function useCreatives() {
   return useQuery({
     queryKey: ['community-creatives'],
     queryFn: async () => {
-      // Query ALL non-admin profiles, left-join collaborator_profiles for extra info
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          full_name,
-          avatar_url,
-          city,
-          email,
-          instagram_handle,
-          edition_id,
-          tagline,
-          specialty,
-          bio,
-          editions(name),
-          collaborator_profiles(
-            id,
-            tagline,
-            occupations,
-            available_for_hire,
-            about,
-            intro,
-            portfolio_url,
-            is_published
-          )
-        `)
-        .or('is_admin.is.null,is_admin.eq.false')
-        .not('full_name', 'is', null);
-      if (error) throw error;
-      return (data || []).map((p: any) => {
-        const cp = Array.isArray(p.collaborator_profiles)
-          ? p.collaborator_profiles[0]
-          : p.collaborator_profiles;
+      // Two separate queries — avoids FK relationship requirement in PostgREST.
+      // profiles has no FK to collaborator_profiles so nested select fails.
+      const [profilesRes, collabRes, editionsRes] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url, city, email, instagram_handle, edition_id, tagline, specialty, bio')
+          .or('is_admin.is.null,is_admin.eq.false')
+          .not('full_name', 'is', null),
+        supabase
+          .from('collaborator_profiles')
+          .select('user_id, id, tagline, occupations, available_for_hire, about, intro, portfolio_url, is_published'),
+        supabase
+          .from('editions')
+          .select('id, name'),
+      ]);
+
+      if (profilesRes.error) throw profilesRes.error;
+
+      // Build lookup maps
+      const collabByUser = new Map<string, any>();
+      (collabRes.data || []).forEach((cp: any) => collabByUser.set(cp.user_id, cp));
+
+      const editionById = new Map<string, string>();
+      (editionsRes.data || []).forEach((e: any) => editionById.set(e.id, e.name));
+
+      return (profilesRes.data || []).map((p: any) => {
+        const cp = collabByUser.get(p.id);
         return {
           id: p.id,
           collabId: cp?.id || '',
@@ -130,7 +125,7 @@ function useCreatives() {
           occupations: cp?.occupations || (p.specialty ? [p.specialty] : []),
           avatar: p.avatar_url || undefined,
           available: cp?.available_for_hire ?? false,
-          cohort: (p.editions as any)?.name || '',
+          cohort: editionById.get(p.edition_id) || '',
           about: cp?.about || cp?.intro || p.bio || '',
           portfolioUrl: cp?.portfolio_url || '',
           email: p.email || '',
