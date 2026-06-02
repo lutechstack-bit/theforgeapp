@@ -943,195 +943,36 @@ const GigsView: React.FC = () => {
   );
 };
 
-// Rotating card stack — cycles through sponsored gigs + alumni post-a-gig CTAs
-type StackCard =
-  | { kind: 'sponsored'; sponsor: string; title: string; meta: string; cta: string; href: string }
-  | { kind: 'featured';  badge: string; title: string; meta: string; cta: string; href: string }
-  | { kind: 'cta'; emoji: string; title: string; subtitle: string; cta: string; href: string };
-
-const STACK_CARDS: StackCard[] = [
-  {
-    kind: 'sponsored',
-    sponsor: 'Sony India',
-    title: 'DOPs wanted — FX6 documentary series',
-    meta: '₹65k / day · Onsite · Mumbai',
-    cta: 'View role',
-    href: '#',
-  },
-  {
-    kind: 'cta',
-    emoji: '✍️',
-    title: 'Got work to share?',
-    subtitle: 'Forge alumni post in 60 seconds. Every gig is verified.',
-    cta: 'Post a gig',
-    href: '/community/post-gig',
-  },
-  {
-    kind: 'featured',
-    badge: 'Featured · Fellowship',
-    title: 'Film Bazaar Co-Production Market 2026',
-    meta: 'Closes Aug 31 · ₹2L stipend',
-    cta: 'Apply',
-    href: '#',
-  },
-  {
-    kind: 'sponsored',
-    sponsor: 'BookMyShow Studios',
-    title: 'Editors for a 4-ep web series',
-    meta: '₹1.5L per ep · Hybrid · Bengaluru',
-    cta: 'View role',
-    href: '#',
-  },
-  {
-    kind: 'cta',
-    emoji: '🤝',
-    title: 'Know someone who fits?',
-    subtitle: 'Refer an alum to a gig — we send you a ₹500 voucher.',
-    cta: 'Refer & earn',
-    href: '#',
-  },
-  {
-    kind: 'featured',
-    badge: 'Featured · Residency',
-    title: 'MIFF documentary lab — Mumbai',
-    meta: '6 weeks · ₹50k + housing',
-    cta: 'Apply',
-    href: '#',
-  },
-];
-
-const GigStack: React.FC = () => {
-  const [idx, setIdx] = useState(0);
-  const [paused, setPaused] = useState(false);
-
-  React.useEffect(() => {
-    if (paused) return;
-    const t = window.setInterval(() => {
-      setIdx(i => (i + 1) % STACK_CARDS.length);
-    }, 4200);
-    return () => clearInterval(t);
-  }, [paused]);
-
-  return (
-    <div
-      className="relative h-[300px] sm:h-[340px] w-full"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-    >
-      {STACK_CARDS.map((card, i) => {
-        // Offset from current (positive when ahead in cycle)
-        let offset = (i - idx + STACK_CARDS.length) % STACK_CARDS.length;
-        // Cap at 3 visible (front + two behind)
-        const isVisible = offset <= 2;
-        const z = STACK_CARDS.length - offset;
-        const styles: React.CSSProperties = {
-          zIndex: z,
-          transform:
-            offset === 0
-              ? 'translateY(0) scale(1)'
-              : offset === 1
-                ? 'translateY(14px) scale(0.96)'
-                : 'translateY(28px) scale(0.92)',
-          opacity: offset === 0 ? 1 : offset === 1 ? 0.55 : 0.25,
-          pointerEvents: offset === 0 ? 'auto' : 'none',
-          filter: offset === 0 ? 'blur(0px)' : `blur(${offset * 0.8}px)`,
-        };
-        return (
-          <article
-            key={i}
-            style={styles}
-            aria-hidden={offset !== 0}
-            className={cn(
-              'absolute inset-x-0 top-0 h-full overflow-hidden rounded-3xl border border-border/40 p-6 transition-all duration-700 ease-out',
-              isVisible ? '' : 'hidden',
-              card.kind === 'sponsored' && 'bg-[radial-gradient(at_top_right,hsl(41_100%_62%/0.12),transparent_60%),linear-gradient(to_bottom_right,hsl(0_0%_8%),hsl(0_0%_4%))]',
-              card.kind === 'featured' && 'bg-[radial-gradient(at_bottom_left,hsl(27_85%_48%/0.18),transparent_55%),linear-gradient(to_bottom_right,hsl(0_0%_8%),hsl(0_0%_4%))]',
-              card.kind === 'cta' && 'bg-gradient-to-br from-primary/15 via-card to-card border-primary/30'
-            )}
-          >
-            <StackCardContent card={card} />
-          </article>
-        );
-      })}
-
-      {/* Indicator dots */}
-      <div className="absolute -bottom-5 left-0 right-0 flex justify-center gap-1.5">
-        {STACK_CARDS.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setIdx(i)}
-            aria-label={`Show card ${i + 1}`}
-            className={cn(
-              'h-1 rounded-full transition-all',
-              i === idx ? 'w-6 bg-primary shadow-[0_0_6px_hsl(41_100%_62%/0.6)]' : 'w-2 bg-border hover:bg-muted-foreground/60'
-            )}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const StackCardContent: React.FC<{ card: StackCard }> = ({ card }) => {
-  if (card.kind === 'cta') {
-    return (
-      <div className="flex h-full flex-col justify-between">
-        <div className="flex items-start justify-between">
-          <span className="text-3xl">{card.emoji}</span>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-background/30 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            For alumni
-          </span>
-        </div>
-        <div>
-          <h3 className="text-2xl sm:text-[28px] leading-tight tracking-tight text-foreground">{card.title}</h3>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{card.subtitle}</p>
-        </div>
-        <Link to={card.href} className="inline-flex w-fit items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 shadow-[0_8px_24px_-8px_hsl(41_100%_62%/0.5)]">
-          {card.cta} <ArrowUpRight className="h-4 w-4" />
-        </Link>
-      </div>
-    );
-  }
-
-  if (card.kind === 'sponsored') {
-    return (
-      <div className="flex h-full flex-col justify-between">
-        <div className="flex items-start justify-between gap-3">
-          <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-background/60 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-primary backdrop-blur">
-            <Sparkles className="h-3 w-3" /> Sponsored
-          </span>
-          <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground truncate">{card.sponsor}</span>
-        </div>
-        <div>
-          <h3 className="text-2xl sm:text-[26px] leading-tight tracking-tight text-foreground">{card.title}</h3>
-          <p className="mt-2 text-sm text-muted-foreground">{card.meta}</p>
-        </div>
-        <Link to={card.href} className="inline-flex w-fit items-center gap-2 rounded-full border border-border/60 bg-card/40 px-5 py-2.5 text-sm font-semibold text-foreground hover:border-primary/60 hover:text-primary transition-colors">
-          {card.cta} <ArrowUpRight className="h-4 w-4" />
-        </Link>
-      </div>
-    );
-  }
-
-  // featured
-  return (
-    <div className="flex h-full flex-col justify-between">
-      <div className="flex items-start justify-between gap-3">
-        <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-background/60 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-primary backdrop-blur">
-          <Star className="h-3 w-3" /> {card.badge}
+// Static post-a-gig CTA card — replaces the fake rotating carousel
+const GigStack: React.FC = () => (
+  <div className="w-full h-[300px] sm:h-[340px]">
+    <article className="h-full overflow-hidden rounded-3xl border border-primary/30 bg-card p-7 flex flex-col justify-between"
+      style={{ background: 'linear-gradient(135deg, hsl(0 0% 7%) 0%, hsl(0 0% 5%) 100%)' }}>
+      <div className="flex items-start justify-between">
+        <span className="text-3xl">✍️</span>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-background/30 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          For members
         </span>
-        <Briefcase className="h-5 w-5 text-muted-foreground/60" />
       </div>
       <div>
-        <h3 className="text-2xl sm:text-[26px] leading-tight tracking-tight text-foreground">{card.title}</h3>
-        <p className="mt-2 text-sm text-muted-foreground">{card.meta}</p>
+        <h3 className="text-2xl sm:text-[28px] leading-tight tracking-tight text-foreground">
+          Got work to share?
+        </h3>
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+          Forge alumni post in 60 seconds. Every gig is verified by the team before going live.
+        </p>
       </div>
-      <Link to={card.href} className="inline-flex w-fit items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
-        {card.cta} <ArrowUpRight className="h-4 w-4" />
+      <Link
+        to="/community/post-gig"
+        className="inline-flex w-fit items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 shadow-[0_8px_24px_-8px_hsl(41_100%_62%/0.5)] transition-colors"
+      >
+        Post a gig <ArrowUpRight className="h-4 w-4" />
       </Link>
-    </div>
-  );
-};
+    </article>
+  </div>
+);
+
+// StackCardContent removed — GigStack is now a static card, no carousel needed
 
 // Inline pill-style select with a custom dark-themed popover
 const InlineSelect: React.FC<{
