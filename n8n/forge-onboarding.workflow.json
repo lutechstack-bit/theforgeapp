@@ -164,21 +164,19 @@
     },
     {
       "parameters": {
-        "method": "PATCH",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/profiles?email=eq.{{ encodeURIComponent($json.email) }}",
+        "method": "POST",
+        "url": "=https://tprvyhzpecopryylxznm.supabase.co/functions/v1/sync-payment-status",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
-            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" },
-            { "name": "Prefer", "value": "return=minimal" }
+            { "name": "x-forge-secret", "value": "={{ $env.FORGE_AUTOMATION_SECRET }}" },
+            { "name": "Content-Type", "value": "application/json" }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ payment_status: $json.payment_status, unlock_level: $json.payment_status === 'BALANCE_PAID' ? 'FULL' : 'PREVIEW' }) }}",
-        "options": { "response": { "response": { "neverError": true } } }
+        "jsonBody": "={{ JSON.stringify({ email: $json.email, payment_status: $json.payment_status }) }}",
+        "options": { "response": { "response": { "neverError": true, "responseFormat": "json" } } }
       },
       "id": "66666666-6666-6666-6666-666666666666",
       "name": "Sync Payment Status",
