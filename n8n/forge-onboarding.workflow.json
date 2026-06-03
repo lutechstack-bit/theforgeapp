@@ -1,0 +1,157 @@
+{
+  "name": "Forge — Sheet → App Onboarding & Payment Sync",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "minutes", "minutesInterval": 5 }
+          ]
+        }
+      },
+      "id": "11111111-1111-1111-1111-111111111111",
+      "name": "Every 5 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-200, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://docs.google.com/spreadsheets/d/{{ $env.GOOGLE_SHEET_ID }}/gviz/tq?tqx=out:csv&sheet={{ encodeURIComponent($env.GOOGLE_SHEET_TAB || '') }}",
+        "options": {
+          "response": { "response": { "responseFormat": "text" } }
+        }
+      },
+      "id": "22222222-2222-2222-2222-222222222222",
+      "name": "Fetch Sheet CSV",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [40, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== CONFIG — map YOUR sheet's column headers here (exact header text) =====\nconst COL = {\n  email:        'Email',\n  full_name:    'Name',\n  phone:        'Phone',\n  city:         'City',\n  product:      'Product',        // FFM / FC / FW  (optional — defaults to FFM)\n  payment:      'Payment Status', // the column your team / Razorpay updates\n  edition_id:   'Edition Id',      // optional — assigns to an existing edition\n  edition_name: 'Edition',         // optional — enables auto-create of a NEW edition\n  edition_city: 'Edition City',    // required (with name+cohort) for auto-create\n  cohort_type:  'Cohort Type',     // FORGE | FORGE_CREATORS | FORGE_WRITING\n};\n// Substrings (lowercase) in the payment column that mean each state:\nconst BALANCE_PAID_VALUES  = ['balance paid', 'full paid', 'paid 50', '50000', 'completed'];\nconst CONFIRMED_15K_VALUES = ['15k', 'deposit paid', 'confirmed', '15000', 'slot confirmed'];\nconst DEFERRED_VALUES      = ['defer', 'waitlist', 'postpone'];\n// ============================================================================\n\n// The HTTP node returns the CSV as a single text body on the first item.\nconst body = $input.first().json.data ?? $input.first().json.body ?? $input.first().binary?.data ?? '';\nconst text = typeof body === 'string' ? body : '';\n\n// --- CSV parse (handles quotes) ---\nfunction parseCSV(t) {\n  const rows = []; let row = [], cell = '', q = false;\n  for (let i = 0; i < t.length; i++) {\n    const c = t[i], n = t[i + 1];\n    if (q) {\n      if (c === '\"' && n === '\"') { cell += '\"'; i++; }\n      else if (c === '\"') q = false;\n      else cell += c;\n    } else if (c === '\"') q = true;\n    else if (c === ',') { row.push(cell.trim()); cell = ''; }\n    else if (c === '\\n' || (c === '\\r' && n === '\\n')) { if (c === '\\r') i++; row.push(cell.trim()); cell = ''; if (row.some(x => x !== '')) rows.push(row); row = []; }\n    else cell += c;\n  }\n  if (cell || row.length) { row.push(cell.trim()); if (row.some(x => x !== '')) rows.push(row); }\n  return rows;\n}\n\nconst parsed = parseCSV(text);\nif (parsed.length < 2) return [];\nconst headers = parsed[0];\nconst idx = (name) => headers.findIndex(h => h.trim().toLowerCase() === (name || '').trim().toLowerCase());\nconst get = (r, name) => { const i = idx(name); return i >= 0 ? (r[i] || '') : ''; };\nconst norm = (s) => (s || '').toString().trim().toLowerCase();\n\nconst out = [];\nfor (let i = 1; i < parsed.length; i++) {\n  const r = parsed[i];\n  const email = norm(get(r, COL.email));\n  if (!email || !email.includes('@')) continue;\n\n  const payRaw = norm(get(r, COL.payment));\n  let payment_status = null;\n  if (BALANCE_PAID_VALUES.some(v => payRaw.includes(v)))       payment_status = 'BALANCE_PAID';\n  else if (CONFIRMED_15K_VALUES.some(v => payRaw.includes(v))) payment_status = 'CONFIRMED_15K';\n  else if (DEFERRED_VALUES.some(v => payRaw.includes(v)))      payment_status = 'DEFERRED';\n  if (!payment_status) continue; // unrecognised payment state → ignore row\n\n  const json = {\n    student_id:  email,\n    email,\n    full_name:   get(r, COL.full_name),\n    phone:       get(r, COL.phone),\n    city:        get(r, COL.city),\n    product:     (get(r, COL.product) || 'FFM').toUpperCase(),\n    payment_status,\n    edition_id:   get(r, COL.edition_id) || undefined,\n    edition_name: get(r, COL.edition_name) || undefined,\n    edition_city: get(r, COL.edition_city) || undefined,\n    cohort_type:  (get(r, COL.cohort_type) || '').toUpperCase() || undefined,\n  };\n  // Confirmed/Balance rows are onboardable; DEFERRED is Phase-2 (waitlist) — skipped for now.\n  json._onboardable = payment_status === 'CONFIRMED_15K' || payment_status === 'BALANCE_PAID';\n  out.push({ json });\n}\nreturn out;"
+      },
+      "id": "33333333-3333-3333-3333-333333333333",
+      "name": "Parse & Classify Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [280, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json._onboardable }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "44444444-4444-4444-4444-444444444444",
+      "name": "Onboardable?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [520, 180]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/functions/v1/forge-onboard-student",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-forge-secret", "value": "={{ $env.FORGE_AUTOMATION_SECRET }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ student_id: $json.student_id, email: $json.email, full_name: $json.full_name, phone: $json.phone, city: $json.city, product: $json.product, payment_amount: 15000, edition_id: $json.edition_id, edition_name: $json.edition_name, edition_city: $json.edition_city, cohort_type: $json.cohort_type }) }}",
+        "options": { "response": { "response": { "neverError": true, "responseFormat": "json" } } }
+      },
+      "id": "55555555-5555-5555-5555-555555555555",
+      "name": "Onboard Student",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [760, 180]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/profiles?email=eq.{{ encodeURIComponent($json.email) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ payment_status: $json.payment_status, unlock_level: $json.payment_status === 'BALANCE_PAID' ? 'FULL' : 'PREVIEW' }) }}",
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "id": "66666666-6666-6666-6666-666666666666",
+      "name": "Sync Payment Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [760, 420]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "e1",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "skipped",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "77777777-7777-7777-7777-777777777777",
+      "name": "Onboard Failed?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [1000, 180]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Surface onboarding failures in the n8n execution log so they are not silent.\nfor (const item of $input.all()) {\n  console.warn('[forge-onboard] FAILED for', item.json.email, '→', JSON.stringify(item.json));\n}\nreturn $input.all();"
+      },
+      "id": "88888888-8888-8888-8888-888888888888",
+      "name": "Log Failures",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1240, 180]
+    }
+  ],
+  "connections": {
+    "Every 5 min": { "main": [[{ "node": "Fetch Sheet CSV", "type": "main", "index": 0 }]] },
+    "Fetch Sheet CSV": { "main": [[{ "node": "Parse & Classify Rows", "type": "main", "index": 0 }]] },
+    "Parse & Classify Rows": {
+      "main": [[
+        { "node": "Onboardable?", "type": "main", "index": 0 },
+        { "node": "Sync Payment Status", "type": "main", "index": 0 }
+      ]]
+    },
+    "Onboardable?": { "main": [[{ "node": "Onboard Student", "type": "main", "index": 0 }]] },
+    "Onboard Student": { "main": [[{ "node": "Onboard Failed?", "type": "main", "index": 0 }]] },
+    "Onboard Failed?": { "main": [[{ "node": "Log Failures", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false
+}

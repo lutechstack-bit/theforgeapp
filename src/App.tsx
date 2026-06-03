@@ -97,6 +97,7 @@ const AdminEmailAudienceEdit = lazy(() => import("./pages/admin/AdminEmailAudien
 const AdminAutomationSettings = lazy(() => import("./pages/admin/AdminAutomationSettings"));
 const AdminAutomationProductMapping = lazy(() => import("./pages/admin/AdminAutomationProductMapping"));
 const AdminAutomationHistory = lazy(() => import("./pages/admin/AdminAutomationHistory"));
+const AdminOnboardingStatus = lazy(() => import("./pages/admin/AdminOnboardingStatus"));
 const AdminAutomationManualTrigger = lazy(() => import("./pages/admin/AdminAutomationManualTrigger"));
 const AdminSheetViewer = lazy(() => import("./pages/admin/AdminSheetViewer"));
 
@@ -360,6 +361,7 @@ const AppRoutes = () => {
         <Route path="automation-settings" element={<AdminAutomationSettings />} />
         <Route path="automation-product-mapping" element={<AdminAutomationProductMapping />} />
         <Route path="automation-history" element={<AdminAutomationHistory />} />
+        <Route path="onboarding-status" element={<AdminOnboardingStatus />} />
         <Route path="automation-manual-trigger" element={<AdminAutomationManualTrigger />} />
         <Route path="sheet-viewer" element={<AdminSheetViewer />} />
       </Route>
