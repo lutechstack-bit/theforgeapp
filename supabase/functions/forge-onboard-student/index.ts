@@ -138,7 +138,15 @@ async function logOnboardingAttempt(
 // ═══════════════════════ Input validation ════════════════════════════════════
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const VALID_COHORT_TYPES = ['FORGE', 'FORGE_CREATORS', 'FORGE_WRITING'];
+const VALID_COHORT_TYPES = ['FORGE', 'FORGE_CREATORS', 'FORGE_WRITING', 'FORGE_AI'];
+
+// Derives cohort_type from product code when cohort_type is not explicitly provided.
+const PRODUCT_TO_COHORT: Record<string, string> = {
+  FFM: 'FORGE',
+  FC:  'FORGE_CREATORS',
+  FW:  'FORGE_WRITING',
+  FAI: 'FORGE_AI',
+};
 
 function validateStudentData(body: Record<string, unknown>): { data: StudentData; error: string | null } {
   const email = (body.email as string | undefined)?.trim().toLowerCase() || '';
@@ -152,13 +160,16 @@ function validateStudentData(body: Record<string, unknown>): { data: StudentData
   if (!product) return { data: {} as StudentData, error: 'product is required' };
 
   // Validate cohort_type if provided
-  const cohort_type = (body.cohort_type as string | undefined)?.trim().toUpperCase();
-  if (cohort_type && !VALID_COHORT_TYPES.includes(cohort_type)) {
+  const cohort_type_raw = (body.cohort_type as string | undefined)?.trim().toUpperCase();
+  if (cohort_type_raw && !VALID_COHORT_TYPES.includes(cohort_type_raw)) {
     return {
       data: {} as StudentData,
       error: `cohort_type must be one of: ${VALID_COHORT_TYPES.join(', ')}`,
     };
   }
+  // If cohort_type is not supplied, derive it from the product code automatically.
+  // This means the sheet only needs a Product column (FFM/FC/FW/FAI) — no Cohort Type column needed.
+  const cohort_type = cohort_type_raw || PRODUCT_TO_COHORT[product.toUpperCase()] || 'FORGE';
 
   return {
     data: {
@@ -175,7 +186,7 @@ function validateStudentData(body: Record<string, unknown>): { data: StudentData
       // Edition auto-creation fields
       edition_name: (body.edition_name as string | undefined)?.trim() || undefined,
       edition_city: (body.edition_city as string | undefined)?.trim() || undefined,
-      cohort_type: cohort_type || undefined,
+      cohort_type,
       forge_start_date: (body.forge_start_date as string | undefined)?.trim() || undefined,
       forge_end_date: (body.forge_end_date as string | undefined)?.trim() || undefined,
       online_start_date: (body.online_start_date as string | undefined)?.trim() || undefined,
@@ -196,13 +207,15 @@ async function autoProvisionEdition(
   config: AutomationConfig,
   studentData: StudentData
 ): Promise<{ edition: Record<string, unknown> | null; error: string | null }> {
-  const { edition_name, edition_city, cohort_type, product } = studentData;
+  const { edition_name, cohort_type, product } = studentData;
+  // edition_city is optional — useful for display but not required to create an edition.
+  const edition_city = studentData.edition_city || '';
 
-  if (!edition_name || !edition_city || !cohort_type) {
+  if (!edition_name || !cohort_type) {
     return {
       edition: null,
       error: `No active mapping for product "${product}" and no edition details provided. ` +
-        'Add edition_name, edition_city, and cohort_type columns to the sheet for auto-provisioning.',
+        'At minimum, provide edition_name and cohort_type (or product) to auto-create an edition.',
     };
   }
 
