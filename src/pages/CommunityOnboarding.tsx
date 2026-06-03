@@ -338,7 +338,7 @@ const TopBar: React.FC<{ onExit: () => void; showProgress: boolean; current: num
           ))}
         </div>
       </div>
-    ) : <span className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Profile setup</span>}
+    ) : <span />}
     <button
       onClick={onExit}
       aria-label="Exit setup"
@@ -352,10 +352,6 @@ const TopBar: React.FC<{ onExit: () => void; showProgress: boolean; current: num
 // ---------- Step 0 · Welcome ----------
 const WelcomeStep: React.FC<{ onStart: () => void }> = () => (
   <div className="flex flex-col items-center text-center">
-    <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.24em] text-primary/80">
-      <span className="h-px w-8 bg-primary/40" /> Welcome back
-    </div>
-
     <h1 className="mt-4 text-[40px] sm:text-[48px] leading-[0.95] tracking-tight text-foreground">
       Welcome to
       <br />
@@ -531,7 +527,6 @@ const ConnectStep: React.FC<{ data: FormData; update: <K extends keyof FormData>
 // ---------- Step 4 · Review ----------
 const ReviewStep: React.FC<{ data: FormData; onEdit: (idx: number) => void }> = ({ data, onEdit }) => (
   <div>
-    <div className="text-[10px] uppercase tracking-[0.22em] text-primary/80">Almost there</div>
     <h1 className="mt-2 text-[32px] sm:text-[38px] leading-[1.02] tracking-tight text-foreground">
       Almost <span className="italic text-primary">there</span>.
     </h1>
@@ -609,14 +604,6 @@ const LivePreview: React.FC<{ data: FormData; step: StepKey }> = ({ data, step }
 
   return (
     <div className="p-6 space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="text-[10px] uppercase tracking-[0.22em] text-primary/80">Live preview</div>
-        <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_6px_hsl(41_100%_62%)]" />
-          Updating
-        </div>
-      </div>
-
       {/* The directory card */}
       <div className="flex justify-center">
         <PreviewCard data={data} />

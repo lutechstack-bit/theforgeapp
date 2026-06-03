@@ -300,9 +300,6 @@ const CreativesView: React.FC = () => {
       <section className="grid grid-cols-12 gap-8 pt-12 pb-14">
         <div className="col-span-12 lg:col-span-5 flex flex-col justify-center">
           <div>
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.24em] text-primary/80">
-              <span className="h-px w-8 bg-primary/40" /> The Forge
-            </div>
             <h1 className="mt-3 text-[44px] sm:text-[56px] lg:text-[64px] xl:text-[80px] leading-[0.92] tracking-tight text-foreground">
               <span className="block">The</span>
               <span className="mt-1 flex items-center gap-2 sm:gap-3">
@@ -656,7 +653,6 @@ const FilterPanel: React.FC<{
 
 const PostGigCTA: React.FC = () => (
   <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5">
-    <p className="text-xs uppercase tracking-[0.18em] text-primary/80 mb-2">For members</p>
     <h3 className="text-lg font-semibold text-foreground mb-1">Got work to share?</h3>
     <p className="text-sm text-muted-foreground mb-4">Post a gig in 60 seconds. Every listing is verified by the Forge team.</p>
     <Link to="/community/post-gig" className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-black hover:bg-primary/90 transition-colors">
@@ -867,7 +863,6 @@ const GigsView: React.FC = () => {
       {/* Hero band */}
       <section className="grid grid-cols-12 gap-8 pt-12 pb-10">
         <div className="col-span-12 lg:col-span-7 flex flex-col justify-center">
-          <div className="text-[11px] uppercase tracking-[0.24em] text-primary/80">— Open positions</div>
           <h1 className="mt-3 text-[56px] xl:text-[80px] leading-[0.95] tracking-tight text-foreground">
             Open <span className="italic text-primary">gigs</span>.
           </h1>
@@ -885,7 +880,6 @@ const GigsView: React.FC = () => {
       {/* Mad-Libs filter sentence */}
       <section className="rounded-3xl border border-border/40 bg-card/40 p-7 sm:p-10 lg:p-12 my-6">
         <div className="flex items-center justify-between">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-primary/80">— Find your gig</div>
           {!isDefault && (
             <button onClick={reset} className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground hover:text-primary transition-colors">
               Reset
@@ -950,9 +944,6 @@ const GigStack: React.FC = () => (
       style={{ background: 'linear-gradient(135deg, hsl(0 0% 7%) 0%, hsl(0 0% 5%) 100%)' }}>
       <div className="flex items-start justify-between">
         <span className="text-3xl">✍️</span>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-background/30 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          For members
-        </span>
       </div>
       <div>
         <h3 className="text-2xl sm:text-[28px] leading-tight tracking-tight text-foreground">

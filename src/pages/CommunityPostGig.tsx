@@ -16,7 +16,6 @@ import {
   MapPin,
   Star,
   X,
-  Clock,
 } from 'lucide-react';
 
 
@@ -201,7 +200,6 @@ const FormBody: React.FC<{
 }> = ({ data, update, profile }) => (
   <div className="space-y-7">
     <header>
-      <div className="text-[10px] uppercase tracking-[0.22em] text-primary/80">— Tell the community</div>
       <h1 className="mt-2 text-[32px] sm:text-[38px] leading-[1.02] tracking-tight text-foreground">
         Post a <span className="italic text-primary">gig</span>.
       </h1>
@@ -340,14 +338,6 @@ const FormBody: React.FC<{
 // ---------- Live preview (mirrors GigRow in the directory) ----------
 const LivePreview: React.FC<{ data: FormData; profile: any }> = ({ data, profile }) => (
   <div className="p-6 space-y-5">
-    <div className="flex items-center justify-between">
-      <div className="text-[10px] uppercase tracking-[0.22em] text-primary/80">Live preview</div>
-      <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-        <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_6px_hsl(41_100%_62%)]" />
-        Updating
-      </div>
-    </div>
-
     {/* Card-styled preview */}
     <article className="rounded-2xl border border-border/40 bg-background/40 p-5">
       <div className="flex items-center gap-3">
@@ -420,9 +410,6 @@ const LivePreview: React.FC<{ data: FormData; profile: any }> = ({ data, profile
 
     {/* Verification note */}
     <div className="rounded-2xl border border-border/40 bg-card/40 p-4">
-      <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-        <Clock className="h-3 w-3 text-primary" /> What happens next
-      </div>
       <ol className="mt-3 space-y-2 text-xs text-muted-foreground leading-relaxed">
         <Step n={1}>You publish — gig enters review.</Step>
         <Step n={2}>Forge team verifies within 24h.</Step>
