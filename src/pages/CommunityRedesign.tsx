@@ -291,7 +291,14 @@ const CreativesView: React.FC = () => {
       r = r.filter(c => c.name.toLowerCase().includes(q) || c.tagline.toLowerCase().includes(q) || c.city.toLowerCase().includes(q));
     }
     if (scope === 'cohort') r = r.filter(c => c.editionId === profile?.edition_id);
-    return r;
+    // Profiles with a photo first, then alphabetical within each group
+    return [...r].sort((a, b) => {
+      const aHasPhoto = !!a.avatar;
+      const bHasPhoto = !!b.avatar;
+      if (aHasPhoto && !bHasPhoto) return -1;
+      if (!aHasPhoto && bHasPhoto) return 1;
+      return a.name.localeCompare(b.name);
+    });
   }, [creatives, role, search, scope, profile]);
 
   return (
