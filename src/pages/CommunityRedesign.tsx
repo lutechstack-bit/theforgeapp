@@ -297,23 +297,17 @@ const CreativesView: React.FC = () => {
   return (
     <div>
       {/* Hero band: editorial title + spotlight side by side */}
-      <section className="grid grid-cols-12 gap-8 pt-12 pb-14">
-        <div className="col-span-12 lg:col-span-5 flex flex-col justify-center">
-          <div>
-            <h1 className="mt-3 text-[44px] sm:text-[56px] lg:text-[64px] xl:text-[80px] leading-[0.92] tracking-tight text-foreground">
-              <span className="block">The</span>
-              <span className="mt-1 flex items-center gap-2 sm:gap-3">
-                <span className="italic text-primary">Community</span>
-                <span>.</span>
-              </span>
-            </h1>
-            <p className="mt-6 max-w-md text-base text-muted-foreground leading-relaxed">
-              Forge alumni meet here. Hire each other, post gigs, swap drafts, ship work that wouldn&apos;t exist otherwise.
-            </p>
-          </div>
-        </div>
-
-        <div className="col-span-12 lg:col-span-7" />
+      <section className="pt-6 pb-8 md:pt-10 md:pb-12">
+        <h1 className="text-[32px] sm:text-[44px] lg:text-[56px] xl:text-[72px] leading-[0.92] tracking-tight text-foreground">
+          <span className="block">The</span>
+          <span className="flex items-center gap-2">
+            <span className="italic text-primary">Community</span>
+            <span>.</span>
+          </span>
+        </h1>
+        <p className="mt-4 max-w-lg text-sm sm:text-base text-muted-foreground leading-relaxed">
+          Forge alumni meet here. Hire each other, post gigs, swap drafts, ship work that wouldn&apos;t exist otherwise.
+        </p>
       </section>
 
       {/* Main directory — full width, filters inline */}
@@ -370,7 +364,7 @@ const CreativesView: React.FC = () => {
         {creativesLoading ? (
           <div className="text-muted-foreground text-sm p-8 text-center">Loading...</div>
         ) : (
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 lg:gap-5">
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 lg:gap-5">
             {!creativesLoading && filtered.length === 0 && (
               <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
                 <p className="text-2xl font-semibold text-foreground mb-2">No creatives found</p>
@@ -700,7 +694,7 @@ const CreativeTile: React.FC<{ c: Creative; large?: boolean; accentIndex?: numbe
   };
   return (
   <button type="button" onClick={handleClick} className="block w-full text-left">
-  <article className="group relative aspect-[4/5] [perspective:1200px]">
+  <article className="group relative aspect-[3/4] sm:aspect-[4/5] [perspective:1200px]">
     <div className="relative h-full w-full transition-transform duration-700 ease-out [transform-style:preserve-3d] md:group-hover:[transform:rotateX(180deg)]">
       {/* FRONT — full-bleed portrait */}
       <div className="absolute inset-0 overflow-hidden rounded-2xl border border-border/40 bg-card [backface-visibility:hidden]">
@@ -733,15 +727,14 @@ const CreativeTile: React.FC<{ c: Creative; large?: boolean; accentIndex?: numbe
         </span>
 
         {/* Bottom-left meta */}
-        <div className="absolute inset-x-0 bottom-0 p-3.5 sm:p-5">
-          <div className="text-[10px] sm:text-[10px] uppercase tracking-[0.16em] text-primary/90 truncate font-medium">
-            {c.occupations.join(' · ')}
+        <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-4">
+          <div className="text-[8px] sm:text-[10px] uppercase tracking-[0.14em] text-primary/90 truncate font-medium">
+            {c.occupations[0] || ''}
           </div>
-          <h3 className="mt-1 text-[19px] sm:text-2xl xl:text-3xl leading-[1.05] text-white truncate font-semibold">{c.name}</h3>
-          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] sm:text-xs text-white/70">
-            <MapPin className="h-3 w-3 shrink-0" /> <span className="truncate">{c.city}</span>
-            <span className="h-1 w-1 rounded-full bg-white/30 shrink-0" />
-            <span className="truncate">{c.cohort}</span>
+          <h3 className="mt-0.5 text-sm sm:text-xl leading-[1.1] text-white truncate font-semibold">{c.name}</h3>
+          <div className="mt-1 flex items-center gap-1 text-[10px] sm:text-xs text-white/70">
+            <MapPin className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
+            <span className="truncate">{c.city || c.cohort}</span>
           </div>
         </div>
       </div>
@@ -760,9 +753,9 @@ const CreativeTile: React.FC<{ c: Creative; large?: boolean; accentIndex?: numbe
           />
         )}
 
-        <div className="relative flex h-full flex-col p-6">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-primary/80">{c.cohort}</div>
-          <h3 className="mt-1 text-2xl leading-tight text-foreground">{c.name}</h3>
+        <div className="relative flex h-full flex-col p-3 sm:p-5">
+          <div className="text-[9px] sm:text-[10px] uppercase tracking-[0.22em] text-primary/80">{c.cohort}</div>
+          <h3 className="mt-1 text-base sm:text-xl leading-tight text-foreground truncate">{c.name}</h3>
           <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <MapPin className="h-3 w-3" /> {c.city}
           </div>
@@ -861,18 +854,18 @@ const GigsView: React.FC = () => {
   return (
     <div>
       {/* Hero band */}
-      <section className="grid grid-cols-12 gap-8 pt-12 pb-10">
-        <div className="col-span-12 lg:col-span-7 flex flex-col justify-center">
-          <h1 className="mt-3 text-[56px] xl:text-[80px] leading-[0.95] tracking-tight text-foreground">
+      <section className="pt-6 pb-8 md:pt-10 md:pb-10 flex flex-col lg:grid lg:grid-cols-12 lg:gap-10">
+        <div className="lg:col-span-7 flex flex-col justify-center">
+          <h1 className="text-[32px] sm:text-[44px] lg:text-[56px] xl:text-[72px] leading-[0.95] tracking-tight text-foreground">
             Open <span className="italic text-primary">gigs</span>.
           </h1>
-          <p className="mt-4 max-w-xl text-base text-muted-foreground leading-relaxed">
+          <p className="mt-3 sm:mt-4 max-w-xl text-sm sm:text-base text-muted-foreground leading-relaxed">
             Paid work, collaborations, and residencies — alumni to alumni. Forge keeps the matching, not the fees.
           </p>
         </div>
 
-        {/* Rotating card stack on right */}
-        <div className="col-span-12 lg:col-span-5">
+        {/* Post-a-gig CTA card */}
+        <div className="lg:col-span-5 mt-6 lg:mt-0">
           <GigStack />
         </div>
       </section>
@@ -909,12 +902,6 @@ const GigsView: React.FC = () => {
 
       {/* Filtered list */}
       <section className="border-y border-border/40">
-        <div className="grid grid-cols-12 gap-4 py-4 border-b border-border/40 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          <div className="col-span-7">Role</div>
-          <div className="col-span-2 text-right">Budget</div>
-          <div className="col-span-2 text-right">Location</div>
-          <div className="col-span-1 text-right">·</div>
-        </div>
         {gigsLoading ? (
           <div className="text-muted-foreground text-sm p-8 text-center">Loading...</div>
         ) : filtered.length === 0 ? (
@@ -1057,30 +1044,31 @@ const GigRow: React.FC<{ g: Gig }> = ({ g }) => {
     'text-muted-foreground border-border/40';
 
   return (
-    <li className="group grid grid-cols-12 gap-4 py-7 transition-colors hover:bg-card/30 -mx-2 px-2">
-      <div className="col-span-12 sm:col-span-7">
-        <div className="flex items-center gap-3">
-          <span className={cn('inline-flex items-center gap-1.5 border px-2 py-0.5 text-[9px] uppercase tracking-[0.2em]', statusStyles)}>
-            <span className="h-1.5 w-1.5 rounded-full bg-current" /> {g.status}
-          </span>
-          <span className="text-[11px] text-muted-foreground">{g.postedAt} ago</span>
-          {g.mode === 'remote' && <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">· Remote</span>}
-          {g.mode === 'hybrid' && <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">· Hybrid</span>}
+    <li className="group py-4 sm:py-6 transition-colors hover:bg-card/30 -mx-2 px-2">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={cn('inline-flex items-center gap-1 border px-2 py-0.5 text-[9px] uppercase tracking-[0.16em]', statusStyles)}>
+              <span className="h-1.5 w-1.5 rounded-full bg-current" /> {g.status}
+            </span>
+            <span className="text-[11px] text-muted-foreground">{g.postedAt} ago</span>
+            {(g.mode === 'remote' || g.mode === 'hybrid') && (
+              <span className="text-[10px] text-muted-foreground capitalize">· {g.mode}</span>
+            )}
+          </div>
+          <h3 className="mt-2 text-base sm:text-xl leading-tight text-foreground group-hover:text-primary transition-colors">{g.title}</h3>
+          <p className="mt-1 text-xs sm:text-sm text-muted-foreground line-clamp-2">{g.description}</p>
+          <PosterBadge poster={g.postedBy} />
         </div>
-        <h3 className="mt-2 text-2xl leading-tight text-foreground group-hover:text-primary transition-colors">{g.title}</h3>
-        <p className="mt-1 text-sm text-muted-foreground line-clamp-1">{g.description}</p>
-        <PosterBadge poster={g.postedBy} />
-      </div>
-      <div className="col-span-6 sm:col-span-2 sm:text-right">
-        <div className="text-2xl text-foreground tabular-nums">{g.budget}</div>
-      </div>
-      <div className="col-span-6 sm:col-span-2 sm:text-right text-sm text-muted-foreground inline-flex items-center gap-1 sm:justify-end self-center">
-        <MapPin className="h-3 w-3" /> {g.location}
-      </div>
-      <div className="col-span-12 sm:col-span-1 sm:flex sm:items-center sm:justify-end">
-        <button className="inline-flex items-center gap-1.5 text-sm font-medium text-primary group-hover:gap-2.5 transition-all">
-          Apply <ArrowUpRight className="h-4 w-4" />
-        </button>
+        <div className="shrink-0 text-right">
+          <div className="text-sm sm:text-lg font-semibold text-foreground tabular-nums">{g.budget}</div>
+          <div className="mt-1 text-[11px] text-muted-foreground flex items-center gap-1 justify-end">
+            <MapPin className="h-2.5 w-2.5" /> {g.location}
+          </div>
+          <button className="mt-2 inline-flex items-center gap-1 text-xs sm:text-sm font-medium text-primary">
+            Apply <ArrowUpRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
     </li>
   );
