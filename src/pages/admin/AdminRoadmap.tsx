@@ -33,19 +33,19 @@ import type { Database } from '@/integrations/supabase/types';
 
 type RoadmapDay = Database['public']['Tables']['roadmap_days']['Row'];
 
-type CohortType = 'FORGE' | 'FORGE_CREATORS' | 'FORGE_WRITING';
+type CohortType = 'FFM' | 'FC' | 'FW';
 
 const COHORT_LABELS: Record<CohortType, string> = {
-  FORGE: 'Filmmaking',
-  FORGE_CREATORS: 'Creators',
-  FORGE_WRITING: 'Writing',
+  FFM: 'Filmmaking',
+  FC: 'Creators',
+  FW: 'Writing',
 };
 
 export default function AdminRoadmap() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDay, setEditingDay] = useState<RoadmapDay | null>(null);
   const [deletingDay, setDeletingDay] = useState<RoadmapDay | null>(null);
-  const [selectedCohort, setSelectedCohort] = useState<CohortType>('FORGE');
+  const [selectedCohort, setSelectedCohort] = useState<CohortType>('FFM');
   const queryClient = useQueryClient();
 
   // Fetch template days for the selected cohort
@@ -643,7 +643,7 @@ function RoadmapDayDialog({
     location: '',
     is_active: false,
     checklist: [] as string[],
-    cohort_type: '' as '' | 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS',
+    cohort_type: '' as '' | 'FFM' | 'FW' | 'FC',
     // Virtual meeting fields
     is_virtual: false,
     meeting_url: '',
@@ -665,7 +665,7 @@ function RoadmapDayDialog({
         location: day.location || '',
         is_active: day.is_active,
         checklist: (day.checklist as string[]) || [],
-        cohort_type: (day.cohort_type as '' | 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS') || '',
+        cohort_type: (day.cohort_type as '' | 'FFM' | 'FW' | 'FC') || '',
         is_virtual: day.is_virtual || false,
         meeting_url: day.meeting_url || '',
         meeting_id: day.meeting_id || '',
@@ -755,9 +755,9 @@ function RoadmapDayDialog({
                 <SelectValue placeholder="Select which cohort this template is for…" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="FORGE">FORGE — Filmmaking (8-day bootcamp)</SelectItem>
-                <SelectItem value="FORGE_CREATORS">FORGE_CREATORS — Creators (7-day bootcamp)</SelectItem>
-                <SelectItem value="FORGE_WRITING">FORGE_WRITING — Writing</SelectItem>
+                <SelectItem value="FFM">FFM — Filmmaking (8-day bootcamp)</SelectItem>
+                <SelectItem value="FC">FC — Creators (7-day bootcamp)</SelectItem>
+                <SelectItem value="FW">FW — Writing</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">

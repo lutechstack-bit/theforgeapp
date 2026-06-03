@@ -51,7 +51,7 @@ export interface Edition {
   id: string;
   forge_start_date: string | null;
   forge_end_date: string | null;
-  cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS';
+  cohort_type: 'FFM' | 'FW' | 'FC';
   city: string;
   online_start_date: string | null;
   online_end_date: string | null;

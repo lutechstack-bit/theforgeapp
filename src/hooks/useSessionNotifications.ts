@@ -32,8 +32,8 @@ export const useSessionNotifications = () => {
       return [];
     }
 
-    // FORGE_WRITING cohort has no online sessions - skip virtual session tracking
-    if (cohortType === 'FORGE_WRITING') {
+    // FW cohort has no online sessions - skip virtual session tracking
+    if (cohortType === 'FW') {
       return [];
     }
 

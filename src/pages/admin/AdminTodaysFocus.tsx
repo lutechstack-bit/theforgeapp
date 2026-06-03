@@ -352,7 +352,7 @@ export default function AdminTodaysFocus() {
             <div>
               <label className="text-sm font-medium text-foreground mb-2 block">Cohort Types</label>
               <div className="flex gap-2">
-                {['FORGE', 'FORGE_CREATORS', 'FORGE_WRITING'].map((type) => (
+                {['FFM', 'FC', 'FW'].map((type) => (
                   <button
                     key={type}
                     onClick={() => toggleCohort(type)}

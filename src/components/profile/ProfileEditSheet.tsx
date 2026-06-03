@@ -225,9 +225,9 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
 
       // Update KY response table if we have cohort data
       if (cohortType && Object.keys(kyFormData).length > 0) {
-        const tableName = cohortType === 'FORGE' ? 'kyf_responses'
-          : cohortType === 'FORGE_WRITING' ? 'kyw_responses'
-          : cohortType === 'FORGE_CREATORS' ? 'kyc_responses'
+        const tableName = cohortType === 'FFM' ? 'kyf_responses'
+          : cohortType === 'FW' ? 'kyw_responses'
+          : cohortType === 'FC' ? 'kyc_responses'
           : null;
 
         if (tableName) {
@@ -473,7 +473,7 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                     />
                   </div>
 
-                  {(cohortType === 'FORGE' || cohortType === 'FORGE_WRITING') && (
+                  {(cohortType === 'FFM' || cohortType === 'FW') && (
                     <div className="space-y-1.5">
                       <Label className="text-xs text-muted-foreground">Current Occupation</Label>
                       <Input
@@ -484,7 +484,7 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                     </div>
                   )}
 
-                  {cohortType === 'FORGE_CREATORS' && (
+                  {cohortType === 'FC' && (
                     <div className="space-y-1.5">
                       <Label className="text-xs text-muted-foreground">Current Status</Label>
                       <Input
@@ -511,7 +511,7 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                     Proficiency
                   </h3>
 
-                  {cohortType === 'FORGE' && (
+                  {cohortType === 'FFM' && (
                     <>
                       {renderSelectField('Screenwriting', kyFormData.proficiency_screenwriting || '', PROFICIENCY_LEVELS, (val) => updateKyField('proficiency_screenwriting', val))}
                       {renderSelectField('Direction', kyFormData.proficiency_direction || '', PROFICIENCY_LEVELS, (val) => updateKyField('proficiency_direction', val))}
@@ -520,14 +520,14 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                     </>
                   )}
 
-                  {cohortType === 'FORGE_WRITING' && (
+                  {cohortType === 'FW' && (
                     <>
                       {renderSelectField('Writing', kyFormData.proficiency_writing || '', PROFICIENCY_LEVELS, (val) => updateKyField('proficiency_writing', val))}
                       {renderSelectField('Story & Voice', kyFormData.proficiency_story_voice || '', PROFICIENCY_LEVELS, (val) => updateKyField('proficiency_story_voice', val))}
                     </>
                   )}
 
-                  {cohortType === 'FORGE_CREATORS' && (
+                  {cohortType === 'FC' && (
                     <>
                       {renderSelectField('Content Creation', kyFormData.proficiency_content_creation || '', PROFICIENCY_LEVELS, (val) => updateKyField('proficiency_content_creation', val))}
                       {renderSelectField('Storytelling', kyFormData.proficiency_storytelling || '', PROFICIENCY_LEVELS, (val) => updateKyField('proficiency_storytelling', val))}
@@ -542,9 +542,9 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                     Influences
                   </h3>
 
-                  {cohortType === 'FORGE' && renderTagsInput('Top 3 Movies', kyFormData.top_3_movies, 'top_3_movies')}
-                  {cohortType === 'FORGE_WRITING' && renderTagsInput('Top 3 Writers / Books', kyFormData.top_3_writers_books, 'top_3_writers_books')}
-                  {cohortType === 'FORGE_CREATORS' && renderTagsInput('Top 3 Creators', kyFormData.top_3_creators, 'top_3_creators')}
+                  {cohortType === 'FFM' && renderTagsInput('Top 3 Movies', kyFormData.top_3_movies, 'top_3_movies')}
+                  {cohortType === 'FW' && renderTagsInput('Top 3 Writers / Books', kyFormData.top_3_writers_books, 'top_3_writers_books')}
+                  {cohortType === 'FC' && renderTagsInput('Top 3 Creators', kyFormData.top_3_creators, 'top_3_creators')}
 
                   {renderSelectField('Chronotype', kyFormData.chronotype || '', CHRONOTYPES, (val) => updateKyField('chronotype', val))}
                 </div>
@@ -555,11 +555,11 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                     Practice & Safety
                   </h3>
 
-                  {cohortType === 'FORGE_WRITING' && renderTagsInput('Writing Types', kyFormData.writing_types, 'writing_types')}
+                  {cohortType === 'FW' && renderTagsInput('Writing Types', kyFormData.writing_types, 'writing_types')}
 
-                  {cohortType === 'FORGE' && renderTagsInput('Languages Known', kyFormData.languages_known, 'languages_known')}
+                  {cohortType === 'FFM' && renderTagsInput('Languages Known', kyFormData.languages_known, 'languages_known')}
 
-                  {cohortType === 'FORGE_CREATORS' && (
+                  {cohortType === 'FC' && (
                     <div className="space-y-1.5">
                       <Label className="text-xs text-muted-foreground">Primary Platform</Label>
                       <Input
@@ -602,7 +602,7 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                     />
                   </div>
 
-                  {cohortType === 'FORGE_WRITING' && (
+                  {cohortType === 'FW' && (
                     <div className="space-y-1.5">
                       <Label className="text-xs text-muted-foreground">Primary Language</Label>
                       <Input

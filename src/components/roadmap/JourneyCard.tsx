@@ -51,7 +51,7 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
   status,
   forgeMode,
   forgeStartDate,
-  cohortType = 'FORGE',
+  cohortType = 'FFM',
   onHover
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -159,8 +159,8 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
                   {day.day_number === 0 ? 'Pre-Forge' : `Day ${day.day_number}`}
                 </span>
                 
-                {/* Virtual/Physical indicator - Virtual only for FORGE and FORGE_CREATORS */}
-                {day.is_virtual && cohortType !== 'FORGE_WRITING' ? (
+                {/* Virtual/Physical indicator - Virtual only for FFM and FC */}
+                {day.is_virtual && cohortType !== 'FW' ? (
                   <span className="text-[10px] text-blue-400 flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/10">
                     <Globe className="w-2.5 h-2.5" />
                     Online
@@ -228,8 +228,8 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
               </div>
             )}
 
-            {/* Join Meeting Button for current virtual sessions - Only for FORGE and FORGE_CREATORS */}
-            {day.is_virtual && day.meeting_url && status === 'current' && forgeMode === 'DURING_FORGE' && cohortType !== 'FORGE_WRITING' && (
+            {/* Join Meeting Button for current virtual sessions - Only for FFM and FC */}
+            {day.is_virtual && day.meeting_url && status === 'current' && forgeMode === 'DURING_FORGE' && cohortType !== 'FW' && (
               <Button
                 size="sm"
                 className="mt-3 gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg h-8 text-xs"

@@ -27,7 +27,7 @@ export const useNightlyRitual = (dayNumber: number) => {
   const queryClient = useQueryClient();
 
   // Determine cohort type from edition
-  const cohortType = edition?.cohort_type || 'FORGE';
+  const cohortType = edition?.cohort_type || 'FFM';
 
   // Fetch ritual items for current day and cohort
   const { data: ritualItems = [], isLoading: isLoadingItems } = useQuery({

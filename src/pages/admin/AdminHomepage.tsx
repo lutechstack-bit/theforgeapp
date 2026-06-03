@@ -33,9 +33,9 @@ interface HeroSlide {
 // ─── Hero Slides Manager ───
 function HeroSlidesManager() {
   const queryClient = useQueryClient();
-  const [selectedCohort, setSelectedCohort] = useState<string>('FORGE');
+  const [selectedCohort, setSelectedCohort] = useState<string>('FFM');
   const [newImageUrl, setNewImageUrl] = useState('');
-  const [newCohortType, setNewCohortType] = useState<string>('FORGE');
+  const [newCohortType, setNewCohortType] = useState<string>('FFM');
   const [inputMode, setInputMode] = useState<'upload' | 'url'>('upload');
   const [isUploading, setIsUploading] = useState(false);
 
@@ -152,9 +152,9 @@ function HeroSlidesManager() {
   });
 
   const cohortLabel: Record<string, string> = {
-    FORGE: 'Filmmaking',
-    FORGE_WRITING: 'Writing',
-    FORGE_CREATORS: 'Creators',
+    FFM: 'Filmmaking',
+    FW: 'Writing',
+    FC: 'Creators',
   };
 
   return (
@@ -168,7 +168,7 @@ function HeroSlidesManager() {
         {/* Filter by cohort */}
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-sm text-muted-foreground">Filter:</span>
-          {['ALL', 'FORGE', 'FORGE_WRITING', 'FORGE_CREATORS'].map(c => (
+          {['ALL', 'FFM', 'FW', 'FC'].map(c => (
             <Button
               key={c}
               size="sm"
@@ -223,9 +223,9 @@ function HeroSlidesManager() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="FORGE">Filmmaking</SelectItem>
-                  <SelectItem value="FORGE_WRITING">Writing</SelectItem>
-                  <SelectItem value="FORGE_CREATORS">Creators</SelectItem>
+                  <SelectItem value="FFM">Filmmaking</SelectItem>
+                  <SelectItem value="FW">Writing</SelectItem>
+                  <SelectItem value="FC">Creators</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -274,16 +274,16 @@ function HeroSlidesManager() {
 
                 {/* Cohort selector */}
                 <Select
-                  value={slide.cohort_type || 'FORGE'}
+                  value={slide.cohort_type || 'FFM'}
                   onValueChange={(val) => updateCohortMutation.mutate({ id: slide.id, cohort_type: val })}
                 >
                   <SelectTrigger className="w-32 h-8 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="FORGE">Filmmaking</SelectItem>
-                    <SelectItem value="FORGE_WRITING">Writing</SelectItem>
-                    <SelectItem value="FORGE_CREATORS">Creators</SelectItem>
+                    <SelectItem value="FFM">Filmmaking</SelectItem>
+                    <SelectItem value="FW">Writing</SelectItem>
+                    <SelectItem value="FC">Creators</SelectItem>
                   </SelectContent>
                 </Select>
 

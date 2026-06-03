@@ -16,7 +16,7 @@ export const BentoInfluencesTile: React.FC<BentoInfluencesTileProps> = ({
   kyData,
   onEdit,
 }) => {
-  const isFilmmaking = cohortType === 'FORGE' || cohortType === 'FORGE_CREATORS';
+  const isFilmmaking = cohortType === 'FFM' || cohortType === 'FC';
   const items = isFilmmaking ? kyfResponse?.top_3_movies : kywResponse?.top_3_writers_books;
   const prefix = isFilmmaking ? '🎬' : '📖';
   const chronotype = kyData?.chronotype;

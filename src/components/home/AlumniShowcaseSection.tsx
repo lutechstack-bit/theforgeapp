@@ -93,14 +93,14 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
 
   // Card sizing per cohort
   const getCardWidth = () => {
-    if (cohortType === 'FORGE_WRITING') return 'w-[140px] sm:w-[160px]';
-    if (cohortType === 'FORGE_CREATORS') return 'w-[150px] sm:w-[170px]';
+    if (cohortType === 'FW') return 'w-[140px] sm:w-[160px]';
+    if (cohortType === 'FC') return 'w-[150px] sm:w-[170px]';
     return 'w-[calc(100vw-72px)] sm:w-[280px]';
   };
 
   const getAspectClass = () => {
-    if (cohortType === 'FORGE_WRITING') return 'aspect-[2/3]';
-    if (cohortType === 'FORGE_CREATORS') return 'aspect-[9/16]';
+    if (cohortType === 'FW') return 'aspect-[2/3]';
+    if (cohortType === 'FC') return 'aspect-[9/16]';
     return 'aspect-video';
   };
 

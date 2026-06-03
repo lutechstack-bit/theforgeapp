@@ -29,7 +29,7 @@ import { toast } from 'sonner';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const PRODUCT_OPTIONS = ['FFM', 'FC', 'FW', 'FAI', 'FORGE CREATORS', 'FORGE WRITING', 'FORGE AI'];
+const PRODUCT_OPTIONS = ['FFM', 'FC', 'FW', 'FAI', 'FFM CREATORS', 'FFM WRITING', 'FFM AI'];
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -53,7 +53,7 @@ type FormState = typeof EMPTY_FORM;
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 const cohortColor: Record<string, string> = {
-  FORGE: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
+  FFM: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
   CREATORS: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
   WRITING: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
 };

@@ -53,9 +53,9 @@ interface NightlyRitualItem {
 }
 
 const COHORT_OPTIONS = [
-  { value: 'FORGE', label: 'Forge Filmmakers' },
-  { value: 'FORGE_CREATORS', label: 'Forge Creators' },
-  { value: 'FORGE_WRITING', label: 'Forge Writing' },
+  { value: 'FFM', label: 'Forge Filmmakers' },
+  { value: 'FC', label: 'Forge Creators' },
+  { value: 'FW', label: 'Forge Writing' },
 ];
 
 const CATEGORY_OPTIONS = [
@@ -75,14 +75,14 @@ const ICON_OPTIONS = [
 
 const AdminNightlyRituals: React.FC = () => {
   const queryClient = useQueryClient();
-  const [selectedCohort, setSelectedCohort] = useState<string>('FORGE');
+  const [selectedCohort, setSelectedCohort] = useState<string>('FFM');
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<NightlyRitualItem | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
-    cohort_type: 'FORGE',
+    cohort_type: 'FFM',
     day_number: 1,
     category: 'reflect',
     title: '',

@@ -26,7 +26,7 @@ export const MERGE_TAGS: MergeTagDescriptor[] = [
   { key: 'user.city', label: 'City', example: 'Goa', category: 'user' },
   // Edition ---------------------------------------------------------------
   { key: 'edition.name', label: 'Edition name', example: 'Forge Filmmaking Bootcamp – E17', category: 'edition' },
-  { key: 'edition.cohort_type', label: 'Cohort type', example: 'FORGE', category: 'edition' },
+  { key: 'edition.cohort_type', label: 'Cohort type', example: 'FFM', category: 'edition' },
   { key: 'edition.city', label: 'Edition city', example: 'Goa', category: 'edition' },
   { key: 'edition.forge_start_date', label: 'Forge start date', example: 'Apr 26, 2026', category: 'edition' },
   { key: 'edition.forge_end_date', label: 'Forge end date', example: 'May 09, 2026', category: 'edition' },

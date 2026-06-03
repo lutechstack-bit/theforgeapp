@@ -58,9 +58,9 @@ serve(async (req) => {
 
     // 1. Create editions for each cohort
     const editions = [
-      { name: 'Forge Filmmaking - Goa Feb 2025', city: 'Goa', cohort_type: 'FORGE', forge_start_date: '2025-02-15', forge_end_date: '2025-02-21' },
-      { name: 'Forge Writing - Goa Jan 2025', city: 'Goa', cohort_type: 'FORGE_WRITING', forge_start_date: '2025-01-20', forge_end_date: '2025-01-25' },
-      { name: 'Forge Creators - Goa Oct 2024', city: 'Goa', cohort_type: 'FORGE_CREATORS', forge_start_date: '2024-10-04', forge_end_date: '2024-10-10' },
+      { name: 'Forge Filmmaking - Goa Feb 2025', city: 'Goa', cohort_type: 'FFM', forge_start_date: '2025-02-15', forge_end_date: '2025-02-21' },
+      { name: 'Forge Writing - Goa Jan 2025', city: 'Goa', cohort_type: 'FW', forge_start_date: '2025-01-20', forge_end_date: '2025-01-25' },
+      { name: 'Forge Creators - Goa Oct 2024', city: 'Goa', cohort_type: 'FC', forge_start_date: '2024-10-04', forge_end_date: '2024-10-10' },
     ];
 
     const createdEditions: Record<string, string> = {};
@@ -94,9 +94,9 @@ serve(async (req) => {
 
     // 2. Create test users
     const testUsers = [
-      { email: 'test@film.in', password: 'test123', full_name: 'Film Test User', cohort_type: 'FORGE' },
-      { email: 'test@writers.in', password: 'test123', full_name: 'Writer Test User', cohort_type: 'FORGE_WRITING' },
-      { email: 'test@creators.in', password: 'test123', full_name: 'Creator Test User', cohort_type: 'FORGE_CREATORS' },
+      { email: 'test@film.in', password: 'test123', full_name: 'Film Test User', cohort_type: 'FFM' },
+      { email: 'test@writers.in', password: 'test123', full_name: 'Writer Test User', cohort_type: 'FW' },
+      { email: 'test@creators.in', password: 'test123', full_name: 'Creator Test User', cohort_type: 'FC' },
     ];
 
     for (const user of testUsers) {
@@ -149,7 +149,7 @@ serve(async (req) => {
 
     // 3. Create roadmap days for each edition
     // Forge Writing Roadmap (6 days)
-    const writingEditionId = createdEditions['FORGE_WRITING'];
+    const writingEditionId = createdEditions['FW'];
     if (writingEditionId) {
       // Delete existing roadmap days for this edition
       await adminClient.from('roadmap_days').delete().eq('edition_id', writingEditionId);
@@ -170,7 +170,7 @@ serve(async (req) => {
     }
 
     // Forge Creators Roadmap (7 days)
-    const creatorsEditionId = createdEditions['FORGE_CREATORS'];
+    const creatorsEditionId = createdEditions['FC'];
     if (creatorsEditionId) {
       await adminClient.from('roadmap_days').delete().eq('edition_id', creatorsEditionId);
 
@@ -191,7 +191,7 @@ serve(async (req) => {
     }
 
     // Forge Filmmaking Roadmap (6 days)
-    const filmEditionId = createdEditions['FORGE'];
+    const filmEditionId = createdEditions['FFM'];
     if (filmEditionId) {
       await adminClient.from('roadmap_days').delete().eq('edition_id', filmEditionId);
 

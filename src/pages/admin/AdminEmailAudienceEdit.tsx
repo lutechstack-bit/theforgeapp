@@ -30,9 +30,9 @@ interface FilterCriteria {
 type TriState = 'any' | 'yes' | 'no';
 
 const COHORT_OPTIONS = [
-  { value: 'FORGE', label: 'Forge Filmmaking' },
-  { value: 'FORGE_WRITING', label: 'Forge Writing' },
-  { value: 'FORGE_CREATORS', label: 'Forge Creators' },
+  { value: 'FFM', label: 'Forge Filmmaking' },
+  { value: 'FW', label: 'Forge Writing' },
+  { value: 'FC', label: 'Forge Creators' },
 ];
 
 const FORGE_MODE_OPTIONS = [

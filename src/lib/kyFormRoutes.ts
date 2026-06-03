@@ -5,11 +5,11 @@
 
 export const getKYFormSectionRoute = (cohortType?: string | null): string => {
   switch (cohortType) {
-    case 'FORGE':
+    case 'FFM':
       return '/ky-section/filmmaker_profile';
-    case 'FORGE_CREATORS':
+    case 'FC':
       return '/ky-section/creator_profile';
-    case 'FORGE_WRITING':
+    case 'FW':
       return '/ky-section/writer_profile';
     default:
       return '/ky-section/filmmaker_profile';
@@ -18,11 +18,11 @@ export const getKYFormSectionRoute = (cohortType?: string | null): string => {
 
 export const getKYFormName = (cohortType?: string | null): string => {
   switch (cohortType) {
-    case 'FORGE':
+    case 'FFM':
       return 'Know Your Filmmaker';
-    case 'FORGE_CREATORS':
+    case 'FC':
       return 'Know Your Creator';
-    case 'FORGE_WRITING':
+    case 'FW':
       return 'Know Your Writer';
     default:
       return 'Complete KY Form';
@@ -31,9 +31,9 @@ export const getKYFormName = (cohortType?: string | null): string => {
 
 export const getKYFormShortName = (cohortType?: string | null): string => {
   switch (cohortType) {
-    case 'FORGE_CREATORS':
+    case 'FC':
       return 'KYC Form';
-    case 'FORGE_WRITING':
+    case 'FW':
       return 'KYW Form';
     default:
       return 'KYF Form';

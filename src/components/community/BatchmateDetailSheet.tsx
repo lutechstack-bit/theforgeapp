@@ -72,7 +72,7 @@ export const BatchmateDetailSheet: React.FC<BatchmateDetailSheetProps> = ({ memb
   if (!member) return null;
 
   const ky = details?.ky_data || {};
-  const cohortType = details?.cohort_type || 'FORGE';
+  const cohortType = details?.cohort_type || 'FFM';
 
   const content = (
     <div className="space-y-5 pb-6 px-1">
@@ -149,14 +149,14 @@ export const BatchmateDetailSheet: React.FC<BatchmateDetailSheetProps> = ({ memb
             let profs: { label: string; level: string | null }[] = [];
             let icon = <Film className="w-4 h-4 text-primary" />;
 
-            if (cohortType === 'FORGE') {
+            if (cohortType === 'FFM') {
               profs = [
                 { label: 'Screenwriting', level: ky.proficiency_screenwriting },
                 { label: 'Direction', level: ky.proficiency_direction },
                 { label: 'Cinematography', level: ky.proficiency_cinematography },
                 { label: 'Editing', level: ky.proficiency_editing },
               ].filter(p => p.level);
-            } else if (cohortType === 'FORGE_CREATORS') {
+            } else if (cohortType === 'FC') {
               icon = <Palette className="w-4 h-4 text-primary" />;
               profs = [
                 { label: 'Content Creation', level: ky.proficiency_content_creation },
@@ -187,8 +187,8 @@ export const BatchmateDetailSheet: React.FC<BatchmateDetailSheetProps> = ({ memb
             const favs: string[] =
               ky.top_3_movies || ky.top_3_creators || ky.top_3_writers_books || [];
             const label =
-              cohortType === 'FORGE' ? 'Favorite Films' :
-              cohortType === 'FORGE_CREATORS' ? 'Favorite Creators' :
+              cohortType === 'FFM' ? 'Favorite Films' :
+              cohortType === 'FC' ? 'Favorite Creators' :
               'Favorite Writers/Books';
             if (!favs.length) return null;
             return (
@@ -206,7 +206,7 @@ export const BatchmateDetailSheet: React.FC<BatchmateDetailSheetProps> = ({ memb
           })()}
 
           {/* Writing types (writers only) */}
-          {cohortType === 'FORGE_WRITING' && ky.writing_types?.length > 0 && (
+          {cohortType === 'FW' && ky.writing_types?.length > 0 && (
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <Pen className="w-4 h-4 text-primary" /> Writing Types
@@ -220,7 +220,7 @@ export const BatchmateDetailSheet: React.FC<BatchmateDetailSheetProps> = ({ memb
           )}
 
           {/* Creators: platform */}
-          {cohortType === 'FORGE_CREATORS' && ky.primary_platform && (
+          {cohortType === 'FC' && ky.primary_platform && (
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <Palette className="w-4 h-4 text-primary" /> Primary Platform

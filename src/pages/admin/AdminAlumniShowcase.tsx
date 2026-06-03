@@ -15,7 +15,7 @@ import { Plus, Pencil, Trash2, Film, Play, Image } from 'lucide-react';
 interface AlumniShowcaseForm {
   title: string;
   author_name: string;
-  cohort_type: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS';
+  cohort_type: 'FFM' | 'FW' | 'FC';
   media_type: 'video' | 'image' | 'reel';
   media_url: string;
   thumbnail_url: string;
@@ -28,7 +28,7 @@ interface AlumniShowcaseForm {
 const initialShowcaseForm: AlumniShowcaseForm = {
   title: '',
   author_name: '',
-  cohort_type: 'FORGE',
+  cohort_type: 'FFM',
   media_type: 'video',
   media_url: '',
   thumbnail_url: '',
@@ -39,9 +39,9 @@ const initialShowcaseForm: AlumniShowcaseForm = {
 };
 
 const cohortMediaDefaults: Record<string, 'video' | 'image' | 'reel'> = {
-  FORGE: 'video',
-  FORGE_WRITING: 'image',
-  FORGE_CREATORS: 'reel',
+  FFM: 'video',
+  FW: 'image',
+  FC: 'reel',
 };
 
 const AdminAlumniShowcase: React.FC = () => {
@@ -49,7 +49,7 @@ const AdminAlumniShowcase: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<AlumniShowcaseForm>(initialShowcaseForm);
-  const [subTab, setSubTab] = useState<'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS'>('FORGE');
+  const [subTab, setSubTab] = useState<'FFM' | 'FW' | 'FC'>('FFM');
 
   const { data: showcaseItems = [], isLoading } = useQuery({
     queryKey: ['admin-alumni-showcase'],
@@ -105,7 +105,7 @@ const AdminAlumniShowcase: React.FC = () => {
     setForm({
       title: item.title || '',
       author_name: item.author_name || '',
-      cohort_type: item.cohort_type || 'FORGE',
+      cohort_type: item.cohort_type || 'FFM',
       media_type: item.media_type || 'video',
       media_url: item.media_url || '',
       thumbnail_url: item.thumbnail_url || '',
@@ -141,7 +141,7 @@ const AdminAlumniShowcase: React.FC = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex gap-1 p-1 rounded-full bg-card border border-border/30 w-fit">
-            {(['FORGE', 'FORGE_WRITING', 'FORGE_CREATORS'] as const).map((tab) => (
+            {(['FFM', 'FW', 'FC'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setSubTab(tab)}
@@ -151,7 +151,7 @@ const AdminAlumniShowcase: React.FC = () => {
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {tab === 'FORGE' ? 'Filmmaking' : tab === 'FORGE_WRITING' ? 'Writing' : 'Creators'}
+                {tab === 'FFM' ? 'Filmmaking' : tab === 'FW' ? 'Writing' : 'Creators'}
               </button>
             ))}
           </div>
@@ -172,7 +172,7 @@ const AdminAlumniShowcase: React.FC = () => {
             <Film className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">No showcase items yet</h3>
             <p className="text-muted-foreground mb-4">
-              Add {subTab === 'FORGE' ? 'videos' : subTab === 'FORGE_WRITING' ? 'images' : 'reels'} for this cohort
+              Add {subTab === 'FFM' ? 'videos' : subTab === 'FW' ? 'images' : 'reels'} for this cohort
             </p>
             <Button onClick={() => {
               resetForm();
@@ -252,14 +252,14 @@ const AdminAlumniShowcase: React.FC = () => {
                 <div>
                   <Label>Cohort Type</Label>
                   <Select value={form.cohort_type} onValueChange={(v) => {
-                    const ct = v as 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS';
+                    const ct = v as 'FFM' | 'FW' | 'FC';
                     setForm({ ...form, cohort_type: ct, media_type: cohortMediaDefaults[ct] });
                   }}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="FORGE">Filmmaking</SelectItem>
-                      <SelectItem value="FORGE_WRITING">Writing</SelectItem>
-                      <SelectItem value="FORGE_CREATORS">Creators</SelectItem>
+                      <SelectItem value="FFM">Filmmaking</SelectItem>
+                      <SelectItem value="FW">Writing</SelectItem>
+                      <SelectItem value="FC">Creators</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

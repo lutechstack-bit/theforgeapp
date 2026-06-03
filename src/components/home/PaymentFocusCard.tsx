@@ -43,7 +43,7 @@ const PaymentFocusCard: React.FC = () => {
   const { balance_due } = paymentConfig;
 
   const editionLabel = edition
-    ? `Forge ${edition.cohort_type === 'FORGE' ? 'Filmmaking' : edition.cohort_type === 'FORGE_WRITING' ? 'Writing' : 'Creators'} - ${edition.city}`
+    ? `Forge ${edition.cohort_type === 'FFM' ? 'Filmmaking' : edition.cohort_type === 'FW' ? 'Writing' : 'Creators'} - ${edition.city}`
     : 'Programme';
   const editionDates = edition?.forge_start_date && edition?.forge_end_date
     ? `${new Date(edition.forge_start_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}-${new Date(edition.forge_end_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`

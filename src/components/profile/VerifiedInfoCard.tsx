@@ -3,7 +3,7 @@ import { Lock, Calendar, Globe2, Brain, Target, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface VerifiedInfoCardProps {
-  cohortType: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS' | null;
+  cohortType: 'FFM' | 'FW' | 'FC' | null;
   kyfResponse?: any;
   kywResponse?: any;
   isPublicView?: boolean;
@@ -41,7 +41,7 @@ export const VerifiedInfoCard: React.FC<VerifiedInfoCardProps> = ({
   if (!kyfResponse && !kywResponse) return null;
 
   const kyData = kyfResponse || kywResponse;
-  const isFilmmaking = cohortType === 'FORGE' || cohortType === 'FORGE_CREATORS';
+  const isFilmmaking = cohortType === 'FFM' || cohortType === 'FC';
 
   // Get proficiency count for stats
   const getProficiencyCount = () => {
@@ -178,7 +178,7 @@ export const VerifiedInfoCard: React.FC<VerifiedInfoCardProps> = ({
 
 export const getSkillsCount = (cohortType: string | null, kyfResponse: any, kywResponse: any): number => {
   let count = 0;
-  if ((cohortType === 'FORGE' || cohortType === 'FORGE_CREATORS') && kyfResponse) {
+  if ((cohortType === 'FFM' || cohortType === 'FC') && kyfResponse) {
     if (kyfResponse.proficiency_screenwriting) count++;
     if (kyfResponse.proficiency_direction) count++;
     if (kyfResponse.proficiency_cinematography) count++;

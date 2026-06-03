@@ -9,14 +9,14 @@ import {
   Headphones, Puzzle, Flame, Rocket, Crown, Medal
 } from 'lucide-react';
 
-export type CohortType = 'FORGE' | 'FORGE_CREATORS' | 'FORGE_WRITING';
+export type CohortType = 'FFM' | 'FC' | 'FW';
 
 interface IconConfig {
   icon: React.ReactNode;
   label: string;
 }
 
-// Icon mappings for FORGE (Filmmakers) cohort
+// Icon mappings for FFM (Filmmakers) cohort
 const forgeIcons: Record<string, IconConfig> = {
   // Day-specific icons
   orientation: { icon: <Plane />, label: 'Arrival & Orientation' },
@@ -101,9 +101,9 @@ export function getDayIcon(
   const sizeClass = size === 'sm' ? 'w-4 h-4' : size === 'lg' ? 'w-7 h-7' : 'w-5 h-5';
   
   const iconMaps = {
-    FORGE: forgeIcons,
-    FORGE_CREATORS: creatorsIcons,
-    FORGE_WRITING: writingIcons,
+    FFM: forgeIcons,
+    FC: creatorsIcons,
+    FW: writingIcons,
   };
 
   const cohortIcons = iconMaps[cohortType] || forgeIcons;
@@ -123,8 +123,8 @@ export function getDayIcon(
     }
   }
 
-  // Default icons based on day number for FORGE
-  if (cohortType === 'FORGE' && dayNumber !== undefined) {
+  // Default icons based on day number for FFM
+  if (cohortType === 'FFM' && dayNumber !== undefined) {
     const dayDefaults: Record<number, React.ReactNode> = {
       0: <Plane className={sizeClass} />,
       1: <Users className={sizeClass} />,

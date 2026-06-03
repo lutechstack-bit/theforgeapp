@@ -144,14 +144,14 @@ export const usePortfolioBySlug = (slug: string) => {
       let kyResponse = null;
       const cohortType = profile?.editions?.cohort_type;
       
-      if (cohortType === 'FORGE' || cohortType === 'FORGE_CREATORS') {
+      if (cohortType === 'FFM' || cohortType === 'FC') {
         const { data } = await supabase
           .from('kyf_responses')
           .select('*')
           .eq('user_id', portfolio.user_id)
           .maybeSingle();
         kyResponse = data;
-      } else if (cohortType === 'FORGE_WRITING') {
+      } else if (cohortType === 'FW') {
         const { data } = await supabase
           .from('kyw_responses')
           .select('*')

@@ -299,9 +299,9 @@ function CohortCard({
   variant?: 'default' | 'waitlist';
 }) {
   const cohortTypeColors: Record<string, string> = {
-    'FORGE': 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-    'FORGE_WRITING': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    'FORGE_CREATORS': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+    'FFM': 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+    'FW': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    'FC': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
   };
 
   return (
@@ -316,7 +316,7 @@ function CohortCard({
         <div className="flex items-center gap-2 flex-wrap">
           {edition ? (
             <Badge variant="outline" className={cohortTypeColors[edition.cohort_type] || ''}>
-              {edition.cohort_type.replace('FORGE_', '').replace('FORGE', 'FILMMAKING')}
+              {edition.cohort_type.replace('FORGE_', '').replace('FFM', 'FILMMAKING')}
             </Badge>
           ) : variant === 'waitlist' ? (
             <Badge variant="outline" className="bg-amber-500/20 text-amber-400 border-amber-500/30">

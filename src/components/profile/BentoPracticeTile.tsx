@@ -16,7 +16,7 @@ export const BentoPracticeTile: React.FC<BentoPracticeTileProps> = ({
   kyData,
   onEdit,
 }) => {
-  const isWriting = cohortType === 'FORGE_WRITING';
+  const isWriting = cohortType === 'FW';
   const writingTypes = kywResponse?.writing_types || [];
   const allTypes = ['Fiction', 'Non-fiction', 'Poetry', 'Screenwriting', 'Journaling', 'Not writing consistently yet'];
 

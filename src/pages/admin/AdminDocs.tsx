@@ -205,14 +205,14 @@ const AdminDocs: React.FC = () => {
                 
                 <h3 className="text-lg font-semibold mb-2">Cohort Types</h3>
                 <ul className="list-disc list-inside space-y-1 text-gray-700 mb-4">
-                  <li><strong>FORGE</strong> - Core filmmaking program (10-day intensive)</li>
-                  <li><strong>FORGE_WRITING</strong> - Screenwriting focused program</li>
-                  <li><strong>FORGE_CREATORS</strong> - Content creator program</li>
+                  <li><strong>FFM</strong> - Core filmmaking program (10-day intensive)</li>
+                  <li><strong>FW</strong> - Screenwriting focused program</li>
+                  <li><strong>FC</strong> - Content creator program</li>
                 </ul>
 
                 <h3 className="text-lg font-semibold mb-2">Target Users</h3>
                 <ul className="list-disc list-inside space-y-1 text-gray-700">
-                  <li>Students enrolled in FORGE programs</li>
+                  <li>Students enrolled in FFM programs</li>
                   <li>Program mentors and instructors</li>
                   <li>Administrative staff</li>
                 </ul>
@@ -337,7 +337,7 @@ const AdminDocs: React.FC = () => {
                     <tr><td className="border border-gray-300 px-3 py-2">user_course_progress</td><td className="border border-gray-300 px-3 py-2">Learning progress tracking</td></tr>
                     <tr><td className="border border-gray-300 px-3 py-2">user_video_progress</td><td className="border border-gray-300 px-3 py-2">Video watch progress</td></tr>
                     <tr><td className="border border-gray-300 px-3 py-2">user_badges</td><td className="border border-gray-300 px-3 py-2">Achievement badges</td></tr>
-                    <tr><td className="border border-gray-300 px-3 py-2">editions</td><td className="border border-gray-300 px-3 py-2">Cohort editions (FORGE 25, etc.)</td></tr>
+                    <tr><td className="border border-gray-300 px-3 py-2">editions</td><td className="border border-gray-300 px-3 py-2">Cohort editions (FFM 25, etc.)</td></tr>
                   </tbody>
                 </table>
 
@@ -427,9 +427,9 @@ const AdminDocs: React.FC = () => {
                     <tr><td className="border border-gray-300 px-3 py-2">ky_forms</td><td className="border border-gray-300 px-3 py-2">Dynamic form definitions</td></tr>
                     <tr><td className="border border-gray-300 px-3 py-2">ky_form_fields</td><td className="border border-gray-300 px-3 py-2">Form field configurations</td></tr>
                     <tr><td className="border border-gray-300 px-3 py-2">ky_form_responses</td><td className="border border-gray-300 px-3 py-2">Generic form responses</td></tr>
-                    <tr><td className="border border-gray-300 px-3 py-2">kyf_responses</td><td className="border border-gray-300 px-3 py-2">FORGE form responses</td></tr>
-                    <tr><td className="border border-gray-300 px-3 py-2">kyw_responses</td><td className="border border-gray-300 px-3 py-2">FORGE_WRITING responses</td></tr>
-                    <tr><td className="border border-gray-300 px-3 py-2">kyc_responses</td><td className="border border-gray-300 px-3 py-2">FORGE_CREATORS responses</td></tr>
+                    <tr><td className="border border-gray-300 px-3 py-2">kyf_responses</td><td className="border border-gray-300 px-3 py-2">FFM form responses</td></tr>
+                    <tr><td className="border border-gray-300 px-3 py-2">kyw_responses</td><td className="border border-gray-300 px-3 py-2">FW responses</td></tr>
+                    <tr><td className="border border-gray-300 px-3 py-2">kyc_responses</td><td className="border border-gray-300 px-3 py-2">FC responses</td></tr>
                     <tr><td className="border border-gray-300 px-3 py-2">ky_form_field_responses</td><td className="border border-gray-300 px-3 py-2">Individual field responses</td></tr>
                   </tbody>
                 </table>

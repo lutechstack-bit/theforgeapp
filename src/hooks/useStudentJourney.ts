@@ -53,7 +53,7 @@ export const useStudentJourney = () => {
   const queryClient = useQueryClient();
 
   // Get effective cohort type (respects admin simulation)
-  const cohortType = effectiveCohortType || 'FORGE';
+  const cohortType = effectiveCohortType || 'FFM';
 
   // Fetch all journey stages
   const { data: allStages, isLoading: stagesLoading } = useQuery({
@@ -69,9 +69,9 @@ export const useStudentJourney = () => {
     },
   });
 
-  // Filter out online_forge stage for FORGE_WRITING cohort
+  // Filter out online_forge stage for FW cohort
   const stages = allStages?.filter(stage => {
-    if (cohortType === 'FORGE_WRITING' && stage.stage_key === 'online_forge') {
+    if (cohortType === 'FW' && stage.stage_key === 'online_forge') {
       return false;
     }
     return true;
@@ -181,10 +181,10 @@ export const useStudentJourney = () => {
     if (now > forgeEnd) return 'post_forge';
     
     // Writers go directly to physical_forge (no online stage)
-    if (cohortType === 'FORGE_WRITING') {
+    if (cohortType === 'FW') {
       if (daysSinceStart >= 0) return 'physical_forge';
     } else {
-      // FORGE and FORGE_CREATORS have online forge for first 3 days
+      // FFM and FC have online forge for first 3 days
       if (daysSinceStart >= 3) return 'physical_forge';
       if (daysSinceStart >= 0) return 'online_forge';
     }

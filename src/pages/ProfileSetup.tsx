@@ -17,18 +17,18 @@ type Edition = Database['public']['Tables']['editions']['Row'];
 
 const getCohortIcon = (cohortType: string) => {
   switch (cohortType) {
-    case 'FORGE': return Film;
-    case 'FORGE_WRITING': return Pen;
-    case 'FORGE_CREATORS': return Users;
+    case 'FFM': return Film;
+    case 'FW': return Pen;
+    case 'FC': return Users;
     default: return Film;
   }
 };
 
 const getCohortLabel = (cohortType: string) => {
   switch (cohortType) {
-    case 'FORGE': return 'Filmmaking';
-    case 'FORGE_WRITING': return 'Writing';
-    case 'FORGE_CREATORS': return 'Creators';
+    case 'FFM': return 'Filmmaking';
+    case 'FW': return 'Writing';
+    case 'FC': return 'Creators';
     default: return 'Forge';
   }
 };

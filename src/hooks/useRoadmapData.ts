@@ -15,9 +15,9 @@ import { promiseWithTimeout, isTimeoutError } from '@/lib/promiseTimeout';
 export type RoadmapDay = Database['public']['Tables']['roadmap_days']['Row'];
 
 export const cohortDisplayNames: Record<CohortType, string> = {
-  FORGE: 'The Forge',
-  FORGE_WRITING: 'Forge Writing',
-  FORGE_CREATORS: 'Forge Creators',
+  FFM: 'The Forge',
+  FW: 'Forge Writing',
+  FC: 'Forge Creators',
 };
 
 // Timeout for roadmap queries (12 seconds)

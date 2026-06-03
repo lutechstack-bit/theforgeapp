@@ -18,7 +18,7 @@
 // Sheet columns for auto-edition creation (only needed for first student of a new edition):
 //   edition_name      e.g. "Forge Filmmaking - Edition 15 - Mumbai"
 //   edition_city      e.g. "Mumbai"
-//   cohort_type       e.g. "FORGE" | "FORGE_CREATORS" | "FORGE_WRITING"
+//   cohort_type       e.g. "FFM" | "FC" | "FW"
 //   forge_start_date  e.g. "2026-07-01"  (optional)
 //   forge_end_date    e.g. "2026-07-14"  (optional)
 //   online_start_date e.g. "2026-06-01"  (optional)
@@ -138,14 +138,14 @@ async function logOnboardingAttempt(
 // ═══════════════════════ Input validation ════════════════════════════════════
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const VALID_COHORT_TYPES = ['FORGE', 'FORGE_CREATORS', 'FORGE_WRITING', 'FORGE_AI'];
+const VALID_COHORT_TYPES = ['FFM', 'FC', 'FW', 'FAI'];
 
 // Derives cohort_type from product code when cohort_type is not explicitly provided.
 const PRODUCT_TO_COHORT: Record<string, string> = {
-  FFM: 'FORGE',
-  FC:  'FORGE_CREATORS',
-  FW:  'FORGE_WRITING',
-  FAI: 'FORGE_AI',
+  FFM: 'FFM',
+  FC:  'FC',
+  FW:  'FW',
+  FAI: 'FAI',
 };
 
 function validateStudentData(body: Record<string, unknown>): { data: StudentData; error: string | null } {
@@ -169,7 +169,7 @@ function validateStudentData(body: Record<string, unknown>): { data: StudentData
   }
   // If cohort_type is not supplied, derive it from the product code automatically.
   // This means the sheet only needs a Product column (FFM/FC/FW/FAI) — no Cohort Type column needed.
-  const cohort_type = cohort_type_raw || PRODUCT_TO_COHORT[product.toUpperCase()] || 'FORGE';
+  const cohort_type = cohort_type_raw || PRODUCT_TO_COHORT[product.toUpperCase()] || 'FFM';
 
   return {
     data: {

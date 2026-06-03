@@ -23,7 +23,7 @@ import { ArrowLeft, History, RotateCcw, Save, Wand2, Code2 } from 'lucide-react'
 import { toast } from 'sonner';
 
 const CATEGORIES = ['onboarding', 'reminder', 'announcement', 'alumni'] as const;
-const COHORT_TYPES = ['FORGE', 'FORGE_WRITING', 'FORGE_CREATORS'] as const;
+const COHORT_TYPES = ['FFM', 'FW', 'FC'] as const;
 const FORGE_MODES = ['PRE_FORGE', 'DURING_FORGE', 'POST_FORGE'] as const;
 
 type AuthorMode = 'simple' | 'advanced';

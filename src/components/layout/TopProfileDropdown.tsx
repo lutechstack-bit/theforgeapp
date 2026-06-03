@@ -16,9 +16,9 @@ import {
 import { useRestartTour } from '@/components/onboarding/OnboardingTour';
 
 const cohortLabelMap: Record<string, string> = {
-  FORGE: 'The Forge',
-  FORGE_WRITING: 'Forge Writing',
-  FORGE_CREATORS: 'Forge Creators',
+  FFM: 'The Forge',
+  FW: 'Forge Writing',
+  FC: 'Forge Creators',
 };
 
 export const TopProfileDropdown: React.FC = () => {

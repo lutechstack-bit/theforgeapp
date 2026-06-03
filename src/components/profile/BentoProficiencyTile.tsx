@@ -46,7 +46,7 @@ export const BentoProficiencyTile: React.FC<BentoProficiencyTileProps> = ({
   kycResponse,
   onEdit,
 }) => {
-  const isFilmmaking = cohortType === 'FORGE' || cohortType === 'FORGE_CREATORS';
+  const isFilmmaking = cohortType === 'FFM' || cohortType === 'FC';
 
   return (
     <BentoTile
@@ -65,13 +65,13 @@ export const BentoProficiencyTile: React.FC<BentoProficiencyTileProps> = ({
             <ProfRow name="Editing" level={kyfResponse.proficiency_editing} />
           </>
         )}
-        {cohortType === 'FORGE_WRITING' && kywResponse && (
+        {cohortType === 'FW' && kywResponse && (
           <>
             <ProfRow name="Writing" level={kywResponse.proficiency_writing} />
             <ProfRow name="Story & Voice" level={kywResponse.proficiency_story_voice} />
           </>
         )}
-        {cohortType === 'FORGE_CREATORS' && kycResponse && (
+        {cohortType === 'FC' && kycResponse && (
           <>
             <ProfRow name="Content Creation" level={kycResponse.proficiency_content_creation} />
             <ProfRow name="Storytelling" level={kycResponse.proficiency_storytelling} />

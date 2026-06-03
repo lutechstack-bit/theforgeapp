@@ -33,9 +33,9 @@ const ICONS: Record<string, LucideIcon> = {
 };
 
 const COHORT_LABELS: Record<string, string> = {
-  FORGE: 'Filmmaking',
-  FORGE_WRITING: 'Writing',
-  FORGE_CREATORS: 'Creators',
+  FFM: 'Filmmaking',
+  FW: 'Writing',
+  FC: 'Creators',
 };
 
 interface Props {

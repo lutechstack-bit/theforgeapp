@@ -12,9 +12,9 @@ const getCohortLabel = (edition: any) => {
   if (!edition) return null;
   const type = edition.cohort_type;
   const name = edition.name || '';
-  if (type === 'FORGE') return `Forge Filmmaking · ${name}`;
-  if (type === 'FORGE_WRITING') return `Forge Writing · ${name}`;
-  if (type === 'FORGE_CREATORS') return `Forge Creators · ${name}`;
+  if (type === 'FFM') return `Forge Filmmaking · ${name}`;
+  if (type === 'FW') return `Forge Writing · ${name}`;
+  if (type === 'FC') return `Forge Creators · ${name}`;
   return name;
 };
 

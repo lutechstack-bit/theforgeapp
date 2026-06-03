@@ -47,9 +47,9 @@ const FIELD_TYPES = [
 ];
 
 const COHORT_TYPES = [
-  { value: 'FORGE', label: 'Filmmaking' },
-  { value: 'FORGE_CREATORS', label: 'Creators' },
-  { value: 'FORGE_WRITING', label: 'Writing' },
+  { value: 'FFM', label: 'Filmmaking' },
+  { value: 'FC', label: 'Creators' },
+  { value: 'FW', label: 'Writing' },
 ];
 
 const ICONS = ['User', 'MapPin', 'Heart', 'Film', 'Camera', 'Sparkles', 'FileCheck', 'Pen', 'Video', 'ExternalLink'];
@@ -342,11 +342,11 @@ const AdminKYForms: React.FC = () => {
   };
 
   const seedFormsFromConfig = async () => {
-    const cohortTypes: Array<'FORGE' | 'FORGE_CREATORS' | 'FORGE_WRITING'> = ['FORGE', 'FORGE_CREATORS', 'FORGE_WRITING'];
+    const cohortTypes: Array<'FFM' | 'FC' | 'FW'> = ['FFM', 'FC', 'FW'];
     for (const cohortType of cohortTypes) {
       const sections = getSectionsForCohort(cohortType);
       const kySections = sections.filter(s => s.key !== 'community_profile');
-      const formName = cohortType === 'FORGE' ? 'Know Your Filmmaker' : cohortType === 'FORGE_CREATORS' ? 'Know Your Creator' : 'Know Your Writer';
+      const formName = cohortType === 'FFM' ? 'Know Your Filmmaker' : cohortType === 'FC' ? 'Know Your Creator' : 'Know Your Writer';
       const { data: newForm, error: formError } = await supabase.from('ky_forms').insert({ cohort_type: cohortType, name: formName, description: kySections.map(s => s.title).join(', '), is_active: true }).select().single();
       if (formError || !newForm) { console.error('Error seeding form:', formError); continue; }
       let stepIndex = 0;
@@ -375,7 +375,7 @@ const AdminKYForms: React.FC = () => {
 
   const createNewForm = (cohortType: string) => {
     const newForm: Form = {
-      cohort_type: cohortType, name: `Know Your ${cohortType === 'FORGE' ? 'Filmmaker' : cohortType === 'FORGE_CREATORS' ? 'Creator' : 'Writer'}`,
+      cohort_type: cohortType, name: `Know Your ${cohortType === 'FFM' ? 'Filmmaker' : cohortType === 'FC' ? 'Creator' : 'Writer'}`,
       description: '', is_active: true,
       steps: [
         { title: 'General Details', description: "Let's start with the basics", icon: 'User', order_index: 0, fields: [{ field_key: 'certificate_name', label: 'Full name (as you want it on your certificate)', field_type: 'text', placeholder: '', helper_text: '', is_required: true, options: [], order_index: 0, grid_cols: 1 }] },
@@ -452,7 +452,7 @@ const AdminKYForms: React.FC = () => {
       if (formId) {
         await supabase.from('ky_forms').update({ name: selectedForm.name, description: selectedForm.description, is_active: selectedForm.is_active }).eq('id', formId);
       } else {
-        const { data: newForm, error } = await supabase.from('ky_forms').insert({ cohort_type: selectedForm.cohort_type as 'FORGE' | 'FORGE_CREATORS' | 'FORGE_WRITING', name: selectedForm.name, description: selectedForm.description, is_active: selectedForm.is_active }).select().single();
+        const { data: newForm, error } = await supabase.from('ky_forms').insert({ cohort_type: selectedForm.cohort_type as 'FFM' | 'FC' | 'FW', name: selectedForm.name, description: selectedForm.description, is_active: selectedForm.is_active }).select().single();
         if (error) throw error;
         formId = newForm.id;
       }
@@ -484,13 +484,13 @@ const AdminKYForms: React.FC = () => {
   const duplicateForm = (form: Form, newCohortType: string) => {
     setSelectedForm({
       ...form, id: undefined, cohort_type: newCohortType,
-      name: `Know Your ${newCohortType === 'FORGE' ? 'Filmmaker' : newCohortType === 'FORGE_CREATORS' ? 'Creator' : 'Writer'}`,
+      name: `Know Your ${newCohortType === 'FFM' ? 'Filmmaker' : newCohortType === 'FC' ? 'Creator' : 'Writer'}`,
       steps: form.steps.map(s => ({ ...s, id: undefined, fields: s.fields.map(f => ({ ...f, id: undefined })) })),
     });
   };
 
   const downloadResponses = async (cohortType: string) => {
-    const tableMap: Record<string, string> = { 'FORGE': 'kyf_responses', 'FORGE_CREATORS': 'kyc_responses', 'FORGE_WRITING': 'kyw_responses' };
+    const tableMap: Record<string, string> = { 'FFM': 'kyf_responses', 'FC': 'kyc_responses', 'FW': 'kyw_responses' };
     const tableName = tableMap[cohortType];
     if (!tableName) return;
     try {

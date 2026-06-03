@@ -46,9 +46,9 @@ interface JourneyTask {
 }
 
 const cohortOptions = [
-  { value: 'FORGE', label: 'Forge Filmmaking' },
-  { value: 'FORGE_WRITING', label: 'Forge Writing' },
-  { value: 'FORGE_CREATORS', label: 'Forge Creators' },
+  { value: 'FFM', label: 'Forge Filmmaking' },
+  { value: 'FW', label: 'Forge Writing' },
+  { value: 'FC', label: 'Forge Creators' },
 ];
 
 const autoCompleteOptions = [
@@ -78,7 +78,7 @@ const AdminJourneyTasks: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<JourneyTask>>({});
   const [createForm, setCreateForm] = useState<Partial<JourneyTask>>({
-    cohort_types: ['FORGE', 'FORGE_WRITING', 'FORGE_CREATORS'],
+    cohort_types: ['FFM', 'FW', 'FC'],
     is_required: true,
     is_active: true,
   });
@@ -122,7 +122,7 @@ const AdminJourneyTasks: React.FC = () => {
           stage_id: task.stage_id!,
           title: task.title!,
           description: task.description || null,
-          cohort_types: task.cohort_types || ['FORGE', 'FORGE_WRITING', 'FORGE_CREATORS'],
+          cohort_types: task.cohort_types || ['FFM', 'FW', 'FC'],
           auto_complete_field: task.auto_complete_field || null,
           deep_link: task.deep_link || null,
           is_required: task.is_required ?? true,
@@ -136,7 +136,7 @@ const AdminJourneyTasks: React.FC = () => {
       toast.success('Task created successfully');
       setIsCreateOpen(false);
       setCreateForm({
-        cohort_types: ['FORGE', 'FORGE_WRITING', 'FORGE_CREATORS'],
+        cohort_types: ['FFM', 'FW', 'FC'],
         is_required: true,
         is_active: true,
       });

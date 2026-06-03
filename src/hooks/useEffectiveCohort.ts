@@ -9,7 +9,7 @@ export const useEffectiveCohort = () => {
   const { isTestingMode, simulatedCohortType, simulatedEditionId } = useAdminTestingSafe();
 
   // We're simulating whenever the admin has picked a different edition than
-  // their own — this covers cross-cohort simulation (FORGE -> WRITING) AND
+  // their own — this covers cross-cohort simulation (FFM -> WRITING) AND
   // same-cohort edition swapping (E16 -> E17) which the old cohort-type check
   // missed.
   const hasEditionOverride = isTestingMode && !!simulatedEditionId && simulatedEditionId !== edition?.id;

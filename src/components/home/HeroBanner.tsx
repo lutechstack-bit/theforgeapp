@@ -36,7 +36,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ edition, showCountdown }) => {
       const { data, error } = await supabase
         .from('homepage_hero_slides')
         .select('*')
-        .eq('cohort_type', effectiveCohortType || 'FORGE')
+        .eq('cohort_type', effectiveCohortType || 'FFM')
         .eq('is_active', true)
         .order('order_index', { ascending: true });
       if (error) throw error;

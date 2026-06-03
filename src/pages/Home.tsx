@@ -49,7 +49,7 @@ const Home: React.FC = () => {
         supabase
           .from('alumni_showcase')
           .select('*')
-          .eq('cohort_type', userCohortType || 'FORGE')
+          .eq('cohort_type', userCohortType || 'FFM')
           .eq('is_active', true)
           .order('order_index', { ascending: true })
           .limit(12)
@@ -178,7 +178,7 @@ const Home: React.FC = () => {
             <AlumniShowcaseSection
               alumni={alumniShowcaseQuery.data || []}
               isLoading={alumniShowcaseQuery.isLoading}
-              cohortType={userCohortType || 'FORGE'}
+              cohortType={userCohortType || 'FFM'}
               title={alumniSection.title}
               subtitle={alumniSection.subtitle || undefined}
             />

@@ -41,9 +41,9 @@ export function useStudentKYData(cohortFilter: string | null) {
         const edition = editionMap.get(p.edition_id) as any;
         const cohortType = edition?.cohort_type || null;
         let kyData: Record<string, any> | null = null;
-        if (cohortType === 'FORGE') kyData = kyfMap.get(p.id) || null;
-        else if (cohortType === 'FORGE_CREATORS') kyData = kycMap.get(p.id) || null;
-        else if (cohortType === 'FORGE_WRITING') kyData = kywMap.get(p.id) || null;
+        if (cohortType === 'FFM') kyData = kyfMap.get(p.id) || null;
+        else if (cohortType === 'FC') kyData = kycMap.get(p.id) || null;
+        else if (cohortType === 'FW') kyData = kywMap.get(p.id) || null;
 
         const collab = collabMap.get(p.id) || null;
 

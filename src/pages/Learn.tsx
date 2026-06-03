@@ -278,8 +278,8 @@ const Learn: React.FC = () => {
           />
         ) : (
           <div className="space-y-5 sm:space-y-6">
-            {/* Pre Forge Sessions — only for FORGE cohort, gated by feature flag */}
-            {isFeatureEnabled('pre_forge_sessions_enabled') && (!effectiveCohortType || effectiveCohortType === 'FORGE') && (
+            {/* Pre Forge Sessions — only for FFM cohort, gated by feature flag */}
+            {isFeatureEnabled('pre_forge_sessions_enabled') && (!effectiveCohortType || effectiveCohortType === 'FFM') && (
               <CourseCarouselSection
                 items={forgeOnlineSessions}
                 title="Pre Forge Sessions"

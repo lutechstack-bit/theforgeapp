@@ -3,7 +3,7 @@ import forgeLogoImg from '@/assets/forge-logo.png';
 import forgeWritingLogoImg from '@/assets/forge-writing-logo.png';
 import forgeCreatorsLogoImg from '@/assets/forge-creators-logo.png';
 
-type CohortType = 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS';
+type CohortType = 'FFM' | 'FW' | 'FC';
 
 interface CohortInfo {
   name: string;
@@ -20,17 +20,17 @@ interface ThemeContextType {
 
 // Cohort metadata for cross-sell
 const cohortInfo: Record<CohortType, CohortInfo> = {
-  FORGE: {
+  FFM: {
     name: 'The Forge',
     description: 'Master the art of filmmaking',
     logo: forgeLogoImg,
   },
-  FORGE_WRITING: {
+  FW: {
     name: 'The Forge Writing',
     description: 'Craft compelling screenplays',
     logo: forgeWritingLogoImg,
   },
-  FORGE_CREATORS: {
+  FC: {
     name: 'The Forge Creators',
     description: 'Build your creator career',
     logo: forgeCreatorsLogoImg,
@@ -38,7 +38,7 @@ const cohortInfo: Record<CohortType, CohortInfo> = {
 };
 
 const ThemeContext = createContext<ThemeContextType>({
-  cohortType: 'FORGE',
+  cohortType: 'FFM',
   cohortName: 'The Forge',
   allCohorts: cohortInfo,
   getOtherCohorts: () => [],
@@ -56,8 +56,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   return (
     <ThemeContext.Provider value={{
-      cohortType: 'FORGE', // Default, actual cohort comes from AuthContext
-      cohortName: cohortInfo.FORGE.name,
+      cohortType: 'FFM', // Default, actual cohort comes from AuthContext
+      cohortName: cohortInfo.FFM.name,
       allCohorts: cohortInfo,
       getOtherCohorts,
     }}>

@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import forgeLogo from '@/assets/forge-logo.png';
 
 interface KYFormCompletionProps {
-  cohortType?: 'FORGE' | 'FORGE_WRITING' | 'FORGE_CREATORS';
+  cohortType?: 'FFM' | 'FW' | 'FC';
   onNavigateHome?: () => void;
   onNavigateProfile?: () => void;
 }
@@ -33,7 +33,7 @@ interface ConfettiParticle {
 }
 
 export const KYFormCompletion: React.FC<KYFormCompletionProps> = ({
-  cohortType = 'FORGE',
+  cohortType = 'FFM',
   onNavigateHome,
   onNavigateProfile,
 }) => {
@@ -80,9 +80,9 @@ export const KYFormCompletion: React.FC<KYFormCompletionProps> = ({
 
   const getCohortLabel = () => {
     switch (cohortType) {
-      case 'FORGE_WRITING':
+      case 'FW':
         return 'The Forge Writing';
-      case 'FORGE_CREATORS':
+      case 'FC':
         return 'The Forge Creators';
       default:
         return 'The Forge';

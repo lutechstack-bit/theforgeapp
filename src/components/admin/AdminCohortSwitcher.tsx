@@ -12,9 +12,9 @@ import { supabase } from '@/integrations/supabase/client';
 // Per-cohort display metadata (label + icon). Unknown cohort_types fall back
 // to the Film icon and the raw string.
 const cohortMeta: Record<string, { label: string; icon: typeof Film }> = {
-  FORGE: { label: 'Filmmaking', icon: Film },
-  FORGE_WRITING: { label: 'Writing', icon: PenTool },
-  FORGE_CREATORS: { label: 'Creators', icon: Smartphone },
+  FFM: { label: 'Filmmaking', icon: Film },
+  FW: { label: 'Writing', icon: PenTool },
+  FC: { label: 'Creators', icon: Smartphone },
 };
 
 type EditionRow = {
@@ -59,7 +59,7 @@ const AdminCohortSwitcher: React.FC = () => {
   const isSimulating = !!simulatedEditionId && simulatedEditionId !== actualEditionId;
 
   const displayedEdition = editions.find(e => e.id === displayedEditionId);
-  const displayedCohort = (displayedEdition?.cohort_type as CohortType) || actualCohort || 'FORGE';
+  const displayedCohort = (displayedEdition?.cohort_type as CohortType) || actualCohort || 'FFM';
   const currentMeta = cohortMeta[displayedCohort] || { label: displayedCohort, icon: Film };
   const CurrentIcon = currentMeta.icon;
   const pillLabel = displayedEdition?.name || currentMeta.label;

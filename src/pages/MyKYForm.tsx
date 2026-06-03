@@ -24,24 +24,24 @@ const MyKYForm: React.FC = () => {
   
   const cohortType = effectiveCohortType;
   const kyData = profileData?.kyfResponse || profileData?.kywResponse || profileData?.kycResponse;
-  const isFilmmaking = cohortType === 'FORGE';
-  const isWriting = cohortType === 'FORGE_WRITING';
-  const isCreator = cohortType === 'FORGE_CREATORS';
+  const isFilmmaking = cohortType === 'FFM';
+  const isWriting = cohortType === 'FW';
+  const isCreator = cohortType === 'FC';
   
   const getFormRoute = () => getKYFormSectionRoute(cohortType);
   
   const getFormTitle = () => {
     switch (cohortType) {
-      case 'FORGE_WRITING': return 'Know Your Writer';
-      case 'FORGE_CREATORS': return 'Know Your Creator';
+      case 'FW': return 'Know Your Writer';
+      case 'FC': return 'Know Your Creator';
       default: return 'Know Your Filmmaker';
     }
   };
 
   const getCohortLabel = () => {
     switch (cohortType) {
-      case 'FORGE_WRITING': return 'Writer';
-      case 'FORGE_CREATORS': return 'Creator';
+      case 'FW': return 'Writer';
+      case 'FC': return 'Creator';
       default: return 'Filmmaker';
     }
   };

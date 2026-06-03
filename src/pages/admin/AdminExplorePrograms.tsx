@@ -216,7 +216,7 @@ const AdminExplorePrograms: React.FC = () => {
               </div>
               <div>
                 <Label htmlFor="prog_label">Label</Label>
-                <Input id="prog_label" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="e.g. FORGE RESIDENCY" />
+                <Input id="prog_label" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="e.g. FFM RESIDENCY" />
               </div>
               <FileUpload
                 bucket="learn-thumbnails"

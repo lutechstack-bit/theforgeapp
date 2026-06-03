@@ -48,8 +48,8 @@ const PublicPortfolio: React.FC = () => {
   }));
   
   const skillsCount = getSkillsCount(cohortType, 
-    cohortType === 'FORGE' || cohortType === 'FORGE_CREATORS' ? kyResponse : null,
-    cohortType === 'FORGE_WRITING' ? kyResponse : null
+    cohortType === 'FFM' || cohortType === 'FC' ? kyResponse : null,
+    cohortType === 'FW' ? kyResponse : null
   );
 
   return (
@@ -88,8 +88,8 @@ const PublicPortfolio: React.FC = () => {
 
         <VerifiedInfoCard
           cohortType={cohortType}
-          kyfResponse={cohortType === 'FORGE' || cohortType === 'FORGE_CREATORS' ? kyResponse : undefined}
-          kywResponse={cohortType === 'FORGE_WRITING' ? kyResponse : undefined}
+          kyfResponse={cohortType === 'FFM' || cohortType === 'FC' ? kyResponse : undefined}
+          kywResponse={cohortType === 'FW' ? kyResponse : undefined}
           isPublicView={true}
         />
 

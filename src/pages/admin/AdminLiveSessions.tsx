@@ -205,7 +205,7 @@ const AdminLiveSessions: React.FC = () => {
         title: rs.title,
         description: rs.description || null,
         edition_id: selectedEditionId,
-        cohort_type: selectedEdition?.cohort_type || 'FORGE',
+        cohort_type: selectedEdition?.cohort_type || 'FFM',
         start_at: startDT,
         end_at: endDT,
         zoom_meeting_number: rs.meeting_id?.replace(/\D/g, '') || '0',

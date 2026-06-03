@@ -39,7 +39,7 @@ const KYSectionForm: React.FC = () => {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [exitDialogOpen, setExitDialogOpen] = useState(false);
 
-  const cohortType = effectiveCohortType || 'FORGE';
+  const cohortType = effectiveCohortType || 'FFM';
   const sections = useMemo(() => getSectionsForCohort(cohortType), [cohortType]);
   const requiredSections = useMemo(() => getRequiredSections(cohortType), [cohortType]);
   const section = useMemo(() => sections.find(s => s.key === sectionKey), [sections, sectionKey]);

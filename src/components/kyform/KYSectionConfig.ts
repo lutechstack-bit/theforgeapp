@@ -557,11 +557,11 @@ const KYW_SECTIONS: KYSection[] = [
 // Map cohort_type to sections
 export function getSectionsForCohort(cohortType: string): KYSection[] {
   switch (cohortType) {
-    case 'FORGE':
+    case 'FFM':
       return [...KYF_SECTIONS, COMMUNITY_PROFILE_SECTION];
-    case 'FORGE_CREATORS':
+    case 'FC':
       return [...KYC_SECTIONS, COMMUNITY_PROFILE_SECTION];
-    case 'FORGE_WRITING':
+    case 'FW':
       return [...KYW_SECTIONS, COMMUNITY_PROFILE_SECTION];
     default:
       return [...KYF_SECTIONS, COMMUNITY_PROFILE_SECTION];

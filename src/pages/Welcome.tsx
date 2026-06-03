@@ -9,7 +9,7 @@ import { Map, UserCircle, MessageCircle, ArrowRight } from 'lucide-react';
 const Welcome: React.FC = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
-  const cohortType = (profile as any)?.edition?.cohort_type || 'FORGE';
+  const cohortType = (profile as any)?.edition?.cohort_type || 'FFM';
 
   // If KY form is completed, show the celebration
   if (profile?.ky_form_completed) {

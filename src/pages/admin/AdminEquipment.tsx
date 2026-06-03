@@ -28,9 +28,9 @@ interface Equipment {
 }
 
 const cohortTypes = [
-  { value: 'FORGE', label: 'Forge Filmmakers' },
-  { value: 'FORGE_CREATORS', label: 'Forge Creators' },
-  { value: 'FORGE_WRITING', label: 'Forge Writing' },
+  { value: 'FFM', label: 'Forge Filmmakers' },
+  { value: 'FC', label: 'Forge Creators' },
+  { value: 'FW', label: 'Forge Writing' },
 ];
 
 const categories = [
@@ -39,7 +39,7 @@ const categories = [
 
 const AdminEquipment: React.FC = () => {
   const queryClient = useQueryClient();
-  const [selectedCohort, setSelectedCohort] = useState('FORGE');
+  const [selectedCohort, setSelectedCohort] = useState('FFM');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Equipment | null>(null);

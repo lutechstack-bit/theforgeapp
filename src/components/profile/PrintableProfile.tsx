@@ -33,7 +33,7 @@ const ProficiencyBar: React.FC<{ label: string; level: string }> = ({ label, lev
 
 export const PrintableProfile = forwardRef<HTMLDivElement, PrintableProfileProps>(
   ({ profile, edition, kyResponse, cohortType, works }, ref) => {
-    const isFilmmaking = cohortType === 'FORGE' || cohortType === 'FORGE_CREATORS';
+    const isFilmmaking = cohortType === 'FFM' || cohortType === 'FC';
     const proficiencies: { label: string; level: string }[] = [];
 
     if (isFilmmaking && kyResponse) {

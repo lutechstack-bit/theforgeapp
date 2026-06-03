@@ -17,7 +17,7 @@ export type CompletionFilter = 'all' | 'complete' | 'incomplete';
 
 export interface KYFilters {
   // Primary (always visible)
-  cohort: string | null;              // FORGE | FORGE_WRITING | FORGE_CREATORS | null
+  cohort: string | null;              // FFM | FW | FC | null
   edition: string;                    // edition_name OR 'all'
   completion: CompletionFilter;
   search: string;
@@ -213,9 +213,9 @@ function slugify(s: string): string {
 // ─────────────────────────── UI ───────────────────────────────────────────
 
 const COHORT_TYPES = [
-  { value: 'FORGE', label: 'Filmmaking' },
-  { value: 'FORGE_CREATORS', label: 'Creators' },
-  { value: 'FORGE_WRITING', label: 'Writing' },
+  { value: 'FFM', label: 'Filmmaking' },
+  { value: 'FC', label: 'Creators' },
+  { value: 'FW', label: 'Writing' },
 ];
 
 const KNOWN_LANGUAGES = ['English', 'Hindi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada'];
