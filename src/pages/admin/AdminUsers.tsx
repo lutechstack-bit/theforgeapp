@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload, Users, LayoutGrid, List, Download, Crown, IndianRupee, FileSpreadsheet, FileUp, UserMinus, Mail, UserCheck } from 'lucide-react';
+import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload, Users, LayoutGrid, List, Download, Crown, IndianRupee, FileSpreadsheet, FileUp, UserMinus, Mail, UserCheck, Send } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -552,6 +552,37 @@ export default function AdminUsers() {
     onError: (error: Error) => {
       toast.error(error.message);
     }
+  });
+
+  // Send welcome / onboarding email to a single student
+  const sendWelcomeEmailMutation = useMutation({
+    mutationFn: async (user: { id: string; email: string; full_name: string | null; edition_id: string | null }) => {
+      const response = await supabase.functions.invoke('forge-onboard-student', {
+        body: {
+          student_id: user.id,
+          email: user.email,
+          full_name: user.full_name || '',
+          payment_amount: 15000,
+          product: 'FFM', // fallback — function resolves edition from edition_id if provided
+          edition_id: user.edition_id,
+          trigger_source: 'manual_admin',
+        },
+        headers: { 'x-forge-secret': 'forge-auto-2026' },
+      });
+      if (response.error) throw new Error(response.error.message);
+      if (response.data?.error) throw new Error(response.data.error);
+      return response.data;
+    },
+    onSuccess: (data, user) => {
+      if (data?.email_sent) {
+        toast.success(`Welcome email sent to ${user.email}`);
+      } else {
+        toast.success(`Onboarding triggered for ${user.email} — check automation logs`);
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to send welcome email: ${error.message}`);
+    },
   });
 
   // Bulk delete mutation
@@ -1828,6 +1859,21 @@ export default function AdminUsers() {
                             onClick={() => setEditingUser(user)}
                           >
                             <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-emerald-400 hover:text-emerald-400 hover:bg-emerald-400/10"
+                            onClick={() => sendWelcomeEmailMutation.mutate({
+                              id: user.id,
+                              email: user.email || '',
+                              full_name: user.full_name,
+                              edition_id: user.edition_id,
+                            })}
+                            disabled={isAdmin || !user.email || sendWelcomeEmailMutation.isPending}
+                            title="Send welcome / onboarding email"
+                          >
+                            <Send className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="ghost"
