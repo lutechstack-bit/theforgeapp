@@ -73,6 +73,8 @@ interface AutomationConfig {
   notify_on_success: boolean;
   notify_on_failure: boolean;
   notification_email: string | null;
+  // Admin-selected welcome email template (by slug). Falls back to 'student-welcome'.
+  welcome_template_slug: string | null;
 }
 
 // ═══════════════════════ Helpers ═════════════════════════════════════════════
@@ -545,10 +547,14 @@ serve(async (req) => {
 
     if (resendApiKey) {
       try {
+        // Which template to send is admin-controlled via
+        // onboarding_automation_config.welcome_template_slug (falls back to 'student-welcome').
+        const welcomeSlug = (config.welcome_template_slug || '').trim() || 'student-welcome';
+
         const { data: template } = await admin
           .from('email_templates')
           .select('id, subject, html_content, default_sender_id, slug, current_version')
-          .eq('slug', 'student-welcome')
+          .eq('slug', welcomeSlug)
           .eq('is_active', true)
           .single();
 

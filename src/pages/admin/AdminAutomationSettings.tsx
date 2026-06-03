@@ -12,7 +12,10 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Settings2, Bell, IndianRupee, ShieldCheck } from 'lucide-react';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import { Loader2, Settings2, Bell, IndianRupee, ShieldCheck, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -24,6 +27,7 @@ interface AutomationConfig {
   notify_on_success: boolean;
   notify_on_failure: boolean;
   notification_email: string | null;
+  welcome_template_slug: string | null;
   updated_at: string | null;
 }
 
@@ -33,7 +37,10 @@ interface FormState {
   notify_on_success: boolean;
   notify_on_failure: boolean;
   notification_email: string;
+  welcome_template_slug: string;
 }
+
+const DEFAULT_WELCOME_SLUG = 'student-welcome';
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -47,8 +54,23 @@ export default function AdminAutomationSettings() {
     notify_on_success: false,
     notify_on_failure: true,
     notification_email: '',
+    welcome_template_slug: DEFAULT_WELCOME_SLUG,
   });
   const [isDirty, setIsDirty] = useState(false);
+
+  // Active email templates the admin can choose as the welcome email.
+  const { data: templates = [] } = useQuery({
+    queryKey: ['admin-automation-templates'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('email_templates')
+        .select('id, name, slug')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   // ── Data fetch ──────────────────────────────────────────────────────────
   const { data: config, isLoading } = useQuery<AutomationConfig>({
@@ -72,6 +94,7 @@ export default function AdminAutomationSettings() {
         notify_on_success: config.notify_on_success,
         notify_on_failure: config.notify_on_failure,
         notification_email: config.notification_email ?? '',
+        welcome_template_slug: config.welcome_template_slug || DEFAULT_WELCOME_SLUG,
       });
       setIsDirty(false);
     }
@@ -101,6 +124,7 @@ export default function AdminAutomationSettings() {
           notify_on_success: form.notify_on_success,
           notify_on_failure: form.notify_on_failure,
           notification_email: form.notification_email.trim() || null,
+          welcome_template_slug: form.welcome_template_slug || DEFAULT_WELCOME_SLUG,
           updated_at: new Date().toISOString(),
           updated_by: user?.id ?? null,
         })
@@ -124,6 +148,7 @@ export default function AdminAutomationSettings() {
       notify_on_success: config.notify_on_success,
       notify_on_failure: config.notify_on_failure,
       notification_email: config.notification_email ?? '',
+      welcome_template_slug: config.welcome_template_slug || DEFAULT_WELCOME_SLUG,
     });
     setIsDirty(false);
   };
@@ -214,6 +239,46 @@ export default function AdminAutomationSettings() {
                 : 'Onboarding automation is paused'}
             </Label>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Card: Welcome email template ────────────────────────────────── */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-1.5">
+            <Mail className="h-4 w-4" /> Welcome Email Template
+          </CardTitle>
+          <CardDescription className="text-xs">
+            The email sent to each student when they're onboarded. Pick any active template.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Select
+            value={form.welcome_template_slug}
+            onValueChange={(v) => updateForm('welcome_template_slug', v)}
+          >
+            <SelectTrigger className="max-w-[360px]">
+              <SelectValue placeholder="Select a template…" />
+            </SelectTrigger>
+            <SelectContent>
+              {templates.map((t: any) => (
+                <SelectItem key={t.id} value={t.slug}>
+                  {t.name} <span className="text-muted-foreground">({t.slug})</span>
+                </SelectItem>
+              ))}
+              {/* Keep the saved slug selectable even if its template is inactive/missing. */}
+              {form.welcome_template_slug &&
+                !templates.some((t: any) => t.slug === form.welcome_template_slug) && (
+                  <SelectItem value={form.welcome_template_slug}>
+                    {form.welcome_template_slug} (inactive or missing)
+                  </SelectItem>
+                )}
+            </SelectContent>
+          </Select>
+          <p className="text-[11px] text-muted-foreground mt-2">
+            Only <span className="font-medium">active</span> templates appear here. The chosen
+            template must have a sender identity set, or no email is sent.
+          </p>
         </CardContent>
       </Card>
 
