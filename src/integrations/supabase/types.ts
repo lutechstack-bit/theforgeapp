@@ -4121,7 +4121,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "moderator" | "user" | "mentor"
       card_source: "admin" | "mentor"
-      cohort_type: "FFM" | "FW" | "FC"
+      cohort_type: "FFM" | "FW" | "FC" | "FAI"
       doubt_status:
         | "open"
         | "replied"
@@ -4277,7 +4277,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "moderator", "user", "mentor"],
       card_source: ["admin", "mentor"],
-      cohort_type: ["FFM", "FW", "FC"],
+      cohort_type: ["FFM", "FW", "FC", "FAI"],
       doubt_status: [
         "open",
         "replied",
