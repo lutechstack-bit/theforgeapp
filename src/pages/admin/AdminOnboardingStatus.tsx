@@ -74,6 +74,8 @@ export default function AdminOnboardingStatus() {
   const [search, setSearch] = useState('');
   const [editionFilter, setEditionFilter] = useState('all');
   const [emailFilter, setEmailFilter] = useState('all');
+  // 'all' = every student · 'automation' = only those onboarded via the n8n automation
+  const [sourceFilter, setSourceFilter] = useState('all');
 
   // Students (non-admin profiles)
   const { data: profiles = [], isLoading: loadingProfiles } = useQuery({
@@ -131,7 +133,7 @@ export default function AdminOnboardingStatus() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('onboarding_automation_logs')
-        .select('student_email, created_profile_id, status, email_sent, created_at')
+        .select('student_email, created_profile_id, status, email_sent, created_at, trigger_source')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
@@ -180,6 +182,8 @@ export default function AdminOnboardingStatus() {
         editionLabel: p.edition_id ? (editionName.get(p.edition_id) || 'Unknown') : null,
         emailStatus,
         onboardStatus: log?.status || null,
+        // A student "came from the automation" if there is an onboarding log for them.
+        fromAutomation: !!log,
         isWaitlisted,
       };
     });
@@ -187,6 +191,7 @@ export default function AdminOnboardingStatus() {
 
   const filtered = useMemo(() => {
     return rows.filter((r: any) => {
+      if (sourceFilter === 'automation' && !r.fromAutomation) return false;
       if (editionFilter !== 'all') {
         if (editionFilter === 'waitlist' ? !r.isWaitlisted : r.edition_id !== editionFilter) return false;
       }
@@ -199,7 +204,7 @@ export default function AdminOnboardingStatus() {
       }
       return true;
     });
-  }, [rows, editionFilter, emailFilter, search]);
+  }, [rows, editionFilter, emailFilter, search, sourceFilter]);
 
   // Summary stats
   const stats = useMemo(() => {
@@ -238,6 +243,13 @@ export default function AdminOnboardingStatus() {
             className="pl-8"
           />
         </div>
+        <Select value={sourceFilter} onValueChange={setSourceFilter}>
+          <SelectTrigger className="w-[190px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All students</SelectItem>
+            <SelectItem value="automation">Automation only (n8n)</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={editionFilter} onValueChange={setEditionFilter}>
           <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
           <SelectContent>

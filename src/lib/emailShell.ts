@@ -3,7 +3,8 @@
 // Lets admins author emails as plain content (heading + body + optional CTA)
 // without touching HTML. The Simple-mode composer (AdminEmailTemplateEdit)
 // turns its fields into `html_content` by calling `wrapInForgeShell`, so every
-// email gets the same dark/gold Forge styling used by the student-welcome mail.
+// email gets the same clean, light Forge styling (white background, dark text,
+// a simple logo and an understated button) used by the student-welcome mail.
 //
 // Merge tags (e.g. {{user.first_name}}) pass straight through untouched — they
 // are resolved server-side at send time by send-email / preview-email.
@@ -20,23 +21,22 @@ export interface ForgeShellOptions {
 }
 
 const FORGE_STYLES = `
-  body { margin:0; padding:0; background:#0b0a08; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; }
-  .wrap { max-width:560px; margin:0 auto; padding:40px 24px; }
-  .logo { font-size:22px; font-weight:800; color:#f5efe2; letter-spacing:-0.5px; }
-  .logo span { color:#f59e0b; }
-  .hero { background:linear-gradient(135deg,#1a1814 0%,#110f0c 100%); border:1px solid #2a2520; border-radius:16px; padding:36px 32px; margin:28px 0; }
-  .hero h1 { color:#f5efe2; font-size:28px; font-weight:700; margin:0; line-height:1.25; }
-  .hero h1 span { color:#f59e0b; }
-  .body-content { color:#c8c0b8; font-size:15px; line-height:1.7; }
+  body { margin:0; padding:0; background:#ffffff; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; }
+  .wrap { max-width:560px; margin:0 auto; padding:32px 24px; }
+  .logo { font-size:20px; font-weight:700; color:#111111; letter-spacing:-0.3px; margin-bottom:8px; }
+  .logo span { color:#d97706; }
+  .hero { margin:20px 0 8px; }
+  .hero h1 { color:#111111; font-size:24px; font-weight:700; margin:0; line-height:1.3; }
+  .body-content { color:#333333; font-size:15px; line-height:1.7; }
   .body-content p { margin:0 0 16px; }
-  .body-content strong { color:#f5efe2; }
-  .body-content a { color:#f59e0b; text-decoration:none; }
-  .body-content ul, .body-content ol { color:#c8c0b8; padding-left:20px; margin:0 0 16px; }
+  .body-content strong { color:#111111; }
+  .body-content a { color:#0b5cad; text-decoration:underline; }
+  .body-content ul, .body-content ol { color:#333333; padding-left:20px; margin:0 0 16px; }
   .body-content li { margin-bottom:8px; }
-  .btn { display:inline-block; background:#f59e0b; color:#0b0a08 !important; font-weight:700; font-size:15px; padding:14px 32px; border-radius:50px; text-decoration:none; margin:24px 0; }
-  .divider { border:none; border-top:1px solid #2a2520; margin:28px 0; }
-  .footer { color:#6b635d; font-size:12px; text-align:center; margin-top:32px; line-height:1.6; }
-  .footer a { color:#f59e0b; text-decoration:none; }
+  .btn { display:inline-block; background:#111111; color:#ffffff !important; font-weight:600; font-size:15px; padding:12px 28px; border-radius:6px; text-decoration:none; margin:20px 0; }
+  .divider { border:none; border-top:1px solid #e5e5e5; margin:28px 0; }
+  .footer { color:#999999; font-size:12px; text-align:left; margin-top:28px; line-height:1.6; }
+  .footer a { color:#777777; text-decoration:underline; }
 `;
 
 /**

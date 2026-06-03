@@ -84,9 +84,11 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-function generateTempPassword(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-  return Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+// Password format: Firstname@Forge!  (e.g. "Abhishake Kumar" → "Abhishake@Forge!")
+function generateTempPassword(fullName: string): string {
+  const firstName = (fullName || '').trim().split(/\s+/)[0] || 'Student';
+  const capitalized = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+  return `${capitalized}@Forge!`;
 }
 
 // ═══════════════════════ Logging helper ══════════════════════════════════════
@@ -454,7 +456,9 @@ serve(async (req) => {
     }
 
     // ── Create auth user (idempotent) ─────────────────────────────────────
-    const tempPassword = generateTempPassword();
+    // Password format: Firstname@Forge!  (derived from the student's name so it
+    // matches what the welcome email shows and is easy to type on first login).
+    const tempPassword = generateTempPassword(studentData.full_name);
     let userId: string | null = null;
     let userAction: 'created' | 'updated' = 'created';
 

@@ -17,7 +17,7 @@
     },
     {
       "parameters": {
-        "url": "=https://docs.google.com/spreadsheets/d/{{ $env.GOOGLE_SHEET_ID }}/gviz/tq?tqx=out:csv&sheet={{ encodeURIComponent($env.GOOGLE_SHEET_TAB || '') }}",
+        "url": "https://docs.google.com/spreadsheets/d/1_c4401Lm039N-szlSTjYFzpzhJxqrcrhR6D0n7Eu-AA/gviz/tq?tqx=out:csv&sheet=Sheet1",
         "options": {
           "response": { "response": { "responseFormat": "text" } }
         }
@@ -63,11 +63,11 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.SUPABASE_URL }}/functions/v1/forge-onboard-student",
+        "url": "https://tprvyhzpecopryylxznm.supabase.co/functions/v1/forge-onboard-student",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "x-forge-secret", "value": "={{ $env.FORGE_AUTOMATION_SECRET }}" },
+            { "name": "x-forge-secret", "value": "forge123" },
             { "name": "Content-Type", "value": "application/json" }
           ]
         },
@@ -94,34 +94,20 @@
     },
     {
       "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "={{ $env.GOOGLE_SHEET_ID }}",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Logs",
-          "mode": "name"
-        },
-        "columns": {
-          "mappingMode": "autoMapInputData",
-          "matchingColumns": [],
-          "schema": []
-        },
-        "options": {}
-      },
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
-          "name": "Google Sheets Account"
+        "method": "POST",
+        "url": "https://script.google.com/a/macros/leveluplearning.in/s/AKfycbyK9kXm17Ms1eUHKwk-OeeKO_GsEV0GGvHmXIn6ubiSEdK0WohrFIMiDZ6tbJQRIMdX/exec",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "redirect": { "redirect": { "followRedirects": true } },
+          "response": { "response": { "neverError": true, "responseFormat": "text" } }
         }
       },
       "id": "99999999-9999-9999-9999-999999999902",
       "name": "Write Onboard Log",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [1240, 100]
     },
     {
@@ -165,11 +151,11 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://tprvyhzpecopryylxznm.supabase.co/functions/v1/sync-payment-status",
+        "url": "https://tprvyhzpecopryylxznm.supabase.co/functions/v1/sync-payment-status",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "x-forge-secret", "value": "={{ $env.FORGE_AUTOMATION_SECRET }}" },
+            { "name": "x-forge-secret", "value": "forge123" },
             { "name": "Content-Type", "value": "application/json" }
           ]
         },
@@ -196,34 +182,20 @@
     },
     {
       "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "={{ $env.GOOGLE_SHEET_ID }}",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Logs",
-          "mode": "name"
-        },
-        "columns": {
-          "mappingMode": "autoMapInputData",
-          "matchingColumns": [],
-          "schema": []
-        },
-        "options": {}
-      },
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
-          "name": "Google Sheets Account"
+        "method": "POST",
+        "url": "https://script.google.com/a/macros/leveluplearning.in/s/AKfycbyK9kXm17Ms1eUHKwk-OeeKO_GsEV0GGvHmXIn6ubiSEdK0WohrFIMiDZ6tbJQRIMdX/exec",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "redirect": { "redirect": { "followRedirects": true } },
+          "response": { "response": { "neverError": true, "responseFormat": "text" } }
         }
       },
       "id": "99999999-9999-9999-9999-999999999904",
       "name": "Write Payment Log",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [1000, 500]
     }
   ],

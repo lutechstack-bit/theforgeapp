@@ -21,21 +21,25 @@ every 5 minutes and:
 n8n → **Workflows → Import from File** → select
 [`forge-onboarding.workflow.json`](./forge-onboarding.workflow.json).
 
-## 2. Set environment variables on your self-hosted n8n
+## 2. No setup needed — everything is hardcoded ✅
 
-Add these to the n8n process env (e.g. `docker-compose.yml` `environment:` or
-`.env`), then restart n8n:
+This workflow needs **no environment variables and no Google OAuth**. Every value
+is baked into the nodes already:
 
-| Variable | Value |
+| What | Value (already in the JSON) |
 |---|---|
-| `GOOGLE_SHEET_ID` | The sheet's ID (the long string in its URL). Sheet must be shared **"Anyone with the link → Viewer"**. |
-| `GOOGLE_SHEET_TAB` | The tab/sheet name to read (leave blank for the first tab). |
-| `SUPABASE_URL` | `https://tprvyhzpecopryylxznm.supabase.co` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service-role key (Supabase/Lovable → Project Settings → API). **Secret — n8n only.** |
-| `FORGE_AUTOMATION_SECRET` | Must equal the `FORGE_AUTOMATION_SECRET` set on the `forge-onboard-student` edge function. |
+| Source sheet | `1_c4401Lm039N-szlSTjYFzpzhJxqrcrhR6D0n7Eu-AA`, tab `Sheet1` |
+| Supabase URL | `https://tprvyhzpecopryylxznm.supabase.co` |
+| `x-forge-secret` | `forge123` |
+| Log destination | Apps Script Web App (`…/exec`) → appends to the `Logs` tab |
 
-> Self-hosted n8n must be started with `N8N_BLOCK_ENV_ACCESS_IN_NODE=false`
-> (the default) so `{{ $env.* }}` works inside nodes.
+> The source sheet must be shared **"Anyone with the link → Viewer"** so the CSV
+> fetch works without auth.
+>
+> **If anything changes later** — edit it directly in the node:
+> - New secret → update `x-forge-secret` on **Onboard Student** + **Sync Payment Status**.
+> - Redeployed Apps Script → paste the new `…/exec` URL into **Write Onboard Log** + **Write Payment Log**.
+> - Different sheet/tab → update the URL in **Fetch Sheet CSV**.
 
 ## 3. Map your sheet columns (one-time)
 
