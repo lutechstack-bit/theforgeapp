@@ -44,6 +44,9 @@ interface StudentData {
   batch?: string;
   product: string;
   payment_amount?: number;
+  // Direct edition assignment (preferred — e.g. profile already in an edition).
+  // When present and valid, this wins over product_mappings / auto-creation.
+  edition_id?: string;
   // Edition auto-creation fields (only needed for first student of a new edition)
   edition_name?: string;
   edition_city?: string;
@@ -167,6 +170,8 @@ function validateStudentData(body: Record<string, unknown>): { data: StudentData
       batch: (body.batch as string | undefined)?.trim() || undefined,
       product,
       payment_amount: body.payment_amount != null ? Number(body.payment_amount) : 15000,
+      // Direct edition assignment (preferred path)
+      edition_id: (body.edition_id as string | undefined)?.trim() || undefined,
       // Edition auto-creation fields
       edition_name: (body.edition_name as string | undefined)?.trim() || undefined,
       edition_city: (body.edition_city as string | undefined)?.trim() || undefined,
@@ -370,16 +375,36 @@ serve(async (req) => {
       }, 200);
     }
 
-    // ── Resolve product → edition ─────────────────────────────────────────
-    // First try existing product_mappings in config.
+    // ── Resolve edition ───────────────────────────────────────────────────
+    // Priority: (1) explicit edition_id on the payload (e.g. the student is
+    // already assigned to an edition) → (2) product_mappings → (3) auto-create
+    // from edition_name/city/cohort_type. This means onboarding works WITHOUT
+    // any product mapping configured.
+    let edition: Record<string, unknown> | null = null;
+
+    if (studentData.edition_id) {
+      const { data: dbEdition, error: editionErr } = await admin
+        .from('editions')
+        .select('id, name, cohort_type, city, forge_start_date, forge_end_date')
+        .eq('id', studentData.edition_id)
+        .single();
+
+      if (editionErr || !dbEdition) {
+        // Payload pointed at a non-existent edition — fall through to mapping/auto-provision.
+        console.warn(`⚠️  Payload edition_id ${studentData.edition_id} not found — falling back`);
+      } else {
+        edition = dbEdition;
+        console.log(`✅ Resolved by edition_id → ${edition.name}`);
+      }
+    }
+
+    // Fall back to existing product_mappings in config.
     const productMappings = (config.product_mappings || []) as ProductMapping[];
     const existingMapping = productMappings.find(
       (m) => m.product === studentData.product && m.is_active
     );
 
-    let edition: Record<string, unknown> | null = null;
-
-    if (existingMapping) {
+    if (!edition && existingMapping) {
       // Happy path — mapping already exists, just verify edition is still in DB.
       const { data: dbEdition, error: editionErr } = await admin
         .from('editions')

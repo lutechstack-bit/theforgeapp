@@ -13,15 +13,59 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { HtmlEditorPane } from '@/components/admin/email/HtmlEditorPane';
-import { extractTags } from '@/lib/mergeTags';
+import { PreviewIframe } from '@/components/admin/email/PreviewIframe';
+import { MergeTagHelper } from '@/components/admin/email/MergeTagHelper';
+import { extractTags, buildMergeValues, resolveMergeTags } from '@/lib/mergeTags';
+import { wrapInForgeShell, simpleBodyToHtml } from '@/lib/emailShell';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ArrowLeft, History, RotateCcw, Save } from 'lucide-react';
+import { ArrowLeft, History, RotateCcw, Save, Wand2, Code2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const CATEGORIES = ['onboarding', 'reminder', 'announcement', 'alumni'] as const;
 const COHORT_TYPES = ['FORGE', 'FORGE_WRITING', 'FORGE_CREATORS'] as const;
 const FORGE_MODES = ['PRE_FORGE', 'DURING_FORGE', 'POST_FORGE'] as const;
+
+type AuthorMode = 'simple' | 'advanced';
+
+// Simple-mode source is stashed in a hidden HTML comment at the top of
+// html_content so the template round-trips back into the Simple editor.
+// Email clients ignore comments, so it's invisible to recipients.
+const SIMPLE_MARKER = 'FORGE_SIMPLE_V1:';
+
+interface SimpleFields {
+  heading: string;
+  body: string;
+  ctaText: string;
+  ctaUrl: string;
+}
+
+const EMPTY_SIMPLE: SimpleFields = { heading: '', body: '', ctaText: '', ctaUrl: '' };
+
+function encodeSimpleSource(f: SimpleFields): string {
+  // base64 of UTF-8 JSON — safe inside an HTML comment
+  return btoa(unescape(encodeURIComponent(JSON.stringify(f))));
+}
+
+function decodeSimpleSource(html: string): SimpleFields | null {
+  const m = html.match(/<!--FORGE_SIMPLE_V1:([A-Za-z0-9+/=]+)-->/);
+  if (!m) return null;
+  try {
+    return { ...EMPTY_SIMPLE, ...JSON.parse(decodeURIComponent(escape(atob(m[1])))) };
+  } catch {
+    return null;
+  }
+}
+
+/** Builds the full html_content (marker + branded shell) from Simple fields. */
+function buildSimpleHtml(f: SimpleFields): string {
+  const shell = wrapInForgeShell(simpleBodyToHtml(f.body), {
+    heading: f.heading.trim() || undefined,
+    ctaText: f.ctaText.trim() || undefined,
+    ctaUrl: f.ctaUrl.trim() || undefined,
+  });
+  return `<!--${SIMPLE_MARKER}${encodeSimpleSource(f)}-->\n${shell}`;
+}
 
 interface FormState {
   name: string;
@@ -62,6 +106,8 @@ export default function AdminEmailTemplateEdit() {
   const [changeNote, setChangeNote] = useState('');
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [mode, setMode] = useState<AuthorMode>('simple');
+  const [simple, setSimple] = useState<SimpleFields>(EMPTY_SIMPLE);
 
   // Load senders
   const { data: senders = [] } = useQuery({
@@ -104,6 +150,15 @@ export default function AdminEmailTemplateEdit() {
         is_active: existing.is_active ?? true,
       });
       setSlugManuallyEdited(true);
+      // If this template was authored in Simple mode, restore those fields and
+      // reopen in Simple. Otherwise it's hand-written HTML → open in Advanced.
+      const decoded = decodeSimpleSource(existing.html_content || '');
+      if (decoded) {
+        setSimple(decoded);
+        setMode('simple');
+      } else {
+        setMode('advanced');
+      }
     } else if (isNew && senders.length > 0 && !form.default_sender_id) {
       // Default to the seeded default sender for new templates
       const defaultSender = senders.find(s => s.is_default) || senders[0];
@@ -151,10 +206,34 @@ export default function AdminEmailTemplateEdit() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // In Simple mode, html_content is generated from the simple fields so that
+  // save / version / preview all read from one source (form.html_content).
+  useEffect(() => {
+    if (mode !== 'simple') return;
+    const next = buildSimpleHtml(simple);
+    setForm((f) => (f.html_content === next ? f : { ...f, html_content: next }));
+  }, [mode, simple]);
+
   const usedTags = useMemo(
     () => extractTags(`${form.subject} ${form.html_content}`),
     [form.subject, form.html_content]
   );
+
+  // Live preview for Simple mode (resolves merge tags with sample data).
+  const simplePreviewHtml = useMemo(() => {
+    const values = buildMergeValues(sample?.profile || null, sample?.edition || null, {
+      'user.temp_password': '[temp_password at send time]',
+    });
+    return resolveMergeTags(form.html_content, values).rendered;
+  }, [form.html_content, sample]);
+
+  const setSimpleField = <K extends keyof SimpleFields>(key: K, value: SimpleFields[K]) => {
+    setSimple((s) => ({ ...s, [key]: value }));
+  };
+
+  const insertTagIntoBody = (snippet: string) => {
+    setSimple((s) => ({ ...s, body: `${s.body}${snippet}` }));
+  };
 
   // Save -----------------------------------------------------------------
   const saveMutation = useMutation({
@@ -319,6 +398,14 @@ export default function AdminEmailTemplateEdit() {
                             preview_text: v.preview_text || '',
                             html_content: v.html_content,
                           }));
+                          // Reopen in the mode the restored version was authored in.
+                          const decoded = decodeSimpleSource(v.html_content || '');
+                          if (decoded) {
+                            setSimple(decoded);
+                            setMode('simple');
+                          } else {
+                            setMode('advanced');
+                          }
                           setChangeNote(`Restored from v${v.version}`);
                           setShowHistory(false);
                           toast.info(`Loaded v${v.version} into editor — save to publish`);
@@ -463,18 +550,101 @@ export default function AdminEmailTemplateEdit() {
         </CardContent>
       </Card>
 
-      {/* HTML editor + preview */}
+      {/* Body editor + preview */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">HTML body &amp; preview</CardTitle>
+        <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-base">Email body &amp; preview</CardTitle>
+          {/* Simple / Advanced toggle */}
+          <div className="inline-flex rounded-lg border border-border/60 p-0.5 bg-muted/30">
+            <button
+              type="button"
+              onClick={() => setMode('simple')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                mode === 'simple' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Wand2 className="h-3.5 w-3.5" /> Simple
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('advanced')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                mode === 'advanced' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Code2 className="h-3.5 w-3.5" /> Advanced HTML
+            </button>
+          </div>
         </CardHeader>
         <CardContent>
-          <HtmlEditorPane
-            html={form.html_content}
-            onChange={(html) => setField('html_content', html)}
-            sampleProfile={sample?.profile}
-            sampleEdition={sample?.edition}
-          />
+          {mode === 'simple' ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Left: simple authoring fields */}
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <Label>Heading</Label>
+                  <Input
+                    value={simple.heading}
+                    onChange={(e) => setSimpleField('heading', e.target.value)}
+                    placeholder="Welcome, {{user.first_name}}."
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Body</Label>
+                  <Textarea
+                    value={simple.body}
+                    onChange={(e) => setSimpleField('body', e.target.value)}
+                    placeholder={
+                      'Write in plain text. Leave a blank line between paragraphs.\n\nUse **bold**, [links](https://…), and start lines with "- " for bullets.\n\nMerge tags like {{user.first_name}} and {{edition.name}} work too.'
+                    }
+                    className="min-h-[320px] leading-relaxed"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Plain text. Blank line = new paragraph · <code>**bold**</code> ·
+                    <code>[text](url)</code> · <code>- bullet</code>
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label>Button text (optional)</Label>
+                    <Input
+                      value={simple.ctaText}
+                      onChange={(e) => setSimpleField('ctaText', e.target.value)}
+                      placeholder="Open The Forge App →"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Button link (optional)</Label>
+                    <Input
+                      value={simple.ctaUrl}
+                      onChange={(e) => setSimpleField('ctaUrl', e.target.value)}
+                      placeholder="https://app.forgebylevelup.com"
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                </div>
+                <MergeTagHelper onInsert={insertTagIntoBody} usedTags={usedTags} />
+              </div>
+              {/* Right: live preview */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Live preview</Label>
+                  <p className="text-[11px] text-muted-foreground">Rendered with sample data</p>
+                </div>
+                <PreviewIframe
+                  html={simplePreviewHtml}
+                  className="w-full h-full min-h-[520px] rounded-lg bg-white border border-border/40"
+                />
+              </div>
+            </div>
+          ) : (
+            <HtmlEditorPane
+              html={form.html_content}
+              onChange={(html) => setField('html_content', html)}
+              sampleProfile={sample?.profile}
+              sampleEdition={sample?.edition}
+            />
+          )}
         </CardContent>
       </Card>
     </div>
