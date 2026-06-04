@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase as supabaseTyped } from '@/integrations/supabase/client';
@@ -36,7 +36,7 @@ const SHEET_NAME_KEY = 'forge_sheet_name';
 interface SheetRow   { [key: string]: string }
 interface SheetData  { headers: string[]; rows: SheetRow[] }
 interface Edition    { id: string; name: string; cohort_type: string; is_archived: boolean }
-interface ColMap     { name: string; email: string; phone: string; city: string; payment: string }
+interface ColMap     { name: string; email: string; phone: string; city: string; payment: string; amount: string }
 
 interface OnboardResult {
   row: SheetRow;
@@ -99,6 +99,7 @@ function guessColMap(headers: string[]): ColMap {
     phone:   find(/phone|mobile|contact/i),
     city:    find(/city|location|place/i),
     payment: find(/payment.?status|payment|paid|balance|fee.?status/i),
+    amount:  find(/amount.?paid|paid.?amount|amount|amount.?received/i),
   };
 }
 
@@ -194,6 +195,27 @@ function OnboardDialog({
   const [colMap, setColMap]         = useState<ColMap>(() => guessColMap(headers));
   const [results, setResults]       = useState<OnboardResult[] | null>(null);
   const [step, setStep]             = useState<'config' | 'done'>('config');
+  const [programmeTotal, setProgrammeTotal] = useState(''); // ₹ — drives balance_due
+
+  // Pull the selected edition's default programme total to pre-fill the field.
+  const { data: editionDefaults } = useQuery<{ programme_total: number; default_deposit: number; deposit_label: string | null; payment_link: string | null; default_deadline: string | null } | null>({
+    queryKey: ['payment-defaults', editionId],
+    enabled: !!editionId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('payment_defaults')
+        .select('programme_total, default_deposit, deposit_label, payment_link, default_deadline')
+        .eq('edition_id', editionId)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (editionDefaults?.programme_total && !programmeTotal) {
+      setProgrammeTotal(String(editionDefaults.programme_total));
+    }
+  }, [editionDefaults]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onboardMutation = useMutation({
     mutationFn: async () => {
@@ -216,6 +238,12 @@ function OnboardDialog({
         const isFullyPaid = ['balance', 'full', '50000', '50,000', 'completed', 'paid in full']
           .some(v => payRaw.includes(v));
         const payment_status = isFullyPaid ? 'BALANCE_PAID' : 'CONFIRMED_15K';
+
+        // Exact rupees paid (from the sheet's amount column) → deposit_paid.
+        const amountPaid = parseInt(colVal(colMap.amount).replace(/[^0-9]/g, ''), 10) || 0;
+        const total = parseInt((programmeTotal || '').replace(/[^0-9]/g, ''), 10) || 0;
+        const depositPaid = amountPaid || (isFullyPaid ? total : 15000);
+        const balanceDue = total > 0 ? Math.max(0, total - depositPaid) : null;
 
         if (!email) {
           out.push({ row, name, email, status: 'failed', error: 'No email found in selected column' });
@@ -247,7 +275,26 @@ function OnboardDialog({
               out.push({ row, name, email, status: 'failed', error: msg });
             }
           } else {
-            out.push({ row, name, email, status: 'success', userId: res.data?.user?.id });
+            const userId = res.data?.user?.id;
+            // Populate exact-amount payment_config so the student sees the right balance.
+            if (userId && (total > 0 || amountPaid > 0)) {
+              try {
+                await supabase.from('payment_config').upsert({
+                  user_id: userId,
+                  programme_total: total || depositPaid,
+                  deposit_paid: depositPaid,
+                  balance_due: balanceDue,
+                  deposit_label: editionDefaults?.deposit_label || 'Slot confirmation fee',
+                  payment_link: editionDefaults?.payment_link || null,
+                  payment_deadline: editionDefaults?.default_deadline || null,
+                  is_deposit_verified: true,
+                  updated_at: new Date().toISOString(),
+                }, { onConflict: 'user_id' });
+              } catch (pcErr) {
+                console.error('payment_config upsert failed (non-fatal):', pcErr);
+              }
+            }
+            out.push({ row, name, email, status: 'success', userId });
           }
         } catch (e: any) {
           out.push({ row, name, email, status: 'failed', error: e.message });
@@ -323,9 +370,24 @@ function OnboardDialog({
                 <ColSelect field="phone"   label="Phone" />
                 <ColSelect field="city"    label="City" />
                 <ColSelect field="payment" label="Payment status" />
+                <ColSelect field="amount"  label="Amount paid (₹)" />
               </div>
               <p className="text-[11px] text-muted-foreground">
                 Payment: "balance/full/completed" → full access (BALANCE_PAID); anything else → ₹15k confirmed. No column → ₹15k confirmed.
+              </p>
+            </div>
+
+            {/* Programme total → drives each student's balance */}
+            <div className="space-y-1.5">
+              <Label className="text-sm">Programme total (₹)</Label>
+              <Input
+                type="number"
+                placeholder="e.g. 65000"
+                value={programmeTotal}
+                onChange={(e) => setProgrammeTotal(e.target.value)}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Balance shown to each student = this total − amount paid. {editionDefaults?.programme_total ? `Pre-filled from this edition's default (₹${editionDefaults.programme_total}).` : 'Set this so balances display. Tip: set per-edition defaults in Admin → Payments.'}
               </p>
             </div>
 
@@ -333,7 +395,7 @@ function OnboardDialog({
             <div className="space-y-1">
               <p className="text-xs font-medium text-muted-foreground">Preview — first selected student</p>
               <div className="bg-muted/30 rounded p-3 text-xs space-y-1 font-mono">
-                {(['name','email','phone','city','payment'] as (keyof ColMap)[]).map(f => (
+                {(['name','email','phone','city','payment','amount'] as (keyof ColMap)[]).map(f => (
                   colMap[f] && colMap[f] !== '__skip__' ? (
                     <div key={f} className="flex gap-2">
                       <span className="text-muted-foreground w-12">{f}:</span>
