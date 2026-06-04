@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 import { Plus, Edit, Loader2, Calendar, Archive, ArchiveRestore, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -78,7 +79,7 @@ export default function AdminEditions() {
 
   // Create edition mutation
   const createMutation = useMutation({
-    mutationFn: async (data: { name: string; city: string; cohort_type: 'FFM' | 'FW' | 'FC'; forge_start_date?: string; forge_end_date?: string; online_start_date?: string; online_end_date?: string }) => {
+    mutationFn: async (data: { name: string; city: string; cohort_type: 'FFM' | 'FW' | 'FC' | 'FAI'; forge_start_date?: string; forge_end_date?: string; online_start_date?: string; online_end_date?: string }) => {
       const { error } = await supabase.from('editions').insert(data);
       if (error) throw error;
     },
@@ -95,7 +96,7 @@ export default function AdminEditions() {
 
   // Update edition mutation
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; name: string; city: string; cohort_type: 'FFM' | 'FW' | 'FC'; forge_start_date?: string; forge_end_date?: string; online_start_date?: string; online_end_date?: string }) => {
+    mutationFn: async ({ id, ...data }: { id: string; name: string; city: string; cohort_type: 'FFM' | 'FW' | 'FC' | 'FAI'; forge_start_date?: string; forge_end_date?: string; online_start_date?: string; online_end_date?: string }) => {
       const { error } = await supabase.from('editions').update(data).eq('id', id);
       if (error) throw error;
     },
@@ -436,7 +437,7 @@ export default function AdminEditions() {
   );
 }
 
-type CohortType = 'FFM' | 'FW' | 'FC';
+type CohortType = 'FFM' | 'FW' | 'FC' | 'FAI';
 
 function EditionDialog({
   open,
@@ -461,7 +462,15 @@ function EditionDialog({
     online_end_date: ''
   });
 
+  const [nameError, setNameError] = useState('');
   const showOnlineDate = formData.cohort_type === 'FFM' || formData.cohort_type === 'FC';
+
+  // Edition name is now just an E-number (e.g. "E7"). The cohort/program comes
+  // from Cohort Type, and the app shows the full name. Normalise "7"/"e7"/"E 7" → "E7".
+  const normalizeEditionName = (raw: string) => {
+    const m = (raw || '').match(/(\d+)/);
+    return m ? `E${m[1]}` : (raw || '').trim();
+  };
 
   React.useEffect(() => {
     if (edition) {
@@ -481,10 +490,16 @@ function EditionDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const name = normalizeEditionName(formData.name);
+    if (!/^E\d+$/.test(name)) {
+      setNameError('Enter just the edition number, e.g. E7 (the cohort comes from Cohort Type below).');
+      return;
+    }
+    setNameError('');
     onSubmit({
-      name: formData.name,
+      name,
       city: formData.city,
-      cohort_type: formData.cohort_type as 'FFM' | 'FW' | 'FC',
+      cohort_type: formData.cohort_type as 'FFM' | 'FW' | 'FC' | 'FAI',
       forge_start_date: formData.forge_start_date || undefined,
       forge_end_date: formData.forge_end_date || undefined,
       online_start_date: showOnlineDate && formData.online_start_date ? formData.online_start_date : undefined,
@@ -499,12 +514,17 @@ function EditionDialog({
           <DialogTitle>{edition ? 'Edit Edition' : 'Create Edition'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <FloatingInput
-            label="Name *"
-            required
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          />
+          <div>
+            <FloatingInput
+              label="Edition number — e.g. E7 *"
+              required
+              value={formData.name}
+              onChange={(e) => { setFormData({ ...formData, name: e.target.value }); if (nameError) setNameError(''); }}
+            />
+            <p className={cn('mt-1 text-xs', nameError ? 'text-destructive' : 'text-muted-foreground')}>
+              {nameError || 'Just the number (E7). The program name comes from Cohort Type below.'}
+            </p>
+          </div>
           <FloatingInput
             label="City *"
             required
@@ -521,9 +541,10 @@ function EditionDialog({
                 <SelectValue placeholder="Select cohort type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="FFM">Forge (Filmmaking)</SelectItem>
-                <SelectItem value="FW">Forge Writing</SelectItem>
-                <SelectItem value="FC">Forge Creators</SelectItem>
+                <SelectItem value="FFM">Forge Filmmaking Bootcamp</SelectItem>
+                <SelectItem value="FW">Forge Writing Retreat</SelectItem>
+                <SelectItem value="FC">Forge Creator Residency</SelectItem>
+                <SelectItem value="FAI">Forge AI Residency</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -551,8 +572,9 @@ function EditionDialog({
               onChange={(e) => setFormData({ ...formData, forge_start_date: e.target.value })}
             />
             <FloatingInput
-              label="Bootcamp End"
+              label="Bootcamp End *"
               type="date"
+              required
               value={formData.forge_end_date}
               onChange={(e) => setFormData({ ...formData, forge_end_date: e.target.value })}
             />
