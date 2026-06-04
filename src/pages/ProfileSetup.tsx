@@ -140,7 +140,18 @@ const ProfileSetup: React.FC = () => {
 
   const selectedEdition = editions?.find(e => e.id === formData.edition_id);
   const hasPreAssignedEdition = !!profile?.edition_id;
-  const preAssignedEdition = editions?.find(e => e.id === profile?.edition_id);
+  // Resolve the assigned edition DIRECTLY by id (not from the filtered picker list),
+  // so a student assigned to a past / other-cohort edition still sees their locked
+  // "Enrolled" card instead of falling through to the picker.
+  const { data: assignedEdition } = useQuery({
+    queryKey: ['my-assigned-edition', profile?.edition_id],
+    enabled: !!profile?.edition_id,
+    queryFn: async () => {
+      const { data } = await supabase.from('editions').select('*').eq('id', profile!.edition_id!).maybeSingle();
+      return data as Edition | null;
+    },
+  });
+  const preAssignedEdition = editions?.find(e => e.id === profile?.edition_id) || assignedEdition || undefined;
 
   const handleSubmit = async () => {
     if (!user) return;
