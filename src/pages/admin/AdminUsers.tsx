@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { editionLabel } from '@/lib/editions';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit, Loader2, Trash2, AlertTriangle, Upload, Users, LayoutGrid, List, Download, Crown, IndianRupee, FileSpreadsheet, FileUp, UserMinus, Mail, UserCheck, Send } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
@@ -1716,7 +1717,7 @@ export default function AdminUsers() {
                 <SelectItem value="none">No Edition Assigned ({unassignedCount})</SelectItem>
                 {allEditions?.map(edition => (
                   <SelectItem key={edition.id} value={edition.id}>
-                    {edition.name} ({editionUserCounts.get(edition.id) || 0})
+                    {editionLabel(edition)} ({editionUserCounts.get(edition.id) || 0})
                     {edition.is_archived ? ' [Archived]' : ''}
                   </SelectItem>
                 ))}
@@ -2020,7 +2021,7 @@ export default function AdminUsers() {
               <SelectContent>
                 {allEditions?.map(ed => (
                   <SelectItem key={ed.id} value={ed.id}>
-                    {ed.name} {ed.is_archived ? '[Archived]' : ''}
+                    {editionLabel(ed)} {ed.is_archived ? '[Archived]' : ''}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -2129,7 +2130,7 @@ export default function AdminUsers() {
                   <SelectContent>
                     <SelectItem value="none">— No edition / Waitlist —</SelectItem>
                     {editions?.filter(e => !e.is_archived).map(ed => (
-                      <SelectItem key={ed.id} value={ed.id}>{ed.name}</SelectItem>
+                      <SelectItem key={ed.id} value={ed.id}>{editionLabel(ed)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -2616,7 +2617,7 @@ function CreateUserDialog({
               <SelectContent>
                 {editions.map((edition) => (
                   <SelectItem key={edition.id} value={edition.id}>
-                    {edition.name}
+                    {editionLabel(edition)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -2829,7 +2830,7 @@ function EditUserDialog({
               <SelectContent>
                 {editions.map((edition) => (
                   <SelectItem key={edition.id} value={edition.id}>
-                    {edition.name}
+                    {editionLabel(edition)}
                   </SelectItem>
                 ))}
               </SelectContent>
