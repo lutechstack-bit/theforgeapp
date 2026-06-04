@@ -417,13 +417,31 @@ serve(async (req) => {
       }
     }
 
-    // Fall back to existing product_mappings in config.
+    // Resolve by explicit edition NAME next — authoritative for sheet/TeleCRM
+    // onboarding, so "…E19" and "…E20" each get their own edition instead of all
+    // collapsing into a single per-product mapping.
+    if (!edition && studentData.edition_name) {
+      const { data: namedEdition } = await admin
+        .from('editions')
+        .select('id, name, cohort_type, city, forge_start_date, forge_end_date')
+        .eq('name', studentData.edition_name)
+        .limit(1)
+        .maybeSingle();
+      if (namedEdition) {
+        edition = namedEdition as Record<string, unknown>;
+        console.log(`✅ Resolved by edition_name → ${edition.name}`);
+      }
+    }
+
+    // Fall back to existing product_mappings in config — ONLY when no explicit
+    // edition_name was supplied (otherwise the name wins and a new edition is
+    // auto-created below).
     const productMappings = (config.product_mappings || []) as ProductMapping[];
     const existingMapping = productMappings.find(
       (m) => m.product === studentData.product && m.is_active
     );
 
-    if (!edition && existingMapping) {
+    if (!edition && !studentData.edition_name && existingMapping) {
       // Happy path — mapping already exists, just verify edition is still in DB.
       const { data: dbEdition, error: editionErr } = await admin
         .from('editions')
