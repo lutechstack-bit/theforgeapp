@@ -67,12 +67,16 @@ const ProfileSetup: React.FC = () => {
   const { data: editions, isLoading: editionsLoading } = useQuery({
     queryKey: ['active-editions', myCohort],
     queryFn: async () => {
+      const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
       let q = supabase
         .from('editions')
         .select('*')
         .eq('is_archived', false);
       // Filter to the student's cohort when known (fall back to all if not set).
       if (myCohort) q = q.eq('cohort_type', myCohort);
+      // Only show UPCOMING / ongoing cohorts — hide ones whose offline (Forge)
+      // end date has already passed. Editions with no end date (Dates TBD) still show.
+      q = q.or(`forge_end_date.is.null,forge_end_date.gte.${today}`);
       const { data, error } = await q.order('forge_start_date', { ascending: true });
       if (error) throw error;
       return data as Edition[];
