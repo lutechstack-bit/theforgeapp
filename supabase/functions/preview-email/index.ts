@@ -29,6 +29,8 @@ function daysUntil(iso?: string | null) {
 
 function buildMergeValues(profile: any, edition: any, overrides?: Record<string, string>) {
   const fullName = profile?.full_name || '';
+  const fn = firstName(fullName) || 'Student';
+  const computedTempPassword = `${fn}@Forge!`; // firstName() is already Title Cased here
   return {
     'user.first_name': firstName(fullName),
     'user.last_name': lastName(fullName),
@@ -36,7 +38,7 @@ function buildMergeValues(profile: any, edition: any, overrides?: Record<string,
     'user.email': profile?.email || '',
     'user.phone': profile?.phone || '',
     'user.city': profile?.city || '',
-    'user.temp_password': overrides?.temp_password || '[temp_password will be set at send time]',
+    'user.temp_password': overrides?.temp_password || computedTempPassword,
     'edition.name': edition?.name || '',
     'edition.cohort_type': edition?.cohort_type || '',
     'edition.city': edition?.city || '',

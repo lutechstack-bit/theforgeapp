@@ -66,6 +66,11 @@ function buildMergeValues(
   overrides?: Record<string, string>
 ): MergeValues {
   const fullName = (profile?.full_name as string) || '';
+  // Deterministic temp password "Firstname@Forge!" (matches account creation),
+  // so the onboarding template's {{user.temp_password}} fills on manual/audience
+  // sends too — not just automated onboarding (which passes it via overrides).
+  const fn = firstName(fullName) || 'Student';
+  const computedTempPassword = `${fn.charAt(0).toUpperCase()}${fn.slice(1).toLowerCase()}@Forge!`;
   return {
     'user.first_name': firstName(fullName),
     'user.last_name': lastName(fullName),
@@ -73,7 +78,7 @@ function buildMergeValues(
     'user.email': (profile?.email as string) || '',
     'user.phone': (profile?.phone as string) || '',
     'user.city': (profile?.city as string) || '',
-    'user.temp_password': overrides?.temp_password || '',
+    'user.temp_password': overrides?.temp_password || computedTempPassword,
     'edition.name': (edition?.name as string) || '',
     'edition.cohort_type': (edition?.cohort_type as string) || '',
     'edition.city': (edition?.city as string) || '',
