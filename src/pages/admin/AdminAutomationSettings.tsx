@@ -281,6 +281,7 @@ export default function AdminAutomationSettings() {
           <Select
             value={form.welcome_template_slug}
             onValueChange={(v) => updateForm('welcome_template_slug', v)}
+          >
             <SelectTrigger className="max-w-[360px]">
               <SelectValue placeholder="Select a template…" />
             </SelectTrigger>
