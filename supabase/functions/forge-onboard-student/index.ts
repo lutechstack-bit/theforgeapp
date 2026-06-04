@@ -75,6 +75,8 @@ interface AutomationConfig {
   notification_email: string | null;
   // Admin-selected welcome email template (by slug). Falls back to 'student-welcome'.
   welcome_template_slug: string | null;
+  // When false, the app does NOT send the Resend welcome email (e.g. n8n sends via Gmail).
+  send_welcome_email: boolean | null;
 }
 
 // ═══════════════════════ Helpers ═════════════════════════════════════════════
@@ -542,10 +544,14 @@ serve(async (req) => {
     }
 
     // ── Send welcome email ─────────────────────────────────────────────────
+    // Admins can turn the app's Resend welcome email OFF (e.g. when n8n sends
+    // the email via Gmail instead) via onboarding_automation_config.send_welcome_email.
     let emailSent = false;
     let emailMessageId: string | undefined;
 
-    if (resendApiKey) {
+    const appEmailEnabled = config.send_welcome_email !== false;
+
+    if (resendApiKey && appEmailEnabled) {
       try {
         // Which template to send is admin-controlled via
         // onboarding_automation_config.welcome_template_slug (falls back to 'student-welcome').

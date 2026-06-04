@@ -1,0 +1,56 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// ── Build the Forge confirmation + app-credentials email ──────────────\n// Reads the student fields coming from \"Map TeleCRM Fields\" (full_name, email,\n// phone, product…) and produces email_to / email_subject / email_html for the\n// Gmail node. Password is the same Firstname@Forge! the app account uses.\n//\n// >>> EDIT these two links once: <<<\nconst GUIDE_URL    = 'https://YOUR-WELCOME-GUIDE-LINK';\nconst COMMUNITY_WA = 'https://chat.whatsapp.com/YOUR-COMMUNITY-LINK';\nconst APP_URL      = 'https://app.forgebylevelup.com/auth';\n\nreturn $input.all().map(item => {\n  const j = item.json;\n  const fullName  = (j.full_name || '').trim();\n  const firstRaw  = fullName.split(/\\s+/)[0] || 'there';\n  const firstName = firstRaw.charAt(0).toUpperCase() + firstRaw.slice(1).toLowerCase();\n  const display   = fullName || firstName;\n  const email     = j.email || '';\n  const phone     = j.phone || '';\n  const password  = `${firstName}@Forge!`;\n\n  const html = `\n<div style=\"font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:560px;margin:0 auto;color:#222;font-size:15px;line-height:1.7;\">\n  <p>Dear ${display},</p>\n  <p>Welcome to <strong>The Forge Filmmaking Bootcamp!</strong> Congratulations — your seat is officially confirmed!</p>\n  <p>Your confirmation payment has locked in your spot, and you're now part of a tribe of dreamers-turned-doers who are about to live, breathe, and create cinema together.</p>\n  <p>At Forge, you don't just learn filmmaking — you live it. From script to screen, you'll write, direct, shoot, and edit your very own short film alongside passionate creators from across the country. Over fifteen days online and offline, you'll collaborate, experiment, and tell the stories you've always wanted to — and discover what it truly means to be a filmmaker.</p>\n\n  <h3 style=\"margin:24px 0 8px;\">Here's what happens next</h3>\n\n  <p><strong>Your Welcome Guide</strong><br/>\n  We've prepared a Welcome Guide that walks you through what to expect — from your daily schedule to a sneak peek of the experience that awaits. <a href=\"${GUIDE_URL}\">Click here to view your Welcome Guide.</a> Trust us, it'll get you excited!</p>\n\n  <div style=\"background:#f6f6f4;border:1px solid #e5e5e5;border-radius:10px;padding:16px 20px;margin:20px 0;\">\n    <p style=\"margin:0 0 8px;\"><strong>Your Forge App access</strong></p>\n    <p style=\"margin:0 0 10px;\">The Forge App is your command center — learning, community, your roadmap and full journey, all in one place. Your account is ready:</p>\n    <p style=\"margin:0;\">🔗 Login: <a href=\"${APP_URL}\">${APP_URL}</a><br/>\n    📧 Email: <strong>${email}</strong><br/>\n    🔑 Password: <strong>${password}</strong></p>\n    <p style=\"margin:10px 0 0;font-size:13px;color:#555;\">Prefer not to type a password? You can also log in with a one-time OTP sent to your registered phone number${phone ? ` (${phone})` : ''} — just tap &ldquo;Login with OTP&rdquo; on the login screen. You can change your password anytime after your first login.</p>\n  </div>\n\n  <p><strong>Join the Inner Circle</strong><br/>\n  You're now part of the LevelUp Inner Circle — your private creator community to connect with mentors, alumni, and batchmates, plus online discussions, workshops, and invites to exclusive events and productions.</p>\n\n  <p><strong>Balance Payment</strong><br/>\n  Details about your balance payment, venue, and dates will be shared in the next email — stay tuned.</p>\n\n  <p>Here's the link to the Community WhatsApp Group: <a href=\"${COMMUNITY_WA}\">Join the Forge Community</a>. You'll also be added to your Edition WhatsApp Group closer to the program start.</p>\n\n  <p>Any doubts about what's next — or anything at all — feel free to reach out:<br/>\n  Email: forge@leveluplearning.in<br/>\n  WhatsApp: Hiresh — 9840203604 (Program Lead) | Pranaush — 7397468193 (Head of Admissions)</p>\n\n  <p>Our alumni call the Forge a once-in-a-lifetime experience, so brace yourself!</p>\n  <p>And get ready to Lights, Camera, and Forge!</p>\n  <p>Your Loudest Cheerleader,<br/>Team Forge by LevelUp Learning</p>\n</div>`;\n\n  return { json: {\n    ...j,\n    temp_password: password,\n    email_to: email,\n    email_subject: `Your Forge seat is confirmed, ${firstName}! 🎬`,\n    email_html: html,\n  }};\n});"
+      },
+      "id": "aaaaaaa1-0000-0000-0000-000000000001",
+      "name": "Build Welcome Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email_to }}",
+        "subject": "={{ $json.email_subject }}",
+        "emailType": "html",
+        "message": "={{ $json.email_html }}",
+        "options": {
+          "appendAttribution": false,
+          "replyTo": "forge@leveluplearning.in"
+        }
+      },
+      "id": "aaaaaaa1-0000-0000-0000-000000000002",
+      "name": "Send Welcome Email (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1240,
+        300
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REPLACE_WITH_YOUR_GMAIL_CREDENTIAL",
+          "name": "Gmail (forge@leveluplearning.in)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Build Welcome Email": {
+      "main": [
+        [
+          {
+            "node": "Send Welcome Email (Gmail)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -28,6 +28,7 @@ interface AutomationConfig {
   notify_on_failure: boolean;
   notification_email: string | null;
   welcome_template_slug: string | null;
+  send_welcome_email: boolean | null;
   updated_at: string | null;
 }
 
@@ -38,6 +39,7 @@ interface FormState {
   notify_on_failure: boolean;
   notification_email: string;
   welcome_template_slug: string;
+  send_welcome_email: boolean;
 }
 
 const DEFAULT_WELCOME_SLUG = 'student-welcome';
@@ -55,6 +57,7 @@ export default function AdminAutomationSettings() {
     notify_on_failure: true,
     notification_email: '',
     welcome_template_slug: DEFAULT_WELCOME_SLUG,
+    send_welcome_email: true,
   });
   const [isDirty, setIsDirty] = useState(false);
 
@@ -95,6 +98,7 @@ export default function AdminAutomationSettings() {
         notify_on_failure: config.notify_on_failure,
         notification_email: config.notification_email ?? '',
         welcome_template_slug: config.welcome_template_slug || DEFAULT_WELCOME_SLUG,
+        send_welcome_email: config.send_welcome_email !== false,
       });
       setIsDirty(false);
     }
@@ -125,6 +129,7 @@ export default function AdminAutomationSettings() {
           notify_on_failure: form.notify_on_failure,
           notification_email: form.notification_email.trim() || null,
           welcome_template_slug: form.welcome_template_slug || DEFAULT_WELCOME_SLUG,
+          send_welcome_email: form.send_welcome_email,
           updated_at: new Date().toISOString(),
           updated_by: user?.id ?? null,
         })
@@ -149,6 +154,7 @@ export default function AdminAutomationSettings() {
       notify_on_failure: config.notify_on_failure,
       notification_email: config.notification_email ?? '',
       welcome_template_slug: config.welcome_template_slug || DEFAULT_WELCOME_SLUG,
+      send_welcome_email: config.send_welcome_email !== false,
     });
     setIsDirty(false);
   };
@@ -253,10 +259,28 @@ export default function AdminAutomationSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Master toggle: app (Resend) email on/off */}
+          <div className="flex items-center justify-between gap-3 mb-4 pb-4 border-b">
+            <div>
+              <Label htmlFor="send-welcome" className="cursor-pointer select-none font-medium">
+                Send welcome email from the app
+              </Label>
+              <p className="text-xs text-muted-foreground mt-0.5 max-w-md">
+                On = the app sends the welcome email via Resend. <strong>Turn OFF</strong> if n8n
+                sends the confirmation email (via Gmail) instead — prevents students getting two emails.
+              </p>
+            </div>
+            <Switch
+              id="send-welcome"
+              checked={form.send_welcome_email}
+              onCheckedChange={(v) => updateForm('send_welcome_email', v)}
+            />
+          </div>
+
+          <Label className="text-xs text-muted-foreground">Template used when the app sends</Label>
           <Select
             value={form.welcome_template_slug}
             onValueChange={(v) => updateForm('welcome_template_slug', v)}
-          >
             <SelectTrigger className="max-w-[360px]">
               <SelectValue placeholder="Select a template…" />
             </SelectTrigger>
