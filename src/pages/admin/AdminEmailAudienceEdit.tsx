@@ -33,6 +33,7 @@ const COHORT_OPTIONS = [
   { value: 'FFM', label: 'Forge Filmmaking' },
   { value: 'FW', label: 'Forge Writing' },
   { value: 'FC', label: 'Forge Creators' },
+  { value: 'FAI', label: 'Forge AI' },
 ];
 
 const FORGE_MODE_OPTIONS = [
@@ -222,6 +223,7 @@ export default function AdminEmailAudienceEdit() {
   const [kyState, setKyState] = useState<TriState>('any');
   const [photoState, setPhotoState] = useState<TriState>('any');
   const [cities, setCities] = useState<string[]>([]);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
   // Load existing audience for edit
@@ -422,6 +424,18 @@ export default function AdminEmailAudienceEdit() {
 
           <Separator />
 
+          {/* Advanced filters — hidden by default to keep the common case (pick a
+              cohort / edition) clean. */}
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((s) => !s)}
+            className="text-xs font-medium text-primary hover:underline"
+          >
+            {showAdvanced ? '− Hide advanced filters' : '+ Show advanced filters (Forge mode, onboarding, KY form, photo, city)'}
+          </button>
+
+          {showAdvanced && (
+          <>
           <div className="space-y-2">
             <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Forge Mode
@@ -477,6 +491,8 @@ export default function AdminEmailAudienceEdit() {
                 <BadgeToggle options={cityOptions} selected={cities} onChange={setCities} />
               </div>
             </>
+          )}
+          </>
           )}
         </CardContent>
       </Card>
