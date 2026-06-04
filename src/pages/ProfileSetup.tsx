@@ -61,14 +61,19 @@ const ProfileSetup: React.FC = () => {
   const { user, profile, refreshProfile, signOut } = useAuth();
   const { toast } = useToast();
 
+  // The student's cohort is set during onboarding (from TeleCRM product).
+  // Only show editions that belong to their cohort so they pick the right one.
+  const myCohort = (profile as any)?.cohort_type as string | undefined;
   const { data: editions, isLoading: editionsLoading } = useQuery({
-    queryKey: ['active-editions'],
+    queryKey: ['active-editions', myCohort],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from('editions')
         .select('*')
-        .eq('is_archived', false)
-        .order('forge_start_date', { ascending: true });
+        .eq('is_archived', false);
+      // Filter to the student's cohort when known (fall back to all if not set).
+      if (myCohort) q = q.eq('cohort_type', myCohort);
+      const { data, error } = await q.order('forge_start_date', { ascending: true });
       if (error) throw error;
       return data as Edition[];
     }

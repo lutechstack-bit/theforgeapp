@@ -372,17 +372,20 @@ serve(async (req) => {
     console.log(`📋 Processing: ${studentData.email} | product: ${studentData.product}`);
 
     // ── Duplicate check ───────────────────────────────────────────────────
+    // A student is "already onboarded" once their profile has a cohort_type set
+    // (the edition is now chosen by the student on first login, so we no longer
+    // key duplicate detection off edition_id).
     const { data: existingProfiles } = await admin
       .from('profiles')
-      .select('id, full_name, edition_id')
+      .select('id, full_name, edition_id, cohort_type')
       .eq('email', studentData.email)
-      .not('edition_id', 'is', null);
+      .not('cohort_type', 'is', null);
 
     if (existingProfiles && existingProfiles.length > 0) {
       console.log(`⚠️  Duplicate: ${studentData.email}`);
       await logOnboardingAttempt(admin, studentData, null, {
         status: 'duplicate',
-        error_message: 'Account already exists with an edition assigned',
+        error_message: 'Account already onboarded (cohort already assigned)',
         created_user_id: existingProfiles[0].id,
         trigger_source: triggerSource,
         triggered_by: triggeredBy,
@@ -458,23 +461,16 @@ serve(async (req) => {
       }
     }
 
+    // Edition is OPTIONAL. If an edition_name was supplied but doesn't exist yet,
+    // auto-create it. Otherwise leave edition null — the student picks their own
+    // edition (filtered to their cohort) on first login. Onboarding never "skips"
+    // for a missing edition anymore.
+    if (!edition && studentData.edition_name) {
+      const { edition: provisioned } = await autoProvisionEdition(admin, config, studentData);
+      if (provisioned) edition = provisioned;
+    }
     if (!edition) {
-      // No valid mapping — try to auto-provision from sheet data.
-      const { edition: provisioned, error: provisionErr } = await autoProvisionEdition(
-        admin, config, studentData
-      );
-
-      if (provisionErr || !provisioned) {
-        await logOnboardingAttempt(admin, studentData, null, {
-          status: 'skipped',
-          error_message: provisionErr ?? 'Could not resolve or create edition',
-          trigger_source: triggerSource,
-          triggered_by: triggeredBy,
-        });
-        return json({ error: provisionErr ?? 'Edition not found', status: 'skipped' }, 400);
-      }
-
-      edition = provisioned;
+      console.log(`ℹ️  No edition resolved — ${studentData.email} will pick one on first login.`);
     }
 
     // ── Create auth user (idempotent) ─────────────────────────────────────
@@ -550,7 +546,8 @@ serve(async (req) => {
         full_name: studentData.full_name,
         phone: studentData.phone ?? null,
         city: studentData.city ?? null,
-        edition_id: edition.id,
+        cohort_type: studentData.cohort_type,
+        edition_id: edition?.id ?? null,
         payment_status: 'CONFIRMED_15K',
         unlock_level: 'PREVIEW',
         profile_setup_completed: false,
@@ -672,15 +669,16 @@ serve(async (req) => {
       triggered_by: triggeredBy,
     });
 
-    console.log(`🎉 Onboarded ${studentData.full_name} → ${edition.name} [${userAction}]`);
+    console.log(`🎉 Onboarded ${studentData.full_name} → ${edition?.name ?? '(no edition — picks on login)'} [${userAction}]`);
 
     return json({
       success: true,
       status: 'success',
       action: userAction,
       user_id: userId,
-      edition: { id: edition.id, name: edition.name, cohort_type: edition.cohort_type },
-      edition_created: !existingMapping,
+      cohort_type: studentData.cohort_type,
+      edition: edition ? { id: edition.id, name: edition.name, cohort_type: edition.cohort_type } : null,
+      edition_created: !!edition && !existingMapping,
       email_sent: emailSent,
       message: userAction === 'created'
         ? 'Student account created and onboarded successfully'

@@ -96,7 +96,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Build one audit-log row from the Build payload + the onboarding response.\nconst b = $('Build Email Payload').first().json;\nlet onboarded = 'n/a';\ntry {\n  const r = $('Onboard Student').first().json || {};\n  onboarded = r.status || r.error || 'n/a';\n} catch (e) { onboarded = 'n/a'; }\n\nreturn [{ json: {\n  'Timestamp':  new Date().toISOString().replace('T', ' ').slice(0, 19),\n  'Email':      b.toEmail    || '',\n  'Name':       b.toName     || '',\n  'Product':    b.productCode || '',\n  'Program':    b.programName || '',\n  'Amount':     b.amount     || '',\n  'Password':   b.password   || '',\n  'Onboarded':  onboarded,\n  'EmailSent':  'sent',\n  'Subject':    b.subject    || ''\n}}];"
+        "jsCode": "// Build one audit-log row matching the sheet columns:\n// Timestamp | Email | Name | Edition | Payment | Product | Action | Status | Details\nconst b = $('Build Email Payload').first().json;\nlet onboarded = 'n/a';\ntry { const r = $('Onboard Student').first().json || {}; onboarded = r.status || r.error || 'n/a'; } catch (e) {}\n\nreturn [{ json: {\n  'Timestamp': new Date().toISOString().replace('T', ' ').slice(0, 19),\n  'Email':    b.toEmail     || '',\n  'Name':     b.toName      || '',\n  'Edition':  b.editionName  || '',\n  'Payment':  b.amount      || '',\n  'Product':  b.productCode || '',\n  'Action':   'Onboarding (TeleCRM)',\n  'Status':   onboarded,\n  'Details':  b.subject     || ''\n}}];"
       },
       "id": "n5",
       "name": "Prep Log Row",
