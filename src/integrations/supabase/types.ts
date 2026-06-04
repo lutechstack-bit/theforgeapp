@@ -2523,6 +2523,7 @@ export type Database = {
           notify_on_failure: boolean | null
           notify_on_success: boolean | null
           product_mappings: Json | null
+          send_welcome_email: boolean
           updated_at: string | null
           updated_by: string | null
           welcome_template_slug: string
@@ -2536,6 +2537,7 @@ export type Database = {
           notify_on_failure?: boolean | null
           notify_on_success?: boolean | null
           product_mappings?: Json | null
+          send_welcome_email?: boolean
           updated_at?: string | null
           updated_by?: string | null
           welcome_template_slug?: string
@@ -2549,6 +2551,7 @@ export type Database = {
           notify_on_failure?: boolean | null
           notify_on_success?: boolean | null
           product_mappings?: Json | null
+          send_welcome_email?: boolean
           updated_at?: string | null
           updated_by?: string | null
           welcome_template_slug?: string
