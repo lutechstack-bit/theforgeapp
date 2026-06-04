@@ -89,6 +89,9 @@ const ProfileSetup: React.FC = () => {
         ...prev,
         full_name: user.user_metadata?.full_name || profile?.full_name || prev.full_name,
         email: user.email || prev.email,
+        // Pre-fill phone + city from onboarding so the student doesn't re-type them.
+        phone: prev.phone || (profile?.phone as string) || '',
+        city: prev.city || (profile?.city as string) || '',
         avatar_url: profile?.avatar_url || prev.avatar_url,
         edition_id: profile?.edition_id || prev.edition_id,
       }));
