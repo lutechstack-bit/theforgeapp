@@ -544,6 +544,7 @@ serve(async (req) => {
       .from('profiles')
       .update({
         full_name: studentData.full_name,
+        email: studentData.email, // ensure profiles.email is set (audiences/sends filter on it)
         phone: studentData.phone ?? null,
         city: studentData.city ?? null,
         cohort_type: studentData.cohort_type,

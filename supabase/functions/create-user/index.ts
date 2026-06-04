@@ -177,6 +177,7 @@ serve(async (req) => {
       .from('profiles')
       .update({
         full_name,
+        email, // ensure profiles.email is set — email audiences/sends filter on it
         phone,
         city,
         edition_id,
