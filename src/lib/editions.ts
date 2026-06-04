@@ -18,13 +18,20 @@ export const COHORT_SHORT_NAMES: Record<string, string> = {
   FAI: 'Forge AI',
 };
 
-/** "Forge Writing Retreat - E7" (cohort + short edition name). */
+/**
+ * "Forge Writing Retreat - E7" (cohort + short edition name).
+ * Robust against both states: if the stored name still contains the full program
+ * text (pre-rename, e.g. "Forge Creator Residency - E6") it's returned as-is, so
+ * we never double-prefix.
+ */
 export function editionLabel(
   edition?: { name?: string | null; cohort_type?: string | null } | null,
 ): string {
   if (!edition) return '';
   const cohort = COHORT_FULL_NAMES[edition.cohort_type || ''] || '';
   const name = (edition.name || '').trim();
-  if (cohort && name) return `${cohort} - ${name}`;
-  return name || cohort || 'Edition';
+  if (!name) return cohort || 'Edition';
+  // Name already has a program/cohort prefix → don't prepend again.
+  if (!cohort || /forge/i.test(name)) return name;
+  return `${cohort} - ${name}`;
 }

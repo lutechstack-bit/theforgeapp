@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase as supabaseTyped } from '@/integrations/supabase/client';
+import { editionLabel } from '@/lib/editions';
 const supabase = supabaseTyped as any;
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -334,7 +335,7 @@ function OnboardDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {editions.filter(e => !e.is_archived).map(e => (
-                    <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                    <SelectItem key={e.id} value={e.id}>{editionLabel(e)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -743,7 +744,7 @@ export default function AdminSheetViewer() {
             {activeEditions.map(e => (
               <button key={e.id} onClick={() => setEditionFilter(editionFilter === e.id ? ALL : e.id)}
                 className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${editionFilter === e.id ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 font-semibold' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
-                {e.name} ({editionRowCounts.get(e.id) ?? 0})
+                {editionLabel(e)} ({editionRowCounts.get(e.id) ?? 0})
               </button>
             ))}
             {(editionRowCounts.get('__none__') ?? 0) > 0 && (
