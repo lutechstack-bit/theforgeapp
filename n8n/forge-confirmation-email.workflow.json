@@ -4,7 +4,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "forge-confirmation-email",
+        "path": "forge-telecrm",
         "responseMode": "onReceived",
         "options": {}
       },
@@ -49,7 +49,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ student_id: $json.toEmail, email: $json.toEmail, full_name: $json.toName, phone: $json.phone, product: $json.productCode, payment_amount: 15000, cohort_type: $json.productCode }) }}",
+        "jsonBody": "={{ JSON.stringify({ student_id: $('Build Email Payload').first().json.toEmail, email: $('Build Email Payload').first().json.toEmail, full_name: $('Build Email Payload').first().json.toName, phone: $('Build Email Payload').first().json.phone, product: $('Build Email Payload').first().json.productCode, payment_amount: 15000, cohort_type: $('Build Email Payload').first().json.productCode }) }}",
         "options": {
           "response": {
             "response": {
@@ -70,10 +70,10 @@
     },
     {
       "parameters": {
-        "sendTo": "={{ $('Build Email Payload').item.json.toEmail }}",
-        "subject": "={{ $('Build Email Payload').item.json.subject }}",
+        "sendTo": "={{ $('Build Email Payload').first().json.toEmail }}",
+        "subject": "={{ $('Build Email Payload').first().json.subject }}",
         "emailType": "html",
-        "message": "={{ $('Build Email Payload').item.json.bodyHtml }}",
+        "message": "={{ $('Build Email Payload').first().json.bodyHtml }}",
         "options": {
           "appendAttribution": false,
           "replyTo": "forge@leveluplearning.in"
@@ -96,7 +96,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Build one audit-log row from the Build payload + the onboarding response.\nconst b = $('Build Email Payload').item.json;\nlet onboarded = 'n/a';\ntry {\n  const r = $('Onboard Student').item.json || {};\n  onboarded = r.status || r.error || 'n/a';\n} catch (e) { onboarded = 'n/a'; }\n\nreturn [{ json: {\n  'Timestamp':  new Date().toISOString().replace('T', ' ').slice(0, 19),\n  'Email':      b.toEmail    || '',\n  'Name':       b.toName     || '',\n  'Product':    b.productCode || '',\n  'Program':    b.programName || '',\n  'Amount':     b.amount     || '',\n  'Password':   b.password   || '',\n  'Onboarded':  onboarded,\n  'EmailSent':  'sent',\n  'Subject':    b.subject    || ''\n}}];"
+        "jsCode": "// Build one audit-log row from the Build payload + the onboarding response.\nconst b = $('Build Email Payload').first().json;\nlet onboarded = 'n/a';\ntry {\n  const r = $('Onboard Student').first().json || {};\n  onboarded = r.status || r.error || 'n/a';\n} catch (e) { onboarded = 'n/a'; }\n\nreturn [{ json: {\n  'Timestamp':  new Date().toISOString().replace('T', ' ').slice(0, 19),\n  'Email':      b.toEmail    || '',\n  'Name':       b.toName     || '',\n  'Product':    b.productCode || '',\n  'Program':    b.programName || '',\n  'Amount':     b.amount     || '',\n  'Password':   b.password   || '',\n  'Onboarded':  onboarded,\n  'EmailSent':  'sent',\n  'Subject':    b.subject    || ''\n}}];"
       },
       "id": "n5",
       "name": "Prep Log Row",
