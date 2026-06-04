@@ -213,6 +213,10 @@ function OnboardDialog({
           continue;
         }
 
+        // Temp password = Firstname@Forge!  (matches the welcome-email convention).
+        const firstName = (name || '').trim().split(/\s+/)[0] || 'Student';
+        const password = `${firstName.charAt(0).toUpperCase()}${firstName.slice(1).toLowerCase()}@Forge!`;
+
         try {
           const res = await supabase.functions.invoke('create-user', {
             body: {
@@ -220,6 +224,7 @@ function OnboardDialog({
               email,
               phone,
               city,
+              password,
               edition_id: editionId || undefined,
               payment_status: 'CONFIRMED_15K',
             },
