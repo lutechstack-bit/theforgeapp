@@ -3004,6 +3004,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           city: string | null
+          cohort_type: Database["public"]["Enums"]["cohort_type"] | null
           created_at: string
           edition_id: string | null
           email: string | null
@@ -3030,6 +3031,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
+          cohort_type?: Database["public"]["Enums"]["cohort_type"] | null
           created_at?: string
           edition_id?: string | null
           email?: string | null
@@ -3056,6 +3058,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
+          cohort_type?: Database["public"]["Enums"]["cohort_type"] | null
           created_at?: string
           edition_id?: string | null
           email?: string | null
