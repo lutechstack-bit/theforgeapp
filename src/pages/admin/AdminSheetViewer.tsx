@@ -36,7 +36,7 @@ const SHEET_NAME_KEY = 'forge_sheet_name';
 interface SheetRow   { [key: string]: string }
 interface SheetData  { headers: string[]; rows: SheetRow[] }
 interface Edition    { id: string; name: string; cohort_type: string; is_archived: boolean }
-interface ColMap     { name: string; email: string; phone: string; city: string }
+interface ColMap     { name: string; email: string; phone: string; city: string; payment: string }
 
 interface OnboardResult {
   row: SheetRow;
@@ -94,10 +94,11 @@ async function fetchSheetData(sheetId: string, sheetName: string): Promise<Sheet
 function guessColMap(headers: string[]): ColMap {
   const find = (patterns: RegExp) => headers.find(h => patterns.test(h)) ?? '';
   return {
-    name:  find(/full.?name|student.?name|name/i),
-    email: find(/email|mail/i),
-    phone: find(/phone|mobile|contact/i),
-    city:  find(/city|location|place/i),
+    name:    find(/full.?name|student.?name|name/i),
+    email:   find(/email|mail/i),
+    phone:   find(/phone|mobile|contact/i),
+    city:    find(/city|location|place/i),
+    payment: find(/payment.?status|payment|paid|balance|fee.?status/i),
   };
 }
 
@@ -208,6 +209,14 @@ function OnboardDialog({
         const phone = colVal(colMap.phone);
         const city  = colVal(colMap.city);
 
+        // Read payment status from the sheet (Razorpay-fed). Full/balance paid →
+        // BALANCE_PAID (FULL access); anything else (deposit/15k/confirmed) →
+        // CONFIRMED_15K. Falls back to CONFIRMED_15K when no payment column is mapped.
+        const payRaw = colVal(colMap.payment).toLowerCase();
+        const isFullyPaid = ['balance', 'full', '50000', '50,000', 'completed', 'paid in full']
+          .some(v => payRaw.includes(v));
+        const payment_status = isFullyPaid ? 'BALANCE_PAID' : 'CONFIRMED_15K';
+
         if (!email) {
           out.push({ row, name, email, status: 'failed', error: 'No email found in selected column' });
           continue;
@@ -226,7 +235,7 @@ function OnboardDialog({
               city,
               password,
               edition_id: editionId || undefined,
-              payment_status: 'CONFIRMED_15K',
+              payment_status,
             },
           });
 
@@ -309,18 +318,22 @@ function OnboardDialog({
               <p className="text-sm font-medium">Map sheet columns → student fields</p>
               <p className="text-xs text-muted-foreground">We auto-detected these — adjust if wrong.</p>
               <div className="grid grid-cols-2 gap-2">
-                <ColSelect field="name"  label="Full name *" />
-                <ColSelect field="email" label="Email *" />
-                <ColSelect field="phone" label="Phone" />
-                <ColSelect field="city"  label="City" />
+                <ColSelect field="name"    label="Full name *" />
+                <ColSelect field="email"   label="Email *" />
+                <ColSelect field="phone"   label="Phone" />
+                <ColSelect field="city"    label="City" />
+                <ColSelect field="payment" label="Payment status" />
               </div>
+              <p className="text-[11px] text-muted-foreground">
+                Payment: "balance/full/completed" → full access (BALANCE_PAID); anything else → ₹15k confirmed. No column → ₹15k confirmed.
+              </p>
             </div>
 
             {/* Preview */}
             <div className="space-y-1">
               <p className="text-xs font-medium text-muted-foreground">Preview — first selected student</p>
               <div className="bg-muted/30 rounded p-3 text-xs space-y-1 font-mono">
-                {(['name','email','phone','city'] as (keyof ColMap)[]).map(f => (
+                {(['name','email','phone','city','payment'] as (keyof ColMap)[]).map(f => (
                   colMap[f] && colMap[f] !== '__skip__' ? (
                     <div key={f} className="flex gap-2">
                       <span className="text-muted-foreground w-12">{f}:</span>
