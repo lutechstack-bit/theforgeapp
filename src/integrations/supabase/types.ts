@@ -2525,6 +2525,7 @@ export type Database = {
           product_mappings: Json | null
           updated_at: string | null
           updated_by: string | null
+          welcome_template_slug: string
         }
         Insert: {
           created_at?: string | null
@@ -2537,6 +2538,7 @@ export type Database = {
           product_mappings?: Json | null
           updated_at?: string | null
           updated_by?: string | null
+          welcome_template_slug?: string
         }
         Update: {
           created_at?: string | null
@@ -2549,6 +2551,7 @@ export type Database = {
           product_mappings?: Json | null
           updated_at?: string | null
           updated_by?: string | null
+          welcome_template_slug?: string
         }
         Relationships: []
       }
