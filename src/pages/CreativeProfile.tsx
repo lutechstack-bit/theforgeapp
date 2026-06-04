@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
@@ -70,6 +70,7 @@ type Work = {
   role: string;
   thumb: string;
   status?: 'new' | 'featured';
+  description?: string;
 };
 
 // --- Page ---
@@ -78,6 +79,7 @@ const CreativeProfile: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<'works' | 'about' | 'credits' | 'gigs'>('works');
 
   const { data: creative, isLoading } = useQuery({
     queryKey: ['creative-profile', id],
@@ -162,7 +164,22 @@ const CreativeProfile: React.FC = () => {
         year: w.year ? String(w.year) : '',
         role: '—',
         thumb: craftThumbs[w.work_type] || craftThumbs['Film'],
+        description: w.description || '',
       }));
+    },
+  });
+
+  // Gigs this person has posted (for the "Gigs posted" tab)
+  const { data: gigs = [] } = useQuery({
+    queryKey: ['creative-gigs', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('gigs')
+        .select('id, title, description, budget, location, gig_type, pay_type, status, created_at')
+        .eq('user_id', id!)
+        .order('created_at', { ascending: false });
+      return data || [];
     },
   });
 
@@ -339,14 +356,31 @@ const CreativeProfile: React.FC = () => {
         <section className="col-span-12 lg:col-span-8">
           {/* Sub-nav tabs */}
           <div className="mt-4 flex items-end justify-between border-b border-border/40">
-            <ul className="flex gap-8">
-              <li><button className="relative pb-3 text-sm font-semibold text-foreground">
-                Works
-                <span className="absolute -bottom-px left-0 right-0 h-[2px] bg-primary shadow-[0_0_8px_hsl(41_100%_62%/0.7)]" />
-              </button></li>
-              <li><button className="pb-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">About</button></li>
-              <li><button className="pb-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Credits</button></li>
-              <li><button className="pb-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Gigs posted</button></li>
+            <ul className="flex gap-6 sm:gap-8">
+              {([
+                ['works', 'Works'],
+                ['about', 'About'],
+                ['credits', 'Credits'],
+                ['gigs', 'Gigs posted'],
+              ] as const).map(([key, label]) => {
+                const active = activeTab === key;
+                return (
+                  <li key={key}>
+                    <button
+                      onClick={() => setActiveTab(key)}
+                      className={cn(
+                        'relative pb-3 text-sm transition-colors',
+                        active ? 'font-semibold text-foreground' : 'font-medium text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      {label}
+                      {active && (
+                        <span className="absolute -bottom-px left-0 right-0 h-[2px] bg-primary shadow-[0_0_8px_hsl(41_100%_62%/0.7)]" />
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
             <div className="hidden sm:flex items-center gap-2 pb-3 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               <span>Sort:</span>
@@ -356,40 +390,145 @@ const CreativeProfile: React.FC = () => {
             </div>
           </div>
 
-          <h2 className="mt-6 text-2xl font-semibold text-foreground">
-            Works
-            <span className="ml-3 text-sm font-normal text-muted-foreground">— shot, cut, scored, or shipped by {c.name.split(' ')[0]}.</span>
-          </h2>
+          {/* ── Works tab ──────────────────────────────────────────── */}
+          {activeTab === 'works' && (
+            <>
+              <h2 className="mt-6 text-2xl font-semibold text-foreground">
+                Works
+                <span className="ml-3 text-sm font-normal text-muted-foreground">— shot, cut, scored, or shipped by {c.name.split(' ')[0]}.</span>
+              </h2>
 
-          {works.length === 0 ? (
-            <div className="mt-6 flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-border/50 bg-card/30">
-              <p className="text-lg font-semibold text-foreground mb-1">No works yet</p>
-              <p className="text-sm text-muted-foreground">{c.name.split(' ')[0]} hasn't added any works to their profile.</p>
-            </div>
-          ) : (
-            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
-              {works.map((w, i) => (
-                <WorkCard key={w.id} w={w} feature={i === 0} />
-              ))}
+              {works.length === 0 ? (
+                <EmptyTab title="No works yet" body={`${c.name.split(' ')[0]} hasn't added any works to their profile.`} />
+              ) : (
+                <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  {works.map((w, i) => (
+                    <WorkCard key={w.id} w={w} feature={i === 0} />
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-dashed border-border/50 bg-card/30 p-6">
+                <div>
+                  <div className="text-sm font-semibold text-foreground">Want to see more of {c.name.split(' ')[0]}&apos;s work?</div>
+                  <div className="mt-1 text-xs text-muted-foreground">Request a private reel — shows unlisted projects and works-in-progress.</div>
+                </div>
+                <button className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors">
+                  Request reel <ArrowUpRight className="h-4 w-4" />
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* ── About tab ──────────────────────────────────────────── */}
+          {activeTab === 'about' && (
+            <div className="mt-6 space-y-8">
+              <div>
+                <h2 className="text-2xl font-semibold text-foreground">About {c.name.split(' ')[0]}</h2>
+                {c.about ? (
+                  <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground whitespace-pre-line">{c.about}</p>
+                ) : (
+                  <EmptyTab title="Nothing here yet" body={`${c.name.split(' ')[0]} hasn't written a bio yet.`} />
+                )}
+              </div>
+
+              {c.occupations.length > 0 && (
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Crafts</div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {c.occupations.map((o: string) => (
+                      <span key={o} className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/30 px-3 py-1.5 text-xs font-medium text-foreground">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />{o}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {c.cohort && <InfoRow label="Cohort" value={c.cohort} />}
+                {c.city && <InfoRow label="Based in" value={c.city} />}
+                {c.email && <InfoRow label="Email" value={c.email} />}
+                {c.instagram && <InfoRow label="Instagram" value={`@${c.instagram}`} />}
+              </div>
             </div>
           )}
 
-          {/* Empty CTA at bottom */}
-          <div className="mt-10 flex items-center justify-between rounded-2xl border border-dashed border-border/50 bg-card/30 p-6">
-            <div>
-              <div className="text-sm font-semibold text-foreground">Want to see more of {c.name.split(' ')[0]}&apos;s work?</div>
-              <div className="mt-1 text-xs text-muted-foreground">Request a private reel — shows unlisted projects and works-in-progress.</div>
+          {/* ── Credits tab ────────────────────────────────────────── */}
+          {activeTab === 'credits' && (
+            <div className="mt-6">
+              <h2 className="text-2xl font-semibold text-foreground">Credits</h2>
+              {works.length === 0 ? (
+                <EmptyTab title="No credits yet" body={`${c.name.split(' ')[0]} hasn't listed any credits.`} />
+              ) : (
+                <ul className="mt-6 divide-y divide-border/40 rounded-2xl border border-border/40 bg-card/40">
+                  {works.map((w) => (
+                    <li key={w.id} className="flex items-center justify-between gap-4 px-5 py-4">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-foreground">{w.title}</div>
+                        {w.description && <div className="mt-0.5 truncate text-xs text-muted-foreground">{w.description}</div>}
+                      </div>
+                      <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
+                        <span className="rounded-full border border-border/60 px-2.5 py-1 uppercase tracking-[0.15em]">{w.type}</span>
+                        {w.year && <span>{w.year}</span>}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-            <button className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors">
-              Request reel <ArrowUpRight className="h-4 w-4" />
-            </button>
-          </div>
+          )}
+
+          {/* ── Gigs posted tab ────────────────────────────────────── */}
+          {activeTab === 'gigs' && (
+            <div className="mt-6">
+              <h2 className="text-2xl font-semibold text-foreground">Gigs posted</h2>
+              {gigs.length === 0 ? (
+                <EmptyTab title="No gigs posted" body={`${c.name.split(' ')[0]} hasn't posted any gigs yet.`} />
+              ) : (
+                <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {gigs.map((g: any) => (
+                    <article key={g.id} className="rounded-2xl border border-border/40 bg-card/60 p-5 transition-colors hover:border-primary/40">
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="text-base font-semibold text-foreground">{g.title}</h3>
+                        {g.status && (
+                          <span className="shrink-0 rounded-full border border-border/60 px-2.5 py-1 text-[10px] uppercase tracking-[0.15em] text-muted-foreground">{g.status}</span>
+                        )}
+                      </div>
+                      {g.description && <p className="mt-2 text-sm leading-relaxed text-muted-foreground line-clamp-3">{g.description}</p>}
+                      <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                        {g.location && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{g.location}</span>}
+                        {g.budget && <span>{g.pay_type ? `${g.pay_type}: ` : ''}{g.budget}</span>}
+                        {g.gig_type && <span className="rounded-full border border-border/60 px-2 py-0.5">{g.gig_type}</span>}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </section>
       </main>
     </div>
   );
 };
 
+
+// --- Shared empty state for tabs ---
+const EmptyTab: React.FC<{ title: string; body: string }> = ({ title, body }) => (
+  <div className="mt-6 flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-border/50 bg-card/30">
+    <p className="mb-1 text-lg font-semibold text-foreground">{title}</p>
+    <p className="text-sm text-muted-foreground">{body}</p>
+  </div>
+);
+
+// --- Labelled info row (About tab) ---
+const InfoRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div className="rounded-xl border border-border/40 bg-card/40 px-4 py-3">
+    <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">{label}</div>
+    <div className="mt-1 truncate text-sm font-medium text-foreground">{value}</div>
+  </div>
+);
 
 // --- Work card ---
 const WorkCard: React.FC<{ w: Work; feature?: boolean }> = ({ w, feature }) => (

@@ -88,9 +88,9 @@ const BatchmateCard: React.FC<BatchmateCardProps> = ({ member, headshot, cardKey
           </div>
         )}
 
-        {/* Text overlay — pinned to bottom */}
+        {/* Text overlay — pinned to bottom. Name wraps to 2 lines so it isn't clipped. */}
         <div className="absolute bottom-0 left-0 right-0 px-2.5 pb-2.5 pt-6">
-          <p className="text-[13px] font-bold text-white leading-tight truncate">
+          <p className="text-[13px] font-bold text-white leading-tight line-clamp-2">
             {firstName}
             {lastName && (
               <span className="font-normal text-white/70"> {lastName}</span>
