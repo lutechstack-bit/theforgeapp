@@ -68,17 +68,12 @@ export function wrapInForgeShell(bodyHtml: string, opts: ForgeShellOptions = {})
 </head>
 <body>
 <div class="wrap">
-  <div class="logo">the <span>Forge</span></div>
   ${preheaderBlock}
   ${heroBlock}
   <div class="body-content">
 ${bodyHtml}
   </div>
   ${ctaBlock}
-  <hr class="divider" />
-  <div class="footer">
-    <p>The Forge by LevelUp Learning · <a href="https://leveluplearning.in">leveluplearning.in</a></p>
-  </div>
 </div>
 </body>
 </html>`;
