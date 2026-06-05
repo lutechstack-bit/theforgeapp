@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { editionLabel } from '@/lib/editions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -579,7 +580,7 @@ const AdminRoadmapSidebar: React.FC = () => {
     if (editionIds.length === 0) return 'All Editions';
     if (editionIds.length === 1) {
       const edition = editions?.find(e => e.id === editionIds[0]);
-      return edition ? edition.name : '1 edition';
+      return edition ? editionLabel(edition) : '1 edition';
     }
     return `${editionIds.length} editions`;
   };
@@ -626,7 +627,7 @@ const AdminRoadmapSidebar: React.FC = () => {
                 <SelectContent>
                   <SelectItem value="all">All Editions</SelectItem>
                   {editions?.map(edition => (
-                    <SelectItem key={edition.id} value={edition.id}>{edition.name}</SelectItem>
+                    <SelectItem key={edition.id} value={edition.id}>{editionLabel(edition)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -882,7 +883,7 @@ const AdminRoadmapSidebar: React.FC = () => {
                           checked={contentForm.edition_ids.includes(edition.id)}
                           onCheckedChange={() => handleContentEditionToggle(edition.id)}
                         />
-                        <span className="text-sm">{edition.name}</span>
+                        <span className="text-sm">{editionLabel(edition)}</span>
                       </div>
                     ))}
                   </div>
@@ -899,7 +900,7 @@ const AdminRoadmapSidebar: React.FC = () => {
                         className="text-xs cursor-pointer"
                         onClick={() => handleContentEditionToggle(id)}
                       >
-                        {edition.name}
+                        {editionLabel(edition)}
                         <X className="w-3 h-3 ml-1" />
                       </Badge>
                     ) : null;
@@ -1047,7 +1048,7 @@ const AdminRoadmapSidebar: React.FC = () => {
                           checked={stayForm.edition_ids.includes(edition.id)}
                           onCheckedChange={() => handleStayEditionToggle(edition.id)}
                         />
-                        <span className="text-sm">{edition.name} ({edition.city})</span>
+                        <span className="text-sm">{editionLabel(edition)} ({edition.city})</span>
                       </label>
                     ))}
                   </ScrollArea>
@@ -1059,7 +1060,7 @@ const AdminRoadmapSidebar: React.FC = () => {
                       const edition = editions?.find(e => e.id === id);
                       return edition ? (
                         <Badge key={id} variant="secondary" className="gap-1 text-xs">
-                          {edition.name}
+                          {editionLabel(edition)}
                           <X 
                             className="w-3 h-3 cursor-pointer" 
                             onClick={() => handleStayEditionToggle(id)} 
