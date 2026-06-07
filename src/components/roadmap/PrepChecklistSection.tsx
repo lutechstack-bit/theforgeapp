@@ -119,7 +119,7 @@ const PrepChecklistSection: React.FC<PrepChecklistSectionProps> = ({
           const categoryCompleted = categoryItems.filter(item => completedIds.has(item.id)).length;
           
           return (
-            <Card key={category} id={`prep-${category}`} className="glass-card overflow-hidden transition-all duration-500">
+            <Card key={category} id={`prep-${category}`} className="glass-card overflow-hidden transition duration-500">
               {/* Category Header */}
               <div className="flex items-center justify-between p-4 border-b border-border/30 bg-secondary/30">
                 <div className="flex items-center gap-3">

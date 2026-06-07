@@ -45,7 +45,7 @@ export const PullToRefreshWrapper: React.FC<PullToRefreshWrapperProps> = ({
         <div
           className={cn(
             'flex flex-col items-center gap-1 text-xs text-muted-foreground',
-            'transition-all duration-200'
+            'transition duration-200'
           )}
         >
           {isComplete ? (

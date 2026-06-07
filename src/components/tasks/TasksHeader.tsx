@@ -70,7 +70,7 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
             key={filter.key}
             onClick={() => onFilterChange(filter.key)}
             className={cn(
-              "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+              "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition",
               "border",
               activeFilter === filter.key
                 ? "bg-primary text-primary-foreground border-primary"

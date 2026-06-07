@@ -36,7 +36,7 @@ const LiveSessionCard: React.FC = () => {
       onClick={() => navigate(`/live-session/${session.id}`)}
       className="w-full text-left group"
     >
-      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-4 sm:p-5 transition-all hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 active:scale-[0.99]">
+      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-4 sm:p-5 transition hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 active:scale-[0.99]">
         <div className="flex items-start gap-4">
           <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${isLive ? 'bg-red-500/20' : 'bg-primary/20'}`}>
             {isLive ? <Radio className="w-6 h-6 text-red-400 animate-pulse" /> : <Video className="w-6 h-6 text-primary" />}

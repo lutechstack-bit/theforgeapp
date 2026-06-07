@@ -57,7 +57,7 @@ const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
               className={cn(
                 "flex-shrink-0 flex items-center justify-center gap-1.5",
                 "px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-full text-[11px] sm:text-sm font-medium",
-                "border transition-all duration-200",
+                "border transition duration-200",
                 active
                   ? "bg-primary text-primary-foreground border-primary shadow-sm"
                   : "bg-transparent text-muted-foreground border-border/50 hover:bg-secondary/50 hover:text-foreground"

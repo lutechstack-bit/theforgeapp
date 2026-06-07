@@ -177,7 +177,7 @@ const NightlyRitualSection: React.FC<NightlyRitualSectionProps> = ({ currentDayN
                             <label
                               key={item.id}
                               className={cn(
-                                "flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200",
+                                "flex items-start gap-3 p-3 rounded-lg cursor-pointer transition duration-200",
                                 "hover:bg-white/5",
                                 isCompleted && "bg-white/5"
                               )}
@@ -193,7 +193,7 @@ const NightlyRitualSection: React.FC<NightlyRitualSectionProps> = ({ currentDayN
                               />
                               <div className="flex-1 min-w-0">
                                 <p className={cn(
-                                  "text-sm font-medium transition-all duration-200",
+                                  "text-sm font-medium transition duration-200",
                                   isCompleted 
                                     ? "text-slate-400 line-through" 
                                     : "text-white"

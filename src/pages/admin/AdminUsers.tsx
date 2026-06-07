@@ -307,7 +307,7 @@ function CohortCard({
 
   return (
     <Card
-      className={`cursor-pointer transition-all hover:border-forge-gold/50 hover:shadow-lg ${
+      className={`cursor-pointer transition hover:border-forge-gold/50 hover:shadow-lg ${
         isSelected ? 'border-forge-gold ring-2 ring-forge-gold/30' :
         variant === 'waitlist' ? 'border-amber-500/50 border-dashed' : 'border-border/50'
       } ${edition?.is_archived ? 'opacity-60' : ''}`}

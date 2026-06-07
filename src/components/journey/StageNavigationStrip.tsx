@@ -51,7 +51,7 @@ export const StageNavigationStrip: React.FC<StageNavigationStripProps> = ({
                   {/* Inner dot */}
                   <div
                     className={cn(
-                      'w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300',
+                      'w-6 h-6 rounded-full flex items-center justify-center transition duration-300',
                       isCompleted && 'bg-emerald-500 text-white',
                       isCurrent && 'bg-primary text-primary-foreground shadow-lg shadow-primary/30',
                       isUpcoming && 'bg-muted/50 text-muted-foreground',

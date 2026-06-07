@@ -110,7 +110,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           size="icon"
           disabled={(!message.trim() && !imageFile) || disabled || sending}
           className={cn(
-            "shrink-0 transition-all duration-200",
+            "shrink-0 transition duration-200",
             (message.trim() || imageFile) && !sending
               ? "bg-primary hover:bg-primary/90 scale-100"
               : "bg-muted scale-95"

@@ -40,7 +40,7 @@ const EquipmentCard: React.FC<EquipmentCardProps> = ({ equipment }) => {
   const specsLine = equipment.specs?.slice(0, 3).join(' • ') || '';
 
   return (
-    <div className="group relative rounded-2xl overflow-hidden bg-card border border-[#FFBF00]/20 transition-all duration-300">
+    <div className="group relative rounded-2xl overflow-hidden bg-card border border-[#FFBF00]/20 transition duration-300">
       {/* Product Image Container - Clean White/Light Background */}
       <div className={`aspect-square relative overflow-hidden bg-gradient-to-br ${gradientClass}`}>
         {/* Subtle gradient backdrop */}

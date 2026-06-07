@@ -42,7 +42,7 @@ export const TopProfileDropdown: React.FC = () => {
     : (effectiveCohortType ? cohortLabelMap[effectiveCohortType] || 'The Forge' : 'The Forge');
 
   return (
-    <div className="transition-all duration-300">
+    <div className="transition duration-300">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
@@ -50,7 +50,7 @@ export const TopProfileDropdown: React.FC = () => {
             data-tour="profile-menu"
             className={cn(
               "flex items-center gap-2 rounded-lg border border-white/20 bg-black/40 backdrop-blur-md px-3 py-1.5",
-              "transition-all duration-300 focus:outline-none",
+              "transition duration-300 focus:outline-none",
               "hover:bg-black/50 hover:border-white/30",
               isProfileActive && "border-white/40"
             )}

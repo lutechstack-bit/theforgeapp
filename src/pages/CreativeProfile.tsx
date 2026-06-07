@@ -533,7 +533,7 @@ const InfoRow: React.FC<{ label: string; value: string }> = ({ label, value }) =
 // --- Work card ---
 const WorkCard: React.FC<{ w: Work; feature?: boolean }> = ({ w, feature }) => (
   <article className={cn(
-    'group relative overflow-hidden rounded-2xl border border-border/40 bg-card transition-all hover:border-primary/40 hover:-translate-y-0.5',
+    'group relative overflow-hidden rounded-2xl border border-border/40 bg-card transition hover:border-primary/40 hover:-translate-y-0.5',
     feature && 'sm:col-span-2'
   )}>
     <div className={cn('relative overflow-hidden', feature ? 'aspect-[16/8]' : 'aspect-video')}>

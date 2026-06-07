@@ -45,7 +45,7 @@ export const StickyProgressBar: React.FC<StickyProgressBarProps> = ({
   return (
     <div
       className={cn(
-        'fixed top-14 left-0 right-0 z-30 transition-all duration-300',
+        'fixed top-14 left-0 right-0 z-30 transition duration-300',
         'bg-background/95 backdrop-blur-sm border-b border-border',
         'px-4 py-2 safe-area-pt',
         isVisible

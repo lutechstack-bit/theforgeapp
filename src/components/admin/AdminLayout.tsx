@@ -180,7 +180,7 @@ export const AdminLayout: React.FC = () => {
       end={item.end}
       className={({ isActive }) =>
         cn(
-          'flex items-center gap-3 rounded-lg transition-all duration-200 text-sm',
+          'flex items-center gap-3 rounded-lg transition duration-200 text-sm',
           'hover:bg-primary/10',
           collapsed ? 'justify-center px-3 py-2.5' : 'px-3 py-2.5 pl-10',
           isActive ? 'bg-primary/20 text-primary font-medium' : 'text-muted-foreground'
@@ -196,7 +196,7 @@ export const AdminLayout: React.FC = () => {
     <TooltipProvider>
       <div className="min-h-screen bg-background flex">
         <aside className={cn(
-          "border-r border-border/50 bg-card/30 backdrop-blur-sm flex flex-col transition-all duration-300",
+          "border-r border-border/50 bg-card/30 backdrop-blur-sm flex flex-col transition duration-300",
           collapsed ? "w-[72px]" : "w-64"
         )}>
           {/* Header */}
@@ -219,7 +219,7 @@ export const AdminLayout: React.FC = () => {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setCollapsed(!collapsed)}
-                  className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 hover:bg-primary/20 text-muted-foreground hover:text-foreground transition-all"
+                  className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 hover:bg-primary/20 text-muted-foreground hover:text-foreground transition"
                 >
                   {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
                 </button>

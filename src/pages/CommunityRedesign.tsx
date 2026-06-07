@@ -548,7 +548,7 @@ const SpotlightCard: React.FC<{ creative: Creative }> = ({ creative }) => (
           ))}
         </div>
         <div className="mt-auto pt-8 flex items-center justify-between">
-          <button className="group inline-flex items-center gap-2 rounded-full border border-primary bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90">
+          <button className="group inline-flex items-center gap-2 rounded-full border border-primary bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
             View profile
             <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </button>
@@ -559,9 +559,9 @@ const SpotlightCard: React.FC<{ creative: Creative }> = ({ creative }) => (
 );
 
 const FeaturedCard: React.FC<{ c: Creative }> = ({ c }) => (
-  <article className="group relative overflow-hidden rounded-xl border border-border/40 bg-card/40 p-5 transition-all hover:border-primary/40 hover:bg-card hover:-translate-y-0.5">
+  <article className="group relative overflow-hidden rounded-xl border border-border/40 bg-card/40 p-5 transition hover:border-primary/40 hover:bg-card hover:-translate-y-0.5">
     <div className="flex items-center gap-3">
-      <Avatar className="h-12 w-12 ring-2 ring-border/50 transition-all group-hover:ring-primary/40">
+      <Avatar className="h-12 w-12 ring-2 ring-border/50 transition group-hover:ring-primary/40">
         <AvatarImage src={c.avatar} />
         <AvatarFallback className="bg-primary/15 text-primary">{initialsOf(c.name)}</AvatarFallback>
       </Avatar>
@@ -637,7 +637,7 @@ const FilterPanel: React.FC<{
               key={o}
               onClick={() => setRole(o)}
               className={cn(
-                'px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] transition-all border',
+                'px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] transition border',
                 active
                   ? 'border-primary text-primary bg-primary/5'
                   : 'border-border/40 text-muted-foreground hover:border-primary/40 hover:text-foreground'
@@ -993,7 +993,7 @@ const InlineSelect: React.FC<{
         aria-haspopup="listbox"
         aria-expanded={open}
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-full border px-3 sm:px-4 py-0.5 sm:py-1 transition-all text-[0.7em] leading-none',
+          'inline-flex items-center gap-1.5 rounded-full border px-3 sm:px-4 py-0.5 sm:py-1 transition text-[0.7em] leading-none',
           isDefault
             ? 'border-border/60 bg-card text-foreground hover:border-primary/40'
             : 'border-primary/60 bg-primary/10 text-primary',

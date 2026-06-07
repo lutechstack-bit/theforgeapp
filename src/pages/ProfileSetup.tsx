@@ -431,7 +431,7 @@ const ProfileSetup: React.FC = () => {
                     onClick={() => updateFormData('edition_id', edition.id)}
                     className={`
                       group relative flex items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl sm:rounded-2xl border 
-                      text-left transition-all duration-300 overflow-hidden tap-scale
+                      text-left transition duration-300 overflow-hidden tap-scale
                       ${isSelected 
                         ? 'border-primary bg-gradient-to-br from-primary/15 to-primary/5 shadow-lg shadow-primary/20' 
                         : 'border-border/50 bg-card/50 hover:border-primary/40 hover:bg-card/80'}
@@ -445,7 +445,7 @@ const ProfileSetup: React.FC = () => {
                     
                     <div className={`
                       w-14 h-14 rounded-xl flex items-center justify-center shrink-0
-                      transition-all duration-300
+                      transition duration-300
                       ${isSelected 
                         ? 'bg-primary text-primary-foreground' 
                         : 'bg-secondary/80 text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary'}

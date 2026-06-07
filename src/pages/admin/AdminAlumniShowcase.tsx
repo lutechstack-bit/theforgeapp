@@ -145,7 +145,7 @@ const AdminAlumniShowcase: React.FC = () => {
               <button
                 key={tab}
                 onClick={() => setSubTab(tab)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
                   subTab === tab
                     ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'

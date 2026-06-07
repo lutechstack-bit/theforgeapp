@@ -185,13 +185,13 @@ export const CompactCountdownTimer: React.FC<CompactCountdownTimerProps> = ({ ed
       
       {/* Filled background (gold gradient - visible on filled side) */}
       <div 
-        className="absolute inset-0 bg-gradient-to-r from-forge-orange via-forge-gold to-forge-yellow transition-all duration-500"
+        className="absolute inset-0 bg-gradient-to-r from-forge-orange via-forge-gold to-forge-yellow transition duration-500"
         style={{ width: 'var(--p)' }}
       />
       
       {/* Progress edge line (crisp vertical divider) */}
       <div 
-        className="absolute top-0 bottom-0 w-px bg-black/20 z-10 transition-all duration-500"
+        className="absolute top-0 bottom-0 w-px bg-black/20 z-10 transition duration-500"
         style={{ left: 'var(--p)' }}
       />
       

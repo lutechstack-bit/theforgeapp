@@ -379,7 +379,7 @@ export default function AdminDashboard() {
           <Card
             key={kpi.label}
             className={cn(
-              "bg-card/60 border-border/40 cursor-pointer hover:scale-[1.02] hover:border-primary/30 transition-all",
+              "bg-card/60 border-border/40 cursor-pointer hover:scale-[1.02] hover:border-primary/30 transition",
               kpi.isToggle && showNeverLogged && "border-amber-500/40 bg-amber-500/5"
             )}
             onClick={() => kpi.isToggle ? setShowNeverLogged(!showNeverLogged) : navigate(kpi.link)}

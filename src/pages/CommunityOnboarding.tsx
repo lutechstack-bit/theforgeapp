@@ -286,7 +286,7 @@ const CommunityOnboarding: React.FC = () => {
                 onClick={next}
                 disabled={!canAdvance}
                 className={cn(
-                  'inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all',
+                  'inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition',
                   canAdvance
                     ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_8px_24px_-8px_hsl(41_100%_62%/0.6)]'
                     : 'bg-muted text-muted-foreground cursor-not-allowed'
@@ -466,7 +466,7 @@ const ProfessionalStep: React.FC<{ data: FormData; update: <K extends keyof Form
                 onClick={() => toggle(o)}
                 disabled={disabled}
                 className={cn(
-                  'rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all active:scale-95',
+                  'rounded-full border px-3.5 py-1.5 text-xs font-medium transition active:scale-95',
                   selected
                     ? 'border-primary bg-primary text-primary-foreground shadow-[0_4px_16px_-4px_hsl(41_100%_62%/0.5)]'
                     : disabled
@@ -696,7 +696,7 @@ const PreviewSection: React.FC<{
 }> = ({ label, active, empty, emptyHint, children }) => (
   <section
     className={cn(
-      'rounded-2xl border bg-card/40 p-4 transition-all',
+      'rounded-2xl border bg-card/40 p-4 transition',
       active ? 'border-primary/50 bg-primary/[0.04] shadow-[inset_2px_0_0_hsl(41_100%_62%/0.7)]' : 'border-border/40'
     )}
   >
@@ -1032,7 +1032,7 @@ const ToggleRow: React.FC<{
   <button
     onClick={() => onChange(!checked)}
     className={cn(
-      'w-full text-left rounded-2xl border p-4 transition-all flex items-center gap-4',
+      'w-full text-left rounded-2xl border p-4 transition flex items-center gap-4',
       checked
         ? 'border-primary/50 bg-primary/5'
         : 'border-border/40 bg-card/40 hover:border-primary/30'

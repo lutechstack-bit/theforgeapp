@@ -21,7 +21,7 @@ export const KYFormProgressBar: React.FC<KYFormProgressBarProps> = ({
           <div
             key={i}
             className={cn(
-              'h-1.5 flex-1 rounded-full transition-all duration-500',
+              'h-1.5 flex-1 rounded-full transition duration-500',
               isCompleted && 'bg-gradient-to-r from-forge-gold to-forge-orange',
               isCurrent && 'bg-forge-gold',
               !isCompleted && !isCurrent && 'bg-muted/20'

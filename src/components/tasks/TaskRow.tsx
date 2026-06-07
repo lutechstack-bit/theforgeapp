@@ -53,7 +53,7 @@ const TaskRow: React.FC<TaskRowProps> = ({
   return (
     <div
       className={cn(
-        "group flex items-center gap-3 p-3 rounded-lg transition-all duration-200",
+        "group flex items-center gap-3 p-3 rounded-lg transition duration-200",
         "hover:bg-secondary/50",
         isCompleted && "opacity-75"
       )}
@@ -76,7 +76,7 @@ const TaskRow: React.FC<TaskRowProps> = ({
           checked={isCompleted}
           disabled={isAutoCompleted}
           className={cn(
-            "h-5 w-5 rounded-full transition-all",
+            "h-5 w-5 rounded-full transition",
             isCompleted && "bg-primary border-primary",
             isAutoCompleted && "cursor-default"
           )}

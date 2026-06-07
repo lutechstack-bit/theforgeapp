@@ -55,7 +55,7 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
                     to={to}
                     data-tour-mobile={tour}
                     className={cn(
-                      "relative flex flex-col items-center justify-center gap-0.5 min-h-[52px] min-w-[52px] px-3 py-2 rounded-2xl transition-all duration-300",
+                      "relative flex flex-col items-center justify-center gap-0.5 min-h-[52px] min-w-[52px] px-3 py-2 rounded-2xl transition duration-300",
                       "active:scale-95 tap-feedback",
                       isActive 
                         ? "text-primary bg-primary/10 nav-glow-active" 
@@ -64,7 +64,7 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
                   >
                     <Icon 
                       className={cn(
-                        "h-5 w-5 transition-all duration-300",
+                        "h-5 w-5 transition duration-300",
                         isActive && "drop-shadow-[0_0_10px_hsl(var(--primary))]"
                       )} 
                       strokeWidth={isActive ? 2.5 : 2}
@@ -82,12 +82,12 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
                 onClick={() => setConfirmOpen(true)}
                 aria-label="Sign out"
                 className={cn(
-                  "relative flex flex-col items-center justify-center gap-0.5 min-h-[52px] min-w-[52px] px-3 py-2 rounded-2xl transition-all duration-300",
+                  "relative flex flex-col items-center justify-center gap-0.5 min-h-[52px] min-w-[52px] px-3 py-2 rounded-2xl transition duration-300",
                   "active:scale-95 tap-feedback",
                   "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                 )}
               >
-                <LogOut className="h-5 w-5 transition-all duration-300" strokeWidth={2} />
+                <LogOut className="h-5 w-5 transition duration-300" strokeWidth={2} />
                 <span className="text-[10px] font-medium tracking-wide">Sign Out</span>
               </button>
             </div>

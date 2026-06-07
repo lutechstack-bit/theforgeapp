@@ -117,7 +117,7 @@ export const CommunityProfileStep3: React.FC<StepProps> = ({ formData, updateFie
         <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
           {PORTFOLIO_TYPES.map(t => (
             <button key={t} onClick={() => updateField('portfolio_type', t)}
-              className={cn('px-3 py-1.5 rounded-full text-[11px] font-medium border shrink-0 active:scale-95 transition-all',
+              className={cn('px-3 py-1.5 rounded-full text-[11px] font-medium border shrink-0 active:scale-95 transition',
                 portfolioType === t ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border/30'
               )}>
               {t}

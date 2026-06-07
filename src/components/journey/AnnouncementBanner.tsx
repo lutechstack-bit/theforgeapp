@@ -74,7 +74,7 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({ classNam
         'relative overflow-hidden rounded-xl',
         'bg-primary/10 border border-primary/30',
         'backdrop-blur-sm',
-        'cursor-pointer transition-all duration-200',
+        'cursor-pointer transition duration-200',
         'hover:bg-primary/15 hover:border-primary/40',
         className
       )}
@@ -171,7 +171,7 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({ classNam
                 setTimeout(() => setIsPaused(false), 10000);
               }}
               className={cn(
-                'w-1.5 h-1.5 rounded-full transition-all',
+                'w-1.5 h-1.5 rounded-full transition',
                 idx === currentIndex 
                   ? 'bg-primary w-3' 
                   : 'bg-primary/30 hover:bg-primary/50'

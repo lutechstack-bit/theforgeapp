@@ -26,7 +26,7 @@ export const PremiumVideoCard: React.FC<PremiumVideoCardProps> = ({
   return (
     <button
       onClick={onClick}
-      className="w-full text-left rounded-xl border border-border/30 bg-card overflow-hidden hover:border-primary/30 hover:shadow-lg transition-all active:scale-[0.98]"
+      className="w-full text-left rounded-xl border border-border/30 bg-card overflow-hidden hover:border-primary/30 hover:shadow-lg transition active:scale-[0.98]"
     >
       {/* Thumbnail */}
       <div className="relative aspect-video bg-muted">

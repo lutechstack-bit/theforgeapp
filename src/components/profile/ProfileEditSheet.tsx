@@ -330,7 +330,7 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
 
           <div className="space-y-6 py-6">
             {/* Avatar Upload Section */}
-            <div ref={photoSectionRef} className="flex flex-col items-center gap-4 transition-all duration-500 rounded-lg p-2 -m-2">
+            <div ref={photoSectionRef} className="flex flex-col items-center gap-4 transition duration-500 rounded-lg p-2 -m-2">
               <div className="relative group">
                 <Avatar className="h-24 w-24 border-2 border-primary/30">
                   <AvatarImage src={avatarUrl} alt={formData.full_name} />
@@ -383,7 +383,7 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
             </div>
 
             {/* About / Basic Info */}
-            <div ref={aboutRef} className="space-y-4 transition-all duration-500 rounded-lg p-2 -m-2">
+            <div ref={aboutRef} className="space-y-4 transition duration-500 rounded-lg p-2 -m-2">
               <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                 Basic Info
               </h3>
@@ -438,7 +438,7 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               />
 
-              <div ref={instagramSectionRef} className="transition-all duration-500 rounded-lg p-2 -m-2">
+              <div ref={instagramSectionRef} className="transition duration-500 rounded-lg p-2 -m-2">
                 <FloatingInput
                   id="instagram"
                   label="Instagram Handle"
@@ -459,7 +459,7 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
             {cohortType && (
               <>
                 {/* General Details */}
-                <div ref={generalRef} className="space-y-4 transition-all duration-500 rounded-lg p-2 -m-2">
+                <div ref={generalRef} className="space-y-4 transition duration-500 rounded-lg p-2 -m-2">
                   <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                     General Details
                   </h3>
@@ -497,7 +497,7 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                 </div>
 
                 {/* Personality */}
-                <div ref={personalityRef} className="space-y-4 transition-all duration-500 rounded-lg p-2 -m-2">
+                <div ref={personalityRef} className="space-y-4 transition duration-500 rounded-lg p-2 -m-2">
                   <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                     Personality
                   </h3>
@@ -506,7 +506,7 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                 </div>
 
                 {/* Proficiency */}
-                <div ref={proficiencyRef} className="space-y-4 transition-all duration-500 rounded-lg p-2 -m-2">
+                <div ref={proficiencyRef} className="space-y-4 transition duration-500 rounded-lg p-2 -m-2">
                   <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                     Proficiency
                   </h3>
@@ -537,7 +537,7 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                 </div>
 
                 {/* Influences */}
-                <div ref={influencesRef} className="space-y-4 transition-all duration-500 rounded-lg p-2 -m-2">
+                <div ref={influencesRef} className="space-y-4 transition duration-500 rounded-lg p-2 -m-2">
                   <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                     Influences
                   </h3>
@@ -550,7 +550,7 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                 </div>
 
                 {/* Practice */}
-                <div ref={practiceRef} className="space-y-4 transition-all duration-500 rounded-lg p-2 -m-2">
+                <div ref={practiceRef} className="space-y-4 transition duration-500 rounded-lg p-2 -m-2">
                   <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                     Practice & Safety
                   </h3>
@@ -588,7 +588,7 @@ export const ProfileEditSheet: React.FC<ProfileEditSheetProps> = ({
                 </div>
 
                 {/* Personal Details */}
-                <div ref={personalRef} className="space-y-4 transition-all duration-500 rounded-lg p-2 -m-2">
+                <div ref={personalRef} className="space-y-4 transition duration-500 rounded-lg p-2 -m-2">
                   <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                     Personal Details
                   </h3>

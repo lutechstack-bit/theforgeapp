@@ -38,7 +38,7 @@ export const ProfileHero: React.FC<ProfileHeroProps> = ({
           <Button
             variant="outline"
             size="sm"
-            className="absolute top-4 right-4 bg-background/90 backdrop-blur-sm border-primary/30 hover:bg-background hover:border-primary/50 transition-all"
+            className="absolute top-4 right-4 bg-background/90 backdrop-blur-sm border-primary/30 hover:bg-background hover:border-primary/50 transition"
             onClick={onEdit}
           >
             <Edit2 className="h-4 w-4 mr-1" />

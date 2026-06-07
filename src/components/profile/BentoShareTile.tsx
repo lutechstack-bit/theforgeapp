@@ -67,7 +67,7 @@ export const BentoShareTile: React.FC<BentoShareTileProps> = ({
             {onDownloadPDF && (
               <button
                 onClick={onDownloadPDF}
-                className="flex items-center gap-2 px-4 py-2 bg-secondary border border-primary/10 rounded-lg text-xs text-muted-foreground hover:border-primary/25 hover:text-foreground transition-all cursor-pointer whitespace-nowrap"
+                className="flex items-center gap-2 px-4 py-2 bg-secondary border border-primary/10 rounded-lg text-xs text-muted-foreground hover:border-primary/25 hover:text-foreground transition cursor-pointer whitespace-nowrap"
               >
                 <Download className="h-3.5 w-3.5" />
                 Download PDF
@@ -94,7 +94,7 @@ export const BentoShareTile: React.FC<BentoShareTileProps> = ({
               href={portfolioUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary border border-primary/10 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground hover:border-primary/25 transition-all shrink-0"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary border border-primary/10 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground hover:border-primary/25 transition shrink-0"
             >
               <ExternalLink className="h-3 w-3" />
               Preview

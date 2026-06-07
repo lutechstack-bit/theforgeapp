@@ -280,7 +280,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         <div
           onClick={handleClick}
           className={cn(
-            "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200",
+            "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition duration-200",
             "hover:border-primary/50 hover:bg-primary/5",
             error ? "border-destructive/50 bg-destructive/5" : "border-border"
           )}

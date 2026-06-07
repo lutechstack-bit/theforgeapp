@@ -109,7 +109,7 @@ const JourneyCard: React.FC<JourneyCardProps> = ({
       <div
         className={`
           relative rounded-xl p-4 border-l-4 
-          transition-all duration-300 cursor-pointer
+          transition duration-300 cursor-pointer
           hover:border-l-primary/70 hover:bg-card/50
           ${getCardStyles()}
         `}

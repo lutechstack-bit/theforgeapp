@@ -38,7 +38,7 @@ const AdminTestingPanel: React.FC = () => {
       <button
         onClick={() => setIsOpen(true)}
         className={cn(
-          "fixed bottom-24 right-4 z-50 p-3 rounded-full shadow-lg transition-all",
+          "fixed bottom-24 right-4 z-50 p-3 rounded-full shadow-lg transition",
           "bg-primary text-primary-foreground hover:scale-105",
           isTestingMode && "ring-2 ring-green-500 ring-offset-2 ring-offset-background animate-pulse"
         )}
@@ -77,7 +77,7 @@ const AdminTestingPanel: React.FC = () => {
                 key={key}
                 onClick={() => setSimulatedForgeMode(key)}
                 className={cn(
-                  "flex flex-col items-center gap-1 p-2 rounded-lg border text-xs font-medium transition-all",
+                  "flex flex-col items-center gap-1 p-2 rounded-lg border text-xs font-medium transition",
                   simulatedForgeMode === key
                     ? "bg-primary text-primary-foreground border-primary"
                     : "bg-muted/30 border-border hover:bg-muted/50"

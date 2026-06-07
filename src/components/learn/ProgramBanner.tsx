@@ -21,7 +21,7 @@ export const ProgramBanner: React.FC<ProgramBannerProps> = ({
 }) => {
   if (imageUrl) {
     return (
-      <div className="rounded-2xl p-[2px] bg-gradient-to-r from-[#FFBF00]/40 via-[#FFBF00]/20 to-[#FFBF00]/40 shadow-[0_0_15px_rgba(255,191,0,0.2)] hover:shadow-[0_0_25px_rgba(255,191,0,0.45)] hover:from-[#FFBF00]/60 hover:via-[#FFBF00]/35 hover:to-[#FFBF00]/60 transition-all duration-300">
+      <div className="rounded-2xl p-[2px] bg-gradient-to-r from-[#FFBF00]/40 via-[#FFBF00]/20 to-[#FFBF00]/40 shadow-[0_0_15px_rgba(255,191,0,0.2)] hover:shadow-[0_0_25px_rgba(255,191,0,0.45)] hover:from-[#FFBF00]/60 hover:via-[#FFBF00]/35 hover:to-[#FFBF00]/60 transition duration-300">
         <a
           href={ctaUrl}
           target="_blank"
@@ -59,7 +59,7 @@ export const ProgramBanner: React.FC<ProgramBannerProps> = ({
       </p>
       <button
         onClick={handleCta}
-        className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-primary to-[hsl(36,88%,44%)] text-primary-foreground text-sm font-bold tracking-wide transition-all hover:opacity-90 active:scale-[0.97]"
+        className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-primary to-[hsl(36,88%,44%)] text-primary-foreground text-sm font-bold tracking-wide transition hover:opacity-90 active:scale-[0.97]"
       >
         {ctaText}
       </button>

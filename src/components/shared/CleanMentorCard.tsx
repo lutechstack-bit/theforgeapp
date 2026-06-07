@@ -25,7 +25,7 @@ export const CleanMentorCard: React.FC<CleanMentorCardProps> = ({
       className={cn(
         "relative min-w-[140px] sm:min-w-[160px] md:min-w-[180px] rounded-2xl overflow-hidden cursor-pointer flex-shrink-0 group tap-scale",
         "bg-card border border-border/50",
-        "transition-all duration-300 ease-out",
+        "transition duration-300 ease-out",
         "hover:scale-[1.02] hover:border-primary/50 hover:shadow-[0_0_20px_hsl(var(--primary)/0.2)]",
         className
       )}
@@ -42,7 +42,7 @@ export const CleanMentorCard: React.FC<CleanMentorCardProps> = ({
           loading="lazy"
           onLoad={() => setImageLoaded(true)}
           className={cn(
-            "w-full h-full object-cover object-top transition-all duration-500",
+            "w-full h-full object-cover object-top transition duration-500",
             "group-hover:scale-105",
             imageLoaded ? "opacity-100" : "opacity-0"
           )}

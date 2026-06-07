@@ -55,7 +55,7 @@ const DatePillSelector: React.FC<DatePillSelectorProps> = ({
               ref={isSelected ? selectedRef : undefined}
               onClick={() => onSelect(pill.id)}
               className={cn(
-                'flex flex-col items-center justify-center rounded-lg w-[56px] h-[64px] transition-all duration-200 border',
+                'flex flex-col items-center justify-center rounded-lg w-[56px] h-[64px] transition duration-200 border',
                 isSelected
                   ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/25'
                   : isCompleted

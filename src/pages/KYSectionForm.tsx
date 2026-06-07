@@ -333,7 +333,7 @@ const KYSectionForm: React.FC = () => {
       <div className="relative z-10 flex items-center justify-between px-4 pt-2 pb-1">
         <button
           onClick={handleBack}
-          className="p-2.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/50 hover:border-forge-gold/30 hover:bg-secondary/80 transition-all"
+          className="p-2.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/50 hover:border-forge-gold/30 hover:bg-secondary/80 transition"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
@@ -342,7 +342,7 @@ const KYSectionForm: React.FC = () => {
         </div>
         <button
           onClick={() => setExitDialogOpen(true)}
-          className="p-2.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/50 hover:border-forge-gold/30 hover:bg-secondary/80 transition-all"
+          className="p-2.5 rounded-full bg-card/60 backdrop-blur-sm border border-border/50 hover:border-forge-gold/30 hover:bg-secondary/80 transition"
         >
           <X className="w-5 h-5 text-foreground" />
         </button>
@@ -388,7 +388,7 @@ const KYSectionForm: React.FC = () => {
             onClick={handleNext}
             disabled={!canProceed() || loading}
             className={cn(
-              'h-11 px-10 rounded-full text-sm font-bold transition-all',
+              'h-11 px-10 rounded-full text-sm font-bold transition',
               'bg-[#FCF7EF] text-[#1a1a1a]',
               'hover:bg-[#f5eddf] active:scale-[0.97]',
               'disabled:opacity-40 disabled:cursor-not-allowed'

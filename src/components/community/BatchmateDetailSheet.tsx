@@ -39,7 +39,7 @@ const ProficiencyBar = ({ label, level }: { label: string; level: string | null 
       </div>
       <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
         <div
-          className="h-full rounded-full bg-primary transition-all duration-500"
+          className="h-full rounded-full bg-primary transition duration-500"
           style={{ width: `${info.value}%` }}
         />
       </div>

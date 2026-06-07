@@ -383,7 +383,7 @@ const Auth: React.FC = () => {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full py-[14px] lg:py-[16px] mt-1 rounded-xl text-[#111] font-semibold text-[15px] lg:text-base tracking-[0.1px] bg-gradient-to-b from-[#F5C76A] via-primary to-[#D99A1F] shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_10px_25px_rgba(255,188,59,0.18),0_2px_6px_rgba(0,0,0,0.3)] hover:brightness-[1.04] hover:-translate-y-px hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_14px_32px_rgba(255,188,59,0.28),0_3px_8px_rgba(0,0,0,0.35)] active:translate-y-0 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                      className="w-full py-[14px] lg:py-[16px] mt-1 rounded-xl text-[#111] font-semibold text-[15px] lg:text-base tracking-[0.1px] bg-gradient-to-b from-[#F5C76A] via-primary to-[#D99A1F] shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_10px_25px_rgba(255,188,59,0.18),0_2px_6px_rgba(0,0,0,0.3)] hover:brightness-[1.04] hover:-translate-y-px hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_14px_32px_rgba(255,188,59,0.28),0_3px_8px_rgba(0,0,0,0.35)] active:translate-y-0 transition disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                     >
                       {loading ? (
                         <span className="inline-flex items-center justify-center gap-2">
@@ -406,7 +406,7 @@ const Auth: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setMode('phone-enter')}
-                      className="w-full py-[13px] lg:py-[15px] rounded-xl font-semibold text-[15px] tracking-[0.1px] border border-[#E8B86D]/40 text-[#E8B86D] hover:bg-[#E8B86D]/10 bg-transparent transition-all"
+                      className="w-full py-[13px] lg:py-[15px] rounded-xl font-semibold text-[15px] tracking-[0.1px] border border-[#E8B86D]/40 text-[#E8B86D] hover:bg-[#E8B86D]/10 bg-transparent transition"
                     >
                       Login with OTP
                     </button>
@@ -463,7 +463,7 @@ const Auth: React.FC = () => {
                       type="button"
                       onClick={handleSendOtp}
                       disabled={otpLoading}
-                      className="w-full py-[14px] lg:py-[16px] rounded-xl text-[#111] font-semibold text-[15px] tracking-[0.1px] bg-gradient-to-r from-[#E8B86D] to-[#C9963F] hover:opacity-90 active:translate-y-0 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="w-full py-[14px] lg:py-[16px] rounded-xl text-[#111] font-semibold text-[15px] tracking-[0.1px] bg-gradient-to-r from-[#E8B86D] to-[#C9963F] hover:opacity-90 active:translate-y-0 transition disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       {otpLoading ? (
                         <span className="inline-flex items-center justify-center gap-2">
@@ -522,7 +522,7 @@ const Auth: React.FC = () => {
                       type="button"
                       onClick={handleVerifyOtp}
                       disabled={otpLoading}
-                      className="w-full py-[14px] lg:py-[16px] rounded-xl text-[#111] font-semibold text-[15px] tracking-[0.1px] bg-gradient-to-r from-[#E8B86D] to-[#C9963F] hover:opacity-90 active:translate-y-0 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="w-full py-[14px] lg:py-[16px] rounded-xl text-[#111] font-semibold text-[15px] tracking-[0.1px] bg-gradient-to-r from-[#E8B86D] to-[#C9963F] hover:opacity-90 active:translate-y-0 transition disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       {otpLoading ? (
                         <span className="inline-flex items-center justify-center gap-2">

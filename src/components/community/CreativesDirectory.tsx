@@ -143,7 +143,7 @@ export const CreativesDirectory: React.FC<CreativesDirectoryProps> = ({ onSetupP
           </div>
           <button
             onClick={onSetupProfile}
-            className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 shrink-0 active:scale-95 transition-all"
+            className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 shrink-0 active:scale-95 transition"
           >
             Set Up
           </button>
@@ -155,7 +155,7 @@ export const CreativesDirectory: React.FC<CreativesDirectoryProps> = ({ onSetupP
         <button
           onClick={() => setCohortFilter('all')}
           className={cn(
-            'px-3.5 py-2 rounded-full text-xs font-semibold transition-all border active:scale-95',
+            'px-3.5 py-2 rounded-full text-xs font-semibold transition border active:scale-95',
             cohortFilter === 'all'
               ? 'bg-primary text-primary-foreground border-primary'
               : 'bg-card text-muted-foreground border-border/30 hover:border-border/60'
@@ -167,7 +167,7 @@ export const CreativesDirectory: React.FC<CreativesDirectoryProps> = ({ onSetupP
           <button
             onClick={() => setCohortFilter('cohort')}
             className={cn(
-              'px-3.5 py-2 rounded-full text-xs font-semibold transition-all border active:scale-95 flex items-center gap-1',
+              'px-3.5 py-2 rounded-full text-xs font-semibold transition border active:scale-95 flex items-center gap-1',
               cohortFilter === 'cohort'
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-card text-muted-foreground border-border/30 hover:border-border/60'
@@ -204,7 +204,7 @@ export const CreativesDirectory: React.FC<CreativesDirectoryProps> = ({ onSetupP
           <button
             onClick={() => setActiveFilter('ALL')}
             className={cn(
-              'px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all border whitespace-nowrap shrink-0 active:scale-95',
+              'px-3 py-1.5 rounded-full text-[11px] font-semibold transition border whitespace-nowrap shrink-0 active:scale-95',
               activeFilter === 'ALL'
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-card text-muted-foreground border-border/30'
@@ -217,7 +217,7 @@ export const CreativesDirectory: React.FC<CreativesDirectoryProps> = ({ onSetupP
               key={occ.id}
               onClick={() => setActiveFilter(occ.name)}
               className={cn(
-                'px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all border whitespace-nowrap shrink-0 active:scale-95',
+                'px-3 py-1.5 rounded-full text-[11px] font-semibold transition border whitespace-nowrap shrink-0 active:scale-95',
                 activeFilter === occ.name
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-card text-muted-foreground border-border/30'

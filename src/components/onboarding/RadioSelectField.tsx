@@ -42,7 +42,7 @@ export const RadioSelectField: React.FC<RadioSelectFieldProps> = ({
               type="button"
               onClick={() => onChange(option.value)}
               className={cn(
-                'p-2 rounded-xl border text-left transition-all active:scale-[0.98]',
+                'p-2 rounded-xl border text-left transition active:scale-[0.98]',
                 isSelected
                   ? 'border-forge-gold bg-forge-gold/10 shadow-[0_0_15px_-4px_hsl(var(--forge-gold)/0.3)]'
                   : 'border-border bg-card/60 hover:border-forge-gold/40'

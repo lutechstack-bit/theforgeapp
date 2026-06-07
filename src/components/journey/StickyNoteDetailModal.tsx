@@ -108,7 +108,7 @@ export const StickyNoteDetailModal: React.FC<StickyNoteDetailModalProps> = ({
                 {/* Checkbox */}
                 <button
                   className={cn(
-                    'w-5 h-5 mt-0.5 rounded-md flex items-center justify-center shrink-0 border-2 transition-all',
+                    'w-5 h-5 mt-0.5 rounded-md flex items-center justify-center shrink-0 border-2 transition',
                     isCompleted
                       ? 'bg-emerald-500 border-emerald-500'
                       : 'border-muted-foreground/40 hover:border-muted-foreground'

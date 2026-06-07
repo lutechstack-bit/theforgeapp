@@ -45,7 +45,7 @@ export const OccupationPillSelector: React.FC<OccupationPillSelectorProps> = ({
               type="button"
               onClick={() => toggle(occ.name)}
               className={cn(
-                'px-3 py-1.5 rounded-full text-xs font-medium border transition-all active:scale-95',
+                'px-3 py-1.5 rounded-full text-xs font-medium border transition active:scale-95',
                 isSelected
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-card text-muted-foreground border-border/30 hover:border-border/60'

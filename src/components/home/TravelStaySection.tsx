@@ -185,7 +185,7 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
                     <button
                       key={i}
                       onClick={(e) => { e.stopPropagation(); setCurrentImageIdx(i); }}
-                      className={`h-1.5 rounded-full transition-all ${
+                      className={`h-1.5 rounded-full transition ${
                         i === currentImageIdx ? 'w-4 bg-primary' : 'w-1.5 bg-white/50 hover:bg-white/70'
                       }`}
                     />
@@ -292,7 +292,7 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
                     <button
                       key={i}
                       onClick={() => setModalImageIdx(i)}
-                      className={`h-2 rounded-full transition-all ${
+                      className={`h-2 rounded-full transition ${
                         i === modalImageIdx ? 'w-5 bg-primary' : 'w-2 bg-white/50 hover:bg-white/70'
                       }`}
                     />

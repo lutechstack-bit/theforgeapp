@@ -46,7 +46,7 @@ export const MultiSelectField: React.FC<MultiSelectFieldProps> = ({
               type="button"
               onClick={() => toggleOption(option)}
               className={cn(
-                'px-4 py-2 rounded-full border text-sm transition-all active:scale-[0.96]',
+                'px-4 py-2 rounded-full border text-sm transition active:scale-[0.96]',
                 isSelected
                   ? 'border-forge-gold bg-forge-gold/15 text-forge-gold shadow-[0_0_10px_-3px_hsl(var(--forge-gold)/0.3)]'
                   : 'border-border bg-card/60 text-muted-foreground hover:border-forge-gold/40'

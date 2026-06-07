@@ -121,7 +121,7 @@ export const KYFormCompletion: React.FC<KYFormCompletionProps> = ({
       {/* Content */}
       <div
         className={cn(
-          'relative z-10 text-center px-6 max-w-md mx-auto transition-all duration-700',
+          'relative z-10 text-center px-6 max-w-md mx-auto transition duration-700',
           showContent ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
         )}
       >

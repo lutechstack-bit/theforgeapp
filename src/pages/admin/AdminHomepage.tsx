@@ -256,7 +256,7 @@ function HeroSlidesManager() {
               <div
                 key={slide.id}
                 className={cn(
-                  'flex items-center gap-4 p-3 rounded-lg border transition-all',
+                  'flex items-center gap-4 p-3 rounded-lg border transition',
                   slide.is_active ? 'border-border/50 bg-card/30' : 'border-border/20 bg-muted/20 opacity-60'
                 )}
               >
@@ -407,7 +407,7 @@ function SectionOrderManager() {
           <div
             key={section.id}
             className={cn(
-              'flex items-center gap-4 p-4 rounded-lg border transition-all',
+              'flex items-center gap-4 p-4 rounded-lg border transition',
               section.is_visible ? 'border-border/50 bg-card/30' : 'border-border/20 bg-muted/20 opacity-60'
             )}
           >

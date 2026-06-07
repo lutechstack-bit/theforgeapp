@@ -40,7 +40,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
             key={key}
             onClick={() => onFilterChange(key)}
             className={cn(
-              'flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap',
+              'flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition whitespace-nowrap',
               isActive
                 ? 'bg-gray-900 text-white shadow-sm'
                 : 'bg-gray-200/80 text-gray-600 hover:bg-gray-300'

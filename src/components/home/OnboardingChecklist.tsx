@@ -84,7 +84,7 @@ export const OnboardingChecklist: React.FC = () => {
                   "flex-shrink-0 w-32 snap-start",
                   "flex flex-col items-center gap-3 p-4",
                   "bg-card/60 backdrop-blur-sm rounded-xl",
-                  "border transition-all duration-200",
+                  "border transition duration-200",
                   task.isCompleted 
                     ? "border-border/30 opacity-60" 
                     : "border-border/50 hover:border-primary/40 hover:-translate-y-0.5",

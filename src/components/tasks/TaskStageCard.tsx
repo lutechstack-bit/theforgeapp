@@ -55,7 +55,7 @@ const TaskStageCard: React.FC<TaskStageCardProps> = ({
     <Collapsible open={isExpanded} onOpenChange={onToggle}>
       <div
         className={cn(
-          "rounded-xl border transition-all duration-200 overflow-hidden",
+          "rounded-xl border transition duration-200 overflow-hidden",
           variant === 'current' && "border-primary/50 bg-card shadow-md",
           variant === 'completed' && "border-border/50 bg-card/50",
           variant === 'upcoming' && "border-border/30 bg-card/30 opacity-80"

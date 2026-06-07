@@ -93,7 +93,7 @@ export const BatchmatesDirectory: React.FC = () => {
           <button
             key={member.id}
             onClick={() => setSelectedMember(member)}
-            className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-border/30 bg-card hover:border-primary/30 hover:bg-primary/5 transition-all text-center group"
+            className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-border/30 bg-card hover:border-primary/30 hover:bg-primary/5 transition text-center group"
           >
             <Avatar className="w-14 h-14 border-2 border-border/30 group-hover:border-primary/40 transition-colors">
               <AvatarImage src={member.avatar_url || undefined} alt={member.full_name || ''} />

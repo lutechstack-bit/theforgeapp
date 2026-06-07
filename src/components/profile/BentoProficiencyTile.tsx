@@ -28,7 +28,7 @@ const ProfRow: React.FC<{ name: string; level: string | null }> = ({ name, level
       </div>
       <div className="h-[3px] bg-secondary rounded-full overflow-hidden">
         <div
-          className="h-full rounded-full transition-all duration-1000 ease-out"
+          className="h-full rounded-full transition duration-1000 ease-out"
           style={{
             width: config.width,
             background: 'linear-gradient(90deg, hsl(var(--forge-gold)), hsl(var(--primary)))',

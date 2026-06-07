@@ -168,7 +168,7 @@ const AdminCohortSwitcher: React.FC = () => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center gap-2 px-3 py-2 rounded-full shadow-lg transition-all max-w-[240px]",
+          "flex items-center gap-2 px-3 py-2 rounded-full shadow-lg transition max-w-[240px]",
           "bg-card border border-border hover:border-primary/50",
           isSimulating && "ring-2 ring-primary ring-offset-2 ring-offset-background"
         )}

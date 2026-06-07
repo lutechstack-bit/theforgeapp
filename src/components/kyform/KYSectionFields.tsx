@@ -122,7 +122,7 @@ function renderField(
             value={value}
             onChange={(e) => updateField(field.key, e.target.value)}
             placeholder={field.placeholder}
-            className="rounded-xl h-10 border-border/50 bg-card/60 backdrop-blur-sm shadow-[0_0_0_1px_hsl(var(--forge-gold)/0.05)] focus:ring-2 focus:ring-forge-gold/30 focus:border-forge-gold/50 transition-all"
+            className="rounded-xl h-10 border-border/50 bg-card/60 backdrop-blur-sm shadow-[0_0_0_1px_hsl(var(--forge-gold)/0.05)] focus:ring-2 focus:ring-forge-gold/30 focus:border-forge-gold/50 transition"
           />
         </div>
       );
@@ -149,7 +149,7 @@ function renderField(
               <Button
                 variant="outline"
                 className={cn(
-                  'w-full h-10 justify-start text-left font-normal rounded-xl border-border/50 bg-card/60 backdrop-blur-sm shadow-[0_0_0_1px_hsl(var(--forge-gold)/0.05)] hover:border-forge-gold/40 transition-all',
+                  'w-full h-10 justify-start text-left font-normal rounded-xl border-border/50 bg-card/60 backdrop-blur-sm shadow-[0_0_0_1px_hsl(var(--forge-gold)/0.05)] hover:border-forge-gold/40 transition',
                   !value && 'text-muted-foreground'
                 )}
               >
@@ -316,7 +316,7 @@ function renderField(
                 type="button"
                 onClick={() => updateField(field.key, type)}
                 className={cn(
-                  'py-1 rounded-xl border text-[13px] font-bold transition-all active:scale-[0.96]',
+                  'py-1 rounded-xl border text-[13px] font-bold transition active:scale-[0.96]',
                   value === type
                     ? 'border-forge-gold bg-forge-gold/15 text-forge-gold shadow-[0_0_12px_-3px_hsl(var(--forge-gold)/0.3)]'
                     : 'border-border/50 bg-card/60 text-muted-foreground hover:border-forge-gold/40'
@@ -345,7 +345,7 @@ function renderField(
                 type="button"
                 onClick={() => updateField(field.key, option.value)}
                 className={cn(
-                  'flex flex-col items-center gap-1 p-2.5 rounded-2xl border-2 transition-all active:scale-[0.97]',
+                  'flex flex-col items-center gap-1 p-2.5 rounded-2xl border-2 transition active:scale-[0.97]',
                   value === option.value
                     ? 'border-forge-gold bg-forge-gold/10 shadow-[0_0_20px_-5px_hsl(var(--forge-gold)/0.3)]'
                     : 'border-border/50 bg-card/60 hover:border-forge-gold/40'
@@ -377,7 +377,7 @@ function renderField(
                 type="button"
                 onClick={() => updateField(field.key, size)}
                 className={cn(
-                  'px-3 py-1.5 rounded-xl border text-[13px] font-bold transition-all min-w-[44px] active:scale-[0.96]',
+                  'px-3 py-1.5 rounded-xl border text-[13px] font-bold transition min-w-[44px] active:scale-[0.96]',
                   value === size
                     ? 'border-forge-gold bg-forge-gold/15 text-forge-gold shadow-[0_0_12px_-3px_hsl(var(--forge-gold)/0.3)]'
                     : 'border-border/50 bg-card/60 text-muted-foreground hover:border-forge-gold/40'
@@ -407,7 +407,7 @@ function renderField(
                 type="button"
                 onClick={() => updateField(field.key, option.value)}
                 className={cn(
-                  'flex items-center justify-center gap-2 py-2.5 rounded-2xl border-2 transition-all active:scale-[0.97]',
+                  'flex items-center justify-center gap-2 py-2.5 rounded-2xl border-2 transition active:scale-[0.97]',
                   value === option.value
                     ? 'border-forge-gold bg-forge-gold/10 shadow-[0_0_20px_-5px_hsl(var(--forge-gold)/0.3)]'
                     : 'border-border/50 bg-card/60 hover:border-forge-gold/40'
@@ -440,7 +440,7 @@ function renderField(
                 type="button"
                 onClick={() => updateField(field.key, option.value)}
                 className={cn(
-                  'px-4 py-1.5 rounded-full border text-[13px] font-semibold transition-all active:scale-[0.96]',
+                  'px-4 py-1.5 rounded-full border text-[13px] font-semibold transition active:scale-[0.96]',
                   value === option.value
                     ? 'border-forge-gold bg-forge-gold/15 text-forge-gold shadow-[0_0_12px_-3px_hsl(var(--forge-gold)/0.3)]'
                     : 'border-border/50 bg-card/60 text-muted-foreground hover:border-forge-gold/40'

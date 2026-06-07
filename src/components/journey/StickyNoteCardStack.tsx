@@ -227,7 +227,7 @@ export const StickyNoteCardStack: React.FC<StickyNoteCardStackProps> = ({
               key={stage.id}
               onClick={() => onStageChange(index)}
               className={cn(
-                'rounded-full transition-all duration-300',
+                'rounded-full transition duration-300',
                 isCurrent 
                   ? 'w-6 h-2 bg-primary' 
                   : isCompleted

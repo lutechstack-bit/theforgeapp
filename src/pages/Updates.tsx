@@ -100,7 +100,7 @@ const Updates: React.FC = () => {
                   {entries.map((entry, index) => (
                     <div
                       key={entry.id}
-                      className="p-4 rounded-xl border border-border/50 bg-card hover:border-border transition-all animate-fade-in"
+                      className="p-4 rounded-xl border border-border/50 bg-card hover:border-border transition animate-fade-in"
                       style={{ animationDelay: `${index * 0.05}s` }}
                     >
                       <div className="flex items-start gap-3">

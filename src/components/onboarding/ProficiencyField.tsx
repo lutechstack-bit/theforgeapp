@@ -35,14 +35,14 @@ export const ProficiencyField: React.FC<ProficiencyFieldProps> = ({
               type="button"
               onClick={() => onChange(option.value)}
               className={cn(
-                'w-full p-2 rounded-xl border text-left transition-all flex items-start gap-2.5 active:scale-[0.98]',
+                'w-full p-2 rounded-xl border text-left transition flex items-start gap-2.5 active:scale-[0.98]',
                 isSelected
                   ? 'border-forge-gold bg-forge-gold/10 shadow-[0_0_15px_-4px_hsl(var(--forge-gold)/0.3)]'
                   : 'border-border bg-card/60 hover:border-forge-gold/40'
               )}
             >
               <div className={cn(
-                'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all',
+                'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition',
                 isSelected
                   ? 'border-forge-gold bg-forge-gold scale-110'
                   : 'border-muted-foreground/40'

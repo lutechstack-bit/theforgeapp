@@ -93,13 +93,13 @@ export const SideNav: React.FC = () => {
     <TooltipProvider>
       <aside
         className={cn(
-          "hidden md:flex flex-col fixed left-0 top-0 bottom-0 z-40 bg-sidebar border-r border-sidebar-border transition-all duration-300 ease-in-out",
+          "hidden md:flex flex-col fixed left-0 top-0 bottom-0 z-40 bg-sidebar border-r border-sidebar-border transition duration-300 ease-in-out",
           collapsed ? "w-[72px]" : "w-72"
         )}
       >
         {/* Logo + Toggle */}
         <div className={cn(
-          "flex py-5 transition-all duration-300",
+          "flex py-5 transition duration-300",
           collapsed ? "flex-col items-center gap-4 px-3" : "flex-row items-center justify-between px-5"
         )}>
           <Link to="/" className="flex items-center justify-center overflow-hidden" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
@@ -107,7 +107,7 @@ export const SideNav: React.FC = () => {
               src={collapsed ? forgeIcon : forgeLogo}
               alt="Forge"
               className={cn(
-                "shrink-0 transition-all duration-300 object-contain cursor-pointer",
+                "shrink-0 transition duration-300 object-contain cursor-pointer",
                 collapsed ? "h-8 w-8" : "h-10 max-w-[180px]"
               )}
             />

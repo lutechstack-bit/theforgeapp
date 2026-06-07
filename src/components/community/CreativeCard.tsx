@@ -40,7 +40,7 @@ export const CreativeCard: React.FC<CreativeCardProps> = ({ profile, onClick }) 
   return (
     <button
       onClick={onClick}
-      className="w-full text-left p-4 rounded-xl border border-border/30 bg-card hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all active:scale-[0.98]"
+      className="w-full text-left p-4 rounded-xl border border-border/30 bg-card hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition active:scale-[0.98]"
     >
       <div className="flex items-start gap-3">
         <Avatar className="w-12 h-12 border-2 border-background shrink-0">

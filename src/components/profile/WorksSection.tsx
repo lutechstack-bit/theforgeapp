@@ -97,7 +97,7 @@ const WorkCard: React.FC<{
 
   return (
     <div 
-      className="group relative rounded-xl overflow-hidden border border-border/30 bg-secondary/20 hover:border-primary/30 transition-all cursor-pointer"
+      className="group relative rounded-xl overflow-hidden border border-border/30 bg-secondary/20 hover:border-primary/30 transition cursor-pointer"
       onClick={handleClick}
     >
       {/* Thumbnail */}

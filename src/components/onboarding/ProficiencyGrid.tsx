@@ -63,7 +63,7 @@ export const ProficiencyGrid: React.FC<ProficiencyGridProps> = ({
                     type="button"
                     onClick={() => onChange(skill.key, levelValue)}
                     className={cn(
-                      'w-6 h-6 md:w-7 md:h-7 rounded-full border-2 transition-all duration-200 flex items-center justify-center',
+                      'w-6 h-6 md:w-7 md:h-7 rounded-full border-2 transition duration-200 flex items-center justify-center',
                       isSelected
                         ? 'border-forge-gold bg-forge-gold scale-110 shadow-[0_0_14px_-2px_hsl(var(--forge-gold)/0.5)]'
                         : 'border-muted-foreground/30 hover:border-forge-gold/50 active:scale-95'

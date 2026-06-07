@@ -95,7 +95,7 @@ export const PersonalNoteCard: React.FC<PersonalNoteCardProps> = ({
   return (
     <div
       className={cn(
-        'relative rounded-xl overflow-hidden transition-all duration-200',
+        'relative rounded-xl overflow-hidden transition duration-200',
         'bg-rose-500/10 border-2 border-rose-500/30',
         'hover:border-rose-500/50',
         isEditing && 'border-rose-500/60 ring-2 ring-rose-500/20',

@@ -73,7 +73,7 @@ export const GigsBoard: React.FC = () => {
       {/* Post Gig CTA */}
       <button
         onClick={() => setPostFormOpen(true)}
-        className="flex items-center gap-3 p-3.5 rounded-xl border-l-[3px] border-l-primary/60 border-y border-r border-border/30 bg-card hover:shadow-lg hover:shadow-primary/5 hover:border-primary/40 transition-all active:scale-[0.98]"
+        className="flex items-center gap-3 p-3.5 rounded-xl border-l-[3px] border-l-primary/60 border-y border-r border-border/30 bg-card hover:shadow-lg hover:shadow-primary/5 hover:border-primary/40 transition active:scale-[0.98]"
       >
         <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
           <Plus className="w-4 h-4 text-primary" />
@@ -103,7 +103,7 @@ export const GigsBoard: React.FC = () => {
             key={f.key}
             onClick={() => setPayFilter(f.key)}
             className={cn(
-              'px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all border whitespace-nowrap shrink-0 active:scale-95',
+              'px-3 py-1.5 rounded-full text-[11px] font-semibold transition border whitespace-nowrap shrink-0 active:scale-95',
               payFilter === f.key
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-card text-muted-foreground border-border/30'

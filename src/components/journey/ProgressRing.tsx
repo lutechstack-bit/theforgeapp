@@ -66,7 +66,7 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className={cn(getStrokeColor(), 'transition-all duration-500 ease-out')}
+          className={cn(getStrokeColor(), 'transition duration-500 ease-out')}
         />
       </svg>
       {/* Center content */}

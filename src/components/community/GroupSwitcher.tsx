@@ -45,7 +45,7 @@ export const GroupSwitcher: React.FC<GroupSwitcherProps> = ({
         <button
           onClick={onSelectCohort}
           className={cn(
-            "flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all",
+            "flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition",
             activeGroupType === 'cohort'
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground hover:bg-background/50"
@@ -61,7 +61,7 @@ export const GroupSwitcher: React.FC<GroupSwitcherProps> = ({
         <button
           onClick={() => onSelectCity(displayCityGroup.id)}
           className={cn(
-            "flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all",
+            "flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition",
             activeGroupType === 'city' && activeGroupId === displayCityGroup.id
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground hover:bg-background/50"

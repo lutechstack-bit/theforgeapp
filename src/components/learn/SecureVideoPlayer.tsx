@@ -292,7 +292,7 @@ const VimeoEmbedPlayer: React.FC<{
               <button onClick={toggleMute} className="p-2 hover:bg-white/20 rounded-full transition-colors" title="Mute">
                 {vIsMuted || vVolume === 0 ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
               </button>
-              <div className="w-0 overflow-hidden group-hover/volume:w-20 transition-all duration-200">
+              <div className="w-0 overflow-hidden group-hover/volume:w-20 transition duration-200">
                 <Slider
                   value={[vIsMuted ? 0 : vVolume]}
                   min={0}
@@ -907,7 +907,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
                   <Volume2 className="w-5 h-5 text-white" />
                 )}
               </button>
-              <div className="w-0 overflow-hidden group-hover/volume:w-20 transition-all duration-200">
+              <div className="w-0 overflow-hidden group-hover/volume:w-20 transition duration-200">
                 <Slider
                   value={[isMuted ? 0 : volume]}
                   min={0}

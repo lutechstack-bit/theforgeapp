@@ -56,7 +56,7 @@ const BatchmateCard: React.FC<BatchmateCardProps> = ({ member, headshot, cardKey
     <button
       key={cardKey}
       onClick={onClick}
-      className="group flex-shrink-0 w-32 sm:w-36 rounded-2xl overflow-hidden relative border border-white/8 shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="group flex-shrink-0 w-32 sm:w-36 rounded-2xl overflow-hidden relative border border-white/8 shadow-lg hover:shadow-xl hover:scale-[1.03] transition duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       {/* Portrait frame — aspect-[3/4] */}
       <div className="relative w-full aspect-[3/4] overflow-hidden bg-[#1a1a1a]">

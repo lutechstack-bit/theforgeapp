@@ -69,7 +69,7 @@ const RoadmapSummaryCards: React.FC = () => {
                 <div
                   key={i}
                   className={cn(
-                    'h-1.5 flex-1 rounded-full transition-all',
+                    'h-1.5 flex-1 rounded-full transition',
                     status === 'completed' ? 'bg-primary' :
                     status === 'current' ? 'bg-primary animate-pulse' :
                     'bg-muted-foreground/20'
@@ -147,7 +147,7 @@ const RoadmapSummaryCards: React.FC = () => {
               'min-w-0',
               card.id === 'journey' && 'col-span-2 sm:col-span-1',
               'rounded-xl border border-[#FFBF00]/20 bg-card p-3 sm:p-4',
-              'text-left transition-all duration-200',
+              'text-left transition duration-200',
               'active:scale-[0.98]'
             )}
           >

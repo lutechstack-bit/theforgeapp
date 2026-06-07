@@ -481,7 +481,7 @@ const CourseDetail: React.FC = () => {
                               handleResourceClick(resource);
                             }
                           }}
-                          className="bg-card rounded-lg p-2.5 flex items-center justify-between border border-border/50 hover:border-primary/30 transition-all group cursor-pointer focus:outline-none focus:border-primary/50"
+                          className="bg-card rounded-lg p-2.5 flex items-center justify-between border border-border/50 hover:border-primary/30 transition group cursor-pointer focus:outline-none focus:border-primary/50"
                         >
                           <div className="flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">

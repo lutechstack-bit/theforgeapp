@@ -100,7 +100,7 @@ export const CollaboratorInbox: React.FC = () => {
               key={f}
               onClick={() => setFilter(f)}
               className={cn(
-                'px-3 py-1.5 rounded-full text-xs font-medium transition-all border',
+                'px-3 py-1.5 rounded-full text-xs font-medium transition border',
                 filter === f ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/30 text-muted-foreground border-border/50'
               )}
             >

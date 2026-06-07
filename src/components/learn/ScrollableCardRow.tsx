@@ -45,7 +45,7 @@ export const ScrollableCardRow: React.FC<ScrollableCardRowProps> = ({ children, 
       {canScrollLeft && (
         <button
           onClick={() => scroll('left')}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden md:flex items-center justify-center w-9 h-9 rounded-full bg-background/70 backdrop-blur-md border border-border/40 shadow-lg text-foreground/70 hover:text-primary hover:border-primary/40 hover:bg-background/90 transition-all duration-200 -translate-x-1/2"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden md:flex items-center justify-center w-9 h-9 rounded-full bg-background/70 backdrop-blur-md border border-border/40 shadow-lg text-foreground/70 hover:text-primary hover:border-primary/40 hover:bg-background/90 transition duration-200 -translate-x-1/2"
           aria-label="Scroll left"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -56,7 +56,7 @@ export const ScrollableCardRow: React.FC<ScrollableCardRowProps> = ({ children, 
       {canScrollRight && (
         <button
           onClick={() => scroll('right')}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden md:flex items-center justify-center w-9 h-9 rounded-full bg-background/70 backdrop-blur-md border border-border/40 shadow-lg text-foreground/70 hover:text-primary hover:border-primary/40 hover:bg-background/90 transition-all duration-200 translate-x-1/2"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden md:flex items-center justify-center w-9 h-9 rounded-full bg-background/70 backdrop-blur-md border border-border/40 shadow-lg text-foreground/70 hover:text-primary hover:border-primary/40 hover:bg-background/90 transition duration-200 translate-x-1/2"
           aria-label="Scroll right"
         >
           <ChevronRight className="w-5 h-5" />

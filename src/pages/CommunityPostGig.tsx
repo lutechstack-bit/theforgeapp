@@ -175,7 +175,7 @@ const CommunityPostGig: React.FC = () => {
                   onClick={publish}
                   disabled={!isValid || publishMutation.isPending}
                   className={cn(
-                    'inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all',
+                    'inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition',
                     isValid && !publishMutation.isPending
                       ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_8px_24px_-8px_hsl(41_100%_62%/0.6)]'
                       : 'bg-muted text-muted-foreground cursor-not-allowed'
@@ -456,7 +456,7 @@ const Choice: React.FC<{ active: boolean; onClick: () => void; title: string; he
     type="button"
     onClick={onClick}
     className={cn(
-      'group rounded-2xl border p-3 text-left transition-all',
+      'group rounded-2xl border p-3 text-left transition',
       active
         ? 'border-primary/60 bg-primary/10 text-foreground shadow-[0_4px_16px_-6px_hsl(41_100%_62%/0.4)]'
         : 'border-border/40 bg-card/40 text-muted-foreground hover:border-primary/30 hover:text-foreground'
@@ -566,7 +566,7 @@ const Dropdown: React.FC<{
         aria-haspopup="listbox"
         aria-expanded={open}
         className={cn(
-          'flex w-full items-center justify-between gap-3 rounded-2xl border bg-card/40 px-4 py-3 text-base transition-all',
+          'flex w-full items-center justify-between gap-3 rounded-2xl border bg-card/40 px-4 py-3 text-base transition',
           current ? 'border-primary/60 text-foreground' : 'border-border/40 text-muted-foreground/60',
           open && 'ring-2 ring-primary/30'
         )}

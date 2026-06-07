@@ -38,7 +38,7 @@ export const GigCard: React.FC<GigCardProps> = ({ gig }) => {
   const initials = (gig.poster_name || 'U').charAt(0).toUpperCase();
 
   return (
-    <div className="p-4 rounded-xl border border-border/30 bg-card hover:border-primary/30 transition-all">
+    <div className="p-4 rounded-xl border border-border/30 bg-card hover:border-primary/30 transition">
       <div className="flex items-start justify-between gap-2 mb-2">
         <h3 className="text-sm font-semibold text-foreground line-clamp-1">{gig.title}</h3>
         {gig.pay_type && (

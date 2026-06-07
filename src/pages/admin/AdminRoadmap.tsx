@@ -140,7 +140,7 @@ export default function AdminRoadmap() {
             key={cohort}
             onClick={() => setSelectedCohort(cohort)}
             className={cn(
-              'px-4 py-2 rounded-full text-sm border transition-all duration-200',
+              'px-4 py-2 rounded-full text-sm border transition duration-200',
               selectedCohort === cohort
                 ? 'bg-primary text-primary-foreground border-primary font-medium'
                 : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30'

@@ -49,7 +49,7 @@ export const KYFormCardStack: React.FC<KYFormCardStackProps> = ({
               'bg-card/30 border border-forge-gold/5',
               'transform rotate-[3deg] translate-y-4 translate-x-4',
               'opacity-35',
-              'transition-all duration-500 ease-out'
+              'transition duration-500 ease-out'
             )}
           />
         )}
@@ -62,7 +62,7 @@ export const KYFormCardStack: React.FC<KYFormCardStackProps> = ({
               'bg-card/50 border border-forge-gold/10',
               'transform rotate-[1.5deg] translate-y-2 translate-x-2',
               'opacity-60',
-              'transition-all duration-500 ease-out',
+              'transition duration-500 ease-out',
               isAnimating === 'forward' && 'animate-stack-reveal'
             )}
           />

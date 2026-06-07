@@ -79,7 +79,7 @@ export const GigPostForm: React.FC<GigPostFormProps> = ({ open, onOpenChange, on
             <div className="flex gap-1.5">
               {PAY_TYPES.map(pt => (
                 <button key={pt.key} onClick={() => update('pay_type', pt.key)}
-                  className={cn('px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all',
+                  className={cn('px-3 py-1.5 rounded-full text-[11px] font-medium border transition',
                     form.pay_type === pt.key ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border/30'
                   )}>
                   {pt.label}

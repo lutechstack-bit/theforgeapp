@@ -150,7 +150,7 @@ const AlumniShowcaseSection: React.FC<AlumniShowcaseSectionProps> = ({
                   {/* Play icon for video/reel */}
                   {a.media_type !== 'image' && (
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="h-9 w-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300">
+                      <div className="h-9 w-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-80 group-hover:opacity-100 group-hover:scale-110 transition duration-300">
                         <Play className="h-4 w-4 text-white fill-current ml-0.5" />
                       </div>
                     </div>

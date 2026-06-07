@@ -47,7 +47,7 @@ const Welcome: React.FC = () => {
             <button
               key={to}
               onClick={() => navigate(to)}
-              className="w-full flex items-center gap-4 p-4 rounded-2xl bg-card/50 border border-border/30 hover:border-primary/30 hover:bg-card/80 transition-all duration-200 group text-left"
+              className="w-full flex items-center gap-4 p-4 rounded-2xl bg-card/50 border border-border/30 hover:border-primary/30 hover:bg-card/80 transition duration-200 group text-left"
             >
               <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
                 <Icon className="h-5 w-5 text-primary" />

@@ -288,7 +288,7 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
           <button
             onClick={() => setActiveTab('online')}
             className={cn(
-              'flex-1 min-w-0 px-3 py-2 text-sm rounded-full border transition-all duration-200 text-center',
+              'flex-1 min-w-0 px-3 py-2 text-sm rounded-full border transition duration-200 text-center',
               activeTab === 'online'
                 ? 'bg-primary text-primary-foreground border-primary font-medium'
                 : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30'
@@ -299,7 +299,7 @@ const HomeJourneySection: React.FC<HomeJourneySectionProps> = ({
           <button
             onClick={() => setActiveTab('bootcamp')}
             className={cn(
-              'flex-1 min-w-0 px-3 py-2 text-sm rounded-full border transition-all duration-200 text-center',
+              'flex-1 min-w-0 px-3 py-2 text-sm rounded-full border transition duration-200 text-center',
               activeTab === 'bootcamp'
                 ? 'bg-primary text-primary-foreground border-primary font-medium'
                 : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30'

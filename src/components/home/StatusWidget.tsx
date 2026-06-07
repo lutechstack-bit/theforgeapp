@@ -66,7 +66,7 @@ export const StatusWidget: React.FC<StatusWidgetProps> = ({ variant, className }
             onClick={() => navigate(getKYFormRoute())}
             className="w-full glass-card rounded-xl p-4 flex items-center gap-3 
                        border border-primary/30 bg-primary/10 
-                       hover:bg-primary/20 transition-all duration-200 group text-left"
+                       hover:bg-primary/20 transition duration-200 group text-left"
           >
             <div className="p-2 bg-primary/20 rounded-lg shrink-0">
               <ClipboardList className="h-5 w-5 text-primary" />
@@ -91,7 +91,7 @@ export const StatusWidget: React.FC<StatusWidgetProps> = ({ variant, className }
             onClick={handleAnnouncementClick}
             className="w-full glass-card rounded-xl p-3 flex items-center gap-3 
                        border border-border/50 bg-muted/30
-                       hover:bg-muted/50 transition-all duration-200 group text-left relative"
+                       hover:bg-muted/50 transition duration-200 group text-left relative"
           >
             <span className="text-lg shrink-0">{currentAnnouncement.icon}</span>
             <div className="flex-1 min-w-0">
@@ -141,7 +141,7 @@ export const StatusWidget: React.FC<StatusWidgetProps> = ({ variant, className }
           onClick={() => navigate(getKYFormRoute())}
           className="flex-1 glass-card rounded-xl px-3 py-2.5 flex items-center gap-2 
                      border border-primary/30 bg-primary/10 
-                     hover:bg-primary/20 transition-all duration-200"
+                     hover:bg-primary/20 transition duration-200"
         >
           <ClipboardList className="h-4 w-4 text-primary shrink-0" />
           <span className="text-sm font-medium text-foreground truncate">
@@ -159,7 +159,7 @@ export const StatusWidget: React.FC<StatusWidgetProps> = ({ variant, className }
           onClick={handleAnnouncementClick}
           className={cn(
             "glass-card rounded-xl px-3 py-2.5 flex items-center gap-2",
-            "border border-border/50 bg-muted/30 hover:bg-muted/50 transition-all duration-200",
+            "border border-border/50 bg-muted/30 hover:bg-muted/50 transition duration-200",
             showKYForm ? "flex-1" : "w-full"
           )}
         >

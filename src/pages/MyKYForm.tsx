@@ -421,7 +421,7 @@ const MyKYForm: React.FC = () => {
           <Button 
             className="w-full h-14 text-base font-semibold bg-gradient-to-r from-primary to-accent 
                        text-primary-foreground shadow-[0_0_30px_rgba(255,188,59,0.3)] 
-                       hover:shadow-[0_0_40px_rgba(255,188,59,0.5)] transition-all duration-300
+                       hover:shadow-[0_0_40px_rgba(255,188,59,0.5)] transition duration-300
                        rounded-xl border border-primary/30"
             onClick={() => navigate(getFormRoute())}
           >
@@ -464,7 +464,7 @@ const ProficiencyBar: React.FC<{ skill: string; level: string | null }> = ({ ski
       </div>
       <div className="h-2 rounded-full bg-secondary/50 overflow-hidden">
         <div 
-          className={`h-full rounded-full bg-gradient-to-r ${getColorClass()} transition-all duration-1000 ease-out`}
+          className={`h-full rounded-full bg-gradient-to-r ${getColorClass()} transition duration-1000 ease-out`}
           style={{ width: `${getPercentage()}%` }}
         />
       </div>

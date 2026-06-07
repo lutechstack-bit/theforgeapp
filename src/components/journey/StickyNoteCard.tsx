@@ -108,7 +108,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
     <div
       onClick={!isLocked ? onClick : undefined}
       className={cn(
-        'relative rounded-xl p-4 transition-all duration-300',
+        'relative rounded-xl p-4 transition duration-300',
         // Dark glassmorphism background
         'bg-black/60 backdrop-blur-xl',
         // Border with accent color

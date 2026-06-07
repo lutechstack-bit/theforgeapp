@@ -30,7 +30,7 @@ const FloatingTextarea = React.forwardRef<HTMLTextAreaElement, FloatingTextareaP
           htmlFor={textareaId}
           className={cn(
             'pointer-events-none absolute left-3 top-4 origin-[0] text-sm text-muted-foreground',
-            'transition-all duration-200 ease-out',
+            'transition duration-200 ease-out',
             'peer-focus:top-1 peer-focus:scale-75 peer-focus:text-primary',
             'peer-[:not(:placeholder-shown)]:top-1 peer-[:not(:placeholder-shown)]:scale-75',
             error && 'peer-focus:text-destructive',

@@ -44,7 +44,7 @@ export const CleanEventCard: React.FC<CleanEventCardProps> = ({
     <div
       onClick={onClick}
       className={cn(
-        "group relative overflow-hidden rounded-2xl cursor-pointer transition-all duration-300",
+        "group relative overflow-hidden rounded-2xl cursor-pointer transition duration-300",
         "bg-card border border-[#FFBF00]/20",
         "active:scale-[0.98]",
         className

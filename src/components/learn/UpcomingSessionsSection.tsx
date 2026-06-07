@@ -98,7 +98,7 @@ export const UpcomingSessionsSection: React.FC = () => {
       <ScrollableCardRow>
           {sessions.map((session, index) => (
             <div key={session.id} className="snap-start flex-shrink-0">
-              <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[hsl(var(--primary))]/15 via-[hsl(var(--primary))]/5 to-[hsl(var(--primary))]/15 hover:from-[hsl(var(--primary))]/50 hover:via-[hsl(var(--primary))]/25 hover:to-[hsl(var(--primary))]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all duration-300">
+              <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[hsl(var(--primary))]/15 via-[hsl(var(--primary))]/5 to-[hsl(var(--primary))]/15 hover:from-[hsl(var(--primary))]/50 hover:via-[hsl(var(--primary))]/25 hover:to-[hsl(var(--primary))]/50 hover:shadow-[0_0_20px_rgba(255,191,0,0.3)] transition duration-300">
               <div className="w-[270px] sm:w-[300px] bg-card rounded-[13px] p-4 flex flex-col min-h-[160px]">
                 {/* Date pill + Title */}
                 <div className="flex items-start gap-3">

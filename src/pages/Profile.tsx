@@ -181,7 +181,7 @@ const Profile: React.FC = () => {
       <div className="flex flex-wrap gap-2 sm:gap-2.5 items-center px-4 sm:px-6 md:px-0 py-3 border-b border-primary/10 mb-6">
         <Link
           to="/kyf"
-          className={`flex items-center gap-2 px-3.5 py-2 border rounded-lg text-xs transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-2 border rounded-lg text-xs transition cursor-pointer ${
             profile?.ky_form_completed
               ? 'border-primary/10 bg-card text-muted-foreground hover:border-primary/25'
               : 'border-primary/35 bg-primary/7 text-primary'
@@ -197,7 +197,7 @@ const Profile: React.FC = () => {
 
         <Link
           to="/perks"
-          className="flex items-center gap-2 px-3.5 py-2 border border-primary/10 bg-card rounded-lg text-xs text-muted-foreground hover:border-primary/25 transition-all cursor-pointer"
+          className="flex items-center gap-2 px-3.5 py-2 border border-primary/10 bg-card rounded-lg text-xs text-muted-foreground hover:border-primary/25 transition cursor-pointer"
         >
           <Gift className="h-3.5 w-3.5" />
           My Perks & Acceptance ›

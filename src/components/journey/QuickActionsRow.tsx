@@ -53,7 +53,7 @@ export const QuickActionsRow: React.FC<QuickActionsRowProps> = ({ className }) =
                 'bg-gray-900/5 hover:bg-gray-900/10 dark:bg-white/5 dark:hover:bg-white/10',
                 'border border-gray-200/50 dark:border-white/10',
                 'text-gray-700 dark:text-gray-200',
-                'transition-all duration-200 hover:scale-[1.02]',
+                'transition duration-200 hover:scale-[1.02]',
                 'min-w-fit whitespace-nowrap group'
               )}
             >

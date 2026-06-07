@@ -362,7 +362,7 @@ const Learn: React.FC = () => {
                   <button
                     key={tab}
                     onClick={() => setProgramTab(tab)}
-                    className={`px-4 py-2.5 min-h-[44px] rounded-full text-sm font-medium transition-all ${
+                    className={`px-4 py-2.5 min-h-[44px] rounded-full text-sm font-medium transition ${
                       programTab === tab
                         ? 'bg-primary text-primary-foreground shadow-sm'
                         : 'text-muted-foreground hover:text-foreground'

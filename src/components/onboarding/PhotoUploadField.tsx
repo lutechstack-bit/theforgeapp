@@ -87,7 +87,7 @@ export const PhotoUploadField: React.FC<PhotoUploadFieldProps> = ({
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
           className={cn(
-            'w-20 h-20 rounded-xl border-2 border-dashed bg-card/60 backdrop-blur-sm flex flex-col items-center justify-center gap-1.5 transition-all',
+            'w-20 h-20 rounded-xl border-2 border-dashed bg-card/60 backdrop-blur-sm flex flex-col items-center justify-center gap-1.5 transition',
             'border-border hover:border-forge-gold/50',
             uploading && 'opacity-60'
           )}

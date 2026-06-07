@@ -232,7 +232,7 @@ function RequestsTab() {
       <div className="flex gap-1.5">
         {['all', 'unread', 'read', 'accepted', 'declined'].map(f => (
           <button key={f} onClick={() => setFilter(f)}
-            className={cn('px-3 py-1.5 rounded-full text-xs font-medium border transition-all capitalize',
+            className={cn('px-3 py-1.5 rounded-full text-xs font-medium border transition capitalize',
               filter === f ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/30 text-muted-foreground border-border/50'
             )}>{f}</button>
         ))}

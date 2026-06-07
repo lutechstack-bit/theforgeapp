@@ -282,7 +282,7 @@ export const KYSectionSheet: React.FC<KYSectionSheetProps> = ({
           onClick={handleNext}
           disabled={!canProceed() || loading}
           className={cn(
-            'w-full py-3.5 rounded-full text-sm font-bold transition-all',
+            'w-full py-3.5 rounded-full text-sm font-bold transition',
             'bg-forge-orange text-foreground',
             'hover:brightness-110 active:scale-[0.98]',
             'disabled:opacity-40 disabled:cursor-not-allowed',

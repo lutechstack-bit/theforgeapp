@@ -21,7 +21,7 @@ export const BentoTile: React.FC<BentoTileProps> = ({
   return (
     <div
       className={cn(
-        'bg-card border border-primary/10 rounded-[14px] overflow-hidden transition-all duration-250 relative flex flex-col',
+        'bg-card border border-primary/10 rounded-[14px] overflow-hidden transition duration-250 relative flex flex-col',
         'hover:border-primary/25 hover:-translate-y-px',
         'bento-tile-animate',
         className
@@ -37,7 +37,7 @@ export const BentoTile: React.FC<BentoTileProps> = ({
         {onEdit && (
           <button
             onClick={onEdit}
-            className="text-muted-foreground text-[13px] px-1.5 py-0.5 rounded-md transition-all hover:text-primary hover:bg-primary/10 cursor-pointer"
+            className="text-muted-foreground text-[13px] px-1.5 py-0.5 rounded-md transition hover:text-primary hover:bg-primary/10 cursor-pointer"
           >
             ✎
           </button>

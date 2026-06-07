@@ -58,7 +58,7 @@ const KYProfileCard: React.FC = () => {
               disabled={isLocked || completed}
               onClick={() => isActive && handleOpenSection(section.key)}
               className={cn(
-                "w-full flex items-center gap-4 px-5 py-4 text-left transition-all",
+                "w-full flex items-center gap-4 px-5 py-4 text-left transition",
                 isActive && "hover:bg-primary/5 cursor-pointer",
                 completed && "bg-primary/5",
                 isLocked && "opacity-40 cursor-not-allowed",
