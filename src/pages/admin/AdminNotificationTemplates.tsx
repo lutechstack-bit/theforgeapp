@@ -65,8 +65,12 @@ export default function AdminNotificationTemplates() {
     else create.mutate(form, { onSuccess });
   };
   const sendTest = async (template_id: string) => {
-    await supabase.functions.invoke('send-notification-placeholder', { body: { template_id } });
-    toast.info('Will be implemented in Prompt 3 - send pipeline');
+    toast.loading('Sending test push to your device…', { id: 'sendtest' });
+    const { data, error } = await supabase.functions.invoke('send-notification', { body: { templateId: template_id } });
+    if (error) { toast.error(error.message || 'Send failed', { id: 'sendtest' }); return; }
+    if (data?.error) { toast.error(data.error, { id: 'sendtest' }); return; }
+    if (data?.sent > 0) toast.success(`Sent — check your notifications. (${data.delivered} delivered)`, { id: 'sendtest' });
+    else toast.warning(data?.note || 'No active subscription — enable notifications first.', { id: 'sendtest' });
   };
 
   const grouped = templates.reduce((acc: Record<string, any[]>, t: any) => { (acc[t.category] ??= []).push(t); return acc; }, {});

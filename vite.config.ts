@@ -16,6 +16,8 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "fonts/*.woff2", "images/**/*"],
+      // Register the SW in dev so push subscribe/notifications can be tested locally
+      devOptions: { enabled: true, type: "module", navigateFallback: "index.html" },
       manifest: {
         name: "the Forge",
         short_name: "Forge",
@@ -34,6 +36,8 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,svg,woff2}"],
         globIgnores: ["**/images/mentors/**"],
+        // Layer our push + notificationclick handlers onto the generated SW
+        importScripts: ["/push-sw.js"],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
         // Production hardening: ensure fresh content on updates
         cleanupOutdatedCaches: true,

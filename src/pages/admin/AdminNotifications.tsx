@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useNotificationCampaigns } from '@/hooks/useNotificationCampaigns';
 import { Bell, FileText, Target, Zap, ScrollText, Megaphone, ChevronRight, Send, BarChart3 } from 'lucide-react';
+import { EnablePushButton } from '@/components/EnablePushButton';
 
 const since30d = () => new Date(Date.now() - 30 * 864e5).toISOString();
 
@@ -71,6 +72,16 @@ export default function AdminNotifications() {
           <p className="text-sm text-muted-foreground">Templates, audiences, rules and campaigns for in-app push notifications.</p>
         </div>
       </div>
+
+      <Card className="bg-card/50 border-border/50">
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+          <div>
+            <div className="font-semibold">This device</div>
+            <div className="text-xs text-muted-foreground">Enable push here, then hit “Send test” on any template to fire a real notification to yourself.</div>
+          </div>
+          <EnablePushButton />
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {tiles.map((t) => (
