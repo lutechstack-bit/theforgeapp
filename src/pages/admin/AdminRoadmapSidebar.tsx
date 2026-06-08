@@ -162,7 +162,7 @@ const AdminRoadmapSidebar: React.FC = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('editions')
-        .select('id, name, city')
+        .select('id, name, city, cohort_type')
         .eq('is_archived', false)
         .order('created_at', { ascending: false });
       if (error) throw error;
