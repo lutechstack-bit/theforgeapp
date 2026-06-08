@@ -94,6 +94,12 @@ const AdminEmailHistory = lazy(() => import("./pages/admin/AdminEmailHistory"));
 const AdminEmailSenders = lazy(() => import("./pages/admin/AdminEmailSenders"));
 const AdminEmailAudiences = lazy(() => import("./pages/admin/AdminEmailAudiences"));
 const AdminEmailAudienceEdit = lazy(() => import("./pages/admin/AdminEmailAudienceEdit"));
+const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
+const AdminNotificationTemplates = lazy(() => import("./pages/admin/AdminNotificationTemplates"));
+const AdminNotificationAudiences = lazy(() => import("./pages/admin/AdminNotificationAudiences"));
+const AdminNotificationTriggers = lazy(() => import("./pages/admin/AdminNotificationTriggers"));
+const AdminNotificationRules = lazy(() => import("./pages/admin/AdminNotificationRules"));
+const AdminNotificationCampaigns = lazy(() => import("./pages/admin/AdminNotificationCampaigns"));
 const AdminAutomationSettings = lazy(() => import("./pages/admin/AdminAutomationSettings"));
 const AdminAutomationProductMapping = lazy(() => import("./pages/admin/AdminAutomationProductMapping"));
 const AdminAutomationHistory = lazy(() => import("./pages/admin/AdminAutomationHistory"));
@@ -349,6 +355,12 @@ const AppRoutes = () => {
         <Route path="live-sessions" element={<AdminLiveSessions />} />
 
         {/* Email infrastructure */}
+        <Route path="notifications" element={<AdminNotifications />} />
+        <Route path="notifications/templates" element={<AdminNotificationTemplates />} />
+        <Route path="notifications/audiences" element={<AdminNotificationAudiences />} />
+        <Route path="notifications/triggers" element={<AdminNotificationTriggers />} />
+        <Route path="notifications/rules" element={<AdminNotificationRules />} />
+        <Route path="notifications/campaigns" element={<AdminNotificationCampaigns />} />
         <Route path="email" element={<AdminEmailDashboard />} />
         <Route path="email/templates" element={<AdminEmailTemplates />} />
         <Route path="email/templates/:id" element={<AdminEmailTemplateEdit />} />

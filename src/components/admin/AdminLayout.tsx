@@ -6,7 +6,7 @@ import {
   ListTodo, Megaphone, History, PanelLeft, PanelLeftClose, Home, Target, Gift,
   Handshake, ExternalLink, Film, CreditCard, Activity, ChevronRight, BarChart3,
   Settings, Users2, MonitorSmartphone, GraduationCap, Search, Plus, RefreshCw, Video,
-  Mail, Send, AtSign, BookMarked, Zap, ArrowLeftRight, ScrollText, FileSpreadsheet, MailCheck
+  Mail, Send, AtSign, BookMarked, Zap, ArrowLeftRight, ScrollText, FileSpreadsheet, MailCheck, Bell
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -96,6 +96,18 @@ const navGroups: NavGroup[] = [
       { to: '/admin/email/send', icon: Send, label: 'Compose & Send' },
       { to: '/admin/email/history', icon: History, label: 'History' },
       { to: '/admin/email/senders', icon: AtSign, label: 'Senders' },
+    ],
+  },
+  {
+    label: 'In-App Push',
+    icon: Bell,
+    items: [
+      { to: '/admin/notifications', icon: LayoutDashboard, label: 'Overview', end: true },
+      { to: '/admin/notifications/templates', icon: FileText, label: 'Templates' },
+      { to: '/admin/notifications/audiences', icon: Target, label: 'Audiences' },
+      { to: '/admin/notifications/triggers', icon: Zap, label: 'Triggers' },
+      { to: '/admin/notifications/rules', icon: ScrollText, label: 'Rules' },
+      { to: '/admin/notifications/campaigns', icon: Megaphone, label: 'Campaigns' },
     ],
   },
   {
