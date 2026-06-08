@@ -100,6 +100,7 @@ const AdminNotificationAudiences = lazy(() => import("./pages/admin/AdminNotific
 const AdminNotificationTriggers = lazy(() => import("./pages/admin/AdminNotificationTriggers"));
 const AdminNotificationRules = lazy(() => import("./pages/admin/AdminNotificationRules"));
 const AdminNotificationCampaigns = lazy(() => import("./pages/admin/AdminNotificationCampaigns"));
+const AdminNotificationCampaignDetail = lazy(() => import("./pages/admin/AdminNotificationCampaignDetail"));
 const AdminAutomationSettings = lazy(() => import("./pages/admin/AdminAutomationSettings"));
 const AdminAutomationProductMapping = lazy(() => import("./pages/admin/AdminAutomationProductMapping"));
 const AdminAutomationHistory = lazy(() => import("./pages/admin/AdminAutomationHistory"));
@@ -361,6 +362,7 @@ const AppRoutes = () => {
         <Route path="notifications/triggers" element={<AdminNotificationTriggers />} />
         <Route path="notifications/rules" element={<AdminNotificationRules />} />
         <Route path="notifications/campaigns" element={<AdminNotificationCampaigns />} />
+        <Route path="notifications/campaigns/:id" element={<AdminNotificationCampaignDetail />} />
         <Route path="email" element={<AdminEmailDashboard />} />
         <Route path="email/templates" element={<AdminEmailTemplates />} />
         <Route path="email/templates/:id" element={<AdminEmailTemplateEdit />} />

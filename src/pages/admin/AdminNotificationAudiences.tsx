@@ -106,7 +106,16 @@ export default function AdminNotificationAudiences() {
             <div className="space-y-1.5">
               <Label>Filter SQL (WHERE clause body)</Label>
               <Textarea rows={6} className="font-mono text-xs" value={form.filter_sql} onChange={(e) => setForm({ ...form, filter_sql: e.target.value })} placeholder="is_admin = false AND payment_status = 'CONFIRMED_15K'" />
-              <p className="text-[11px] text-muted-foreground">The system prepends <span className="font-mono">SELECT id FROM profiles WHERE</span> automatically. Available joins: editions, user_activity_logs, community_messages. (Evaluator arrives in Prompt 4.)</p>
+              <p className="text-[11px] text-muted-foreground">The system prepends <span className="font-mono">SELECT id FROM profiles WHERE</span> automatically. (Evaluator arrives in Prompt 4.)</p>
+              <div className="rounded-lg border border-border/40 bg-muted/20 p-3 mt-1">
+                <div className="text-[11px] font-semibold text-foreground mb-1">Available columns on <span className="font-mono">profiles</span></div>
+                <div className="flex flex-wrap gap-1.5">
+                  {['id', 'email', 'ky_form_completed', 'payment_status', 'last_login_at', 'last_active_at', 'deposit_paid_at', 'edition_id', 'profile_photo_url', 'deleted_at'].map((col) => (
+                    <span key={col} className="font-mono text-[10px] rounded bg-card/60 border border-border/40 px-1.5 py-0.5 text-primary">{col}</span>
+                  ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-2">Joins available at eval time: editions, user_activity_logs, community_messages.</p>
+              </div>
             </div>
             {editing?.is_system && <p className="text-[11px] text-amber-400">System audience — key is locked and it can't be deleted.</p>}
             <div className="flex justify-end gap-2 pt-2">

@@ -23,7 +23,21 @@ import { Plus, FileText, Pencil, Send } from 'lucide-react';
 const CATS = [
   { key: 'all', label: 'All' }, { key: 'onboarding', label: 'Onboarding' }, { key: 'payment', label: 'Payment' },
   { key: 'community', label: 'Community' }, { key: 'learn', label: 'Learn' }, { key: 'habit', label: 'Habit' },
-  { key: 'session', label: 'Session' }, { key: 'post_residency', label: 'Post-residency' },
+  { key: 'post_residency', label: 'Post-residency' },
+];
+
+// Every token is auto-filled by the send pipeline from system data — admins never type them.
+const AUTO_TOKENS: [string, string][] = [
+  ['[FIRST_NAME]', 'profiles.full_name'],
+  ['[COHORT_NAME]', 'editions.name'],
+  ['[MESSAGE_PREVIEW]', 'community_messages.body (first 50 chars)'],
+  ['[MESSAGE_ID]', 'community_messages.id'],
+  ['[TIMESTAMP]', 'learn_watch_progress.position_seconds'],
+  ['[VIDEO_TITLE]', 'learn_content.title'],
+  ['[REMAINING_MIN]', 'computed from learn_watch_progress'],
+  ['[COURSE_ID]', 'learn_content.id'],
+  ['[STREAK_COUNT]', 'computed from user_activity_logs'],
+  ['[TODAYS_FOCUS_TITLE]', "todays_focus.title (user's roadmap stage)"],
 ];
 const CAT_STYLE: Record<string, string> = {
   onboarding: 'bg-sky-500/15 text-sky-400 border-sky-500/30', payment: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
@@ -178,6 +192,21 @@ export default function AdminNotificationTemplates() {
               <Label>Tokens used</Label>
               <div className="flex flex-wrap gap-1.5">{tokens.length ? tokens.map((t) => <Badge key={t} variant="outline" className="font-mono text-[10px]">[{t}]</Badge>) : <span className="text-xs text-muted-foreground">None</span>}</div>
             </div>
+
+            {/* Read-only reference: every token is auto-filled at send time. No admin input needed. */}
+            <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
+              <div className="text-[11px] font-semibold text-foreground mb-1">Available auto-tokens</div>
+              <p className="text-[11px] text-muted-foreground mb-2">All filled automatically by the send pipeline — you never type values.</p>
+              <div className="space-y-1">
+                {AUTO_TOKENS.map(([tok, src]) => (
+                  <div key={tok} className="flex items-baseline gap-2 text-[11px]">
+                    <span className="font-mono text-primary shrink-0">{tok}</span>
+                    <span className="text-muted-foreground truncate">← {src}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="flex items-center justify-between rounded-lg border border-border/40 p-3"><Label>Active</Label><Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} /></div>
             <div className="flex justify-end gap-2 pt-1">
               <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>

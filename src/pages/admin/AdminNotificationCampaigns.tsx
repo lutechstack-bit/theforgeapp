@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { useNotificationCampaigns, useCampaignDeliveries } from '@/hooks/useNotificationCampaigns';
+import { useNavigate } from 'react-router-dom';
+import { useNotificationCampaigns } from '@/hooks/useNotificationCampaigns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { Megaphone } from 'lucide-react';
 
@@ -18,30 +18,10 @@ const STATUS_STYLE: Record<string, string> = {
 };
 const fmt = (s?: string | null) => (s ? new Date(s).toLocaleString() : '—');
 
-function Funnel({ c }: { c: any }) {
-  const stages = [
-    ['Targeted', c.total_targeted], ['Sent', c.total_sent], ['Delivered', c.total_delivered],
-    ['Opened', c.total_opened], ['Clicked', c.total_clicked], ['Converted', c.total_converted],
-  ] as const;
-  const max = Math.max(1, c.total_targeted || 0);
-  return (
-    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-      {stages.map(([label, n]) => (
-        <div key={label} className="rounded-lg border border-border/40 bg-card/40 p-3 text-center">
-          <div className="text-xl font-bold text-foreground">{n ?? 0}</div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
-          <div className="mt-1.5 h-1 rounded bg-muted overflow-hidden"><div className="h-full bg-primary" style={{ width: `${Math.round(((n ?? 0) / max) * 100)}%` }} /></div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export default function AdminNotificationCampaigns() {
+  const navigate = useNavigate();
   const [status, setStatus] = useState('all');
-  const [selected, setSelected] = useState<any>(null);
   const { data: campaigns = [], isLoading } = useNotificationCampaigns({ status });
-  const { data: deliveries = [] } = useCampaignDeliveries(selected?.id);
 
   return (
     <div className="p-6 space-y-5 max-w-7xl mx-auto">
@@ -83,7 +63,7 @@ export default function AdminNotificationCampaigns() {
               </TableHeader>
               <TableBody>
                 {campaigns.map((c: any) => (
-                  <TableRow key={c.id} className="cursor-pointer" onClick={() => setSelected(c)}>
+                  <TableRow key={c.id} className="cursor-pointer" onClick={() => navigate(`/admin/notifications/campaigns/${c.id}`)}>
                     <TableCell className="font-medium">{c.template?.title || '—'}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{c.audience?.label || (c.target_user_ids?.length ? `${c.target_user_ids.length} users` : '—')}</TableCell>
                     <TableCell><Badge variant="outline" className={STATUS_STYLE[c.status] || ''}>{c.status}</Badge></TableCell>
@@ -97,49 +77,6 @@ export default function AdminNotificationCampaigns() {
           )}
         </CardContent>
       </Card>
-
-      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
-          {selected && (
-            <>
-              <SheetHeader><SheetTitle>{selected.template?.title || 'Campaign'}</SheetTitle></SheetHeader>
-              <div className="mt-5 space-y-5">
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><div className="text-[10px] uppercase text-muted-foreground">Audience</div>{selected.audience?.label || '—'}</div>
-                  <div><div className="text-[10px] uppercase text-muted-foreground">Status</div><Badge variant="outline" className={STATUS_STYLE[selected.status] || ''}>{selected.status}</Badge></div>
-                  <div><div className="text-[10px] uppercase text-muted-foreground">Scheduled</div>{fmt(selected.scheduled_for)}</div>
-                  <div><div className="text-[10px] uppercase text-muted-foreground">Sent</div>{fmt(selected.sent_at)}</div>
-                </div>
-                {selected.error_message && <p className="text-sm text-red-400">{selected.error_message}</p>}
-                <div>
-                  <div className="text-xs font-semibold mb-2">Funnel</div>
-                  <Funnel c={selected} />
-                </div>
-                <div>
-                  <div className="text-xs font-semibold mb-2">Deliveries</div>
-                  {deliveries.length === 0 ? (
-                    <div className="text-sm text-muted-foreground py-4 text-center border border-dashed border-border/50 rounded-lg">No deliveries yet.</div>
-                  ) : (
-                    <Table>
-                      <TableHeader><TableRow><TableHead>User</TableHead><TableHead>Status</TableHead><TableHead>Opened</TableHead><TableHead>Clicked</TableHead></TableRow></TableHeader>
-                      <TableBody>
-                        {deliveries.map((d: any) => (
-                          <TableRow key={d.id}>
-                            <TableCell className="font-mono text-xs">{String(d.user_id).slice(0, 8)}…</TableCell>
-                            <TableCell><Badge variant="outline" className={STATUS_STYLE[d.status] || 'bg-muted text-muted-foreground'}>{d.status}</Badge></TableCell>
-                            <TableCell className="text-xs text-muted-foreground">{fmt(d.opened_at)}</TableCell>
-                            <TableCell className="text-xs text-muted-foreground">{fmt(d.clicked_at)}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }
