@@ -36,6 +36,7 @@ const COHORT_OPTIONS = [
   { value: 'FFM', label: 'Filmmaking' },
   { value: 'FW', label: 'Writing' },
   { value: 'FC', label: 'Creators' },
+  { value: 'FAI', label: 'AI' },
 ];
 
 const defaultForm: MentorForm = {
@@ -48,7 +49,7 @@ const defaultForm: MentorForm = {
   brands: [{ name: '', logoUrl: '' }],
   is_active: true,
   order_index: 0,
-  cohort_types: ['FFM', 'FW', 'FC'],
+  cohort_types: ['FFM', 'FW', 'FC', 'FAI'],
 };
 
 const AdminMentors: React.FC = () => {
@@ -142,7 +143,7 @@ const AdminMentors: React.FC = () => {
       brands: mentor.brands?.length ? mentor.brands : [{ name: '', logoUrl: '' }],
       is_active: mentor.is_active,
       order_index: mentor.order_index,
-      cohort_types: mentor.cohort_types?.length ? mentor.cohort_types : ['FFM', 'FW', 'FC'],
+      cohort_types: mentor.cohort_types?.length ? mentor.cohort_types : ['FFM', 'FW', 'FC', 'FAI'],
     });
     setIsDialogOpen(true);
   };

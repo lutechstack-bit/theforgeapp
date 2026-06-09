@@ -33,12 +33,13 @@ import type { Database } from '@/integrations/supabase/types';
 
 type RoadmapDay = Database['public']['Tables']['roadmap_days']['Row'];
 
-type CohortType = 'FFM' | 'FC' | 'FW';
+type CohortType = 'FFM' | 'FC' | 'FW' | 'FAI';
 
 const COHORT_LABELS: Record<CohortType, string> = {
   FFM: 'Filmmaking',
   FC: 'Creators',
   FW: 'Writing',
+  FAI: 'AI',
 };
 
 export default function AdminRoadmap() {
@@ -758,6 +759,7 @@ function RoadmapDayDialog({
                 <SelectItem value="FFM">FFM — Filmmaking (8-day bootcamp)</SelectItem>
                 <SelectItem value="FC">FC — Creators (7-day bootcamp)</SelectItem>
                 <SelectItem value="FW">FW — Writing</SelectItem>
+                <SelectItem value="FAI">FAI — AI Residency (9-day)</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">

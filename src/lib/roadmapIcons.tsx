@@ -9,7 +9,7 @@ import {
   Headphones, Puzzle, Flame, Rocket, Crown, Medal
 } from 'lucide-react';
 
-export type CohortType = 'FFM' | 'FC' | 'FW';
+export type CohortType = 'FFM' | 'FC' | 'FW' | 'FAI';
 
 interface IconConfig {
   icon: React.ReactNode;

@@ -31,6 +31,7 @@ const cohortTypes = [
   { value: 'FFM', label: 'Forge Filmmakers' },
   { value: 'FC', label: 'Forge Creators' },
   { value: 'FW', label: 'Forge Writing' },
+  { value: 'FAI', label: 'Forge AI' },
 ];
 
 const categories = [

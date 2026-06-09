@@ -49,6 +49,7 @@ const cohortOptions = [
   { value: 'FFM', label: 'Forge Filmmaking' },
   { value: 'FW', label: 'Forge Writing' },
   { value: 'FC', label: 'Forge Creators' },
+  { value: 'FAI', label: 'Forge AI' },
 ];
 
 const autoCompleteOptions = [
@@ -78,7 +79,7 @@ const AdminJourneyTasks: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<JourneyTask>>({});
   const [createForm, setCreateForm] = useState<Partial<JourneyTask>>({
-    cohort_types: ['FFM', 'FW', 'FC'],
+    cohort_types: ['FFM', 'FW', 'FC', 'FAI'],
     is_required: true,
     is_active: true,
   });
@@ -122,7 +123,7 @@ const AdminJourneyTasks: React.FC = () => {
           stage_id: task.stage_id!,
           title: task.title!,
           description: task.description || null,
-          cohort_types: task.cohort_types || ['FFM', 'FW', 'FC'],
+          cohort_types: task.cohort_types || ['FFM', 'FW', 'FC', 'FAI'],
           auto_complete_field: task.auto_complete_field || null,
           deep_link: task.deep_link || null,
           is_required: task.is_required ?? true,
@@ -136,7 +137,7 @@ const AdminJourneyTasks: React.FC = () => {
       toast.success('Task created successfully');
       setIsCreateOpen(false);
       setCreateForm({
-        cohort_types: ['FFM', 'FW', 'FC'],
+        cohort_types: ['FFM', 'FW', 'FC', 'FAI'],
         is_required: true,
         is_active: true,
       });

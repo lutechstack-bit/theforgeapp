@@ -15,7 +15,7 @@ import { Plus, Pencil, Trash2, Film, Play, Image } from 'lucide-react';
 interface AlumniShowcaseForm {
   title: string;
   author_name: string;
-  cohort_type: 'FFM' | 'FW' | 'FC';
+  cohort_type: 'FFM' | 'FW' | 'FC' | 'FAI';
   media_type: 'video' | 'image' | 'reel';
   media_url: string;
   thumbnail_url: string;
@@ -42,6 +42,7 @@ const cohortMediaDefaults: Record<string, 'video' | 'image' | 'reel'> = {
   FFM: 'video',
   FW: 'image',
   FC: 'reel',
+  FAI: 'video',
 };
 
 const AdminAlumniShowcase: React.FC = () => {
@@ -49,7 +50,7 @@ const AdminAlumniShowcase: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<AlumniShowcaseForm>(initialShowcaseForm);
-  const [subTab, setSubTab] = useState<'FFM' | 'FW' | 'FC'>('FFM');
+  const [subTab, setSubTab] = useState<'FFM' | 'FW' | 'FC' | 'FAI'>('FFM');
 
   const { data: showcaseItems = [], isLoading } = useQuery({
     queryKey: ['admin-alumni-showcase'],
@@ -141,7 +142,7 @@ const AdminAlumniShowcase: React.FC = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex gap-1 p-1 rounded-full bg-card border border-border/30 w-fit">
-            {(['FFM', 'FW', 'FC'] as const).map((tab) => (
+            {(['FFM', 'FW', 'FC', 'FAI'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setSubTab(tab)}
@@ -151,7 +152,7 @@ const AdminAlumniShowcase: React.FC = () => {
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {tab === 'FFM' ? 'Filmmaking' : tab === 'FW' ? 'Writing' : 'Creators'}
+                {tab === 'FFM' ? 'Filmmaking' : tab === 'FW' ? 'Writing' : tab === 'FAI' ? 'AI' : 'Creators'}
               </button>
             ))}
           </div>
@@ -252,7 +253,7 @@ const AdminAlumniShowcase: React.FC = () => {
                 <div>
                   <Label>Cohort Type</Label>
                   <Select value={form.cohort_type} onValueChange={(v) => {
-                    const ct = v as 'FFM' | 'FW' | 'FC';
+                    const ct = v as 'FFM' | 'FW' | 'FC' | 'FAI';
                     setForm({ ...form, cohort_type: ct, media_type: cohortMediaDefaults[ct] });
                   }}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -260,6 +261,7 @@ const AdminAlumniShowcase: React.FC = () => {
                       <SelectItem value="FFM">Filmmaking</SelectItem>
                       <SelectItem value="FW">Writing</SelectItem>
                       <SelectItem value="FC">Creators</SelectItem>
+                      <SelectItem value="FAI">AI</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

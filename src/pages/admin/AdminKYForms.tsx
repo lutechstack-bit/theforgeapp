@@ -50,6 +50,7 @@ const COHORT_TYPES = [
   { value: 'FFM', label: 'Filmmaking' },
   { value: 'FC', label: 'Creators' },
   { value: 'FW', label: 'Writing' },
+  { value: 'FAI', label: 'AI' },
 ];
 
 const ICONS = ['User', 'MapPin', 'Heart', 'Film', 'Camera', 'Sparkles', 'FileCheck', 'Pen', 'Video', 'ExternalLink'];
@@ -342,11 +343,11 @@ const AdminKYForms: React.FC = () => {
   };
 
   const seedFormsFromConfig = async () => {
-    const cohortTypes: Array<'FFM' | 'FC' | 'FW'> = ['FFM', 'FC', 'FW'];
+    const cohortTypes: Array<'FFM' | 'FC' | 'FW' | 'FAI'> = ['FFM', 'FC', 'FW', 'FAI'];
     for (const cohortType of cohortTypes) {
       const sections = getSectionsForCohort(cohortType);
       const kySections = sections.filter(s => s.key !== 'community_profile');
-      const formName = cohortType === 'FFM' ? 'Know Your Filmmaker' : cohortType === 'FC' ? 'Know Your Creator' : 'Know Your Writer';
+      const formName = cohortType === 'FFM' ? 'Know Your Filmmaker' : cohortType === 'FC' ? 'Know Your Creator' : cohortType === 'FAI' ? 'Know Your AI Builder' : 'Know Your Writer';
       const { data: newForm, error: formError } = await supabase.from('ky_forms').insert({ cohort_type: cohortType, name: formName, description: kySections.map(s => s.title).join(', '), is_active: true }).select().single();
       if (formError || !newForm) { console.error('Error seeding form:', formError); continue; }
       let stepIndex = 0;
@@ -490,7 +491,7 @@ const AdminKYForms: React.FC = () => {
   };
 
   const downloadResponses = async (cohortType: string) => {
-    const tableMap: Record<string, string> = { 'FFM': 'kyf_responses', 'FC': 'kyc_responses', 'FW': 'kyw_responses' };
+    const tableMap: Record<string, string> = { 'FFM': 'kyf_responses', 'FC': 'kyc_responses', 'FW': 'kyw_responses', 'FAI': 'kyai_responses' }; // TODO: confirm FAI KY response table name
     const tableName = tableMap[cohortType];
     if (!tableName) return;
     try {

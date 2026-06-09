@@ -1,7 +1,9 @@
 import React, { useState, forwardRef } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Map, BookOpen, MessageCircle, LogOut } from 'lucide-react';
+import { Home, Map, BookOpen, MessageCircle, LogOut, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   AlertDialog,
@@ -27,6 +29,14 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
     const navigate = useNavigate();
     const { signOut } = useAuth();
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const push = usePushNotifications();
+    const showPushPrompt = push.supported && !push.subscribed && push.permission !== 'denied';
+
+    const onPushClick = async () => {
+      const ok = await push.enable();
+      if (ok) toast.success('Notifications enabled on this device.');
+      else toast.error(push.error || 'Could not enable notifications.');
+    };
 
     const isNavActive = (to: string) => {
       if (to === '/') return location.pathname === '/';
@@ -76,6 +86,23 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
                   </NavLink>
                 );
               })}
+
+              {/* Enable-push prompt — only until the user turns alerts on */}
+              {showPushPrompt && (
+                <button
+                  onClick={onPushClick}
+                  disabled={push.loading}
+                  aria-label="Turn on notifications"
+                  className={cn(
+                    "relative flex flex-col items-center justify-center gap-0.5 min-h-[52px] min-w-[52px] px-3 py-2 rounded-2xl transition duration-300",
+                    "active:scale-95 tap-feedback text-primary hover:bg-primary/10"
+                  )}
+                >
+                  <span className="absolute top-1.5 right-2 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                  <Bell className="h-5 w-5 transition duration-300" strokeWidth={2} />
+                  <span className="text-[10px] font-medium tracking-wide">Alerts</span>
+                </button>
+              )}
 
               {/* Sign Out Button */}
               <button

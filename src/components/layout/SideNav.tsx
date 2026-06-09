@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation, Link, useNavigate } from 'react-router-dom';
-import { House, Users, BookOpen, Compass, CalendarDays, Gift, Info, ChevronsLeft, ChevronsRight, ShieldCheck, LogOut } from 'lucide-react';
+import { House, Users, BookOpen, Compass, CalendarDays, Gift, Info, ChevronsLeft, ChevronsRight, ShieldCheck, LogOut, Bell, BellRing } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
@@ -41,6 +43,14 @@ export const SideNav: React.FC = () => {
   const { isAdmin } = useAdminCheck();
   const { isFeatureEnabled } = useFeatureFlags();
   const [signOutOpen, setSignOutOpen] = useState(false);
+  const push = usePushNotifications();
+
+  const onPushClick = async () => {
+    if (!push.supported) { toast.error("Push isn't supported on this browser."); return; }
+    if (push.permission === 'denied') { toast.error('Notifications are blocked in your browser settings — unblock them for this site, then retry.'); return; }
+    if (push.subscribed) { await push.disable(); toast.info('Notifications turned off on this device.'); }
+    else { const ok = await push.enable(); if (ok) toast.success('Notifications enabled on this device.'); else toast.error(push.error || 'Could not enable notifications.'); }
+  };
 
   const filteredNavItems = navItems.filter(item => {
     if (item.to === '/events' && !isFeatureEnabled('events_enabled')) return false;
@@ -156,6 +166,39 @@ export const SideNav: React.FC = () => {
               isActive={location.pathname === to || location.pathname.startsWith(to + '/')}
             />
           ))}
+
+          {/* Push notifications toggle */}
+          {push.supported && (() => {
+            const on = push.subscribed;
+            const Icon = on ? BellRing : Bell;
+            const label = on ? 'Alerts on' : 'Turn on alerts';
+            const content = (
+              <button
+                onClick={onPushClick}
+                disabled={push.loading}
+                className={cn(
+                  "group flex items-center gap-3.5 rounded-2xl transition-colors duration-200 text-base font-medium w-full",
+                  collapsed ? "justify-center p-3" : "px-4 py-3.5",
+                  on
+                    ? "text-emerald-400 hover:bg-white/[0.04]"
+                    : "text-sidebar-foreground/50 hover:bg-white/[0.04] hover:text-sidebar-foreground/80"
+                )}
+              >
+                <Icon className="h-5 w-5 shrink-0" strokeWidth={1.75} />
+                {!collapsed && <span>{label}</span>}
+                {!collapsed && !on && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />}
+              </button>
+            );
+            if (collapsed) {
+              return (
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger asChild><span className="block w-full">{content}</span></TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={12} className="bg-popover/95 backdrop-blur-sm text-popover-foreground border-border/50">{label}</TooltipContent>
+                </Tooltip>
+              );
+            }
+            return content;
+          })()}
 
           {isAdmin && (
             <NavItem

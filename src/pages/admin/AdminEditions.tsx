@@ -232,6 +232,7 @@ export default function AdminEditions() {
                   <span className={`mt-2 inline-block px-2 py-0.5 rounded text-xs font-medium ${
                     edition.cohort_type === 'FFM' ? 'bg-forge-yellow/20 text-forge-yellow' :
                     edition.cohort_type === 'FW' ? 'bg-blue-500/20 text-blue-400' :
+                    edition.cohort_type === 'FAI' ? 'bg-indigo-500/20 text-indigo-400' :
                     'bg-pink-500/20 text-pink-400'
                   }`}>
                     {edition.cohort_type?.replace(/_/g, ' ')}
@@ -463,7 +464,7 @@ function EditionDialog({
   });
 
   const [nameError, setNameError] = useState('');
-  const showOnlineDate = formData.cohort_type === 'FFM' || formData.cohort_type === 'FC';
+  const showOnlineDate = formData.cohort_type === 'FFM' || formData.cohort_type === 'FC' || formData.cohort_type === 'FAI';
 
   // Edition name is now just an E-number (e.g. "E7"). The cohort/program comes
   // from Cohort Type, and the app shows the full name. Normalise "7"/"e7"/"E 7" → "E7".

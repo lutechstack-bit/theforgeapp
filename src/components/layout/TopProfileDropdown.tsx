@@ -19,6 +19,7 @@ const cohortLabelMap: Record<string, string> = {
   FFM: 'The Forge',
   FW: 'Forge Writing',
   FC: 'Forge Creators',
+  FAI: 'Forge AI Residency',
 };
 
 export const TopProfileDropdown: React.FC = () => {

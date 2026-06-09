@@ -7,7 +7,7 @@ import { FloatingInput } from '@/components/ui/floating-input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Loader2, Camera, Upload, Film, Pen, Users, CheckCircle2, MapPin, Calendar, Lock } from 'lucide-react';
+import { ArrowRight, Loader2, Camera, Upload, Film, Pen, Users, CheckCircle2, MapPin, Calendar, Lock, Sparkles } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { PhoneInput } from '@/components/onboarding/PhoneInput';
@@ -20,6 +20,7 @@ const getCohortIcon = (cohortType: string) => {
     case 'FFM': return Film;
     case 'FW': return Pen;
     case 'FC': return Users;
+    case 'FAI': return Sparkles;
     default: return Film;
   }
 };
@@ -29,6 +30,7 @@ const getCohortLabel = (cohortType: string) => {
     case 'FFM': return 'Filmmaking';
     case 'FW': return 'Writing';
     case 'FC': return 'Creators';
+    case 'FAI': return 'AI';
     default: return 'Forge';
   }
 };

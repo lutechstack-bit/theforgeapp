@@ -15,6 +15,7 @@ const getCohortLabel = (edition: any) => {
   if (type === 'FFM') return `Forge Filmmaking · ${name}`;
   if (type === 'FW') return `Forge Writing · ${name}`;
   if (type === 'FC') return `Forge Creators · ${name}`;
+  if (type === 'FAI') return `Forge AI · ${name}`;
   return name;
 };
 

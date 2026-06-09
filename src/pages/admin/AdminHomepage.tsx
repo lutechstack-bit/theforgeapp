@@ -155,6 +155,7 @@ function HeroSlidesManager() {
     FFM: 'Filmmaking',
     FW: 'Writing',
     FC: 'Creators',
+    FAI: 'Forge AI',
   };
 
   return (
@@ -168,7 +169,7 @@ function HeroSlidesManager() {
         {/* Filter by cohort */}
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-sm text-muted-foreground">Filter:</span>
-          {['ALL', 'FFM', 'FW', 'FC'].map(c => (
+          {['ALL', 'FFM', 'FW', 'FC', 'FAI'].map(c => (
             <Button
               key={c}
               size="sm"
@@ -226,6 +227,7 @@ function HeroSlidesManager() {
                   <SelectItem value="FFM">Filmmaking</SelectItem>
                   <SelectItem value="FW">Writing</SelectItem>
                   <SelectItem value="FC">Creators</SelectItem>
+                  <SelectItem value="FAI">Forge AI</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -284,6 +286,7 @@ function HeroSlidesManager() {
                     <SelectItem value="FFM">Filmmaking</SelectItem>
                     <SelectItem value="FW">Writing</SelectItem>
                     <SelectItem value="FC">Creators</SelectItem>
+                    <SelectItem value="FAI">Forge AI</SelectItem>
                   </SelectContent>
                 </Select>
 

@@ -3,7 +3,7 @@ import forgeLogoImg from '@/assets/forge-logo.png';
 import forgeWritingLogoImg from '@/assets/forge-writing-logo.png';
 import forgeCreatorsLogoImg from '@/assets/forge-creators-logo.png';
 
-type CohortType = 'FFM' | 'FW' | 'FC';
+type CohortType = 'FFM' | 'FW' | 'FC' | 'FAI';
 
 interface CohortInfo {
   name: string;
@@ -34,6 +34,11 @@ const cohortInfo: Record<CohortType, CohortInfo> = {
     name: 'The Forge Creators',
     description: 'Build your creator career',
     logo: forgeCreatorsLogoImg,
+  },
+  FAI: {
+    name: 'Forge AI',
+    description: 'Build, automate, and launch with AI',
+    logo: forgeLogoImg,
   },
 };
 

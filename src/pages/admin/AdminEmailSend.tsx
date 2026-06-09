@@ -19,7 +19,7 @@ import { buildMergeValues, extractTags, resolveMergeTags } from '@/lib/mergeTags
 import { Send, Users, Mail, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const COHORT_TYPES = ['FFM', 'FW', 'FC'] as const;
+const COHORT_TYPES = ['FFM', 'FW', 'FC', 'FAI'] as const;
 
 interface Profile {
   id: string;
