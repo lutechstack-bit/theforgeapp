@@ -55,8 +55,8 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
     return (
       <>
         <nav ref={ref} className="fixed bottom-0 left-0 right-0 z-50 glass-nav md:hidden safe-area-pb" {...props}>
-          <div className="container">
-            <div className="flex items-center justify-around h-[68px]">
+          <div className="container px-1.5">
+            <div className="flex items-stretch justify-between h-[68px] gap-0.5">
               {navItems.map(({ to, icon: Icon, label, tour }) => {
                 const isActive = isNavActive(to);
                 return (
@@ -65,22 +65,22 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
                     to={to}
                     data-tour-mobile={tour}
                     className={cn(
-                      "relative flex flex-col items-center justify-center gap-0.5 min-h-[52px] min-w-[52px] px-3 py-2 rounded-2xl transition duration-300",
+                      "relative flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 py-2 rounded-2xl transition duration-300",
                       "active:scale-95 tap-feedback",
-                      isActive 
-                        ? "text-primary bg-primary/10 nav-glow-active" 
+                      isActive
+                        ? "text-primary bg-primary/10 nav-glow-active"
                         : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
                     )}
                   >
-                    <Icon 
+                    <Icon
                       className={cn(
-                        "h-5 w-5 transition duration-300",
+                        "h-5 w-5 shrink-0 transition duration-300",
                         isActive && "drop-shadow-[0_0_10px_hsl(var(--primary))]"
-                      )} 
+                      )}
                       strokeWidth={isActive ? 2.5 : 2}
                     />
                     <span className={cn(
-                      "text-[10px] font-medium tracking-wide",
+                      "max-w-full truncate text-[10px] font-medium tracking-tight leading-none",
                       isActive && "font-semibold"
                     )}>{label}</span>
                   </NavLink>
@@ -94,19 +94,19 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
                   disabled={push.loading}
                   aria-label={push.subscribed ? 'Notifications on — tap to turn off' : 'Turn on notifications'}
                   className={cn(
-                    "relative flex flex-col items-center justify-center gap-0.5 min-h-[52px] min-w-[52px] px-3 py-2 rounded-2xl transition duration-300 active:scale-95 tap-feedback",
+                    "relative flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 py-2 rounded-2xl transition duration-300 active:scale-95 tap-feedback",
                     push.subscribed
                       ? "text-primary"
                       : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
                   )}
                 >
                   {!push.subscribed && push.permission !== 'denied' && (
-                    <span className="absolute top-1.5 right-2 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                    <span className="absolute top-1.5 right-1/4 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
                   )}
                   {push.subscribed
-                    ? <BellRing className="h-5 w-5 transition duration-300 drop-shadow-[0_0_10px_hsl(var(--primary))]" strokeWidth={2.5} />
-                    : <Bell className="h-5 w-5 transition duration-300" strokeWidth={2} />}
-                  <span className={cn("text-[10px] font-medium tracking-wide", push.subscribed && "font-semibold")}>Alerts</span>
+                    ? <BellRing className="h-5 w-5 shrink-0 transition duration-300 drop-shadow-[0_0_10px_hsl(var(--primary))]" strokeWidth={2.5} />
+                    : <Bell className="h-5 w-5 shrink-0 transition duration-300" strokeWidth={2} />}
+                  <span className={cn("max-w-full truncate text-[10px] font-medium tracking-tight leading-none", push.subscribed && "font-semibold")}>Alerts</span>
                 </button>
               )}
 
@@ -115,13 +115,13 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
                 onClick={() => setConfirmOpen(true)}
                 aria-label="Sign out"
                 className={cn(
-                  "relative flex flex-col items-center justify-center gap-0.5 min-h-[52px] min-w-[52px] px-3 py-2 rounded-2xl transition duration-300",
+                  "relative flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 py-2 rounded-2xl transition duration-300",
                   "active:scale-95 tap-feedback",
                   "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                 )}
               >
-                <LogOut className="h-5 w-5 transition duration-300" strokeWidth={2} />
-                <span className="text-[10px] font-medium tracking-wide">Sign Out</span>
+                <LogOut className="h-5 w-5 shrink-0 transition duration-300" strokeWidth={2} />
+                <span className="max-w-full truncate text-[10px] font-medium tracking-tight leading-none">Sign Out</span>
               </button>
             </div>
           </div>
