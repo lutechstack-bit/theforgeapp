@@ -56,50 +56,55 @@ const BatchmateCard: React.FC<BatchmateCardProps> = ({ member, headshot, cardKey
     <button
       key={cardKey}
       onClick={onClick}
-      className="group flex-shrink-0 w-32 sm:w-36 rounded-2xl overflow-hidden relative border border-white/8 shadow-lg hover:shadow-xl hover:scale-[1.03] transition duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="group flex-shrink-0 w-36 sm:w-40 rounded-[20px] overflow-hidden relative border border-white/[0.06] shadow-[0_8px_24px_-12px_rgba(0,0,0,0.7)] hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.85)] hover:-translate-y-1 transition duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       {/* Portrait frame — aspect-[3/4] */}
-      <div className="relative w-full aspect-[3/4] overflow-hidden bg-[#1a1a1a]">
+      <div className="relative w-full aspect-[3/4] overflow-hidden bg-[#161616]">
         {photoUrl ? (
           <img
             src={photoUrl}
             alt={member.full_name || ''}
-            className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover object-top group-hover:scale-[1.06] transition-transform duration-[600ms] ease-out"
             loading="lazy"
           />
         ) : (
-          /* No photo — show initials centered on textured bg */
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-            <span className="text-3xl font-black text-primary/80 tracking-tight select-none">
+          /* No photo — refined initials: brand-tinted radial wash + soft watermark */
+          <div className="relative w-full h-full flex items-center justify-center bg-gradient-to-br from-[#1e1e1e] to-[#121212]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_25%,hsl(var(--primary)/0.18),transparent_65%)]" />
+            <img src={forgeIcon} alt="" className="absolute bottom-3 right-3 w-5 h-5 opacity-[0.12]" />
+            <span className="relative text-[2.75rem] font-black text-primary/75 tracking-tight select-none drop-shadow-sm">
               {getInitials(member.full_name)}
             </span>
           </div>
         )}
 
-        {/* Bottom gradient overlay — always present */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+        {/* Bottom gradient overlay — always present, slightly deeper for legibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/25 to-transparent" />
+
+        {/* Subtle inner ring for a crisp framed edge */}
+        <div className="absolute inset-0 rounded-[20px] ring-1 ring-inset ring-white/[0.06]" />
 
         {/* Specialty pill — top right, only when available */}
         {member.specialty && (
-          <div className="absolute top-2 right-2">
-            <span className="inline-block px-1.5 py-0.5 rounded-md text-[9px] font-semibold tracking-wide bg-primary/80 text-primary-foreground backdrop-blur-sm leading-tight max-w-[72px] truncate">
+          <div className="absolute top-2.5 right-2.5">
+            <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-wide bg-black/40 text-white/90 ring-1 ring-white/15 backdrop-blur-md leading-tight max-w-[80px] truncate">
               {member.specialty}
             </span>
           </div>
         )}
 
         {/* Text overlay — pinned to bottom. Name wraps to 2 lines so it isn't clipped. */}
-        <div className="absolute bottom-0 left-0 right-0 px-2.5 pb-2.5 pt-6">
-          <p className="text-[13px] font-bold text-white leading-tight line-clamp-2">
+        <div className="absolute bottom-0 left-0 right-0 px-3 pb-3 pt-8">
+          <p className="text-[13px] font-bold text-white leading-snug line-clamp-2 tracking-[-0.01em]">
             {firstName}
             {lastName && (
-              <span className="font-normal text-white/70"> {lastName}</span>
+              <span className="font-normal text-white/65"> {lastName}</span>
             )}
           </p>
           {member.city && (
-            <div className="flex items-center gap-0.5 mt-0.5">
+            <div className="flex items-center gap-1 mt-1">
               <MapPin className="w-2.5 h-2.5 text-white/40 flex-shrink-0" />
-              <p className="text-[10px] text-white/50 truncate leading-tight">{member.city}</p>
+              <p className="text-[10px] text-white/55 truncate leading-tight">{member.city}</p>
             </div>
           )}
         </div>
@@ -172,7 +177,7 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
         <Skeleton className="h-6 w-48" />
         <div className="flex gap-3 overflow-hidden">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="w-32 flex-shrink-0 rounded-2xl" style={{ aspectRatio: '3/4' }} />
+            <Skeleton key={i} className="w-36 sm:w-40 flex-shrink-0 rounded-[20px]" style={{ aspectRatio: '3/4' }} />
           ))}
         </div>
       </div>
@@ -206,10 +211,10 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
         </Button>
       </div>
 
-      {/* Marquee container — single row, hover pauses */}
-      <div className="marquee-pause overflow-hidden -mx-1">
-        <div className="flex gap-3">
-          <div className="flex gap-3 animate-marquee">
+      {/* Marquee container — single row, hover pauses, edges fade out */}
+      <div className="marquee-pause overflow-hidden -mx-1 py-1 [-webkit-mask-image:linear-gradient(to_right,transparent,black_4%,black_96%,transparent)] [mask-image:linear-gradient(to_right,transparent,black_4%,black_96%,transparent)]">
+        <div className="flex gap-3.5">
+          <div className="flex gap-3.5 animate-marquee">
             {row1.map((member, i) => (
               <BatchmateCard
                 key={`r1-${member.id}-${i}`}
