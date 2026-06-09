@@ -1,6 +1,6 @@
 import React, { useState, forwardRef } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Map, BookOpen, MessageCircle, LogOut, Bell } from 'lucide-react';
+import { Home, Map, BookOpen, MessageCircle, LogOut, Bell, BellRing } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -30,12 +30,12 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
     const { signOut } = useAuth();
     const [confirmOpen, setConfirmOpen] = useState(false);
     const push = usePushNotifications();
-    const showPushPrompt = push.supported && !push.subscribed && push.permission !== 'denied';
 
     const onPushClick = async () => {
-      const ok = await push.enable();
-      if (ok) toast.success('Notifications enabled on this device.');
-      else toast.error(push.error || 'Could not enable notifications.');
+      if (!push.supported) { toast.error("Push isn't supported on this browser."); return; }
+      if (push.permission === 'denied') { toast.error('Notifications are blocked in your browser settings — unblock them for this site, then retry.'); return; }
+      if (push.subscribed) { await push.disable(); toast.info('Notifications turned off on this device.'); }
+      else { const ok = await push.enable(); if (ok) toast.success('Notifications enabled on this device.'); else toast.error(push.error || 'Could not enable notifications.'); }
     };
 
     const isNavActive = (to: string) => {
@@ -87,20 +87,26 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
                 );
               })}
 
-              {/* Enable-push prompt — only until the user turns alerts on */}
-              {showPushPrompt && (
+              {/* Notifications toggle — always visible when push is supported */}
+              {push.supported && (
                 <button
                   onClick={onPushClick}
                   disabled={push.loading}
-                  aria-label="Turn on notifications"
+                  aria-label={push.subscribed ? 'Notifications on — tap to turn off' : 'Turn on notifications'}
                   className={cn(
-                    "relative flex flex-col items-center justify-center gap-0.5 min-h-[52px] min-w-[52px] px-3 py-2 rounded-2xl transition duration-300",
-                    "active:scale-95 tap-feedback text-primary hover:bg-primary/10"
+                    "relative flex flex-col items-center justify-center gap-0.5 min-h-[52px] min-w-[52px] px-3 py-2 rounded-2xl transition duration-300 active:scale-95 tap-feedback",
+                    push.subscribed
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
                   )}
                 >
-                  <span className="absolute top-1.5 right-2 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                  <Bell className="h-5 w-5 transition duration-300" strokeWidth={2} />
-                  <span className="text-[10px] font-medium tracking-wide">Alerts</span>
+                  {!push.subscribed && push.permission !== 'denied' && (
+                    <span className="absolute top-1.5 right-2 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                  )}
+                  {push.subscribed
+                    ? <BellRing className="h-5 w-5 transition duration-300 drop-shadow-[0_0_10px_hsl(var(--primary))]" strokeWidth={2.5} />
+                    : <Bell className="h-5 w-5 transition duration-300" strokeWidth={2} />}
+                  <span className={cn("text-[10px] font-medium tracking-wide", push.subscribed && "font-semibold")}>Alerts</span>
                 </button>
               )}
 
