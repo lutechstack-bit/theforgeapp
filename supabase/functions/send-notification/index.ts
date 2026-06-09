@@ -71,16 +71,12 @@ Deno.serve(async (req) => {
     if (Array.isArray(testUserIds) && testUserIds.length) {
       userIds = testUserIds;
     } else if (audienceId) {
-      // Resolve through the existing audience resolver if present; fall back to none
-      const { data: aud } = await admin
-        .from("notification_audiences")
-        .select("filter_sql")
-        .eq("id", audienceId)
-        .single();
-      if (aud?.filter_sql) {
-        const { data: rows } = await admin.rpc("resolve_audience_ids", { _filter: aud.filter_sql }).catch(() => ({ data: null }));
-        if (Array.isArray(rows)) userIds = rows.map((r: any) => r.id ?? r);
-      }
+      // notification_audiences use raw filter_sql; the SQL evaluator arrives in
+      // a later prompt. Until then, audience-based sends aren't supported.
+      return json(
+        { error: "Audience-based sends aren't enabled yet (the filter_sql evaluator is a later prompt). Use 'Send test' to send to yourself, or pass explicit testUserIds." },
+        400
+      );
     } else {
       userIds = [caller.id]; // default: send to self (the "Send test" case)
     }

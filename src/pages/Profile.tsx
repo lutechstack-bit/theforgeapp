@@ -32,6 +32,7 @@ import { BentoPersonalTile } from '@/components/profile/BentoPersonalTile';
 import { BentoWorksTile } from '@/components/profile/BentoWorksTile';
 import { BentoBadgesTile } from '@/components/profile/BentoBadgesTile';
 import { BentoShareTile } from '@/components/profile/BentoShareTile';
+import { EnablePushButton } from '@/components/EnablePushButton';
 
 const ProfileSkeleton = () => (
   <div className="max-w-6xl mx-auto page-container space-y-4 pb-24 md:pb-6">
@@ -202,6 +203,8 @@ const Profile: React.FC = () => {
           <Gift className="h-3.5 w-3.5" />
           My Perks & Acceptance ›
         </Link>
+
+        <div className="ml-auto"><EnablePushButton /></div>
       </div>
 
       {/* Bento Grid */}
