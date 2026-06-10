@@ -138,7 +138,7 @@ const CommunityOnboarding: React.FC = () => {
         available_for_hire: existingCollab?.available_for_hire ?? prev.available_for_hire,
         open_to_remote: existingCollab?.open_to_remote ?? prev.open_to_remote,
         portfolio_links: existingCollab?.portfolio_url
-          ? [{ type: 'Portfolio' as any, url: existingCollab.portfolio_url }]
+          ? [{ id: '', type: 'Portfolio' as any, url: existingCollab.portfolio_url }]
           : prev.portfolio_links,
       };
     });

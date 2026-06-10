@@ -20,6 +20,7 @@ import { wrapInForgeShell, simpleBodyToHtml } from '@/lib/emailShell';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ArrowLeft, History, RotateCcw, Save, Wand2, Code2 } from 'lucide-react';
+import { format } from 'date-fns';
 import { toast } from 'sonner';
 
 const CATEGORIES = ['onboarding', 'reminder', 'announcement', 'alumni'] as const;

@@ -644,7 +644,7 @@ function RoadmapDayDialog({
     location: '',
     is_active: false,
     checklist: [] as string[],
-    cohort_type: '' as '' | 'FFM' | 'FW' | 'FC',
+    cohort_type: '' as '' | 'FFM' | 'FW' | 'FC' | 'FAI',
     // Virtual meeting fields
     is_virtual: false,
     meeting_url: '',

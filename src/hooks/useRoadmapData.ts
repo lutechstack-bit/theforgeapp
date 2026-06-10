@@ -18,6 +18,7 @@ export const cohortDisplayNames: Record<CohortType, string> = {
   FFM: 'The Forge',
   FW: 'Forge Writing',
   FC: 'Forge Creators',
+  FAI: 'Forge AI',
 };
 
 // Timeout for roadmap queries (12 seconds)

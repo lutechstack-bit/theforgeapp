@@ -7,7 +7,7 @@ export interface ProfileData {
   kyfResponse: any | null;
   kywResponse: any | null;
   kycResponse: any | null;
-  cohortType: 'FFM' | 'FW' | 'FC' | null;
+  cohortType: 'FFM' | 'FW' | 'FC' | 'FAI' | null;
   messageCount: number;
   worksCount: number;
   collaboratorProfile: any | null; // community profile data (tagline, occupations, about, etc.)
