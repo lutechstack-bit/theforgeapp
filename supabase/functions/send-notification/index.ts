@@ -1,11 +1,3 @@
-// Real Web Push send pipeline (Prompt 3)
-// Renders a template, finds target users' push subscriptions, sends web-push,
-// records a campaign + per-user deliveries.
-//
-// Required secrets (set in Lovable → Project → Edge Function secrets):
-//   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT (e.g. mailto:you@domain)
-//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (provided by platform)
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
 
@@ -21,7 +13,6 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-// --- minimal token rendering (full engine arrives later) ---
 function renderTokens(text: string, ctx: Record<string, string>): string {
   if (!text) return text;
   return text.replace(/\[([A-Z0-9_]+)\]/g, (m, key) => (key in ctx ? ctx[key] : m));
@@ -43,7 +34,6 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const admin = createClient(supabaseUrl, serviceKey);
 
-    // Identify + authorize the caller (must be admin)
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace("Bearer ", "");
     const { data: userData } = await admin.auth.getUser(token);
@@ -58,7 +48,6 @@ Deno.serve(async (req) => {
 
     if (!templateId) return json({ error: "templateId is required." }, 400);
 
-    // Load template
     const { data: template, error: tErr } = await admin
       .from("notification_templates")
       .select("*")
@@ -66,24 +55,17 @@ Deno.serve(async (req) => {
       .single();
     if (tErr || !template) return json({ error: "Template not found." }, 404);
 
-    // Resolve target user ids
     let userIds: string[] = [];
     if (Array.isArray(testUserIds) && testUserIds.length) {
       userIds = testUserIds;
     } else if (audienceId) {
-      // notification_audiences use raw filter_sql; the SQL evaluator arrives in
-      // a later prompt. Until then, audience-based sends aren't supported.
-      return json(
-        { error: "Audience-based sends aren't enabled yet (the filter_sql evaluator is a later prompt). Use 'Send test' to send to yourself, or pass explicit testUserIds." },
-        400
-      );
+      return json({ error: "Audience-based sends aren't enabled yet. Use 'Send test' to send to yourself." }, 400);
     } else {
-      userIds = [caller.id]; // default: send to self (the "Send test" case)
+      userIds = [caller.id];
     }
     userIds = [...new Set(userIds)].filter(Boolean);
     if (!userIds.length) return json({ error: "No target users resolved." }, 400);
 
-    // Create the campaign row
     const { data: campaign, error: cErr } = await admin
       .from("notification_campaigns")
       .insert({
@@ -101,7 +83,6 @@ Deno.serve(async (req) => {
       .single();
     if (cErr) return json({ error: "Could not create campaign: " + cErr.message }, 500);
 
-    // Pull profiles (for token context) and subscriptions
     const { data: profiles } = await admin
       .from("profiles")
       .select("id, full_name")
@@ -158,7 +139,6 @@ Deno.serve(async (req) => {
           await admin.from("push_subscriptions").update({ last_used_at: new Date().toISOString() }).eq("id", s.id);
         } catch (err: any) {
           const statusCode = err?.statusCode;
-          // 404/410 => subscription is dead; disable it
           if (statusCode === 404 || statusCode === 410) {
             await admin.from("push_subscriptions").update({ enabled: false }).eq("id", s.id);
           }

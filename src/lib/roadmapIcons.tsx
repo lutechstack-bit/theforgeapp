@@ -104,6 +104,7 @@ export function getDayIcon(
     FFM: forgeIcons,
     FC: creatorsIcons,
     FW: writingIcons,
+    FAI: forgeIcons,
   };
 
   const cohortIcons = iconMaps[cohortType] || forgeIcons;

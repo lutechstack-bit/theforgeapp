@@ -75,7 +75,7 @@ const ProfileSetup: React.FC = () => {
         .select('*')
         .eq('is_archived', false);
       // Filter to the student's cohort when known (fall back to all if not set).
-      if (myCohort) q = q.eq('cohort_type', myCohort);
+      if (myCohort) q = q.eq('cohort_type', myCohort as any);
       // Only show UPCOMING / ongoing cohorts — hide ones whose offline (Forge)
       // end date has already passed. Editions with no end date (Dates TBD) still show.
       q = q.or(`forge_end_date.is.null,forge_end_date.gte.${today}`);

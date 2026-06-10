@@ -22,7 +22,7 @@ interface CachedProfile {
 
 interface CachedEdition {
   id: string;
-  cohort_type: 'FFM' | 'FW' | 'FC';
+  cohort_type: 'FFM' | 'FW' | 'FC' | 'FAI';
   forge_start_date: string | null;
   forge_end_date: string | null;
   city?: string;
