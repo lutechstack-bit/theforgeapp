@@ -666,7 +666,7 @@ function RoadmapDayDialog({
         location: day.location || '',
         is_active: day.is_active,
         checklist: (day.checklist as string[]) || [],
-        cohort_type: (day.cohort_type as '' | 'FFM' | 'FW' | 'FC') || '',
+        cohort_type: (day.cohort_type as '' | 'FFM' | 'FW' | 'FC' | 'FAI') || '',
         is_virtual: day.is_virtual || false,
         meeting_url: day.meeting_url || '',
         meeting_id: day.meeting_id || '',

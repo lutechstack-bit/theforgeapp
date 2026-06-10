@@ -3,7 +3,7 @@ import { Lock, Calendar, Globe2, Brain, Target, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface VerifiedInfoCardProps {
-  cohortType: 'FFM' | 'FW' | 'FC' | null;
+  cohortType: 'FFM' | 'FW' | 'FC' | 'FAI' | null;
   kyfResponse?: any;
   kywResponse?: any;
   isPublicView?: boolean;
