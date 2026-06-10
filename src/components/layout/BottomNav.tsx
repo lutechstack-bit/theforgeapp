@@ -32,10 +32,16 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
     const push = usePushNotifications();
 
     const onPushClick = async () => {
-      if (!push.supported) { toast.error("Push isn't supported on this browser."); return; }
-      if (push.permission === 'denied') { toast.error('Notifications are blocked in your browser settings — unblock them for this site, then retry.'); return; }
+      if (!push.supported) {
+        toast('Add to Home Screen to enable alerts', {
+          description: 'Tap the Share button → "Add to Home Screen", then open the app from there to enable push notifications.',
+          duration: 6000,
+        });
+        return;
+      }
+      if (push.permission === 'denied') { toast.error('Notifications are blocked — go to your browser Settings for this site and allow notifications, then retry.'); return; }
       if (push.subscribed) { await push.disable(); toast.info('Notifications turned off on this device.'); }
-      else { const ok = await push.enable(); if (ok) toast.success('Notifications enabled on this device.'); else toast.error(push.error || 'Could not enable notifications.'); }
+      else { const ok = await push.enable(); if (ok) toast.success('Notifications enabled on this device! 🔔'); else toast.error(push.error || 'Could not enable notifications.'); }
     };
 
     const isNavActive = (to: string) => {
@@ -87,28 +93,26 @@ export const BottomNav = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElemen
                 );
               })}
 
-              {/* Notifications toggle — always visible when push is supported */}
-              {push.supported && (
-                <button
-                  onClick={onPushClick}
-                  disabled={push.loading}
-                  aria-label={push.subscribed ? 'Notifications on — tap to turn off' : 'Turn on notifications'}
-                  className={cn(
-                    "relative flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 py-2 rounded-2xl transition duration-300 active:scale-95 tap-feedback",
-                    push.subscribed
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
-                  )}
-                >
-                  {!push.subscribed && push.permission !== 'denied' && (
-                    <span className="absolute top-1.5 right-1/4 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                  )}
-                  {push.subscribed
-                    ? <BellRing className="h-5 w-5 shrink-0 transition duration-300 drop-shadow-[0_0_10px_hsl(var(--primary))]" strokeWidth={2.5} />
-                    : <Bell className="h-5 w-5 shrink-0 transition duration-300" strokeWidth={2} />}
-                  <span className={cn("max-w-full truncate text-[10px] font-medium tracking-tight leading-none", push.subscribed && "font-semibold")}>Alerts</span>
-                </button>
-              )}
+              {/* Notifications toggle — always visible */}
+              <button
+                onClick={onPushClick}
+                disabled={push.loading}
+                aria-label={push.subscribed ? 'Notifications on — tap to turn off' : 'Turn on notifications'}
+                className={cn(
+                  "relative flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 py-2 rounded-2xl transition duration-300 active:scale-95 tap-feedback",
+                  push.subscribed
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+                )}
+              >
+                {!push.subscribed && push.permission !== 'denied' && (
+                  <span className="absolute top-1.5 right-1/4 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                )}
+                {push.subscribed
+                  ? <BellRing className="h-5 w-5 shrink-0 transition duration-300 drop-shadow-[0_0_10px_hsl(var(--primary))]" strokeWidth={2.5} />
+                  : <Bell className="h-5 w-5 shrink-0 transition duration-300" strokeWidth={2} />}
+                <span className={cn("max-w-full truncate text-[10px] font-medium tracking-tight leading-none", push.subscribed && "font-semibold")}>Alerts</span>
+              </button>
 
               {/* Sign Out Button */}
               <button
