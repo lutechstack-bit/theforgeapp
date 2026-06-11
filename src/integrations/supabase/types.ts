@@ -2649,6 +2649,7 @@ export type Database = {
           send_window_end: string | null
           send_window_start: string | null
           template_id: string | null
+          test_only: boolean
           timezone: string | null
           trigger_id: string | null
           updated_at: string | null
@@ -2665,6 +2666,7 @@ export type Database = {
           send_window_end?: string | null
           send_window_start?: string | null
           template_id?: string | null
+          test_only?: boolean
           timezone?: string | null
           trigger_id?: string | null
           updated_at?: string | null
@@ -2681,6 +2683,7 @@ export type Database = {
           send_window_end?: string | null
           send_window_start?: string | null
           template_id?: string | null
+          test_only?: boolean
           timezone?: string | null
           trigger_id?: string | null
           updated_at?: string | null
@@ -4520,6 +4523,18 @@ export type Database = {
       }
       is_doubt_participant: { Args: { _doubt_id: string }; Returns: boolean }
       is_my_student: { Args: { _student_id: string }; Returns: boolean }
+      nudge_eligible_users: {
+        Args: {
+          _cooldown_hours: number
+          _extra: string
+          _filter: string
+          _max_sends: number
+          _template_id: string
+        }
+        Returns: {
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "mentor"
