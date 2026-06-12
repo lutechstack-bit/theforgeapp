@@ -1868,16 +1868,20 @@ export type Database = {
           email: string | null
           emergency_contact_name: string | null
           emergency_contact_number: string | null
+          food_allergies: string | null
           forge_intent: string | null
           forge_intent_other: string | null
           id: string
           mbti_type: string | null
+          meal_preference: string | null
+          medication_support: string | null
           primary_language: string | null
           proficiency_story_voice: string | null
           proficiency_writing: string | null
           terms_accepted: boolean | null
           terms_accepted_at: string | null
           top_3_writers_books: string[] | null
+          tshirt_size: string | null
           updated_at: string
           user_id: string
           whatsapp_number: string | null
@@ -1895,16 +1899,20 @@ export type Database = {
           email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_number?: string | null
+          food_allergies?: string | null
           forge_intent?: string | null
           forge_intent_other?: string | null
           id?: string
           mbti_type?: string | null
+          meal_preference?: string | null
+          medication_support?: string | null
           primary_language?: string | null
           proficiency_story_voice?: string | null
           proficiency_writing?: string | null
           terms_accepted?: boolean | null
           terms_accepted_at?: string | null
           top_3_writers_books?: string[] | null
+          tshirt_size?: string | null
           updated_at?: string
           user_id: string
           whatsapp_number?: string | null
@@ -1922,16 +1930,20 @@ export type Database = {
           email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_number?: string | null
+          food_allergies?: string | null
           forge_intent?: string | null
           forge_intent_other?: string | null
           id?: string
           mbti_type?: string | null
+          meal_preference?: string | null
+          medication_support?: string | null
           primary_language?: string | null
           proficiency_story_voice?: string | null
           proficiency_writing?: string | null
           terms_accepted?: boolean | null
           terms_accepted_at?: string | null
           top_3_writers_books?: string[] | null
+          tshirt_size?: string | null
           updated_at?: string
           user_id?: string
           whatsapp_number?: string | null
