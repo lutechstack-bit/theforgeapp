@@ -14,6 +14,7 @@ import { CommunityProfileStep1, CommunityProfileStep2, CommunityProfileStep3 } f
 import { ArrowLeft, Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
+import { kyFormAvailable } from '@/lib/kyFormRoutes';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +49,13 @@ const KYSectionForm: React.FC = () => {
   const isLastRequiredSection = sectionIndex === requiredSections.length - 1;
 
   const totalSteps = section ? getSectionTotalSteps(section) : 0;
+
+  // FAI has no KY form yet — block KY form sections for FAI (the community
+  // profile is still allowed so they appear in the directory).
+  const kyFormBlocked = !kyFormAvailable(cohortType) && sectionKey !== 'community_profile';
+  useEffect(() => {
+    if (kyFormBlocked) navigate('/my-kyform', { replace: true });
+  }, [kyFormBlocked, navigate]);
 
   // Load existing data
   useEffect(() => {
