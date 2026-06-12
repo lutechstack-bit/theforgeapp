@@ -33,6 +33,7 @@ import { BentoWorksTile } from '@/components/profile/BentoWorksTile';
 import { BentoBadgesTile } from '@/components/profile/BentoBadgesTile';
 import { BentoShareTile } from '@/components/profile/BentoShareTile';
 import { EnablePushButton } from '@/components/EnablePushButton';
+import { kyFormAvailable } from '@/lib/kyFormRoutes';
 
 const ProfileSkeleton = () => (
   <div className="max-w-6xl mx-auto page-container space-y-4 pb-24 md:pb-6">
@@ -180,21 +181,23 @@ const Profile: React.FC = () => {
 
       {/* Action Strip */}
       <div className="flex flex-wrap gap-2 sm:gap-2.5 items-center px-4 sm:px-6 md:px-0 py-3 border-b border-primary/10 mb-6">
-        <Link
-          to="/kyf"
-          className={`flex items-center gap-2 px-3.5 py-2 border rounded-lg text-xs transition cursor-pointer ${
-            profile?.ky_form_completed
-              ? 'border-primary/10 bg-card text-muted-foreground hover:border-primary/25'
-              : 'border-primary/35 bg-primary/7 text-primary'
-          }`}
-        >
-          {profile?.ky_form_completed ? (
-            <CheckCircle2 className="h-3.5 w-3.5" />
-          ) : (
-            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-          )}
-          {profile?.ky_form_completed ? 'KY Form — Complete' : 'Complete KY Form'}
-        </Link>
+        {kyFormAvailable(edition?.cohort_type ?? profileData?.cohortType) && (
+          <Link
+            to="/kyf"
+            className={`flex items-center gap-2 px-3.5 py-2 border rounded-lg text-xs transition cursor-pointer ${
+              profile?.ky_form_completed
+                ? 'border-primary/10 bg-card text-muted-foreground hover:border-primary/25'
+                : 'border-primary/35 bg-primary/7 text-primary'
+            }`}
+          >
+            {profile?.ky_form_completed ? (
+              <CheckCircle2 className="h-3.5 w-3.5" />
+            ) : (
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+            )}
+            {profile?.ky_form_completed ? 'KY Form — Complete' : 'Complete KY Form'}
+          </Link>
+        )}
 
         <Link
           to="/perks"

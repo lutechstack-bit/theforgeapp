@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSmartAnnouncements } from '@/hooks/useSmartAnnouncements';
 import { ClipboardList, ChevronRight, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getKYFormSectionRoute, getKYFormName } from '@/lib/kyFormRoutes';
+import { getKYFormSectionRoute, getKYFormName, kyFormAvailable } from '@/lib/kyFormRoutes';
 
 interface StatusWidgetProps {
   variant: 'desktop' | 'mobile';
@@ -29,7 +29,8 @@ export const StatusWidget: React.FC<StatusWidgetProps> = ({ variant, className }
     return () => clearInterval(interval);
   }, [announcements.length]);
 
-  const showKYForm = profile?.profile_setup_completed && !profile?.ky_form_completed;
+  // FAI has no KY form yet — never prompt FAI students to complete one.
+  const showKYForm = profile?.profile_setup_completed && !profile?.ky_form_completed && kyFormAvailable(edition?.cohort_type);
   
   const getKYFormRoute = () => getKYFormSectionRoute(edition?.cohort_type);
   const getKYFormLabel = () => getKYFormName(edition?.cohort_type);

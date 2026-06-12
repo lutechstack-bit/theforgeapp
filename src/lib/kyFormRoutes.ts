@@ -3,6 +3,14 @@
  * Maps cohort types to their first section key in the new unified flow.
  */
 
+// Cohorts that have a built KY form. Forge AI (FAI) intentionally has NO form
+// yet — its "Know Your Builder" (KYB) form isn't built, so we must NOT fall
+// back to the Filmmaking form for FAI students. Gate every KY surface on this.
+export const COHORTS_WITH_KY_FORM = ['FFM', 'FC', 'FW'];
+
+export const kyFormAvailable = (cohortType?: string | null): boolean =>
+  !!cohortType && COHORTS_WITH_KY_FORM.includes(cohortType);
+
 export const getKYFormSectionRoute = (cohortType?: string | null): string => {
   switch (cohortType) {
     case 'FFM':

@@ -10,11 +10,11 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { 
   ArrowLeft, Edit, User, UserCircle, Phone, 
   Target, Settings, Heart, Film, Brain, Clock, MapPin, 
-  Instagram, Mail, Calendar, Ruler, Shirt, Utensils, Languages
+  Instagram, Mail, Calendar, Ruler, Shirt, Utensils, Languages, Sparkles
 } from 'lucide-react';
 import { format } from 'date-fns';
 import forgeIcon from '@/assets/forge-icon.png';
-import { getKYFormSectionRoute } from '@/lib/kyFormRoutes';
+import { getKYFormSectionRoute, kyFormAvailable } from '@/lib/kyFormRoutes';
 
 const MyKYForm: React.FC = () => {
   const navigate = useNavigate();
@@ -60,6 +60,22 @@ const MyKYForm: React.FC = () => {
     );
   }
   
+  // Forge AI has no KY form yet — "Know Your Builder" is still being built.
+  // Never route FAI students into the Filmmaking form; show a placeholder.
+  if (!kyFormAvailable(cohortType)) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
+        <Sparkles className="h-10 w-10 text-primary mb-4" />
+        <h1 className="text-2xl font-bold mb-2">Know Your Builder</h1>
+        <p className="text-muted-foreground max-w-sm mb-6">
+          Your Forge AI profile form is on its way. We’ll let you know the moment it’s ready —
+          nothing to fill out right now.
+        </p>
+        <Button onClick={() => navigate('/')}>Back to Home</Button>
+      </div>
+    );
+  }
+
   // Redirect if form not completed
   if (!profile?.ky_form_completed) {
     return <Navigate to={getFormRoute()} replace />;
