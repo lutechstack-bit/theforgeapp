@@ -5,6 +5,7 @@ import { useSmartAnnouncements } from '@/hooks/useSmartAnnouncements';
 import { ClipboardList, ChevronRight, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getKYFormSectionRoute, getKYFormName, kyFormAvailable } from '@/lib/kyFormRoutes';
+import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 
 interface StatusWidgetProps {
   variant: 'desktop' | 'mobile';
@@ -12,7 +13,8 @@ interface StatusWidgetProps {
 }
 
 export const StatusWidget: React.FC<StatusWidgetProps> = ({ variant, className }) => {
-  const { profile, edition } = useAuth();
+  const { profile } = useAuth();
+  const { effectiveEdition: edition } = useEffectiveCohort();
   const navigate = useNavigate();
   const { announcements, dismissAnnouncement } = useSmartAnnouncements();
   

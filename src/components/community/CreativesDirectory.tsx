@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 import { useNavigate } from 'react-router-dom';
 import { CreativeCard, type CreativeProfile } from './CreativeCard';
 import { CreativeDetailModal } from './CreativeDetailModal';
@@ -14,7 +15,8 @@ interface CreativesDirectoryProps {
 }
 
 export const CreativesDirectory: React.FC<CreativesDirectoryProps> = ({ onSetupProfile }) => {
-  const { user, profile, edition } = useAuth();
+  const { user, profile } = useAuth();
+  const { effectiveEdition: edition } = useEffectiveCohort();
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('ALL');
   const [cohortFilter, setCohortFilter] = useState<'all' | 'cohort'>('all');

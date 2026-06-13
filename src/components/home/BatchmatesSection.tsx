@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 import { supabase } from '@/integrations/supabase/client';
 import { ChevronRight, MapPin } from 'lucide-react';
 import forgeIcon from '@/assets/forge-icon.png';
@@ -119,18 +120,20 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
 }) => {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
+  const { effectiveEdition } = useEffectiveCohort();
+  const editionId = effectiveEdition?.id || profile?.edition_id;
 
   const [selectedMember, setSelectedMember] = useState<Batchmate | null>(null);
 
   // Fetch all batchmates (no limit)
   const { data: batchmates = [], isLoading: loadingProfiles } = useQuery({
-    queryKey: ['batchmates', profile?.edition_id],
+    queryKey: ['batchmates', editionId],
     queryFn: async () => {
       const result = await promiseWithTimeout(
         supabase
           .from('profiles')
           .select('id, full_name, avatar_url, city, specialty')
-          .eq('edition_id', profile!.edition_id!)
+          .eq('edition_id', editionId!)
           .neq('id', user!.id)
           .then(res => res),
         10000,
@@ -139,7 +142,7 @@ const BatchmatesSection: React.FC<BatchmatesSectionProps> = ({
       if (result.error) throw result.error;
       return (result.data || []) as Batchmate[];
     },
-    enabled: !!profile?.edition_id && !!user?.id,
+    enabled: !!editionId && !!user?.id,
     staleTime: 5 * 60 * 1000,
   });
 

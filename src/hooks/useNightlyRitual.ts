@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 import { useMemo } from 'react';
 
 interface NightlyRitualItem {
@@ -23,11 +24,12 @@ interface UserProgress {
 }
 
 export const useNightlyRitual = (dayNumber: number) => {
-  const { user, edition } = useAuth();
+  const { user } = useAuth();
+  const { effectiveCohortType } = useEffectiveCohort();
   const queryClient = useQueryClient();
 
-  // Determine cohort type from edition
-  const cohortType = edition?.cohort_type || 'FFM';
+  // Determine cohort type from the effective (simulated-aware) edition
+  const cohortType = effectiveCohortType || 'FFM';
 
   // Fetch ritual items for current day and cohort
   const { data: ritualItems = [], isLoading: isLoadingItems } = useQuery({

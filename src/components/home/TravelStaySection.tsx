@@ -5,6 +5,7 @@ import forgeIcon from '@/assets/forge-icon.png';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveCohort } from '@/hooks/useEffectiveCohort';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -40,7 +41,7 @@ const TravelStaySection: React.FC<TravelStaySectionProps> = ({
   subtitle = 'Where you\'ll be living, breathing, eating and creating',
 }) => {
   const navigate = useNavigate();
-  const { edition } = useAuth();
+  const { effectiveEdition: edition } = useEffectiveCohort();
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
   const [modalImageIdx, setModalImageIdx] = useState(0);
