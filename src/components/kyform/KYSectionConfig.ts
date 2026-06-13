@@ -42,7 +42,7 @@ export interface KYSection {
   introTitle: string;
   introDescription: string;
   steps: SectionStep[];
-  responseTable: 'kyf_responses' | 'kyc_responses' | 'kyw_responses' | 'collaborator_profiles';
+  responseTable: 'kyf_responses' | 'kyc_responses' | 'kyw_responses' | 'kyai_responses' | 'collaborator_profiles';
   isOptional?: boolean;
 }
 
@@ -73,6 +73,65 @@ const INTENT_OPTIONS_WRITER = [
   { value: 'finish_script', label: 'Finish my script' },
   { value: 'feedback', label: 'Get feedback' },
   { value: 'networking', label: 'Build my network' },
+];
+
+// ── Forge AI (Know Your Builder) options ──
+const INTENT_OPTIONS_BUILDER = [
+  { value: 'build_product', label: 'Build a product' },
+  { value: 'automate_work', label: 'Automate my work' },
+  { value: 'level_up_ai', label: 'Level up AI skills' },
+  { value: 'switch_tech', label: 'Switch into tech' },
+  { value: 'explore', label: 'Explore & experiment' },
+];
+
+const AI_LEVEL_OPTIONS = [
+  { value: 'new', label: 'Brand new — barely used it' },
+  { value: 'beginner', label: 'Beginner — I use ChatGPT/Claude now and then' },
+  { value: 'intermediate', label: 'Intermediate — I use AI regularly in my work' },
+  { value: 'advanced', label: 'Advanced — I build with AI (automations, products)' },
+];
+
+const AI_FREQ_OPTIONS = [
+  { value: 'daily', label: 'Every day' },
+  { value: 'weekly', label: 'A few times a week' },
+  { value: 'occasionally', label: 'Occasionally' },
+  { value: 'rarely', label: 'Rarely or never' },
+];
+
+const AI_TOOLS_OPTIONS = [
+  { value: 'chatgpt', label: 'ChatGPT' },
+  { value: 'claude', label: 'Claude' },
+  { value: 'gemini', label: 'Gemini' },
+  { value: 'perplexity', label: 'Perplexity' },
+  { value: 'midjourney', label: 'Midjourney' },
+  { value: 'higgsfield', label: 'Higgsfield' },
+  { value: 'elevenlabs', label: 'ElevenLabs' },
+  { value: 'n8n', label: 'n8n' },
+  { value: 'make_zapier', label: 'Make / Zapier' },
+  { value: 'lovable', label: 'Lovable' },
+  { value: 'cursor', label: 'Cursor' },
+  { value: 'replit', label: 'Replit' },
+  { value: 'v0', label: 'v0' },
+  { value: 'none', label: 'None yet' },
+  { value: 'other', label: 'Other' },
+];
+
+const AI_USE_FOR_OPTIONS = [
+  { value: 'content', label: 'Writing & content' },
+  { value: 'media', label: 'Images & video' },
+  { value: 'coding', label: 'Coding' },
+  { value: 'automation', label: 'Automating tasks' },
+  { value: 'research', label: 'Research & learning' },
+  { value: 'brainstorm', label: 'Brainstorming' },
+  { value: 'business', label: 'Business & marketing' },
+  { value: 'not_much', label: 'Not much yet' },
+];
+
+const CODING_EXPERIENCE_OPTIONS = [
+  { value: 'none', label: 'None — I’ve never coded' },
+  { value: 'little', label: 'A little — no-code tools / lightly tweaked code' },
+  { value: 'some', label: 'Some — I can read & edit code' },
+  { value: 'comfortable', label: 'Yes — I write code comfortably' },
 ];
 
 const LANGUAGES = ['English', 'Hindi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada'];
@@ -554,6 +613,145 @@ const KYW_SECTIONS: KYSection[] = [
   },
 ];
 
+const KYB_SECTIONS: KYSection[] = [
+  {
+    key: 'builder_profile',
+    title: 'Builder Profile',
+    subtitle: 'Your AI building journey',
+    icon: '🛠️',
+    introTitle: "Let's build your builder profile",
+    introDescription: 'Tell us where you are with AI so we can tailor the residency to you.',
+    keepHandy: [
+      { emoji: '🎂', text: 'Your date of birth' },
+      { emoji: '🤖', text: 'The AI tools you’ve tried' },
+      { emoji: '🎯', text: 'What you want to build' },
+    ],
+    timeEstimate: '~6 minutes',
+    responseTable: 'kyai_responses',
+    steps: [
+      {
+        key: 'general_details',
+        title: 'General Details',
+        subtitle: 'The basics about you',
+        fields: [
+          { key: 'certificate_name', type: 'text', label: 'Name (as on certificate)', placeholder: 'Your full legal name', required: true },
+          { key: 'current_occupation', type: 'text', label: 'Current Occupation', placeholder: 'e.g. Student, Founder, Working Professional', required: true },
+          { key: 'instagram_id', type: 'text', label: 'Instagram ID', placeholder: '@yourhandle', required: false },
+          { key: 'date_of_birth', type: 'date', label: 'Date of Birth', required: true },
+        ],
+      },
+      {
+        key: 'location',
+        title: 'Location',
+        subtitle: 'Where are you based?',
+        fields: [
+          { key: 'city', type: 'country-state', label: 'Country & State', countryKey: 'country', required: true },
+        ],
+      },
+      {
+        key: 'ai_experience',
+        title: 'AI Experience',
+        subtitle: 'Where you are with AI today',
+        fields: [
+          { key: 'ai_experience_level', type: 'pill-select', label: 'Your current level with AI', options: AI_LEVEL_OPTIONS, required: true },
+          { key: 'ai_usage_frequency', type: 'pill-select', label: 'How often do you use AI tools?', options: AI_FREQ_OPTIONS, required: true },
+          { key: 'ai_tools_used', type: 'multi-select', label: 'Which AI tools have you used?', options: AI_TOOLS_OPTIONS, required: true },
+          { key: 'ai_use_for', type: 'multi-select', label: 'What do you mainly use AI for today?', options: AI_USE_FOR_OPTIONS, required: true },
+        ],
+      },
+      {
+        key: 'ai_skills',
+        title: 'Your AI Skills',
+        subtitle: 'Rate yourself in each area',
+        fields: [
+          {
+            key: 'proficiency_grid',
+            type: 'proficiency-grid',
+            label: 'Rate your proficiency',
+            skills: [
+              { key: 'proficiency_prompting', label: 'Prompting & chat AI (ChatGPT/Claude)' },
+              { key: 'proficiency_ai_media', label: 'AI image & video generation' },
+              { key: 'proficiency_automation', label: 'Automations (n8n / Make / Zapier)' },
+              { key: 'proficiency_coding', label: 'Coding / building apps' },
+              { key: 'proficiency_ai_agents', label: 'AI agents' },
+            ],
+            levels: ['Beginner', 'Amateur', 'Ok', 'Good', 'Pro'],
+          },
+          { key: 'coding_experience', type: 'pill-select', label: 'Do you have any coding experience?', options: CODING_EXPERIENCE_OPTIONS, required: true },
+        ],
+      },
+      {
+        key: 'builds_goals',
+        title: 'Builds & Goals',
+        subtitle: 'What you’ve done and want to do',
+        fields: [
+          { key: 'past_ai_builds', type: 'textarea', label: 'What have you built or created with AI so far?', placeholder: 'Projects, automations, content… “nothing yet” is fine', required: true },
+          { key: 'what_to_build', type: 'textarea', label: 'What do you want to build at the program?', placeholder: 'The product, automation, or system you have in mind', required: true },
+          { key: 'has_laptop', type: 'radio', label: 'Are you bringing a laptop to the residency?', options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }], columns: 2, required: true },
+        ],
+      },
+      {
+        key: 'aspirations',
+        title: 'Your Aspirations',
+        subtitle: 'Help us shape the curriculum for you',
+        fields: [
+          { key: 'program_outcome', type: 'textarea', label: 'What outcome do you most want from this program?', placeholder: 'e.g. Launch my first product, automate my business…', required: true },
+          { key: 'biggest_roadblock', type: 'textarea', label: 'Biggest roadblock you’re facing right now that you’d want help with?', placeholder: 'What’s holding you back today?', required: true },
+          { key: 'learning_goals', type: 'textarea', label: 'What do you most want to learn at the residency?', placeholder: 'Skills, tools, topics…', required: true },
+          { key: 'mbti_type', type: 'mbti', label: 'Your MBTI', required: true, helperText: 'Take the test at 16personalities.com if unsure' },
+        ],
+      },
+      {
+        key: 'your_vibe',
+        title: 'Your Vibe',
+        subtitle: 'One last thing about you',
+        fields: [
+          { key: 'chronotype', type: 'chronotype', label: 'You are', options: CHRONOTYPE_OPTIONS, required: true },
+          { key: 'forge_intent', type: 'pill-select', label: 'What brings you here?', options: INTENT_OPTIONS_BUILDER, required: true },
+        ],
+      },
+    ],
+  },
+  {
+    key: 'hospitality',
+    title: 'Hospitality Details',
+    subtitle: 'Help us prepare for your stay',
+    icon: '🍽️',
+    introTitle: 'Almost there! Final details',
+    introDescription: 'We want to make sure your stay is comfortable. This helps us plan meals, rooms, and emergencies.',
+    keepHandy: [
+      { emoji: '📞', text: 'Emergency contact number' },
+      { emoji: '👕', text: 'Your T-shirt size' },
+      { emoji: '🍽️', text: 'Any dietary restrictions or allergies' },
+    ],
+    timeEstimate: '~2 minutes',
+    responseTable: 'kyai_responses',
+    steps: [
+      {
+        key: 'food_dietary',
+        title: 'Food & Dietary',
+        subtitle: 'Meals and dietary needs',
+        fields: [
+          { key: 'meal_preference', type: 'meal-preference', label: 'Meal Preference', required: true },
+          { key: 'food_allergies', type: 'text', label: 'Food Allergies', placeholder: 'None', required: true },
+          { key: 'medication_support', type: 'text', label: 'Medication / Medical Support', placeholder: 'None', required: true },
+        ],
+      },
+      {
+        key: 'merch_emergency',
+        title: 'Merch & Emergency',
+        subtitle: 'T-shirt, safety, and confirmation',
+        fields: [
+          { key: 'tshirt_size', type: 'tshirt-size', label: 'T-Shirt Size', required: true },
+          { key: 'emergency_contact_name', type: 'text', label: 'Emergency Contact Name', placeholder: 'Parent / Guardian name', required: true, inline: 'emergency_row' },
+          { key: 'emergency_contact_number', type: 'phone', label: 'Emergency Contact Number', required: true, inline: 'emergency_row' },
+          { key: 'terms_accepted', type: 'checkbox', label: 'I accept the Terms & Conditions', required: true },
+        ],
+      },
+    ],
+  },
+];
+
 // Map cohort_type to sections
 export function getSectionsForCohort(cohortType: string): KYSection[] {
   switch (cohortType) {
@@ -563,6 +761,8 @@ export function getSectionsForCohort(cohortType: string): KYSection[] {
       return [...KYC_SECTIONS, COMMUNITY_PROFILE_SECTION];
     case 'FW':
       return [...KYW_SECTIONS, COMMUNITY_PROFILE_SECTION];
+    case 'FAI':
+      return [...KYB_SECTIONS, COMMUNITY_PROFILE_SECTION];
     default:
       return [...KYF_SECTIONS, COMMUNITY_PROFILE_SECTION];
   }

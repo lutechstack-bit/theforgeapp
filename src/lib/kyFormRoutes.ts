@@ -6,7 +6,7 @@
 // Cohorts that have a built KY form. Forge AI (FAI) intentionally has NO form
 // yet — its "Know Your Builder" (KYB) form isn't built, so we must NOT fall
 // back to the Filmmaking form for FAI students. Gate every KY surface on this.
-export const COHORTS_WITH_KY_FORM = ['FFM', 'FC', 'FW'];
+export const COHORTS_WITH_KY_FORM = ['FFM', 'FC', 'FW', 'FAI'];
 
 export const kyFormAvailable = (cohortType?: string | null): boolean =>
   !!cohortType && COHORTS_WITH_KY_FORM.includes(cohortType);
@@ -19,6 +19,8 @@ export const getKYFormSectionRoute = (cohortType?: string | null): string => {
       return '/ky-section/creator_profile';
     case 'FW':
       return '/ky-section/writer_profile';
+    case 'FAI':
+      return '/ky-section/builder_profile';
     default:
       return '/ky-section/filmmaker_profile';
   }
@@ -32,6 +34,8 @@ export const getKYFormName = (cohortType?: string | null): string => {
       return 'Know Your Creator';
     case 'FW':
       return 'Know Your Writer';
+    case 'FAI':
+      return 'Know Your Builder';
     default:
       return 'Complete KY Form';
   }
@@ -43,6 +47,8 @@ export const getKYFormShortName = (cohortType?: string | null): string => {
       return 'KYC Form';
     case 'FW':
       return 'KYW Form';
+    case 'FAI':
+      return 'KYB Form';
     default:
       return 'KYF Form';
   }
